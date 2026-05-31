@@ -4001,6 +4001,7 @@ private String displayPath(String value) {
         Button btnClearPlayTime = d.findViewById(R.id.btnClearPlayTime);
         TextView tvPlayTimeInfo = d.findViewById(R.id.tvPlayTimeInfo);
         View btnPickEmulatorApp = d.findViewById(R.id.btnPickEmulatorApp);
+        View btnResetEmulatorPackage = d.findViewById(R.id.btnResetEmulatorPackage);
         View btnPickGameHubShortcut = d.findViewById(R.id.btnPickGameHubShortcut);
         btnPickGameHubShortcut.setOnClickListener(v -> showGameHubShortcutPicker(title, pkg, gamehubLocalGameId));
         btnPickEmulatorApp.setOnClickListener(v -> showInstalledAppPicker(pkg));
@@ -4011,6 +4012,16 @@ private String displayPath(String value) {
             winlatorAdvancedLayout.setVisibility(isWinlator ? View.VISIBLE : View.GONE);
             gamehubLaunchLayout.setVisibility("GAMEHUB".equals(engine) ? View.VISIBLE : View.GONE);
         };
+        btnResetEmulatorPackage.setOnClickListener(v -> {
+            String engine = sp.getSelectedItem() == null ? "" : sp.getSelectedItem().toString();
+            String defaultPkg = defaultEmulatorPackageForEngine(engine);
+            pkg.setText(defaultPkg);
+            if ("GAMEHUB".equals(engine)) gamehubLocalGameId.setText("");
+            if ("ARTEMIS".equals(engine)) updateArtemisVersionButtons(defaultPkg, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
+            updateWinlatorAdvanced.run();
+            Toast.makeText(this, defaultPkg.isEmpty() ? "已清空默认包名" : "已恢复默认包名：" + defaultPkg, Toast.LENGTH_SHORT).show();
+        });
+
         pkg.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
             public void onTextChanged(CharSequence s, int st, int b, int c) { updateWinlatorAdvanced.run(); }
@@ -4109,6 +4120,17 @@ private String displayPath(String value) {
         if (d.getWindow() != null) {
             d.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.82f), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
+    }
+
+    private String defaultEmulatorPackageForEngine(String engine) {
+        String e = engine == null ? "" : engine.trim().toUpperCase(Locale.ROOT);
+        if ("KIRIKIRI".equals(e)) return "internal.krkr";
+        if ("TYRANO".equals(e)) return "internal.tyrano";
+        if ("ONS".equals(e)) return "internal.ons";
+        if ("ARTEMIS".equals(e)) return "internal.artemis";
+        if ("WINLATOR".equals(e)) return guessInstalledWinlatorPackage();
+        if ("GAMEHUB".equals(e)) return guessInstalledGameHubPackage();
+        return "";
     }
 
     private void updateArtemisVersionButtons(String value, Button std, Button compat, Button compatV2) {
@@ -4264,7 +4286,13 @@ private String displayPath(String value) {
     private boolean isWinlatorPackageName(String pkg) {
         if (pkg == null) return false;
         String p = pkg.trim().toLowerCase(Locale.ROOT);
-        return p.equals("com.winlator") || p.startsWith("com.winlator.") || p.contains("winlator");
+        return p.equals("com.winlator")
+                || p.startsWith("com.winlator.")
+                || p.contains("winlator")
+                || p.contains("glibc")
+                || p.contains("proot")
+                || p.contains("mobox")
+                || p.contains("winalator");
     }
 
     private int winlatorModeIndex(String mode) {

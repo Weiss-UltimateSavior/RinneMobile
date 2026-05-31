@@ -169,9 +169,9 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         String desktopPath = resolveDesktopPath(context, rootUri, launchTarget);
         if (desktopPath == null || desktopPath.trim().isEmpty()) return false;
         int containerId = parseWinlatorContainerId(desktopPath);
-        String execPath = resolveWinlatorExecPathFromDesktop(desktopPath);
+        String execPath = resolveWinlatorExecPathFromDesktop(desktopPath, pkg);
         boolean legacyRootfsShortcut = isWinlatorLegacyRootfsShortcut(desktopPath);
-        // WinlatorCN/官版受限 Activity 强制启动需要 container_id；解析不到时默认使用第一个容器。
+        // Winlator/WinlatorCN/glibc/proot/mobox 等改包直启通常需要 container_id；解析不到时默认使用第一个容器。
         if (containerId <= 0 && shouldUseShellWinlatorLaunch(pkg)) containerId = 1;
         PackageManager pm = context.getPackageManager();
         String launchMode = mode == null ? "game" : mode.trim().toLowerCase(Locale.ROOT);
@@ -179,11 +179,9 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         List<Intent> intents = new ArrayList<>();
 
         // 官版 v11 源码：Shortcut 直启需要 container_id + shortcut_path。
-        // 旧版/rootfs 模式可能没有 container_id，优先尝试直接把 shortcut_path 交给 XServerDisplayActivity/MainActivity。
-        if ("com.winlator".equalsIgnoreCase(pkg)) {
-            intents.add(addWinlatorExtras(explicit(pkg, "com.winlator.XServerDisplayActivity", Intent.ACTION_MAIN, null), desktopPath, execPath, containerId));
-            if (containerId > 0) intents.add(addWinlatorExtras(explicit(pkg, "com.winlator.XrActivity", Intent.ACTION_MAIN, null), desktopPath, execPath, containerId));
-        }
+        // 改包可能仍保留 com.winlator.* 类名，也可能重打包成 当前包名.*，两种都尝试。
+        addWinlatorActivityCandidates(intents, pkg, "XServerDisplayActivity", desktopPath, execPath, containerId);
+        addWinlatorActivityCandidates(intents, pkg, "XrActivity", desktopPath, execPath, containerId);
 
         intents.add(addWinlatorExtras(new Intent(Intent.ACTION_VIEW).setPackage(pkg).setDataAndType(Uri.fromFile(new File(desktopPath)), "application/x-desktop"), desktopPath, containerId));
 
@@ -204,11 +202,21 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         return false;
     }
 
+    private static void addWinlatorActivityCandidates(List<Intent> intents, String pkg, String simpleActivityName, String desktopPath, String execPath, int containerId) {
+        if (intents == null || pkg == null || simpleActivityName == null) return;
+        String p = pkg.trim();
+        if (p.isEmpty()) return;
+        // 严格跟随用户选择的包名，只尝试当前包名下的 Activity，不再补固定的 com.winlator 兜底。
+        List<String> classes = new ArrayList<>();
+        classes.add(p + "." + simpleActivityName);
+        classes.add(p + ".activities." + simpleActivityName);
+        for (String cls : classes) {
+            intents.add(addWinlatorExtras(explicit(p, cls, Intent.ACTION_MAIN, null), desktopPath, execPath, containerId));
+        }
+    }
+
     private static boolean shouldUseShellWinlatorLaunch(String pkg) {
-        if (pkg == null) return false;
-        String p = pkg.trim().toLowerCase(Locale.ROOT);
-        // WinlatorCN/官版/多数改版包名仍是 com.winlator 或包含 winlator。
-        return p.equals("com.winlator") || p.startsWith("com.winlator.") || p.contains("winlator");
+        return isWinlatorPackage(pkg);
     }
 
     private static boolean isGameHubPackage(String pkg) {
@@ -341,7 +349,7 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         return i;
     }
 
-    private static String resolveWinlatorExecPathFromDesktop(String desktopPath) {
+    private static String resolveWinlatorExecPathFromDesktop(String desktopPath, String pkg) {
         try {
             File f = new File(desktopPath);
             if (!f.isFile()) return null;
@@ -366,7 +374,8 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
                     return unixPath + (unixPath.endsWith("/") ? "" : "/") + fileName;
                 }
                 char drive = Character.toLowerCase(exe.charAt(0));
-                return "/data/user/0/com.winlator/files/rootfs/home/xuser/.wine/dosdevices/" + drive + ":" + exe.substring(2);
+                String packageForPath = (pkg == null || pkg.trim().isEmpty()) ? "com.winlator" : pkg.trim();
+                return "/data/user/0/" + packageForPath + "/files/rootfs/home/xuser/.wine/dosdevices/" + drive + ":" + exe.substring(2);
             }
             return exe;
         } catch (Throwable ignored) {
