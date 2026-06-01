@@ -8,7 +8,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+
 import bridge.NativeBridge;
+import com.yuki.yukihub.krkr.KrkrSaveHook;
 import org.tvp.kirikiri2.KR2Activity;
 
 public abstract class r extends KR2Activity {
@@ -41,11 +44,48 @@ public abstract class r extends KR2Activity {
             finish();
         }
     }
-
     @Override
     public void onLoadNativeLibraries() {
-        NativeBridge.initialize(soName());
+        boolean initialized = NativeBridge.initialize(soName());
+        Log.i(TAG, "native initialize result=" + initialized + " so=" + soName());
+        Intent intent = getIntent();
+        if (intent == null || !intent.getBooleanExtra("scopedSaveDir", false)) {
+            Log.i(TAG, "native interceptor skipped: scoped save disabled");
+            return;
+        }
+        String prefix = null;
+        try {
+            String rawPath = intent.getStringExtra("path");
+            if (rawPath != null && !rawPath.trim().isEmpty()) {
+                String resolved = normalizeKrPath(rawPath);
+                File root = new File(resolved);
+                if (root.isFile()) root = root.getParentFile();
+                if (root != null) {
+                    File saveRoot = new File(new File(getExternalFilesDir(null), "save"), safeSaveName(root.getAbsolutePath()));
+                    if (saveRoot.exists() || saveRoot.mkdirs()) {
+                        File originalSaveDir = new File(root, "savedata");
+                        boolean yhHook = KrkrSaveHook.enable(originalSaveDir.getAbsolutePath(), saveRoot.getAbsolutePath());
+                        Log.i(TAG, "yukihub KRKR save hook original=" + originalSaveDir.getAbsolutePath() + " private=" + saveRoot.getAbsolutePath() + " ok=" + yhHook);
+                        prefix = storagePrefix(root.getAbsolutePath());
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "resolve scoped hook prefix failed", t);
+        }
+        if (prefix != null) {
+            try {
+                NativeBridge.interceptor(prefix);
+                NativeBridge.relocate();
+                Log.i(TAG, "native interceptor enabled prefix=" + prefix);
+            } catch (Throwable t) {
+                Log.e(TAG, "enable native interceptor failed", t);
+            }
+        } else {
+            Log.w(TAG, "native interceptor skipped: empty prefix");
+        }
     }
+
 
     private void tryLaunchGame(String path, boolean maps) {
         new Thread(() -> {
@@ -74,6 +114,44 @@ public abstract class r extends KR2Activity {
                 });
             }
         }).start();
+    }
+
+    private static String normalizeKrPath(String path) {
+        if (path == null) return "";
+        String p = path.trim();
+        if (p.startsWith("file://")) p = p.substring("file://".length());
+        while (p.startsWith("./")) p = p.substring(2);
+        if (p.startsWith("storage/")) p = "/" + p;
+        return p;
+    }
+
+    private static String storagePrefix(String path) {
+        String p = normalizeKrPath(path);
+        String lower = p.toLowerCase();
+        if (lower.startsWith("/storage/emulated/0/")) return "/storage/emulated/0";
+        if (lower.startsWith("/sdcard/")) return "/sdcard";
+        if (lower.startsWith("/storage/")) {
+            String rest = p.substring("/storage/".length());
+            int slash = rest.indexOf('/');
+            if (slash > 0) return "/storage/" + rest.substring(0, slash);
+        }
+        return p;
+    }
+
+    private static String safeSaveName(String rootPath) {
+        try {
+            String path = normalizeKrPath(rootPath);
+            File f = new File(path);
+            String name = f.getName();
+            if (name == null || name.trim().isEmpty()) {
+                File parent = f.getParentFile();
+                name = parent == null ? "default" : parent.getName();
+            }
+            name = name == null ? "default" : name.trim().replaceAll("[\\\\/:*?\"<>|]", "_");
+            return name.isEmpty() ? "default" : name;
+        } catch (Throwable ignored) {
+            return "default";
+        }
     }
 
     @Override

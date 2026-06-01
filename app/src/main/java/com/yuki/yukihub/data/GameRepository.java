@@ -174,6 +174,42 @@ public class GameRepository {
         for (Long id : ids) finishPlaySession(id, end, minDuration, maxDuration);
     }
 
+    public PlayActivity findLatestOpenPlaySession() {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT ps.id,ps.session_uuid,ps.game_id,g.title,ps.start_time,ps.end_time,ps.duration,ps.launch_type " +
+                        "FROM play_sessions ps JOIN games g ON g.id=ps.game_id " +
+                        "WHERE ps.end_time IS NULL AND IFNULL(ps.deleted,0)=0 " +
+                        "ORDER BY ps.start_time DESC LIMIT 1", null);
+        try {
+            if (!c.moveToFirst()) return null;
+            PlayActivity a = new PlayActivity();
+            a.sessionId = c.getLong(0);
+            a.sessionUuid = c.getString(1);
+            a.gameId = c.getLong(2);
+            a.gameTitle = c.getString(3);
+            a.startTime = c.getLong(4);
+            a.endTime = 0L;
+            a.duration = c.getLong(6);
+            a.launchType = c.getString(7);
+            if (a.gameTitle == null || a.gameTitle.trim().isEmpty()) a.gameTitle = "未命名游戏";
+            return a;
+        } finally {
+            c.close();
+        }
+    }
+
+    public int deleteOpenPlaySessions() {
+        SQLiteDatabase db = helper.getWritableDatabase();
+        return db.delete("play_sessions", "end_time IS NULL", null);
+    }
+
+    public int deleteOpenPlaySession(long sessionId) {
+        if (sessionId <= 0) return 0;
+        SQLiteDatabase db = helper.getWritableDatabase();
+        return db.delete("play_sessions", "id=? AND end_time IS NULL", new String[]{String.valueOf(sessionId)});
+    }
+
     public void addPlayTime(long gameId, long start, long end, long duration) {
         if (duration <= 0) duration = Math.max(0L, end - start);
         addManualPlayTime(gameId, duration, end <= 0 ? System.currentTimeMillis() : end);
@@ -422,6 +458,7 @@ g.description = o.optString("description", g.description);
             }
             changed++;
         }
+        recalculatePlayStats();
         return changed;
     }
 
@@ -558,7 +595,7 @@ g.description = o.optString("description", g.description);
         v.put("cover_persist_uri", g.coverPersistUri);
         v.put("cover_source_type", g.coverSourceType);
         v.put("emulator_package", g.emulatorPackage);
-        v.put("launch_target", g.launchTarget == null || g.launchTarget.isEmpty() ? "data.xp3" : g.launchTarget);
+        v.put("launch_target", g.launchTarget == null || g.launchTarget.isEmpty() ? "[游戏目录]" : g.launchTarget);
 v.put("winlator_launch_mode", normalizeWinlatorLaunchMode(g.winlatorLaunchMode));
 v.put("description", g.description);
         v.put("tags", g.tags);
@@ -588,7 +625,7 @@ v.put("description", g.description);
         g.coverSourceType = getIntOrDefault(c, "cover_source_type", 0);
         g.emulatorPackage = c.getString(c.getColumnIndexOrThrow("emulator_package"));
         g.launchTarget = getStringOrNull(c, "launch_target");
-if (g.launchTarget == null || g.launchTarget.isEmpty()) g.launchTarget = "data.xp3";
+if (g.launchTarget == null || g.launchTarget.isEmpty()) g.launchTarget = "[游戏目录]";
 g.winlatorLaunchMode = normalizeWinlatorLaunchMode(getStringOrNull(c, "winlator_launch_mode"));
 g.description = c.getString(c.getColumnIndexOrThrow("description"));
         g.tags = c.getString(c.getColumnIndexOrThrow("tags"));

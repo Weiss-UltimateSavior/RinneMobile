@@ -86,7 +86,18 @@
             android:windowSoftInputMode="adjustPan"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
-<activity
+        <activity
+            android:name="com.akira.tyranoemu.remote.Kirikiroid134"
+            android:exported="false"
+            android:process=":kirikiri2"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.yuki.yukihub.Kirikiroid2"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.YukiHub.Kirikiroid2Compatible"
+            android:windowSoftInputMode="adjustPan"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+ <activity
             android:name="com.yuki.yukihub.tyrano.TyranoActivity"
             android:exported="false"
             android:process=":tyrano"

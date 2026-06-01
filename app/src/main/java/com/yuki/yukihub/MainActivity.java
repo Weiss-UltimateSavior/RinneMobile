@@ -157,7 +157,7 @@ private VnMetadata currentSideMetadata;
 private long runningSessionId = -1;
 private long sessionStart = 0;
 private boolean launchedExternal = false;
-private static final long MIN_PLAY_SESSION_MS = 60_000L;
+private static final long MIN_PLAY_SESSION_MS = 0L;
 private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
     private boolean coverScanRunning = false;
     private boolean coverMaintenanceDone = false;
@@ -177,8 +177,11 @@ private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
     private static final int MAX_STARTUP_SCAN_DEPTH = 4;
 private static final String KEY_METADATA_SOURCE = "metadata_source";
     private static final String KEY_BANGUMI_TOKEN = "bangumi_token";
-    private static final String KEY_KR_COMPAT_MODE = "kr_compat_mode";
-    private static final String SOURCE_VNDB = "vndb";
+private static final String KEY_KR_COMPAT_MODE = "kr_compat_mode";
+private static final String KEY_KR_ENGINE_VERSION = "kr_engine_version";
+private static final String KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir";
+private static final String KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir";
+private static final String SOURCE_VNDB = "vndb";
     private static final String SOURCE_BANGUMI = "bangumi";
     private static final String SOURCE_BANGUMI_MIRROR = "bangumi_mirror";
 private static final String KEY_SORT_MODE = "sort_mode";
@@ -665,9 +668,23 @@ private String copyImageToInternalStorage(Uri uri, String folder, String prefix,
     }
 
     private void takeFlags(Uri uri) {
+        if (uri == null) return;
+        int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
         try {
-            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        } catch (Exception ignored) { }
+            getContentResolver().takePersistableUriPermission(uri, flags);
+            Log.i("YukiHub", "persisted tree permission: " + uri);
+        } catch (SecurityException writeDenied) {
+            try {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Log.i("YukiHub", "persisted read-only tree permission: " + uri);
+            } catch (Exception readDenied) {
+                Log.w("YukiHub", "persist tree permission failed: " + uri, readDenied);
+                Toast.makeText(this, "目录授权保存失败，请重新选择 TF 卡目录", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.w("YukiHub", "persist tree permission failed: " + uri, e);
+            Toast.makeText(this, "目录授权保存失败，请重新选择 TF 卡目录", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void scanMissingCoversIfNeeded() {
@@ -3133,14 +3150,22 @@ LinearLayout accountActions = new LinearLayout(this);
         root.addView(krTitle);
 
         TextView krInfo = new TextView(this);
-        krInfo.setText("兼容模式会使用更接近原生 KRKR 的启动参数。默认关闭；仅在内置 KRKR 崩溃、黑屏或启动异常时尝试开启。");
+        krInfo.setText("启动参数兼容模式会补齐旧式参数；引擎版本由此处统一指定。若部分机型因外部存储授权导致闪退，可开启独立存档目录。");
         krInfo.setTextColor(getColorCompat(R.color.yh_text_muted));
         krInfo.setTextSize(11);
         krInfo.setPadding(0, dp(4), 0, dp(6));
         root.addView(krInfo);
 
-        CheckBox krCompatMode = krCheckBox("KR 兼容模式", prefs.getBoolean(KEY_KR_COMPAT_MODE, false));
+        root.addView(krLabel("KR 引擎版本"));
+        Spinner krEngineVersion = krSpinner(new String[]{"自动", "1.3.9", "1.3.4"}, krEngineVersionToLabel(prefs.getString(KEY_KR_ENGINE_VERSION, "auto")));
+        root.addView(krEngineVersion);
+
+        CheckBox krCompatMode = krCheckBox("KR 启动参数兼容模式", prefs.getBoolean(KEY_KR_COMPAT_MODE, false));
+        CheckBox krScopedSaveDir = krCheckBox("KR 独立存档目录（App 外部私有目录，实验）", prefs.getBoolean(KEY_KR_SCOPED_SAVE_DIR, false));
+        CheckBox artemisScopedSaveDir = krCheckBox("Artemis 独立存档目录（实验，暂不建议开启）", prefs.getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, false));
         root.addView(krCompatMode);
+        root.addView(krScopedSaveDir);
+        root.addView(artemisScopedSaveDir);
 
         Button nativeKrkrButton = krButton("进入原生KRKR");
         nativeKrkrButton.setTextColor(getColorCompat(R.color.yh_primary));
@@ -3195,8 +3220,11 @@ LinearLayout accountActions = new LinearLayout(this);
                     .putString(KEY_SORT_MODE, sortMode)
                     .putBoolean(KEY_BACKGROUND_DIM_ENABLED, bgDimEnabled.isChecked())
                 .putBoolean(KEY_BACKGROUND_VIDEO_SOUND, bgVideoSound.isChecked())
-                .putBoolean(KEY_KR_COMPAT_MODE, krCompatMode.isChecked())
-                .putFloat(UiScaleUtil.KEY_UI_FONT_SCALE, fontScale)
+                .putString(KEY_KR_ENGINE_VERSION, krEngineVersionFromLabel(String.valueOf(krEngineVersion.getSelectedItem())))
+.putBoolean(KEY_KR_COMPAT_MODE, krCompatMode.isChecked())
+.putBoolean(KEY_KR_SCOPED_SAVE_DIR, krScopedSaveDir.isChecked())
+.putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, artemisScopedSaveDir.isChecked())
+.putFloat(UiScaleUtil.KEY_UI_FONT_SCALE, fontScale)
                     .apply();
             applyCustomBackground();
             Toast.makeText(this, "已保存资料源：" + (bangumiMirror ? "Bangumi镜像" : (bangumi ? "Bangumi" : "VNDB")) + "，扫描深度：" + depth + " 层，字体：" + UiScaleUtil.percent(fontScale) + "%", Toast.LENGTH_SHORT).show();
@@ -3934,7 +3962,7 @@ private String displayPath(String value) {
             Uri uri = Uri.parse(value);
             String docId = null;
             // DocumentFile.fromTreeUri(...).listFiles() 得到的子目录 URI 通常是：
-            // content://.../tree/primary%3ATyranor/document/primary%3ATyranor%2F悠之空
+            // content://.../tree/primary%3AGames/document/primary%3AGames%2FExample
             // 详情页要显示到真正的游戏子目录，所以优先取 documentId，而不是 treeId。
             try {
                 docId = DocumentsContract.getDocumentId(uri);
@@ -3957,7 +3985,7 @@ private String displayPath(String value) {
         if (docId == null || docId.trim().isEmpty()) return null;
         String id = Uri.decode(docId.trim());
         // 有些 fallback 可能拿到带前缀的片段，先剥掉 URI 结构前缀；
-        // 但不能按最后一个 / 截断，因为 primary:Tyranor/悠之空 里的 / 是真实路径层级。
+        // 但不能按最后一个 / 截断，因为 primary:Games/Example 里的 / 是真实路径层级。
         int docPrefix = id.indexOf("/document/");
         if (docPrefix >= 0) id = id.substring(docPrefix + "/document/".length());
         if (id.startsWith("document/")) id = id.substring("document/".length());
@@ -3995,6 +4023,7 @@ private String displayPath(String value) {
         View winlatorAdvancedLayout = d.findViewById(R.id.layoutWinlatorLaunchMode);
         View gamehubLaunchLayout = d.findViewById(R.id.layoutGameHubLaunch);
         View artemisVersionLayout = d.findViewById(R.id.layoutArtemisVersion);
+        Button btnArtemisAuto = d.findViewById(R.id.btnArtemisAuto);
         Button btnArtemisStd = d.findViewById(R.id.btnArtemisStd);
         Button btnArtemisCompat = d.findViewById(R.id.btnArtemisCompat);
         Button btnArtemisCompatV2 = d.findViewById(R.id.btnArtemisCompatV2);
@@ -4017,7 +4046,7 @@ private String displayPath(String value) {
             String defaultPkg = defaultEmulatorPackageForEngine(engine);
             pkg.setText(defaultPkg);
             if ("GAMEHUB".equals(engine)) gamehubLocalGameId.setText("");
-            if ("ARTEMIS".equals(engine)) updateArtemisVersionButtons(defaultPkg, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
+            if ("ARTEMIS".equals(engine)) updateArtemisVersionButtons(defaultPkg, btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
             updateWinlatorAdvanced.run();
             Toast.makeText(this, defaultPkg.isEmpty() ? "已清空默认包名" : "已恢复默认包名：" + defaultPkg, Toast.LENGTH_SHORT).show();
         });
@@ -4046,9 +4075,10 @@ private String displayPath(String value) {
             btnClearPlayTime.setVisibility(View.VISIBLE);
             btnClearPlayTime.setOnClickListener(v -> confirmClearPlayTime(game, d));
         }
-        btnArtemisStd.setOnClickListener(v -> { pkg.setText("internal.artemis"); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
-        btnArtemisCompat.setOnClickListener(v -> { pkg.setText("internal.artemis.compat"); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
-        btnArtemisCompatV2.setOnClickListener(v -> { pkg.setText("internal.artemis.compat.v2"); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
+        btnArtemisAuto.setOnClickListener(v -> { pkg.setText(resolveArtemisPackageFromMarkers(pendingDirUri)); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
+        btnArtemisStd.setOnClickListener(v -> { pkg.setText("internal.artemis"); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
+        btnArtemisCompat.setOnClickListener(v -> { pkg.setText("internal.artemis.compat"); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
+        btnArtemisCompatV2.setOnClickListener(v -> { pkg.setText("internal.artemis.compat.v2"); updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2); });
         if (game != null) {
             title.setText(game.title); pkg.setText(game.emulatorPackage); gamehubLocalGameId.setText(game.gamehubLocalGameId); updateWinlatorAdvanced.run(); desc.setText(game.description);
             winlatorModeSp.setSelection(winlatorModeIndex(game.winlatorLaunchMode));
@@ -4057,7 +4087,7 @@ private String displayPath(String value) {
             launchSp.setSelection(findLaunchSelection(launchOptions, game.launchTarget));
             ((TextView)d.findViewById(R.id.tvSelectedDir)).setText(emptyText(game.rootUri, "未选择游戏目录"));
             ((TextView)d.findViewById(R.id.tvSelectedCover)).setText(emptyText(game.coverUri, "未选择封面"));
-            if (game.engine == EngineType.ARTEMIS) updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
+            if (game.engine == EngineType.ARTEMIS) updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
         } else if (pendingDirUri != null) {
             ((TextView)d.findViewById(R.id.tvSelectedDir)).setText(pendingDirUri);
         }
@@ -4082,7 +4112,7 @@ private String displayPath(String value) {
                     pkg.setText(guessInstalledGameHubPackage());
                 }
                 updateWinlatorAdvanced.run();
-                if (isArtemis) updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
+                if (isArtemis) updateArtemisVersionButtons(pkg.getText().toString(), btnArtemisAuto, btnArtemisStd, btnArtemisCompat, btnArtemisCompatV2);
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
         });
@@ -4100,7 +4130,13 @@ private String displayPath(String value) {
             g.engine = EngineType.fromString((String) sp.getSelectedItem()); if (g.engine == EngineType.AUTO) g.engine = EngineType.UNKNOWN;
             g.emulatorPackage = pkg.getText().toString().trim();
             g.gamehubLocalGameId = gamehubLocalGameId.getText().toString().trim();
-            if (g.engine == EngineType.ARTEMIS) g.emulatorPackage = normalizeArtemisPackage(g.emulatorPackage);
+            if (g.engine == EngineType.ARTEMIS) {
+                g.emulatorPackage = normalizeArtemisPackage(g.emulatorPackage);
+                if (!saveArtemisVersionMarker(g.rootUri, g.emulatorPackage)) {
+                    Toast.makeText(this, "保存 Artemis 兼容标记失败", Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
             if (g.engine == EngineType.ONS && (g.emulatorPackage == null || g.emulatorPackage.trim().isEmpty())) g.emulatorPackage = "internal.ons";
             if (g.engine == EngineType.WINLATOR && (g.emulatorPackage == null || g.emulatorPackage.trim().isEmpty())) g.emulatorPackage = guessInstalledWinlatorPackage();
             if (g.engine == EngineType.GAMEHUB && (g.emulatorPackage == null || g.emulatorPackage.trim().isEmpty())) g.emulatorPackage = guessInstalledGameHubPackage();
@@ -4133,26 +4169,102 @@ private String displayPath(String value) {
         return "";
     }
 
-    private void updateArtemisVersionButtons(String value, Button std, Button compat, Button compatV2) {
-        String pkg = normalizeArtemisPackage(value);
-        boolean isV2 = "internal.artemis.compat.v2".equalsIgnoreCase(pkg);
-        boolean isCompat = "internal.artemis.compat".equalsIgnoreCase(pkg);
-        std.setSelected(!isCompat && !isV2);
-        compat.setSelected(isCompat);
-        compatV2.setSelected(isV2);
+    private void updateArtemisVersionButtons(String value, Button auto, Button std, Button compat, Button compatV2) {
+String pkg = normalizeArtemisPackage(value);
+boolean isCompat = "internal.artemis.compat".equalsIgnoreCase(pkg);
+boolean isV2 = "internal.artemis.compat.v2".equalsIgnoreCase(pkg);
+boolean isStd = "internal.artemis".equalsIgnoreCase(pkg);
+boolean autoMode = false;
+auto.setSelected(autoMode);
+std.setSelected(isStd);
+compat.setSelected(isCompat);
+compatV2.setSelected(isV2);
+        auto.setAlpha(auto.isSelected() ? 1f : 0.55f);
         std.setAlpha(std.isSelected() ? 1f : 0.55f);
         compat.setAlpha(compat.isSelected() ? 1f : 0.55f);
         compatV2.setAlpha(compatV2.isSelected() ? 1f : 0.55f);
     }
 
     private String normalizeArtemisPackage(String value) {
-        String pkg = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-        if (pkg.contains("v2") || pkg.endsWith(".2")) return "internal.artemis.compat.v2";
-        if (pkg.contains("compat")) return "internal.artemis.compat";
-        return "internal.artemis";
-    }
+String pkg = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+if (pkg.contains("compat.v2") || pkg.contains("compatible_v2") || pkg.endsWith(".2")) return "internal.artemis.compat.v2";
+if (pkg.contains("compat")) return "internal.artemis.compat";
+return "internal.artemis";
+}
 
-    private void confirmClearPlayTime(Game game, Dialog editDialog) {
+private String resolveArtemisPackageFromMarkers(String rootUri) {
+try {
+DocumentFile dir = gameDir(rootUri);
+if (dir != null) {
+if (dir.findFile(".compatible_v2") != null || dir.findFile("compatible_v2.ini") != null) return "internal.artemis.compat.v2";
+if (dir.findFile(".compatible") != null || dir.findFile("compatible.ini") != null) return "internal.artemis.compat";
+}
+} catch (Throwable ignored) { }
+try {
+String path = displayPath(rootUri);
+if (path != null && path.startsWith("/")) {
+if (new File(path, ".compatible_v2").exists() || new File(path, "compatible_v2.ini").exists()) return "internal.artemis.compat.v2";
+if (new File(path, ".compatible").exists() || new File(path, "compatible.ini").exists()) return "internal.artemis.compat";
+}
+} catch (Throwable ignored) { }
+return "internal.artemis";
+}
+
+private boolean saveArtemisVersionMarker(String rootUri, String artemisPackage) {
+String mode = normalizeArtemisPackage(artemisPackage);
+try {
+DocumentFile dir = gameDir(rootUri);
+if (dir != null) {
+DocumentFile c1 = dir.findFile(".compatible");
+DocumentFile c2 = dir.findFile(".compatible_v2");
+DocumentFile i1 = dir.findFile("compatible.ini");
+DocumentFile i2 = dir.findFile("compatible_v2.ini");
+if ("internal.artemis".equals(mode)) return true;
+if (c1 != null) c1.delete();
+if (c2 != null) c2.delete();
+if (i1 != null) i1.delete();
+if (i2 != null) i2.delete();
+if ("internal.artemis.compat".equals(mode)) return dir.createFile("application/octet-stream", ".compatible") != null;
+if ("internal.artemis.compat.v2".equals(mode)) return dir.createFile("application/octet-stream", ".compatible_v2") != null;
+return true;
+}
+} catch (Throwable ignored) { }
+try {
+String path = displayPath(rootUri);
+if (path == null || !path.startsWith("/")) return false;
+File c1 = new File(path, ".compatible");
+File c2 = new File(path, ".compatible_v2");
+File i1 = new File(path, "compatible.ini");
+File i2 = new File(path, "compatible_v2.ini");
+if ("internal.artemis".equals(mode)) return true;
+deleteFileQuietly(c1);
+deleteFileQuietly(c2);
+deleteFileQuietly(i1);
+deleteFileQuietly(i2);
+if ("internal.artemis.compat".equals(mode)) return c1.exists() || c1.createNewFile();
+if ("internal.artemis.compat.v2".equals(mode)) return c2.exists() || c2.createNewFile();
+return true;
+} catch (Throwable ignored) {
+return false;
+}
+}
+
+private DocumentFile gameDir(String rootUri) {
+if (rootUri == null || rootUri.trim().isEmpty()) return null;
+if (rootUri.startsWith("/") || rootUri.startsWith("file://")) {
+File file = new File(rootUri.startsWith("file://") ? Uri.parse(rootUri).getPath() : rootUri);
+return DocumentFile.fromFile(file);
+}
+return DocumentFile.fromTreeUri(this, Uri.parse(rootUri));
+}
+
+private void deleteFileQuietly(File file) {
+try {
+if (file != null && file.exists()) file.delete();
+} catch (Throwable ignored) { }
+}
+
+private void confirmClearPlayTime(Game game, Dialog editDialog) {
         if (game == null || game.id <= 0) return;
         new AlertDialog.Builder(this)
                 .setTitle("清除游玩时长")
@@ -4593,11 +4705,33 @@ private String displayPath(String value) {
     }
 
     private String rendererFromLabel(String label) {
-        if (label != null && label.toLowerCase(Locale.ROOT).contains("opengl")) return "opengl";
-        return "software";
-    }
+if (label != null && label.toLowerCase(Locale.ROOT).contains("opengl")) return "opengl";
+return "software";
+}
 
-    private String pref(Map<String, String> prefs, String key, String def) {
+private String krEngineVersionToLabel(String value) {
+String mode = normalizeKrEngineVersion(value);
+if ("1.3.4".equals(mode)) return "1.3.4";
+if ("1.3.9".equals(mode)) return "1.3.9";
+return "自动";
+}
+
+private String krEngineVersionFromLabel(String label) {
+if (label == null) return "auto";
+String v = label.trim();
+if (v.contains("1.3.4")) return "1.3.4";
+if (v.contains("1.3.9")) return "1.3.9";
+return "auto";
+}
+
+private String normalizeKrEngineVersion(String value) {
+String v = value == null ? "auto" : value.trim().toLowerCase(Locale.ROOT);
+if ("134".equals(v) || "1.3.4".equals(v) || "kr134".equals(v)) return "1.3.4";
+if ("139".equals(v) || "1.3.9".equals(v) || "kr139".equals(v)) return "1.3.9";
+return "auto";
+}
+
+private String pref(Map<String, String> prefs, String key, String def) {
         String v = prefs.get(key);
         return v == null ? def : v;
     }
@@ -4638,11 +4772,13 @@ private String displayPath(String value) {
     }
 
     private int findLaunchSelection(List<String> options, String target) {
-        if (target == null || target.isEmpty()) target = "data.xp3";
+        if (options == null || options.isEmpty()) return 0;
+        if (target == null || target.trim().isEmpty()) target = "[游戏目录]";
         for (int i = 0; i < options.size(); i++) {
             if (target.equals(options.get(i))) return i;
         }
-        return 0;
+        int dirIndex = options.indexOf("[游戏目录]");
+        return dirIndex >= 0 ? dirIndex : 0;
     }
 
     private Map<String, String> loadKrPrefs(String rootUri) {
@@ -4677,6 +4813,17 @@ private String displayPath(String value) {
         prefs.put("showfps", "0");
         prefs.put("outputlog", "1");
         return prefs;
+    }
+
+    // KR 引擎版本只保留全局设置，不再通过单个游戏目录的 .1.3.4 标记读写，避免与右上角设置冲突。
+
+    private DocumentFile krGameDir(String rootUri) {
+        if (rootUri == null || rootUri.trim().isEmpty()) return null;
+        if (rootUri.startsWith("/") || rootUri.startsWith("file://")) {
+            File file = new File(rootUri.startsWith("file://") ? Uri.parse(rootUri).getPath() : rootUri);
+            return DocumentFile.fromFile(file);
+        }
+        return DocumentFile.fromTreeUri(this, Uri.parse(rootUri));
     }
 
     private InputStream openKrPrefsInput(String rootUri) {
@@ -4797,9 +4944,9 @@ if (showToast) Toast.makeText(this, "正在扫描，请稍候...", Toast.LENGTH_
     }
 
     private String defaultLaunchTargetForEngine(EngineType engine) {
-        if (engine == EngineType.TYRANO || engine == EngineType.ARTEMIS) return "[游戏目录]";
+        if (engine == EngineType.TYRANO || engine == EngineType.ARTEMIS || engine == EngineType.KIRIKIRI) return "[游戏目录]";
         if (engine == EngineType.GAMEHUB) return "[GameHub]";
-        return "data.xp3";
+        return "[游戏目录]";
     }
 
     private void autoMatchVndbForImportedGames(List<Game> games) {
@@ -4903,7 +5050,7 @@ try {
             if (r.engine == EngineType.KIRIKIRI) g.emulatorPackage = "internal.krkr";
             if (r.engine == EngineType.ONS) g.emulatorPackage = "internal.ons";
             if (r.engine == EngineType.TYRANO) g.emulatorPackage = "internal.tyrano";
-            if (r.engine == EngineType.ARTEMIS) g.emulatorPackage = "internal.artemis";
+            if (r.engine == EngineType.ARTEMIS) g.emulatorPackage = resolveArtemisPackageFromMarkers(g.rootUri);
             if (isDesktopLaunchTarget(g.launchTarget)) g.emulatorPackage = guessInstalledWinlatorPackage();
             long newId = repository.insertIfNotExists(g);
             if (newId > 0) {
@@ -4961,9 +5108,10 @@ try {
         if (game == null || emulatorPackage == null || emulatorPackage.trim().isEmpty()) return false;
         String pkg = emulatorPackage.trim();
         if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) {
-            boolean compatMode = prefs != null && prefs.getBoolean(KEY_KR_COMPAT_MODE, false);
-            return startActivitySafely(EmulatorLauncher.buildInternalKrkrIntent(this, game.rootUri, launchTarget, false, compatMode));
-        }
+boolean compatMode = prefs != null && prefs.getBoolean(KEY_KR_COMPAT_MODE, false);
+String krEngineVersion = prefs == null ? "auto" : prefs.getString(KEY_KR_ENGINE_VERSION, "auto");
+return startActivitySafely(EmulatorLauncher.buildInternalKrkrIntent(this, game.rootUri, launchTarget, false, compatMode, krEngineVersion));
+}
         if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) {
             return startActivitySafely(EmulatorLauncher.buildInternalTyranoIntent(this, game.rootUri, launchTarget));
         }
@@ -5009,7 +5157,35 @@ try {
 
     private void finishStalePlaySessionsIfAny() {
         if (repository == null) return;
-        repository.finishUnfinishedPlaySessions(System.currentTimeMillis(), MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS, runningSessionId);
+        PlayActivity open = repository.findLatestOpenPlaySession();
+        if (open == null) return;
+        long now = System.currentTimeMillis();
+        long rawDuration = Math.max(0L, now - open.startTime);
+        long duration = Math.min(rawDuration, MAX_PLAY_SESSION_MS);
+        String message = "检测到最近一次游玩未正常结束。\n\n"
+                + "游戏：" + emptyText(open.gameTitle, "未命名游戏") + "\n"
+                + "开始时间：" + TimeFormatUtil.date(open.startTime) + "\n"
+                + "可补记时长：" + TimeFormatUtil.playTime(duration) + "\n\n"
+                + "如果这段时间确实在游玩，可选择补记；如果只是测试启动、闪退或误操作，请选择忽略。\n\n"
+                + "本操作仅处理这一条未完成记录。";
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("发现未完成的游玩记录")
+                .setMessage(message)
+                .setPositiveButton("补记", (d, w) -> {
+                    repository.finishPlaySession(open.sessionId, System.currentTimeMillis(), MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
+                    loadGames();
+                    updateProfilePanel();
+                    Toast.makeText(this, "已补记上次游玩时长", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("忽略", (d, w) -> {
+                    repository.deleteOpenPlaySession(open.sessionId);
+                    loadGames();
+                    updateProfilePanel();
+                    Toast.makeText(this, "已忽略上次未完成记录", Toast.LENGTH_SHORT).show();
+                })
+                .setCancelable(false)
+                .show();
+        styleAlertDialogDark(dialog);
     }
 
     @Override protected void onResume() {

@@ -2,118 +2,150 @@ package com.ies_net.artemis;
 
 import android.app.NativeActivity;
 import android.content.Intent;
-import android.media.AudioManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
+import android.widget.Toast;
 
 public class ArtemisActivity extends NativeActivity {
- private static final int REQ_VIDEO = 1;
- private static final String TAG = "ArtemisVideo";
+    public void DownloadExpansionFiles(String value) {
+    }
 
- public ArtemisActivity() {
- super();
- }
+    public void DownloadResource(String a, String b, String c) {
+    }
 
- public void DownloadExpansionFiles(String value) {
- }
+    public native void EmulateKeyEvent(int keyCode, int action);
 
- public void DownloadResource(String a, String b, String c) {
- }
+    public native void ExecuteTag(String tag);
 
- public native void EmulateKeyEvent(int keyCode, int action);
+    public void InAppBilling(String a, String b, boolean c, boolean d) {
+        OnFinishPurchase(1, "", "", "", "", 1, "");
+    }
 
- public native void ExecuteTag(String tag);
+    public native void OnFinishPurchase(int result, String a, String b, String c, String d, int e, String f);
 
- public void InAppBilling(String a, String b, boolean c, boolean d) {
- OnFinishPurchase(1, "", "", "", "",1, "");
- }
+    public native void OnFinishVideo();
 
- public native void OnFinishPurchase(int result, String a, String b, String c, String d, int e, String f);
+    public native void OnReadyPlayAssetDelivery(int a, int b, int c);
 
- public native void OnFinishVideo();
+    public void PlayVideo(String path, int offset, int length, int volume, int skip) {
+        Intent intent = new Intent(getApplicationContext(), VideoViewActivity.class);
+        intent.addFlags(65536);
+        intent.putExtra("PATH", path);
+        intent.putExtra("OFFSET", offset);
+        intent.putExtra("LENGTH", length);
+        intent.putExtra("VOLUME", volume);
+        intent.putExtra("SKIP", skip);
+        startActivityForResult(intent, 1);
+        overridePendingTransition(0, 0);
+    }
 
- public native void OnReadyPlayAssetDelivery(int a, int b, int c);
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+        if (event.getAction() == 0 && keyCode == 66) {
+            EmulateKeyEvent(13, 2);
+        } else if (event.getAction() == 0 && keyCode == 59) {
+            EmulateKeyEvent(115, 2);
+        } else if (event.getAction() == 0 && keyCode == 60) {
+            EmulateKeyEvent(115, 2);
+        } else if (event.getAction() == 0 && keyCode == 113) {
+            EmulateKeyEvent(140, 2);
+        } else if (event.getAction() == 0 && keyCode == 114) {
+            EmulateKeyEvent(140, 2);
+        } else if (event.getAction() == 0 && keyCode == 62) {
+            EmulateKeyEvent(32, 2);
+        } else if (event.getAction() == 0 && keyCode == 21) {
+            EmulateKeyEvent(37, 2);
+        } else if (event.getAction() == 0 && keyCode == 19) {
+            EmulateKeyEvent(38, 2);
+        } else if (event.getAction() == 0 && keyCode == 22) {
+            EmulateKeyEvent(39, 2);
+        } else if (event.getAction() == 0 && keyCode == 20) {
+            EmulateKeyEvent(40, 2);
+        } else if (event.getAction() == 0 && keyCode == 29) {
+            EmulateKeyEvent(143, 2);
+        } else if (event.getAction() == 0 && keyCode == 47) {
+            EmulateKeyEvent(83, 2);
+        } else if (event.getAction() == 0 && keyCode == 40) {
+            EmulateKeyEvent(76, 2);
+        } else if (event.getAction() == 0 && keyCode == 50) {
+            EmulateKeyEvent(86, 2);
+        } else if (event.getAction() == 0 && keyCode == 8) {
+            EmulateKeyEvent(112, 2);
+        } else if (event.getAction() == 0 && keyCode == 9) {
+            EmulateKeyEvent(113, 2);
+        } else if (event.getAction() == 0 && keyCode == 10) {
+            EmulateKeyEvent(114, 2);
+        } else if (event.getAction() == 0 && keyCode == 11) {
+            EmulateKeyEvent(115, 2);
+        } else if (event.getAction() == 0 && keyCode == 12) {
+            EmulateKeyEvent(116, 2);
+        } else if (event.getAction() == 0 && keyCode == 13) {
+            EmulateKeyEvent(117, 2);
+        } else if (event.getAction() == 0 && keyCode == 14) {
+            EmulateKeyEvent(118, 2);
+        } else if (event.getAction() == 0 && keyCode == 15) {
+            EmulateKeyEvent(119, 2);
+        } else if (event.getAction() == 0 && keyCode == 23) {
+            EmulateKeyEvent(13, 2);
+        } else if (event.getAction() == 0 && keyCode == 17) {
+            EmulateKeyEvent(122, 2);
+        } else if (event.getAction() == 0 && keyCode == 18) {
+            EmulateKeyEvent(140, 2);
+        } else if (event.getAction() == 0 && keyCode == 98) {
+            EmulateKeyEvent(1, 2);
+        } else if (event.getAction() == 0 && keyCode == 96) {
+            EmulateKeyEvent(139, 2);
+        } else if (event.getAction() == 0 && keyCode == 97) {
+            EmulateKeyEvent(32, 2);
+        } else if (event.getAction() == 0 && keyCode == 99) {
+            EmulateKeyEvent(123, 2);
+        } else if (event.getAction() == 0 && keyCode == 100) {
+            EmulateKeyEvent(1, 2);
+        } else if (event.getAction() == 0 && keyCode == 101) {
+            EmulateKeyEvent(140, 1);
+        } else if (event.getAction() == 1 && keyCode == 101) {
+            EmulateKeyEvent(140, 0);
+        } else if (event.getAction() == 0 && keyCode == 102) {
+            EmulateKeyEvent(83, 2);
+        } else if (event.getAction() == 0 && keyCode == 103) {
+            EmulateKeyEvent(76, 2);
+        } else if (event.getAction() == 0 && keyCode == 105) {
+            EmulateKeyEvent(124, 2);
+        } else if (event.getAction() == 0 && keyCode == 106) {
+            EmulateKeyEvent(143, 2);
+        }
+        return super.dispatchKeyEvent(event);
+    }
 
- public void PlayVideo(String path, int offset, int length, int volume, int skip) {
- try {
- Log.i(TAG, "PlayVideo path=" + path + " offset=" + offset + " length=" + length + " volume=" + volume + " skip=" + skip);
- Intent intent = new Intent(getApplicationContext(), VideoViewActivity.class);
- intent.putExtra("PATH", path);
- intent.putExtra("GAME_DIR", getExternalFilesDir(null).getAbsolutePath());
- intent.putExtra("OFFSET", offset);
- intent.putExtra("LENGTH", length);
- intent.putExtra("VOLUME", volume);
- intent.putExtra("SKIP", skip);
- // Keep old debug extras for compatibility with the previous stub.
- intent.putExtra("A", offset);
- intent.putExtra("B", length);
- intent.putExtra("C", volume);
- intent.putExtra("D", skip);
- startActivityForResult(intent, REQ_VIDEO);
- overridePendingTransition(0, 0);
- } catch (Throwable t) {
- Log.e(TAG, "PlayVideo failed", t);
- notifyFinishVideoSafely();
- }
- }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == 1) {
+            OnFinishVideo();
+        }
+    }
 
- @Override
- public boolean dispatchKeyEvent(KeyEvent event) {
- int keyCode = event == null ? 0 : event.getKeyCode();
- if (isSystemVolumeKey(keyCode)) return super.dispatchKeyEvent(event);
- try {
- EmulateKeyEvent(event.getKeyCode(), event.getAction());
- return true;
- } catch (Throwable ignored) {
- return super.dispatchKeyEvent(event);
- }
- }
+    @Override
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        getWindow().addFlags(1024);
+        getWindow().addFlags(128);
+    }
 
- private boolean isSystemVolumeKey(int keyCode) {
- return keyCode == KeyEvent.KEYCODE_VOLUME_UP
- || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
- || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE
- || keyCode == KeyEvent.KEYCODE_MUTE;
- }
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Intent old = getIntent();
+        if (old == null || intent == null) return;
+        String oldPath = old.getStringExtra("path");
+        String newPath = intent.getStringExtra("path");
+        if (oldPath == null || oldPath.equals(newPath) || newPath == null) return;
+        Toast.makeText(this, "已有游戏在运行，请先存档并退出游戏后再启动新游戏", Toast.LENGTH_SHORT).show();
+    }
 
- @Override
- public void onActivityResult(int requestCode, int resultCode, Intent data) {
- super.onActivityResult(requestCode, resultCode, data);
- Log.i(TAG, "onActivityResult request=" + requestCode + " result=" + resultCode);
- if (requestCode == REQ_VIDEO) notifyFinishVideoSafely();
- }
-
- @Override
- public void onCreate(Bundle savedInstanceState) {
- super.onCreate(savedInstanceState);
- setVolumeControlStream(AudioManager.STREAM_MUSIC);
- enterFullscreen();
- }
-
- @Override
- public void onNewIntent(Intent intent) {
- super.onNewIntent(intent);
- Intent oldIntent = getIntent();
- if (oldIntent == null || intent == null) return;
- String oldPath = oldIntent.getStringExtra("path");
- String newPath = intent.getStringExtra("path");
- if (newPath != null && !newPath.equals(oldPath)) {
- setIntent(intent);
- }
- }
-
- @Override
- public void onWindowFocusChanged(boolean hasFocus) {
- super.onWindowFocusChanged(hasFocus);
- if (hasFocus) enterFullscreen();
- }
-
- private void enterFullscreen() {
- try { getWindow().getDecorView().setSystemUiVisibility(5894); } catch (Throwable ignored) { }
- }
-
- private void notifyFinishVideoSafely() {
- try { OnFinishVideo(); } catch (Throwable ignored) { }
- }
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        getWindow().getDecorView().setSystemUiVisibility(5894);
+    }
 }

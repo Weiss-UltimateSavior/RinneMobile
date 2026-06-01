@@ -57,8 +57,8 @@ if (packageName == null || packageName.trim().isEmpty()) return false;
             return false;
         }
         if ("internal.artemis".equalsIgnoreCase(pkg) || "com.yuki.yukihub.artemis".equalsIgnoreCase(pkg)
-                || "internal.artemis.compat".equalsIgnoreCase(pkg) || "internal.artemis.compatible".equalsIgnoreCase(pkg)
-                || "internal.artemis.compat.v2".equalsIgnoreCase(pkg) || "internal.artemis.compatible.v2".equalsIgnoreCase(pkg)) {
+            || "internal.artemis.compat".equalsIgnoreCase(pkg) || "internal.artemis.compatible".equalsIgnoreCase(pkg)
+            || "internal.artemis.compat.v2".equalsIgnoreCase(pkg) || "internal.artemis.compatible.v2".equalsIgnoreCase(pkg)) {
             try {
                 context.startActivity(buildInternalArtemisIntent(context, pkg, rootUri, launchTarget));
                 return true;
@@ -108,7 +108,7 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         String target = launchTarget == null ? "" : launchTarget;
         if ("com.akira.tyranoemu".equals(pkg)) {
             return new Intent[]{
-                    // Tyranor 2.3.4 exposes this action for web/Tyrano games.
+                    // Some external players expose this action for web/Tyrano games.
                     explicit("com.akira.tyranoemu", "com.akira.tyranoemu.remote.WebActivity", "android.intent.action.WebGame", uri)
                             .putExtra("path", uriText).putExtra("uri", uriText).putExtra("projectRoot", rootText)
                             .putExtra("launchFile", target).putExtra("filename", target).putExtra("game", uriText)
@@ -585,11 +585,13 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
     }
 
     public static Intent buildInternalArtemisIntent(Context context, String packageName, String gamePath, String launchTarget) {
-        Intent i = new Intent(context, chooseArtemisActivity(packageName));
-        String resolvedPath = resolveInternalArtemisPath(gamePath, launchTarget);
-        Log.i("EmulatorLauncher", "internal Artemis pkg=" + packageName + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath);
+String resolvedPath = resolveInternalArtemisPath(gamePath, launchTarget);
+String rootPath = stripFileScheme(resolvedPath);
+Class<?> activityClass = chooseArtemisActivity(packageName, rootPath);
+Intent i = new Intent(context, activityClass);
+Log.i("EmulatorLauncher", "internal Artemis pkg=" + packageName + " activity=" + activityClass.getSimpleName() + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath);
         if (resolvedPath != null && !resolvedPath.isEmpty()) {
-            // Tyranor ArtemisActivity uses getIntent().getStringExtra("path") directly
+            // The embedded Artemis activity reads getIntent().getStringExtra("path") directly
             // and returns it from getExternalFilesDir(). It expects a normal filesystem path.
             i.putExtra("path", stripFileScheme(resolvedPath));
             i.putExtra("gamePath", stripFileScheme(resolvedPath));
@@ -598,6 +600,8 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         i.putExtra("launchTarget", launchTarget);
         i.putExtra("launchMode", "internal.artemis");
         i.putExtra("orientation", 6);
+        i.putExtra("scopedSaveDir", context != null && context.getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE).getBoolean("artemis_scoped_save_dir", false));
+        i.putExtra("scopedSaveName", safeSaveName(rootPath));
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return i;
     }
@@ -606,15 +610,28 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         return buildInternalArtemisIntent(context, "internal.artemis", gamePath, launchTarget);
     }
 
-    private static Class<?> chooseArtemisActivity(String packageName) {
-        String pkg = packageName == null ? "" : packageName.trim().toLowerCase();
-        if (pkg.contains("v2") || pkg.endsWith(".2")) return com.akira.tyranoemu.remote.ArtemisActivityV3.class;
-        if (pkg.contains("compat")) return com.akira.tyranoemu.remote.ArtemisActivityV2.class;
-        return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
+    private static String safeSaveName(String rootPath) {
+        try {
+            if (rootPath == null || rootPath.trim().isEmpty()) return "default";
+            File f = new File(rootPath);
+            String name = f.getName();
+            if (name == null || name.trim().isEmpty()) name = String.valueOf(Math.abs(rootPath.hashCode()));
+            name = name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+            return name.isEmpty() ? "default" : name;
+        } catch (Throwable ignored) {
+            return "default";
+        }
     }
 
-    private static String resolveInternalArtemisPath(String rootUri, String launchTarget) {
-        // Tyranor's Artemis runner launches by game directory. The .pfs file is only used for detection.
+    private static Class<?> chooseArtemisActivity(String packageName, String rootPath) {
+String pkg = packageName == null ? "" : packageName.trim().toLowerCase(Locale.ROOT);
+if (pkg.contains("compat.v2") || pkg.contains("compatible_v2") || pkg.endsWith(".2")) return com.akira.tyranoemu.remote.ArtemisActivityV3.class;
+if (pkg.contains("compat")) return com.akira.tyranoemu.remote.ArtemisActivityV2.class;
+return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
+}
+
+private static String resolveInternalArtemisPath(String rootUri, String launchTarget) {
+        // Artemis launches by game directory. The .pfs file is only used for detection.
         String rootPath = uriToFilePath(rootUri);
         if (rootPath == null || rootPath.isEmpty()) return rootUri;
         return rootPath;
@@ -641,12 +658,17 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
     }
 
     public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode, boolean compatMode) {
-        Intent i = new Intent(context, originMode ? org.tvp.kirikiri2.KR2Activity.class : com.akira.tyranoemu.remote.Kirikiroid139.class);
-        String resolvedPath = originMode ? null : resolveInternalKrkrPath(gamePath, launchTarget);
+        return buildInternalKrkrIntent(context, gamePath, launchTarget, originMode, compatMode, "auto");
+    }
+
+    public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode, boolean compatMode, String engineVersion) {
+        String resolvedPath = originMode ? null : resolveInternalKrkrPath(context, gamePath, launchTarget);
         String rawRootPath = stripFileScheme(uriToFilePath(gamePath));
         String path = resolvedPath == null ? null : stripFileScheme(resolvedPath);
         String rootPath = krkrRootForPath(rawRootPath, path);
-        Log.i("EmulatorLauncher", "internal KRKR originMode=" + originMode + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath + " rootPath=" + rootPath);
+        boolean use134 = !originMode && shouldUseKrkr134(rootPath, engineVersion);
+        Intent i = new Intent(context, originMode ? org.tvp.kirikiri2.KR2Activity.class : (use134 ? com.akira.tyranoemu.remote.Kirikiroid134.class : com.akira.tyranoemu.remote.Kirikiroid139.class));
+        Log.i("EmulatorLauncher", "internal KRKR originMode=" + originMode + " engineVersion=" + normalizeKrkrEngineVersion(engineVersion) + " use134=" + use134 + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath + " rootPath=" + rootPath);
         if (path != null && !path.isEmpty()) {
             // 普通模式也使用普通文件路径，让默认启动链更接近原生 KRKR / TY 的读取方式。
             i.putExtra("path", path);
@@ -668,14 +690,31 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         i.putExtra("focus", "true");
         if (!originMode && compatMode) i.putExtra("maps", true);
         i.putExtra("compatMode", compatMode);
+        i.putExtra("krEngineVersion", use134 ? "1.3.4" : "1.3.9");
         i.putExtra("orientation", 6);
         i.putExtra("launchMode", originMode ? "internal.krkr.origin" : "internal.krkr");
+        i.putExtra("scopedSaveDir", context != null && context.getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE).getBoolean("kr_scoped_save_dir", false));
+        i.putExtra("scopedSaveName", safeSaveName(rootPath));
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return i;
     }
 
-    private static String resolveInternalKrkrPath(String rootUri, String launchTarget) {
-        // 对齐 Tyranor/Kirikiroid 的思路：
+    private static boolean shouldUseKrkr134(String rootPath, String engineVersion) {
+        String mode = normalizeKrkrEngineVersion(engineVersion);
+        return "1.3.4".equals(mode);
+    }
+
+    private static String normalizeKrkrEngineVersion(String engineVersion) {
+        String mode = engineVersion == null ? "auto" : engineVersion.trim().toLowerCase(Locale.ROOT);
+        if (mode.equals("134") || mode.equals("1.3.4") || mode.equals("kr134") || mode.equals("kirikiroid134")) return "1.3.4";
+        if (mode.equals("139") || mode.equals("1.3.9") || mode.equals("kr139") || mode.equals("kirikiroid139")) return "1.3.9";
+        return "auto";
+    }
+
+    // KR 引擎版本只由全局设置决定，不再读取单个游戏目录标记。
+
+    private static String resolveInternalKrkrPath(Context context, String rootUri, String launchTarget) {
+        // 对齐 Kirikiroid 的思路：
         // 1) 优先解析为真正的入口文件
         // 2) 其次才退回目录本身
         String rootPath = stripFileScheme(uriToFilePath(rootUri));
@@ -686,7 +725,9 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         }
         if ("XP3_FIRST".equalsIgnoreCase(target)) {
             String firstXp3 = findFirstChildBySuffix(rootPath, ".xp3");
-            return firstXp3 == null ? rootPath : firstXp3;
+            if (firstXp3 != null) return firstXp3;
+            String safFirstXp3 = findKrkrPreferredEntryFromTree(context, rootUri, rootPath);
+            return safFirstXp3 == null ? rootPath : safFirstXp3;
         }
         if (target.startsWith("/")) {
             File f = new File(target);
@@ -696,11 +737,11 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
         File targetFile = new File(root, target);
         if (targetFile.isFile()) return targetFile.getAbsolutePath();
         if (targetFile.isDirectory()) return targetFile.getAbsolutePath();
+        String safTarget = findKrkrTargetFromTree(context, rootUri, rootPath, target);
+        if (safTarget != null) return safTarget;
         if (target.endsWith(".xp3") || target.endsWith(".tjs") || target.endsWith(".exe") || target.endsWith(".dll")) {
             return targetFile.getAbsolutePath();
         }
-        String preferred = findKrkrPreferredEntry(rootPath);
-        if (preferred != null) return preferred;
         return rootPath;
     }
 
@@ -716,6 +757,49 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
             }
         } catch (Throwable ignored) { }
         return findFirstChildBySuffix(rootPath, ".xp3");
+    }
+
+    private static String findKrkrPreferredEntryFromTree(Context context, String rootUri, String rootPath) {
+        String[] names = new String[]{"data.xp3", "startup.tjs", "patch.xp3"};
+        for (String name : names) {
+            String p = findKrkrTargetFromTree(context, rootUri, rootPath, name);
+            if (p != null) return p;
+        }
+        try {
+            DocumentFile dir = DocumentFile.fromTreeUri(context, Uri.parse(rootUri));
+            if (dir == null || !dir.isDirectory()) return null;
+            DocumentFile[] files = dir.listFiles();
+            if (files == null) return null;
+            for (DocumentFile file : files) {
+                if (file == null || !file.isFile()) continue;
+                String name = file.getName();
+                if (name != null && name.toLowerCase(Locale.ROOT).endsWith(".xp3")) {
+                    return rootPath.endsWith("/") ? rootPath + name : rootPath + "/" + name;
+                }
+            }
+        } catch (Throwable ignored) { }
+        return null;
+    }
+
+    private static String findKrkrTargetFromTree(Context context, String rootUri, String rootPath, String target) {
+        if (context == null || rootUri == null || target == null || target.trim().isEmpty()) return null;
+        try {
+            DocumentFile dir = DocumentFile.fromTreeUri(context, Uri.parse(rootUri));
+            if (dir == null || !dir.isDirectory()) return null;
+            String[] parts = target.split("/");
+            DocumentFile current = dir;
+            for (String part : parts) {
+                if (part == null || part.isEmpty() || ".".equals(part)) continue;
+                current = current == null ? null : current.findFile(part);
+                if (current == null) return null;
+            }
+            if (current != null && current.exists() && current.isFile()) {
+                String cleanTarget = target;
+                while (cleanTarget.startsWith("/")) cleanTarget = cleanTarget.substring(1);
+                return rootPath.endsWith("/") ? rootPath + cleanTarget : rootPath + "/" + cleanTarget;
+            }
+        } catch (Throwable ignored) { }
+        return null;
     }
 
     private static String krkrRootForPath(String rawRootPath, String launchPath) {

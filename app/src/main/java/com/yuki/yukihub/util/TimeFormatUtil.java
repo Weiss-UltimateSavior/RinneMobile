@@ -9,7 +9,11 @@ public class TimeFormatUtil {
     private static final DecimalFormat HOURS_FORMAT = new DecimalFormat("0.0");
 
     public static String playTime(long millis) {
-        if (millis <= 0) return "0h";
+        if (millis <= 0) return "0s";
+        if (millis < 60000L) {
+            long seconds = Math.max(1L, Math.round(millis / 1000.0));
+            return seconds + "s";
+        }
         double hours = millis / 3600000.0;
         if (hours < 1.0) {
             long minutes = Math.max(1L, Math.round(millis / 60000.0));

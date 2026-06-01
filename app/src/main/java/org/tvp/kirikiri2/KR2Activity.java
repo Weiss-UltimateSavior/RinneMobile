@@ -1,6 +1,7 @@
 package org.tvp.kirikiri2;
 
 import android.app.ActivityManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Locale;
 import org.cocos2dx.lib.Cocos2dxActivity;
@@ -37,18 +39,59 @@ public class KR2Activity extends Cocos2dxActivity {
     }
 
     public static boolean CreateFolders(String path) {
-        try { return new File(path).mkdirs(); } catch (Throwable t) { return false; }
+        try {
+            File f = new File(redirectScopedSavePath(path));
+            boolean ok = f.exists() || f.mkdirs();
+            android.util.Log.i("KR2Activity", "CreateFolders " + path + " -> " + f.getAbsolutePath() + " ok=" + ok);
+            return ok;
+        } catch (Throwable t) { return false; }
     }
-    public static boolean DeleteFile(String path) { try { return new File(path).delete(); } catch (Throwable t) { return false; } }
-    public static boolean RenameFile(String from, String to) { try { return new File(from).renameTo(new File(to)); } catch (Throwable t) { return false; } }
+
+    public static boolean DeleteFile(String path) {
+        try {
+            File mapped = new File(redirectScopedSavePath(path));
+            File original = new File(normalizeKrFilePath(path));
+            boolean existed = mapped.exists() || original.exists();
+            boolean ok = true;
+            if (mapped.exists()) ok = mapped.delete();
+            if (original.exists()) ok = original.delete() && ok;
+            if (!existed) ok = true;
+            android.util.Log.i("KR2Activity", "DeleteFile " + path + " mapped=" + mapped.getAbsolutePath() + " original=" + original.getAbsolutePath() + " existed=" + existed + " ok=" + ok);
+            return ok;
+        } catch (Throwable t) { return false; }
+    }
+
+    public static boolean RenameFile(String from, String to) {
+        try {
+            File mappedSrc = new File(redirectScopedSavePath(from));
+            File originalSrc = new File(normalizeKrFilePath(from));
+            File dst = new File(redirectScopedSavePath(to));
+            File parent = dst.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
+            File src = mappedSrc.exists() ? mappedSrc : originalSrc;
+            boolean ok;
+            boolean srcExisted = src.exists();
+            if (!srcExisted) {
+                ok = true;
+            } else {
+                ok = src.renameTo(dst);
+                if (!ok) ok = copyThenDelete(src, dst);
+            }
+            android.util.Log.i("KR2Activity", "RenameFile " + from + " -> " + to + " mappedSrc=" + mappedSrc.getAbsolutePath() + " originalSrc=" + originalSrc.getAbsolutePath() + " dst=" + dst.getAbsolutePath() + " srcExisted=" + srcExisted + " ok=" + ok);
+            return ok;
+        } catch (Throwable t) { return false; }
+    }
+
     public static boolean WriteFile(String path, byte[] data) {
         try {
-            File f = new File(path);
+            String mapped = redirectScopedSavePath(path);
+            File f = new File(mapped);
             File parent = f.getParentFile();
             if (parent != null && !parent.isDirectory() && !parent.mkdirs()) return false;
             FileOutputStream fos = new FileOutputStream(f);
-            fos.write(data);
+            if (data != null) fos.write(data);
             fos.close();
+            android.util.Log.i("KR2Activity", "WriteFile " + path + " -> " + f.getAbsolutePath() + " bytes=" + (data == null ? 0 : data.length));
             return true;
         } catch (Throwable t) { return false; }
     }
@@ -148,6 +191,73 @@ public class KR2Activity extends Cocos2dxActivity {
     public static boolean isWritableNormalOrSaf(String path) { return true; }
     public static void requireLEXA(String path) { }
 
+    private static boolean copyThenDelete(File src, File dst) {
+        try {
+            File parent = dst.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
+            copyFile(src, dst);
+            return src.delete();
+        } catch (Throwable t) {
+            android.util.Log.w("KR2Activity", "copyThenDelete failed " + src + " -> " + dst, t);
+            return false;
+        }
+    }
+
+    private static String normalizeKrFilePath(String path) {
+        if (path == null) return "";
+        String p = path.trim();
+        if (p.startsWith("file://")) p = p.substring("file://".length());
+        while (p.startsWith("./")) p = p.substring(2);
+        if (p.startsWith("storage/")) p = "/" + p;
+        while (p.contains("//")) p = p.replace("//", "/");
+        return p;
+    }
+
+    private static String redirectScopedSavePath(String path) {
+        try {
+            if (path == null || path.trim().isEmpty()) return path;
+            Intent intent = sInstance != null ? sInstance.getIntent() : null;
+            if (intent == null || !intent.getBooleanExtra("scopedSaveDir", false)) return path;
+            String p = normalizeKrFilePath(path);
+            String lower = p.toLowerCase(Locale.ROOT);
+            int idx = lower.indexOf("/savedata/");
+            int folderLen = "/savedata/".length();
+            if (idx < 0) {
+                if (lower.endsWith("/savedata")) {
+                    idx = lower.length() - "/savedata".length();
+                    folderLen = "/savedata".length();
+                } else {
+                    return path;
+                }
+            }
+            String rel = p.length() > idx + folderLen ? p.substring(idx + folderLen) : "";
+            File base = new File(sInstance.getExternalFilesDir(null), "save");
+            String name = intent.getStringExtra("scopedSaveName");
+            File dir = new File(base, (name == null || name.trim().isEmpty()) ? "default" : name);
+            File out = rel.isEmpty() ? dir : new File(dir, rel);
+            File parent = out.isDirectory() ? out : out.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
+            android.util.Log.i("KR2Activity", "redirectScopedSavePath " + p + " -> " + out.getAbsolutePath());
+            return out.getAbsolutePath();
+        } catch (Throwable t) {
+            android.util.Log.w("KR2Activity", "redirectScopedSavePath failed path=" + path, t);
+            return path;
+        }
+    }
+    // 独立存档必须在文件写入入口完成重定向，禁止采用“先写原目录再周期复制/删除”的同步方案。
+
+
+    private static void copyFile(File src, File dst) throws java.io.IOException {
+        File parent = dst.getParentFile();
+        if (parent != null && !parent.exists()) parent.mkdirs();
+        try (FileInputStream in = new FileInputStream(src); FileOutputStream out = new FileOutputStream(dst)) {
+            byte[] buf = new byte[64 * 1024];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            out.flush();
+        }
+    }
+
     private static native void initDump(String path);
     private static native void nativeOnLowMemory();
     private static native boolean nativeGetHideSystemButton();
@@ -173,52 +283,52 @@ public class KR2Activity extends Cocos2dxActivity {
         System.loadLibrary("game");
         System.loadLibrary("kirikiroid3");
     }
-    @Override protected void onCreate(Bundle savedInstanceState) {
-        doSetSystemUiVisibility();
+    @Override public void onCreate(Bundle savedInstanceState) {
         sInstance = this;
         msgHandler = new Handler(Looper.getMainLooper()) { @Override public void handleMessage(Message msg) { KR2Activity.this.handleMessage(msg); } };
         Sp = PreferenceManager.getDefaultSharedPreferences(this);
-        ensureDefaultHideSystemButton();
         super.onCreate(savedInstanceState);
-        doSetSystemUiVisibility();
         initDump(getFilesDir().getAbsolutePath() + "/dump");
+        android.util.Log.i("KR2Activity", "scoped save sync disabled; writes must be redirected at source");
     }
 
 
     public void handleMessage(Message message) { }
 
-    private void ensureDefaultHideSystemButton() {
-        try {
-            if (!Sp.contains("hide_android_sys_btn")) {
-                Sp.edit().putBoolean("hide_android_sys_btn", true).apply();
-            }
-        } catch (Throwable ignored) { }
-    }
-
     public void doSetSystemUiVisibility() { getWindow().getDecorView().setSystemUiVisibility(5894); }
     public void hideSystemUI() {
-        boolean hide = true;
-        try { hide = nativeGetHideSystemButton(); } catch (Throwable ignored) { }
-        if (hide) doSetSystemUiVisibility();
+        if (nativeGetHideSystemButton()) doSetSystemUiVisibility();
     }
 
     @Override public Cocos2dxGLSurfaceView onCreateView() {
         h gl = new h(this);
         hideSystemUI();
         if (mGLContextAttrs != null && mGLContextAttrs.length > 3 && mGLContextAttrs[3] > 0) gl.getHolder().setFormat(-3);
-        if (mGLContextAttrs != null) gl.setEGLConfigChooser(new Cocos2dxActivity.Cocos2dxEGLConfigChooser(mGLContextAttrs));
+        if (mGLContextAttrs != null) gl.setEGLConfigChooser(this.new Cocos2dxEGLConfigChooser(this, mGLContextAttrs));
         return gl;
     }
 
     @Override public void onResume() { super.onResume(); doSetSystemUiVisibility(); }
     @Override public void onDestroy() {
-    try {
-        mTextEdit = null;
-        if (sInstance == this) sInstance = null;
-    } catch (Throwable ignored) { }
-    super.onDestroy();
-}
+        try {
+            android.util.Log.i("KR2Activity", "destroy KR2Activity");
+            mTextEdit = null;
+            if (sInstance == this) sInstance = null;
+        } catch (Throwable ignored) { }
+        super.onDestroy();
+    }
     @Override public void onLowMemory() { nativeOnLowMemory(); }
     @Override public void onWindowFocusChanged(boolean hasFocus) { super.onWindowFocusChanged(hasFocus); if (hasFocus) doSetSystemUiVisibility(); }
-    public String[] getStoragePath() { return new String[]{Environment.getExternalStorageDirectory().getAbsolutePath()}; }
+    public String[] getStoragePath() {
+        try {
+            if (getIntent() != null && getIntent().getBooleanExtra("scopedSaveDir", false)) {
+                File base = new File(getExternalFilesDir(null), "save");
+                String name = getIntent().getStringExtra("scopedSaveName");
+                File dir = new File(base, (name == null || name.trim().isEmpty()) ? "default" : name);
+                if (!dir.exists()) dir.mkdirs();
+                return new String[]{dir.getAbsolutePath()};
+            }
+        } catch (Throwable ignored) { }
+        return new String[]{Environment.getExternalStorageDirectory().getAbsolutePath()};
+    }
 }
