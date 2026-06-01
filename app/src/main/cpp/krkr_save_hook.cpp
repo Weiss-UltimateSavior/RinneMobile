@@ -135,7 +135,7 @@ static void init_real_funcs() {
     if (!real_unlink) real_unlink = (int (*)(const char *)) dlsym(RTLD_NEXT, "unlink");
     if (!real_access) real_access = (int (*)(const char *, int)) dlsym(RTLD_NEXT, "access");
     if (!real_stat) real_stat = (int (*)(const char *, struct stat *)) dlsym(RTLD_NEXT, "stat");
-    if (!real_stat64) real_stat64 = (int (*)(const char *, struct stat *)) dlsym(RTLD_NEXT, "stat64");
+    if (!real_stat64) real_stat64 = (int (*)(const char *, struct stat64 *)) dlsym(RTLD_NEXT, "stat64");
     if (!real_lstat) real_lstat = (int (*)(const char *, struct stat *)) dlsym(RTLD_NEXT, "lstat");
 }
 
