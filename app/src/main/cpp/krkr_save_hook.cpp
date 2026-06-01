@@ -45,7 +45,7 @@ static int (*real_rename)(const char *, const char *) = nullptr;
 static int (*real_unlink)(const char *) = nullptr;
 static int (*real_access)(const char *, int) = nullptr;
 static int (*real_stat)(const char *, struct stat *) = nullptr;
-static int (*real_stat64)(const char *, struct stat *) = nullptr;
+static int (*real_stat64)(const char *, struct stat64 *) = nullptr;
 static int (*real_lstat)(const char *, struct stat *) = nullptr;
 
 static void init_real_funcs();
@@ -257,12 +257,12 @@ extern "C" int stat(const char *pathname, struct stat *buf) {
     return -1;
 }
 
-extern "C" int stat64(const char *pathname, struct stat *buf) {
+extern "C" int stat64(const char *pathname, struct stat64 *buf) {
     init_real_funcs();
     std::string mapped = redirect_path_string(pathname);
     log_redirect("stat64", pathname, mapped);
     if (real_stat64) return real_stat64(mapped.c_str(), buf);
-    if (real_stat) return real_stat(mapped.c_str(), buf);
+    if (real_stat) return real_stat(mapped.c_str(), reinterpret_cast<struct stat *>(buf));
     errno = ENOSYS;
     return -1;
 }
