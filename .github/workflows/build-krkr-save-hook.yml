@@ -29,8 +29,14 @@ jobs:
             -Wall -Wextra \
             app/src/main/cpp/krkr_save_hook.cpp \
             -o build/krkr-save-hook/arm64-v8a/libyukihub_krkr_save_hook.so \
+            -static-libstdc++ \
             -llog -ldl
           file build/krkr-save-hook/arm64-v8a/libyukihub_krkr_save_hook.so
+          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf -d build/krkr-save-hook/arm64-v8a/libyukihub_krkr_save_hook.so | tee build/krkr-save-hook/arm64-v8a/readelf-dynamic.txt
+          if grep -q 'libc++_shared.so' build/krkr-save-hook/arm64-v8a/readelf-dynamic.txt; then
+            echo 'ERROR: libyukihub_krkr_save_hook.so still depends on libc++_shared.so'
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
