@@ -1,0 +1,212 @@
+package com.apps;
+
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.yuki.yukihub.MainActivity;
+import com.yuki.yukihub.R;
+import com.yuki.yukihub.databinding.ActivityLauncherBinding;
+
+public class LauncherActivity extends AppCompatActivity {
+    static final String APP_PREFS = "yukihub_prefs";
+    static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
+
+    private ActivityLauncherBinding binding;
+    private LauncherViewModel viewModel;
+    private LauncherViewModel.NavItem currentNavItem;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        applySavedToneMode();
+        super.onCreate(savedInstanceState);
+        configureEdgeToEdgeWindow();
+
+        binding = ActivityLauncherBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        viewModel = new ViewModelProvider(this).get(LauncherViewModel.class);
+
+        bindActions();
+        observeState();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (viewModel != null) viewModel.refreshStats();
+    }
+
+    private void configureEdgeToEdgeWindow() {
+        boolean darkMode = isLauncherDarkMode();
+        Window window = getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bottom_bar_color));
+        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        if (!darkMode) {
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        }
+        window.getDecorView().setSystemUiVisibility(flags);
+    }
+
+    private void bindActions() {
+        binding.navHome.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.HOME));
+        binding.navSavings.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.LIBRARY));
+        binding.navCards.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.MANAGE));
+        binding.navAccount.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.ACCOUNT));
+        binding.navLaunchCenter.setOnClickListener(view -> confirmOpenMainActivity());
+    }
+
+    private void observeState() {
+        viewModel.getLauncherState().observe(this, state -> {
+            LauncherViewModel.NavItem selectedItem = state.getSelectedItem();
+            renderSelectedNav(selectedItem);
+            showFragment(selectedItem);
+        });
+    }
+
+    private void showFragment(LauncherViewModel.NavItem selectedItem) {
+        LauncherViewModel.NavItem navItem = selectedItem == null ? LauncherViewModel.NavItem.HOME : selectedItem;
+        if (currentNavItem == navItem && getSupportFragmentManager().findFragmentById(R.id.launcherFragmentContainer) != null) {
+            return;
+        }
+
+        currentNavItem = navItem;
+        Fragment fragment;
+        if (navItem == LauncherViewModel.NavItem.HOME) {
+            fragment = new LauncherHomeFragment();
+        } else if (navItem == LauncherViewModel.NavItem.LIBRARY) {
+            fragment = new LauncherLibraryFragment();
+        } else if (navItem == LauncherViewModel.NavItem.MANAGE) {
+            fragment = new LauncherManageFragment();
+        } else if (navItem == LauncherViewModel.NavItem.ACCOUNT) {
+            fragment = new LauncherAccountFragment();
+        } else {
+            fragment = LauncherPlaceholderFragment.newInstance(placeholderTitle(navItem));
+        }
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.launcherFragmentContainer, fragment, "launcher_" + navItem.name())
+                .commit();
+    }
+
+    private String placeholderTitle(LauncherViewModel.NavItem navItem) {
+        if (navItem == LauncherViewModel.NavItem.LIBRARY) return "游戏库";
+        if (navItem == LauncherViewModel.NavItem.MANAGE) return "管理";
+        if (navItem == LauncherViewModel.NavItem.ACCOUNT) return "账户占位";
+        return "首页";
+    }
+
+    private void renderSelectedNav(LauncherViewModel.NavItem selectedItem) {
+        LauncherViewModel.NavItem navItem = selectedItem == null ? LauncherViewModel.NavItem.HOME : selectedItem;
+        setNavSelected(
+                binding.navHome,
+                binding.navHomeIcon,
+                binding.navHomeLabel,
+                navItem == LauncherViewModel.NavItem.HOME
+        );
+        setNavSelected(
+                binding.navSavings,
+                binding.navSavingsIcon,
+                binding.navSavingsLabel,
+                navItem == LauncherViewModel.NavItem.LIBRARY
+        );
+        setNavSelected(
+                binding.navCards,
+                binding.navCardsIcon,
+                binding.navCardsLabel,
+                navItem == LauncherViewModel.NavItem.MANAGE
+        );
+        setNavSelected(
+                binding.navAccount,
+                binding.navAccountIcon,
+                binding.navAccountLabel,
+                navItem == LauncherViewModel.NavItem.ACCOUNT
+        );
+    }
+
+    private void setNavSelected(LinearLayout container, TextView icon, TextView label, boolean selected) {
+        container.setBackgroundResource(selected ? R.drawable.launcher_nav_selected : R.drawable.launcher_nav_unselected);
+        int color = selected
+                ? ContextCompat.getColor(this, R.color.launcher_primary_color)
+                : ContextCompat.getColor(this, R.color.launcher_text_muted_color);
+        icon.setTextColor(color);
+        label.setTextColor(color);
+        label.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+    }
+
+    private void openMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    private void confirmOpenMainActivity() {
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(
+                (int) (280 * getResources().getDisplayMetrics().density),
+                WindowManager.LayoutParams.WRAP_CONTENT
+        );
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_launcher_confirm, null);
+        window.setContentView(dialogView);
+
+        TextView titleView = dialogView.findViewById(R.id.dialogTitle);
+        TextView messageView = dialogView.findViewById(R.id.dialogMessage);
+        TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
+        TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
+
+        titleView.setText("进入游戏中心");
+        messageView.setText("确定打开主项目游戏中心吗？");
+        btnCancel.setOnClickListener(view -> dialog.dismiss());
+        btnConfirm.setOnClickListener(view -> {
+            dialog.dismiss();
+            openMainActivity();
+        });
+    }
+
+    static void setLauncherDarkMode(android.content.Context context, boolean darkMode) {
+        context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_LAUNCHER_DARK_MODE, darkMode)
+                .apply();
+        AppCompatDelegate.setDefaultNightMode(darkMode
+                ? AppCompatDelegate.MODE_NIGHT_YES
+                : AppCompatDelegate.MODE_NIGHT_NO);
+    }
+
+    static boolean isLauncherDarkMode(android.content.Context context) {
+        return context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .getBoolean(KEY_LAUNCHER_DARK_MODE, false);
+    }
+
+    private boolean isLauncherDarkMode() {
+        return isLauncherDarkMode(this);
+    }
+
+    private void applySavedToneMode() {
+        AppCompatDelegate.setDefaultNightMode(isLauncherDarkMode()
+                ? AppCompatDelegate.MODE_NIGHT_YES
+                : AppCompatDelegate.MODE_NIGHT_NO);
+    }
+}

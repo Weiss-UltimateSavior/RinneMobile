@@ -12,4 +12,19 @@
     <color name="yh_line">#2D3658</color>
     <color name="yh_success">#34C759</color>
     <color name="yh_warning">#FFCC00</color>
+    <color name="launcher_bg_color">#F4F7F3</color>
+    <color name="launcher_card_color">#FFFFFF</color>
+    <color name="launcher_card_alt_color">#EEF7F1</color>
+    <color name="launcher_text_color">#14221B</color>
+    <color name="launcher_text_muted_color">#82908A</color>
+    <color name="launcher_primary_color">#18B978</color>
+    <color name="launcher_on_primary_color">#FFFFFF</color>
+    <color name="launcher_line_color">#DCE7E1</color>
+    <color name="launcher_bottom_bar_color">#FFFFFF</color>
+    <color name="launcher_dialog_bg_color">#FFFFFF</color>
+    <color name="launcher_input_color">#FFFFFF</color>
+    <color name="launcher_input_hint_color">#A8B5AF</color>
+    <color name="launcher_balance_start_color">#1EC780</color>
+    <color name="launcher_balance_end_color">#0E8E62</color>
+    <color name="launcher_balance_text_color">#DDF8EA</color>
 </resources>

@@ -1,0 +1,339 @@
+package com.apps;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
+
+import java.util.List;
+
+public class LauncherHomeFragment extends Fragment {
+    private static final long STATS_REFRESH_INTERVAL_MS = 3000L;
+    private static final String APP_PREFS = "yukihub_prefs";
+    private static final String KEY_PROFILE_AVATAR = "profile_avatar";
+
+    private FragmentLauncherHomeBinding binding;
+    private LauncherViewModel viewModel;
+    private ActivityResultLauncher<String[]> avatarPickerLauncher;
+    private final Handler statsRefreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable statsRefreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (binding == null || viewModel == null) return;
+            viewModel.refreshStats();
+            statsRefreshHandler.postDelayed(this, STATS_REFRESH_INTERVAL_MS);
+        }
+    };
+
+    public LauncherHomeFragment() {
+        avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+            if (uri == null) return;
+            persistAvatarUri(uri);
+        });
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        binding = FragmentLauncherHomeBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel = new ViewModelProvider(requireActivity()).get(LauncherViewModel.class);
+
+        applySystemBarInsets();
+        setupRecentList();
+        binding.launcherAvatarContainer.setClipToOutline(true);
+        renderAvatar();
+        applyIconTone();
+        bindActions();
+        observeState();
+        viewModel.refreshRecentItemsIfNeeded();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        startStatsRefresh();
+    }
+
+    @Override
+    public void onPause() {
+        stopStatsRefresh();
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroyView() {
+        stopStatsRefresh();
+        if (binding != null) {
+            binding.getRoot().setOnApplyWindowInsetsListener(null);
+        }
+        super.onDestroyView();
+        binding = null;
+    }
+
+    private void applySystemBarInsets() {
+        FragmentLauncherHomeBinding currentBinding = binding;
+        int originalLeft = currentBinding.contentScroll.getPaddingLeft();
+        int originalTop = currentBinding.contentScroll.getPaddingTop();
+        int originalRight = currentBinding.contentScroll.getPaddingRight();
+        int originalBottom = currentBinding.contentScroll.getPaddingBottom();
+
+        currentBinding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
+            currentBinding.contentScroll.setPadding(
+                    originalLeft,
+                    originalTop + insets.getSystemWindowInsetTop(),
+                    originalRight,
+                    originalBottom
+            );
+            return insets;
+        });
+        currentBinding.getRoot().requestApplyInsets();
+    }
+
+    private void bindActions() {
+        binding.launcherAvatarContainer.setOnClickListener(view -> avatarPickerLauncher.launch(new String[]{"image/*"}));
+        binding.actionProfileMenu.setOnClickListener(this::showPlaceholderMenu);
+        binding.actionChatRoom.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherChatSelectActivity.class)));
+        binding.actionResourceStation.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), ResourceStationActivity.class)));
+        binding.actionToolbox.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
+        binding.actionAgent.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherPendingActivity.class)));
+        binding.recentRefresh.setOnRefreshListener(() -> viewModel.refreshRecentItems(true));
+    }
+
+    private void applyIconTone() {
+        boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
+        int white = android.graphics.Color.WHITE;
+        applyIconTint(binding.actionProfileMenu, darkMode, white);
+        applyIconTint(binding.actionChatRoomIcon, darkMode, white);
+        applyIconTint(binding.actionResourceStationIcon, darkMode, white);
+        applyIconTint(binding.actionToolboxIcon, darkMode, white);
+        applyIconTint(binding.actionAgentIcon, darkMode, white);
+    }
+
+    private void applyIconTint(ImageView imageView, boolean tint, int color) {
+        if (imageView == null) return;
+        if (tint) {
+            imageView.setColorFilter(color);
+        } else {
+            imageView.clearColorFilter();
+        }
+    }
+
+    private void showPlaceholderMenu(View anchor) {
+        if (binding == null || anchor == null) return;
+        LinearLayout menu = new LinearLayout(requireContext());
+        menu.setOrientation(LinearLayout.VERTICAL);
+        menu.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_popup_menu_bg);
+        menu.setPadding(dp(8), dp(8), dp(8), dp(8));
+
+        PopupWindow popupWindow = new PopupWindow(menu, dp(132), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        popupWindow.setElevation(dp(8));
+
+        addMenuItem(menu, "主题", popupWindow, null);
+        addMenuItem(menu, "色调", popupWindow, this::confirmToggleTone);
+        addMenuItem(menu, "测试", popupWindow, null);
+        addMenuItem(menu, "帮助", popupWindow, null);
+
+        popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(132), dp(6), Gravity.NO_GRAVITY);
+    }
+
+    private void addMenuItem(LinearLayout menu, String label, PopupWindow popupWindow, @Nullable Runnable action) {
+        TextView item = new TextView(requireContext());
+        item.setText(label);
+        item.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_primary_color));
+        item.setTextSize(14);
+        item.setTypeface(null, android.graphics.Typeface.BOLD);
+        item.setGravity(Gravity.CENTER_VERTICAL);
+        item.setSingleLine(true);
+        item.setPadding(dp(14), 0, dp(14), 0);
+        item.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected);
+        item.setOnClickListener(view -> {
+            popupWindow.dismiss();
+            if (action != null) {
+                action.run();
+            } else {
+                Toast.makeText(requireContext(), label + " 功能待接入", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(38)
+        );
+        lp.setMargins(0, 0, 0, dp(6));
+        menu.addView(item, lp);
+    }
+
+    private void confirmToggleTone() {
+        boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
+        String nextTone = darkMode ? "浅色模式" : "深色模式";
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(280), WindowManager.LayoutParams.WRAP_CONTENT);
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
+        window.setContentView(dialogView);
+
+        TextView titleView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogTitle);
+        TextView messageView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogMessage);
+        TextView btnCancel = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnCancel);
+        TextView btnConfirm = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnConfirm);
+
+        titleView.setText("切换色调");
+        messageView.setText("确定切换到" + nextTone + "吗？");
+        btnCancel.setOnClickListener(view -> dialog.dismiss());
+        btnConfirm.setOnClickListener(view -> {
+            dialog.dismiss();
+            LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode);
+        });
+    }
+
+    private void setupRecentList() {
+        binding.recentRefresh.setOnChildScrollUpCallback((parent, child) ->
+                binding != null && binding.contentScroll.canScrollVertically(-1));
+    }
+
+    private void observeState() {
+        viewModel.getLauncherState().observe(getViewLifecycleOwner(), state -> {
+            binding.recentRefresh.setRefreshing(state.isRecentRefreshing());
+            binding.tvAccountMode.setText(state.getAccountMode());
+            binding.tvStateTitle.setText(state.getAccountName());
+            binding.tvGameCount.setText(String.valueOf(state.getGameCount()));
+            binding.tvTotalPlayTime.setText(state.getTotalPlayTime());
+            binding.tvTodayPlayTime.setText(state.getTodayPlayTime());
+            renderRecentItems(state.getRecentItems());
+        });
+    }
+
+    private void renderRecentItems(List<LauncherRepository.RecentItem> items) {
+        if (items == null || items.isEmpty()) {
+            binding.recentEmpty.setVisibility(View.VISIBLE);
+            binding.recentList.setVisibility(View.GONE);
+            binding.recentList.removeAllViews();
+            return;
+        }
+        binding.recentEmpty.setVisibility(View.GONE);
+        binding.recentList.setVisibility(View.VISIBLE);
+        binding.recentList.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        for (LauncherRepository.RecentItem item : items) {
+            View itemView = inflater.inflate(com.yuki.yukihub.R.layout.item_launcher_recent, binding.recentList, false);
+            TextView icon = itemView.findViewById(com.yuki.yukihub.R.id.recentIcon);
+            TextView title = itemView.findViewById(com.yuki.yukihub.R.id.recentTitle);
+            TextView meta = itemView.findViewById(com.yuki.yukihub.R.id.recentMeta);
+            TextView status = itemView.findViewById(com.yuki.yukihub.R.id.recentStatus);
+            icon.setText(item.iconText);
+            title.setText(item.title);
+            meta.setText(item.timeAndDuration);
+            status.setText(item.status);
+            binding.recentList.addView(itemView);
+        }
+    }
+
+    private void persistAvatarUri(Uri uri) {
+        String oldAvatar = prefs().getString(KEY_PROFILE_AVATAR, "");
+        try {
+            requireContext().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (SecurityException ignored) {
+            // Some providers return a readable Uri without persistable grants.
+        }
+        if (oldAvatar != null && !oldAvatar.trim().isEmpty() && !oldAvatar.equals(uri.toString())) {
+            try {
+                requireContext().getContentResolver().releasePersistableUriPermission(Uri.parse(oldAvatar), Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Throwable ignored) {
+            }
+        }
+        prefs().edit().putString(KEY_PROFILE_AVATAR, uri.toString()).apply();
+        renderAvatar();
+        Toast.makeText(requireContext(), "头像已更新", Toast.LENGTH_SHORT).show();
+    }
+
+    private void renderAvatar() {
+        if (binding == null) return;
+        String avatar = prefs().getString(KEY_PROFILE_AVATAR, "");
+        if (avatar == null || avatar.trim().isEmpty()) {
+            binding.launcherAvatarImage.setImageDrawable(null);
+            binding.launcherAvatarImage.setVisibility(View.GONE);
+            binding.launcherAvatarInitial.setVisibility(View.VISIBLE);
+            return;
+        }
+        try {
+            binding.launcherAvatarImage.setImageURI(Uri.parse(avatar));
+            binding.launcherAvatarImage.setClipToOutline(true);
+            if (binding.launcherAvatarImage.getDrawable() == null) {
+                showDefaultAvatar();
+                return;
+            }
+            binding.launcherAvatarImage.setVisibility(View.VISIBLE);
+            binding.launcherAvatarInitial.setVisibility(View.GONE);
+        } catch (Throwable throwable) {
+            showDefaultAvatar();
+        }
+    }
+
+    private void showDefaultAvatar() {
+        if (binding == null) return;
+        binding.launcherAvatarImage.setImageDrawable(null);
+        binding.launcherAvatarImage.setVisibility(View.GONE);
+        binding.launcherAvatarInitial.setVisibility(View.VISIBLE);
+    }
+
+    private SharedPreferences prefs() {
+        return requireContext().getApplicationContext().getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE);
+    }
+
+    private void startStatsRefresh() {
+        stopStatsRefresh();
+        if (viewModel != null) viewModel.refreshStats();
+        statsRefreshHandler.postDelayed(statsRefreshRunnable, STATS_REFRESH_INTERVAL_MS);
+    }
+
+    private void stopStatsRefresh() {
+        statsRefreshHandler.removeCallbacks(statsRefreshRunnable);
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+}

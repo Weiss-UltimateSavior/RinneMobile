@@ -163,6 +163,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity {
+    public static final String EXTRA_LAUNCH_ACTION = "com.yuki.yukihub.extra.LAUNCH_ACTION";
+    public static final String EXTRA_LAUNCH_GAME_ID = "com.yuki.yukihub.extra.LAUNCH_GAME_ID";
+    public static final String ACTION_SCAN = "scan";
+    public static final String ACTION_ADD_GAME = "add_game";
+    public static final String ACTION_SYNC_CENTER = "sync_center";
+    public static final String ACTION_SETTINGS = "settings";
+    public static final String ACTION_LAUNCH_GAME = "launch_game";
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(UiScaleUtil.wrap(newBase));
@@ -397,11 +405,37 @@ if (!ensureDisclaimerAccepted()) {
         setupUi();
         loadGames();
         if (ivScanLoading != null) ivScanLoading.setVisibility(View.GONE);
+        dispatchLaunchActionIfNeeded(getIntent());
         if (prefs != null && prefs.getBoolean(KEY_AUTO_SCAN_ON_STARTUP, false)) {
             autoScanLastRootIfAvailable();
         }
         checkUpdateOnStartupIfEnabled();
         ensureStoragePermissionForInternalKrkr();
+    }
+
+    private void dispatchLaunchActionIfNeeded(Intent intent) {
+        if (intent == null) return;
+        String action = intent.getStringExtra(EXTRA_LAUNCH_ACTION);
+        if (action == null || action.trim().isEmpty()) return;
+        long launchGameId = intent.getLongExtra(EXTRA_LAUNCH_GAME_ID, -1L);
+        intent.removeExtra(EXTRA_LAUNCH_ACTION);
+        intent.removeExtra(EXTRA_LAUNCH_GAME_ID);
+        dispatchLaunchAction(action, launchGameId);
+    }
+
+    private void dispatchLaunchAction(String action, long launchGameId) {
+        if (ACTION_SCAN.equals(action)) {
+            scanLastRootOrChoose();
+        } else if (ACTION_ADD_GAME.equals(action)) {
+            showEditDialog(null);
+        } else if (ACTION_SYNC_CENTER.equals(action)) {
+            showWebDavSettingsDialog();
+        } else if (ACTION_SETTINGS.equals(action)) {
+            showSettingsDialog();
+        } else if (ACTION_LAUNCH_GAME.equals(action)) {
+            Game game = findLoadedGameById(launchGameId);
+            if (game != null) launchGame(game);
+        }
     }
 
     private boolean ensureDisclaimerAccepted() {
@@ -2687,6 +2721,12 @@ scanMissingCoversIfNeeded();
     if (games == null) return false;
     for (Game g : games) if (g != null && g.id == id) return true;
     return false;
+}
+
+private Game findLoadedGameById(long id) {
+    if (id <= 0 || allGames == null) return null;
+    for (Game game : allGames) if (game != null && game.id == id) return game;
+    return null;
 }
 
 private void loadRemoteImage(String url, ImageView target) {
