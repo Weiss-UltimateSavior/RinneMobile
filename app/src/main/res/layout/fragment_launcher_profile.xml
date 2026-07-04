@@ -94,6 +94,76 @@
                 android:orientation="vertical">
 
                 <LinearLayout
+                    android:id="@+id/profileInfoRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="32dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Y"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:text="个人资料"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text=">"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/accountSettingsRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="32dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="@"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:text="账号设置"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text=">"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/helpCenterRow"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"

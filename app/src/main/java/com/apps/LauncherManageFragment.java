@@ -22,23 +22,19 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.yuki.yukihub.MainActivity;
-import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.databinding.FragmentLauncherManageBinding;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.scanner.GameScanner;
-import com.yuki.yukihub.scanner.ScanResult;
+import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
+import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
+import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
+import com.yuki.yukihub.launcherbridge.YukiHubBridge;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.DevLogger;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class LauncherManageFragment extends Fragment {
     private static final String APP_PREFS = "yukihub_prefs";
@@ -105,11 +101,11 @@ public class LauncherManageFragment extends Fragment {
     private void bindActions() {
         binding.actionAddDirectory.setOnClickListener(view -> scanDirectoryPicker.launch(null));
         binding.actionScanGame.setOnClickListener(view -> scanConfiguredDirectories());
-        binding.actionAddGame.setOnClickListener(view -> openMainActivity(MainActivity.ACTION_ADD_GAME));
-        binding.actionCloudSync.setOnClickListener(view -> openMainActivity(MainActivity.ACTION_SYNC_CENTER));
-        binding.actionModelSettings.setOnClickListener(view -> openMainActivity(MainActivity.ACTION_AI_REVIEW_SETTINGS));
+        binding.actionAddGame.setOnClickListener(view -> openAction(MainActivity.ACTION_ADD_GAME));
+        binding.actionCloudSync.setOnClickListener(view -> showSyncOptions());
+        binding.actionModelSettings.setOnClickListener(view -> openAction(MainActivity.ACTION_AI_REVIEW_SETTINGS));
         binding.actionFeedback.setOnClickListener(view -> showFeedbackOptions());
-        binding.actionAppSettings.setOnClickListener(view -> openMainActivity(MainActivity.ACTION_SETTINGS));
+        binding.actionAppSettings.setOnClickListener(view -> openAction(MainActivity.ACTION_SETTINGS));
         binding.actionDiagnostics.setOnClickListener(view -> showDiagnosticsPrivacyDialog());
     }
 
@@ -126,10 +122,8 @@ public class LauncherManageFragment extends Fragment {
         }
     }
 
-    private void openMainActivity(String action) {
-        Intent intent = new Intent(requireContext(), MainActivity.class);
-        intent.putExtra(MainActivity.EXTRA_LAUNCH_ACTION, action);
-        startActivity(intent);
+    private void openAction(String action) {
+        YukiHubBridge.openAction(requireContext(), action);
     }
 
     private void persistAndSaveScanDirectory(Uri uri) {
@@ -166,16 +160,7 @@ public class LauncherManageFragment extends Fragment {
         int depth = scanDepth();
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
-            GameRepository repository = new GameRepository(appContext);
-            List<ScanResult> results = new ArrayList<>();
-            for (String root : roots) {
-                if (root == null || root.trim().isEmpty()) continue;
-                try {
-                    results.addAll(GameScanner.scan(appContext, Uri.parse(root), depth));
-                } catch (Throwable ignored) {
-                }
-            }
-            ScanImportStats stats = importScannedGames(repository, results);
+            LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, roots, depth);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
                 renderScanResult(stats);
@@ -186,44 +171,6 @@ public class LauncherManageFragment extends Fragment {
                 ).show();
             });
         });
-    }
-
-    private ScanImportStats importScannedGames(GameRepository repository, List<ScanResult> results) {
-        ScanImportStats stats = new ScanImportStats();
-        stats.scanned = results == null ? 0 : results.size();
-        if (repository == null || results == null || results.isEmpty()) return stats;
-        Set<String> existing = repository.getRootUriKeySet();
-        for (ScanResult result : results) {
-            if (result == null || result.uri == null || result.uri.trim().isEmpty()) {
-                stats.failed++;
-                stats.failedItems.add("无法读取路径的扫描结果");
-                continue;
-            }
-            String rootKey = GameRepository.normalizeRootUriKey(result.uri);
-            if (existing.contains(rootKey)) {
-                stats.skipped++;
-                stats.skippedItems.add(emptyText(result.title, result.uri));
-                continue;
-            }
-            Game game = new Game();
-            game.title = result.title;
-            game.rootUri = result.uri;
-            game.engine = result.engine;
-            game.launchTarget = result.launchTarget == null || result.launchTarget.trim().isEmpty()
-                    ? defaultLaunchTargetForEngine(result.engine)
-                    : result.launchTarget;
-            game.emulatorPackage = emulatorPackageForEngine(result.engine);
-            long id = repository.insertIfNotExists(game);
-            if (id > 0) {
-                existing.add(rootKey);
-                stats.added++;
-                stats.addedItems.add(emptyText(result.title, result.uri));
-            } else {
-                stats.failed++;
-                stats.failedItems.add(emptyText(result.title, result.uri));
-            }
-        }
-        return stats;
     }
 
     private void renderScanDirectories() {
@@ -306,7 +253,7 @@ public class LauncherManageFragment extends Fragment {
         });
     }
 
-    private void renderScanResult(ScanImportStats stats) {
+    private void renderScanResult(LauncherScanBridge.ImportStats stats) {
         if (binding == null || stats == null) return;
         binding.scanResultTitle.setVisibility(View.VISIBLE);
         binding.scanResultDetail.setVisibility(View.VISIBLE);
@@ -362,7 +309,9 @@ public class LauncherManageFragment extends Fragment {
         addFeedbackOption(root, "GitHub 仓库", dialog, () -> openExternalUrl("https://github.com/xm486/YukiHub"));
         addFeedbackOption(root, "YukiHub 官网", dialog, () -> openExternalUrl("https://yukihub.kesug.com/"));
         addFeedbackOption(root, "QQ 交流群", dialog, () -> openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info"));
-        addFeedbackOption(root, "关于与设置", dialog, () -> openMainActivity(MainActivity.ACTION_SETTINGS));
+        addFeedbackOption(root, "应用设置", dialog, () -> openAction(MainActivity.ACTION_SETTINGS));
+        addFeedbackOption(root, "检查更新", dialog, () -> openAction(MainActivity.ACTION_CHECK_UPDATE));
+        addFeedbackOption(root, "免责声明", dialog, () -> openAction(MainActivity.ACTION_DISCLAIMER));
 
         TextView cancel = new TextView(requireContext());
         cancel.setText("取消");
@@ -377,6 +326,80 @@ public class LauncherManageFragment extends Fragment {
         root.addView(cancel, cancelLp);
 
         window.setContentView(root);
+    }
+
+    private void showSyncOptions() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = dialogTitle("云端同步");
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView info = new TextView(requireContext());
+        info.setGravity(android.view.Gravity.CENTER);
+        info.setText(syncStatusText());
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextSize(13);
+        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        infoLp.setMargins(0, dp(12), 0, 0);
+        root.addView(info, infoLp);
+
+        addFeedbackOption(root, "立即同步", dialog, this::syncNow);
+        addFeedbackOption(root, "打开同步中心", dialog, () -> openAction(MainActivity.ACTION_SYNC_CENTER));
+        addFeedbackOption(root, "导出本地备份", dialog, () -> openAction(MainActivity.ACTION_LOCAL_BACKUP_EXPORT));
+        addFeedbackOption(root, "导入本地备份", dialog, () -> openAction(MainActivity.ACTION_LOCAL_BACKUP_IMPORT));
+
+        TextView cancel = dialogCancelButton(dialog);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
+        cancelLp.setMargins(0, dp(10), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    private String syncStatusText() {
+        if (!LauncherSyncBridge.isConfigured(requireContext())) return "WebDAV 尚未配置，请先打开同步中心。";
+        long last = LauncherSyncBridge.lastSyncTime(requireContext());
+        if (last <= 0L) return "已配置 WebDAV，尚未完成过同步。";
+        return "上次同步：" + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", last);
+    }
+
+    private void syncNow() {
+        if (!LauncherSyncBridge.isConfigured(requireContext())) {
+            Toast.makeText(requireContext(), "请先配置 WebDAV", Toast.LENGTH_SHORT).show();
+            openAction(MainActivity.ACTION_SYNC_CENTER);
+            return;
+        }
+        LauncherSyncBridge.syncNow(requireContext(), new LauncherSyncBridge.Callback() {
+            @Override
+            public void onStart() {
+                Toast.makeText(requireContext(), "正在同步...", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onProgress(String item, boolean changed) {
+            }
+
+            @Override
+            public void onComplete(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String error) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void showDiagnosticsPrivacyDialog() {
@@ -402,7 +425,8 @@ public class LauncherManageFragment extends Fragment {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView info = new TextView(requireContext());
-        info.setText("当前日志大小：" + DevLogger.formatSize(DevLogger.getLogSize()));
+        info.setText("日志状态：" + (LauncherDiagnosticsBridge.isLogEnabled() ? "已开启" : "已关闭")
+                + " · 当前大小：" + DevLogger.formatSize(LauncherDiagnosticsBridge.logSize()));
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
         info.setTextSize(13);
@@ -410,6 +434,8 @@ public class LauncherManageFragment extends Fragment {
         infoLp.setMargins(0, dp(12), 0, 0);
         root.addView(info, infoLp);
 
+        addFeedbackOption(root, LauncherDiagnosticsBridge.isLogEnabled() ? "关闭日志" : "开启日志", dialog, this::toggleDiagnosticLog);
+        addFeedbackOption(root, "清空日志", dialog, this::confirmClearDiagnosticLog);
         addFeedbackOption(root, "导出日志", dialog, this::exportDiagnosticLog);
         addFeedbackOption(root, "打开反馈渠道", dialog, this::showFeedbackOptions);
 
@@ -444,24 +470,26 @@ public class LauncherManageFragment extends Fragment {
     }
 
     private void exportDiagnosticLog() {
-        File logFile = DevLogger.getLogFile();
-        if (logFile == null || !logFile.exists()) {
-            Toast.makeText(requireContext(), "暂无日志文件", Toast.LENGTH_SHORT).show();
-            return;
-        }
         try {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(
-                    Intent.EXTRA_STREAM,
-                    FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".fileprovider", logFile)
-            );
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "YukiHub Logcat");
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(shareIntent, "导出日志"));
+            if (!LauncherDiagnosticsBridge.exportLog(requireContext())) {
+                Toast.makeText(requireContext(), "暂无日志文件", Toast.LENGTH_SHORT).show();
+            }
         } catch (Throwable throwable) {
             Toast.makeText(requireContext(), "导出失败：" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void toggleDiagnosticLog() {
+        boolean next = !LauncherDiagnosticsBridge.isLogEnabled();
+        LauncherDiagnosticsBridge.setLogEnabled(requireContext(), next);
+        Toast.makeText(requireContext(), next ? "日志已开启" : "日志已关闭", Toast.LENGTH_SHORT).show();
+    }
+
+    private void confirmClearDiagnosticLog() {
+        showLauncherConfirmDialog("清空日志", "确定清空当前诊断日志吗？此操作不会删除游戏数据。", "清空", () -> {
+            boolean success = LauncherDiagnosticsBridge.clearLog();
+            Toast.makeText(requireContext(), success ? "日志已清空" : "清空失败", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void addFeedbackOption(LinearLayout root, String label, AlertDialog dialog, Runnable action) {
@@ -516,18 +544,6 @@ public class LauncherManageFragment extends Fragment {
         } catch (Throwable throwable) {
             Toast.makeText(requireContext(), "无法打开链接", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private String emulatorPackageForEngine(EngineType engine) {
-        if (engine == EngineType.KIRIKIRI) return "internal.krkr";
-        if (engine == EngineType.ONS) return "internal.ons";
-        if (engine == EngineType.TYRANO) return "internal.tyrano";
-        if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
-        return "";
-    }
-
-    private String defaultLaunchTargetForEngine(EngineType engine) {
-        return "[游戏目录]";
     }
 
     private List<String> getScanRootUris() {
@@ -616,21 +632,7 @@ public class LauncherManageFragment extends Fragment {
         return colon >= 0 && colon < last.length() - 1 ? last.substring(colon + 1) : last;
     }
 
-    private String emptyText(String value, String fallback) {
-        return value == null || value.trim().isEmpty() ? fallback : value.trim();
-    }
-
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
-    private static final class ScanImportStats {
-        int scanned;
-        int added;
-        int skipped;
-        int failed;
-        final List<String> addedItems = new ArrayList<>();
-        final List<String> skippedItems = new ArrayList<>();
-        final List<String> failedItems = new ArrayList<>();
     }
 }

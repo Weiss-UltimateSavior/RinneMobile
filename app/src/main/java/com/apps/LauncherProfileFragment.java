@@ -11,7 +11,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.yuki.yukihub.R;
+import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherProfileBinding;
+import com.yuki.yukihub.launcherbridge.YukiHubBridge;
 
 public class LauncherProfileFragment extends Fragment {
     private FragmentLauncherProfileBinding binding;
@@ -70,6 +72,10 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void bindActions() {
+        binding.profileInfoRow.setOnClickListener(view ->
+                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_PROFILE));
+        binding.accountSettingsRow.setOnClickListener(view ->
+                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_ACCOUNT_SETTINGS));
         binding.helpCenterRow.setOnClickListener(view ->
                 Toast.makeText(requireContext(), "帮助中心待接入", Toast.LENGTH_SHORT).show());
         binding.privacyPolicyRow.setOnClickListener(view ->

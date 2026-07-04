@@ -119,6 +119,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.documentfile.provider.DocumentFile;
 
+import com.apps.LauncherActivity;
 import com.yuki.yukihub.ai.AiReviewClient;
 import com.yuki.yukihub.ai.AiReviewController;
 import com.yuki.yukihub.ai.AiReviewHistoryStore;
@@ -168,9 +169,22 @@ public class MainActivity extends AppCompatActivity {
     public static final String ACTION_SCAN = "scan";
     public static final String ACTION_ADD_GAME = "add_game";
     public static final String ACTION_SYNC_CENTER = "sync_center";
+    public static final String ACTION_LOCAL_BACKUP_EXPORT = "local_backup_export";
+    public static final String ACTION_LOCAL_BACKUP_IMPORT = "local_backup_import";
     public static final String ACTION_SETTINGS = "settings";
     public static final String ACTION_AI_REVIEW_SETTINGS = "ai_review_settings";
+    public static final String ACTION_AI_REVIEW = "ai_review";
+    public static final String ACTION_AI_REVIEW_HISTORY = "ai_review_history";
     public static final String ACTION_LAUNCH_GAME = "launch_game";
+    public static final String ACTION_EDIT_GAME = "edit_game";
+    public static final String ACTION_GAME_DETAIL = "game_detail";
+    public static final String ACTION_GAME_OPTIONS = "game_options";
+    public static final String ACTION_GAME_STATUS = "game_status";
+    public static final String ACTION_EDIT_PLAY_TIME = "edit_play_time";
+    public static final String ACTION_PROFILE = "profile";
+    public static final String ACTION_ACCOUNT_SETTINGS = "account_settings";
+    public static final String ACTION_CHECK_UPDATE = "check_update";
+    public static final String ACTION_DISCLAIMER = "disclaimer";
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -431,13 +445,44 @@ if (!ensureDisclaimerAccepted()) {
             showEditDialog(null);
         } else if (ACTION_SYNC_CENTER.equals(action)) {
             showWebDavSettingsDialog();
+        } else if (ACTION_LOCAL_BACKUP_EXPORT.equals(action)) {
+            openLocalBackupExportFromSyncCenter();
+        } else if (ACTION_LOCAL_BACKUP_IMPORT.equals(action)) {
+            openLocalBackupImportFromSyncCenter();
         } else if (ACTION_SETTINGS.equals(action)) {
             showSettingsDialog();
         } else if (ACTION_AI_REVIEW_SETTINGS.equals(action)) {
             aiReviewController.showAiReviewSettingsDialog();
+        } else if (ACTION_AI_REVIEW.equals(action)) {
+            aiReviewController.showAiReviewDialog();
+        } else if (ACTION_AI_REVIEW_HISTORY.equals(action)) {
+            aiReviewController.showAiReviewHistoryDialog();
+        } else if (ACTION_PROFILE.equals(action)) {
+            showProfileDialog();
+        } else if (ACTION_ACCOUNT_SETTINGS.equals(action)) {
+            showAccountSettingsDialog();
+        } else if (ACTION_CHECK_UPDATE.equals(action)) {
+            checkUpdateManually();
+        } else if (ACTION_DISCLAIMER.equals(action)) {
+            showDisclaimerDialog();
         } else if (ACTION_LAUNCH_GAME.equals(action)) {
             Game game = findLoadedGameById(launchGameId);
             if (game != null) launchGame(game);
+        } else if (ACTION_EDIT_GAME.equals(action)) {
+            Game game = findLoadedGameById(launchGameId);
+            if (game != null) showEditDialog(game);
+        } else if (ACTION_GAME_DETAIL.equals(action)) {
+            Game game = findLoadedGameById(launchGameId);
+            if (game != null) showDetailDialog(game);
+        } else if (ACTION_GAME_OPTIONS.equals(action)) {
+            Game game = findLoadedGameById(launchGameId);
+            if (game != null) showSideOptions(game);
+        } else if (ACTION_GAME_STATUS.equals(action)) {
+            Game game = findLoadedGameById(launchGameId);
+            if (game != null) showPlayStatusDialog(game, null);
+        } else if (ACTION_EDIT_PLAY_TIME.equals(action)) {
+            Game game = findLoadedGameById(launchGameId);
+            if (game != null) showEditPlayTimeDialog(game);
         }
     }
 
@@ -3987,6 +4032,9 @@ else sourceSpinner.setSelection(0);
         logPathInfo.setPadding(0, dp(6), 0, dp(4));
         root.addView(logPathInfo);
 
+        CheckBox yukiMobileUiCheck = krCheckBox("Yuki Mobile UI（实验性）", AppLaunchMode.isYukiMobileUiEnabled(this));
+        root.addView(yukiMobileUiCheck);
+
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(false);
         scroll.setBackgroundResource(R.drawable.bg_dialog);
@@ -4042,9 +4090,15 @@ else sourceSpinner.setSelection(0);
                     .putInt(KEY_GAME_COLUMNS, Math.max(2, Math.min(10, columnsSeek.getProgress() + 2)))
                     .putBoolean("dev_log_enabled", logEnabledCheck.isChecked())
                     .apply();
+            boolean launchModeChanged = AppLaunchMode.isYukiMobileUiEnabled(this) != yukiMobileUiCheck.isChecked();
+            AppLaunchMode.setYukiMobileUiEnabled(this, yukiMobileUiCheck.isChecked());
             applyCustomBackground();
             Toast.makeText(this, "已保存资料源：" + (ymgal ? "月幕Gal" : (bangumiMirror ? "Bangumi镜像" : (bangumi ? "Bangumi" : "VNDB"))) + "，扫描深度：" + depth + " 层，字体：" + UiScaleUtil.percent(fontScale) + "%", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
+            if (launchModeChanged) {
+                restartToSavedLaunchMode();
+                return;
+            }
             recreate();
         });
         chooseBgButton.setOnClickListener(v -> {
@@ -4075,6 +4129,17 @@ else sourceSpinner.setSelection(0);
             activeScanRootList = null;
             activeScanRootInfo = null;
         });
+    }
+
+    private void restartToSavedLaunchMode() {
+        Class<?> target = AppLaunchMode.isYukiMobileUiEnabled(this)
+                ? LauncherActivity.class
+                : MainActivity.class;
+        Intent intent = new Intent(this, target);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
     }
 
     private List<String> getScanRootUris() {

@@ -29,42 +29,37 @@
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
-            <FrameLayout
-                android:id="@+id/toolboxNoticeCard"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="142dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:background="@drawable/launcher_balance_card"
-                android:padding="20dp">
+                android:orientation="vertical">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/toolboxNoticeTitle"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:orientation="vertical">
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="优质的Galgame辅助工具"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="工具推荐声明"
-                        android:textColor="@color/launcher_on_primary_color"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="本页工具仅作推荐，请根据实际需要自行斟酌使用。"
-                        android:textColor="@color/launcher_balance_text_color"
-                        android:textSize="14sp" />
-                </LinearLayout>
-            </FrameLayout>
+                <TextView
+                    android:id="@+id/toolboxNoticeText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="使用工具进行辅助，让你的游玩更加便捷！仅作推荐喵"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="26dp"
+                android:layout_marginTop="24dp"
                 android:alignmentMode="alignMargins"
                 android:columnCount="3"
                 android:useDefaultMargins="false">

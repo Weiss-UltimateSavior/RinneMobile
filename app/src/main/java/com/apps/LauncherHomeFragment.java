@@ -28,7 +28,9 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
+import com.yuki.yukihub.launcherbridge.YukiHubBridge;
 
 import java.util.List;
 
@@ -184,8 +186,10 @@ public class LauncherHomeFragment extends Fragment {
         addMenuItem(menu, "主题管理", popupWindow, () ->
                 startActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
         addMenuItem(menu, "色调切换", popupWindow, this::confirmToggleTone);
-        addMenuItem(menu, "应用设置", popupWindow, null);
-        addMenuItem(menu, "关于应用", popupWindow, null);
+        addMenuItem(menu, "应用设置", popupWindow, () ->
+                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_SETTINGS));
+        addMenuItem(menu, "关于应用", popupWindow, () ->
+                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_DISCLAIMER));
 
         popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(132), dp(6), Gravity.NO_GRAVITY);
     }
