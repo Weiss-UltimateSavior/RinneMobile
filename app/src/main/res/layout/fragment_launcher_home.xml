@@ -2,8 +2,7 @@
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/recentRefresh"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/launcher_bg">
+    android:layout_height="match_parent">
 
 <androidx.core.widget.NestedScrollView
     android:id="@+id/contentScroll"
@@ -100,16 +99,46 @@
         </LinearLayout>
 
         <FrameLayout
+            android:id="@+id/homeStatsCard"
             android:layout_width="match_parent"
             android:layout_height="170dp"
             android:layout_marginTop="24dp"
             android:background="@drawable/launcher_balance_card"
-            android:padding="20dp">
+            android:clipToOutline="true">
+
+            <ImageView
+                android:id="@+id/homeStatsImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop"
+                android:src="@drawable/launcher_home_stats_bg" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:importantForAccessibility="no"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/homeStatsScrim"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/launcher_home_stats_scrim" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"

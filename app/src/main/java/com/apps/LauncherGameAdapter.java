@@ -77,6 +77,9 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
             binding.launcherGameTitle.setText(safeTitle(game));
             binding.launcherGamePlayStatus.setText(playStatus(game));
             binding.launcherGameInitial.setText(initial(game.title));
+            LauncherTheme.textPrimary(binding.launcherGameTitle);
+            LauncherTheme.textPrimary(binding.launcherGamePlayStatus);
+            LauncherTheme.textPrimary(binding.launcherGameInitial);
             binding.launcherGameFavorite.setVisibility(game.favorite ? View.VISIBLE : View.GONE);
             bindCover(game);
 

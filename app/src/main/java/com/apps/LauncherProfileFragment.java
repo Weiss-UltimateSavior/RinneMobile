@@ -28,6 +28,7 @@ public class LauncherProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         applySystemBarInsets();
         bindActions();
+        applyThemeTone();
     }
 
     @Override
@@ -80,5 +81,11 @@ public class LauncherProfileFragment extends Fragment {
                         .beginTransaction()
                         .replace(R.id.launcherFragmentContainer, new LauncherAccountFragment(), "launcher_ACCOUNT")
                         .commit());
+    }
+
+    private void applyThemeTone() {
+        if (binding == null) return;
+        binding.profilePlaceholderCard.setBackground(LauncherTheme.primaryButton(requireContext(), 30f));
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 }

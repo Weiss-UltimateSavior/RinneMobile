@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String ACTION_ADD_GAME = "add_game";
     public static final String ACTION_SYNC_CENTER = "sync_center";
     public static final String ACTION_SETTINGS = "settings";
+    public static final String ACTION_AI_REVIEW_SETTINGS = "ai_review_settings";
     public static final String ACTION_LAUNCH_GAME = "launch_game";
 
     @Override
@@ -432,6 +433,8 @@ if (!ensureDisclaimerAccepted()) {
             showWebDavSettingsDialog();
         } else if (ACTION_SETTINGS.equals(action)) {
             showSettingsDialog();
+        } else if (ACTION_AI_REVIEW_SETTINGS.equals(action)) {
+            aiReviewController.showAiReviewSettingsDialog();
         } else if (ACTION_LAUNCH_GAME.equals(action)) {
             Game game = findLoadedGameById(launchGameId);
             if (game != null) launchGame(game);

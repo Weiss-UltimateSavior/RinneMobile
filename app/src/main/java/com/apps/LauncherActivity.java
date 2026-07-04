@@ -23,6 +23,10 @@ import com.yuki.yukihub.databinding.ActivityLauncherBinding;
 public class LauncherActivity extends AppCompatActivity {
     static final String APP_PREFS = "yukihub_prefs";
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
+    static final String KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style";
+    static final String THEME_STYLE_DEFAULT = "default";
+    static final String THEME_STYLE_RINNE = "rinne";
+    static final int RINNE_PRIMARY_COLOR = Color.rgb(216, 169, 201);
 
     private ActivityLauncherBinding binding;
     private LauncherViewModel viewModel;
@@ -46,6 +50,9 @@ public class LauncherActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (binding != null) {
+            renderSelectedNav(currentNavItem);
+        }
         if (viewModel != null) viewModel.refreshStats();
     }
 
@@ -114,6 +121,7 @@ public class LauncherActivity extends AppCompatActivity {
 
     private void renderSelectedNav(LauncherViewModel.NavItem selectedItem) {
         LauncherViewModel.NavItem navItem = selectedItem == null ? LauncherViewModel.NavItem.HOME : selectedItem;
+        applyLauncherThemeTone();
         setNavSelected(
                 binding.navHome,
                 binding.navHomeIcon,
@@ -143,11 +151,25 @@ public class LauncherActivity extends AppCompatActivity {
     private void setNavSelected(LinearLayout container, TextView icon, TextView label, boolean selected) {
         container.setBackgroundResource(selected ? R.drawable.launcher_nav_selected : R.drawable.launcher_nav_unselected);
         int color = selected
-                ? ContextCompat.getColor(this, R.color.launcher_primary_color)
+                ? launcherPrimaryColor(this)
                 : ContextCompat.getColor(this, R.color.launcher_text_muted_color);
         icon.setTextColor(color);
         label.setTextColor(color);
         label.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+    }
+
+    private void applyLauncherThemeTone() {
+        if (binding == null) return;
+        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circle(this));
+        boolean rinneTheme = isRinneTheme(this);
+        binding.navLaunchCenterImage.setVisibility(rinneTheme ? View.GONE : View.VISIBLE);
+        binding.navLaunchCenterText.setVisibility(rinneTheme ? View.VISIBLE : View.GONE);
+        if (rinneTheme) {
+            binding.navLaunchCenterImage.clearColorFilter();
+        } else {
+            binding.navLaunchCenterImage.setColorFilter(Color.WHITE);
+        }
+        binding.navLaunchCenterText.setText("凛");
     }
 
     private void openMainActivity() {
@@ -176,6 +198,7 @@ public class LauncherActivity extends AppCompatActivity {
 
         titleView.setText("进入游戏中心");
         messageView.setText("确定打开主项目游戏中心吗？");
+        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {
             dialog.dismiss();
@@ -198,6 +221,31 @@ public class LauncherActivity extends AppCompatActivity {
         return context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .getBoolean(KEY_LAUNCHER_DARK_MODE, false);
+    }
+
+    static void setLauncherThemeStyle(android.content.Context context, String style) {
+        String value = THEME_STYLE_RINNE.equals(style) ? THEME_STYLE_RINNE : THEME_STYLE_DEFAULT;
+        context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_LAUNCHER_THEME_STYLE, value)
+                .apply();
+    }
+
+    static String getLauncherThemeStyle(android.content.Context context) {
+        return context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .getString(KEY_LAUNCHER_THEME_STYLE, THEME_STYLE_DEFAULT);
+    }
+
+    static boolean isRinneTheme(android.content.Context context) {
+        return THEME_STYLE_RINNE.equals(getLauncherThemeStyle(context));
+    }
+
+    static int launcherPrimaryColor(android.content.Context context) {
+        return isRinneTheme(context)
+                ? RINNE_PRIMARY_COLOR
+                : ContextCompat.getColor(context, R.color.launcher_primary_color);
     }
 
     private boolean isLauncherDarkMode() {

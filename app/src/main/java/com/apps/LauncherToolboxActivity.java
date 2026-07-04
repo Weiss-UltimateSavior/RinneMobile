@@ -28,6 +28,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         applySystemBarInsets();
         bindActions();
+        applyThemeTone();
     }
 
     private void applySystemBarInsets() {
@@ -61,6 +62,12 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     private void bindTool(View view, String name) {
         view.setOnClickListener(v ->
                 Toast.makeText(this, name + " 待接入", Toast.LENGTH_SHORT).show());
+    }
+
+    private void applyThemeTone() {
+        binding.toolboxNoticeCard.setBackground(LauncherTheme.primaryGradientCard(this, 30f));
+        binding.toolPayBill.getChildAt(0).setBackground(LauncherTheme.primaryButton(this, 4f));
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 
     private void configureEdgeToEdgeWindow() {

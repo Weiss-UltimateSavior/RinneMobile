@@ -26,6 +26,7 @@ public class LauncherPendingActivity extends AppCompatActivity {
         binding = ActivityLauncherPendingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         applySystemBarInsets();
+        applyThemeTone();
         binding.pendingClose.setOnClickListener(view -> finish());
     }
 
@@ -45,6 +46,17 @@ public class LauncherPendingActivity extends AppCompatActivity {
             return insets;
         });
         binding.getRoot().requestApplyInsets();
+    }
+
+    private void applyThemeTone() {
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
+        View iconWrap = binding.pendingContent.getChildAt(1);
+        if (iconWrap instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) iconWrap;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                group.getChildAt(i).setBackground(LauncherTheme.circle(this));
+            }
+        }
     }
 
     private void configureEdgeToEdgeWindow() {

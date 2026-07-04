@@ -36,6 +36,8 @@ public class LauncherRecentAdapter extends RecyclerView.Adapter<LauncherRecentAd
         holder.title.setText(item.title);
         holder.meta.setText(item.timeAndDuration);
         holder.status.setText(item.status);
+        LauncherTheme.textPrimary(holder.icon);
+        LauncherTheme.textPrimary(holder.status);
     }
 
     @Override

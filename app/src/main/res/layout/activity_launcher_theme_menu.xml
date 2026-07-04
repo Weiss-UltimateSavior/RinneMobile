@@ -5,7 +5,7 @@
     android:background="@drawable/launcher_bg">
 
     <ScrollView
-        android:id="@+id/chatSelectScroll"
+        android:id="@+id/themeMenuScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -24,15 +24,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="选择聊天"
+                android:text="主题菜单"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
             <LinearLayout
-                android:id="@+id/publicChatRow"
+                android:id="@+id/freshThemeRow"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
+                android:layout_height="76dp"
                 android:layout_marginTop="20dp"
                 android:background="@drawable/launcher_chat_option_bg"
                 android:clickable="true"
@@ -43,23 +43,42 @@
                 android:paddingEnd="14dp">
 
                 <TextView
+                    android:id="@+id/freshThemeIcon"
                     android:layout_width="46dp"
                     android:layout_height="46dp"
                     android:background="@drawable/launcher_round_icon_green" />
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="公共聊天室"
-                    android:textColor="@color/launcher_text_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="清新绿意（默认）"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="当前启动界面的默认柔和主题"
+                        android:textColor="@color/launcher_text_muted_color"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
                 <TextView
-                    android:id="@+id/publicChatCheck"
+                    android:id="@+id/freshThemeCheck"
                     android:layout_width="24dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -71,9 +90,73 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/yukiAiRow"
+                android:id="@+id/nightThemeRow"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
+                android:layout_height="76dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/launcher_chat_option_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <ImageView
+                    android:id="@+id/rinneThemeLogo"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:background="@drawable/launcher_round_icon_purple"
+                    android:clipToOutline="true"
+                    android:contentDescription="@null"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/launcher_theme_rinne_logo" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="园神凛弥（风格）"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="不断的轮回，只为迎接新的未来"
+                        android:textColor="@color/launcher_text_muted_color"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/nightThemeCheck"
+                    android:layout_width="24dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="✓"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/pinkThemeRow"
+                android:layout_width="match_parent"
+                android:layout_height="76dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/launcher_chat_option_bg"
                 android:clickable="true"
@@ -86,62 +169,39 @@
                 <TextView
                     android:layout_width="46dp"
                     android:layout_height="46dp"
-                    android:background="@drawable/launcher_round_icon_blue" />
+                    android:background="@drawable/launcher_round_icon_pink" />
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="Yuki娘（AI）"
-                    android:textColor="@color/launcher_text_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="四季夏目（风格）"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="死亡的终点，寻求新的开始吧"
+                        android:textColor="@color/launcher_text_muted_color"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
                 <TextView
-                    android:id="@+id/yukiAiCheck"
-                    android:layout_width="24dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="✓"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/rinmiAiRow"
-                android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/launcher_chat_option_bg"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
-
-                <TextView
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:background="@drawable/launcher_round_icon_orange" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:text="园神凛弥（AI）"
-                    android:textColor="@color/launcher_text_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/rinmiAiCheck"
+                    android:id="@+id/pinkThemeCheck"
                     android:layout_width="24dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -157,12 +217,12 @@
                 android:layout_height="28dp" />
 
             <TextView
-                android:id="@+id/chatSelectContinue"
+                android:id="@+id/themeMenuApply"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:background="@drawable/launcher_account_primary_button"
                 android:gravity="center"
-                android:text="进入"
+                android:text="应用"
                 android:textColor="@color/launcher_on_primary_color"
                 android:textSize="14sp"
                 android:textStyle="bold" />

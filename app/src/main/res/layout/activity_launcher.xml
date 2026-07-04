@@ -5,6 +5,16 @@
     android:layout_height="match_parent"
     android:background="@drawable/launcher_bg">
 
+    <com.apps.LauncherParticleView
+        android:id="@+id/launcherParticleView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <FrameLayout
         android:id="@+id/launcherFragmentContainer"
         android:layout_width="0dp"
@@ -99,19 +109,33 @@
             android:orientation="vertical">
 
             <FrameLayout
+                android:id="@+id/navLaunchCenterCircle"
                 android:layout_width="58dp"
                 android:layout_height="58dp"
                 android:background="@drawable/launcher_icon_circle_green"
                 android:elevation="3dp">
 
                 <ImageView
-                    android:layout_width="29dp"
-                    android:layout_height="29dp"
+                    android:id="@+id/navLaunchCenterImage"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:contentDescription="@string/game_center"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_game_center"
-                    app:tint="@color/launcher_on_primary_color" />
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/launcher_game_center_default" />
+
+                <TextView
+                    android:id="@+id/navLaunchCenterText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/game_center"
+                    android:gravity="center"
+                    android:text="凛"
+                    android:textColor="@color/launcher_on_primary_color"
+                    android:textSize="23sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </FrameLayout>
         </LinearLayout>
 

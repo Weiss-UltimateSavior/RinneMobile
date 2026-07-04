@@ -29,6 +29,8 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         applySystemBarInsets();
         bindActions();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
+        applyIconTone();
         renderSelection();
     }
 
@@ -58,6 +60,10 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
                 Toast.makeText(this, selectedChat + " 待接入", Toast.LENGTH_SHORT).show());
     }
 
+    private void applyIconTone() {
+        binding.publicChatRow.getChildAt(0).setBackground(LauncherTheme.circle(this));
+    }
+
     private void selectChat(String chatName) {
         selectedChat = chatName;
         renderSelection();
@@ -69,14 +75,17 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
         boolean rinmiSelected = "园神凛弥（AI）".equals(selectedChat);
 
         binding.publicChatRow.setBackgroundResource(publicSelected
-                ? R.drawable.launcher_chat_option_selected
+                ? 0
                 : R.drawable.launcher_chat_option_bg);
+        if (publicSelected) binding.publicChatRow.setBackground(LauncherTheme.selectedOption(this));
         binding.yukiAiRow.setBackgroundResource(yukiSelected
-                ? R.drawable.launcher_chat_option_selected
+                ? 0
                 : R.drawable.launcher_chat_option_bg);
+        if (yukiSelected) binding.yukiAiRow.setBackground(LauncherTheme.selectedOption(this));
         binding.rinmiAiRow.setBackgroundResource(rinmiSelected
-                ? R.drawable.launcher_chat_option_selected
+                ? 0
                 : R.drawable.launcher_chat_option_bg);
+        if (rinmiSelected) binding.rinmiAiRow.setBackground(LauncherTheme.selectedOption(this));
 
         binding.publicChatCheck.setVisibility(publicSelected ? View.VISIBLE : View.INVISIBLE);
         binding.yukiAiCheck.setVisibility(yukiSelected ? View.VISIBLE : View.INVISIBLE);

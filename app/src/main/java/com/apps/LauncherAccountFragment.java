@@ -30,6 +30,7 @@ public class LauncherAccountFragment extends Fragment {
         applySystemBarInsets();
         bindActions();
         renderMode();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 
     @Override

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/launcher_bg">
+    android:layout_height="match_parent">
 
     <ScrollView
         android:id="@+id/manageScroll"
@@ -138,7 +137,89 @@
                         style="@style/LauncherManageArrow"
                         android:text=">" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/actionAppSettings"
+                    style="@style/LauncherManageItem">
+
+                    <TextView
+                        style="@style/LauncherManageIcon"
+                        android:text="A" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="应用设置" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/actionDiagnostics"
+                    style="@style/LauncherManageItem">
+
+                    <TextView
+                        style="@style/LauncherManageIcon"
+                        android:text="L" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="日志诊断" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
+                </LinearLayout>
             </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="扫描目录"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/scanDirectoryList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/scanDirectoryEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/launcher_white_card"
+                android:gravity="center"
+                android:text="还没有添加扫描目录"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/scanResultTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="最近扫描结果"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/scanResultDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/launcher_white_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

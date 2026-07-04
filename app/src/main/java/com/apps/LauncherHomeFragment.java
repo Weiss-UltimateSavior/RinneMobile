@@ -73,6 +73,8 @@ public class LauncherHomeFragment extends Fragment {
         setupRecentList();
         binding.launcherAvatarContainer.setClipToOutline(true);
         renderAvatar();
+        applyThemeStyle();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyIconTone();
         bindActions();
         observeState();
@@ -82,6 +84,9 @@ public class LauncherHomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        applyThemeStyle();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
+        applyIconTone();
         startStatsRefresh();
     }
 
@@ -153,6 +158,17 @@ public class LauncherHomeFragment extends Fragment {
         }
     }
 
+    private void applyThemeStyle() {
+        if (binding == null) return;
+        if (LauncherActivity.isRinneTheme(requireContext())) {
+            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_rinne_bg);
+            binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
+        } else {
+            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_bg);
+            binding.homeStatsScrim.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_home_stats_scrim);
+        }
+    }
+
     private void showPlaceholderMenu(View anchor) {
         if (binding == null || anchor == null) return;
         LinearLayout menu = new LinearLayout(requireContext());
@@ -165,10 +181,11 @@ public class LauncherHomeFragment extends Fragment {
         popupWindow.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         popupWindow.setElevation(dp(8));
 
-        addMenuItem(menu, "主题", popupWindow, null);
-        addMenuItem(menu, "色调", popupWindow, this::confirmToggleTone);
-        addMenuItem(menu, "测试", popupWindow, null);
-        addMenuItem(menu, "帮助", popupWindow, null);
+        addMenuItem(menu, "主题管理", popupWindow, () ->
+                startActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
+        addMenuItem(menu, "色调切换", popupWindow, this::confirmToggleTone);
+        addMenuItem(menu, "应用设置", popupWindow, null);
+        addMenuItem(menu, "关于应用", popupWindow, null);
 
         popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(132), dp(6), Gravity.NO_GRAVITY);
     }
@@ -176,7 +193,7 @@ public class LauncherHomeFragment extends Fragment {
     private void addMenuItem(LinearLayout menu, String label, PopupWindow popupWindow, @Nullable Runnable action) {
         TextView item = new TextView(requireContext());
         item.setText(label);
-        item.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_primary_color));
+        item.setTextColor(LauncherTheme.primary(requireContext()));
         item.setTextSize(14);
         item.setTypeface(null, android.graphics.Typeface.BOLD);
         item.setGravity(Gravity.CENTER_VERTICAL);
@@ -221,6 +238,7 @@ public class LauncherHomeFragment extends Fragment {
 
         titleView.setText("切换色调");
         messageView.setText("确定切换到" + nextTone + "吗？");
+        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {
             dialog.dismiss();
@@ -266,6 +284,7 @@ public class LauncherHomeFragment extends Fragment {
             title.setText(item.title);
             meta.setText(item.timeAndDuration);
             status.setText(item.status);
+            LauncherTheme.applyPrimaryTone(itemView);
             binding.recentList.addView(itemView);
         }
     }

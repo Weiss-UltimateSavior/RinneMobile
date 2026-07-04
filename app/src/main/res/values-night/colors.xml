@@ -15,4 +15,7 @@
     <color name="launcher_balance_start_color">#168A61</color>
     <color name="launcher_balance_end_color">#0D4F3C</color>
     <color name="launcher_balance_text_color">#BEEFD5</color>
+    <color name="launcher_home_stats_scrim_start">#E622D88E</color>
+    <color name="launcher_home_stats_scrim_mid">#B322D88E</color>
+    <color name="launcher_home_stats_scrim_end">#0022D88E</color>
 </resources>

@@ -28,6 +28,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         applySystemBarInsets();
         bindActions();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 
     private void applySystemBarInsets() {

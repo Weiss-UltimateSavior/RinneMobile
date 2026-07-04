@@ -2,6 +2,7 @@ package com.apps;
 
 import android.content.Intent;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,14 +24,16 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.data.MetadataRepository;
 import com.yuki.yukihub.databinding.FragmentLauncherLibraryBinding;
+import com.yuki.yukihub.launcher.EmulatorLauncher;
 import com.yuki.yukihub.metadata.VnMetadata;
+import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +45,11 @@ import java.util.TreeMap;
 public class LauncherLibraryFragment extends Fragment {
     private static final int GRID_COLUMNS = 2;
     private static final int PAGE_SIZE = 8;
+    private static final long MIN_PLAY_SESSION_MS = 0L;
+    private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
+    private static final String APP_PREFS = "yukihub_prefs";
+    private static final String KEY_KR_COMPAT_MODE = "kr_compat_mode";
+    private static final String KEY_KR_ENGINE_VERSION = "kr_engine_version";
     private static final String CATEGORY_RECENT = "status:recent";
     private static final String CATEGORY_PLAYING = "status:playing";
     private static final String CATEGORY_COMPLETED = "status:completed";
@@ -60,6 +68,8 @@ public class LauncherLibraryFragment extends Fragment {
     private String searchQuery = "";
     private boolean loading;
     private boolean fullyLoaded;
+    private boolean categoriesCollapsed;
+    private long runningSessionId = -1L;
 
     @Nullable
     @Override
@@ -75,6 +85,12 @@ public class LauncherLibraryFragment extends Fragment {
         setupSearchAndCategories();
         setupRecycler();
         loadGames();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        finishDirectPlaySessionIfNeeded();
     }
 
     @Override
@@ -153,6 +169,12 @@ public class LauncherLibraryFragment extends Fragment {
                 InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                 if (imm != null) imm.hideSoftInputFromWindow(binding.librarySearchInput.getWindowToken(), 0);
             }
+            renderToolbarButtonState();
+        });
+        binding.libraryCollapseButton.setOnClickListener(view -> {
+            categoriesCollapsed = !categoriesCollapsed;
+            binding.libraryCategoryScroll.setVisibility(categoriesCollapsed ? View.GONE : View.VISIBLE);
+            renderToolbarButtonState();
         });
         binding.librarySearchInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
@@ -162,6 +184,7 @@ public class LauncherLibraryFragment extends Fragment {
             }
             @Override public void afterTextChanged(Editable s) { }
         });
+        renderToolbarButtonState();
     }
 
     private void loadGames() {
@@ -193,6 +216,9 @@ public class LauncherLibraryFragment extends Fragment {
             if (!query.isEmpty() && !safeTitle(game).toLowerCase(Locale.ROOT).contains(query)) continue;
             if (selectedCategory != null && !selectedCategory.isEmpty() && !matchesCategory(game, selectedCategory)) continue;
             filteredGames.add(game);
+        }
+        if (selectedCategory == null || selectedCategory.isEmpty()) {
+            sortGamesByTitle(filteredGames);
         }
         visibleGames.clear();
         fullyLoaded = filteredGames.isEmpty();
@@ -237,11 +263,112 @@ public class LauncherLibraryFragment extends Fragment {
         }
     }
 
-    private void launchGameInMainActivity(Game game) {
-        Intent intent = new Intent(requireContext(), MainActivity.class);
-        intent.putExtra(MainActivity.EXTRA_LAUNCH_ACTION, MainActivity.ACTION_LAUNCH_GAME);
-        intent.putExtra(MainActivity.EXTRA_LAUNCH_GAME_ID, game.id);
-        startActivity(intent);
+    private void launchGameDirectly(Game game) {
+        if (game == null) return;
+        Context context = requireContext();
+        GameRepository repository = new GameRepository(context.getApplicationContext());
+        String emulatorPackage = resolveEmulatorPackage(game);
+        String launchTarget = resolveLaunchTarget(game);
+        if (game.engine == EngineType.GAMEHUB) {
+            String ghMode = game.gamehubLaunchMode == null ? "game" : game.gamehubLaunchMode.trim().toLowerCase(Locale.ROOT);
+            if (!("program".equals(ghMode) || "normal".equals(ghMode))
+                    && (game.gamehubLocalGameId == null || game.gamehubLocalGameId.trim().isEmpty())) {
+                Toast.makeText(context, "请先在游戏中心编辑游戏，导入 GameHub localGameId。", Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+        if (emulatorPackage.isEmpty()) {
+            Toast.makeText(context, "请先在游戏中心编辑游戏，填写模拟器包名。", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        long sessionId = repository.startPlaySession(game.id, System.currentTimeMillis(), resolveLaunchType(emulatorPackage));
+        if (startGameActivity(context, game, emulatorPackage, launchTarget)) {
+            runningSessionId = sessionId;
+        } else {
+            repository.cancelPlaySession(sessionId);
+            Toast.makeText(context, "启动失败：未找到该模拟器，或该模拟器不接受当前启动目标", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void finishDirectPlaySessionIfNeeded() {
+        if (runningSessionId <= 0L) return;
+        Context context = getContext();
+        if (context == null) return;
+        new GameRepository(context.getApplicationContext()).finishPlaySession(
+                runningSessionId,
+                System.currentTimeMillis(),
+                MIN_PLAY_SESSION_MS,
+                MAX_PLAY_SESSION_MS
+        );
+        runningSessionId = -1L;
+        loadGames();
+    }
+
+    private String resolveEmulatorPackage(Game game) {
+        String emulatorPackage = game.emulatorPackage == null ? "" : game.emulatorPackage.trim();
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.KIRIKIRI) return "internal.krkr";
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return "internal.ons";
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return "internal.tyrano";
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return "org.ppsspp.ppsspp";
+        if (game.engine == EngineType.ARTEMIS && emulatorPackage.isEmpty()) return "internal.artemis";
+        return emulatorPackage;
+    }
+
+    private String resolveLaunchTarget(Game game) {
+        if (game.engine == EngineType.ARTEMIS || game.engine == EngineType.TYRANO) return "[游戏目录]";
+        if (game.engine == EngineType.GAMEHUB) return safeTitle(game);
+        return game.launchTarget;
+    }
+
+    private boolean startGameActivity(Context context, Game game, String emulatorPackage, String launchTarget) {
+        String pkg = emulatorPackage == null ? "" : emulatorPackage.trim();
+        try {
+            if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) {
+                SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
+                boolean compatMode = prefs.getBoolean(KEY_KR_COMPAT_MODE, false);
+                String krEngineVersion = prefs.getString(KEY_KR_ENGINE_VERSION, "auto");
+                return startActivitySafely(EmulatorLauncher.buildInternalKrkrIntent(context, game.rootUri, launchTarget, false, compatMode, krEngineVersion, false));
+            }
+            if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) {
+                return startActivitySafely(EmulatorLauncher.buildInternalTyranoIntent(context, game.rootUri, launchTarget));
+            }
+            if (pkg.startsWith("internal.ons") || pkg.equals("com.yuki.yukihub.ons")) {
+                return startActivitySafely(EmulatorLauncher.buildInternalOnsIntent(context, game.rootUri, launchTarget));
+            }
+            if (pkg.startsWith("internal.artemis")) {
+                return startActivitySafely(EmulatorLauncher.buildInternalArtemisIntent(context, pkg, game.rootUri, launchTarget));
+            }
+            if (pkg.startsWith("internal.psp") || pkg.equals("org.ppsspp.ppsspp")) {
+                if (!EmulatorLauncher.isPPSSPPInstalled(context)) {
+                    Toast.makeText(context, "启动 PSP 游戏需要安装 PPSSPP 模拟器。", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+                return startActivitySafely(EmulatorLauncher.buildInternalPspIntent(context, game.rootUri, launchTarget));
+            }
+            return EmulatorLauncher.launchGame(context, pkg, game.rootUri, launchTarget, game.winlatorLaunchMode, game.gamehubLaunchMode, game.gamehubLocalGameId);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private boolean startActivitySafely(Intent intent) {
+        if (intent == null) return false;
+        try {
+            startActivity(intent);
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private String resolveLaunchType(String emulatorPackage) {
+        String pkg = emulatorPackage == null ? "" : emulatorPackage.trim().toLowerCase(Locale.ROOT);
+        if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) return "internal.krkr";
+        if (pkg.startsWith("internal.ons") || pkg.equals("com.yuki.yukihub.ons")) return "internal.ons";
+        if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) return "internal.tyrano";
+        if (pkg.startsWith("internal.artemis")) return pkg;
+        return "external";
     }
 
     private void confirmLaunchGame(Game game) {
@@ -268,11 +395,12 @@ public class LauncherLibraryFragment extends Fragment {
 
             titleView.setText("启动游戏");
             messageView.setText("确定启动「" + safeTitle(game) + "」吗？");
+            LauncherTheme.dialogButtons(btnCancel, btnConfirm);
 
             btnCancel.setOnClickListener(v -> dialog.dismiss());
             btnConfirm.setOnClickListener(v -> {
                 dialog.dismiss();
-                launchGameInMainActivity(game);
+                launchGameDirectly(game);
             });
         }
     }
@@ -325,14 +453,11 @@ public class LauncherLibraryFragment extends Fragment {
         chip.setSingleLine(true);
         chip.setGravity(android.view.Gravity.CENTER);
         chip.setTextSize(13);
-        chip.setTextColor(ContextCompat.getColor(
-                requireContext(),
-                selected
-                        ? com.yuki.yukihub.R.color.launcher_on_primary_color
-                        : com.yuki.yukihub.R.color.launcher_primary_color
-        ));
+        chip.setTextColor(selected ? LauncherTheme.onPrimary(requireContext()) : LauncherTheme.primary(requireContext()));
         chip.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-        chip.setBackgroundResource(selected ? com.yuki.yukihub.R.drawable.launcher_filter_chip_selected : com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected);
+        chip.setBackground(selected
+                ? LauncherTheme.selectedChip(requireContext())
+                : ContextCompat.getDrawable(requireContext(), com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected));
         chip.setPadding(dp(14), 0, dp(14), 0);
         chip.setOnClickListener(view -> {
             selectedCategory = value;
@@ -342,6 +467,33 @@ public class LauncherLibraryFragment extends Fragment {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(32));
         lp.setMargins(0, 0, dp(8), 0);
         binding.libraryCategoryRow.addView(chip, lp);
+    }
+
+    private void renderToolbarButtonState() {
+        if (binding == null) return;
+        applyToolbarChipState(binding.librarySearchButton, binding.librarySearchInput.getVisibility() == View.VISIBLE);
+        applyToolbarChipState(binding.libraryCollapseButton, categoriesCollapsed);
+    }
+
+    private void applyToolbarChipState(TextView view, boolean selected) {
+        view.setTextColor(selected ? LauncherTheme.onPrimary(requireContext()) : LauncherTheme.primary(requireContext()));
+        view.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        view.setBackground(selected
+                ? LauncherTheme.selectedChip(requireContext())
+                : ContextCompat.getDrawable(requireContext(), com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected));
+    }
+
+    private void sortGamesByTitle(List<Game> games) {
+        if (games == null || games.size() <= 1) return;
+        Collator collator = Collator.getInstance(Locale.CHINA);
+        collator.setStrength(Collator.PRIMARY);
+        Collections.sort(games, (left, right) -> {
+            int result = collator.compare(safeTitle(left), safeTitle(right));
+            if (result != 0) return result;
+            long leftId = left == null ? 0L : left.id;
+            long rightId = right == null ? 0L : right.id;
+            return Long.compare(leftId, rightId);
+        });
     }
 
     private boolean matchesCategory(Game game, String category) {
