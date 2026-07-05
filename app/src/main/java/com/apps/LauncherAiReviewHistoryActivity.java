@@ -1,6 +1,7 @@
 package com.apps;
 
 import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -16,16 +17,12 @@ import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.ai.AiReviewHistoryStore;
-import com.yuki.yukihub.ai.AiReviewResult;
-import com.yuki.yukihub.util.TimeFormatUtil;
 
 import java.util.List;
 
 public class LauncherAiReviewHistoryActivity extends AppCompatActivity {
     private ScrollView scroll;
     private LinearLayout list;
-    private TextView detailTitle;
-    private TextView detailBody;
     private TextView btnClear;
 
     @Override
@@ -36,7 +33,6 @@ public class LauncherAiReviewHistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_launcher_ai_review_history);
         bindViews();
         applySystemBarInsets();
-        applyThemeTone();
         bindActions();
         loadHistory();
     }
@@ -44,8 +40,6 @@ public class LauncherAiReviewHistoryActivity extends AppCompatActivity {
     private void bindViews() {
         scroll = findViewById(R.id.aiHistoryScroll);
         list = findViewById(R.id.aiHistoryList);
-        detailTitle = findViewById(R.id.aiHistoryDetailTitle);
-        detailBody = findViewById(R.id.aiHistoryDetailBody);
         btnClear = findViewById(R.id.aiHistoryClear);
     }
 
@@ -62,21 +56,25 @@ public class LauncherAiReviewHistoryActivity extends AppCompatActivity {
         list.removeAllViews();
         if (entries.isEmpty()) {
             list.addView(historyItem("暂无点评历史", "生成点评后会显示在这里", null));
-            detailTitle.setText("暂无详情");
-            detailBody.setText("还没有保存过的智能评价。");
             return;
         }
-        for (AiReviewHistoryStore.Entry entry : entries) {
-            list.addView(historyItem(entry.displayTitle(), entry.displaySummary(), () -> renderEntry(entry)));
+        for (int i = 0; i < entries.size(); i++) {
+            final int index = i;
+            AiReviewHistoryStore.Entry entry = entries.get(i);
+            list.addView(historyItem(entry.displayTitle(), entry.displaySummary(), () -> openDetail(index)));
         }
-        renderEntry(entries.get(0));
+    }
+
+    private void openDetail(int index) {
+        Intent intent = new Intent(this, LauncherAiReviewDetailActivity.class);
+        intent.putExtra(LauncherAiReviewDetailActivity.EXTRA_ENTRY_INDEX, index);
+        startActivity(intent);
     }
 
     private View historyItem(String title, String summary, @Nullable Runnable action) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(LauncherTheme.dp(this, 14f), LauncherTheme.dp(this, 12f), LauncherTheme.dp(this, 14f), LauncherTheme.dp(this, 12f));
-        row.setBackground(LauncherTheme.cancelChip(this));
+        row.setPadding(0, LauncherTheme.dp(this, 8f), 0, LauncherTheme.dp(this, 8f));
 
         TextView titleView = new TextView(this);
         titleView.setText(title);
@@ -96,25 +94,10 @@ public class LauncherAiReviewHistoryActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, 0, 0, LauncherTheme.dp(this, 10f));
+        params.setMargins(0, 0, 0, LauncherTheme.dp(this, 6f));
         row.setLayoutParams(params);
         if (action != null) row.setOnClickListener(view -> action.run());
         return row;
-    }
-
-    private void renderEntry(AiReviewHistoryStore.Entry entry) {
-        if (entry == null || entry.result == null) return;
-        AiReviewResult result = entry.result;
-        detailTitle.setText(result.title);
-        detailBody.setText(entry.displaySummary()
-                + "\n总时长：" + TimeFormatUtil.playTime(entry.totalDuration)
-                + "\n\n" + result.toShareText());
-    }
-
-    private void applyThemeTone() {
-        btnClear.setBackground(LauncherTheme.cancelChip(this));
-        LauncherTheme.textPrimary(btnClear);
-        LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
     }
 
     private void applySystemBarInsets() {

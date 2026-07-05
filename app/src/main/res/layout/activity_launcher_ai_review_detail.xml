@@ -5,7 +5,7 @@
     android:background="@drawable/launcher_bg">
 
     <ScrollView
-        android:id="@+id/aiHistoryScroll"
+        android:id="@+id/aiDetailScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -13,6 +13,7 @@
         android:overScrollMode="never">
 
         <LinearLayout
+            android:id="@+id/aiDetailContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -22,30 +23,38 @@
             android:paddingBottom="28dp">
 
             <TextView
+                android:id="@+id/aiDetailTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="点评历史"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
-                android:id="@+id/aiHistoryList"
+            <TextView
+                android:id="@+id/aiDetailMeta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/aiDetailCardContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
                 android:orientation="vertical" />
 
             <TextView
-                android:id="@+id/aiHistoryClear"
+                android:id="@+id/aiDetailClose"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="46dp"
                 android:layout_marginTop="18dp"
                 android:background="@drawable/launcher_account_primary_button"
                 android:gravity="center"
-                android:text="清空历史"
+                android:text="关闭"
                 android:textColor="@color/launcher_on_primary_color"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </ScrollView>

@@ -128,6 +128,24 @@
             android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
 
         <activity
+            android:name="com.apps.LauncherDisclaimerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
+
+        <activity
+            android:name="com.apps.LauncherAiReviewDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
+
+        <activity
+            android:name="com.apps.LauncherAiReviewImagePreviewActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
+
+        <activity
             android:name="com.apps.LauncherRegisterActivity"
             android:exported="false"
             android:screenOrientation="portrait"

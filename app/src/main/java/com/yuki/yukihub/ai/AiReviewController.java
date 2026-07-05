@@ -147,6 +147,46 @@ public class AiReviewController {
     public void showAiReviewHistoryDialog() { showAiReviewHistoryDialogImpl(); }
     public WeeklyPlayStats buildWeeklyPlayStats() { return buildWeeklyPlayStatsImpl(AiReviewSettings.load(activity), false); }
     public WeeklyPlayStats buildWeeklyPlayStats(AiReviewSettings s, boolean o) { return buildWeeklyPlayStatsImpl(s, o); }
+    public void openImageTemplateDialog(AiReviewResult result) { showAiReviewImageTemplateDialog(result); }
+
+    public ImageResult generateAiReviewImageSync(AiReviewResult result, int templateStyle) throws Exception {
+        Bitmap bitmap = buildAiReviewShareBitmap(result, templateStyle);
+        int imageW = bitmap.getWidth();
+        int imageH = bitmap.getHeight();
+        File dir = new File(activity.getCacheDir(), "ai_review_share");
+        if (!dir.exists()) dir.mkdirs();
+        cleanupAiReviewShareCache(dir);
+        File out = new File(dir, "yukihub_ai_review_" + templateStyle + "_" + System.currentTimeMillis() + ".png");
+        try (FileOutputStream fos = new FileOutputStream(out)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        }
+        bitmap.recycle();
+        Uri uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".fileprovider", out);
+        return new ImageResult(uri, imageW, imageH);
+    }
+
+    public void shareAiReviewImage(Uri uri) { shareAiReviewImageUri(uri); }
+
+    public void saveAiReviewImageToGallery(Uri uri, String label) { saveAiReviewImageToGalleryImpl(uri, label); }
+
+    public static final class ImageResult {
+        public final Uri uri;
+        public final int width;
+        public final int height;
+        public ImageResult(Uri uri, int width, int height) {
+            this.uri = uri;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    public static String[] getTemplateLabels() {
+        return new String[]{"霓虹周报", "手账风报告", "极简主义报告"};
+    }
+
+    public static String getTemplatePrefix(int style) {
+        return style == 0 ? "✦ " : style == 1 ? "✎ " : "◇ ";
+    }
 
 private void showAiReviewDialogImpl() {
     WeeklyPlayStats stats = buildWeeklyPlayStats();
@@ -1086,7 +1126,7 @@ private void shareAiReviewImageUri(Uri uri) {
     }
 }
 
-private void saveAiReviewImageToGallery(Uri sourceUri, String templateLabel) {
+private void saveAiReviewImageToGalleryImpl(Uri sourceUri, String templateLabel) {
     if (sourceUri == null) return;
     if (Build.VERSION.SDK_INT < 29 && Build.VERSION.SDK_INT >= 23 && activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
         activity.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1002);

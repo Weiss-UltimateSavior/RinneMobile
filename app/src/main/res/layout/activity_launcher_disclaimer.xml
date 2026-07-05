@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_bg">
+
+    <LinearLayout
+        android:id="@+id/disclaimerContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="22dp">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.6" />
+
+        <FrameLayout
+            android:layout_width="100dp"
+            android:layout_height="86dp">
+
+            <TextView
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="center"
+                android:background="@drawable/launcher_pending_icon_bg"
+                android:gravity="center"
+                android:text="i"
+                android:textColor="@color/launcher_on_primary_color"
+                android:textSize="28sp"
+                android:textStyle="bold|italic" />
+
+            <TextView
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/launcher_pending_icon_bg" />
+
+            <TextView
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/launcher_pending_icon_bg" />
+
+            <TextView
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="9dp"
+                android:background="@drawable/launcher_pending_icon_bg" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/disclaimerTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center"
+            android:text="免责声明"
+            android:textColor="@color/launcher_text_color"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="5"
+            android:layout_marginTop="14dp"
+            android:fillViewport="true">
+
+            <TextView
+                android:id="@+id/disclaimerBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:lineSpacingMultiplier="1.1"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="13sp" />
+        </ScrollView>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.4" />
+
+        <TextView
+            android:id="@+id/disclaimerClose"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:background="@drawable/launcher_account_primary_button"
+            android:gravity="center"
+            android:text="关闭"
+            android:textColor="@color/launcher_on_primary_color"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</FrameLayout>

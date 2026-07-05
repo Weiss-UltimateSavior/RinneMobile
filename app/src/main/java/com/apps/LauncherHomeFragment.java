@@ -28,9 +28,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
-import com.yuki.yukihub.launcherbridge.YukiHubBridge;
+import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 import com.yuki.yukihub.util.SafeImageLoader;
 
 import java.util.List;
@@ -187,10 +186,8 @@ public class LauncherHomeFragment extends Fragment {
         addMenuItem(menu, "主题管理", popupWindow, () ->
                 startActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
         addMenuItem(menu, "色调切换", popupWindow, this::confirmToggleTone);
-        addMenuItem(menu, "应用设置", popupWindow, () ->
-                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_SETTINGS));
-        addMenuItem(menu, "关于应用", popupWindow, () ->
-                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_DISCLAIMER));
+        addMenuItem(menu, "检查更新", popupWindow, this::checkUpdate);
+        addMenuItem(menu, "免责声明", popupWindow, this::openDisclaimer);
 
         popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(132), dp(6), Gravity.NO_GRAVITY);
     }
@@ -358,6 +355,151 @@ public class LauncherHomeFragment extends Fragment {
 
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void checkUpdate() {
+        Toast.makeText(requireContext(), "正在检查更新...", Toast.LENGTH_SHORT).show();
+        LauncherUpdateBridge.checkUpdate(requireContext(), new LauncherUpdateBridge.Callback() {
+            @Override
+            public void onResult(LauncherUpdateBridge.UpdateInfo info, String currentVersion, boolean hasUpdate) {
+                if (!isAdded()) return;
+                showUpdateResultDialog(info, currentVersion, hasUpdate, null);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                showUpdateResultDialog(null, "", false, message);
+            }
+        });
+    }
+
+    private void showUpdateResultDialog(LauncherUpdateBridge.UpdateInfo info, String currentVersion, boolean hasUpdate, String error) {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText(hasUpdate ? "发现新版本" : "检查更新");
+        title.setGravity(Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(18);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(requireContext());
+        message.setGravity(Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        message.setTextSize(13);
+        message.setLineSpacing(dp(2), 1.05f);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(12), 0, 0);
+
+        if (error != null) {
+            message.setText(error);
+            root.addView(message, msgLp);
+            root.addView(primaryDialogButton("知道了", v -> dialog.dismiss()), buttonLp());
+        } else if (hasUpdate && info != null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("当前版本：").append(emptyOr(currentVersion, "未知")).append("\n");
+            sb.append("最新版本：").append(emptyOr(info.tagName, info.version)).append("\n\n");
+            String body = trimUpdateBody(info.body, 1600);
+            if (body != null && !body.trim().isEmpty()) {
+                sb.append("更新内容：\n").append(body.trim());
+            } else {
+                sb.append("发现新的 GitHub Release，可前往发布页查看详情。");
+            }
+            message.setText(sb.toString());
+            root.addView(message, msgLp);
+
+            root.addView(primaryDialogButton("前往下载", v -> {
+                dialog.dismiss();
+                openExternalUrl(emptyOr(info.apkUrl, info.releaseUrl));
+            }), buttonLp());
+            root.addView(secondaryDialogButton("发布页", v -> {
+                dialog.dismiss();
+                openExternalUrl(emptyOr(info.releaseUrl, "https://github.com/xm486/YukiHub/releases"));
+            }), buttonLp());
+            root.addView(cancelDialogButton("稍后", v -> dialog.dismiss()), buttonLp());
+        } else {
+            message.setText("已是最新版本：" + emptyOr(currentVersion, "未知"));
+            root.addView(message, msgLp);
+            root.addView(primaryDialogButton("知道了", v -> dialog.dismiss()), buttonLp());
+        }
+
+        window.setContentView(root);
+    }
+
+    private void openDisclaimer() {
+        startActivity(new Intent(requireContext(), LauncherDisclaimerActivity.class));
+    }
+
+    private void openExternalUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Throwable throwable) {
+            Toast.makeText(requireContext(), "无法打开链接", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private TextView primaryDialogButton(String text, View.OnClickListener listener) {
+        TextView button = new TextView(requireContext());
+        button.setText(text);
+        button.setGravity(Gravity.CENTER);
+        button.setTextColor(LauncherTheme.onPrimary(requireContext()));
+        button.setTextSize(14);
+        button.setTypeface(null, android.graphics.Typeface.BOLD);
+        button.setBackground(LauncherTheme.primaryButton(requireContext(), 22f));
+        button.setOnClickListener(listener);
+        return button;
+    }
+
+    private TextView secondaryDialogButton(String text, View.OnClickListener listener) {
+        TextView button = new TextView(requireContext());
+        button.setText(text);
+        button.setGravity(Gravity.CENTER);
+        button.setTextColor(LauncherTheme.primary(requireContext()));
+        button.setTextSize(14);
+        button.setTypeface(null, android.graphics.Typeface.BOLD);
+        button.setBackground(LauncherTheme.cancelChip(requireContext()));
+        button.setOnClickListener(listener);
+        return button;
+    }
+
+    private TextView cancelDialogButton(String text, View.OnClickListener listener) {
+        TextView button = new TextView(requireContext());
+        button.setText(text);
+        button.setGravity(Gravity.CENTER);
+        button.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        button.setTextSize(14);
+        button.setOnClickListener(listener);
+        return button;
+    }
+
+    private LinearLayout.LayoutParams buttonLp() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
+        lp.setMargins(0, dp(10), 0, 0);
+        return lp;
+    }
+
+    private String emptyOr(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
+    }
+
+    private String trimUpdateBody(String text, int max) {
+        if (text == null) return "";
+        String t = text.trim();
+        if (max <= 0 || t.length() <= max) return t;
+        return t.substring(0, max) + "\n...";
     }
 
 }
