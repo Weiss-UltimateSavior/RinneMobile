@@ -247,6 +247,7 @@ public class LauncherHomeFragment extends Fragment {
         btnConfirm.setOnClickListener(view -> {
             dialog.dismiss();
             LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode);
+            requireActivity().recreate();
         });
     }
 

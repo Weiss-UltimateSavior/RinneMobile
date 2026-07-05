@@ -1,6 +1,5 @@
 package com.apps;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
@@ -21,15 +20,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-public class ResourceStationActivity extends Activity {
+public class ResourceStationActivity extends AppCompatActivity {
     private static final String RESOURCE_STATION_URL = "https://www.kungal.com";
 
     private WebView webView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
         configureImmersiveStatusBar();
 

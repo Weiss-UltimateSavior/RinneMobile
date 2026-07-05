@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
@@ -69,8 +68,6 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     }
 
     private void applySavedToneMode() {
-        AppCompatDelegate.setDefaultNightMode(LauncherActivity.isLauncherDarkMode(this)
-                ? AppCompatDelegate.MODE_NIGHT_YES
-                : AppCompatDelegate.MODE_NIGHT_NO);
+        LauncherActivity.applySavedToneMode(this);
     }
 }

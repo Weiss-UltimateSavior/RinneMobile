@@ -212,9 +212,6 @@ public class LauncherActivity extends AppCompatActivity {
                 .edit()
                 .putBoolean(KEY_LAUNCHER_DARK_MODE, darkMode)
                 .apply();
-        AppCompatDelegate.setDefaultNightMode(darkMode
-                ? AppCompatDelegate.MODE_NIGHT_YES
-                : AppCompatDelegate.MODE_NIGHT_NO);
     }
 
     static boolean isLauncherDarkMode(android.content.Context context) {
@@ -252,9 +249,14 @@ public class LauncherActivity extends AppCompatActivity {
         return isLauncherDarkMode(this);
     }
 
-    private void applySavedToneMode() {
-        AppCompatDelegate.setDefaultNightMode(isLauncherDarkMode()
+    static void applySavedToneMode(AppCompatActivity activity) {
+        if (activity == null) return;
+        activity.getDelegate().setLocalNightMode(isLauncherDarkMode(activity)
                 ? AppCompatDelegate.MODE_NIGHT_YES
                 : AppCompatDelegate.MODE_NIGHT_NO);
+    }
+
+    private void applySavedToneMode() {
+        applySavedToneMode(this);
     }
 }
