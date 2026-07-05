@@ -33,7 +33,7 @@
                     android:id="@+id/accountLogo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="YukiHub"
+                    android:text="Rinne Mobile"
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="14sp"
                     android:textStyle="bold" />

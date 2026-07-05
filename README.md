@@ -109,14 +109,29 @@
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>主界面</b></td>
+      <td align="center"><b>进入界面</b></td>
       <td align="center"><b>同步页面</b></td>
-      <td align="center"><b>游戏详情页</b></td>
+      <td align="center"><b>游戏仓库</b></td>
     </tr>
     <tr>
       <td><img src="screenshots/main.jpg" width="280" /></td>
       <td><img src="screenshots/tongbu.jpg" width="280" /></td>
       <td><img src="screenshots/game.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>风格主题</b></td>
+      <td align="center"><b>深色模式</b></td>
+      <td align="center"><b>线上功能</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/theme.jpg" width="280" /></td>
+      <td><img src="screenshots/dark.jpg" width="280" /></td>
+      <td><img src="screenshots/net.jpg" width="280" /></td>
     </tr>
   </table>
 </p>
