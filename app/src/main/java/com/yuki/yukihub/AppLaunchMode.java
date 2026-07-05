@@ -12,7 +12,7 @@ public final class AppLaunchMode {
 
     public static boolean isYukiMobileUiEnabled(Context context) {
         if (context == null) return false;
-        return prefs(context).getBoolean(KEY_YUKI_MOBILE_UI_ENABLED, false);
+        return prefs(context).getBoolean(KEY_YUKI_MOBILE_UI_ENABLED, true);
     }
 
     public static void setYukiMobileUiEnabled(Context context, boolean enabled) {

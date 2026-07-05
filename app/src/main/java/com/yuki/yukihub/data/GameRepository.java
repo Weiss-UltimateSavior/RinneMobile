@@ -42,6 +42,18 @@ public class GameRepository {
         return list;
     }
 
+    public Game findById(long id) {
+        if (id <= 0) return null;
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor c = db.query("games", null, "id=?", new String[]{String.valueOf(id)}, null, null, null);
+        try {
+            if (c.moveToNext()) return fromCursor(c);
+            return null;
+        } finally {
+            c.close();
+        }
+    }
+
     public long insert(Game game) {
         SQLiteDatabase db = helper.getWritableDatabase();
         long now = System.currentTimeMillis();

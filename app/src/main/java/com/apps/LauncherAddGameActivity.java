@@ -27,6 +27,7 @@ import androidx.documentfile.provider.DocumentFile;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.data.GameRepository;
+import com.yuki.yukihub.launcherbridge.LauncherCoverBridge;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.scanner.EngineDetector;
@@ -121,13 +122,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 new EngineOption(EngineType.GAMEHUB, "GameHub"),
                 new EngineOption(EngineType.PSP, "PSP")
         };
-        ArrayAdapter<EngineOption> adapter = new ArrayAdapter<EngineOption>(
-                this,
-                android.R.layout.simple_spinner_item,
-                options
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<EngineOption> adapter = LauncherTheme.spinnerAdapter(this, options);
         engineSpinner.setAdapter(adapter);
+        LauncherTheme.styleSpinner(engineSpinner);
         engineSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -214,6 +211,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
             GameRepository repository = new GameRepository(appContext);
             long id = repository.insertIfNotExists(game);
+            if (id > 0 && copiedCover == null) {
+                game.id = id;
+                LauncherCoverBridge.fetchCoverForGameAsync(appContext, game);
+            }
             runOnUiThread(() -> {
                 saveButton.setEnabled(true);
                 saveButton.setText("保存");
@@ -351,5 +352,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         public String toString() {
             return label;
         }
+    }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 }

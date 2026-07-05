@@ -278,7 +278,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="↩"
-                    android:textColor="#F04444"
+                    android:textColor="@color/launcher_danger_color"
                     android:textSize="18sp" />
 
                 <TextView
@@ -287,7 +287,7 @@
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:text="退出登录"
-                    android:textColor="#F04444"
+                    android:textColor="@color/launcher_danger_color"
                     android:textSize="15sp"
                     android:textStyle="bold" />
                 </LinearLayout>

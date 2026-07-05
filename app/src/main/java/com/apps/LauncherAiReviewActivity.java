@@ -109,9 +109,9 @@ public class LauncherAiReviewActivity extends AppCompatActivity {
     }
 
     private void setupSpinner(Spinner spinner, String[] values) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, values);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = LauncherTheme.spinnerAdapter(this, values);
         spinner.setAdapter(adapter);
+        LauncherTheme.styleSpinner(spinner);
     }
 
     private void loadSettings() {
@@ -231,5 +231,10 @@ public class LauncherAiReviewActivity extends AppCompatActivity {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         }
         window.getDecorView().setSystemUiVisibility(flags);
+    }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 }

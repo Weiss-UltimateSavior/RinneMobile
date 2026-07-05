@@ -4,11 +4,15 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
@@ -17,29 +21,68 @@ final class LauncherTheme {
     private LauncherTheme() {
     }
 
+    private static Context uiContext(Context context) {
+        Context wrapped = LauncherActivity.wrapLauncherUiMode(context);
+        return wrapped == null ? context : wrapped;
+    }
+
+    private static int color(Context context, int colorResId) {
+        return ContextCompat.getColor(uiContext(context), colorResId);
+    }
+
     static int primary(Context context) {
         return LauncherActivity.launcherPrimaryColor(context);
     }
 
     static int onPrimary(Context context) {
-        return ContextCompat.getColor(context, R.color.launcher_on_primary_color);
+        return color(context, R.color.launcher_on_primary_color);
     }
 
     static int card(Context context) {
-        return ContextCompat.getColor(context, R.color.launcher_card_color);
+        return color(context, R.color.launcher_card_color);
     }
 
     static int line(Context context) {
-        return ContextCompat.getColor(context, R.color.launcher_line_color);
+        return color(context, R.color.launcher_line_color);
+    }
+
+    static int text(Context context) {
+        return color(context, R.color.launcher_text_color);
+    }
+
+    static int textMuted(Context context) {
+        return color(context, R.color.launcher_text_muted_color);
     }
 
     static int primaryText(Context context) {
-        return ContextCompat.getColor(context, R.color.launcher_primary_color);
+        return color(context, R.color.launcher_primary_color);
+    }
+
+    static int danger(Context context) {
+        return color(context, R.color.launcher_danger_color);
+    }
+
+    static int onDanger(Context context) {
+        return color(context, R.color.launcher_on_danger_color);
     }
 
     static GradientDrawable primaryButton(Context context, float radiusDp) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(primary(context));
+        drawable.setCornerRadius(dp(context, radiusDp));
+        return drawable;
+    }
+
+    static GradientDrawable secondaryButton(Context context, float radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(card(context));
+        drawable.setCornerRadius(dp(context, radiusDp));
+        return drawable;
+    }
+
+    static GradientDrawable dangerButton(Context context, float radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(danger(context));
         drawable.setCornerRadius(dp(context, radiusDp));
         return drawable;
     }
@@ -63,18 +106,13 @@ final class LauncherTheme {
     }
 
     static GradientDrawable cancelChip(Context context) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(card(context));
-        drawable.setCornerRadius(dp(context, 999f));
-        drawable.setStroke(dp(context, 1f), line(context));
-        return drawable;
+        return secondaryButton(context, 999f);
     }
 
     static GradientDrawable selectedOption(Context context) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(card(context));
         drawable.setCornerRadius(dp(context, 10f));
-        drawable.setStroke(dp(context, 1f), primary(context));
         return drawable;
     }
 
@@ -115,7 +153,7 @@ final class LauncherTheme {
     static void chip(TextView view, boolean selected) {
         if (view == null) return;
         view.setTextColor(selected ? onPrimary(view.getContext()) : primary(view.getContext()));
-        view.setBackground(selected ? selectedChip(view.getContext()) : view.getContext().getDrawable(R.drawable.launcher_filter_chip_unselected));
+        view.setBackground(selected ? selectedChip(view.getContext()) : secondaryButton(view.getContext(), 999f));
     }
 
     static void primaryButton(TextView view) {
@@ -124,10 +162,65 @@ final class LauncherTheme {
         view.setBackground(primaryButton(view.getContext(), 22f));
     }
 
+    static void secondaryButton(TextView view) {
+        if (view == null) return;
+        view.setTextColor(primary(view.getContext()));
+        view.setBackground(secondaryButton(view.getContext(), 22f));
+    }
+
+    static void dangerButton(TextView view) {
+        if (view == null) return;
+        view.setTextColor(onDanger(view.getContext()));
+        view.setBackground(dangerButton(view.getContext(), 22f));
+    }
+
+    static void menuItem(TextView view) {
+        if (view == null) return;
+        view.setTextColor(primary(view.getContext()));
+        view.setBackground(secondaryButton(view.getContext(), 999f));
+    }
+
+    static void dangerMenuItem(TextView view) {
+        if (view == null) return;
+        view.setTextColor(danger(view.getContext()));
+        view.setBackground(secondaryButton(view.getContext(), 999f));
+    }
+
+    static void styleSpinner(Spinner spinner) {
+        if (spinner == null) return;
+        spinner.setBackground(secondaryButton(spinner.getContext(), 22f));
+    }
+
+    static <T> ArrayAdapter<T> spinnerAdapter(Context context, T[] items) {
+        return new ArrayAdapter<T>(context, R.layout.spinner_item_themed, items) {
+            @NonNull
+            @Override
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                styleSpinnerItemView(view, false);
+                return view;
+            }
+
+            @NonNull
+            @Override
+            public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+                View view = convertView;
+                if (view == null) {
+                    view = LayoutInflater.from(getContext()).inflate(R.layout.spinner_dropdown_themed, parent, false);
+                }
+                if (view instanceof TextView) {
+                    TextView textView = (TextView) view;
+                    textView.setText(String.valueOf(getItem(position)));
+                }
+                styleSpinnerItemView(view, true);
+                return view;
+            }
+        };
+    }
+
     static void dialogButtons(TextView cancel, TextView confirm) {
         if (cancel != null) {
-            cancel.setTextColor(primary(cancel.getContext()));
-            cancel.setBackground(cancelChip(cancel.getContext()));
+            secondaryButton(cancel);
         }
         primaryButton(confirm);
     }
@@ -147,13 +240,17 @@ final class LauncherTheme {
         if (root instanceof CompoundButton) {
             ((CompoundButton) root).setButtonTintList(new ColorStateList(
                     new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
-                    new int[]{themedPrimary, ContextCompat.getColor(context, R.color.launcher_text_muted_color)}
+                    new int[]{themedPrimary, textMuted(context)}
             ));
         }
 
         String idName = idName(root);
         if (isPrimaryButtonId(idName) && root instanceof TextView) {
             primaryButton((TextView) root);
+        } else if (isSecondaryButtonId(idName) && root instanceof TextView) {
+            secondaryButton((TextView) root);
+        } else if (isDangerButtonId(idName) && root instanceof TextView) {
+            dangerButton((TextView) root);
         }
 
         if (root instanceof ViewGroup) {
@@ -180,10 +277,45 @@ final class LauncherTheme {
     private static boolean isPrimaryButtonId(String idName) {
         if (idName == null) return false;
         return "btnSubmit".equals(idName)
+                || "addGameSave".equals(idName)
+                || "aiDetailClose".equals(idName)
+                || "aiGenerateSubmit".equals(idName)
+                || "aiHistoryClear".equals(idName)
+                || "aiReviewGenerate".equals(idName)
+                || "aiReviewSave".equals(idName)
+                || "btnSave".equals(idName)
                 || "registerCreate".equals(idName)
                 || "chatSelectContinue".equals(idName)
+                || "disclaimerClose".equals(idName)
+                || "imagePreviewShare".equals(idName)
                 || "themeMenuApply".equals(idName)
                 || "pendingClose".equals(idName);
+    }
+
+    private static boolean isSecondaryButtonId(String idName) {
+        if (idName == null) return false;
+        return "aiReviewHistory".equals(idName)
+                || "aiGenerateHistory".equals(idName)
+                || "btnCancel".equals(idName)
+                || "btnPickCover".equals(idName)
+                || "imagePreviewClose".equals(idName)
+                || "imagePreviewSave".equals(idName);
+    }
+
+    private static boolean isDangerButtonId(String idName) {
+        return "dialogDangerButton".equals(idName);
+    }
+
+    private static void styleSpinnerItemView(View view, boolean dropdown) {
+        if (!(view instanceof TextView)) return;
+        TextView textView = (TextView) view;
+        Context context = textView.getContext();
+        textView.setTextColor(text(context));
+        if (dropdown) {
+            textView.setBackground(secondaryButton(context, 12f));
+        } else {
+            textView.setBackgroundColor(Color.TRANSPARENT);
+        }
     }
 
     private static int shiftColor(int color, float factor) {

@@ -107,8 +107,10 @@ public class LauncherManageFragment extends Fragment {
         binding.actionModelSettings.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherAiReviewActivity.class)));
         binding.actionFeedback.setOnClickListener(view -> showFeedbackOptions());
-        binding.actionAppSettings.setOnClickListener(view -> openAction(MainActivity.ACTION_SETTINGS));
+        binding.actionAppSettings.setOnClickListener(view -> confirmAppSettings());
         binding.actionDiagnostics.setOnClickListener(view -> showDiagnosticsPrivacyDialog());
+        binding.actionMetadataSource.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherMetadataSourceActivity.class)));
     }
 
     private void applyThemeTone() {
@@ -126,6 +128,15 @@ public class LauncherManageFragment extends Fragment {
 
     private void openAction(String action) {
         YukiHubBridge.openAction(requireContext(), action);
+    }
+
+    private void confirmAppSettings() {
+        showLauncherConfirmDialog(
+                "应用设置",
+                "即将离开 Launcher 进入高级设置，请谨慎修改。",
+                "继续",
+                () -> openAction(MainActivity.ACTION_SETTINGS)
+        );
     }
 
     private void persistAndSaveScanDirectory(Uri uri) {
@@ -165,14 +176,16 @@ public class LauncherManageFragment extends Fragment {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, roots, depth);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
-                renderScanResult(stats);
-                Toast.makeText(
-                        requireContext(),
-                        "扫描完成：新增 " + stats.added + " 个，已存在 " + stats.skipped + " 个，失败 " + stats.failed + " 个",
-                        Toast.LENGTH_SHORT
-                ).show();
+                showScanResultDialog(stats);
             });
         });
+    }
+
+    private void showScanResultDialog(LauncherScanBridge.ImportStats stats) {
+        if (stats == null) return;
+        String message = "扫描到 " + stats.scanned + " 个结果\n"
+                + "新增 " + stats.added + " 个，已存在 " + stats.skipped + " 个，失败 " + stats.failed + " 个";
+        showLauncherConfirmDialog("扫描完成", message, "知道了", () -> {});
     }
 
     private void renderScanDirectories() {
@@ -235,10 +248,12 @@ public class LauncherManageFragment extends Fragment {
         view.setSingleLine(true);
         view.setTextSize(12);
         view.setTypeface(null, android.graphics.Typeface.BOLD);
-        view.setTextColor(selected ? LauncherTheme.onPrimary(requireContext()) : LauncherTheme.primary(requireContext()));
-        view.setBackground(selected
-                ? LauncherTheme.selectedChip(requireContext())
-                : ContextCompat.getDrawable(requireContext(), com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected));
+        if (selected) {
+            view.setTextColor(LauncherTheme.onPrimary(requireContext()));
+            view.setBackground(LauncherTheme.selectedChip(requireContext()));
+        } else {
+            LauncherTheme.menuItem(view);
+        }
         view.setLayoutParams(new LinearLayout.LayoutParams(dp(52), dp(32)));
         return view;
     }
@@ -253,37 +268,6 @@ public class LauncherManageFragment extends Fragment {
             saveScanRootEnabledStates(states);
             renderScanDirectories();
         });
-    }
-
-    private void renderScanResult(LauncherScanBridge.ImportStats stats) {
-        if (binding == null || stats == null) return;
-        binding.scanResultTitle.setVisibility(View.VISIBLE);
-        binding.scanResultDetail.setVisibility(View.VISIBLE);
-        binding.scanResultDetail.removeAllViews();
-        addResultLine("扫描到 " + stats.scanned + " 个结果");
-        addResultLine("新增 " + stats.added + " 个，已存在 " + stats.skipped + " 个，失败 " + stats.failed + " 个");
-        addResultGroup("新增", stats.addedItems);
-        addResultGroup("已存在", stats.skippedItems);
-        addResultGroup("失败", stats.failedItems);
-    }
-
-    private void addResultGroup(String title, List<String> items) {
-        if (items == null || items.isEmpty()) return;
-        addResultLine(title + "：");
-        int limit = Math.min(items.size(), 6);
-        for (int i = 0; i < limit; i++) {
-            addResultLine("· " + items.get(i));
-        }
-        if (items.size() > limit) addResultLine("· 还有 " + (items.size() - limit) + " 个未显示");
-    }
-
-    private void addResultLine(String text) {
-        TextView view = new TextView(requireContext());
-        view.setText(text);
-        view.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        view.setTextSize(13);
-        view.setPadding(0, dp(3), 0, dp(3));
-        binding.scanResultDetail.addView(view);
     }
 
     private void showFeedbackOptions() {
@@ -354,7 +338,8 @@ public class LauncherManageFragment extends Fragment {
         root.addView(info, infoLp);
 
         addFeedbackOption(root, "立即同步", dialog, this::syncNow);
-        addFeedbackOption(root, "打开同步中心", dialog, () -> openAction(MainActivity.ACTION_SYNC_CENTER));
+        addFeedbackOption(root, "打开同步中心", dialog, () ->
+                startActivity(new Intent(requireContext(), LauncherSyncCenterActivity.class)));
         addFeedbackOption(root, "导出本地备份", dialog, () -> openAction(MainActivity.ACTION_LOCAL_BACKUP_EXPORT));
         addFeedbackOption(root, "导入本地备份", dialog, () -> openAction(MainActivity.ACTION_LOCAL_BACKUP_IMPORT));
 
@@ -375,10 +360,16 @@ public class LauncherManageFragment extends Fragment {
 
     private void syncNow() {
         if (!LauncherSyncBridge.isConfigured(requireContext())) {
-            Toast.makeText(requireContext(), "请先配置 WebDAV", Toast.LENGTH_SHORT).show();
-            openAction(MainActivity.ACTION_SYNC_CENTER);
+            // 未登录：弹窗提示去同步中心登录
+            showLauncherConfirmDialog(
+                    "未登录",
+                    "请打开同步中心登录后再同步。",
+                    "打开同步中心",
+                    () -> startActivity(new Intent(requireContext(), LauncherSyncCenterActivity.class))
+            );
             return;
         }
+        // 已登录：直接使用主项目的方法同步
         LauncherSyncBridge.syncNow(requireContext(), new LauncherSyncBridge.Callback() {
             @Override
             public void onStart() {
@@ -391,12 +382,12 @@ public class LauncherManageFragment extends Fragment {
 
             @Override
             public void onComplete(String message) {
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                showLauncherConfirmDialog("同步完成", message, "知道了", () -> {});
             }
 
             @Override
             public void onError(String error) {
-                Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                showLauncherConfirmDialog("同步失败", error, "知道了", () -> {});
             }
         });
     }
@@ -496,10 +487,9 @@ public class LauncherManageFragment extends Fragment {
         option.setText(label);
         option.setGravity(android.view.Gravity.CENTER);
         option.setSingleLine(true);
-        option.setTextColor(LauncherTheme.primary(requireContext()));
         option.setTextSize(14);
         option.setTypeface(null, android.graphics.Typeface.BOLD);
-        option.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected);
+        LauncherTheme.menuItem(option);
         option.setOnClickListener(view -> {
             dialog.dismiss();
             action.run();

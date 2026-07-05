@@ -1,6 +1,7 @@
 package com.apps;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -242,7 +243,7 @@ public class LauncherActivity extends AppCompatActivity {
     static int launcherPrimaryColor(android.content.Context context) {
         return isRinneTheme(context)
                 ? RINNE_PRIMARY_COLOR
-                : ContextCompat.getColor(context, R.color.launcher_primary_color);
+                : ContextCompat.getColor(wrapLauncherUiMode(context), R.color.launcher_primary_color);
     }
 
     private boolean isLauncherDarkMode() {
@@ -256,7 +257,22 @@ public class LauncherActivity extends AppCompatActivity {
                 : AppCompatDelegate.MODE_NIGHT_NO);
     }
 
+    static android.content.Context wrapLauncherUiMode(android.content.Context base) {
+        if (base == null) return null;
+        Configuration configuration = new Configuration(base.getResources().getConfiguration());
+        int targetNightMode = isLauncherDarkMode(base)
+                ? Configuration.UI_MODE_NIGHT_YES
+                : Configuration.UI_MODE_NIGHT_NO;
+        configuration.uiMode = (configuration.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | targetNightMode;
+        return base.createConfigurationContext(configuration);
+    }
+
     private void applySavedToneMode() {
         applySavedToneMode(this);
+    }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(wrapLauncherUiMode(newBase));
     }
 }

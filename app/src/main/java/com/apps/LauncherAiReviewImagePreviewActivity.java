@@ -40,6 +40,7 @@ public class LauncherAiReviewImagePreviewActivity extends AppCompatActivity {
         binding = ActivityLauncherAiReviewImagePreviewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         applySystemBarInsets();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
 
         int index = getIntent().getIntExtra(EXTRA_ENTRY_INDEX, -1);
         int style = getIntent().getIntExtra(EXTRA_TEMPLATE_STYLE, 0);
@@ -56,6 +57,7 @@ public class LauncherAiReviewImagePreviewActivity extends AppCompatActivity {
 
         binding.imagePreviewTitle.setText(entry.displayTitle());
         binding.imagePreviewMeta.setText("模板：" + templateLabel);
+        LauncherTheme.secondaryButton(binding.imagePreviewFullScreenClose);
 
         aiReviewController = new AiReviewController(this, new LauncherAiReviewDetailActivity.LauncherAiReviewDelegate(this));
 
@@ -163,5 +165,10 @@ public class LauncherAiReviewImagePreviewActivity extends AppCompatActivity {
 
     private int dp(int value) {
         return LauncherTheme.dp(this, value);
+    }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 }

@@ -19,6 +19,26 @@ public final class LauncherSyncBridge {
         return new SyncManager(context.getApplicationContext()).getLastSyncTime();
     }
 
+    public static SyncManager.SyncConfig getConfig(Context context) {
+        if (context == null) return new SyncManager.SyncConfig("", "", "", false);
+        return new SyncManager(context.getApplicationContext()).getConfig();
+    }
+
+    public static void saveConfig(Context context, String serverUrl, String username, String password, boolean autoSync) {
+        if (context == null) return;
+        new SyncManager(context.getApplicationContext()).saveConfig(serverUrl, username, password, autoSync);
+    }
+
+    public static boolean testConnection(Context context) {
+        if (context == null) return false;
+        return new SyncManager(context.getApplicationContext()).testConnection();
+    }
+
+    public static boolean isAutoSyncEnabled(Context context) {
+        if (context == null) return false;
+        return new SyncManager(context.getApplicationContext()).isAutoSyncEnabled();
+    }
+
     public static void syncNow(Context context, Callback callback) {
         if (context == null) {
             if (callback != null) callback.onError("上下文不可用");

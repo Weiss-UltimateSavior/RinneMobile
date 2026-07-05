@@ -43,7 +43,7 @@
             android:background="@drawable/launcher_game_chip"
             android:gravity="center"
             android:text="★"
-            android:textColor="#F0B429"
+            android:textColor="@color/launcher_warning_color"
             android:textSize="12sp"
             android:textStyle="bold"
             android:visibility="gone" />

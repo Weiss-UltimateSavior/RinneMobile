@@ -195,13 +195,13 @@ public class LauncherHomeFragment extends Fragment {
     private void addMenuItem(LinearLayout menu, String label, PopupWindow popupWindow, @Nullable Runnable action) {
         TextView item = new TextView(requireContext());
         item.setText(label);
-        item.setTextColor(LauncherTheme.primary(requireContext()));
         item.setTextSize(14);
         item.setTypeface(null, android.graphics.Typeface.BOLD);
         item.setGravity(Gravity.CENTER_VERTICAL);
         item.setSingleLine(true);
         item.setPadding(dp(14), 0, dp(14), 0);
-        item.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_filter_chip_unselected);
+        item.setTextColor(LauncherTheme.primary(requireContext()));
+        item.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         item.setOnClickListener(view -> {
             popupWindow.dismiss();
             if (action != null) {

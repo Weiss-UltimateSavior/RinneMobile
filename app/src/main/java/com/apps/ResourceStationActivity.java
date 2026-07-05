@@ -202,4 +202,9 @@ public class ResourceStationActivity extends AppCompatActivity {
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
+    }
 }

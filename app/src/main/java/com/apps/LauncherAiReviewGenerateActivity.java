@@ -162,4 +162,9 @@ public class LauncherAiReviewGenerateActivity extends AppCompatActivity {
         if (!darkMode) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         window.getDecorView().setSystemUiVisibility(flags);
     }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
+    }
 }

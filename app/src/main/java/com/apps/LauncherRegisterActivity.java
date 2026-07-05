@@ -70,4 +70,9 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     private void applySavedToneMode() {
         LauncherActivity.applySavedToneMode(this);
     }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
+    }
 }

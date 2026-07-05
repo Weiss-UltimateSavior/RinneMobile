@@ -5,7 +5,7 @@
     android:gravity="center_vertical"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
-    android:textColor="#FFF0F4FA"
+    android:textColor="@color/launcher_text_color"
     android:textSize="14sp"
-    android:background="#FF171E33"
+    android:background="@color/launcher_card_color"
     android:singleLine="true" />

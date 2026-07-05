@@ -77,7 +77,7 @@
                     android:background="@drawable/launcher_account_social_button"
                     android:gravity="center"
                     android:text="f"
-                    android:textColor="#2F6FEA"
+                    android:textColor="@color/launcher_brand_blue_color"
                     android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>

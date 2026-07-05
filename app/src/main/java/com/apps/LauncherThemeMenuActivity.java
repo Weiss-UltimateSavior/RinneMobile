@@ -66,7 +66,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     private void applyIconTone() {
         binding.freshThemeIcon.setBackground(LauncherTheme.circle(
                 this,
-                ContextCompat.getColor(this, R.color.launcher_primary_color)
+                LauncherTheme.primary(this)
         ));
         binding.rinneThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.RINNE_PRIMARY_COLOR));
         binding.rinneThemeLogo.setClipToOutline(true);
@@ -130,5 +130,10 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
 
     private void applySavedToneMode() {
         LauncherActivity.applySavedToneMode(this);
+    }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 }

@@ -72,6 +72,7 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
         binding.aiDetailTitle.setText(entry.displayTitle());
         binding.aiDetailMeta.setText(entry.displaySummary());
         renderAiReviewCard(binding.aiDetailCardContainer, entry.result);
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.aiDetailClose.setOnClickListener(v -> finish());
     }
 
@@ -86,7 +87,7 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
 
         TextView badge = new TextView(this);
         badge.setText("✦ AI 周点评 ✦");
-        badge.setTextColor(ContextCompat.getColor(this, R.color.launcher_primary_color));
+        badge.setTextColor(LauncherTheme.primary(this));
         badge.setTextSize(11);
         badge.setTypeface(null, Typeface.BOLD);
         card.addView(badge);
@@ -118,7 +119,7 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setBackground(roundBg(R.color.launcher_card_alt_color, dp(8), 0));
         LinearLayout fill = new LinearLayout(this);
-        fill.setBackground(roundBg(R.color.launcher_primary_color, dp(8), 0));
+        fill.setBackground(LauncherTheme.primaryButton(this, 8f));
         bar.addView(fill, new LinearLayout.LayoutParams(0, dp(8), Math.max(1, progress)));
         View rest = new View(this);
         bar.addView(rest, new LinearLayout.LayoutParams(0, dp(8), Math.max(1, 100 - progress)));
@@ -153,7 +154,7 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
         if (result.oneLine != null && !result.oneLine.trim().isEmpty()) {
             TextView one = new TextView(this);
             one.setText(result.oneLine);
-            one.setTextColor(ContextCompat.getColor(this, R.color.launcher_primary_color));
+            one.setTextColor(LauncherTheme.primary(this));
             one.setTextSize(12);
             one.setTypeface(null, Typeface.BOLD);
             one.setPadding(0, dp(10), 0, 0);
@@ -301,13 +302,11 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
     private GradientDrawable cardBackground() {
         int cardColor = ContextCompat.getColor(this, R.color.launcher_card_color);
         int cardAltColor = ContextCompat.getColor(this, R.color.launcher_card_alt_color);
-        int primaryColor = ContextCompat.getColor(this, R.color.launcher_primary_color);
         GradientDrawable g = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
                 new int[]{cardColor, cardAltColor, cardColor}
         );
         g.setCornerRadius(dp(16));
-        g.setStroke(dp(1), (primaryColor & 0x00FFFFFF) | 0x66000000);
         return g;
     }
 
@@ -315,7 +314,6 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
         GradientDrawable g = new GradientDrawable();
         g.setColor(ContextCompat.getColor(this, colorResId));
         g.setCornerRadius(radius);
-        if (strokeColorResId != 0) g.setStroke(dp(1), ContextCompat.getColor(this, strokeColorResId));
         return g;
     }
 
@@ -408,8 +406,8 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
         @Override public int getColorCompat(int id) {
             if (id == R.color.yh_text) return ContextCompat.getColor(activity, R.color.launcher_text_color);
             if (id == R.color.yh_text_muted) return ContextCompat.getColor(activity, R.color.launcher_text_muted_color);
-            if (id == R.color.yh_primary) return ContextCompat.getColor(activity, R.color.launcher_primary_color);
-            if (id == R.color.yh_secondary) return ContextCompat.getColor(activity, R.color.launcher_primary_color);
+            if (id == R.color.yh_primary) return LauncherTheme.primary(activity);
+            if (id == R.color.yh_secondary) return LauncherTheme.primary(activity);
             if (id == R.color.yh_card) return ContextCompat.getColor(activity, R.color.launcher_card_color);
             if (id == R.color.yh_card_2) return ContextCompat.getColor(activity, R.color.launcher_card_alt_color);
             if (id == R.color.yh_line) return ContextCompat.getColor(activity, R.color.launcher_line_color);
@@ -486,5 +484,10 @@ public class LauncherAiReviewDetailActivity extends AppCompatActivity {
             if (title == null || title.trim().isEmpty()) return "YH";
             return title.trim().substring(0, 1).toUpperCase(Locale.ROOT);
         }
+    }
+
+    @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 }
