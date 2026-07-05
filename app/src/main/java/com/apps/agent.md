@@ -55,6 +55,19 @@
 - 根布局或关键组件必须接入 `LauncherTheme.applyPrimaryTone(...)`，确保主题切换完整覆盖。
 - Edge-to-edge、状态栏、导航栏处理优先复用现有 Launcher Activity 模板写法。
 
+## 动效与页面跳转
+
+- Launcher 内新增动效统一走 `LauncherMotion`，不要在各个 Activity / Fragment 中重复手写 `overridePendingTransition(...)`、弹窗动画或点击缩放动画。
+- 打开新的 Launcher Activity 后，统一调用 `LauncherMotion.applyActivityOpen(activity)`。
+- 关闭 Launcher Activity 时，优先使用 `LauncherMotion.finish(activity)`；如必须手动 `finish()`，结束后也要调用 `LauncherMotion.applyActivityClose(activity)`。
+- Launcher 内弹窗创建并 `show()` 后，统一调用 `LauncherMotion.applyDialogMotion(dialog)`，保证弹窗进入 / 退出动画一致。
+- 需要点击反馈的按钮、圆形入口、重要操作入口，优先使用 `LauncherMotion.runAfterPulse(view, action)`；仅播放缩放反馈时使用 `LauncherMotion.pulse(view)`。
+- 主题 / 色调切换需要 `recreate()` 页面时，统一使用 `LauncherMotion.recreateWithToneOverlay(activity, beforeRecreate)`，不要直接裸调用 `activity.recreate()`。
+- Fragment 切换统一使用 `launcher_fragment_enter` / `launcher_fragment_exit` 动画资源，不新增另一套 Fragment 动画。
+- Activity 打开 / 关闭统一使用 `launcher_activity_enter`、`launcher_activity_exit`、`launcher_activity_pop_enter`、`launcher_activity_pop_exit`。
+- 弹窗动画统一使用 `LauncherDialogAnimation`，对应资源为 `launcher_dialog_enter` / `launcher_dialog_exit`。
+- 禁止新增页面单独定义一套与 `LauncherMotion` 并行的动效工具类，除非是特殊组件内部动画，且不影响页面跳转、弹窗、主题切换的统一规范。
+
 ## 禁止事项
 
 - 不修改主项目原有业务页面来迁就 Launcher 样式。
@@ -68,3 +81,7 @@
 - 是否主按钮、次按钮、危险按钮都走了 `LauncherTheme`。
 - 是否 Spinner、输入框、弹窗、卡片都复用了现有 Launcher 资源。
 - 是否切换浅色 / 深色 / Launcher 主题风格后，按钮、图标、文本、遮罩会同步变化。
+- 页面跳转是否使用了 `LauncherMotion.applyActivityOpen(...)` / `LauncherMotion.finish(...)`。
+- 弹窗是否调用了 `LauncherMotion.applyDialogMotion(dialog)`。
+- 主题切换是否通过 `LauncherMotion.recreateWithToneOverlay(...)` 完成。
+- 重要点击入口是否使用了 `LauncherMotion.runAfterPulse(...)`。
