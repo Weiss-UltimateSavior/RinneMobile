@@ -108,15 +108,15 @@
 
 ### 主界面
 
-<img src="screenshots/main.jpg" width="720" />
+<p align="center"><img src="screenshots/main.jpg" width="280" /></p>
 
 ### 同步页面
 
-<img src="screenshots/tongbu.jpg" width="720" />
+<p align="center"><img src="screenshots/tongbu.jpg" width="280" /></p>
 
 ### 游戏详情页
 
-<img src="screenshots/game.jpg" width="720" />
+<p align="center"><img src="screenshots/game.jpg" width="280" /></p>
 
 ***
 
@@ -152,7 +152,7 @@
 - 1.目前用tf疑似不能直启动krkr的游戏(截止0.125+3版本，已修复，在运行sd卡游戏时，自动开启镜像目录运行游戏，存档和独立存档模式位置一致)
 - 2.华为等手机由于存储读写限制，不能正常游玩krkr，atermis等引擎的游戏。(现在做了外部私有存档选项，可以勾选试试，或许有用?还做了轻量级SAF🤔，就是不知道有没有用了，得看你们测试了)(功能入口如下图↓) ✓ (截止0.12.5+1版本，已修复，如仍有问题请反馈)
 
-<img src="screenshots/save1.jpg" width="720" />
+<p align="center"><img src="screenshots/save1.jpg" width="280" /></p>
 
 -以上，欢迎有能力的拉拉pr喵😽😽😽
 
