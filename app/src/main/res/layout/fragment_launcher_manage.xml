@@ -148,7 +148,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="应用设置" />
+                        android:text="高级设置" />
 
                     <TextView
                         style="@style/LauncherManageArrow"
