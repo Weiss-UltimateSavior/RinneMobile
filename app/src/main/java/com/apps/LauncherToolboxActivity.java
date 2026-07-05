@@ -70,9 +70,9 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         binding.toolCreditCard.setOnClickListener(view -> confirmClearCache());
         binding.toolReport.setOnClickListener(view -> showLauncherMenu(
                 "运行报告",
-                new MenuItem("生成点评", () -> YukiHubBridge.openAction(this, MainActivity.ACTION_AI_REVIEW)),
-                new MenuItem("点评历史", () -> YukiHubBridge.openAction(this, MainActivity.ACTION_AI_REVIEW_HISTORY)),
-                new MenuItem("模型设置", () -> YukiHubBridge.openAction(this, MainActivity.ACTION_AI_REVIEW_SETTINGS))
+                new MenuItem("生成点评", () -> startActivity(new android.content.Intent(this, LauncherAiReviewGenerateActivity.class))),
+                new MenuItem("点评历史", () -> startActivity(new android.content.Intent(this, LauncherAiReviewHistoryActivity.class))),
+                new MenuItem("智能评价", () -> startActivity(new android.content.Intent(this, LauncherAiReviewActivity.class)))
         ));
     }
 

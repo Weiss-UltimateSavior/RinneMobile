@@ -110,11 +110,11 @@
 
                     <TextView
                         style="@style/LauncherManageIcon"
-                        android:text="M" />
+                        android:text="AI" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="设置模型" />
+                        android:text="智能评价" />
 
                     <TextView
                         style="@style/LauncherManageArrow"

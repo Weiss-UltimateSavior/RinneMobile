@@ -104,7 +104,8 @@ public class LauncherManageFragment extends Fragment {
         binding.actionAddGame.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherAddGameActivity.class)));
         binding.actionCloudSync.setOnClickListener(view -> showSyncOptions());
-        binding.actionModelSettings.setOnClickListener(view -> openAction(MainActivity.ACTION_AI_REVIEW_SETTINGS));
+        binding.actionModelSettings.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherAiReviewActivity.class)));
         binding.actionFeedback.setOnClickListener(view -> showFeedbackOptions());
         binding.actionAppSettings.setOnClickListener(view -> openAction(MainActivity.ACTION_SETTINGS));
         binding.actionDiagnostics.setOnClickListener(view -> showDiagnosticsPrivacyDialog());
