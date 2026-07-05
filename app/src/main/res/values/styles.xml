@@ -128,6 +128,15 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!-- Spinner 统一样式：dropdown 容器圆角与弹窗一致 -->
+    <style name="LauncherSpinner">
+        <item name="android:background">@drawable/launcher_account_input</item>
+        <item name="android:popupBackground">@drawable/launcher_spinner_popup_bg</item>
+        <item name="android:dropDownWidth">match_parent</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+    </style>
+
     <string-array name="launcher_ai_review_providers">
         <item>OpenAI 兼容接口</item>
         <item>本地模型</item>

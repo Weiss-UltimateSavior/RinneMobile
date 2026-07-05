@@ -188,7 +188,10 @@ final class LauncherTheme {
 
     static void styleSpinner(Spinner spinner) {
         if (spinner == null) return;
-        spinner.setBackground(secondaryButton(spinner.getContext(), 22f));
+        Context context = spinner.getContext();
+        spinner.setBackground(secondaryButton(context, 22f));
+        // dropdown 容器使用与弹窗一致的圆角背景
+        spinner.setPopupBackgroundResource(R.drawable.launcher_spinner_popup_bg);
     }
 
     static <T> ArrayAdapter<T> spinnerAdapter(Context context, T[] items) {
@@ -312,7 +315,9 @@ final class LauncherTheme {
         Context context = textView.getContext();
         textView.setTextColor(text(context));
         if (dropdown) {
-            textView.setBackground(secondaryButton(context, 12f));
+            // dropdown item 透明背景，让 popup 容器的圆角背景统一显示
+            textView.setBackgroundColor(Color.TRANSPARENT);
+            textView.setPadding(dp(context, 14f), 0, dp(context, 14f), 0);
         } else {
             textView.setBackgroundColor(Color.TRANSPARENT);
         }

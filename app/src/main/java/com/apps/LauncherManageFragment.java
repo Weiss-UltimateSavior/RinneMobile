@@ -106,11 +106,12 @@ public class LauncherManageFragment extends Fragment {
         binding.actionCloudSync.setOnClickListener(view -> showSyncOptions());
         binding.actionModelSettings.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherAiReviewActivity.class)));
-        binding.actionFeedback.setOnClickListener(view -> showFeedbackOptions());
         binding.actionAppSettings.setOnClickListener(view -> confirmAppSettings());
         binding.actionDiagnostics.setOnClickListener(view -> showDiagnosticsPrivacyDialog());
         binding.actionMetadataSource.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherMetadataSourceActivity.class)));
+        binding.actionKrkrSettings.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherKrkrSettingsActivity.class)));
     }
 
     private void applyThemeTone() {
@@ -270,47 +271,6 @@ public class LauncherManageFragment extends Fragment {
         });
     }
 
-    private void showFeedbackOptions() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(24), dp(22), dp(24), dp(18));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("建议反馈");
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(18);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        addFeedbackOption(root, "GitHub 仓库", dialog, () -> openExternalUrl("https://github.com/xm486/YukiHub"));
-        addFeedbackOption(root, "YukiHub 官网", dialog, () -> openExternalUrl("https://yukihub.kesug.com/"));
-        addFeedbackOption(root, "QQ 交流群", dialog, () -> openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info"));
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(14);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        cancelLp.setMargins(0, dp(10), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
-    }
-
     private void showSyncOptions() {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
@@ -427,7 +387,6 @@ public class LauncherManageFragment extends Fragment {
         addFeedbackOption(root, LauncherDiagnosticsBridge.isLogEnabled() ? "关闭日志" : "开启日志", dialog, this::toggleDiagnosticLog);
         addFeedbackOption(root, "清空日志", dialog, this::confirmClearDiagnosticLog);
         addFeedbackOption(root, "导出日志", dialog, this::exportDiagnosticLog);
-        addFeedbackOption(root, "打开反馈渠道", dialog, this::showFeedbackOptions);
 
         TextView cancel = dialogCancelButton(dialog);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
@@ -526,15 +485,6 @@ public class LauncherManageFragment extends Fragment {
             onConfirm.run();
         });
     }
-
-    private void openExternalUrl(String url) {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-        } catch (Throwable throwable) {
-            Toast.makeText(requireContext(), "无法打开链接", Toast.LENGTH_SHORT).show();
-        }
-    }
-
 
     private List<String> getScanRootUris() {
         List<String> roots = new ArrayList<>();

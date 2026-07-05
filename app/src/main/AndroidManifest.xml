@@ -164,6 +164,12 @@
             android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
 
         <activity
+            android:name="com.apps.LauncherKrkrSettingsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
+
+        <activity
             android:name="com.apps.LauncherRegisterActivity"
             android:exported="false"
             android:screenOrientation="portrait"

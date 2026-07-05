@@ -122,23 +122,6 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/actionFeedback"
-                    style="@style/LauncherManageItem">
-
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="F" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="建议反馈" />
-
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/actionAppSettings"
                     style="@style/LauncherManageItem">
 
@@ -183,6 +166,23 @@
                     <TextView
                         style="@style/LauncherManageTitle"
                         android:text="资料源设置" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/actionKrkrSettings"
+                    style="@style/LauncherManageItem">
+
+                    <TextView
+                        style="@style/LauncherManageIcon"
+                        android:text="K" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="KRKR 引擎" />
 
                     <TextView
                         style="@style/LauncherManageArrow"

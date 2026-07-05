@@ -187,6 +187,7 @@ public class LauncherHomeFragment extends Fragment {
                 startActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
         addMenuItem(menu, "色调切换", popupWindow, this::confirmToggleTone);
         addMenuItem(menu, "检查更新", popupWindow, this::checkUpdate);
+        addMenuItem(menu, "建议反馈", popupWindow, this::showFeedbackOptions);
         addMenuItem(menu, "免责声明", popupWindow, this::openDisclaimer);
 
         popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(132), dp(6), Gravity.NO_GRAVITY);
@@ -217,6 +218,64 @@ public class LauncherHomeFragment extends Fragment {
         );
         lp.setMargins(0, 0, 0, dp(6));
         menu.addView(item, lp);
+    }
+
+    private void showFeedbackOptions() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("建议反馈");
+        title.setGravity(Gravity.CENTER);
+        title.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(18);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        addFeedbackOption(root, "GitHub 仓库", dialog, () -> openExternalUrl("https://github.com/xm486/YukiHub"));
+        addFeedbackOption(root, "YukiHub 官网", dialog, () -> openExternalUrl("https://yukihub.kesug.com/"));
+        addFeedbackOption(root, "QQ 交流群", dialog, () -> openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info"));
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setTextColor(LauncherTheme.primary(requireContext()));
+        cancel.setTextSize(14);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
+        cancelLp.setMargins(0, dp(10), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    private void addFeedbackOption(LinearLayout root, String label, AlertDialog dialog, Runnable action) {
+        TextView option = new TextView(requireContext());
+        option.setText(label);
+        option.setGravity(Gravity.CENTER);
+        option.setSingleLine(true);
+        option.setTextSize(14);
+        option.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.menuItem(option);
+        option.setOnClickListener(view -> {
+            dialog.dismiss();
+            action.run();
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
+        lp.setMargins(0, dp(12), 0, 0);
+        root.addView(option, lp);
     }
 
     private void confirmToggleTone() {
