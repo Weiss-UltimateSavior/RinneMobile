@@ -131,13 +131,13 @@ public class LauncherHomeFragment extends Fragment {
         binding.launcherAvatarContainer.setOnClickListener(view -> avatarPickerLauncher.launch(new String[]{"image/*"}));
         binding.actionProfileMenu.setOnClickListener(this::showPlaceholderMenu);
         binding.actionChatRoom.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherChatSelectActivity.class)));
+                startLauncherActivity(new Intent(requireContext(), LauncherChatSelectActivity.class)));
         binding.actionResourceStation.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), ResourceStationActivity.class)));
+                startLauncherActivity(new Intent(requireContext(), ResourceStationActivity.class)));
         binding.actionToolbox.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
+                startLauncherActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
         binding.actionAgent.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherPendingActivity.class)));
+                startLauncherActivity(new Intent(requireContext(), LauncherPendingActivity.class)));
         binding.recentRefresh.setOnRefreshListener(() -> viewModel.refreshRecentItems(true));
     }
 
@@ -182,9 +182,10 @@ public class LauncherHomeFragment extends Fragment {
         popupWindow.setOutsideTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         popupWindow.setElevation(dp(8));
+        popupWindow.setAnimationStyle(com.yuki.yukihub.R.style.LauncherDialogAnimation);
 
         addMenuItem(menu, "主题管理", popupWindow, () ->
-                startActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
+                startLauncherActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
         addMenuItem(menu, "色调切换", popupWindow, this::confirmToggleTone);
         addMenuItem(menu, "检查更新", popupWindow, this::checkUpdate);
         addMenuItem(menu, "建议反馈", popupWindow, this::showFeedbackOptions);
@@ -223,6 +224,7 @@ public class LauncherHomeFragment extends Fragment {
     private void showFeedbackOptions() {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         Window window = dialog.getWindow();
         if (window == null) return;
@@ -283,6 +285,7 @@ public class LauncherHomeFragment extends Fragment {
         String nextTone = darkMode ? "浅色模式" : "深色模式";
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         Window window = dialog.getWindow();
         if (window == null) return;
@@ -303,8 +306,8 @@ public class LauncherHomeFragment extends Fragment {
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {
             dialog.dismiss();
-            LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode);
-            requireActivity().recreate();
+            LauncherMotion.recreateWithToneOverlay(requireActivity(), () ->
+                    LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode));
         });
     }
 
@@ -436,6 +439,7 @@ public class LauncherHomeFragment extends Fragment {
     private void showUpdateResultDialog(LauncherUpdateBridge.UpdateInfo info, String currentVersion, boolean hasUpdate, String error) {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         Window window = dialog.getWindow();
         if (window == null) return;
@@ -499,7 +503,12 @@ public class LauncherHomeFragment extends Fragment {
     }
 
     private void openDisclaimer() {
-        startActivity(new Intent(requireContext(), LauncherDisclaimerActivity.class));
+        startLauncherActivity(new Intent(requireContext(), LauncherDisclaimerActivity.class));
+    }
+
+    private void startLauncherActivity(Intent intent) {
+        startActivity(intent);
+        LauncherMotion.applyActivityOpen(requireActivity());
     }
 
     private void openExternalUrl(String url) {

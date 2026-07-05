@@ -212,6 +212,67 @@
                     android:visibility="gone" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/particleToggleRow"
+                android:layout_width="match_parent"
+                android:layout_height="76dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/launcher_chat_option_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <TextView
+                    android:id="@+id/particleToggleIcon"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:gravity="center"
+                    android:text="P"
+                    android:textColor="@color/launcher_on_primary_color"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="动态粒子"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="控制 Launcher 背景的小圆点特效"
+                        android:textColor="@color/launcher_text_muted_color"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/particleToggleState"
+                    android:layout_width="58dp"
+                    android:layout_height="34dp"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="28dp" />

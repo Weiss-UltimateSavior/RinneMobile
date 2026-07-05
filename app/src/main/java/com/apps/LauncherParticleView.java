@@ -28,6 +28,7 @@ public class LauncherParticleView extends View {
     private final Particle[] particles = new Particle[PARTICLE_COUNT];
     private long lastFrameTime;
     private boolean running;
+    private boolean particlesEnabled = true;
     private String activeThemeStyle = "";
     private final Runnable frameRunnable = new Runnable() {
         @Override
@@ -62,7 +63,7 @@ public class LauncherParticleView extends View {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        start();
+        if (particlesEnabled) start();
     }
 
     @Override
@@ -75,7 +76,7 @@ public class LauncherParticleView extends View {
     protected void onWindowVisibilityChanged(int visibility) {
         super.onWindowVisibilityChanged(visibility);
         if (visibility == VISIBLE) {
-            start();
+            if (particlesEnabled) start();
         } else {
             stop();
         }
@@ -93,6 +94,7 @@ public class LauncherParticleView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (!particlesEnabled) return;
         if (getWidth() <= 0 || getHeight() <= 0) return;
         syncThemeColors();
 
@@ -112,6 +114,7 @@ public class LauncherParticleView extends View {
     }
 
     private void start() {
+        if (!particlesEnabled) return;
         if (running) return;
         running = true;
         lastFrameTime = 0L;
@@ -123,6 +126,17 @@ public class LauncherParticleView extends View {
         running = false;
         lastFrameTime = 0L;
         removeCallbacks(frameRunnable);
+    }
+
+    public void setParticlesEnabled(boolean enabled) {
+        if (particlesEnabled == enabled) return;
+        particlesEnabled = enabled;
+        if (enabled && getWindowVisibility() == VISIBLE && isAttachedToWindow()) {
+            start();
+        } else {
+            stop();
+            invalidate();
+        }
     }
 
     private Particle createParticle(int width, int height) {

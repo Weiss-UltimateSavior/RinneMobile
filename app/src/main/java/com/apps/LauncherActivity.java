@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -25,6 +26,7 @@ public class LauncherActivity extends AppCompatActivity {
     static final String APP_PREFS = "yukihub_prefs";
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
     static final String KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style";
+    static final String KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled";
     static final String THEME_STYLE_DEFAULT = "default";
     static final String THEME_STYLE_RINNE = "rinne";
     static final int RINNE_PRIMARY_COLOR = Color.rgb(216, 169, 201);
@@ -32,6 +34,7 @@ public class LauncherActivity extends AppCompatActivity {
     private ActivityLauncherBinding binding;
     private LauncherViewModel viewModel;
     private LauncherViewModel.NavItem currentNavItem;
+    private boolean navIndicatorReady;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,7 @@ public class LauncherActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(LauncherViewModel.class);
 
+        renderParticles();
         bindActions();
         observeState();
     }
@@ -53,6 +57,7 @@ public class LauncherActivity extends AppCompatActivity {
         super.onResume();
         if (binding != null) {
             renderSelectedNav(currentNavItem);
+            renderParticles();
         }
         if (viewModel != null) viewModel.refreshStats();
     }
@@ -76,7 +81,8 @@ public class LauncherActivity extends AppCompatActivity {
         binding.navSavings.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.LIBRARY));
         binding.navCards.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.MANAGE));
         binding.navAccount.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.ACCOUNT));
-        binding.navLaunchCenter.setOnClickListener(view -> confirmOpenMainActivity());
+        binding.navLaunchCenter.setOnClickListener(view ->
+                LauncherMotion.runAfterPulse(binding.navLaunchCenterCircle, this::confirmOpenMainActivity));
     }
 
     private void observeState() {
@@ -109,6 +115,12 @@ public class LauncherActivity extends AppCompatActivity {
 
         getSupportFragmentManager()
                 .beginTransaction()
+                .setCustomAnimations(
+                        R.anim.launcher_fragment_enter,
+                        R.anim.launcher_fragment_exit,
+                        R.anim.launcher_fragment_enter,
+                        R.anim.launcher_fragment_exit
+                )
                 .replace(R.id.launcherFragmentContainer, fragment, "launcher_" + navItem.name())
                 .commit();
     }
@@ -147,16 +159,53 @@ public class LauncherActivity extends AppCompatActivity {
                 binding.navAccountLabel,
                 navItem == LauncherViewModel.NavItem.ACCOUNT
         );
+        moveNavIndicator(navItem);
     }
 
     private void setNavSelected(LinearLayout container, TextView icon, TextView label, boolean selected) {
-        container.setBackgroundResource(selected ? R.drawable.launcher_nav_selected : R.drawable.launcher_nav_unselected);
+        container.setBackgroundResource(R.drawable.launcher_nav_unselected);
         int color = selected
                 ? launcherPrimaryColor(this)
-                : ContextCompat.getColor(this, R.color.launcher_text_muted_color);
+                : LauncherTheme.textMuted(this);
         icon.setTextColor(color);
         label.setTextColor(color);
         label.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+    }
+
+    private void moveNavIndicator(LauncherViewModel.NavItem navItem) {
+        if (binding == null) return;
+        View target = navTarget(navItem);
+        if (target == null) return;
+        binding.bottomNav.post(() -> {
+            if (binding == null || target.getWidth() <= 0) return;
+            // 指示器与 bottomNavItems 都是 bottomNav 的子 View，且默认水平 gravity 均为 start，
+            // 二者 left 都等于 bottomNav 的 paddingLeft，所以只需用 target 在 bottomNavItems
+            // 内部的 left 作为 translationX，避免重复叠加 paddingLeft 导致指示器整体右移。
+            int left = target.getLeft();
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) binding.navSelectionIndicator.getLayoutParams();
+            if (params.width != target.getWidth()) {
+                params.width = target.getWidth();
+                binding.navSelectionIndicator.setLayoutParams(params);
+            }
+            binding.navSelectionIndicator.setBackgroundResource(R.drawable.launcher_nav_selected);
+            if (!navIndicatorReady) {
+                binding.navSelectionIndicator.setTranslationX(left);
+                navIndicatorReady = true;
+                return;
+            }
+            binding.navSelectionIndicator.animate()
+                    .translationX(left)
+                    .setDuration(220L)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+        });
+    }
+
+    private View navTarget(LauncherViewModel.NavItem navItem) {
+        if (navItem == LauncherViewModel.NavItem.LIBRARY) return binding.navSavings;
+        if (navItem == LauncherViewModel.NavItem.MANAGE) return binding.navCards;
+        if (navItem == LauncherViewModel.NavItem.ACCOUNT) return binding.navAccount;
+        return binding.navHome;
     }
 
     private void applyLauncherThemeTone() {
@@ -176,11 +225,13 @@ public class LauncherActivity extends AppCompatActivity {
     private void openMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+        LauncherMotion.applyActivityOpen(this);
     }
 
     private void confirmOpenMainActivity() {
         AlertDialog dialog = new AlertDialog.Builder(this).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         Window window = dialog.getWindow();
         if (window == null) return;
@@ -238,6 +289,27 @@ public class LauncherActivity extends AppCompatActivity {
 
     static boolean isRinneTheme(android.content.Context context) {
         return THEME_STYLE_RINNE.equals(getLauncherThemeStyle(context));
+    }
+
+    static void setLauncherParticlesEnabled(android.content.Context context, boolean enabled) {
+        context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_LAUNCHER_PARTICLES_ENABLED, enabled)
+                .apply();
+    }
+
+    static boolean isLauncherParticlesEnabled(android.content.Context context) {
+        return context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .getBoolean(KEY_LAUNCHER_PARTICLES_ENABLED, true);
+    }
+
+    private void renderParticles() {
+        if (binding == null) return;
+        boolean enabled = isLauncherParticlesEnabled(this);
+        binding.launcherParticleView.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        binding.launcherParticleView.setParticlesEnabled(enabled);
     }
 
     static int launcherPrimaryColor(android.content.Context context) {

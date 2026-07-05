@@ -142,6 +142,32 @@
         <item name="android:track">@drawable/launcher_switch_track</item>
     </style>
 
+    <style name="LauncherActivityAnimation">
+        <item name="android:activityOpenEnterAnimation">@anim/launcher_activity_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/launcher_activity_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/launcher_activity_pop_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/launcher_activity_pop_exit</item>
+    </style>
+
+    <style name="LauncherDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/launcher_dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/launcher_dialog_exit</item>
+    </style>
+
+    <style name="Theme.YukiHub.Launcher" parent="AppTheme">
+        <item name="android:windowAnimationStyle">@style/LauncherActivityAnimation</item>
+        <item name="android:alertDialogTheme">@style/Theme.YukiHub.Launcher.Dialog</item>
+        <item name="alertDialogTheme">@style/Theme.YukiHub.Launcher.Dialog</item>
+    </style>
+
+    <style name="Theme.YukiHub.Launcher.Dialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@style/LauncherDialogAnimation</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+
     <string-array name="launcher_ai_review_providers">
         <item>OpenAI 兼容接口</item>
         <item>本地模型</item>

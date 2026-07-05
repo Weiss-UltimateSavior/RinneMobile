@@ -36,6 +36,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyIconTone();
         renderSelection();
+        renderParticleToggle();
     }
 
     private void applySystemBarInsets() {
@@ -60,6 +61,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         binding.freshThemeRow.setOnClickListener(view -> selectTheme(THEME_DEFAULT_LABEL));
         binding.nightThemeRow.setOnClickListener(view -> selectTheme(THEME_RINNE_LABEL));
         binding.pinkThemeRow.setOnClickListener(view -> selectTheme(THEME_NATSUME_LABEL));
+        binding.particleToggleRow.setOnClickListener(view -> toggleParticles());
         binding.themeMenuApply.setOnClickListener(view -> applySelectedTheme());
     }
 
@@ -70,6 +72,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         ));
         binding.rinneThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.RINNE_PRIMARY_COLOR));
         binding.rinneThemeLogo.setClipToOutline(true);
+        binding.particleToggleIcon.setBackground(LauncherTheme.circle(this));
     }
 
     private void selectTheme(String themeName) {
@@ -111,7 +114,20 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
             Toast.makeText(this, selectedTheme + " 待接入", Toast.LENGTH_SHORT).show();
             return;
         }
-        finish();
+        LauncherMotion.finish(this);
+    }
+
+    private void toggleParticles() {
+        boolean enabled = !LauncherActivity.isLauncherParticlesEnabled(this);
+        LauncherActivity.setLauncherParticlesEnabled(this, enabled);
+        renderParticleToggle();
+        Toast.makeText(this, enabled ? "已开启动态粒子" : "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+    }
+
+    private void renderParticleToggle() {
+        boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
+        binding.particleToggleState.setText(enabled ? "开启" : "关闭");
+        LauncherTheme.chip(binding.particleToggleState, enabled);
     }
 
     private void configureEdgeToEdgeWindow() {
