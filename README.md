@@ -46,6 +46,40 @@
 
 ***
 
+## 截图
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>进入界面</b></td>
+      <td align="center"><b>同步页面</b></td>
+      <td align="center"><b>游戏仓库</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/main.jpg" width="280" /></td>
+      <td><img src="screenshots/tongbu.jpg" width="280" /></td>
+      <td><img src="screenshots/game.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>风格主题</b></td>
+      <td align="center"><b>深色模式</b></td>
+      <td align="center"><b>线上功能</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/theme.jpg" width="280" /></td>
+      <td><img src="screenshots/dark.jpg" width="280" /></td>
+      <td><img src="screenshots/net.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+***
+
 ## 项目定位
 
 一个 **本地游戏管理中心**，而不是单纯的游戏启动器。
@@ -101,40 +135,6 @@
 ### 5. 游戏时长记录
 
 - 当前的游戏时长记录模式为，从软件点击启动对应游戏后，开始计时，直到你回到软件前台，计时结束，中途后台掉了也没关系，重进软件也能记上。(但是，别因为好奇玩一半又回到前台然后直接回游戏，这样你后半段时间就不算了，你得重新在软件里进游戏才行)
-
-***
-
-## 截图
-
-<p align="center">
-  <table align="center">
-    <tr>
-      <td align="center"><b>进入界面</b></td>
-      <td align="center"><b>同步页面</b></td>
-      <td align="center"><b>游戏仓库</b></td>
-    </tr>
-    <tr>
-      <td><img src="screenshots/main.jpg" width="280" /></td>
-      <td><img src="screenshots/tongbu.jpg" width="280" /></td>
-      <td><img src="screenshots/game.jpg" width="280" /></td>
-    </tr>
-  </table>
-</p>
-
-<p align="center">
-  <table align="center">
-    <tr>
-      <td align="center"><b>风格主题</b></td>
-      <td align="center"><b>深色模式</b></td>
-      <td align="center"><b>线上功能</b></td>
-    </tr>
-    <tr>
-      <td><img src="screenshots/theme.jpg" width="280" /></td>
-      <td><img src="screenshots/dark.jpg" width="280" /></td>
-      <td><img src="screenshots/net.jpg" width="280" /></td>
-    </tr>
-  </table>
-</p>
 
 ***
 
