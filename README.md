@@ -106,17 +106,20 @@
 
 ## 截图
 
-### 主界面
-
-<p align="center"><img src="screenshots/main.jpg" width="280" /></p>
-
-### 同步页面
-
-<p align="center"><img src="screenshots/tongbu.jpg" width="280" /></p>
-
-### 游戏详情页
-
-<p align="center"><img src="screenshots/game.jpg" width="280" /></p>
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>主界面</b></td>
+      <td align="center"><b>同步页面</b></td>
+      <td align="center"><b>游戏详情页</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/main.jpg" width="280" /></td>
+      <td><img src="screenshots/tongbu.jpg" width="280" /></td>
+      <td><img src="screenshots/game.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
 
 ***
 

@@ -60,6 +60,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
+        LauncherTheme.styleSwitch(binding.syncAutoSwitch);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 

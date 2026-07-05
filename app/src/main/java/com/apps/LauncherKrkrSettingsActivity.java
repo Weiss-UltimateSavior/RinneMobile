@@ -57,6 +57,9 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
                 new String[]{"自动", "1.3.9", "1.3.4"});
         binding.engineVersionSpinner.setAdapter(adapter);
         LauncherTheme.styleSpinner(binding.engineVersionSpinner);
+        LauncherTheme.styleSwitch(binding.compatModeSwitch);
+        LauncherTheme.styleSwitch(binding.krScopedSwitch);
+        LauncherTheme.styleSwitch(binding.artemisScopedSwitch);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 

@@ -13,6 +13,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
@@ -192,6 +193,42 @@ final class LauncherTheme {
         spinner.setBackground(secondaryButton(context, 22f));
         // dropdown 容器使用与弹窗一致的圆角背景
         spinner.setPopupBackgroundResource(R.drawable.launcher_spinner_popup_bg);
+    }
+
+    /**
+     * 统一 SwitchCompat 启停按钮的色调：开启时使用主题主色，关闭时使用中性灰。
+     * 必须在 Activity 创建后调用，确保主题已加载。
+     */
+    static void styleSwitch(SwitchCompat switchCompat) {
+        if (switchCompat == null) return;
+        Context context = switchCompat.getContext();
+        int primary = primary(context);
+        int mutedGray = ContextCompat.getColor(context, R.color.launcher_text_muted_color);
+
+        // thumb：开关圆点。开启时主色，关闭时浅灰
+        int[][] thumbStates = new int[][]{
+                new int[]{android.R.attr.state_checked},
+                new int[]{-android.R.attr.state_checked}
+        };
+        int[] thumbColors = new int[]{primary, mutedGray};
+        switchCompat.setThumbTintList(new ColorStateList(thumbStates, thumbColors));
+
+        // track：开关轨道。开启时半透明主色，关闭时更浅的灰
+        int trackOn = blend(primary, Color.WHITE, 0.6f);
+        int trackOff = blend(mutedGray, Color.WHITE, 0.6f);
+        int[][] trackStates = new int[][]{
+                new int[]{android.R.attr.state_checked},
+                new int[]{-android.R.attr.state_checked}
+        };
+        int[] trackColors = new int[]{trackOn, trackOff};
+        switchCompat.setTrackTintList(new ColorStateList(trackStates, trackColors));
+    }
+
+    private static int blend(int color1, int color2, float ratio) {
+        int r = (int) (Color.red(color1) * (1 - ratio) + Color.red(color2) * ratio);
+        int g = (int) (Color.green(color1) * (1 - ratio) + Color.green(color2) * ratio);
+        int b = (int) (Color.blue(color1) * (1 - ratio) + Color.blue(color2) * ratio);
+        return Color.rgb(r, g, b);
     }
 
     static <T> ArrayAdapter<T> spinnerAdapter(Context context, T[] items) {

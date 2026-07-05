@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
  * 避免跳转到 MainActivity 即可完成版本检查并展示启动器风格弹窗。
  */
 public final class LauncherUpdateBridge {
-    private static final String UPDATE_API_URL = "https://api.github.com/repos/xm486/YukiHub/releases/latest";
-    private static final String UPDATE_REPO_URL = "https://github.com/xm486/YukiHub";
+    private static final String UPDATE_API_URL = "https://api.github.com/repos/Weiss-UltimateSavior/RinneMobile/releases/latest";
+    private static final String UPDATE_REPO_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile";
 
     private LauncherUpdateBridge() {
     }

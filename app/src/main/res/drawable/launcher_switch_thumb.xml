@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SwitchCompat thumb：跟随主题主色，与 LauncherTheme.styleSwitch 配合使用 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true">
+        <shape android:shape="oval">
+            <solid android:color="@color/launcher_primary_color" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/launcher_text_muted_color" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+</selector>
