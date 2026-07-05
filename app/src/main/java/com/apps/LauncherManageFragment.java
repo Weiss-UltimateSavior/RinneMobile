@@ -101,7 +101,8 @@ public class LauncherManageFragment extends Fragment {
     private void bindActions() {
         binding.actionAddDirectory.setOnClickListener(view -> scanDirectoryPicker.launch(null));
         binding.actionScanGame.setOnClickListener(view -> scanConfiguredDirectories());
-        binding.actionAddGame.setOnClickListener(view -> openAction(MainActivity.ACTION_ADD_GAME));
+        binding.actionAddGame.setOnClickListener(view ->
+                startActivity(new Intent(requireContext(), LauncherAddGameActivity.class)));
         binding.actionCloudSync.setOnClickListener(view -> showSyncOptions());
         binding.actionModelSettings.setOnClickListener(view -> openAction(MainActivity.ACTION_AI_REVIEW_SETTINGS));
         binding.actionFeedback.setOnClickListener(view -> showFeedbackOptions());

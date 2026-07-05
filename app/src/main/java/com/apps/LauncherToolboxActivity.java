@@ -64,7 +64,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
                 new MenuItem("导出备份", () -> YukiHubBridge.openAction(this, MainActivity.ACTION_LOCAL_BACKUP_EXPORT)),
                 new MenuItem("导入备份", () -> YukiHubBridge.openAction(this, MainActivity.ACTION_LOCAL_BACKUP_IMPORT))
         ));
-        binding.toolLauncher.setOnClickListener(view -> YukiHubBridge.openAction(this, MainActivity.ACTION_ADD_GAME));
+        binding.toolLauncher.setOnClickListener(view -> startActivity(new android.content.Intent(this, LauncherAddGameActivity.class)));
         bindPendingTool(binding.toolRecharge, "记录换算");
         binding.toolPayBill.setOnClickListener(view -> YukiHubBridge.openAction(this, MainActivity.ACTION_SCAN));
         binding.toolCreditCard.setOnClickListener(view -> confirmClearCache());

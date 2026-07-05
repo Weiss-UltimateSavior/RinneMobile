@@ -1,6 +1,5 @@
 package com.apps;
 
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ItemLauncherGameCardBinding;
 import com.yuki.yukihub.model.Game;
+import com.yuki.yukihub.util.SafeImageLoader;
 import com.yuki.yukihub.util.TimeFormatUtil;
 
 import java.util.ArrayList;
@@ -98,21 +98,17 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
             String cover = coverUri(game);
             binding.launcherGameCoverFrame.setClipToOutline(true);
             binding.launcherGameCover.setClipToOutline(true);
+            binding.launcherGameCover.setImageDrawable(null);
             if (cover == null || cover.isEmpty()) {
                 showCoverPlaceholder();
                 return;
             }
-            try {
-                binding.launcherGameCover.setImageURI(Uri.parse(cover));
-                if (binding.launcherGameCover.getDrawable() == null) {
-                    showCoverPlaceholder();
-                    return;
-                }
-                binding.launcherGameCover.setVisibility(View.VISIBLE);
-                binding.launcherGameInitial.setVisibility(View.GONE);
-            } catch (Throwable ignored) {
+            if (!SafeImageLoader.loadUri(binding.launcherGameCover, cover)) {
                 showCoverPlaceholder();
+                return;
             }
+            binding.launcherGameCover.setVisibility(View.VISIBLE);
+            binding.launcherGameInitial.setVisibility(View.GONE);
         }
 
         private void showCoverPlaceholder() {

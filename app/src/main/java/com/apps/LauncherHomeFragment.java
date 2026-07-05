@@ -31,6 +31,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
 import com.yuki.yukihub.launcherbridge.YukiHubBridge;
+import com.yuki.yukihub.util.SafeImageLoader;
 
 import java.util.List;
 
@@ -322,9 +323,8 @@ public class LauncherHomeFragment extends Fragment {
             return;
         }
         try {
-            binding.launcherAvatarImage.setImageURI(Uri.parse(avatar));
             binding.launcherAvatarImage.setClipToOutline(true);
-            if (binding.launcherAvatarImage.getDrawable() == null) {
+            if (!SafeImageLoader.loadUri(binding.launcherAvatarImage, avatar)) {
                 showDefaultAvatar();
                 return;
             }

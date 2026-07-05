@@ -86,7 +86,11 @@ public class LauncherLibraryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        finishDirectPlaySessionIfNeeded();
+        if (runningSessionId > 0L) {
+            finishDirectPlaySessionIfNeeded();
+        } else {
+            loadGames();
+        }
     }
 
     @Override

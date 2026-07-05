@@ -98,6 +98,12 @@
             android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
 
         <activity
+            android:name="com.apps.LauncherAddGameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="keyboardHidden|orientation|screenSize|uiMode" />
+
+        <activity
             android:name="com.apps.LauncherPendingActivity"
             android:exported="false"
             android:screenOrientation="portrait"

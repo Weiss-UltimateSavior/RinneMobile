@@ -119,7 +119,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.documentfile.provider.DocumentFile;
 
-import com.apps.LauncherActivity;
 import com.yuki.yukihub.ai.AiReviewClient;
 import com.yuki.yukihub.ai.AiReviewController;
 import com.yuki.yukihub.ai.AiReviewHistoryStore;
@@ -149,6 +148,7 @@ import com.yuki.yukihub.ui.ScanResultAdapter;
 import com.yuki.yukihub.ui.colorpicker.ColorPickerDialog;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.DevLogger;
+import com.yuki.yukihub.util.SafeImageLoader;
 import com.yuki.yukihub.util.TimeFormatUtil;
 import com.yuki.yukihub.util.UiScaleUtil;
 
@@ -781,7 +781,9 @@ private void applyCustomBackground() {
         } else {
             stopBackgroundVideo();
             bgVideo.setVisibility(View.GONE);
-            bgImage.setImageURI(Uri.parse(bg));
+            if (!SafeImageLoader.loadUri(bgImage, bg)) {
+                throw new IllegalStateException("custom background image unavailable");
+            }
             bgImage.setVisibility(View.VISIBLE);
             bgDim.setVisibility(dimEnabled ? View.VISIBLE : View.GONE);
             dynamicBg.setVisibility(View.GONE);
@@ -2566,7 +2568,11 @@ if (uri == null || uri.isEmpty()) uri = prefs == null ? "" : prefs.getString(KEY
         return;
     }
     try {
-        avatar.setImageURI(Uri.parse(uri));
+        if (!SafeImageLoader.loadUri(avatar, uri)) {
+            avatar.setVisibility(View.GONE);
+            if (initial != null) initial.setVisibility(View.VISIBLE);
+            return;
+        }
         avatar.setVisibility(View.VISIBLE);
         if (initial != null) initial.setVisibility(View.GONE);
     } catch (Throwable t) {
@@ -3356,11 +3362,10 @@ if (sideDetailPath != null) sideDetailPath.setText("路径：" + displayPath(gam
         if (sideScreenshot2 != null) sideScreenshot2.setImageDrawable(null);
         String coverUri = safeCoverUri(game);
         if (coverUri != null && !coverUri.isEmpty()) {
-            try {
-                sideDetailCover.setImageURI(Uri.parse(coverUri));
+            if (SafeImageLoader.loadUri(sideDetailCover, coverUri)) {
                 sideDetailCover.setVisibility(View.VISIBLE);
                 sideDetailPlaceholder.setVisibility(View.GONE);
-            } catch (Throwable t) {
+            } else {
                 sideDetailCover.setImageDrawable(null);
                 sideDetailCover.setVisibility(View.GONE);
                 sideDetailPlaceholder.setVisibility(View.VISIBLE);
@@ -4216,7 +4221,6 @@ else sourceSpinner.setSelection(0);
                     .putBoolean("dev_log_enabled", logEnabledCheck.isChecked())
                     .apply();
 
-            boolean launchModeChanged = AppLaunchMode.isYukiMobileUiEnabled(this) != yukiMobileUiCheck.isChecked();
             AppLaunchMode.setYukiMobileUiEnabled(this, yukiMobileUiCheck.isChecked());
 
             DynamicTheme dt = DynamicTheme.getInstance();
@@ -4226,10 +4230,6 @@ else sourceSpinner.setSelection(0);
             applyCustomBackground();
             Toast.makeText(MainActivity.this, "已保存资料源：" + (ymgal ? "月幕Gal" : (bangumiMirror ? "Bangumi镜像" : (bangumi ? "Bangumi" : "VNDB"))) + "，扫描深度：" + depth + " 层，字体：" + UiScaleUtil.percent(fontScale) + "%", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
-            if (launchModeChanged) {
-                restartToSavedLaunchMode();
-                return;
-            }
             recreate();
         });
         chooseBgButton.setOnClickListener(v -> {
@@ -4324,17 +4324,6 @@ else sourceSpinner.setSelection(0);
         });
 
         colorPickerDialog.show();
-    }
-
-    private void restartToSavedLaunchMode() {
-        Class<?> target = AppLaunchMode.isYukiMobileUiEnabled(this)
-                ? LauncherActivity.class
-                : MainActivity.class;
-        Intent intent = new Intent(this, target);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-        overridePendingTransition(0, 0);
     }
 
     private List<String> getScanRootUris() {
@@ -4882,12 +4871,10 @@ private void showDetailDialog(Game game) {
         TextView ph = d.findViewById(R.id.detailCoverPlaceholder);
         String safeCover = safeCoverUri(game);
         if (safeCover != null && !safeCover.isEmpty()) {
-            try {
-                Uri u = Uri.parse(safeCover);
-                cover.setImageURI(u);
+            if (SafeImageLoader.loadUri(cover, safeCover)) {
                 cover.setVisibility(View.VISIBLE);
                 ph.setVisibility(View.GONE);
-            } catch (Throwable e) {
+            } else {
                 cover.setImageDrawable(null);
                 cover.setVisibility(View.GONE);
                 ph.setVisibility(View.VISIBLE);

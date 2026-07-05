@@ -20,6 +20,10 @@ public final class AppLaunchMode {
         prefs(context).edit().putBoolean(KEY_YUKI_MOBILE_UI_ENABLED, enabled).apply();
     }
 
+    public static boolean shouldRouteToLauncher(Context context) {
+        return isYukiMobileUiEnabled(context);
+    }
+
     private static SharedPreferences prefs(Context context) {
         return context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }

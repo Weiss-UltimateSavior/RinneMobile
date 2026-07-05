@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_bg">
+
+    <ScrollView
+        android:id="@+id/addGameScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="22dp"
+            android:paddingTop="34dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="28dp">
+
+            <TextView
+                android:id="@+id/addGameTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="添加游戏"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/addGameHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="填写信息后保存到 YukiHub 游戏库"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="14sp" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:layout_marginTop="24dp"
+                android:text="游戏名称" />
+
+            <EditText
+                android:id="@+id/addGameNameInput"
+                style="@style/LauncherAddGameInput"
+                android:hint="输入游戏名称" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:text="游戏引擎" />
+
+            <Spinner
+                android:id="@+id/addGameEngineSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/launcher_account_input"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:text="游戏目录" />
+
+            <TextView
+                android:id="@+id/addGameDirText"
+                style="@style/LauncherAddGameInputText"
+                android:text="点击选择游戏目录" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:text="封面图片" />
+
+            <TextView
+                android:id="@+id/addGameCoverText"
+                style="@style/LauncherAddGameInputText"
+                android:text="点击选择封面图片" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:text="启动入口" />
+
+            <EditText
+                android:id="@+id/addGameLaunchTargetInput"
+                style="@style/LauncherAddGameInput"
+                android:hint="[游戏目录]" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:text="模拟器包名" />
+
+            <EditText
+                android:id="@+id/addGameEmulatorInput"
+                style="@style/LauncherAddGameInput"
+                android:hint="按引擎自动使用默认值" />
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
+                android:text="备注" />
+
+            <EditText
+                android:id="@+id/addGameDescriptionInput"
+                android:layout_width="match_parent"
+                android:layout_height="96dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/launcher_account_input"
+                android:gravity="top"
+                android:hint="可选"
+                android:paddingStart="14dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="12dp"
+                android:textColor="@color/launcher_text_color"
+                android:textColorHint="@color/launcher_input_hint_color"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/addGameSave"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="22dp"
+                android:gravity="center"
+                android:text="保存"
+                android:textColor="@color/launcher_on_primary_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

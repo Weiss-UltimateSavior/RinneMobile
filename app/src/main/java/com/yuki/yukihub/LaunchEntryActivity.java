@@ -10,7 +10,7 @@ public class LaunchEntryActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Class<?> target = AppLaunchMode.isYukiMobileUiEnabled(this)
+        Class<?> target = AppLaunchMode.shouldRouteToLauncher(this)
                 ? LauncherActivity.class
                 : MainActivity.class;
         Intent intent = new Intent(this, target);

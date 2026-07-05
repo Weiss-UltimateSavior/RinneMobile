@@ -1,7 +1,6 @@
 package com.yuki.yukihub.ui;
 
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -14,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.model.Game;
+import com.yuki.yukihub.util.SafeImageLoader;
 import com.yuki.yukihub.util.TimeFormatUtil;
 
 
@@ -140,12 +140,10 @@ public void setSelectedGameId(long id) { selectedGameId = id; notifyDataSetChang
         bindStatusBadge(h.statusBadge, g.playStatus);
         String coverUri = chooseSafeCoverUri(g);
         if (coverUri != null && !coverUri.isEmpty()) {
-            try {
-                Uri uri = Uri.parse(coverUri);
-                h.cover.setImageURI(uri);
+            if (SafeImageLoader.loadUri(h.cover, coverUri)) {
                 h.cover.setVisibility(View.VISIBLE);
                 h.placeholder.setVisibility(View.GONE);
-            } catch (Throwable e) {
+            } else {
                 h.cover.setImageDrawable(null);
                 h.cover.setVisibility(View.GONE);
                 h.placeholder.setVisibility(View.VISIBLE);
