@@ -2,11 +2,11 @@
 <set xmlns:android="http://schemas.android.com/apk/res/android"
     android:interpolator="@android:interpolator/decelerate_quad">
     <alpha
-        android:duration="200"
+        android:duration="300"
         android:fromAlpha="0.88"
         android:toAlpha="1" />
     <translate
-        android:duration="200"
+        android:duration="300"
         android:fromYDelta="-2%"
         android:toYDelta="0%" />
 </set>

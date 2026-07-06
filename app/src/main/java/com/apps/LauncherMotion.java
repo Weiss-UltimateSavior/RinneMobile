@@ -2,11 +2,10 @@ package com.apps;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.graphics.Color;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
@@ -15,8 +14,6 @@ import androidx.annotation.Nullable;
 import com.yuki.yukihub.R;
 
 final class LauncherMotion {
-    private static final long TONE_OVERLAY_MS = 180L;
-
     private LauncherMotion() {
     }
 
@@ -62,34 +59,17 @@ final class LauncherMotion {
                 .start();
     }
 
+    /**
+     * 切换色调模式：在新窗口淡入的同时渲染新主题页面，旧窗口保持不透明，
+     * 避免黑底穿透。动画进行中即完成页面重建。
+     */
     static void recreateWithToneOverlay(Activity activity, Runnable beforeRecreate) {
         if (activity == null) return;
-        Window window = activity.getWindow();
-        ViewGroup decor = window == null ? null : (ViewGroup) window.getDecorView();
-        if (decor == null) {
-            if (beforeRecreate != null) beforeRecreate.run();
-            activity.recreate();
-            activity.overridePendingTransition(R.anim.launcher_tone_enter, R.anim.launcher_tone_exit);
-            return;
-        }
-
-        View overlay = new View(activity);
-        overlay.setBackgroundColor(overlayColor(activity));
-        overlay.setAlpha(0f);
-        decor.addView(overlay, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
-        overlay.animate()
-                .alpha(1f)
-                .setDuration(TONE_OVERLAY_MS)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withEndAction(() -> {
-                    if (beforeRecreate != null) beforeRecreate.run();
-                    activity.recreate();
-                    activity.overridePendingTransition(R.anim.launcher_tone_enter, R.anim.launcher_tone_exit);
-                })
-                .start();
+        if (beforeRecreate != null) beforeRecreate.run();
+        Intent intent = new Intent(activity, activity.getClass());
+        activity.startActivity(intent);
+        activity.finish();
+        activity.overridePendingTransition(R.anim.launcher_tone_enter, R.anim.launcher_tone_exit);
     }
 
     static void runAfterPulse(@Nullable View view, Runnable action) {
@@ -97,15 +77,5 @@ final class LauncherMotion {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (action != null) action.run();
         }, 150L);
-    }
-
-    private static int overlayColor(Activity activity) {
-        int primary = LauncherTheme.primary(activity);
-        int bg = LauncherTheme.card(activity);
-        return Color.rgb(
-                Math.round(Color.red(primary) * 0.28f + Color.red(bg) * 0.72f),
-                Math.round(Color.green(primary) * 0.28f + Color.green(bg) * 0.72f),
-                Math.round(Color.blue(primary) * 0.28f + Color.blue(bg) * 0.72f)
-        );
     }
 }
