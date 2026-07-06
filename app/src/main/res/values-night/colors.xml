@@ -17,6 +17,7 @@
     <color name="launcher_card_border_color">#2B3B34</color>
     <color name="launcher_surface_subtle_color">#1D2B25</color>
     <color name="launcher_surface_header_color">#1C2A24</color>
+    <color name="launcher_surface_overlay_color">#D91C2A24</color>
     <color name="launcher_avatar_gradient_start">#146849</color>
     <color name="launcher_avatar_gradient_end">#2FA36F</color>
     <color name="launcher_contact_avatar_gradient_start">#A65454</color>
