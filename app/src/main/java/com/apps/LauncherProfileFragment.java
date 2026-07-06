@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -70,5 +71,14 @@ public class LauncherProfileFragment extends Fragment {
         if (binding == null) return;
         binding.profilePlaceholderCard.setBackground(LauncherTheme.primaryButton(requireContext(), 30f));
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        for (int i = 0; i < binding.profileActionList.getChildCount(); i++) {
+            View row = binding.profileActionList.getChildAt(i);
+            if (!(row instanceof ViewGroup)) continue;
+            View icon = ((ViewGroup) row).getChildAt(0);
+            if (icon instanceof TextView) {
+                icon.setBackground(LauncherTheme.circle(requireContext()));
+                ((TextView) icon).setTextColor(LauncherTheme.onPrimary(requireContext()));
+            }
+        }
     }
 }

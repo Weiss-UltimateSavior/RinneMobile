@@ -108,6 +108,7 @@
 
             <!-- 功能列表 -->
             <LinearLayout
+                android:id="@+id/profileActionList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="22dp"
@@ -117,192 +118,104 @@
 
                 <LinearLayout
                     android:id="@+id/profileInfoRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/launcher_icon_square" />
+                    style="@style/LauncherManageItem">
 
                     <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:text="个人资料"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        style="@style/LauncherManageIcon"
+                        android:text="P" />
 
                     <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="&gt;"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp" />
+                        style="@style/LauncherManageTitle"
+                        android:text="个人资料" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/accountSettingsRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/launcher_icon_square" />
+                    style="@style/LauncherManageItem">
 
                     <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:text="账号设置"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        style="@style/LauncherManageIcon"
+                        android:text="A" />
 
                     <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="&gt;"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp" />
+                        style="@style/LauncherManageTitle"
+                        android:text="账号设置" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/helpCenterRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/launcher_icon_square" />
+                    style="@style/LauncherManageItem">
 
                     <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:text="帮助中心"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        style="@style/LauncherManageIcon"
+                        android:text="H" />
 
                     <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="&gt;"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp" />
+                        style="@style/LauncherManageTitle"
+                        android:text="帮助中心" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/privacyPolicyRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/launcher_icon_square" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:gravity="center_vertical"
-                    android:text="隐私政策"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                    style="@style/LauncherManageItem">
 
                     <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="&gt;"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp" />
+                        style="@style/LauncherManageIcon"
+                        android:text="PR" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="隐私政策" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/aboutYukiHubRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/launcher_icon_square" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:gravity="center_vertical"
-                    android:text="关于 YukiHub"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                    style="@style/LauncherManageItem">
 
                     <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="&gt;"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp" />
+                        style="@style/LauncherManageIcon"
+                        android:text="i" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="关于 YukiHub" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/logoutRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/launcher_icon_square" />
+                    style="@style/LauncherManageItem">
 
                     <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:text="退出登录"
-                        android:textColor="@color/launcher_danger_color"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        style="@style/LauncherManageIcon"
+                        android:text="L" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="退出登录" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
