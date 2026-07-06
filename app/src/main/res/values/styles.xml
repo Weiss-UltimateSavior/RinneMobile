@@ -154,6 +154,12 @@
         <item name="android:windowExitAnimation">@anim/launcher_dialog_exit</item>
     </style>
 
+    <style name="Theme.YukiHub.Splash" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@drawable/launcher_splash_screen</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
     <style name="Theme.YukiHub.Launcher" parent="AppTheme">
         <item name="android:windowAnimationStyle">@style/LauncherActivityAnimation</item>
         <item name="android:alertDialogTheme">@style/Theme.YukiHub.Launcher.Dialog</item>

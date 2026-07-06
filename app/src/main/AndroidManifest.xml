@@ -59,7 +59,7 @@
         <activity
             android:name=".LaunchEntryActivity"
             android:exported="true"
-            android:theme="@style/AppTheme"
+            android:theme="@style/Theme.YukiHub.Splash"
             android:configChanges="keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
