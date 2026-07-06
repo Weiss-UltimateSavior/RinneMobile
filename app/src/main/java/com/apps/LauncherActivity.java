@@ -263,8 +263,8 @@ public class LauncherActivity extends AppCompatActivity {
         TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
         TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
 
-        titleView.setText("进入游戏中心");
-        messageView.setText("确定打开主项目游戏中心吗？");
+        titleView.setText("进入横屏模式");
+        messageView.setText("要横屏吗？通常推荐平板使用");
         LauncherTheme.dialogButtons(btnCancel, btnConfirm);
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {

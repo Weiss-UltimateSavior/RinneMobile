@@ -66,42 +66,45 @@
                 android:useDefaultMargins="false">
 
                 <LinearLayout
-                    android:id="@+id/toolTranslate"
+                    android:id="@+id/toolUsefulUnpack"
                     style="@style/LauncherToolboxItem">
 
-                    <TextView
+                    <ImageView
                         style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_blue" />
+                        android:contentDescription="usefulunpack"
+                        android:src="@drawable/launcher_tool_icon_usefulunpack" />
 
                     <TextView
                         style="@style/LauncherToolboxTitle"
-                        android:text="文本翻译" />
+                        android:text="usefulunpack" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/toolArchive"
+                    android:id="@+id/toolTermux"
                     style="@style/LauncherToolboxItem">
 
-                    <TextView
+                    <ImageView
                         style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_red" />
+                        android:contentDescription="termux"
+                        android:src="@drawable/launcher_tool_icon_termux" />
 
                     <TextView
                         style="@style/LauncherToolboxTitle"
-                        android:text="资源整理" />
+                        android:text="termux" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/toolLauncher"
+                    android:id="@+id/toolShizuku"
                     style="@style/LauncherToolboxItem">
 
-                    <TextView
+                    <ImageView
                         style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_blue" />
+                        android:contentDescription="shizuku"
+                        android:src="@drawable/launcher_tool_icon_shizuku" />
 
                     <TextView
                         style="@style/LauncherToolboxTitle"
-                        android:text="启动助手" />
+                        android:text="shizuku" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -143,18 +146,7 @@
                         android:text="缓存清理" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/toolReport"
-                    style="@style/LauncherToolboxItem">
 
-                    <TextView
-                        style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_blue" />
-
-                    <TextView
-                        style="@style/LauncherToolboxTitle"
-                        android:text="运行报告" />
-                </LinearLayout>
             </GridLayout>
         </LinearLayout>
     </ScrollView>

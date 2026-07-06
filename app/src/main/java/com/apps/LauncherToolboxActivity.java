@@ -1,12 +1,17 @@
 package com.apps;
 
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -14,6 +19,10 @@ import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherToolboxBinding;
 
 public class LauncherToolboxActivity extends AppCompatActivity {
+    private static final String USEFULUNPACK_URL = "https://github.com/znso4pa/usefulunpack/releases";
+    private static final String TERMUX_URL = "https://github.com/termux/termux-app/releases";
+    private static final String SHIZUKU_URL = "https://github.com/RikkaApps/Shizuku/releases";
+
     private ActivityLauncherToolboxBinding binding;
 
     @Override
@@ -26,6 +35,40 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         applySystemBarInsets();
         applyThemeTone();
+
+        binding.toolUsefulUnpack.setOnClickListener(view -> confirmOpenExternalTool("usefulunpack", USEFULUNPACK_URL));
+        binding.toolTermux.setOnClickListener(view -> confirmOpenExternalTool("termux", TERMUX_URL));
+        binding.toolShizuku.setOnClickListener(view -> confirmOpenExternalTool("shizuku", SHIZUKU_URL));
+    }
+
+    private void confirmOpenExternalTool(String name, String url) {
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(
+                (int) (280 * getResources().getDisplayMetrics().density),
+                WindowManager.LayoutParams.WRAP_CONTENT
+        );
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_launcher_confirm, null);
+        window.setContentView(dialogView);
+
+        TextView titleView = dialogView.findViewById(R.id.dialogTitle);
+        TextView messageView = dialogView.findViewById(R.id.dialogMessage);
+        TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
+        TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
+
+        titleView.setText("跳转下载");
+        messageView.setText("即将跳转到浏览器下载 " + name + "，是否继续？");
+        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
+        btnCancel.setOnClickListener(view -> dialog.dismiss());
+        btnConfirm.setOnClickListener(view -> {
+            dialog.dismiss();
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        });
     }
 
     private void applySystemBarInsets() {
