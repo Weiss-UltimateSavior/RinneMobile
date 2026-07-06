@@ -4,16 +4,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherProfileBinding;
-import com.yuki.yukihub.launcherbridge.YukiHubBridge;
 
 public class LauncherProfileFragment extends Fragment {
     private FragmentLauncherProfileBinding binding;
@@ -29,7 +25,6 @@ public class LauncherProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         applySystemBarInsets();
-        bindActions();
         applyThemeTone();
     }
 
@@ -69,30 +64,6 @@ public class LauncherProfileFragment extends Fragment {
             return insets;
         });
         currentBinding.getRoot().requestApplyInsets();
-    }
-
-    private void bindActions() {
-        binding.profileInfoRow.setOnClickListener(view ->
-                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_PROFILE));
-        binding.accountSettingsRow.setOnClickListener(view ->
-                YukiHubBridge.openAction(requireContext(), MainActivity.ACTION_ACCOUNT_SETTINGS));
-        binding.helpCenterRow.setOnClickListener(view ->
-                Toast.makeText(requireContext(), "帮助中心待接入", Toast.LENGTH_SHORT).show());
-        binding.privacyPolicyRow.setOnClickListener(view ->
-                Toast.makeText(requireContext(), "隐私政策待接入", Toast.LENGTH_SHORT).show());
-        binding.aboutYukiHubRow.setOnClickListener(view ->
-                Toast.makeText(requireContext(), "关于 YukiHub 待接入", Toast.LENGTH_SHORT).show());
-        binding.logoutRow.setOnClickListener(view ->
-                getParentFragmentManager()
-                        .beginTransaction()
-                        .setCustomAnimations(
-                                R.anim.launcher_fragment_enter,
-                                R.anim.launcher_fragment_exit,
-                                R.anim.launcher_fragment_enter,
-                                R.anim.launcher_fragment_exit
-                        )
-                        .replace(R.id.launcherFragmentContainer, new LauncherAccountFragment(), "launcher_ACCOUNT")
-                        .commit());
     }
 
     private void applyThemeTone() {

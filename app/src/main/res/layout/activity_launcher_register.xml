@@ -43,7 +43,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="昵称"
+                android:text="输入昵称"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -54,7 +54,7 @@
                 android:layout_height="49dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请输入昵称"
+                android:hint="请你的输入昵称"
                 android:inputType="textPersonName"
                 android:maxLines="1"
                 android:paddingStart="16dp"
@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="邮箱"
+                android:text="输入邮箱"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -78,7 +78,7 @@
                 android:layout_height="49dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请输入邮箱"
+                android:hint="请输入你的邮箱"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"
                 android:paddingStart="16dp"
@@ -91,7 +91,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="密码"
+                android:text="输入密码"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -102,7 +102,7 @@
                 android:layout_height="49dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请输入密码"
+                android:hint="请输入你的密码"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:paddingStart="16dp"
@@ -135,11 +135,36 @@
                 android:textColorHint="@color/launcher_input_hint_color"
                 android:textSize="14sp" />
 
+                <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="输入邀请码"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+                <EditText
+                android:id="@+id/registerKey"
+                android:layout_width="match_parent"
+                android:layout_height="49dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/launcher_account_input"
+                android:hint="输入你的邀请码"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textColor="@color/launcher_text_color"
+                android:textColorHint="@color/launcher_input_hint_color"
+                android:textSize="14sp" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="密码至少 8 位"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="密码至少 8 位，请先通过登录页面指引获取邀请码"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="14sp" />
 

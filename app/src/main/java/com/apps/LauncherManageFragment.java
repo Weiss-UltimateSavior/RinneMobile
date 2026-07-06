@@ -207,7 +207,7 @@ public class LauncherManageFragment extends Fragment {
         title.setEllipsize(TextUtils.TruncateAt.END);
         row.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
-        TextView toggle = smallAction(enabled ? "启用" : "停用", enabled);
+        TextView toggle = smallAction(enabled ? "停用" : "启用", enabled);
         toggle.setOnClickListener(view -> {
             List<Boolean> states = getScanRootEnabledStates();
             while (states.size() <= index) states.add(true);

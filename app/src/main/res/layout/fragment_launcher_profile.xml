@@ -122,19 +122,17 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <View
                         android:layout_width="32dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="Y"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/launcher_icon_square" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:gravity="center_vertical"
                         android:text="个人资料"
                         android:textColor="@color/launcher_text_color"
@@ -157,19 +155,17 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <View
                         android:layout_width="32dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="\@"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/launcher_icon_square" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:gravity="center_vertical"
                         android:text="账号设置"
                         android:textColor="@color/launcher_text_color"
@@ -192,18 +188,17 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <View
                         android:layout_width="32dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="?"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp" />
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/launcher_icon_square" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:gravity="center_vertical"
                         android:text="帮助中心"
                         android:textColor="@color/launcher_text_color"
@@ -226,20 +221,19 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="32dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="▣"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="15sp" />
+                    <View
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/launcher_icon_square" />
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:text="隐私政策"
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:gravity="center_vertical"
+                    android:text="隐私政策"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -260,21 +254,19 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="32dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="i"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                    <View
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/launcher_icon_square" />
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:text="关于 YukiHub"
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:gravity="center_vertical"
+                    android:text="关于 YukiHub"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -295,18 +287,17 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <View
                         android:layout_width="32dp"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="↩"
-                        android:textColor="@color/launcher_danger_color"
-                        android:textSize="18sp" />
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/launcher_icon_square" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:gravity="center_vertical"
                         android:text="退出登录"
                         android:textColor="@color/launcher_danger_color"

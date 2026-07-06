@@ -126,7 +126,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
 
     private void renderParticleToggle() {
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
-        binding.particleToggleState.setText(enabled ? "开启" : "关闭");
+        binding.particleToggleState.setText(enabled ? "关闭" : "开启");
         LauncherTheme.chip(binding.particleToggleState, enabled);
     }
 

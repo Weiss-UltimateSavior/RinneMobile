@@ -100,7 +100,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:layout_marginEnd="12dp"
-                    android:text="或使用以下方式登录"
+                    android:text="登录或使用以上方式获取邀请码注册"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="14sp" />
 
