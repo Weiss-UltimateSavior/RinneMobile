@@ -67,6 +67,12 @@ public class LauncherAccountFragment extends Fragment {
         binding.btnSubmit.setOnClickListener(view ->
                 getParentFragmentManager()
                         .beginTransaction()
+                        .setCustomAnimations(
+                                R.anim.launcher_fragment_enter,
+                                R.anim.launcher_fragment_exit,
+                                R.anim.launcher_fragment_enter,
+                                R.anim.launcher_fragment_exit
+                        )
                         .replace(R.id.launcherFragmentContainer, new LauncherProfileFragment(), "launcher_ACCOUNT_PROFILE")
                         .commit());
         binding.btnGoogle.setOnClickListener(view ->

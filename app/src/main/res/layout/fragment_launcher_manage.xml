@@ -10,7 +10,8 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingBottom="18dp">
+        android:paddingBottom="18dp"
+        android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -115,23 +116,6 @@
                     <TextView
                         style="@style/LauncherManageTitle"
                         android:text="智能评价" />
-
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/actionAppSettings"
-                    style="@style/LauncherManageItem">
-
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="A" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="高级设置" />
 
                     <TextView
                         style="@style/LauncherManageArrow"

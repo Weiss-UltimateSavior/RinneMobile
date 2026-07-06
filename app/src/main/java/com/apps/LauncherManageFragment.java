@@ -106,7 +106,6 @@ public class LauncherManageFragment extends Fragment {
         binding.actionCloudSync.setOnClickListener(view -> showSyncOptions());
         binding.actionModelSettings.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherAiReviewActivity.class)));
-        binding.actionAppSettings.setOnClickListener(view -> confirmAppSettings());
         binding.actionDiagnostics.setOnClickListener(view -> showDiagnosticsPrivacyDialog());
         binding.actionMetadataSource.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherMetadataSourceActivity.class)));
@@ -129,15 +128,6 @@ public class LauncherManageFragment extends Fragment {
 
     private void openAction(String action) {
         YukiHubBridge.openAction(requireContext(), action);
-    }
-
-    private void confirmAppSettings() {
-        showLauncherConfirmDialog(
-                "应用设置",
-                "即将离开 Launcher 进入高级设置，请谨慎修改。",
-                "继续",
-                () -> openAction(MainActivity.ACTION_SETTINGS)
-        );
     }
 
     private void persistAndSaveScanDirectory(Uri uri) {

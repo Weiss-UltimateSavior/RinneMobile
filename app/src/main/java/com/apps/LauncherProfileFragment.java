@@ -85,6 +85,12 @@ public class LauncherProfileFragment extends Fragment {
         binding.logoutRow.setOnClickListener(view ->
                 getParentFragmentManager()
                         .beginTransaction()
+                        .setCustomAnimations(
+                                R.anim.launcher_fragment_enter,
+                                R.anim.launcher_fragment_exit,
+                                R.anim.launcher_fragment_enter,
+                                R.anim.launcher_fragment_exit
+                        )
                         .replace(R.id.launcherFragmentContainer, new LauncherAccountFragment(), "launcher_ACCOUNT")
                         .commit());
     }
