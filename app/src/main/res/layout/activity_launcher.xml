@@ -136,17 +136,14 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_game_center_default" />
 
-                <TextView
+                <ImageView
                     android:id="@+id/navLaunchCenterText"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:contentDescription="@string/game_center"
-                    android:gravity="center"
-                    android:text="凛"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="23sp"
-                    android:textStyle="bold"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/launcher_theme_rinne_def"
                     android:visibility="gone" />
             </FrameLayout>
             </LinearLayout>

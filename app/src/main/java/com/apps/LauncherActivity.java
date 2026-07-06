@@ -30,7 +30,9 @@ public class LauncherActivity extends AppCompatActivity {
     static final String KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled";
     static final String THEME_STYLE_DEFAULT = "default";
     static final String THEME_STYLE_RINNE = "rinne";
+    static final String THEME_STYLE_ANRI = "anri";
     static final int RINNE_PRIMARY_COLOR = Color.rgb(216, 169, 201);
+    static final int ANRI_PRIMARY_COLOR = Color.rgb(77, 53, 89);
 
     private ActivityLauncherBinding binding;
     private LauncherViewModel viewModel;
@@ -227,14 +229,21 @@ public class LauncherActivity extends AppCompatActivity {
         if (binding == null) return;
         binding.navLaunchCenterCircle.setBackground(LauncherTheme.circle(this));
         boolean rinneTheme = isRinneTheme(this);
-        binding.navLaunchCenterImage.setVisibility(rinneTheme ? View.GONE : View.VISIBLE);
-        binding.navLaunchCenterText.setVisibility(rinneTheme ? View.VISIBLE : View.GONE);
+        boolean anriTheme = isAnriTheme(this);
+        boolean themedIcon = rinneTheme || anriTheme;
+        binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
+        binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);
         if (rinneTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_rinne_def);
             binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
+        } else if (anriTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_anri_def);
+            binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
         } else {
             binding.navLaunchCenterImage.setColorFilter(Color.WHITE);
         }
-        binding.navLaunchCenterText.setText("凛");
     }
 
     private void openMainActivity() {
@@ -288,7 +297,12 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     static void setLauncherThemeStyle(android.content.Context context, String style) {
-        String value = THEME_STYLE_RINNE.equals(style) ? THEME_STYLE_RINNE : THEME_STYLE_DEFAULT;
+        String value;
+        if (THEME_STYLE_RINNE.equals(style) || THEME_STYLE_ANRI.equals(style)) {
+            value = style;
+        } else {
+            value = THEME_STYLE_DEFAULT;
+        }
         context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .edit()
@@ -304,6 +318,10 @@ public class LauncherActivity extends AppCompatActivity {
 
     static boolean isRinneTheme(android.content.Context context) {
         return THEME_STYLE_RINNE.equals(getLauncherThemeStyle(context));
+    }
+
+    static boolean isAnriTheme(android.content.Context context) {
+        return THEME_STYLE_ANRI.equals(getLauncherThemeStyle(context));
     }
 
     static void setLauncherParticlesEnabled(android.content.Context context, boolean enabled) {
@@ -328,9 +346,9 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     static int launcherPrimaryColor(android.content.Context context) {
-        return isRinneTheme(context)
-                ? RINNE_PRIMARY_COLOR
-                : ContextCompat.getColor(wrapLauncherUiMode(context), R.color.launcher_primary_color);
+        if (isRinneTheme(context)) return RINNE_PRIMARY_COLOR;
+        if (isAnriTheme(context)) return ANRI_PRIMARY_COLOR;
+        return ContextCompat.getColor(wrapLauncherUiMode(context), R.color.launcher_primary_color);
     }
 
     private boolean isLauncherDarkMode() {

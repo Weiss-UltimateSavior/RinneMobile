@@ -29,17 +29,13 @@
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:alpha="1"
+                    android:alpha="0.65"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:scaleType="centerCrop"
                     android:src="@drawable/launcher_home_stats_bg" />
 
-                <!-- 半透明遮罩，防止文字看不清 -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@color/launcher_surface_overlay_color" />
+
 
                 <LinearLayout
                     android:id="@+id/profileHeader"

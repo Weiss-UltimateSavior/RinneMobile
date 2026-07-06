@@ -17,7 +17,7 @@ import com.yuki.yukihub.databinding.ActivityLauncherThemeMenuBinding;
 public class LauncherThemeMenuActivity extends AppCompatActivity {
     private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
     private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
-    private static final String THEME_NATSUME_LABEL = "四季夏目（风格）";
+    private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
 
     private ActivityLauncherThemeMenuBinding binding;
     private String selectedTheme = THEME_DEFAULT_LABEL;
@@ -30,7 +30,14 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
 
         binding = ActivityLauncherThemeMenuBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        selectedTheme = LauncherActivity.isRinneTheme(this) ? THEME_RINNE_LABEL : THEME_DEFAULT_LABEL;
+        String style = LauncherActivity.getLauncherThemeStyle(this);
+        if (LauncherActivity.THEME_STYLE_RINNE.equals(style)) {
+            selectedTheme = THEME_RINNE_LABEL;
+        } else if (LauncherActivity.THEME_STYLE_ANRI.equals(style)) {
+            selectedTheme = THEME_ANRI_LABEL;
+        } else {
+            selectedTheme = THEME_DEFAULT_LABEL;
+        }
         applySystemBarInsets();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
@@ -60,7 +67,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     private void bindActions() {
         binding.freshThemeRow.setOnClickListener(view -> selectTheme(THEME_DEFAULT_LABEL));
         binding.nightThemeRow.setOnClickListener(view -> selectTheme(THEME_RINNE_LABEL));
-        binding.pinkThemeRow.setOnClickListener(view -> selectTheme(THEME_NATSUME_LABEL));
+        binding.pinkThemeRow.setOnClickListener(view -> selectTheme(THEME_ANRI_LABEL));
         binding.particleToggleRow.setOnClickListener(view -> toggleParticles());
         binding.themeMenuApply.setOnClickListener(view -> applySelectedTheme());
     }
@@ -70,8 +77,11 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
                 this,
                 LauncherTheme.primary(this)
         ));
+        binding.freshThemeIcon.setClipToOutline(true);
         binding.rinneThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.RINNE_PRIMARY_COLOR));
         binding.rinneThemeLogo.setClipToOutline(true);
+        binding.anriThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.ANRI_PRIMARY_COLOR));
+        binding.anriThemeLogo.setClipToOutline(true);
         binding.particleToggleIcon.setBackground(LauncherTheme.circle(this));
     }
 
@@ -83,7 +93,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     private void renderSelection() {
         boolean freshSelected = THEME_DEFAULT_LABEL.equals(selectedTheme);
         boolean nightSelected = THEME_RINNE_LABEL.equals(selectedTheme);
-        boolean pinkSelected = THEME_NATSUME_LABEL.equals(selectedTheme);
+        boolean pinkSelected = THEME_ANRI_LABEL.equals(selectedTheme);
 
         binding.freshThemeRow.setBackgroundResource(freshSelected
                 ? 0
@@ -107,6 +117,9 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         if (THEME_RINNE_LABEL.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_RINNE);
             Toast.makeText(this, "已应用园神凛弥风格", Toast.LENGTH_SHORT).show();
+        } else if (THEME_ANRI_LABEL.equals(selectedTheme)) {
+            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_ANRI);
+            Toast.makeText(this, "已应用鹰仓杏璃风格", Toast.LENGTH_SHORT).show();
         } else if (THEME_DEFAULT_LABEL.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_DEFAULT);
             Toast.makeText(this, "已恢复默认主题", Toast.LENGTH_SHORT).show();
