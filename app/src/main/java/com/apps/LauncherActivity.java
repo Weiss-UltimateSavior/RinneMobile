@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -77,12 +78,26 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        binding.navHome.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.HOME));
-        binding.navSavings.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.LIBRARY));
-        binding.navCards.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.MANAGE));
-        binding.navAccount.setOnClickListener(view -> viewModel.selectNavItem(LauncherViewModel.NavItem.ACCOUNT));
-        binding.navLaunchCenter.setOnClickListener(view ->
-                LauncherMotion.runAfterPulse(binding.navLaunchCenterCircle, this::confirmOpenMainActivity));
+        binding.navHome.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            viewModel.selectNavItem(LauncherViewModel.NavItem.HOME);
+        });
+        binding.navSavings.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            viewModel.selectNavItem(LauncherViewModel.NavItem.LIBRARY);
+        });
+        binding.navCards.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            viewModel.selectNavItem(LauncherViewModel.NavItem.MANAGE);
+        });
+        binding.navAccount.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            viewModel.selectNavItem(LauncherViewModel.NavItem.ACCOUNT);
+        });
+        binding.navLaunchCenter.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            LauncherMotion.runAfterPulse(binding.navLaunchCenterCircle, this::confirmOpenMainActivity);
+        });
     }
 
     private void observeState() {
