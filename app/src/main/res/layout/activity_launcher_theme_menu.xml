@@ -61,7 +61,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="清新绿意（默认）"
+                        android:text="丛雨（默认）"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -72,7 +72,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="当前启动界面的默认柔和主题"
+                        android:text="当前启动界面的默认主题"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="12sp" />
                 </LinearLayout>

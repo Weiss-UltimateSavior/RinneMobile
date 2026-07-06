@@ -69,7 +69,6 @@ public class LauncherProfileFragment extends Fragment {
 
     private void applyThemeTone() {
         if (binding == null) return;
-        binding.profilePlaceholderCard.setBackground(LauncherTheme.primaryButton(requireContext(), 30f));
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         for (int i = 0; i < binding.profileActionList.getChildCount(); i++) {
             View row = binding.profileActionList.getChildAt(i);
