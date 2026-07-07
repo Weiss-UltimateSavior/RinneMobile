@@ -167,7 +167,8 @@ public class LauncherManageFragment extends Fragment {
         roots.add(value);
         saveScanRootUris(roots);
         renderScanDirectories();
-        Toast.makeText(requireContext(), "已添加目录", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "已添加目录，正在扫描...", Toast.LENGTH_SHORT).show();
+        scanSingleRoot(value);
     }
 
     private void scanConfiguredDirectories() {
@@ -182,6 +183,18 @@ public class LauncherManageFragment extends Fragment {
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, roots, depth);
+            mainHandler.post(() -> {
+                if (!isAdded()) return;
+                showScanResultDialog(stats);
+            });
+        });
+    }
+
+    private void scanSingleRoot(String rootUri) {
+        int depth = scanDepth();
+        android.content.Context appContext = requireContext().getApplicationContext();
+        AppExecutors.runOnSingle(() -> {
+            LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, java.util.Collections.singletonList(rootUri), depth);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
                 showScanResultDialog(stats);
