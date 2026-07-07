@@ -109,26 +109,6 @@
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
-        <activity
-            android:name="com.apps.LauncherAiReviewActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-
-        <activity
-            android:name="com.apps.LauncherAiReviewGenerateActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-
-        <activity
-            android:name="com.apps.LauncherAiReviewHistoryActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
             android:name="com.apps.LauncherPendingActivity"
@@ -144,19 +124,6 @@
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
-        <activity
-            android:name="com.apps.LauncherAiReviewDetailActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-
-        <activity
-            android:name="com.apps.LauncherAiReviewImagePreviewActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
             android:name="com.apps.LauncherGameEditActivity"

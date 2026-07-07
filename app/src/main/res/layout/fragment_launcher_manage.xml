@@ -105,22 +105,6 @@
                         android:text=">" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/actionModelSettings"
-                    style="@style/LauncherManageItem">
-
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="AI" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="智能评价" />
-
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
-                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/actionDiagnostics"

@@ -174,11 +174,6 @@
         <item name="windowActionBar">false</item>
     </style>
 
-    <string-array name="launcher_ai_review_providers">
-        <item>OpenAI 兼容接口</item>
-        <item>本地模型</item>
-        <item>自定义服务</item>
-    </string-array>
 
     <style name="Theme.YukiHub.AuthDialog" parent="Theme.AppCompat.Dialog">
         <item name="android:windowNoTitle">true</item>
