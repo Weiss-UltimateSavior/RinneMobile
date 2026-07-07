@@ -2,6 +2,7 @@ package com.apps;
 
 import android.content.Context;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.os.Bundle;
@@ -493,7 +494,9 @@ public class LauncherLibraryFragment extends Fragment {
 
     private void showEditPlayTimeDialog(Game game) {
         if (game == null) return;
-        AlertDialog dialog = createLauncherDialog();
+        // 使用 Dialog 而非 AlertDialog，避免 FLAG_NOT_FOCUSABLE 导致输入法无法唤醒
+        Dialog dialog = new Dialog(requireContext());
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("修改游玩时长"));
 
@@ -562,10 +565,16 @@ public class LauncherLibraryFragment extends Fragment {
         brLp.setMargins(0, dp(14), 0, 0);
         btnRow.setLayoutParams(brLp);
 
-        TextView cancelBtn = createDialogCancelButton(dialog);
+        TextView cancelBtn = new TextView(requireContext());
+        cancelBtn.setText("取消");
+        cancelBtn.setGravity(android.view.Gravity.CENTER);
+        cancelBtn.setTextSize(14);
+        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(cancelBtn);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(42), 1f);
         cancelLp.setMargins(0, 0, dp(6), 0);
         cancelBtn.setLayoutParams(cancelLp);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
         btnRow.addView(cancelBtn);
 
         TextView saveBtn = new TextView(requireContext());
@@ -592,18 +601,20 @@ public class LauncherLibraryFragment extends Fragment {
 
         android.view.Window window = dialog.getWindow();
         if (window != null) {
-            // 清除 FLAG_NOT_FOCUSABLE 让 EditText 能获取输入法焦点
-            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-            window.setContentView(root);
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        }
+        dialog.setContentView(root);
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        if (window != null) {
             window.setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
 
-        // 主动请求焦点并唤起输入法
         totalInput.requestFocus();
         totalInput.post(() -> {
             InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) imm.showSoftInput(totalInput, InputMethodManager.SHOW_FORCED);
+            if (imm != null) imm.showSoftInput(totalInput, 0);
         });
     }
 

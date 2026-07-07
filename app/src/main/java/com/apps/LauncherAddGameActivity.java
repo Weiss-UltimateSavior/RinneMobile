@@ -1,18 +1,29 @@
 package com.apps;
 
+import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -20,10 +31,13 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.data.GameRepository;
@@ -36,12 +50,18 @@ import com.yuki.yukihub.util.AppExecutors;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class LauncherAddGameActivity extends AppCompatActivity {
     private ScrollView scroll;
     private EditText nameInput;
-    private EditText launchTargetInput;
-    private EditText emulatorInput;
+    private TextView launchTargetText;
+    private Uri launchTargetUri;
+    private TextView emulatorText;
     private EditText descriptionInput;
     private TextView dirText;
     private TextView coverText;
@@ -58,6 +78,14 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 gameDirUri = uri;
                 dirText.setText(displayUri(uri));
                 fillTitleFromDirIfEmpty(uri);
+            });
+
+    private final ActivityResultLauncher<String[]> launchTargetPicker =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) return;
+                persistUriPermission(uri);
+                launchTargetUri = uri;
+                launchTargetText.setText(displayUri(uri));
             });
 
     private final ActivityResultLauncher<String[]> coverPicker =
@@ -85,8 +113,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private void bindViews() {
         scroll = findViewById(R.id.addGameScroll);
         nameInput = findViewById(R.id.addGameNameInput);
-        launchTargetInput = findViewById(R.id.addGameLaunchTargetInput);
-        emulatorInput = findViewById(R.id.addGameEmulatorInput);
+        launchTargetText = findViewById(R.id.addGameLaunchTargetInput);
+        emulatorText = findViewById(R.id.addGameEmulatorInput);
         descriptionInput = findViewById(R.id.addGameDescriptionInput);
         dirText = findViewById(R.id.addGameDirText);
         coverText = findViewById(R.id.addGameCoverText);
@@ -130,9 +158,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 EngineType engine = selectedEngine();
                 String nextDefault = defaultEmulatorPackage(engine);
-                String current = textOf(emulatorInput);
+                String current = textOf(emulatorText);
                 if (current.isEmpty() || current.equals(lastEngineDefaultPackage)) {
-                    emulatorInput.setText(nextDefault);
+                    emulatorText.setText(nextDefault);
                 }
                 lastEngineDefaultPackage = nextDefault;
             }
@@ -145,6 +173,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void bindActions() {
         dirText.setOnClickListener(view -> directoryPicker.launch(null));
+        launchTargetText.setOnClickListener(view -> launchTargetPicker.launch(new String[]{"*/*"}));
+        emulatorText.setOnClickListener(view -> showAppPicker(emulatorText));
         coverText.setOnClickListener(view -> coverPicker.launch(new String[]{"image/*"}));
         saveButton.setOnClickListener(view -> saveGame());
     }
@@ -170,8 +200,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
         android.content.Context appContext = getApplicationContext();
         EngineType selectedEngine = selectedEngine();
-        String selectedLaunchTarget = textOf(launchTargetInput);
-        String selectedEmulator = textOf(emulatorInput);
+        String selectedLaunchTarget = launchTargetUri != null
+                ? extractFileName(launchTargetUri)
+                : "";
+        String selectedEmulator = textOf(emulatorText);
         String selectedDescription = textOf(descriptionInput);
         Uri selectedGameDir = gameDirUri;
         Uri selectedCover = coverUri;
@@ -227,6 +259,18 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    private String extractFileName(Uri uri) {
+        if (uri == null) return "";
+        try {
+            DocumentFile docFile = DocumentFile.fromSingleUri(this, uri);
+            if (docFile != null && docFile.getName() != null) return docFile.getName();
+        } catch (Throwable ignored) {
+        }
+        String display = displayUri(uri);
+        int slash = display.lastIndexOf('/');
+        return slash >= 0 && slash < display.length() - 1 ? display.substring(slash + 1) : display;
     }
 
     private EngineType selectedEngine() {
@@ -321,8 +365,197 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         return editText == null || editText.getText() == null ? "" : editText.getText().toString().trim();
     }
 
+    private String textOf(TextView textView) {
+        return textView == null || textView.getText() == null ? "" : textView.getText().toString().trim();
+    }
+
     private String textOrDefault(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value.trim();
+    }
+
+    private void showAppPicker(TextView target) {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_launcher_app_picker);
+        LauncherTheme.applyPrimaryTone(dialog.findViewById(android.R.id.content));
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.74f),
+                    (int) (getResources().getDisplayMetrics().heightPixels * 0.82f));
+        }
+        RecyclerView rv = dialog.findViewById(R.id.recyclerLauncherAppPicker);
+        View loading = dialog.findViewById(R.id.layoutLauncherAppLoading);
+        TextView hint = dialog.findViewById(R.id.tvLauncherAppPickerHint);
+        EditText search = dialog.findViewById(R.id.etLauncherAppSearch);
+        TextView btnClose = dialog.findViewById(R.id.btnCloseLauncherAppPicker);
+        LauncherTheme.secondaryButton(btnClose);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.74f),
+                    (int) (getResources().getDisplayMetrics().heightPixels * 0.82f));
+        }
+
+        AppExecutors.runOnIo(() -> {
+            List<AppPickItem> items = loadLaunchableApps();
+            runOnUiThread(() -> {
+                if (!dialog.isShowing()) return;
+                loading.setVisibility(View.GONE);
+                rv.setVisibility(View.VISIBLE);
+                if (items.isEmpty()) {
+                    hint.setText("没有找到可启动的应用");
+                    return;
+                }
+                hint.setText("共 " + items.size() + " 个可启动应用，可搜索应用名或包名");
+                final AppPickerAdapter[] adapterRef = new AppPickerAdapter[1];
+                adapterRef[0] = new AppPickerAdapter(items, item -> {
+                    target.setText(item.packageName);
+                    dialog.dismiss();
+                });
+                rv.setAdapter(adapterRef[0]);
+                search.addTextChangedListener(new TextWatcher() {
+                    public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+                    public void onTextChanged(CharSequence s, int st, int b, int c) {
+                        if (adapterRef[0] == null) return;
+                        adapterRef[0].filter(s == null ? "" : s.toString());
+                        hint.setText("共 " + items.size() + " 个应用，当前显示 " + adapterRef[0].getItemCount() + " 个");
+                    }
+                    public void afterTextChanged(Editable e) {}
+                });
+            });
+        });
+    }
+
+    private List<AppPickItem> loadLaunchableApps() {
+        LinkedHashMap<String, AppPickItem> map = new LinkedHashMap<>();
+        try {
+            PackageManager pm = getPackageManager();
+            Intent launcher = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+            List<ResolveInfo> launchers = pm.queryIntentActivities(launcher, 0);
+            if (launchers != null) {
+                for (ResolveInfo ri : launchers) {
+                    if (ri == null || ri.activityInfo == null || ri.activityInfo.packageName == null) continue;
+                    addAppPickItem(map, pm, ri.activityInfo.applicationInfo);
+                }
+            }
+            List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+            if (apps != null) {
+                for (ApplicationInfo app : apps) {
+                    if (app == null || app.packageName == null) continue;
+                    if (pm.getLaunchIntentForPackage(app.packageName) != null) addAppPickItem(map, pm, app);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        List<AppPickItem> items = new ArrayList<>(map.values());
+        items.sort((a, b) -> a.label.compareToIgnoreCase(b.label));
+        return items;
+    }
+
+    private void addAppPickItem(Map<String, AppPickItem> map, PackageManager pm, ApplicationInfo app) {
+        if (map == null || pm == null || app == null || app.packageName == null) return;
+        if (map.containsKey(app.packageName)) return;
+        try {
+            CharSequence labelSeq = pm.getApplicationLabel(app);
+            String label = labelSeq == null ? app.packageName : labelSeq.toString();
+            Drawable icon = pm.getApplicationIcon(app);
+            map.put(app.packageName, new AppPickItem(label, app.packageName, icon));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private interface AppPickCallback {
+        void onPick(AppPickItem item);
+    }
+
+    private static final class AppPickItem {
+        final String label;
+        final String packageName;
+        final Drawable icon;
+
+        AppPickItem(String label, String packageName, Drawable icon) {
+            this.label = label == null ? "" : label;
+            this.packageName = packageName == null ? "" : packageName;
+            this.icon = icon;
+        }
+    }
+
+    private class AppPickerAdapter extends RecyclerView.Adapter<AppPickerAdapter.Holder> {
+        private final List<AppPickItem> allItems;
+        private final List<AppPickItem> items = new ArrayList<>();
+        private final AppPickCallback callback;
+
+        AppPickerAdapter(List<AppPickItem> items, AppPickCallback callback) {
+            this.allItems = items == null ? new ArrayList<>() : new ArrayList<>(items);
+            this.items.addAll(this.allItems);
+            this.callback = callback;
+        }
+
+        void filter(String query) {
+            String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+            items.clear();
+            if (q.isEmpty()) {
+                items.addAll(allItems);
+            } else {
+                for (AppPickItem item : allItems) {
+                    String label = item.label == null ? "" : item.label.toLowerCase(Locale.ROOT);
+                    String pkg = item.packageName == null ? "" : item.packageName.toLowerCase(Locale.ROOT);
+                    if (label.contains(q) || pkg.contains(q)) items.add(item);
+                }
+            }
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_launcher_app_picker, parent, false);
+            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT, dp(76));
+            lp.setMargins(0, 0, 0, dp(8));
+            v.setLayoutParams(lp);
+            return new Holder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull Holder h, int position) {
+            AppPickItem item = items.get(position);
+            h.label.setText(item.label.isEmpty() ? item.packageName : item.label);
+            h.pkg.setText(item.packageName);
+            if (item.icon != null) {
+                h.icon.setImageDrawable(item.icon);
+            } else {
+                h.icon.setImageResource(android.R.mipmap.sym_def_app_icon);
+            }
+            h.itemView.setOnClickListener(v -> {
+                if (callback != null) callback.onPick(item);
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class Holder extends RecyclerView.ViewHolder {
+            ImageView icon;
+            TextView label, pkg;
+
+            Holder(View itemView) {
+                super(itemView);
+                icon = itemView.findViewById(R.id.ivLauncherAppIcon);
+                label = itemView.findViewById(R.id.tvLauncherAppLabel);
+                pkg = itemView.findViewById(R.id.tvLauncherAppPackage);
+            }
+        }
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density);
     }
 
     private void configureEdgeToEdgeWindow() {
