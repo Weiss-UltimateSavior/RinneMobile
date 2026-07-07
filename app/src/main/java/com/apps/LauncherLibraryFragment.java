@@ -3,11 +3,17 @@ package com.apps;
 import android.content.Context;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.content.Intent;
+import android.Manifest;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -87,10 +93,51 @@ public class LauncherLibraryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        checkStoragePermission();
         if (runningSessionId > 0L) {
             finishDirectPlaySessionIfNeeded();
         } else {
             loadGames();
+        }
+    }
+
+    private void checkStoragePermission() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            if (!Environment.isExternalStorageManager()) {
+                AlertDialog dialog = createLauncherDialog();
+                LinearLayout root = createDialogRoot();
+                root.addView(createDialogTitle("需要文件访问权限"));
+
+                TextView info = new TextView(requireContext());
+                info.setText("应用需要完全访问文件夹的权限来读取游戏文件。请在系统页面允许\"管理所有文件\"。");
+                info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+                info.setTextSize(13);
+                info.setLineSpacing(dp(4), 1f);
+                LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                infoLp.setMargins(0, dp(14), 0, 0);
+                root.addView(info, infoLp);
+
+                root.addView(createDialogButton("前往", true, () -> {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                Uri.parse("package:" + requireContext().getPackageName())));
+                    } catch (Throwable t) {
+                        try { startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); } catch (Throwable ignored) { }
+                    }
+                }, dialog));
+
+                root.addView(createDialogCancelButton(dialog));
+
+                android.view.Window window = dialog.getWindow();
+                if (window != null) {
+                    window.setContentView(root);
+                    window.setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+                }
+            }
+        } else if (Build.VERSION.SDK_INT >= 23) {
+            if (requireActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1001);
+            }
         }
     }
 
@@ -745,7 +792,7 @@ public class LauncherLibraryFragment extends Fragment {
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("删除游戏"));
         TextView msg = new TextView(requireContext());
-        msg.setText("确定要删除「" + safeTitle(game) + "」吗？此操作不可恢复。");
+        msg.setText("要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。");
         msg.setGravity(android.view.Gravity.CENTER);
         msg.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
         msg.setTextSize(13);
@@ -768,7 +815,7 @@ public class LauncherLibraryFragment extends Fragment {
         btnRow.addView(cancelBtn);
 
         TextView deleteBtn = new TextView(requireContext());
-        deleteBtn.setText("删除");
+        deleteBtn.setText("移除");
         deleteBtn.setGravity(android.view.Gravity.CENTER);
         deleteBtn.setTextSize(14);
         deleteBtn.setTypeface(null, android.graphics.Typeface.BOLD);

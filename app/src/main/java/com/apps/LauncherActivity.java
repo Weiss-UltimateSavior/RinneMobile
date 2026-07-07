@@ -3,7 +3,12 @@ package com.apps;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.Manifest;
+import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.Window;
@@ -25,6 +30,7 @@ import com.yuki.yukihub.databinding.ActivityLauncherBinding;
 
 public class LauncherActivity extends AppCompatActivity {
     static final String APP_PREFS = "yukihub_prefs";
+    private static final String KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked";
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
     static final String KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style";
     static final String KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled";
@@ -51,6 +57,7 @@ public class LauncherActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(LauncherViewModel.class);
 
         renderParticles();
+        requestStoragePermissionIfNeeded();
         bindActions();
         observeState();
     }
@@ -77,6 +84,81 @@ public class LauncherActivity extends AppCompatActivity {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         }
         window.getDecorView().setSystemUiVisibility(flags);
+    }
+
+    private void requestStoragePermissionIfNeeded() {
+        if (getSharedPreferences(APP_PREFS, MODE_PRIVATE).getBoolean(KEY_STORAGE_PERMISSION_ASKED, false)) return;
+        getSharedPreferences(APP_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_STORAGE_PERMISSION_ASKED, true).apply();
+
+        if (Build.VERSION.SDK_INT >= 30) {
+            if (!Environment.isExternalStorageManager()) {
+                AlertDialog dialog = new AlertDialog.Builder(this).create();
+                dialog.show();
+                android.view.Window window = dialog.getWindow();
+                if (window == null) return;
+                window.setBackgroundDrawableResource(android.R.color.transparent);
+
+                LinearLayout root = new LinearLayout(this);
+                root.setOrientation(LinearLayout.VERTICAL);
+                root.setPadding(dp(24), dp(22), dp(24), dp(18));
+                root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+                TextView title = new TextView(this);
+                title.setText("需要文件访问权限");
+                title.setGravity(android.view.Gravity.CENTER);
+                title.setSingleLine(true);
+                title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+                title.setTextSize(18);
+                title.setTypeface(null, android.graphics.Typeface.BOLD);
+                root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+                TextView info = new TextView(this);
+                info.setText("应用需要完全访问文件夹的权限来读取和管理游戏文件。请在系统页面允许\"管理所有文件\"。");
+                info.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
+                info.setTextSize(13);
+                info.setLineSpacing(dp(4), 1f);
+                LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                infoLp.setMargins(0, dp(14), 0, 0);
+                root.addView(info, infoLp);
+
+                TextView goBtn = new TextView(this);
+                goBtn.setText("前往");
+                goBtn.setGravity(android.view.Gravity.CENTER);
+                goBtn.setTextSize(14);
+                goBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+                LauncherTheme.primaryButton(goBtn);
+                goBtn.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    try {
+                        startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                Uri.parse("package:" + getPackageName())));
+                    } catch (Throwable t) {
+                        try { startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); } catch (Throwable ignored) { }
+                    }
+                });
+                LinearLayout.LayoutParams goLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
+                goLp.setMargins(0, dp(10), 0, 0);
+                root.addView(goBtn, goLp);
+
+                TextView cancelBtn = new TextView(this);
+                cancelBtn.setText("取消");
+                cancelBtn.setGravity(android.view.Gravity.CENTER);
+                cancelBtn.setTextColor(LauncherTheme.primary(this));
+                cancelBtn.setTextSize(14);
+                cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+                LauncherTheme.menuItem(cancelBtn);
+                cancelBtn.setOnClickListener(v -> dialog.dismiss());
+                LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
+                cancelLp.setMargins(0, dp(10), 0, 0);
+                root.addView(cancelBtn, cancelLp);
+
+                window.setContentView(root);
+                window.setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            }
+        } else if (Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1001);
+        }
     }
 
     private void bindActions() {
@@ -349,6 +431,10 @@ public class LauncherActivity extends AppCompatActivity {
         if (isRinneTheme(context)) return RINNE_PRIMARY_COLOR;
         if (isAnriTheme(context)) return ANRI_PRIMARY_COLOR;
         return ContextCompat.getColor(wrapLauncherUiMode(context), R.color.launcher_primary_color);
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density);
     }
 
     private boolean isLauncherDarkMode() {
