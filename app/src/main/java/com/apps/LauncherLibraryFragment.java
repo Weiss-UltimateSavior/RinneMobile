@@ -677,41 +677,7 @@ public class LauncherLibraryFragment extends Fragment {
         infoLp.setMargins(0, dp(14), 0, 0);
         root.addView(info, infoLp);
 
-        String[][] actions = {
-            {"启动游戏", "primary"},
-            {"修改状态", "secondary"},
-            {"修改时长", "secondary"},
-            {"编辑信息", "secondary"},
-            {"删除游戏", "danger"}
-        };
-        for (String[] act : actions) {
-            TextView btn = new TextView(requireContext());
-            btn.setText(act[0]);
-            btn.setGravity(android.view.Gravity.CENTER);
-            btn.setTextSize(14);
-            btn.setTypeface(null, android.graphics.Typeface.BOLD);
-            if (act[1].equals("primary")) {
-                LauncherTheme.primaryButton(btn);
-            } else if (act[1].equals("danger")) {
-                LauncherTheme.dangerMenuItem(btn);
-            } else {
-                LauncherTheme.secondaryButton(btn);
-            }
-            String label = act[0];
-            btn.setOnClickListener(v -> {
-                dialog.dismiss();
-                switch (label) {
-                    case "启动游戏": launchGameDirectly(game); break;
-                    case "修改状态": showPlayStatusDialog(game); break;
-                    case "修改时长": showEditPlayTimeDialog(game); break;
-                    case "编辑信息": startEditGameActivity(game); break;
-                    case "删除游戏": confirmDeleteGame(game); break;
-                }
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
-            lp.setMargins(0, dp(10), 0, 0);
-            root.addView(btn, lp);
-        }
+
         root.addView(createDialogCancelButton(dialog));
         dialog.getWindow().setContentView(root);
         dialog.getWindow().setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
