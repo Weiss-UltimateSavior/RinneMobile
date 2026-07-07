@@ -16,49 +16,49 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="22dp"
-            android:paddingTop="34dp"
-            android:paddingEnd="22dp"
-            android:paddingBottom="28dp">
+            android:paddingStart="20dp"
+            android:paddingTop="31dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="25dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="KRKR 引擎"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
                 android:text="华为等部分机型如因存储权限导致引擎崩溃或闪退，可开启对应引擎的独立存档目录。"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:text="KR 引擎版本"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/engineVersionSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="6dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
-                android:padding="10dp" />
+                android:padding="9dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -69,7 +69,7 @@
                     android:lineSpacingExtra="2dp"
                     android:text="KR 启动参数兼容模式"
                     android:textColor="@color/launcher_text_color"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -81,7 +81,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -92,7 +92,7 @@
                     android:lineSpacingExtra="2dp"
                     android:text="KR 独立存档目录\n（权限异常闪退时开启）"
                     android:textColor="@color/launcher_text_color"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -104,7 +104,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -115,7 +115,7 @@
                     android:lineSpacingExtra="2dp"
                     android:text="Artemis 独立存档目录\n（权限异常闪退时开启）"
                     android:textColor="@color/launcher_text_color"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -127,45 +127,45 @@
             <TextView
                 android:id="@+id/btnNativeKrkr"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="22dp"
+                android:layout_height="45dp"
+                android:layout_marginTop="20dp"
                 android:background="@drawable/launcher_filter_chip_unselected"
                 android:gravity="center"
                 android:text="进入原生 KRKR"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
                 <TextView
                     android:id="@+id/btnCancel"
                     android:layout_width="0dp"
-                    android:layout_height="50dp"
+                    android:layout_height="45dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_filter_chip_unselected"
                     android:gravity="center"
                     android:text="取消"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/btnSave"
                     android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="9dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_primary_button"
                     android:gravity="center"
                     android:text="保存"
                     android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>

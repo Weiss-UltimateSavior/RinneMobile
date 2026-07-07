@@ -515,8 +515,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_launcher_app_picker, parent, false);
             RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT, dp(76));
-            lp.setMargins(0, 0, 0, dp(8));
+                    RecyclerView.LayoutParams.MATCH_PARENT, dp(68));
+            lp.setMargins(0, 0, 0, dp(7));
             v.setLayoutParams(lp);
             return new Holder(v);
         }

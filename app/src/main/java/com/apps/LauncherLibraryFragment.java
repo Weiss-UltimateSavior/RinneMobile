@@ -111,10 +111,10 @@ public class LauncherLibraryFragment extends Fragment {
                 TextView info = new TextView(requireContext());
                 info.setText("应用需要完全访问文件夹的权限来读取游戏文件。请在系统页面允许\"管理所有文件\"。");
                 info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-                info.setTextSize(13);
+                info.setTextSize(12);
                 info.setLineSpacing(dp(4), 1f);
                 LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                infoLp.setMargins(0, dp(14), 0, 0);
+                infoLp.setMargins(0, dp(13), 0, 0);
                 root.addView(info, infoLp);
 
                 root.addView(createDialogButton("前往", true, () -> {
@@ -131,7 +131,7 @@ public class LauncherLibraryFragment extends Fragment {
                 android.view.Window window = dialog.getWindow();
                 if (window != null) {
                     window.setContentView(root);
-                    window.setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+                    window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
                 }
             }
         } else if (Build.VERSION.SDK_INT >= 23) {
@@ -340,7 +340,7 @@ public class LauncherLibraryFragment extends Fragment {
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
             window.setLayout(
-                    (int) (280 * getResources().getDisplayMetrics().density),
+                    (int) (252 * getResources().getDisplayMetrics().density),
                     android.view.WindowManager.LayoutParams.WRAP_CONTENT
             );
             android.view.View dialogView = android.view.LayoutInflater.from(requireContext())
@@ -372,11 +372,11 @@ public class LauncherLibraryFragment extends Fragment {
         android.view.Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(300), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
         root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
@@ -385,7 +385,7 @@ public class LauncherLibraryFragment extends Fragment {
         title.setSingleLine(true);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(18);
+        title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -399,12 +399,12 @@ public class LauncherLibraryFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(14);
+        cancel.setTextSize(13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        cancelLp.setMargins(0, dp(10), 0, 0);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
         root.addView(cancel, cancelLp);
 
         window.setContentView(root);
@@ -415,15 +415,15 @@ public class LauncherLibraryFragment extends Fragment {
         option.setText(label);
         option.setGravity(android.view.Gravity.CENTER);
         option.setSingleLine(true);
-        option.setTextSize(14);
+        option.setTextSize(13);
         option.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.menuItem(option);
         option.setOnClickListener(view -> {
             dialog.dismiss();
             action.run();
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        lp.setMargins(0, dp(12), 0, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        lp.setMargins(0, dp(11), 0, 0);
         root.addView(option, lp);
     }
 
@@ -445,7 +445,7 @@ public class LauncherLibraryFragment extends Fragment {
     private LinearLayout createDialogRoot() {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
         root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
         return root;
     }
@@ -457,7 +457,7 @@ public class LauncherLibraryFragment extends Fragment {
         title.setSingleLine(true);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(18);
+        title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         return title;
     }
@@ -466,7 +466,7 @@ public class LauncherLibraryFragment extends Fragment {
         TextView btn = new TextView(requireContext());
         btn.setText(text);
         btn.setGravity(android.view.Gravity.CENTER);
-        btn.setTextSize(14);
+        btn.setTextSize(13);
         btn.setTypeface(null, android.graphics.Typeface.BOLD);
         if (primary) {
             LauncherTheme.primaryButton(btn);
@@ -474,8 +474,8 @@ public class LauncherLibraryFragment extends Fragment {
             LauncherTheme.secondaryButton(btn);
         }
         btn.setOnClickListener(v -> { dialog.dismiss(); action.run(); });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
-        lp.setMargins(0, dp(10), 0, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+        lp.setMargins(0, dp(9), 0, 0);
         btn.setLayoutParams(lp);
         return btn;
     }
@@ -485,12 +485,12 @@ public class LauncherLibraryFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(14);
+        cancel.setTextSize(13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        lp.setMargins(0, dp(10), 0, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        lp.setMargins(0, dp(9), 0, 0);
         cancel.setLayoutParams(lp);
         return cancel;
     }
@@ -509,20 +509,20 @@ public class LauncherLibraryFragment extends Fragment {
             option.setText((status.equals(game.playStatus) ? "● " : "○ ") + labels[i]);
             option.setGravity(android.view.Gravity.CENTER);
             option.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-            option.setTextSize(14);
+            option.setTextSize(13);
             option.setTypeface(null, android.graphics.Typeface.BOLD);
             option.setBackground(LauncherTheme.cancelChip(requireContext()));
             option.setOnClickListener(v -> {
                 dialog.dismiss();
                 updateGameStatus(game, status);
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
-            lp.setMargins(0, dp(12), 0, 0);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+            lp.setMargins(0, dp(11), 0, 0);
             root.addView(option, lp);
         }
         root.addView(createDialogCancelButton(dialog));
         dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(280), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void updateGameStatus(Game game, String status) {
@@ -551,75 +551,75 @@ public class LauncherLibraryFragment extends Fragment {
         info.setText("当前总时长：" + com.yuki.yukihub.util.TimeFormatUtil.playTime(game.totalPlayTime)
                 + "\n最近游玩：" + (game.lastPlayedAt > 0 ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new java.util.Date(game.lastPlayedAt)) : "无"));
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        info.setTextSize(13);
+        info.setTextSize(12);
         info.setLineSpacing(dp(4), 1f);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, dp(14), 0, 0);
+        infoLp.setMargins(0, dp(13), 0, 0);
         root.addView(info, infoLp);
 
         TextView totalLabel = new TextView(requireContext());
         totalLabel.setText("设置新的总时长");
         totalLabel.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        totalLabel.setTextSize(13);
+        totalLabel.setTextSize(12);
         totalLabel.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams tlLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        tlLp.setMargins(0, dp(14), 0, 0);
+        tlLp.setMargins(0, dp(13), 0, 0);
         root.addView(totalLabel, tlLp);
 
         android.widget.EditText totalInput = new android.widget.EditText(requireContext());
         totalInput.setHint("例如 3h 20m / 200m / 7200s / 2.5h");
         totalInput.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         totalInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_input_hint_color));
-        totalInput.setTextSize(14);
-        totalInput.setPadding(dp(14), dp(10), dp(14), dp(10));
+        totalInput.setTextSize(13);
+        totalInput.setPadding(dp(13), dp(9), dp(13), dp(9));
         totalInput.setBackground(LauncherTheme.cancelChip(requireContext()));
         LinearLayout.LayoutParams tiLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        tiLp.setMargins(0, dp(6), 0, 0);
+        tiLp.setMargins(0, dp(5), 0, 0);
         root.addView(totalInput, tiLp);
 
         TextView addLabel = new TextView(requireContext());
         addLabel.setText("追加游玩时长");
         addLabel.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        addLabel.setTextSize(13);
+        addLabel.setTextSize(12);
         addLabel.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams alLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        alLp.setMargins(0, dp(12), 0, 0);
+        alLp.setMargins(0, dp(11), 0, 0);
         root.addView(addLabel, alLp);
 
         android.widget.EditText addInput = new android.widget.EditText(requireContext());
         addInput.setHint("例如 30m / 1h30m / 0.5h");
         addInput.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         addInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_input_hint_color));
-        addInput.setTextSize(14);
-        addInput.setPadding(dp(14), dp(10), dp(14), dp(10));
+        addInput.setTextSize(13);
+        addInput.setPadding(dp(13), dp(9), dp(13), dp(9));
         addInput.setBackground(LauncherTheme.cancelChip(requireContext()));
         LinearLayout.LayoutParams aiLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        aiLp.setMargins(0, dp(6), 0, 0);
+        aiLp.setMargins(0, dp(5), 0, 0);
         root.addView(addInput, aiLp);
 
         TextView hint = new TextView(requireContext());
         hint.setText("可填 d/h/m/s 单位组合，纯数字视为分钟");
         hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        hint.setTextSize(12);
+        hint.setTextSize(11);
         LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hLp.setMargins(0, dp(8), 0, 0);
+        hLp.setMargins(0, dp(7), 0, 0);
         root.addView(hint, hLp);
 
         LinearLayout btnRow = new LinearLayout(requireContext());
         btnRow.setOrientation(LinearLayout.HORIZONTAL);
         btnRow.setWeightSum(2f);
         LinearLayout.LayoutParams brLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        brLp.setMargins(0, dp(14), 0, 0);
+        brLp.setMargins(0, dp(13), 0, 0);
         btnRow.setLayoutParams(brLp);
 
         TextView cancelBtn = new TextView(requireContext());
         cancelBtn.setText("取消");
         cancelBtn.setGravity(android.view.Gravity.CENTER);
-        cancelBtn.setTextSize(14);
+        cancelBtn.setTextSize(13);
         cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.secondaryButton(cancelBtn);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(42), 1f);
-        cancelLp.setMargins(0, 0, dp(6), 0);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
+        cancelLp.setMargins(0, 0, dp(5), 0);
         cancelBtn.setLayoutParams(cancelLp);
         cancelBtn.setOnClickListener(v -> dialog.dismiss());
         btnRow.addView(cancelBtn);
@@ -627,11 +627,11 @@ public class LauncherLibraryFragment extends Fragment {
         TextView saveBtn = new TextView(requireContext());
         saveBtn.setText("保存");
         saveBtn.setGravity(android.view.Gravity.CENTER);
-        saveBtn.setTextSize(14);
+        saveBtn.setTextSize(13);
         saveBtn.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.primaryButton(saveBtn);
-        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, dp(42), 1f);
-        saveLp.setMargins(dp(6), 0, 0, 0);
+        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
+        saveLp.setMargins(dp(5), 0, 0, 0);
         saveBtn.setLayoutParams(saveLp);
         saveBtn.setOnClickListener(v -> {
             Long totalMinutes = parseDuration(totalInput.getText().toString().trim());
@@ -655,7 +655,7 @@ public class LauncherLibraryFragment extends Fragment {
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
         if (window != null) {
-            window.setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
 
         totalInput.requestFocus();
@@ -718,16 +718,16 @@ public class LauncherLibraryFragment extends Fragment {
         sb.append("\n\n路径：").append(game.rootUri);
         info.setText(sb.toString());
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        info.setTextSize(13);
+        info.setTextSize(12);
         info.setLineSpacing(dp(4), 1f);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, dp(14), 0, 0);
+        infoLp.setMargins(0, dp(13), 0, 0);
         root.addView(info, infoLp);
 
 
         root.addView(createDialogCancelButton(dialog));
         dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void showMoreOptionsDialog(Game game) {
@@ -747,7 +747,7 @@ public class LauncherLibraryFragment extends Fragment {
             TextView option = new TextView(requireContext());
             option.setText(opt[0]);
             option.setGravity(android.view.Gravity.CENTER);
-            option.setTextSize(14);
+            option.setTextSize(13);
             option.setTypeface(null, android.graphics.Typeface.BOLD);
             if (opt[1].equals("delete")) {
                 LauncherTheme.dangerMenuItem(option);
@@ -764,13 +764,13 @@ public class LauncherLibraryFragment extends Fragment {
                     case "delete": confirmDeleteGame(game); break;
                 }
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
-            lp.setMargins(0, dp(12), 0, 0);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+            lp.setMargins(0, dp(11), 0, 0);
             root.addView(option, lp);
         }
         root.addView(createDialogCancelButton(dialog));
         dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(300), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void toggleFavorite(Game game) {
@@ -795,33 +795,33 @@ public class LauncherLibraryFragment extends Fragment {
         msg.setText("要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。");
         msg.setGravity(android.view.Gravity.CENTER);
         msg.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        msg.setTextSize(13);
+        msg.setTextSize(12);
         msg.setLineSpacing(dp(4), 1f);
         LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(14), 0, 0);
+        msgLp.setMargins(0, dp(13), 0, 0);
         root.addView(msg, msgLp);
 
         LinearLayout btnRow = new LinearLayout(requireContext());
         btnRow.setOrientation(LinearLayout.HORIZONTAL);
         btnRow.setWeightSum(2f);
         LinearLayout.LayoutParams brLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        brLp.setMargins(0, dp(14), 0, 0);
+        brLp.setMargins(0, dp(13), 0, 0);
         btnRow.setLayoutParams(brLp);
 
         TextView cancelBtn = createDialogCancelButton(confirm);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(42), 1f);
-        cancelLp.setMargins(0, 0, dp(6), 0);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
+        cancelLp.setMargins(0, 0, dp(5), 0);
         cancelBtn.setLayoutParams(cancelLp);
         btnRow.addView(cancelBtn);
 
         TextView deleteBtn = new TextView(requireContext());
         deleteBtn.setText("移除");
         deleteBtn.setGravity(android.view.Gravity.CENTER);
-        deleteBtn.setTextSize(14);
+        deleteBtn.setTextSize(13);
         deleteBtn.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.dangerButton(deleteBtn);
-        LinearLayout.LayoutParams delLp = new LinearLayout.LayoutParams(0, dp(42), 1f);
-        delLp.setMargins(dp(6), 0, 0, 0);
+        LinearLayout.LayoutParams delLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
+        delLp.setMargins(dp(5), 0, 0, 0);
         deleteBtn.setLayoutParams(delLp);
         deleteBtn.setOnClickListener(v -> {
             confirm.dismiss();
@@ -831,7 +831,7 @@ public class LauncherLibraryFragment extends Fragment {
         root.addView(btnRow);
 
         confirm.getWindow().setContentView(root);
-        confirm.getWindow().setLayout(dp(300), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        confirm.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void deleteGame(Game game) {
@@ -940,7 +940,7 @@ public class LauncherLibraryFragment extends Fragment {
         chip.setText(label);
         chip.setSingleLine(true);
         chip.setGravity(android.view.Gravity.CENTER);
-        chip.setTextSize(13);
+        chip.setTextSize(12);
         chip.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         if (selected) {
             chip.setTextColor(LauncherTheme.onPrimary(requireContext()));
@@ -948,14 +948,14 @@ public class LauncherLibraryFragment extends Fragment {
         } else {
             LauncherTheme.menuItem(chip);
         }
-        chip.setPadding(dp(14), 0, dp(14), 0);
+        chip.setPadding(dp(13), 0, dp(13), 0);
         chip.setOnClickListener(view -> {
             selectedCategory = value;
             renderCategories();
             applyFilters();
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(32));
-        lp.setMargins(0, 0, dp(8), 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(29));
+        lp.setMargins(0, 0, dp(7), 0);
         binding.libraryCategoryRow.addView(chip, lp);
     }
 

@@ -2,64 +2,64 @@
 <resources>
     <style name="YukiSidebarItem">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">24dp</item>
+        <item name="android:layout_height">22dp</item>
         <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingStart">6dp</item>
-        <item name="android:paddingEnd">5dp</item>
+        <item name="android:paddingStart">5dp</item>
+        <item name="android:paddingEnd">4dp</item>
         <item name="android:background">@drawable/bg_sidebar_item</item>
         <item name="android:textColor">@color/yh_text</item>
-        <item name="android:textSize">8sp</item>
+        <item name="android:textSize">7sp</item>
     </style>
 
     <style name="LauncherManageItem">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">58dp</item>
-        <item name="android:layout_marginBottom">12dp</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:layout_marginBottom">11dp</item>
         <item name="android:background">@drawable/launcher_white_card</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:orientation">horizontal</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingStart">13dp</item>
+        <item name="android:paddingEnd">13dp</item>
     </style>
 
     <style name="LauncherManageIcon">
-        <item name="android:layout_width">28dp</item>
-        <item name="android:layout_height">28dp</item>
+        <item name="android:layout_width">25dp</item>
+        <item name="android:layout_height">25dp</item>
         <item name="android:background">@drawable/launcher_icon_circle</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/launcher_primary_color</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="LauncherManageTitle">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginStart">12dp</item>
+        <item name="android:layout_marginStart">11dp</item>
         <item name="android:layout_weight">1</item>
         <item name="android:textColor">@color/launcher_text_color</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="LauncherManageArrow">
-        <item name="android:layout_width">24dp</item>
+        <item name="android:layout_width">22dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/launcher_text_muted_color</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">16sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="LauncherToolboxItem">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">82dp</item>
+        <item name="android:layout_height">74dp</item>
         <item name="android:layout_columnWeight">1</item>
-        <item name="android:layout_marginStart">6dp</item>
-        <item name="android:layout_marginEnd">6dp</item>
-        <item name="android:layout_marginBottom">12dp</item>
+        <item name="android:layout_marginStart">5dp</item>
+        <item name="android:layout_marginEnd">5dp</item>
+        <item name="android:layout_marginBottom">11dp</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:gravity">center</item>
@@ -67,63 +67,63 @@
     </style>
 
     <style name="LauncherToolboxIcon">
-        <item name="android:layout_width">40dp</item>
-        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_width">36dp</item>
+        <item name="android:layout_height">36dp</item>
     </style>
 
     <style name="LauncherToolboxTitle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginTop">7dp</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/launcher_text_muted_color</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="LauncherAddGameLabel">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">14dp</item>
+        <item name="android:layout_marginTop">13dp</item>
         <item name="android:textColor">@color/launcher_text_color</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="LauncherAddGameInput">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">50dp</item>
-        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_height">45dp</item>
+        <item name="android:layout_marginTop">7dp</item>
         <item name="android:background">@drawable/launcher_account_input</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingStart">13dp</item>
+        <item name="android:paddingEnd">13dp</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColor">@color/launcher_text_color</item>
         <item name="android:textColorHint">@color/launcher_input_hint_color</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textSize">14sp</item>
     </style>
 
     <style name="LauncherAddGameInputText">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">50dp</item>
-        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_height">45dp</item>
+        <item name="android:layout_marginTop">7dp</item>
         <item name="android:background">@drawable/launcher_account_input</item>
         <item name="android:ellipsize">middle</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:maxLines">1</item>
-        <item name="android:paddingStart">14dp</item>
-        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingStart">13dp</item>
+        <item name="android:paddingEnd">13dp</item>
         <item name="android:textColor">@color/launcher_text_muted_color</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textSize">14sp</item>
     </style>
 
     <style name="LauncherAddGameButton">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">44dp</item>
-        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_marginTop">7dp</item>
         <item name="android:gravity">center</item>
         <item name="android:textColor">@color/launcher_on_primary_color</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -132,8 +132,8 @@
         <item name="android:background">@drawable/launcher_account_input</item>
         <item name="android:popupBackground">@drawable/launcher_spinner_popup_bg</item>
         <item name="android:dropDownWidth">match_parent</item>
-        <item name="android:paddingStart">10dp</item>
-        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingStart">9dp</item>
+        <item name="android:paddingEnd">9dp</item>
     </style>
 
     <!-- SwitchCompat 启停按钮统一样式：thumb/track 跟随主题主色 -->

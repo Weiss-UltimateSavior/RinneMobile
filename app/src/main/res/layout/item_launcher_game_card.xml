@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="160dp"
-    android:layout_marginStart="6dp"
-    android:layout_marginTop="6dp"
-    android:layout_marginEnd="6dp"
-    android:layout_marginBottom="6dp"
+    android:layout_height="144dp"
+    android:layout_marginStart="5dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginEnd="5dp"
+    android:layout_marginBottom="5dp"
     android:background="@drawable/launcher_game_image_card"
     android:clickable="true"
     android:focusable="true"
@@ -31,32 +31,32 @@
             android:gravity="center"
             android:text="Y"
             android:textColor="@color/launcher_primary_color"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/launcherGameFavorite"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_gravity="top|start"
-            android:layout_margin="8dp"
+            android:layout_margin="7dp"
             android:background="@drawable/launcher_game_chip"
             android:gravity="center"
             android:text="★"
             android:textColor="@color/launcher_warning_color"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="41dp"
             android:layout_gravity="bottom"
             android:background="@drawable/launcher_game_text_overlay"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:paddingStart="13dp"
-            android:paddingEnd="13dp">
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
 
             <TextView
                 android:id="@+id/launcherGameTitle"
@@ -66,7 +66,7 @@
                 android:maxLines="1"
                 android:text="Game"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -77,7 +77,7 @@
                 android:maxLines="1"
                 android:text="未游玩"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="10sp" />
+                android:textSize="9sp" />
         </LinearLayout>
     </FrameLayout>
 </FrameLayout>

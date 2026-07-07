@@ -113,7 +113,7 @@ final class LauncherTheme {
     static GradientDrawable selectedOption(Context context) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(card(context));
-        drawable.setCornerRadius(dp(context, 10f));
+        drawable.setCornerRadius(dp(context, 9f));
         return drawable;
     }
 
@@ -160,19 +160,19 @@ final class LauncherTheme {
     static void primaryButton(TextView view) {
         if (view == null) return;
         view.setTextColor(onPrimary(view.getContext()));
-        view.setBackground(primaryButton(view.getContext(), 22f));
+        view.setBackground(primaryButton(view.getContext(), 20f));
     }
 
     static void secondaryButton(TextView view) {
         if (view == null) return;
         view.setTextColor(primary(view.getContext()));
-        view.setBackground(secondaryButton(view.getContext(), 22f));
+        view.setBackground(secondaryButton(view.getContext(), 20f));
     }
 
     static void dangerButton(TextView view) {
         if (view == null) return;
         view.setTextColor(onDanger(view.getContext()));
-        view.setBackground(dangerButton(view.getContext(), 22f));
+        view.setBackground(dangerButton(view.getContext(), 20f));
     }
 
     static void menuItem(TextView view) {
@@ -190,7 +190,7 @@ final class LauncherTheme {
     static void styleSpinner(Spinner spinner) {
         if (spinner == null) return;
         Context context = spinner.getContext();
-        spinner.setBackground(secondaryButton(context, 22f));
+        spinner.setBackground(secondaryButton(context, 20f));
         // dropdown 容器使用与弹窗一致的圆角背景
         spinner.setPopupBackgroundResource(R.drawable.launcher_spinner_popup_bg);
     }
@@ -354,7 +354,7 @@ final class LauncherTheme {
         if (dropdown) {
             // dropdown item 透明背景，让 popup 容器的圆角背景统一显示
             textView.setBackgroundColor(Color.TRANSPARENT);
-            textView.setPadding(dp(context, 14f), 0, dp(context, 14f), 0);
+            textView.setPadding(dp(context, 13f), 0, dp(context, 13f), 0);
         } else {
             textView.setBackgroundColor(Color.TRANSPARENT);
         }

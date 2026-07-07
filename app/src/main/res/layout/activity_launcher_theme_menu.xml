@@ -16,36 +16,36 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="22dp"
-            android:paddingTop="28dp"
-            android:paddingEnd="22dp"
-            android:paddingBottom="28dp">
+            android:paddingStart="20dp"
+            android:paddingTop="25dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="25dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="主题菜单"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/freshThemeRow"
                 android:layout_width="match_parent"
-                android:layout_height="76dp"
-                android:layout_marginTop="20dp"
+                android:layout_height="68dp"
+                android:layout_marginTop="18dp"
                 android:background="@drawable/launcher_chat_option_bg"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp">
 
                 <ImageView
                     android:id="@+id/freshThemeIcon"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="41dp"
+                    android:layout_height="41dp"
                     android:background="@drawable/launcher_round_icon_green"
                     android:clipToOutline="true"
                     android:contentDescription="@null"
@@ -55,7 +55,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="14dp"
+                    android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical">
@@ -67,7 +67,7 @@
                         android:maxLines="1"
                         android:text="丛雨（默认）"
                         android:textColor="@color/launcher_text_color"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -78,17 +78,17 @@
                         android:maxLines="1"
                         android:text="当前启动界面的默认主题"
                         android:textColor="@color/launcher_text_muted_color"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/freshThemeCheck"
-                    android:layout_width="24dp"
+                    android:layout_width="22dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="✓"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
             </LinearLayout>
@@ -96,20 +96,20 @@
             <LinearLayout
                 android:id="@+id/nightThemeRow"
                 android:layout_width="match_parent"
-                android:layout_height="76dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="68dp"
+                android:layout_marginTop="11dp"
                 android:background="@drawable/launcher_chat_option_bg"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp">
 
                 <ImageView
                     android:id="@+id/rinneThemeLogo"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="41dp"
+                    android:layout_height="41dp"
                     android:background="@drawable/launcher_round_icon_purple"
                     android:clipToOutline="true"
                     android:contentDescription="@null"
@@ -119,7 +119,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="14dp"
+                    android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical">
@@ -131,7 +131,7 @@
                         android:maxLines="1"
                         android:text="园神凛弥（风格）"
                         android:textColor="@color/launcher_text_color"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -142,17 +142,17 @@
                         android:maxLines="1"
                         android:text="不断的轮回，只为迎接新的未来"
                         android:textColor="@color/launcher_text_muted_color"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/nightThemeCheck"
-                    android:layout_width="24dp"
+                    android:layout_width="22dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="✓"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
             </LinearLayout>
@@ -160,20 +160,20 @@
             <LinearLayout
                 android:id="@+id/pinkThemeRow"
                 android:layout_width="match_parent"
-                android:layout_height="76dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="68dp"
+                android:layout_marginTop="11dp"
                 android:background="@drawable/launcher_chat_option_bg"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp">
 
                 <ImageView
                     android:id="@+id/anriThemeLogo"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="41dp"
+                    android:layout_height="41dp"
                     android:background="@drawable/launcher_round_icon_pink"
                     android:clipToOutline="true"
                     android:contentDescription="@null"
@@ -183,7 +183,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="14dp"
+                    android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical">
@@ -195,7 +195,7 @@
                         android:maxLines="1"
                         android:text="鹰仓杏璃（风格）"
                         android:textColor="@color/launcher_text_color"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -206,17 +206,17 @@
                         android:maxLines="1"
                         android:text="能对你为所欲为的，只有我"
                         android:textColor="@color/launcher_text_muted_color"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/pinkThemeCheck"
-                    android:layout_width="24dp"
+                    android:layout_width="22dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="✓"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
             </LinearLayout>
@@ -224,30 +224,30 @@
             <LinearLayout
                 android:id="@+id/particleToggleRow"
                 android:layout_width="match_parent"
-                android:layout_height="76dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="68dp"
+                android:layout_marginTop="11dp"
                 android:background="@drawable/launcher_chat_option_bg"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp">
 
                 <TextView
                     android:id="@+id/particleToggleIcon"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="41dp"
+                    android:layout_height="41dp"
                     android:gravity="center"
                     android:text="P"
                     android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="14dp"
+                    android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="vertical">
@@ -259,7 +259,7 @@
                         android:maxLines="1"
                         android:text="动态粒子"
                         android:textColor="@color/launcher_text_color"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -270,31 +270,31 @@
                         android:maxLines="1"
                         android:text="控制 Launcher 背景的小圆点特效"
                         android:textColor="@color/launcher_text_muted_color"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/particleToggleState"
-                    android:layout_width="58dp"
-                    android:layout_height="34dp"
+                    android:layout_width="52dp"
+                    android:layout_height="31dp"
                     android:gravity="center"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <Space
                 android:layout_width="match_parent"
-                android:layout_height="28dp" />
+                android:layout_height="25dp" />
 
             <TextView
                 android:id="@+id/themeMenuApply"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="41dp"
                 android:background="@drawable/launcher_account_primary_button"
                 android:gravity="center"
                 android:text="应用"
                 android:textColor="@color/launcher_on_primary_color"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </ScrollView>

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp"
+    android:padding="16dp"
     android:background="@drawable/launcher_dialog_bg">
 
     <TextView
@@ -12,39 +12,39 @@
         android:layout_height="wrap_content"
         android:text="选择模拟器应用"
         android:textColor="@color/launcher_text_color"
-        android:textSize="22sp"
+        android:textSize="20sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvLauncherAppPickerHint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="5dp"
         android:text="正在读取手机应用列表…"
         android:textColor="@color/launcher_text_muted_color"
-        android:textSize="12sp" />
+        android:textSize="11sp" />
 
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/etLauncherAppSearch"
         android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:layout_marginTop="12dp"
+        android:layout_height="38dp"
+        android:layout_marginTop="11dp"
         android:background="@drawable/launcher_account_input"
         android:hint="搜索应用名或包名"
         android:imeOptions="actionSearch"
         android:inputType="text"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
+        android:paddingStart="13dp"
+        android:paddingEnd="13dp"
         android:singleLine="true"
         android:textColor="@color/launcher_text_color"
         android:textColorHint="@color/launcher_text_muted_color"
-        android:textSize="13sp" />
+        android:textSize="12sp" />
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="11dp">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerLauncherAppPicker"
@@ -62,28 +62,28 @@
             android:gravity="center">
 
             <ProgressBar
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:indeterminate="true" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="11dp"
                 android:text="加载应用中…"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
     </FrameLayout>
 
     <TextView
         android:id="@+id/btnCloseLauncherAppPicker"
         android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:layout_marginTop="12dp"
+        android:layout_height="38dp"
+        android:layout_marginTop="11dp"
         android:gravity="center"
         android:text="取消"
         android:textAllCaps="false"
         android:textColor="@color/launcher_text_color"
-        android:textSize="14sp" />
+        android:textSize="13sp" />
 </LinearLayout>

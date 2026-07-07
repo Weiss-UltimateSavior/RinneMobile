@@ -225,13 +225,13 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout row = new LinearLayout(requireContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(14), 0, dp(10), 0);
+        row.setPadding(dp(13), 0, dp(9), 0);
         row.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_white_card);
 
         TextView title = new TextView(requireContext());
         title.setText(directoryLabel(root));
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(14);
+        title.setTextSize(13);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
@@ -249,15 +249,15 @@ public class LauncherManageFragment extends Fragment {
 
         TextView remove = smallAction("移除", false);
         remove.setOnClickListener(view -> confirmRemoveDirectory(index));
-        LinearLayout.LayoutParams removeLp = new LinearLayout.LayoutParams(dp(52), dp(32));
-        removeLp.setMargins(dp(8), 0, 0, 0);
+        LinearLayout.LayoutParams removeLp = new LinearLayout.LayoutParams(dp(47), dp(29));
+        removeLp.setMargins(dp(7), 0, 0, 0);
         row.addView(remove, removeLp);
 
         LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(58)
+                dp(52)
         );
-        rowLp.setMargins(0, 0, 0, dp(10));
+        rowLp.setMargins(0, 0, 0, dp(9));
         row.setLayoutParams(rowLp);
         return row;
     }
@@ -267,7 +267,7 @@ public class LauncherManageFragment extends Fragment {
         view.setText(text);
         view.setGravity(android.view.Gravity.CENTER);
         view.setSingleLine(true);
-        view.setTextSize(12);
+        view.setTextSize(11);
         view.setTypeface(null, android.graphics.Typeface.BOLD);
         if (selected) {
             view.setTextColor(LauncherTheme.onPrimary(requireContext()));
@@ -275,7 +275,7 @@ public class LauncherManageFragment extends Fragment {
         } else {
             LauncherTheme.menuItem(view);
         }
-        view.setLayoutParams(new LinearLayout.LayoutParams(dp(52), dp(32)));
+        view.setLayoutParams(new LinearLayout.LayoutParams(dp(47), dp(29)));
         return view;
     }
 
@@ -298,11 +298,11 @@ public class LauncherManageFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
         root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
 
         TextView title = dialogTitle("云端同步");
@@ -312,9 +312,9 @@ public class LauncherManageFragment extends Fragment {
         info.setGravity(android.view.Gravity.CENTER);
         info.setText(syncStatusText());
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        info.setTextSize(13);
+        info.setTextSize(12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, dp(12), 0, 0);
+        infoLp.setMargins(0, dp(11), 0, 0);
         root.addView(info, infoLp);
 
         addFeedbackOption(root, "立即同步", dialog, this::syncNow);
@@ -324,8 +324,8 @@ public class LauncherManageFragment extends Fragment {
         addFeedbackOption(root, "导入本地备份", dialog, this::confirmImportLocalBackup);
 
         TextView cancel = dialogCancelButton(dialog);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        cancelLp.setMargins(0, dp(10), 0, 0);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
         root.addView(cancel, cancelLp);
 
         window.setContentView(root);
@@ -384,11 +384,11 @@ public class LauncherManageFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(24), dp(22), dp(24), dp(18));
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
         root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
 
         TextView title = dialogTitle("日志诊断");
@@ -399,9 +399,9 @@ public class LauncherManageFragment extends Fragment {
                 + " · 当前大小：" + DevLogger.formatSize(LauncherDiagnosticsBridge.logSize()));
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        info.setTextSize(13);
+        info.setTextSize(12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, dp(12), 0, 0);
+        infoLp.setMargins(0, dp(11), 0, 0);
         root.addView(info, infoLp);
 
         addFeedbackOption(root, LauncherDiagnosticsBridge.isLogEnabled() ? "关闭日志" : "开启日志", dialog, this::toggleDiagnosticLog);
@@ -409,8 +409,8 @@ public class LauncherManageFragment extends Fragment {
         addFeedbackOption(root, "导出日志", dialog, this::exportDiagnosticLog);
 
         TextView cancel = dialogCancelButton(dialog);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        cancelLp.setMargins(0, dp(10), 0, 0);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
         root.addView(cancel, cancelLp);
 
         window.setContentView(root);
@@ -421,7 +421,7 @@ public class LauncherManageFragment extends Fragment {
         title.setText(text);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(18);
+        title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         return title;
     }
@@ -431,7 +431,7 @@ public class LauncherManageFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(14);
+        cancel.setTextSize(13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(view -> dialog.dismiss());
@@ -466,15 +466,15 @@ public class LauncherManageFragment extends Fragment {
         option.setText(label);
         option.setGravity(android.view.Gravity.CENTER);
         option.setSingleLine(true);
-        option.setTextSize(14);
+        option.setTextSize(13);
         option.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.menuItem(option);
         option.setOnClickListener(view -> {
             dialog.dismiss();
             action.run();
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
-        lp.setMargins(0, dp(12), 0, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        lp.setMargins(0, dp(11), 0, 0);
         root.addView(option, lp);
     }
 
@@ -485,7 +485,7 @@ public class LauncherManageFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(280), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
         window.setContentView(dialogView);

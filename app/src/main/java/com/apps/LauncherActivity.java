@@ -100,7 +100,7 @@ public class LauncherActivity extends AppCompatActivity {
 
                 LinearLayout root = new LinearLayout(this);
                 root.setOrientation(LinearLayout.VERTICAL);
-                root.setPadding(dp(24), dp(22), dp(24), dp(18));
+                root.setPadding(dp(22), dp(20), dp(22), dp(16));
                 root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
                 TextView title = new TextView(this);
@@ -109,23 +109,23 @@ public class LauncherActivity extends AppCompatActivity {
                 title.setSingleLine(true);
                 title.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-                title.setTextSize(18);
+                title.setTextSize(16);
                 title.setTypeface(null, android.graphics.Typeface.BOLD);
                 root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
                 TextView info = new TextView(this);
                 info.setText("应用需要完全访问文件夹的权限来读取和管理游戏文件。请在系统页面允许\"管理所有文件\"。");
                 info.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-                info.setTextSize(13);
+                info.setTextSize(12);
                 info.setLineSpacing(dp(4), 1f);
                 LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                infoLp.setMargins(0, dp(14), 0, 0);
+                infoLp.setMargins(0, dp(13), 0, 0);
                 root.addView(info, infoLp);
 
                 TextView goBtn = new TextView(this);
                 goBtn.setText("前往");
                 goBtn.setGravity(android.view.Gravity.CENTER);
-                goBtn.setTextSize(14);
+                goBtn.setTextSize(13);
                 goBtn.setTypeface(null, android.graphics.Typeface.BOLD);
                 LauncherTheme.primaryButton(goBtn);
                 goBtn.setOnClickListener(v -> {
@@ -137,24 +137,24 @@ public class LauncherActivity extends AppCompatActivity {
                         try { startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); } catch (Throwable ignored) { }
                     }
                 });
-                LinearLayout.LayoutParams goLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
-                goLp.setMargins(0, dp(10), 0, 0);
+                LinearLayout.LayoutParams goLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+                goLp.setMargins(0, dp(9), 0, 0);
                 root.addView(goBtn, goLp);
 
                 TextView cancelBtn = new TextView(this);
                 cancelBtn.setText("取消");
                 cancelBtn.setGravity(android.view.Gravity.CENTER);
                 cancelBtn.setTextColor(LauncherTheme.primary(this));
-                cancelBtn.setTextSize(14);
+                cancelBtn.setTextSize(13);
                 cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
                 LauncherTheme.menuItem(cancelBtn);
                 cancelBtn.setOnClickListener(v -> dialog.dismiss());
-                LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
-                cancelLp.setMargins(0, dp(10), 0, 0);
+                LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+                cancelLp.setMargins(0, dp(9), 0, 0);
                 root.addView(cancelBtn, cancelLp);
 
                 window.setContentView(root);
-                window.setLayout(dp(320), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+                window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
             }
         } else if (Build.VERSION.SDK_INT >= 23) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1001);
@@ -343,7 +343,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
         window.setLayout(
-                (int) (280 * getResources().getDisplayMetrics().density),
+                (int) (252 * getResources().getDisplayMetrics().density),
                 WindowManager.LayoutParams.WRAP_CONTENT
         );
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_launcher_confirm, null);

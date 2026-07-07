@@ -40,7 +40,7 @@ public class ResourceStationActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
-        webParams.topMargin = statusBarHeight() + dp(52);
+        webParams.topMargin = statusBarHeight() + dp(47);
         webView.setLayoutParams(webParams);
         configureWebView(webView);
 
@@ -74,7 +74,7 @@ public class ResourceStationActivity extends AppCompatActivity {
 
         FrameLayout.LayoutParams topBarParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                statusBarHeight() + dp(52)
+                statusBarHeight() + dp(47)
         );
         topBarParams.gravity = Gravity.TOP;
         topBar.setLayoutParams(topBarParams);
@@ -83,29 +83,29 @@ public class ResourceStationActivity extends AppCompatActivity {
         TextView backButton = new TextView(this);
         backButton.setText("<");
         backButton.setTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_color));
-        backButton.setTextSize(24);
+        backButton.setTextSize(22);
         backButton.setTypeface(null, android.graphics.Typeface.BOLD);
         backButton.setGravity(Gravity.CENTER);
         backButton.setOnClickListener(view -> finish());
 
-        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(dp(52), dp(52));
+        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(dp(47), dp(47));
         backParams.gravity = Gravity.START | Gravity.TOP;
         topBar.addView(backButton, backParams);
 
         TextView title = new TextView(this);
         title.setText("资源站");
         title.setTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(17);
+        title.setTextSize(15);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setGravity(Gravity.CENTER);
 
         FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(52)
+                dp(47)
         );
         titleParams.gravity = Gravity.TOP;
-        titleParams.leftMargin = dp(64);
-        titleParams.rightMargin = dp(64);
+        titleParams.leftMargin = dp(58);
+        titleParams.rightMargin = dp(58);
         topBar.addView(title, titleParams);
 
         return topBar;

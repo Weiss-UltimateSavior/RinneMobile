@@ -16,217 +16,217 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="22dp"
-            android:paddingTop="34dp"
-            android:paddingEnd="22dp"
-            android:paddingBottom="28dp">
+            android:paddingStart="20dp"
+            android:paddingTop="31dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="25dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="编辑游戏"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="20dp"
                 android:text="标题"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/editTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
                 android:hint="游戏标题"
                 android:textColorHint="@color/launcher_input_hint_color"
                 android:inputType="text"
-                android:padding="14dp"
+                android:padding="13dp"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:text="引擎"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/editEngine"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="6dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
-                android:padding="10dp" />
+                android:padding="9dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:text="模拟器包名"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/editEmulator"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
                 android:hint="留空使用默认"
                 android:textColorHint="@color/launcher_input_hint_color"
                 android:inputType="text"
-                android:padding="14dp"
+                android:padding="13dp"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:text="启动目标"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/editLaunchTarget"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
                 android:hint="[游戏目录]"
                 android:textColorHint="@color/launcher_input_hint_color"
                 android:inputType="text"
-                android:padding="14dp"
+                android:padding="13dp"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:text="描述"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/editDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
                 android:gravity="top|start"
                 android:hint="可选描述"
                 android:textColorHint="@color/launcher_input_hint_color"
                 android:inputType="textMultiLine"
-                android:minHeight="80dp"
-                android:padding="14dp"
+                android:minHeight="72dp"
+                android:padding="13dp"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:text="游戏目录"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/editDir"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
-                android:padding="14dp"
+                android:padding="13dp"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="13dp"
                 android:text="封面"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
                 <TextView
                     android:id="@+id/editCoverStatus"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_filter_chip_unselected"
                     android:gravity="center"
                     android:text="未选择封面"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/btnPickCover"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="5dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_filter_chip_unselected"
                     android:gravity="center"
                     android:text="选择封面"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="20dp"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
                 <TextView
                     android:id="@+id/btnCancel"
                     android:layout_width="0dp"
-                    android:layout_height="50dp"
+                    android:layout_height="45dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_filter_chip_unselected"
                     android:gravity="center"
                     android:text="取消"
                     android:textColor="@color/launcher_primary_color"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/btnSave"
                     android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="9dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_primary_button"
                     android:gravity="center"
                     android:text="保存"
                     android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
