@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,14 +28,19 @@ import androidx.fragment.app.Fragment;
 import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherManageBinding;
 import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
+import com.yuki.yukihub.sync.SyncManager;
 import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
 import com.yuki.yukihub.launcherbridge.YukiHubBridge;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.DevLogger;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.JSONObject;
 
 public class LauncherManageFragment extends Fragment {
     private static final String APP_PREFS = "yukihub_prefs";
@@ -52,6 +58,18 @@ public class LauncherManageFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
                 if (uri == null) return;
                 persistAndSaveScanDirectory(uri);
+            });
+
+    private final ActivityResultLauncher<String[]> backupOpenLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) return;
+                importLocalBackup(uri);
+            });
+
+    private final ActivityResultLauncher<String> backupCreateLauncher =
+            registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), uri -> {
+                if (uri == null) return;
+                exportLocalBackup(uri);
             });
 
     @Nullable
@@ -289,8 +307,8 @@ public class LauncherManageFragment extends Fragment {
         addFeedbackOption(root, "立即同步", dialog, this::syncNow);
         addFeedbackOption(root, "打开同步中心", dialog, () ->
                 startActivity(new Intent(requireContext(), LauncherSyncCenterActivity.class)));
-        addFeedbackOption(root, "导出本地备份", dialog, () -> openAction(MainActivity.ACTION_LOCAL_BACKUP_EXPORT));
-        addFeedbackOption(root, "导入本地备份", dialog, () -> openAction(MainActivity.ACTION_LOCAL_BACKUP_IMPORT));
+        addFeedbackOption(root, "导出本地备份", dialog, this::exportLocalBackupToFile);
+        addFeedbackOption(root, "导入本地备份", dialog, this::confirmImportLocalBackup);
 
         TextView cancel = dialogCancelButton(dialog);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40));
@@ -313,7 +331,7 @@ public class LauncherManageFragment extends Fragment {
             showLauncherConfirmDialog(
                     "未登录",
                     "请打开同步中心登录后再同步。",
-                    "打开同步中心",
+                    "打开",
                     () -> startActivity(new Intent(requireContext(), LauncherSyncCenterActivity.class))
             );
             return;
@@ -563,5 +581,89 @@ public class LauncherManageFragment extends Fragment {
 
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void confirmImportLocalBackup() {
+        showLauncherConfirmDialog("本地导入", "将从备份 JSON 导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？", "选择文件", () ->
+                backupOpenLauncher.launch(new String[]{"application/json", "text/*", "*/*"}));
+    }
+
+    private void importLocalBackup(Uri uri) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        AppExecutors.runOnSingle(() -> {
+            try {
+                String text = readTextFromUri(uri);
+                JSONObject root = new JSONObject(text);
+                if (!"YukiHub".equals(root.optString("app", ""))) {
+                    mainHandler.post(() -> {
+                        if (!isAdded()) return;
+                        showLauncherConfirmDialog("导入失败", "不是有效的 YukiHub 备份", "知道了", () -> {});
+                    });
+                    return;
+                }
+                new SyncManager(appContext).importSnapshotFromLocalBackup(root);
+                int gameCount = root.optJSONArray("games") == null ? 0 : root.optJSONArray("games").length();
+                int sessionCount = root.optJSONArray("play_sessions") == null ? 0 : root.optJSONArray("play_sessions").length();
+                int metaCount = root.optJSONArray("metadata_cache") == null ? 0 : root.optJSONArray("metadata_cache").length();
+                mainHandler.post(() -> {
+                    if (!isAdded()) return;
+                    showLauncherConfirmDialog("导入成功", "游戏 " + gameCount + "，记录 " + sessionCount + "，元数据 " + metaCount, "知道了", () -> {});
+                });
+            } catch (Throwable t) {
+                Log.e("LauncherManage", "import backup failed", t);
+                mainHandler.post(() -> {
+                    if (!isAdded()) return;
+                    showLauncherConfirmDialog("导入失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
+                });
+            }
+        });
+    }
+
+    private void exportLocalBackupToFile() {
+        try {
+            backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".json");
+        } catch (Throwable t) {
+            showLauncherConfirmDialog("导出失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
+        }
+    }
+
+    private void exportLocalBackup(Uri uri) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        AppExecutors.runOnSingle(() -> {
+            try {
+                JSONObject root = new SyncManager(appContext).exportSnapshotForLocalBackup();
+                root.put("created_at", System.currentTimeMillis());
+                root.put("backup_type", "local_full");
+                root.put("note", "Local backup uses the same schema as WebDAV sync, but keeps full play session history.");
+                byte[] bytes = root.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                try (java.io.OutputStream out = appContext.getContentResolver().openOutputStream(uri)) {
+                    if (out == null) throw new Exception("openOutputStream failed");
+                    out.write(bytes);
+                    out.flush();
+                }
+                int sizeKb = bytes.length / 1024;
+                mainHandler.post(() -> {
+                    if (!isAdded()) return;
+                    showLauncherConfirmDialog("导出成功", "备份大小：" + sizeKb + "KB", "知道了", () -> {});
+                });
+            } catch (Throwable t) {
+                Log.e("LauncherManage", "export backup failed", t);
+                mainHandler.post(() -> {
+                    if (!isAdded()) return;
+                    showLauncherConfirmDialog("导出失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
+                });
+            }
+        });
+    }
+
+    private String readTextFromUri(Uri uri) throws Exception {
+        try (InputStream in = requireContext().getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            if (in == null) throw new Exception("openInputStream failed");
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) != -1) bos.write(buf, 0, len);
+            return bos.toString("UTF-8");
+        }
     }
 }
