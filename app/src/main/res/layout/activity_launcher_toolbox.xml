@@ -29,38 +29,62 @@
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="36dp"
-                android:layout_marginBottom="18dp"
-                android:orientation="vertical">
+                android:layout_marginTop="50dp"
+                android:alignmentMode="alignMargins"
+                android:columnCount="3"
+                android:useDefaultMargins="false">
 
-                <TextView
-                    android:id="@+id/toolboxNoticeTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="优质的Galgame辅助工具"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:id="@+id/toolWinlator"
+                    style="@style/LauncherToolboxItem">
 
-                <TextView
-                    android:id="@+id/toolboxNoticeText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="9dp"
-                    android:gravity="center"
-                    android:text="使用工具进行辅助，让你的游玩更加便捷！仅作推荐喵"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="13sp" />
-            </LinearLayout>
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="winlator"
+                        android:src="@drawable/launcher_tool_icon_winlator" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="winlator" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/toolGaishi"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="盖世模拟器"
+                        android:src="@drawable/launcher_tool_icon_gaishi" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="盖世模拟器" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/toolPpsspp"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="PPSSPP"
+                        android:src="@drawable/launcher_tool_icon_ppsspp" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="PPSSPP" />
+                </LinearLayout>
+
+            </GridLayout>
 
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="9dp"
                 android:alignmentMode="alignMargins"
                 android:columnCount="3"
                 android:useDefaultMargins="false">
@@ -106,46 +130,6 @@
                         style="@style/LauncherToolboxTitle"
                         android:text="shizuku" />
                 </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/toolRecharge"
-                    style="@style/LauncherToolboxItem">
-
-                    <TextView
-                        style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_orange" />
-
-                    <TextView
-                        style="@style/LauncherToolboxTitle"
-                        android:text="记录换算" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/toolPayBill"
-                    style="@style/LauncherToolboxItem">
-
-                    <TextView
-                        style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_green" />
-
-                    <TextView
-                        style="@style/LauncherToolboxTitle"
-                        android:text="路径检查" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/toolCreditCard"
-                    style="@style/LauncherToolboxItem">
-
-                    <TextView
-                        style="@style/LauncherToolboxIcon"
-                        android:background="@drawable/launcher_tool_icon_red" />
-
-                    <TextView
-                        style="@style/LauncherToolboxTitle"
-                        android:text="缓存清理" />
-                </LinearLayout>
-
 
             </GridLayout>
         </LinearLayout>

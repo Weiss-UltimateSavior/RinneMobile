@@ -117,7 +117,7 @@ public class LauncherManageFragment extends Fragment {
     }
 
     private void bindActions() {
-        binding.actionAddDirectory.setOnClickListener(view -> scanDirectoryPicker.launch(null));
+        binding.actionAddDirectory.setOnClickListener(view -> confirmAddDirectory());
         binding.actionScanGame.setOnClickListener(view -> scanConfiguredDirectories());
         binding.actionAddGame.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherAddGameActivity.class)));
@@ -145,6 +145,11 @@ public class LauncherManageFragment extends Fragment {
 
     private void openAction(String action) {
         YukiHubBridge.openAction(requireContext(), action);
+    }
+
+    private void confirmAddDirectory() {
+        showLauncherConfirmDialog("添加目录", "部分模拟器属于外置跳转，不可直接扫描游玩（PPSSPP、Winlator 等）可通过工具箱进行下载", "添加", () ->
+                scanDirectoryPicker.launch(null));
     }
 
     private void persistAndSaveScanDirectory(Uri uri) {

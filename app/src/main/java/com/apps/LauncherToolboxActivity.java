@@ -22,6 +22,9 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     private static final String USEFULUNPACK_URL = "https://github.com/znso4pa/usefulunpack/releases";
     private static final String TERMUX_URL = "https://github.com/termux/termux-app/releases";
     private static final String SHIZUKU_URL = "https://github.com/RikkaApps/Shizuku/releases";
+    private static final String WINLATOR_URL = "https://github.com/brunodev85/winlator/releases";
+    private static final String GAISHI_URL = "https://hub.xiaoji.com/zh-cn";
+    private static final String PPSSPP_URL = "https://www.ppsspp.org/";
 
     private ActivityLauncherToolboxBinding binding;
 
@@ -39,6 +42,9 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         binding.toolUsefulUnpack.setOnClickListener(view -> confirmOpenExternalTool("usefulunpack", USEFULUNPACK_URL));
         binding.toolTermux.setOnClickListener(view -> confirmOpenExternalTool("termux", TERMUX_URL));
         binding.toolShizuku.setOnClickListener(view -> confirmOpenExternalTool("shizuku", SHIZUKU_URL));
+        binding.toolWinlator.setOnClickListener(view -> confirmOpenExternalTool("winlator", WINLATOR_URL));
+        binding.toolGaishi.setOnClickListener(view -> confirmOpenExternalTool("盖世模拟器", GAISHI_URL));
+        binding.toolPpsspp.setOnClickListener(view -> confirmOpenExternalTool("PPSSPP", PPSSPP_URL));
     }
 
     private void confirmOpenExternalTool(String name, String url) {
@@ -90,9 +96,6 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
-        LauncherTheme.textPrimary(binding.toolboxNoticeTitle);
-        LauncherTheme.textPrimary(binding.toolboxNoticeText);
-        binding.toolPayBill.getChildAt(0).setBackground(LauncherTheme.primaryButton(this, 4f));
         LauncherTheme.applyPrimaryTone(binding.getRoot());
     }
 
