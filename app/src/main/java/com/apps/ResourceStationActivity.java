@@ -24,7 +24,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 public class ResourceStationActivity extends AppCompatActivity {
-    private static final String RESOURCE_STATION_URL = "https://www.kungal.com";
+    private static final String DEFAULT_URL = "https://www.kungal.com";
+    private static final String DEFAULT_TITLE = "资源站";
 
     private WebView webView;
 
@@ -50,7 +51,9 @@ public class ResourceStationActivity extends AppCompatActivity {
         root.addView(createTopBar());
         setContentView(root);
 
-        webView.loadUrl(RESOURCE_STATION_URL);
+        String url = getIntent().getStringExtra("resource_url");
+        if (url == null || url.trim().isEmpty()) url = DEFAULT_URL;
+        webView.loadUrl(url);
     }
 
     private void configureImmersiveStatusBar() {
@@ -93,7 +96,9 @@ public class ResourceStationActivity extends AppCompatActivity {
         topBar.addView(backButton, backParams);
 
         TextView title = new TextView(this);
-        title.setText("资源站");
+        String titleText = getIntent().getStringExtra("resource_title");
+        if (titleText == null || titleText.trim().isEmpty()) titleText = DEFAULT_TITLE;
+        title.setText(titleText);
         title.setTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_color));
         title.setTextSize(15);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -169,7 +174,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         String scheme = uri.getScheme();
         if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
             String host = uri.getHost();
-            if (host != null && ("www.kungal.com".equalsIgnoreCase(host) || host.toLowerCase().endsWith(".kungal.com"))) {
+            if (host != null && isAllowedHost(host)) {
                 return false;
             }
             openExternalUri(uri);
@@ -181,6 +186,13 @@ public class ResourceStationActivity extends AppCompatActivity {
 
         openExternalUri(uri);
         return true;
+    }
+
+    private boolean isAllowedHost(String host) {
+        String h = host.toLowerCase();
+        return h.equals("www.kungal.com") || h.endsWith(".kungal.com")
+                || h.equals("www.shinnku.com") || h.endsWith(".shinnku.com")
+                || h.equals("www.touchgal.ink") || h.endsWith(".touchgal.ink");
     }
 
     private void openExternalUri(Uri uri) {

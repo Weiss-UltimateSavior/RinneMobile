@@ -63,7 +63,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_social_button"
                     android:gravity="center"
-                    android:text="G"
+                    android:text="QQ群聊"
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -76,8 +76,8 @@
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_social_button"
                     android:gravity="center"
-                    android:text="f"
-                    android:textColor="@color/launcher_brand_blue_color"
+                    android:text="官网首页"
+                    android:textColor="@color/launcher_primary_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>

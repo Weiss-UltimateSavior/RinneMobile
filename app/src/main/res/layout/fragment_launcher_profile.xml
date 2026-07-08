@@ -70,15 +70,15 @@
                         android:gravity="center"
                         android:orientation="horizontal">
 
-                        <TextView
+                        <ImageView
+                            android:id="@+id/profileAvatar"
                             android:layout_width="59dp"
                             android:layout_height="59dp"
                             android:background="@drawable/launcher_avatar"
-                            android:gravity="center"
-                            android:text="Y"
-                            android:textColor="@color/launcher_on_primary_color"
-                            android:textSize="23sp"
-                            android:textStyle="bold" />
+                            android:clipToOutline="true"
+                            android:contentDescription="@null"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/launcher_default_avatar" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -88,6 +88,7 @@
                             android:orientation="vertical">
 
                             <TextView
+                                android:id="@+id/profileNickname"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="本地用户"
@@ -96,10 +97,11 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/profileEmail"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="rinne@example.com"
+                                android:text=""
                                 android:textColor="@color/launcher_text_color"
                                 android:textSize="14sp" />
                         </LinearLayout>

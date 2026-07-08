@@ -3,6 +3,7 @@ package com.apps;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.data.GameRepository.PlayActivity;
 import com.yuki.yukihub.model.Game;
@@ -98,8 +99,8 @@ public class LauncherRepository {
     }
 
     private String displayName() {
-        if (isLoggedIn()) {
-            String nickname = appPrefs.getString(KEY_AUTH_NICKNAME, "");
+        if (LauncherAuthBridge.isLoggedIn(appContext)) {
+            String nickname = LauncherAuthBridge.getNickname(appContext);
             if (nickname != null && !nickname.trim().isEmpty()) return nickname.trim();
         }
         String profileName = appPrefs.getString(KEY_PROFILE_NAME, "");
@@ -108,17 +109,12 @@ public class LauncherRepository {
     }
 
     private String accountMode() {
-        if (!isLoggedIn()) return "本地模式";
+        if (!LauncherAuthBridge.isLoggedIn(appContext)) return "本地模式";
         String status = appPrefs.getString(KEY_AUTH_STATUS, "");
-        if (AUTH_STATUS_ONLINE.equals(status)) return "云账户 · 在线";
-        if (AUTH_STATUS_SYNCING.equals(status)) return "云账户 · 同步中";
-        if (AUTH_STATUS_EXPIRED.equals(status)) return "云账户 · 登录过期";
-        return "云账户 · 离线";
-    }
-
-    private boolean isLoggedIn() {
-        String token = appPrefs.getString(KEY_AUTH_ACCESS_TOKEN, "");
-        return token != null && !token.trim().isEmpty();
+        if (AUTH_STATUS_ONLINE.equals(status)) return "在线模式";
+        if (AUTH_STATUS_SYNCING.equals(status)) return "在线模式 · 同步中";
+        if (AUTH_STATUS_EXPIRED.equals(status)) return "在线模式 · 登录过期";
+        return "在线模式";
     }
 
     private String syncStatus() {

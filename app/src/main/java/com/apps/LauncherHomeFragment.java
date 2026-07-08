@@ -29,6 +29,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
+import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 import com.yuki.yukihub.util.SafeImageLoader;
 
@@ -89,6 +90,7 @@ public class LauncherHomeFragment extends Fragment {
         applyThemeStyle();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyIconTone();
+        renderAvatar();
         startStatsRefresh();
     }
 
@@ -132,8 +134,7 @@ public class LauncherHomeFragment extends Fragment {
         binding.actionProfileMenu.setOnClickListener(this::showPlaceholderMenu);
         binding.actionChatRoom.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherChatSelectActivity.class)));
-        binding.actionResourceStation.setOnClickListener(view ->
-                startLauncherActivity(new Intent(requireContext(), ResourceStationActivity.class)));
+        binding.actionResourceStation.setOnClickListener(view -> showResourceStationDialog());
         binding.actionToolbox.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
         binding.actionAgent.setOnClickListener(view ->
@@ -222,6 +223,68 @@ public class LauncherHomeFragment extends Fragment {
         );
         lp.setMargins(0, 0, 0, dp(5));
         menu.addView(item, lp);
+    }
+
+    private void showResourceStationDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("资源站");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        addResourceOption(root, "鲲Galgame", "https://www.kungal.com", dialog);
+        addResourceOption(root, "真红小站", "https://www.shinnku.com/", dialog);
+        addResourceOption(root, "Touch Gal", "https://www.touchgal.ink/", dialog);
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        cancel.setTextColor(LauncherTheme.primary(requireContext()));
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    private void addResourceOption(LinearLayout root, String label, String url, AlertDialog dialog) {
+        TextView option = new TextView(requireContext());
+        option.setText(label);
+        option.setGravity(android.view.Gravity.CENTER);
+        option.setSingleLine(true);
+        option.setTextSize(13);
+        option.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.menuItem(option);
+        option.setOnClickListener(view -> {
+            dialog.dismiss();
+            Intent intent = new Intent(requireContext(), ResourceStationActivity.class);
+            intent.putExtra("resource_url", url);
+            intent.putExtra("resource_title", label);
+            startLauncherActivity(intent);
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        lp.setMargins(0, dp(11), 0, 0);
+        root.addView(option, lp);
     }
 
     private void showFeedbackOptions() {
@@ -371,13 +434,31 @@ public class LauncherHomeFragment extends Fragment {
             }
         }
         prefs().edit().putString(KEY_PROFILE_AVATAR, uri.toString()).apply();
+        // 同步头像到个人页
+        requireContext().getSharedPreferences("launcher_profile_prefs", 0)
+                .edit().putString("custom_avatar_uri", uri.toString()).apply();
         renderAvatar();
         Toast.makeText(requireContext(), "头像已更新", Toast.LENGTH_SHORT).show();
     }
 
     private void renderAvatar() {
         if (binding == null) return;
+        // 优先使用主页头像，再检查个人页头像
         String avatar = prefs().getString(KEY_PROFILE_AVATAR, "");
+        if (avatar == null || avatar.trim().isEmpty()) {
+            String profileAvatar = requireContext().getSharedPreferences("launcher_profile_prefs", 0)
+                    .getString("custom_avatar_uri", "");
+            if (profileAvatar != null && !profileAvatar.trim().isEmpty()) {
+                avatar = profileAvatar;
+            }
+        }
+        // 更新首字母
+        String nickname = LauncherAuthBridge.isLoggedIn(requireContext())
+                ? LauncherAuthBridge.getNickname(requireContext()) : "";
+        String initial = (nickname != null && !nickname.trim().isEmpty())
+                ? String.valueOf(nickname.trim().charAt(0)).toUpperCase() : "Y";
+        binding.launcherAvatarInitial.setText(initial);
+
         if (avatar == null || avatar.trim().isEmpty()) {
             binding.launcherAvatarImage.setImageDrawable(null);
             binding.launcherAvatarImage.setVisibility(View.GONE);
@@ -399,6 +480,11 @@ public class LauncherHomeFragment extends Fragment {
 
     private void showDefaultAvatar() {
         if (binding == null) return;
+        String nickname = LauncherAuthBridge.isLoggedIn(requireContext())
+                ? LauncherAuthBridge.getNickname(requireContext()) : "";
+        String initial = (nickname != null && !nickname.trim().isEmpty())
+                ? String.valueOf(nickname.trim().charAt(0)).toUpperCase() : "Y";
+        binding.launcherAvatarInitial.setText(initial);
         binding.launcherAvatarImage.setImageDrawable(null);
         binding.launcherAvatarImage.setVisibility(View.GONE);
         binding.launcherAvatarInitial.setVisibility(View.VISIBLE);
