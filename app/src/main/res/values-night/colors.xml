@@ -43,5 +43,5 @@
     <color name="launcher_accent_pink_color">#FF7BA5</color>
     <color name="launcher_accent_purple_color">#D8A9C9</color>
     <color name="launcher_game_chip_color">#203129</color>
-    <color name="launcher_game_text_overlay_color">#D914201A</color>
+    <color name="launcher_game_text_overlay_color">#D91A1A1A</color>
 </resources>

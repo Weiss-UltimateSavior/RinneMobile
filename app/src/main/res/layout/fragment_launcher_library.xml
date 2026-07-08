@@ -120,8 +120,9 @@
                 android:layout_gravity="bottom"
                 android:gravity="center"
                 android:text="正在加载..."
-                android:textColor="@color/launcher_text_muted_color"
-                android:textSize="11sp"
+                android:textColor="@color/launcher_primary_color"
+                android:textSize="12sp"
+                android:textStyle="bold"
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

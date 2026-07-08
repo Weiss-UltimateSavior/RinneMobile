@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yuki.yukihub.R;
@@ -31,14 +32,46 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
     }
 
     public void submit(List<Game> newGames) {
+        if (newGames == null) newGames = new ArrayList<>();
+        final List<Game> oldGames = new ArrayList<>(games);
         games.clear();
-        if (newGames != null) games.addAll(newGames);
-        notifyDataSetChanged();
+        games.addAll(newGames);
+
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() { return oldGames.size(); }
+            @Override
+            public int getNewListSize() { return games.size(); }
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                Game o = oldGames.get(oldPos), n = games.get(newPos);
+                return o != null && n != null && o.id == n.id;
+            }
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                Game o = oldGames.get(oldPos), n = games.get(newPos);
+                if (o == null || n == null) return false;
+                return o.id == n.id
+                        && eq(o.title, n.title)
+                        && o.totalPlayTime == n.totalPlayTime
+                        && eq(o.playStatus, n.playStatus)
+                        && o.favorite == n.favorite
+                        && eq(o.coverPersistUri, n.coverPersistUri)
+                        && eq(o.coverUri, n.coverUri);
+            }
+        });
+        result.dispatchUpdatesTo(this);
     }
 
     public void setSelectedGameId(long id) {
+        long oldId = selectedGameId;
         selectedGameId = id;
-        notifyDataSetChanged();
+        for (int i = 0; i < games.size(); i++) {
+            Game g = games.get(i);
+            if (g != null && (g.id == oldId || g.id == id)) {
+                notifyItemChanged(i);
+            }
+        }
     }
 
     @NonNull
@@ -61,6 +94,11 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
     @Override
     public int getItemCount() {
         return games.size();
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull Holder holder) {
+        holder.recycle();
     }
 
     final class Holder extends RecyclerView.ViewHolder {
@@ -94,6 +132,10 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
             });
         }
 
+        void recycle() {
+            binding.launcherGameCover.setImageDrawable(null);
+        }
+
         private void bindCover(Game game) {
             String cover = coverUri(game);
             binding.launcherGameCoverFrame.setClipToOutline(true);
@@ -116,6 +158,11 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
             binding.launcherGameCover.setVisibility(View.GONE);
             binding.launcherGameInitial.setVisibility(View.VISIBLE);
         }
+    }
+
+    private static boolean eq(String a, String b) {
+        if (a == null) return b == null;
+        return a.equals(b);
     }
 
     private String safeTitle(Game game) {

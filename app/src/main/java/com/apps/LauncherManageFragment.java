@@ -183,8 +183,80 @@ public class LauncherManageFragment extends Fragment {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             return;
         }
-        Toast.makeText(requireContext(), "正在扫描目录...", Toast.LENGTH_SHORT).show();
-        int depth = scanDepth();
+        showScanDepthDialog(roots);
+    }
+
+    private void showScanDepthDialog(List<String> roots) {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("扫描游戏");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        // 深度选择区域
+        String[] depthLabels = {"浅层扫描（1层）", "标准扫描（2层）", "深层扫描（3层）", "深度扫描（4层）"};
+        int currentDepth = scanDepth();
+        int[] depthValues = {1, 2, 3, 4};
+
+        for (int i = 0; i < depthLabels.length; i++) {
+            final int depth = depthValues[i];
+            TextView option = new TextView(requireContext());
+            option.setText((depth == currentDepth ? "● " : "○ ") + depthLabels[i]);
+            option.setGravity(android.view.Gravity.CENTER);
+            option.setTextSize(13);
+            option.setTypeface(null, android.graphics.Typeface.BOLD);
+            if (depth == currentDepth) {
+                LauncherTheme.primaryButton(option);
+            } else {
+                LauncherTheme.menuItem(option);
+            }
+            option.setOnClickListener(v -> {
+                dialog.dismiss();
+                saveScanDepth(depth);
+                executeScan(roots, depth);
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+            lp.setMargins(0, dp(11), 0, 0);
+            root.addView(option, lp);
+        }
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        cancel.setTextColor(LauncherTheme.primary(requireContext()));
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    private void saveScanDepth(int depth) {
+        prefs().edit().putInt(KEY_STARTUP_SCAN_DEPTH, depth).apply();
+    }
+
+    private void executeScan(List<String> roots, int depth) {
+        Toast.makeText(requireContext(), "正在扫描目录（深度" + depth + "层）...", Toast.LENGTH_SHORT).show();
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, roots, depth);

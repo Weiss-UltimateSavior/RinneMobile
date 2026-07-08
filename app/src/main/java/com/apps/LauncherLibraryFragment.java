@@ -14,10 +14,14 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +77,9 @@ public class LauncherLibraryFragment extends Fragment {
     private boolean fullyLoaded;
     private boolean categoriesCollapsed;
     private long runningSessionId = -1L;
+    private Runnable searchDebounce;
+    private GestureDetector swipeGestureDetector;
+    private boolean swipeConsumed;
 
     @Nullable
     @Override
@@ -85,9 +92,11 @@ public class LauncherLibraryFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         applySystemBarInsets();
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
         setupSearchAndCategories();
         setupRecycler();
         loadGames();
+        setupSwipeGesture();
     }
 
     @Override
@@ -176,6 +185,10 @@ public class LauncherLibraryFragment extends Fragment {
         adapter.setOnGameCardListener(new LauncherGameAdapter.OnGameCardListener() {
             @Override
             public void onGameClick(Game game) {
+                if (swipeConsumed) {
+                    swipeConsumed = false;
+                    return;
+                }
                 if (game != null) {
                     adapter.setSelectedGameId(game.id);
                     confirmLaunchGame(game);
@@ -184,6 +197,10 @@ public class LauncherLibraryFragment extends Fragment {
 
             @Override
             public void onGameLongClick(Game game) {
+                if (swipeConsumed) {
+                    swipeConsumed = false;
+                    return;
+                }
                 if (game != null) showGameActionMenu(game);
             }
         });
@@ -191,6 +208,11 @@ public class LauncherLibraryFragment extends Fragment {
         GridLayoutManager layoutManager = new GridLayoutManager(requireContext(), GRID_COLUMNS);
         binding.libraryRecycler.setLayoutManager(layoutManager);
         binding.libraryRecycler.setAdapter(adapter);
+        binding.libraryRecycler.setHasFixedSize(true);
+        binding.libraryRecycler.setItemViewCacheSize(20);
+        RecyclerView.RecycledViewPool pool = new RecyclerView.RecycledViewPool();
+        pool.setMaxRecycledViews(0, 30);
+        binding.libraryRecycler.setRecycledViewPool(pool);
         binding.libraryRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -202,6 +224,117 @@ public class LauncherLibraryFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void setupSwipeGesture() {
+        swipeGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_THRESHOLD = 80;
+            private static final int SWIPE_VELOCITY = 200;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                float diffX = e2.getX() - e1.getX();
+                float diffY = e2.getY() - e1.getY();
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY) {
+                    swipeConsumed = true;
+                    if (diffX < 0) {
+                        switchToNextCategory();
+                    } else {
+                        switchToPreviousCategory();
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        // RecyclerView 区域：通过 OnItemTouchListener 获取触摸事件
+        binding.libraryRecycler.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                swipeGestureDetector.onTouchEvent(e);
+                return false;
+            }
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                swipeGestureDetector.onTouchEvent(e);
+            }
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+        });
+
+        // 非列表区域（背景、分类栏、空提示等）
+        binding.getRoot().setOnTouchListener((v, event) -> {
+            swipeGestureDetector.onTouchEvent(event);
+            return false;
+        });
+        binding.libraryContent.setOnTouchListener((v, event) -> {
+            swipeGestureDetector.onTouchEvent(event);
+            return false;
+        });
+        binding.libraryEmpty.setOnTouchListener((v, event) -> {
+            swipeGestureDetector.onTouchEvent(event);
+            return false;
+        });
+    }
+
+    private List<CategoryOption> getFlatCategories() {
+        List<CategoryOption> flat = new ArrayList<>();
+        flat.add(new CategoryOption("全部", ""));
+        flat.addAll(categories);
+        return flat;
+    }
+
+    private int getCurrentCategoryIndex() {
+        List<CategoryOption> flat = getFlatCategories();
+        for (int i = 0; i < flat.size(); i++) {
+            if (flat.get(i).value.equals(selectedCategory == null ? "" : selectedCategory)) return i;
+        }
+        return 0;
+    }
+
+    private void switchToNextCategory() {
+        List<CategoryOption> flat = getFlatCategories();
+        int idx = getCurrentCategoryIndex();
+        if (idx < flat.size() - 1) {
+            selectedCategory = flat.get(idx + 1).value;
+            renderCategories();
+            applyFilters();
+            animateCategorySwitch();
+        }
+    }
+
+    private void switchToPreviousCategory() {
+        List<CategoryOption> flat = getFlatCategories();
+        int idx = getCurrentCategoryIndex();
+        if (idx > 0) {
+            selectedCategory = flat.get(idx - 1).value;
+            renderCategories();
+            applyFilters();
+            animateCategorySwitch();
+        }
+    }
+
+    private void animateCategorySwitch() {
+        if (binding == null) return;
+        // 滚动分类栏到当前选中项
+        HorizontalScrollView categoryScroll = binding.libraryCategoryScroll;
+        for (int i = 0; i < binding.libraryCategoryRow.getChildCount(); i++) {
+            View child = binding.libraryCategoryRow.getChildAt(i);
+            if (child instanceof TextView) {
+                Object tag = child.getTag();
+                String catValue = tag != null ? tag.toString() : "";
+                if (catValue.equals(selectedCategory == null ? "" : selectedCategory)) {
+                    int scrollX = child.getLeft() - categoryScroll.getWidth() / 2 + child.getWidth() / 2;
+                    categoryScroll.smoothScrollTo(scrollX, 0);
+                    break;
+                }
+            }
+        }
+        // 列表淡入动画
+        binding.libraryRecycler.setAlpha(0.7f);
+        binding.libraryRecycler.animate().alpha(1f).setDuration(1500).setInterpolator(new AccelerateDecelerateInterpolator()).start();
     }
 
     private void setupSearchAndCategories() {
@@ -228,7 +361,9 @@ public class LauncherLibraryFragment extends Fragment {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 searchQuery = s == null ? "" : s.toString().trim();
-                applyFilters();
+                if (searchDebounce != null) mainHandler.removeCallbacks(searchDebounce);
+                searchDebounce = () -> applyFilters();
+                mainHandler.postDelayed(searchDebounce, 300);
             }
             @Override public void afterTextChanged(Editable s) { }
         });
@@ -299,7 +434,7 @@ public class LauncherLibraryFragment extends Fragment {
             binding.libraryFooter.setVisibility(View.GONE);
         } else {
             binding.libraryFooter.setVisibility(fullyLoaded ? View.GONE : View.VISIBLE);
-            binding.libraryFooter.setText("继续上拉加载更多");
+            binding.libraryFooter.setText("上拉加载");
         }
     }
 
@@ -942,6 +1077,7 @@ public class LauncherLibraryFragment extends Fragment {
         chip.setGravity(android.view.Gravity.CENTER);
         chip.setTextSize(12);
         chip.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        chip.setTag(value);
         if (selected) {
             chip.setTextColor(LauncherTheme.onPrimary(requireContext()));
             chip.setBackground(LauncherTheme.selectedChip(requireContext()));
