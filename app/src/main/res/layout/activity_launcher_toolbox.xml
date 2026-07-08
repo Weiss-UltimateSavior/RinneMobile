@@ -10,7 +10,8 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
-        android:overScrollMode="never">
+        android:overScrollMode="never"
+        android:paddingBottom="66dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -134,4 +135,19 @@
             </GridLayout>
         </LinearLayout>
     </ScrollView>
+
+    <TextView
+        android:id="@+id/toolboxBack"
+        android:layout_width="match_parent"
+        android:layout_height="41dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="25dp"
+        android:background="@drawable/launcher_account_primary_button"
+        android:gravity="center"
+        android:text="返回"
+        android:textColor="@color/launcher_on_primary_color"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 </FrameLayout>

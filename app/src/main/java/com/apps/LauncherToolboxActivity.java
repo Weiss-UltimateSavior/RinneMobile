@@ -45,6 +45,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         binding.toolWinlator.setOnClickListener(view -> confirmOpenExternalTool("winlator", WINLATOR_URL));
         binding.toolGaishi.setOnClickListener(view -> confirmOpenExternalTool("盖世模拟器", GAISHI_URL));
         binding.toolPpsspp.setOnClickListener(view -> confirmOpenExternalTool("PPSSPP", PPSSPP_URL));
+        binding.toolboxBack.setOnClickListener(view -> LauncherMotion.finish(this));
     }
 
     private void confirmOpenExternalTool(String name, String url) {
@@ -97,6 +98,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.primaryButton(binding.toolboxBack);
     }
 
     private void configureEdgeToEdgeWindow() {

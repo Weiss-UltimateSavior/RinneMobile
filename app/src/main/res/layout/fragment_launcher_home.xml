@@ -145,7 +145,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="游戏总数"
-                    android:textColor="@color/launcher_balance_text_color"
+                    android:textColor="@color/launcher_on_primary_color"
                     android:textSize="12sp" />
 
                 <TextView
@@ -178,7 +178,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="累计游玩"
-                            android:textColor="@color/launcher_balance_text_color"
+                            android:textColor="@color/launcher_on_primary_color"
                             android:textSize="12sp" />
 
                         <TextView
@@ -201,7 +201,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="今日游玩"
-                            android:textColor="@color/launcher_balance_text_color"
+                            android:textColor="@color/launcher_on_primary_color"
                             android:textSize="12sp" />
 
                         <TextView
