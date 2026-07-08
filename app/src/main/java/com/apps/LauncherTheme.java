@@ -3,6 +3,8 @@ package com.apps;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+
+import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -370,5 +372,148 @@ final class LauncherTheme {
 
     private static int clamp(int value) {
         return Math.max(0, Math.min(255, value));
+    }
+
+    private static int dp(Context context, int value) {
+        return (int) (value * context.getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    static void showUpdateResultDialog(Context context, LauncherUpdateBridge.UpdateInfo info, String currentVersion, boolean hasUpdate, String error) {
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(context).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        android.view.Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(context, 252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+
+        android.widget.LinearLayout root = new android.widget.LinearLayout(context);
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
+        root.setPadding(dp(context, 22), dp(context, 20), dp(context, 22), dp(context, 16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        android.widget.TextView title = new android.widget.TextView(context);
+        title.setText(hasUpdate ? "发现新版本" : "检查更新");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        android.widget.LinearLayout.LayoutParams optionLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36));
+        optionLp.setMargins(0, dp(context, 11), 0, 0);
+
+        android.widget.LinearLayout.LayoutParams cancelLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36));
+        cancelLp.setMargins(0, dp(context, 9), 0, 0);
+
+        if (error != null) {
+            android.widget.TextView message = new android.widget.TextView(context);
+            message.setText(error);
+            message.setGravity(android.view.Gravity.CENTER);
+            message.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_muted_color));
+            message.setTextSize(12);
+            message.setLineSpacing(dp(context, 2), 1.05f);
+            android.widget.LinearLayout.LayoutParams msgLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            msgLp.setMargins(0, dp(context, 11), 0, 0);
+            root.addView(message, msgLp);
+
+            android.widget.TextView btn = new android.widget.TextView(context);
+            btn.setText("知道了");
+            btn.setGravity(android.view.Gravity.CENTER);
+            btn.setTextColor(primary(context));
+            btn.setTextSize(13);
+            btn.setTypeface(null, android.graphics.Typeface.BOLD);
+            btn.setBackground(cancelChip(context));
+            btn.setOnClickListener(v -> dialog.dismiss());
+            root.addView(btn, cancelLp);
+        } else if (hasUpdate && info != null) {
+            android.widget.TextView message = new android.widget.TextView(context);
+            StringBuilder sb = new StringBuilder();
+            sb.append("当前版本：").append(emptyOr(currentVersion, "未知")).append("\n");
+            sb.append("最新版本：").append(emptyOr(info.tagName, info.version)).append("\n\n");
+            String body = trimUpdateBody(info.body, 1600);
+            if (body != null && !body.trim().isEmpty()) {
+                sb.append("更新内容：\n").append(body.trim());
+            } else {
+                sb.append("发现新的 GitHub Release，可前往发布页查看详情。");
+            }
+            message.setText(sb.toString());
+            message.setGravity(android.view.Gravity.CENTER);
+            message.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_muted_color));
+            message.setTextSize(12);
+            message.setLineSpacing(dp(context, 2), 1.05f);
+            android.widget.LinearLayout.LayoutParams msgLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            msgLp.setMargins(0, dp(context, 11), 0, 0);
+            root.addView(message, msgLp);
+
+            addDialogOption(root, "前往下载", dialog, () -> openUrl(context, emptyOr(info.apkUrl, info.releaseUrl)), optionLp);
+            addDialogOption(root, "发布页", dialog, () -> openUrl(context, emptyOr(info.releaseUrl, "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test")), optionLp);
+
+            android.widget.TextView cancel = new android.widget.TextView(context);
+            cancel.setText("稍后");
+            cancel.setGravity(android.view.Gravity.CENTER);
+            cancel.setTextColor(primary(context));
+            cancel.setTextSize(13);
+            cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+            cancel.setBackground(cancelChip(context));
+            cancel.setOnClickListener(v -> dialog.dismiss());
+            root.addView(cancel, cancelLp);
+        } else {
+            android.widget.TextView message = new android.widget.TextView(context);
+            message.setText("已是最新版本：" + emptyOr(currentVersion, "未知"));
+            message.setGravity(android.view.Gravity.CENTER);
+            message.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_muted_color));
+            message.setTextSize(12);
+            message.setLineSpacing(dp(context, 2), 1.05f);
+            android.widget.LinearLayout.LayoutParams msgLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            msgLp.setMargins(0, dp(context, 11), 0, 0);
+            root.addView(message, msgLp);
+
+            android.widget.TextView btn = new android.widget.TextView(context);
+            btn.setText("知道了");
+            btn.setGravity(android.view.Gravity.CENTER);
+            btn.setTextColor(primary(context));
+            btn.setTextSize(13);
+            btn.setTypeface(null, android.graphics.Typeface.BOLD);
+            btn.setBackground(cancelChip(context));
+            btn.setOnClickListener(v -> dialog.dismiss());
+            root.addView(btn, cancelLp);
+        }
+
+        window.setContentView(root);
+    }
+
+    private static void addDialogOption(android.widget.LinearLayout root, String label, androidx.appcompat.app.AlertDialog dialog, Runnable action, android.widget.LinearLayout.LayoutParams lp) {
+        android.widget.TextView option = new android.widget.TextView(root.getContext());
+        option.setText(label);
+        option.setGravity(android.view.Gravity.CENTER);
+        option.setSingleLine(true);
+        option.setTextSize(13);
+        option.setTypeface(null, android.graphics.Typeface.BOLD);
+        menuItem(option);
+        option.setOnClickListener(v -> {
+            dialog.dismiss();
+            action.run();
+        });
+        root.addView(option, lp);
+    }
+
+    private static String emptyOr(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
+    }
+
+    private static String trimUpdateBody(String text, int max) {
+        if (text == null) return "";
+        String t = text.trim();
+        if (max <= 0 || t.length() <= max) return t;
+        return t.substring(0, max) + "\n...";
+    }
+
+    private static void openUrl(Context context, String url) {
+        try {
+            context.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)));
+        } catch (Throwable ignored) {
+        }
     }
 }

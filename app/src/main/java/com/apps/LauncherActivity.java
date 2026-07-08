@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +28,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherBinding;
+import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 
 public class LauncherActivity extends AppCompatActivity {
     static final String APP_PREFS = "yukihub_prefs";
@@ -60,6 +62,7 @@ public class LauncherActivity extends AppCompatActivity {
         requestStoragePermissionIfNeeded();
         bindActions();
         observeState();
+        scheduleAutoUpdateCheck();
     }
 
     @Override
@@ -84,6 +87,28 @@ public class LauncherActivity extends AppCompatActivity {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         }
         window.getDecorView().setSystemUiVisibility(flags);
+    }
+
+    private void scheduleAutoUpdateCheck() {
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            LauncherUpdateBridge.checkUpdate(this, new LauncherUpdateBridge.Callback() {
+                @Override
+                public void onResult(LauncherUpdateBridge.UpdateInfo info, String currentVersion, boolean hasUpdate) {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (hasUpdate) showAutoUpdateResult(info, currentVersion);
+                }
+
+                @Override
+                public void onError(String message) {
+                    // 静默失败，不打扰用户
+                }
+            });
+        }, 2000);
+    }
+
+    private void showAutoUpdateResult(LauncherUpdateBridge.UpdateInfo info, String currentVersion) {
+        LauncherTheme.showUpdateResultDialog(this, info, currentVersion, true, null);
     }
 
     private void requestStoragePermissionIfNeeded() {

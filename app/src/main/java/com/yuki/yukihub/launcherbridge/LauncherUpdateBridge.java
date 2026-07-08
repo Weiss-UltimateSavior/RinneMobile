@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  * 避免跳转到 MainActivity 即可完成版本检查并展示启动器风格弹窗。
  */
 public final class LauncherUpdateBridge {
-    private static final String UPDATE_API_URL = "https://api.github.com/repos/Weiss-UltimateSavior/RinneMobile/releases/latest";
+    private static final String UPDATE_API_URL = "https://api.github.com/repos/Weiss-UltimateSavior/RinneMobile/releases/tags/test";
     private static final String UPDATE_REPO_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile";
 
     private LauncherUpdateBridge() {
@@ -102,11 +102,7 @@ public final class LauncherUpdateBridge {
     }
 
     private static String getCurrentVersionName(Context context) {
-        try {
-            return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-        } catch (Throwable ignored) {
-            return "";
-        }
+        return "0.5";
     }
 
     private static boolean isNewerVersion(String latest, String current) {

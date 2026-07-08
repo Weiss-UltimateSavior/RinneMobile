@@ -247,7 +247,7 @@ public class LauncherHomeFragment extends Fragment {
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        addFeedbackOption(root, "GitHub 仓库", dialog, () -> openExternalUrl("https://github.com/xm486/YukiHub"));
+        addFeedbackOption(root, "GitHub 仓库", dialog, () -> openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile"));
         addFeedbackOption(root, "YukiHub 官网", dialog, () -> openExternalUrl("https://yukihub.kesug.com/"));
         addFeedbackOption(root, "QQ 交流群", dialog, () -> openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info"));
 
@@ -440,69 +440,7 @@ public class LauncherHomeFragment extends Fragment {
     }
 
     private void showUpdateResultDialog(LauncherUpdateBridge.UpdateInfo info, String currentVersion, boolean hasUpdate, String error) {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(hasUpdate ? "发现新版本" : "检查更新");
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setGravity(Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        message.setLineSpacing(dp(2), 1.05f);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(11), 0, 0);
-
-        if (error != null) {
-            message.setText(error);
-            root.addView(message, msgLp);
-            root.addView(primaryDialogButton("知道了", v -> dialog.dismiss()), buttonLp());
-        } else if (hasUpdate && info != null) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("当前版本：").append(emptyOr(currentVersion, "未知")).append("\n");
-            sb.append("最新版本：").append(emptyOr(info.tagName, info.version)).append("\n\n");
-            String body = trimUpdateBody(info.body, 1600);
-            if (body != null && !body.trim().isEmpty()) {
-                sb.append("更新内容：\n").append(body.trim());
-            } else {
-                sb.append("发现新的 GitHub Release，可前往发布页查看详情。");
-            }
-            message.setText(sb.toString());
-            root.addView(message, msgLp);
-
-            root.addView(primaryDialogButton("前往下载", v -> {
-                dialog.dismiss();
-                openExternalUrl(emptyOr(info.apkUrl, info.releaseUrl));
-            }), buttonLp());
-            root.addView(secondaryDialogButton("发布页", v -> {
-                dialog.dismiss();
-                openExternalUrl(emptyOr(info.releaseUrl, "https://github.com/xm486/YukiHub/releases"));
-            }), buttonLp());
-            root.addView(cancelDialogButton("稍后", v -> dialog.dismiss()), buttonLp());
-        } else {
-            message.setText("已是最新版本：" + emptyOr(currentVersion, "未知"));
-            root.addView(message, msgLp);
-            root.addView(primaryDialogButton("知道了", v -> dialog.dismiss()), buttonLp());
-        }
-
-        window.setContentView(root);
+        LauncherTheme.showUpdateResultDialog(requireContext(), info, currentVersion, hasUpdate, error);
     }
 
     private void openDisclaimer() {
