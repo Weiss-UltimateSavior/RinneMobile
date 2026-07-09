@@ -255,35 +255,100 @@ public class LauncherManageFragment extends Fragment {
         prefs().edit().putInt(KEY_STARTUP_SCAN_DEPTH, depth).apply();
     }
 
+    private AlertDialog scanLoadingDialog;
+
     private void executeScan(List<String> roots, int depth) {
-        Toast.makeText(requireContext(), "正在扫描目录（深度" + depth + "层）...", Toast.LENGTH_SHORT).show();
+        scanLoadingDialog = showScanLoadingDialog();
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, roots, depth);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
+                dismissScanLoadingDialog();
                 showScanResultDialog(stats);
             });
         });
     }
 
     private void scanSingleRoot(String rootUri) {
+        scanLoadingDialog = showScanLoadingDialog();
         int depth = scanDepth();
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, java.util.Collections.singletonList(rootUri), depth);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
+                dismissScanLoadingDialog();
                 showScanResultDialog(stats);
             });
         });
     }
 
+    private AlertDialog showScanLoadingDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.setCancelable(false);
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return dialog;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("正在扫描...");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        android.widget.ProgressBar progressBar = new android.widget.ProgressBar(requireContext());
+        progressBar.setIndeterminate(true);
+        progressBar.getIndeterminateDrawable().setColorFilter(
+                LauncherTheme.primary(requireContext()), android.graphics.PorterDuff.Mode.SRC_IN);
+        LinearLayout.LayoutParams pbLp = new LinearLayout.LayoutParams(dp(32), dp(32));
+        pbLp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        pbLp.setMargins(0, dp(14), 0, 0);
+        root.addView(progressBar, pbLp);
+
+        TextView hint = new TextView(requireContext());
+        hint.setText("请不要关闭应用，扫描可能需要一些时间");
+        hint.setGravity(android.view.Gravity.CENTER);
+        hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        hint.setTextSize(11);
+        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        hintLp.setMargins(0, dp(10), 0, 0);
+        root.addView(hint, hintLp);
+
+        window.setContentView(root);
+        return dialog;
+    }
+
+    private void dismissScanLoadingDialog() {
+        if (scanLoadingDialog != null && scanLoadingDialog.isShowing()) {
+            scanLoadingDialog.dismiss();
+            scanLoadingDialog = null;
+        }
+    }
+
     private void showScanResultDialog(LauncherScanBridge.ImportStats stats) {
         if (stats == null) return;
-        String message = "扫描到 " + stats.scanned + " 个结果\n"
-                + "新增 " + stats.added + " 个，已存在 " + stats.skipped + " 个，失败 " + stats.failed + " 个";
-        showLauncherConfirmDialog("扫描完成", message, "知道了", () -> {});
+        StringBuilder msg = new StringBuilder();
+        msg.append("扫描到 ").append(stats.scanned).append(" 个结果\n")
+                .append("新增 ").append(stats.added).append(" 个，已存在 ").append(stats.skipped).append(" 个，失败 ").append(stats.failed).append(" 个");
+        if (!stats.failedItems.isEmpty()) {
+            msg.append("\n");
+            for (String item : stats.failedItems) {
+                msg.append("\n• ").append(item);
+            }
+        }
+        showLauncherConfirmDialog("扫描完成", msg.toString(), "知道了", () -> {});
     }
 
     private void renderScanDirectories() {

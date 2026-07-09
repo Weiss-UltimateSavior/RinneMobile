@@ -33,11 +33,25 @@ public final class LauncherScanBridge {
             if (root == null || root.trim().isEmpty()) continue;
             try {
                 results.addAll(GameScanner.scan(appContext, Uri.parse(root), depth));
+            } catch (SecurityException e) {
+                stats.failed++;
+                stats.failedItems.add("目录权限已失效，请重新添加：" + simplifyUri(root));
             } catch (Throwable ignored) {
             }
         }
         importScannedGames(appContext, repository, results, stats);
         return stats;
+    }
+
+    private static String simplifyUri(String uri) {
+        if (uri == null) return "";
+        try {
+            Uri parsed = Uri.parse(uri);
+            String last = parsed.getLastPathSegment();
+            return last != null ? last : uri;
+        } catch (Throwable e) {
+            return uri;
+        }
     }
 
     private static void importScannedGames(Context context, GameRepository repository, List<ScanResult> results, ImportStats stats) {

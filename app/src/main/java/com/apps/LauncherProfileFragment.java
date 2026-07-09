@@ -174,26 +174,15 @@ public class LauncherProfileFragment extends Fragment {
                 LauncherAuthBridge.fetchPlayData(requireContext(), new LauncherAuthBridge.PlayDataCallback() {
                     @Override
                     public void onSuccess(String playSql) {
-                        // 先导入设置
+                        // 直接导入云端设置
                         boolean settingsOk = LauncherUserData.importSettingsFromJson(requireContext(), configJson);
-                        // 再导入游玩记录
-                        boolean playOk = true;
-                        if (playSql != null && !playSql.trim().isEmpty()) {
-                            // 写入本地 SQL 文件后导入
-                            try {
-                                LauncherUserData.exportAll(requireContext()); // 确保目录存在
-                                java.io.File sqlFile = LauncherUserData.getPlaySqlFile(requireContext());
-                                LauncherUserData.writeText(sqlFile, playSql);
-                                playOk = LauncherUserData.importAll(requireContext());
-                            } catch (Exception e) {
-                                playOk = false;
-                            }
-                        }
+                        // 直接导入云端游玩记录
+                        boolean playOk = LauncherUserData.importPlaySql(requireContext(), playSql);
                         dismissLoadingDialog();
                         if (settingsOk && playOk) {
                             showResultDialog("恢复成功", "配置已从云端恢复，即将重启生效");
                         } else {
-                            showResultDialog("部分恢复失败", settingsOk ? "设置已恢复，游玩记录恢复失败" : "设置恢复失败");
+                            showResultDialog("部分恢复失败", settingsOk ? "设置已恢复，游玩记录部分导入失败" : "设置恢复失败");
                         }
                     }
 
@@ -306,8 +295,8 @@ public class LauncherProfileFragment extends Fragment {
         LauncherTheme.primaryButton(okBtn);
         okBtn.setOnClickListener(v -> {
             dialog.dismiss();
-            // 恢复成功后重启 Launcher 使设置生效
-            LauncherUserData.importAndRestart(requireActivity());
+            // 数据已导入，直接重启使设置生效（不再重复 importAll）
+            LauncherUserData.restartLauncher(requireActivity());
         });
         LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
         okLp.setMargins(0, dp(11), 0, 0);

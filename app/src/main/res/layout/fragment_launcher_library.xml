@@ -31,6 +31,18 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/librarySyncButton"
+                android:layout_width="49dp"
+                android:layout_height="31dp"
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/launcher_filter_chip_unselected"
+                android:gravity="center"
+                android:text="同步"
+                android:textColor="@color/launcher_primary_color"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/libraryCollapseButton"
                 android:layout_width="49dp"
                 android:layout_height="31dp"

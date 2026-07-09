@@ -139,7 +139,13 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String configJson) {
                 // 上传游玩记录
-                LauncherUserData.exportAll(LauncherAccountSettingsActivity.this);
+                String exportPath = LauncherUserData.exportAll(LauncherAccountSettingsActivity.this);
+                if (exportPath == null) {
+                    // 导出失败，仅配置上传成功
+                    dismissLoading();
+                    showResultDialog("部分上传失败", "配置已上传，但本地数据导出失败，游玩记录未能上传");
+                    return;
+                }
                 String playSql = LauncherUserData.readExportedSql(LauncherAccountSettingsActivity.this);
                 if (playSql != null && !playSql.trim().isEmpty()) {
                     LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playSql, new LauncherAuthBridge.PlayDataCallback() {

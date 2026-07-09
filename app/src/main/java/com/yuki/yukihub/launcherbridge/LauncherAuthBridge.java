@@ -263,13 +263,14 @@ public final class LauncherAuthBridge {
 
     /**
      * 从服务端获取游玩记录 SQL。
+     * 使用更长的超时和更大的响应缓冲，适配大数据量场景。
      */
     public static void fetchPlayData(Context context, PlayDataCallback callback) {
         AppExecutors.runOnIo(() -> {
             try {
                 String token = getToken(context);
                 if (token.isEmpty()) throw new RuntimeException("未登录");
-                String response = get("/auth/config/play-data", token);
+                String response = getLarge("/auth/config/play-data", token);
                 JSONObject json = new JSONObject(response == null ? "{}" : response);
                 String playData = json.optString("play_data", "");
                 postMain(() -> callback.onSuccess(playData));
@@ -284,6 +285,7 @@ public final class LauncherAuthBridge {
 
     /**
      * 上传游玩记录 SQL 到服务端。
+     * 使用更长的超时和更大的响应缓冲，适配大数据量场景。
      */
     public static void uploadPlayData(Context context, String playSql, PlayDataCallback callback) {
         AppExecutors.runOnIo(() -> {
@@ -292,7 +294,7 @@ public final class LauncherAuthBridge {
                 if (token.isEmpty()) throw new RuntimeException("未登录");
                 JSONObject body = new JSONObject();
                 body.put("play_data", playSql);
-                put("/auth/config/play-data", body, token);
+                putLarge("/auth/config/play-data", body, token);
                 postMain(() -> callback.onSuccess(playSql));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "上传游玩记录失败");
@@ -304,6 +306,25 @@ public final class LauncherAuthBridge {
     }
 
     // ========== 网络工具 ==========
+
+    /** 大数据量 PUT：超时更长，响应缓冲更大（适配游玩记录上传/下载）。 */
+    private static String putLarge(String path, JSONObject body, String authToken) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(API_BASE + path).openConnection();
+        c.setRequestMethod("PUT");
+        c.setDoOutput(true);
+        c.setConnectTimeout(15000);
+        c.setReadTimeout(60000);
+        c.setRequestProperty("Content-Type", "application/json");
+        c.setRequestProperty("Accept", "application/json");
+        if (authToken != null && !authToken.isEmpty()) {
+            c.setRequestProperty("Authorization", "Bearer " + authToken);
+        }
+        byte[] bytes = body.toString().getBytes("UTF-8");
+        c.setFixedLengthStreamingMode(bytes.length);
+        c.getOutputStream().write(bytes);
+        c.getOutputStream().flush();
+        return readLargeResponse(c);
+    }
 
     private static String put(String path, JSONObject body, String authToken) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(API_BASE + path).openConnection();
@@ -353,9 +374,33 @@ public final class LauncherAuthBridge {
         return readResponse(c);
     }
 
+    /** 大数据量 GET：超时更长，响应缓冲更大。 */
+    private static String getLarge(String path, String authToken) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(API_BASE + path).openConnection();
+        c.setRequestMethod("GET");
+        c.setConnectTimeout(15000);
+        c.setReadTimeout(60000);
+        c.setRequestProperty("Accept", "application/json");
+        if (authToken != null && !authToken.isEmpty()) {
+            c.setRequestProperty("Authorization", "Bearer " + authToken);
+        }
+        return readLargeResponse(c);
+    }
+
     private static String readResponse(HttpURLConnection c) throws Exception {
         int code = c.getResponseCode();
         String text = readSmallText(code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream());
+        return checkResponse(code, text);
+    }
+
+    /** 大响应读取：不限制缓冲大小，适配服务端回传大数据。 */
+    private static String readLargeResponse(HttpURLConnection c) throws Exception {
+        int code = c.getResponseCode();
+        String text = readLargeText(code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream());
+        return checkResponse(code, text);
+    }
+
+    private static String checkResponse(int code, String text) throws Exception {
         if (code < 200 || code >= 300) {
             String detail = text;
             try {
@@ -387,6 +432,18 @@ public final class LauncherAuthBridge {
         while ((len = is.read(buf)) != -1 && total < 64 * 1024) {
             bos.write(buf, 0, len);
             total += len;
+        }
+        return bos.toString("UTF-8");
+    }
+
+    /** 大响应读取：无 64KB 限制，适配游玩记录等大数据回传。 */
+    private static String readLargeText(InputStream is) throws Exception {
+        if (is == null) return "";
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int len;
+        while ((len = is.read(buf)) != -1) {
+            bos.write(buf, 0, len);
         }
         return bos.toString("UTF-8");
     }

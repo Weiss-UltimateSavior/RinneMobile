@@ -1,0 +1,156 @@
+2026-07-09 18:21:07.638 30082-30082 MIUIInput               com.yuki.yukihub                     I  [MotionEvent] ViewRootImpl windowName 'com.yuki.yukihub/com.apps.LauncherActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=584602481, downTime=584602481, phoneEventTime=1783592467633 } moveCount:0
+2026-07-09 18:21:07.638 30082-30082 VRI[LauncherActivity]   com.yuki.yukihub                     D  getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+2026-07-09 18:21:07.677 30082-30082 MIUIInput               com.yuki.yukihub                     I  [MotionEvent] ViewRootImpl windowName 'com.yuki.yukihub/com.apps.LauncherActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=584602522, downTime=584602481, phoneEventTime=1783592467674 } moveCount:5
+2026-07-09 18:21:07.680 30082-30082 WindowOnBackDispatcher  com.yuki.yukihub                     W  sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda16@88bdd6
+2026-07-09 18:21:07.680 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  onDetachedFromWindow
+2026-07-09 18:21:07.682 30082-14915 BufferQueueProducer     com.yuki.yukihub                     D  [VRI[LauncherActivity]#13(BLAST Consumer)13](id:75820000000d,api:1,p:30082,c:30082) disconnect: api 1 (caller=30082)
+2026-07-09 18:21:07.684 30082-30082 om.yuki.yukihub         com.yuki.yukihub                     W  Binder 0xb40000774409b640 destroyed after setInheritRt before being parceled.
+2026-07-09 18:21:07.684 30082-30082 BufferQueueConsumer     com.yuki.yukihub                     D  [VRI[LauncherActivity]#13(BLAST Consumer)13](id:75820000000d,api:0,p:-1,c:30082) disconnect: caller 30082
+2026-07-09 18:21:07.694 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.695 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.695 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.695 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.695 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.695 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.695 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.698 30082-30082 DecorView               com.yuki.yukihub                     D  updateFreeformOutlineFromActivity, inFreeform=false,inFreeformWindowMode=false
+2026-07-09 18:21:07.703 30082-30082 ScrollerOp...ionManager com.yuki.yukihub                     D  registerConfigChangedListener
+2026-07-09 18:21:07.708 30082-30082 ScrollerOp...ionManager com.yuki.yukihub                     D  registerConfigChangedListener
+2026-07-09 18:21:07.718 30082-14915 HWUI                    com.yuki.yukihub                     D  TAG_DDRE, CanvasContext::setDdreActivities: 
+2026-07-09 18:21:07.718 30082-30082 ViewRootImpl            com.yuki.yukihub                     I  com.yuki.yukihub/com.apps.LauncherActivity use first frame acceleration
+2026-07-09 18:21:07.731 30082-30082 Choreographer           com.yuki.yukihub                     I  first vsync insert message into MessageQueue Head
+2026-07-09 18:21:07.731 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  onAttachedToWindow. pkg: com.yuki.yukihub
+2026-07-09 18:21:07.731 30082-30082 ComputilityLevel        com.yuki.yukihub                     I  getComputilityLevel(): 4
+2026-07-09 18:21:07.731 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  getWindowType: 2 title:com.yuki.yukihub/com.apps.LauncherActivity
+2026-07-09 18:21:07.732 30082-30082 MiuiNBIManagerImpl      com.yuki.yukihub                     D  mRemote has already been created
+2026-07-09 18:21:07.732 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  isNBIEnable=false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.732 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.737 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.737 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.737 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.737 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.737 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.739 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.740 30082-30082 VRI[LauncherActivity]   com.yuki.yukihub                     D  vri.Setup new sync=wmsSync-VRI[LauncherActivity]#28
+2026-07-09 18:21:07.744 30082-30082 VRI[LauncherActivity]   com.yuki.yukihub                     D  vri.reportDrawFinished 0 0 Rect(213, 1236 - 1023, 1665)
+2026-07-09 18:21:07.746 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.747 30082-14915 HWUI                    com.yuki.yukihub                     D  [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+2026-07-09 18:21:07.747 30082-14915 HWUI                    com.yuki.yukihub                     D  [HWUI] EnhanceVkPipelineCache is disabled
+2026-07-09 18:21:07.747 30082-14915 HWUI                    com.yuki.yukihub                     D  [HWUI] Flag ddre enabled
+2026-07-09 18:21:07.748 30082-30082 HandWritingStubImpl     com.yuki.yukihub                     I  refreshLastKeyboardType: 1
+2026-07-09 18:21:07.748 30082-30082 HandWritingStubImpl     com.yuki.yukihub                     I  getCurrentKeyboardType: 1
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:07.749 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:07.750 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:07.758 30082-30082 InsetsController        com.yuki.yukihub                     D  hide(ime(), fromIme=false)
+2026-07-09 18:21:07.758 30082-30082 ImeTracker              com.yuki.yukihub                     I  com.yuki.yukihub:84eaba6d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+2026-07-09 18:21:09.138 30082-30082 SQLiteLog               com.yuki.yukihub                     E  (1) near "yaku": syntax error in "INSERT OR REPLACE INTO metadata_cache ("game_id", "source", "source_id", "json", "updated_at") VALUES (27, 'vndb', 'v18874', '{"id":"v18874","chineseTitle":"与你拉钩起誓的�
+2026-07-09 18:21:09.140 30082-30082 WindowOnBackDispatcher  com.yuki.yukihub                     W  sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda16@837e79
+2026-07-09 18:21:09.141 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  onDetachedFromWindow
+2026-07-09 18:21:09.143 30082-14915 BufferQueueProducer     com.yuki.yukihub                     D  [VRI[LauncherActivity]#14(BLAST Consumer)14](id:75820000000e,api:1,p:30082,c:30082) disconnect: api 1 (caller=30082)
+2026-07-09 18:21:09.144 30082-30082 om.yuki.yukihub         com.yuki.yukihub                     W  Binder 0xb40000774408cee0 destroyed after setInheritRt before being parceled.
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.152 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.153 30082-15159 BufferQueueConsumer     com.yuki.yukihub                     D  [VRI[LauncherActivity]#14(BLAST Consumer)14](id:75820000000e,api:0,p:-1,c:30082) disconnect: caller 0
+2026-07-09 18:21:09.156 30082-30082 DecorView               com.yuki.yukihub                     D  updateFreeformOutlineFromActivity, inFreeform=false,inFreeformWindowMode=false
+2026-07-09 18:21:09.160 30082-30082 ScrollerOp...ionManager com.yuki.yukihub                     D  registerConfigChangedListener
+2026-07-09 18:21:09.165 30082-30082 ScrollerOp...ionManager com.yuki.yukihub                     D  registerConfigChangedListener
+2026-07-09 18:21:09.175 30082-14915 HWUI                    com.yuki.yukihub                     D  TAG_DDRE, CanvasContext::setDdreActivities: 
+2026-07-09 18:21:09.175 30082-30082 ViewRootImpl            com.yuki.yukihub                     I  com.yuki.yukihub/com.apps.LauncherActivity use first frame acceleration
+2026-07-09 18:21:09.190 30082-30082 Choreographer           com.yuki.yukihub                     I  first vsync insert message into MessageQueue Head
+2026-07-09 18:21:09.191 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  onAttachedToWindow. pkg: com.yuki.yukihub
+2026-07-09 18:21:09.191 30082-30082 ComputilityLevel        com.yuki.yukihub                     I  getComputilityLevel(): 4
+2026-07-09 18:21:09.191 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  getWindowType: 2 title:com.yuki.yukihub/com.apps.LauncherActivity
+2026-07-09 18:21:09.191 30082-30082 MiuiNBIManagerImpl      com.yuki.yukihub                     D  mRemote has already been created
+2026-07-09 18:21:09.191 30082-30082 DecorViewImmersiveImpl  com.yuki.yukihub                     D  isNBIEnable=false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.192 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.197 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.197 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.197 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.197 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.197 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.199 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.200 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.201 30082-30082 VRI[LauncherActivity]   com.yuki.yukihub                     D  vri.Setup new sync=wmsSync-VRI[LauncherActivity]#30
+2026-07-09 18:21:09.205 30082-30082 VRI[LauncherActivity]   com.yuki.yukihub                     D  vri.reportDrawFinished 0 0 Rect(213, 1250 - 1023, 1652)
+2026-07-09 18:21:09.207 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.207 30082-14915 HWUI                    com.yuki.yukihub                     D  [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+2026-07-09 18:21:09.207 30082-14915 HWUI                    com.yuki.yukihub                     D  [HWUI] EnhanceVkPipelineCache is disabled
+2026-07-09 18:21:09.207 30082-14915 HWUI                    com.yuki.yukihub                     D  [HWUI] Flag ddre enabled
+2026-07-09 18:21:09.208 30082-30082 HandWritingStubImpl     com.yuki.yukihub                     I  refreshLastKeyboardType: 1
+2026-07-09 18:21:09.208 30082-30082 HandWritingStubImpl     com.yuki.yukihub                     I  getCurrentKeyboardType: 1
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =36 hasIntersection =false
+2026-07-09 18:21:09.210 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =152 hasIntersection =false
+2026-07-09 18:21:09.211 30082-30082 InsetsSource            com.yuki.yukihub                     W  Has no intersection or mTmpFrame.height(), return Insets.NONE mTmpFrame.height() =0 hasIntersection =false
+2026-07-09 18:21:09.215 30082-30082 InsetsController        com.yuki.yukihub                     D  hide(ime(), fromIme=false)
+2026-07-09 18:21:09.215 30082-30082 ImeTracker              com.yuki.yukihub                     I  com.yuki.yukihub:e3c749e5: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN

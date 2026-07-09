@@ -19,6 +19,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.HorizontalScrollView;
@@ -354,6 +356,7 @@ public class LauncherLibraryFragment extends Fragment {
             }
             renderToolbarButtonState();
         });
+        binding.librarySyncButton.setOnClickListener(view -> showSyncDataConfirmDialog());
         binding.libraryCollapseButton.setOnClickListener(view -> {
             categoriesCollapsed = !categoriesCollapsed;
             binding.libraryCategoryScroll.setVisibility(categoriesCollapsed ? View.GONE : View.VISIBLE);
@@ -417,36 +420,44 @@ public class LauncherLibraryFragment extends Fragment {
     }
 
     private void applyFilters() {
-        filteredGames.clear();
-        String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
-        for (Game game : allGames) {
-            if (game == null) continue;
-            if (!query.isEmpty() && !safeTitle(game).toLowerCase(Locale.ROOT).contains(query)) continue;
-            if (selectedCategory != null && !selectedCategory.isEmpty() && !matchesCategory(game, selectedCategory)) continue;
-            filteredGames.add(game);
-        }
-        if (selectedCategory == null || selectedCategory.isEmpty()) {
-            sortGamesByTitle(filteredGames);
-        }
-        visibleGames.clear();
-        fullyLoaded = filteredGames.isEmpty();
-        loadNextPage();
-        renderState();
-    }
+    applyFilters(false);
+}
 
-    private void loadNextPage() {
-        if (adapter == null || loading && !visibleGames.isEmpty()) return;
-        loading = true;
-        int start = visibleGames.size();
-        int end = Math.min(start + PAGE_SIZE, filteredGames.size());
-        if (start < end) {
-            visibleGames.addAll(filteredGames.subList(start, end));
-            adapter.submit(new ArrayList<>(visibleGames));
-        }
-        fullyLoaded = end >= filteredGames.size();
-        loading = false;
-        renderState();
+private void applyFilters(boolean forceFullRefresh) {
+    filteredGames.clear();
+    String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
+    for (Game game : allGames) {
+        if (game == null) continue;
+        if (!query.isEmpty() && !safeTitle(game).toLowerCase(Locale.ROOT).contains(query)) continue;
+        if (selectedCategory != null && !selectedCategory.isEmpty() && !matchesCategory(game, selectedCategory)) continue;
+        filteredGames.add(game);
     }
+    if (selectedCategory == null || selectedCategory.isEmpty()) {
+        sortGamesByTitle(filteredGames);
+    }
+    visibleGames.clear();
+    fullyLoaded = filteredGames.isEmpty();
+    loadNextPage(forceFullRefresh);
+    renderState();
+}
+
+private void loadNextPage() {
+    loadNextPage(false);
+}
+
+private void loadNextPage(boolean forceFullRefresh) {
+    if (adapter == null || loading && !visibleGames.isEmpty()) return;
+    loading = true;
+    int start = visibleGames.size();
+    int end = Math.min(start + PAGE_SIZE, filteredGames.size());
+    if (start < end) {
+        visibleGames.addAll(filteredGames.subList(start, end));
+        adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
+    }
+    fullyLoaded = end >= filteredGames.size();
+    loading = false;
+    renderState();
+}
 
     private void renderState() {
         if (binding == null) return;
@@ -1015,6 +1026,305 @@ public class LauncherLibraryFragment extends Fragment {
         });
     }
 
+    private AlertDialog syncLoadingDialog;
+
+    private void showSyncDataConfirmDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("同步数据");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(requireContext());
+        message.setText("全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？");
+        message.setGravity(android.view.Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        message.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(message, msgLp);
+
+        TextView confirmBtn = new TextView(requireContext());
+        confirmBtn.setText("确定同步");
+        confirmBtn.setGravity(android.view.Gravity.CENTER);
+        LauncherTheme.primaryButton(confirmBtn);
+        confirmBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            performBatchSync();
+        });
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        confirmLp.setMargins(0, dp(11), 0, 0);
+        root.addView(confirmBtn, confirmLp);
+
+        TextView cancelBtn = new TextView(requireContext());
+        cancelBtn.setText("取消");
+        cancelBtn.setGravity(android.view.Gravity.CENTER);
+        cancelBtn.setTextColor(LauncherTheme.primary(requireContext()));
+        cancelBtn.setTextSize(13);
+        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancelBtn.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancelBtn, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    private void performBatchSync() {
+        syncLoadingDialog = showSyncLoadingDialog("正在同步数据...", "请不要关闭应用及网络，否则可能导致数据出错");
+
+        Context appContext = requireContext().getApplicationContext();
+        AppExecutors.io().execute(() -> {
+            final long syncBatchVersion = System.currentTimeMillis();
+            // 获取所有游戏
+            List<Game> syncGames;
+            try {
+                GameRepository repo = new GameRepository(appContext);
+                syncGames = repo.getAll();
+            } catch (Throwable e) {
+                syncGames = Collections.emptyList();
+            }
+
+            int total = syncGames.size();
+            int synced = 0;
+            int failed = 0;
+
+            for (int i = 0; i < total; i++) {
+                Game game = syncGames.get(i);
+                if (game.title == null || game.title.trim().isEmpty()) {
+                    failed++;
+                    continue;
+                }
+                try {
+                    // 1. 重新匹配 VNDB 元数据
+                    List<VnMetadata> candidates = com.yuki.yukihub.metadata.VndbClient.searchCandidates(game.title, 1);
+                    if (candidates != null && !candidates.isEmpty()) {
+                        VnMetadata meta = candidates.get(0);
+                        MetadataRepository metaRepo = new MetadataRepository(appContext);
+                        metaRepo.saveVndb(game.id, meta);
+
+                        // 2. 同步封面到卡片
+                        if (meta.coverUrl != null && !meta.coverUrl.trim().isEmpty()) {
+                            String cover = com.yuki.yukihub.launcherbridge.LauncherCoverBridge.downloadCover(
+                                  appContext,
+                                  meta.coverUrl,
+                                  "sync_cover_" + game.id + "_" + syncBatchVersion
+                            );
+                            if (cover != null) {
+                                GameRepository repo = new GameRepository(appContext);
+                                Game latest = repo.findById(game.id);
+                                if (latest != null) {
+                                    latest.coverUri = cover;
+                                    latest.coverPersistUri = cover;
+                                    latest.coverSourceType = 1;
+                                    repo.update(latest);
+                                }
+                            }
+                        }
+                        synced++;
+                    } else {
+                        failed++;
+                    }
+                } catch (Throwable e) {
+                    failed++;
+                }
+
+                // 更新加载弹窗进度
+                final int progress = i + 1;
+                final int totalGames = total;
+                mainHandler.post(() -> {
+                    if (syncLoadingDialog != null && syncLoadingDialog.isShowing()) {
+                        Window w = syncLoadingDialog.getWindow();
+                        if (w != null) {
+                            android.widget.TextView progressView = w.getDecorView().findViewWithTag("sync_progress");
+                            if (progressView != null) {
+                                progressView.setText(progress + "/" + totalGames + " 已完成");
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 同步完成后：在 IO 线程直接重新加载游戏列表，然后一次性刷新 UI
+            List<Game> finalGames;
+            try {
+                GameRepository repo = new GameRepository(appContext);
+                finalGames = repo.getAll();
+            } catch (Throwable e) {
+                finalGames = Collections.emptyList();
+            }
+
+            final int syncedCount = synced;
+            final int failedCount = failed;
+            List<Game> loadedGames = finalGames;
+            CategoryBuildResult categoryResult;
+try {
+    categoryResult = buildCategoriesInBackground(appContext, loadedGames);
+} catch (Throwable throwable) {
+    categoryResult = new CategoryBuildResult(Collections.emptyList(), Collections.emptyMap());
+}
+
+CategoryBuildResult loadedCategoryResult = categoryResult;
+
+mainHandler.post(() -> {
+    if (!isAdded()) return;
+
+    if (binding != null) {
+        allGames.clear();
+        allGames.addAll(loadedGames);
+
+        gameDevelopers.clear();
+        gameDevelopers.putAll(loadedCategoryResult.developers);
+
+        categories.clear();
+        categories.addAll(loadedCategoryResult.categories);
+
+        if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
+            selectedCategory = "";
+        }
+
+        renderCategories();
+        dataLoaded = true;
+
+        // 关键：批量同步完成后，强制刷新当前页面所有卡片
+        applyFilters(true);
+
+        binding.libraryRecycler.post(() -> {
+            if (adapter != null) adapter.notifyDataSetChanged();
+        });
+    }
+
+    dismissSyncLoadingDialog();
+    showSyncResultDialog(syncedCount, failedCount);
+});
+        });
+    }
+
+    private AlertDialog showSyncLoadingDialog(String titleText, String hintText) {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.setCancelable(false);
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return dialog;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText(titleText);
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        android.widget.ProgressBar progressBar = new android.widget.ProgressBar(requireContext());
+        progressBar.setIndeterminate(true);
+        progressBar.getIndeterminateDrawable().setColorFilter(
+                LauncherTheme.primary(requireContext()), android.graphics.PorterDuff.Mode.SRC_IN);
+        LinearLayout.LayoutParams pbLp = new LinearLayout.LayoutParams(dp(32), dp(32));
+        pbLp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        pbLp.setMargins(0, dp(14), 0, 0);
+        root.addView(progressBar, pbLp);
+
+        TextView progressText = new TextView(requireContext());
+        progressText.setTag("sync_progress");
+        progressText.setText("0/0 已完成");
+        progressText.setGravity(android.view.Gravity.CENTER);
+        progressText.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        progressText.setTextSize(12);
+        LinearLayout.LayoutParams ptLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        ptLp.setMargins(0, dp(6), 0, 0);
+        root.addView(progressText, ptLp);
+
+        TextView hint = new TextView(requireContext());
+        hint.setText(hintText);
+        hint.setGravity(android.view.Gravity.CENTER);
+        hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        hint.setTextSize(11);
+        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        hintLp.setMargins(0, dp(10), 0, 0);
+        root.addView(hint, hintLp);
+
+        window.setContentView(root);
+        return dialog;
+    }
+
+    private void dismissSyncLoadingDialog() {
+        if (syncLoadingDialog != null && syncLoadingDialog.isShowing()) {
+            syncLoadingDialog.dismiss();
+            syncLoadingDialog = null;
+        }
+    }
+
+    private void showSyncResultDialog(int synced, int failed) {
+        String message = "同步完成 " + synced + " 个" + (failed > 0 ? "\n失败 " + failed + " 个" : "");
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView titleView = new TextView(requireContext());
+        titleView.setText("同步完成");
+        titleView.setGravity(android.view.Gravity.CENTER);
+        titleView.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        titleView.setTextSize(16);
+        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView msgView = new TextView(requireContext());
+        msgView.setText(message);
+        msgView.setGravity(android.view.Gravity.CENTER);
+        msgView.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        msgView.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(msgView, msgLp);
+
+        TextView okBtn = new TextView(requireContext());
+        okBtn.setText("知道了");
+        okBtn.setGravity(android.view.Gravity.CENTER);
+        LauncherTheme.primaryButton(okBtn);
+        okBtn.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        okLp.setMargins(0, dp(11), 0, 0);
+        root.addView(okBtn, okLp);
+
+        window.setContentView(root);
+    }
+
     private void rematchMetadata(Game game) {
         Toast.makeText(requireContext(), "正在搜索 VNDB...", Toast.LENGTH_SHORT).show();
         com.yuki.yukihub.launcherbridge.LauncherMetadataBridge.fetchAndSaveMetadataAsync(requireContext(), game, success -> {
@@ -1038,6 +1348,7 @@ public class LauncherLibraryFragment extends Fragment {
     }
 
     private void startEditGameActivity(Game game) {
+        needsRefresh = true;
         android.content.Intent intent = new android.content.Intent(requireContext(), LauncherGameEditActivity.class);
         intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, game.id);
         startActivity(intent);

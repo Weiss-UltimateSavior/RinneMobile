@@ -109,7 +109,12 @@ public class LauncherSyncScheduler {
         }
 
         // 导出游玩记录 SQL
-        LauncherUserData.exportAll(context); // 先写入本地文件
+        String exportPath = LauncherUserData.exportAll(context); // 先写入本地文件
+        if (exportPath == null) {
+            Log.w(TAG, "本地数据导出失败，跳过游玩记录备份");
+            scheduleNextBackup(context);
+            return;
+        }
         String playSql = LauncherUserData.readExportedSql(context);
         if (playSql != null && !playSql.trim().isEmpty()) {
             LauncherAuthBridge.uploadPlayData(context, playSql, new LauncherAuthBridge.PlayDataCallback() {

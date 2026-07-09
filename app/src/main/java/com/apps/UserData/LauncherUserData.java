@@ -15,7 +15,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * 统一管理 Launcher 所有用户设置的导出/导入。
@@ -173,21 +175,30 @@ public class LauncherUserData {
      * 从 JSON 字符串仅导入设置。
      */
     public static boolean importSettingsFromJson(Context context, String json) {
-        try {
-            JSONObject root = new JSONObject(json);
-            if (root.has("main_prefs")) {
-                importSharedPreferences(context, PREFS_MAIN, root.getJSONObject("main_prefs"));
-            }
-            if (root.has("profile_prefs")) {
-                importSharedPreferences(context, PREFS_PROFILE, root.getJSONObject("profile_prefs"));
-            }
-            if (root.has("account_settings")) {
-                importSharedPreferences(context, PREFS_ACCOUNT_SETTINGS, root.getJSONObject("account_settings"));
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
+    try {
+        if (json == null || json.trim().isEmpty()) return false;
+
+        JSONObject root = new JSONObject(json);
+
+        boolean ok = true;
+
+        if (root.has("main_prefs")) {
+            ok = importSharedPreferences(context, PREFS_MAIN, root.getJSONObject("main_prefs")) && ok;
         }
+
+        if (root.has("profile_prefs")) {
+            ok = importSharedPreferences(context, PREFS_PROFILE, root.getJSONObject("profile_prefs")) && ok;
+        }
+
+        if (root.has("account_settings")) {
+            ok = importSharedPreferences(context, PREFS_ACCOUNT_SETTINGS, root.getJSONObject("account_settings")) && ok;
+        }
+
+        return ok;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
     }
 
     // ══════════════════════════════════════════════════
@@ -249,28 +260,41 @@ public class LauncherUserData {
         return obj;
     }
 
-    private static void importSharedPreferences(Context context, String prefsName, JSONObject obj) throws JSONException {
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(prefsName, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Iterator<String> it = obj.keys();
-        while (it.hasNext()) {
-            String key = it.next();
-            Object value = obj.get(key);
-            if (value instanceof Boolean) {
-                editor.putBoolean(key, (Boolean) value);
-            } else if (value instanceof Integer) {
-                editor.putInt(key, (Integer) value);
-            } else if (value instanceof Long) {
-                editor.putLong(key, (Long) value);
-            } else if (value instanceof Float) {
-                editor.putFloat(key, (Float) value);
-            } else if (value instanceof Double) {
-                editor.putLong(key, ((Double) value).longValue());
+    /** 从 JSONObject 导入 SharedPreferences 数据。 */
+    public static boolean importSharedPreferences(Context context, String prefsName, JSONObject obj) throws JSONException {
+    SharedPreferences prefs = context.getApplicationContext()
+            .getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+
+    SharedPreferences.Editor editor = prefs.edit();
+    Iterator<String> it = obj.keys();
+
+    while (it.hasNext()) {
+        String key = it.next();
+        Object value = obj.get(key);
+
+        if (value == JSONObject.NULL) {
+            editor.remove(key);
+        } else if (value instanceof Boolean) {
+            editor.putBoolean(key, (Boolean) value);
+        } else if (value instanceof Integer) {
+            editor.putInt(key, (Integer) value);
+        } else if (value instanceof Long) {
+            editor.putLong(key, (Long) value);
+        } else if (value instanceof Float) {
+            editor.putFloat(key, (Float) value);
+        } else if (value instanceof Double) {
+            double d = (Double) value;
+            if (d == Math.rint(d)) {
+                editor.putLong(key, (long) d);
             } else {
-                editor.putString(key, String.valueOf(value));
+                editor.putFloat(key, (float) d);
             }
+        } else {
+            editor.putString(key, String.valueOf(value));
         }
-        editor.apply();
+    }
+
+    return editor.commit();
     }
 
     // ══════════════════════════════════════════════════
@@ -297,6 +321,18 @@ public class LauncherUserData {
             Cursor pc = db.query("play_sessions", null, null, null, null, null, "id ASC");
             sb.append(tableToInsertSql(pc, "play_sessions"));
             pc.close();
+
+            // metadata_cache 表（VNDB/Bangumi/Ymgal 元数据，复合主键 game_id+source）
+            sb.append("\n-- metadata_cache\n");
+            Cursor mc = db.query("metadata_cache", null, null, null, null, null, "game_id ASC, source ASC");
+            sb.append(tableToInsertSql(mc, "metadata_cache"));
+            mc.close();
+
+            // settings 表（键值对，主键 key）
+            sb.append("\n-- settings\n");
+            Cursor sc = db.query("settings", null, null, null, null, null, "\"key\" ASC");
+            sb.append(tableToInsertSql(sc, "settings"));
+            sc.close();
         } finally {
             db.close();
         }
@@ -350,34 +386,119 @@ public class LauncherUserData {
         sb.append('\'');
     }
 
-    private static boolean importPlaySql(Context context, String sql) {
-        if (sql == null || sql.trim().isEmpty()) return true;
-        YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
-        SQLiteDatabase db = helper.getWritableDatabase();
-        try {
-            db.beginTransaction();
-            // 按分号分割执行每条语句
-            String[] statements = sql.split(";");
-            for (String stmt : statements) {
-                String trimmed = stmt.trim();
-                if (trimmed.isEmpty() || trimmed.startsWith("--")) continue;
+    /**
+     * 导入游玩记录 SQL。
+     * 逐条执行 INSERT 语句，单条失败仅跳过（不回滚已成功的语句），
+     * 确保部分数据损坏/截断时不丢失全部数据。
+     *
+     * @return 全部成功返回 true，有跳过返回 false（但已执行的数据仍保留）
+     */
+    public static boolean importPlaySql(Context context, String sql) {
+    if (sql == null || sql.trim().isEmpty()) return true;
+
+    YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
+    SQLiteDatabase db = helper.getWritableDatabase();
+
+    boolean allOk = true;
+
+    try {
+        List<String> statements = splitSqlStatements(sql);
+
+        db.beginTransaction();
+
+        for (String stmt : statements) {
+            String trimmed = removeLeadingSqlComments(stmt).trim();
+            if (trimmed.isEmpty()) continue;
+
+            try {
                 db.execSQL(trimmed);
+            } catch (Exception e) {
+                e.printStackTrace();
+                allOk = false;
             }
-            db.setTransactionSuccessful();
-            return true;
-        } catch (Exception e) {
-            return false;
-        } finally {
-            try { db.endTransaction(); } catch (Exception ignored) {}
-            db.close();
         }
+
+        db.setTransactionSuccessful();
+    } catch (Exception e) {
+        e.printStackTrace();
+        allOk = false;
+    } finally {
+        try {
+            db.endTransaction();
+        } catch (Exception ignored) {
+        }
+        db.close();
+    }
+
+    return allOk;
+}
+
+private static String removeLeadingSqlComments(String stmt) {
+    String[] lines = stmt.split("\\r?\\n");
+    StringBuilder sb = new StringBuilder();
+
+    for (String line : lines) {
+        String trimmed = line.trim();
+        if (trimmed.startsWith("--")) {
+            continue;
+        }
+        sb.append(line).append('\n');
+    }
+
+    return sb.toString();
+}
+
+    /**
+     * 正确拆分 SQL 语句，跳过字符串字面量中的分号。
+     * 例如: INSERT INTO t VALUES ('a;b'); INSERT INTO t VALUES('c');
+     * → ["INSERT INTO t VALUES ('a;b')", "INSERT INTO t VALUES('c')"]
+     */
+    private static List<String> splitSqlStatements(String sql) {
+    List<String> result = new ArrayList<>();
+    StringBuilder sb = new StringBuilder();
+    boolean inSingleQuote = false;
+
+    for (int i = 0; i < sql.length(); i++) {
+        char c = sql.charAt(i);
+
+        if (c == '\'') {
+            if (inSingleQuote && i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
+                // 关键修复：SQL 字符串里的转义单引号必须保留两个 ''
+                sb.append("''");
+                i++;
+                continue;
+            }
+
+            inSingleQuote = !inSingleQuote;
+            sb.append(c);
+            continue;
+        }
+
+        if (c == ';' && !inSingleQuote) {
+            String stmt = sb.toString().trim();
+            if (!stmt.isEmpty()) {
+                result.add(stmt);
+            }
+            sb.setLength(0);
+        } else {
+            sb.append(c);
+        }
+    }
+
+    String remaining = sb.toString().trim();
+    if (!remaining.isEmpty()) {
+        result.add(remaining);
+    }
+
+    return result;
     }
 
     // ══════════════════════════════════════════════════
     //  重启
     // ══════════════════════════════════════════════════
 
-    private static void restartLauncher(android.app.Activity activity) {
+    /** 直接重启 LauncherActivity，不重新导入数据。用于数据已导入后仅需重启的场景。 */
+    public static void restartLauncher(android.app.Activity activity) {
         try {
             android.content.Intent intent = new android.content.Intent(activity, com.apps.LauncherActivity.class);
             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -391,6 +512,22 @@ public class LauncherUserData {
             } catch (Exception ignored2) {
             }
         }
+    }
+
+    //清理 SQL 注释
+    private static String removeSqlLineComments(String sql) {
+    StringBuilder sb = new StringBuilder();
+    String[] lines = sql.split("\\r?\\n");
+
+    for (String line : lines) {
+        String trimmed = line.trim();
+        if (trimmed.startsWith("--")) {
+            continue;
+        }
+        sb.append(line).append('\n');
+    }
+
+    return sb.toString();
     }
 
     // ══════════════════════════════════════════════════
