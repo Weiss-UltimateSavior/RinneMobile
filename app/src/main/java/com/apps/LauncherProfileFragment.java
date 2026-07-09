@@ -44,13 +44,22 @@ public class LauncherProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         applySystemBarInsets();
         applyThemeTone();
-        binding.actionChangeCover.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("image/*");
-            startActivityForResult(intent, REQUEST_PICK_COVER);
-        });
+        binding.actionChangeCover.setOnClickListener(v -> showChangeCoverDialog());
         binding.profileAvatar.setOnClickListener(v -> showChangeAvatarDialog());
+        binding.profileInfoRow.setOnClickListener(v -> {
+            if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
+                Toast.makeText(requireContext(), "当前未登录", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(requireContext(), LauncherProfileEditActivity.class);
+            startActivity(intent);
+            LauncherMotion.applyActivityOpen(requireActivity());
+        });
+        binding.accountSettingsRow.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LauncherAccountSettingsActivity.class);
+            startActivity(intent);
+            LauncherMotion.applyActivityOpen(requireActivity());
+        });
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
         renderUserInfo();
     }
@@ -177,6 +186,68 @@ public class LauncherProfileFragment extends Fragment {
                 )
                 .replace(R.id.launcherFragmentContainer, new LauncherAccountFragment(), "launcher_ACCOUNT")
                 .commit();
+    }
+
+    private void showChangeCoverDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("更换背景");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(requireContext());
+        message.setText("是否从图库选择新的背景图片？");
+        message.setGravity(android.view.Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
+        message.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(message, msgLp);
+
+        TextView confirm = new TextView(requireContext());
+        confirm.setText("确定");
+        confirm.setGravity(android.view.Gravity.CENTER);
+        LauncherTheme.primaryButton(confirm);
+        confirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+            startActivityForResult(intent, REQUEST_PICK_COVER);
+        });
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        confirmLp.setMargins(0, dp(11), 0, 0);
+        root.addView(confirm, confirmLp);
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        cancel.setTextColor(LauncherTheme.primary(requireContext()));
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
     }
 
     private void showChangeAvatarDialog() {

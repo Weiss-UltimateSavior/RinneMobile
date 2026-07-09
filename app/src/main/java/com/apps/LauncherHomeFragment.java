@@ -130,7 +130,7 @@ public class LauncherHomeFragment extends Fragment {
     }
 
     private void bindActions() {
-        binding.launcherAvatarContainer.setOnClickListener(view -> avatarPickerLauncher.launch(new String[]{"image/*"}));
+        binding.launcherAvatarContainer.setOnClickListener(view -> showChangeAvatarDialog());
         binding.actionProfileMenu.setOnClickListener(this::showPlaceholderMenu);
         binding.actionChatRoom.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherChatSelectActivity.class)));
@@ -418,6 +418,65 @@ public class LauncherHomeFragment extends Fragment {
             LauncherTheme.applyPrimaryTone(itemView);
             binding.recentList.addView(itemView);
         }
+    }
+
+    private void showChangeAvatarDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("修改头像");
+        title.setGravity(Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(requireContext());
+        message.setText("是否从图库选择新头像？");
+        message.setGravity(Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        message.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(message, msgLp);
+
+        TextView confirm = new TextView(requireContext());
+        confirm.setText("确定");
+        confirm.setGravity(Gravity.CENTER);
+        LauncherTheme.primaryButton(confirm);
+        confirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            avatarPickerLauncher.launch(new String[]{"image/*"});
+        });
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        confirmLp.setMargins(0, dp(11), 0, 0);
+        root.addView(confirm, confirmLp);
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setTextColor(LauncherTheme.primary(requireContext()));
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
     }
 
     private void persistAvatarUri(Uri uri) {

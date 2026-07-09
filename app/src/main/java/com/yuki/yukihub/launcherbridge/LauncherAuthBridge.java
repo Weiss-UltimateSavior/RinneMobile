@@ -161,7 +161,84 @@ public final class LauncherAuthBridge {
         });
     }
 
+    // ========== 用户信息修改 ==========
+
+    public static void updateUsername(Context context, String newUsername, AuthCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONObject body = new JSONObject();
+                body.put("new_username", newUsername);
+                String response = put("/auth/username", body, token);
+                JSONObject json = new JSONObject(response == null ? "{}" : response);
+                String username = json.optString("username", "");
+                String email = json.optString("email", "");
+                saveUserInfo(context, username, email);
+                postMain(() -> callback.onSuccess(token));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "修改用户名失败");
+                if (msg.contains("401")) {
+                    clearToken(context);
+                    msg = "登录已过期，请重新登录";
+                } else if (msg.contains("用户名已存在")) {
+                    msg = "该用户名已存在";
+                } else if (msg.contains("422")) {
+                    msg = "用户名格式有误，需3-32位字母、数字或下划线";
+                }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    public static void updatePassword(Context context, String oldPassword, String newPassword, AuthCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONObject body = new JSONObject();
+                body.put("old_password", oldPassword);
+                body.put("new_password", newPassword);
+                put("/auth/password", body, token);
+                // 修改密码后 Token 全部吊销，清除本地 Token
+                clearToken(context);
+                postMain(() -> callback.onSuccess(""));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "修改密码失败");
+                if (msg.contains("401")) {
+                    clearToken(context);
+                    msg = "登录已过期，请重新登录";
+                } else if (msg.contains("旧密码错误")) {
+                    msg = "旧密码错误";
+                } else if (msg.contains("422")) {
+                    msg = "密码格式有误，需6-128位";
+                }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
     // ========== 网络工具 ==========
+
+    private static String put(String path, JSONObject body, String authToken) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(API_BASE + path).openConnection();
+        c.setRequestMethod("PUT");
+        c.setDoOutput(true);
+        c.setConnectTimeout(10000);
+        c.setReadTimeout(12000);
+        c.setRequestProperty("Content-Type", "application/json");
+        c.setRequestProperty("Accept", "application/json");
+        if (authToken != null && !authToken.isEmpty()) {
+            c.setRequestProperty("Authorization", "Bearer " + authToken);
+        }
+        byte[] bytes = body.toString().getBytes("UTF-8");
+        c.setFixedLengthStreamingMode(bytes.length);
+        c.getOutputStream().write(bytes);
+        c.getOutputStream().flush();
+        return readResponse(c);
+    }
 
     private static String post(String path, JSONObject body, String authToken) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(API_BASE + path).openConnection();

@@ -171,40 +171,6 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/privacyPolicyRow"
-                    style="@style/LauncherManageItem">
-
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="PR" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="隐私政策" />
-
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/aboutYukiHubRow"
-                    style="@style/LauncherManageItem">
-
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="i" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="兑换入口" />
-
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/logoutRow"
                     style="@style/LauncherManageItem">
 
