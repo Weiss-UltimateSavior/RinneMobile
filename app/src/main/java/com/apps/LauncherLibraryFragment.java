@@ -39,11 +39,14 @@ import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.data.MetadataRepository;
 import com.yuki.yukihub.databinding.FragmentLauncherLibraryBinding;
+import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
 import com.yuki.yukihub.metadata.VnMetadata;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
+
+import com.apps.UserData.LauncherUserData;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -81,6 +84,11 @@ public class LauncherLibraryFragment extends Fragment {
     private boolean dataLoaded;
     private boolean needsRefresh;
     private long runningSessionId = -1L;
+    // 实际游玩时间监控：在主项目 play_sessions 之外，并行记录一份用于后续上传
+    private long runningGameId = -1L;
+    private String runningGameTitle = "";
+    private long runningSessionStart = 0L;
+    private String runningLaunchType = "external";
     private Runnable searchDebounce;
     private GestureDetector swipeGestureDetector;
     private boolean swipeConsumed;
@@ -533,6 +541,11 @@ private void loadNextPage(boolean forceFullRefresh) {
         LauncherGameLaunchBridge.LaunchResult result = LauncherGameLaunchBridge.launch(requireContext(), game);
         if (result.success) {
             runningSessionId = result.sessionId;
+            // 记录会话元信息，用于结束时写入实际游玩记录缓冲
+            runningGameId = game.id;
+            runningGameTitle = safeTitle(game);
+            runningSessionStart = System.currentTimeMillis();
+            runningLaunchType = resolveLaunchTypeForRecord(game);
         } else if (result.message != null && !result.message.trim().isEmpty()) {
             Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
         }
@@ -542,9 +555,64 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (runningSessionId <= 0L) return;
         Context context = getContext();
         if (context == null) return;
+        long endTime = System.currentTimeMillis();
+        // 1) 主项目会话收尾（写入 play_sessions 表 + 累加 total_play_time）
         LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
+        // 2) 并行写入 LauncherUserData 实际游玩记录缓冲（供后续上传）
+        if (runningGameId > 0L && runningSessionStart > 0L) {
+            LauncherUserData.appendPlayRecord(context.getApplicationContext(),
+                    runningGameId, runningGameTitle, runningSessionStart, endTime,
+                    Math.max(0L, endTime - runningSessionStart), runningLaunchType);
+        }
         runningSessionId = -1L;
+        runningGameId = -1L;
+        runningGameTitle = "";
+        runningSessionStart = 0L;
+        runningLaunchType = "external";
         loadGames();
+        // 3) 若开启「实时游玩时间」且已登录，静默上传本地缓冲到服务端
+        maybeUploadPlayRecords();
+    }
+
+    /**
+     * 当用户已登录且开启了「实时游玩时间」（account_settings.realtime_playtime）时，
+     * 将本地暂存的游玩记录批量上传到服务端，上传成功后清空本地缓冲。
+     * 失败时保留缓冲，等待下次会话结束或手动同步重试。
+     */
+    private void maybeUploadPlayRecords() {
+        Context context = getContext();
+        if (context == null) return;
+        Context app = context.getApplicationContext();
+        if (!LauncherAuthBridge.isLoggedIn(app)) return;
+        android.content.SharedPreferences prefs = app.getSharedPreferences("launcher_account_settings", Context.MODE_PRIVATE);
+        if (!prefs.getBoolean("realtime_playtime", true)) return;
+        java.util.List<org.json.JSONObject> records = LauncherUserData.readPlayRecords(app);
+        if (records == null || records.isEmpty()) return;
+        LauncherAuthBridge.uploadPlayTime(app, records, new LauncherAuthBridge.PlayTimeCallback() {
+            @Override
+            public void onSuccess(String statsJson) {
+                LauncherUserData.clearPlayRecords(app);
+            }
+            @Override
+            public void onError(String message) {
+                // 静默失败，保留本地缓冲等待下次重试
+            }
+        });
+    }
+
+    /**
+     * 与 LauncherGameLaunchBridge.resolveLaunchType 保持一致的启动类型推导，
+     * 仅用于实际游玩记录的 launchType 字段标记，便于后续上传区分启动方式。
+     */
+    private String resolveLaunchTypeForRecord(Game game) {
+        if (game == null || game.emulatorPackage == null) return "external";
+        String pkg = game.emulatorPackage.trim().toLowerCase(Locale.ROOT);
+        if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) return "internal.krkr";
+        if (pkg.startsWith("internal.ons") || pkg.equals("com.yuki.yukihub.ons")) return "internal.ons";
+        if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) return "internal.tyrano";
+        if (pkg.startsWith("internal.artemis")) return pkg;
+        if (pkg.startsWith("internal.psp") || pkg.equals("org.ppsspp.ppsspp")) return "internal.psp";
+        return "external";
     }
 
     private void confirmLaunchGame(Game game) {

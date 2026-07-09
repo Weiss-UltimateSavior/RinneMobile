@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.yuki.yukihub.data.YukiDatabaseHelper;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 统一管理 Launcher 所有用户设置的导出/导入。
@@ -32,7 +34,11 @@ public class LauncherUserData {
 
     private static final String SETTINGS_FILE = "launcher_user_data.json";
     private static final String PLAY_SQL_FILE = "launcher_play_data.sql";
+    private static final String PLAY_RECORDS_FILE = "launcher_play_records.json";
     private static final int VERSION = 1;
+    private static final int PLAY_RECORDS_VERSION = 1;
+    // 单条游玩记录最长 12 小时，与主项目 MAX_PLAY_SESSION_MS 保持一致
+    private static final long MAX_PLAY_RECORD_MS = 12L * 60L * 60L * 1000L;
 
     // ── SharedPreferences 文件名 ──
     private static final String PREFS_MAIN = "yukihub_prefs";
@@ -528,6 +534,152 @@ private static String removeLeadingSqlComments(String stmt) {
     }
 
     return sb.toString();
+    }
+
+    // ══════════════════════════════════════════════════
+    //  实际游玩记录临时存储（供后续上传）
+    // ══════════════════════════════════════════════════
+    //
+    // 设计说明：
+    //   主项目通过 GameRepository.startPlaySession/finishPlaySession 将会话写入
+    //   play_sessions 表（由 LauncherGameLaunchBridge 透出）。LauncherUserData 在此
+    //   之外并行维护一份「实际游玩记录」缓冲，用于后续上传到服务端。
+    //   该缓冲为追加式 JSON 文件 launcher_play_records.json，上传成功后可调用
+    //   clearPlayRecords 清空。
+
+    /**
+     * 追加一条实际游玩记录到临时缓冲。
+     * 调用时机：游戏会话结束时（finishDirectPlaySessionIfNeeded）。
+     *
+     * @param gameId     游戏 id
+     * @param gameTitle  游戏标题（用于上传时展示）
+     * @param startTime  会话开始时间戳（ms）
+     * @param endTime    会话结束时间戳（ms）
+     * @param duration   实际游玩时长（ms），<=0 时按 endTime-startTime 推算
+     * @param launchType 启动类型（internal.krkr / external 等）
+     * @return 生成的记录的 sessionUuid，失败返回 null
+     */
+    public static String appendPlayRecord(Context context, long gameId, String gameTitle,
+                                          long startTime, long endTime, long duration, String launchType) {
+        if (context == null || gameId <= 0L || startTime <= 0L) return null;
+        long safeEnd = endTime > 0L ? endTime : System.currentTimeMillis();
+        long rawDuration = duration > 0L ? duration : Math.max(0L, safeEnd - startTime);
+        if (rawDuration <= 0L) return null;
+        long safeDuration = Math.min(rawDuration, MAX_PLAY_RECORD_MS);
+
+        JSONObject record = new JSONObject();
+        String sessionUuid = UUID.randomUUID().toString();
+        try {
+            record.put("sessionUuid", sessionUuid);
+            record.put("gameId", gameId);
+            record.put("gameTitle", gameTitle == null ? "" : gameTitle);
+            record.put("startTime", startTime);
+            record.put("endTime", safeEnd);
+            record.put("duration", safeDuration);
+            record.put("launchType", launchType == null ? "external" : launchType);
+            record.put("recordedAt", System.currentTimeMillis());
+        } catch (JSONException e) {
+            return null;
+        }
+
+        synchronized (PLAY_RECORDS_LOCK) {
+            File file = getPlayRecordsFile(context);
+            JSONArray arr = readPlayRecordsArray(context);
+            arr.put(record);
+            if (writePlayRecordsFile(file, arr)) return sessionUuid;
+        }
+        return null;
+    }
+
+    /**
+     * 读取所有暂存的游玩记录（按记录追加顺序）。
+     */
+    public static List<JSONObject> readPlayRecords(Context context) {
+        List<JSONObject> list = new ArrayList<>();
+        if (context == null) return list;
+        JSONArray arr = readPlayRecordsArray(context);
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o != null) list.add(o);
+        }
+        return list;
+    }
+
+    /**
+     * 读取暂存的游玩记录条数。
+     */
+    public static int getPlayRecordCount(Context context) {
+        return readPlayRecordsArray(context).length();
+    }
+
+    /**
+     * 清空所有暂存的游玩记录。建议在上传成功后调用。
+     */
+    public static boolean clearPlayRecords(Context context) {
+        if (context == null) return false;
+        synchronized (PLAY_RECORDS_LOCK) {
+            File file = getPlayRecordsFile(context);
+            if (!file.exists()) return true;
+            try {
+                JSONObject root = new JSONObject();
+                root.put("version", PLAY_RECORDS_VERSION);
+                root.put("records", new JSONArray());
+                writeText(file, root.toString(2));
+                return true;
+            } catch (Exception e) {
+                return file.delete();
+            }
+        }
+    }
+
+    /**
+     * 删除已上传的若干条记录（按 sessionUuid 匹配），用于增量上传场景。
+     */
+    public static boolean removePlayRecords(Context context, java.util.Collection<String> sessionUuids) {
+        if (context == null) return false;
+        if (sessionUuids == null || sessionUuids.isEmpty()) return true;
+        synchronized (PLAY_RECORDS_LOCK) {
+            JSONArray arr = readPlayRecordsArray(context);
+            JSONArray remaining = new JSONArray();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.optJSONObject(i);
+                if (o == null) continue;
+                String uuid = o.optString("sessionUuid", "");
+                if (!sessionUuids.contains(uuid)) remaining.put(o);
+            }
+            return writePlayRecordsFile(getPlayRecordsFile(context), remaining);
+        }
+    }
+
+    public static File getPlayRecordsFile(Context context) {
+        return new File(getUserDataDir(context), PLAY_RECORDS_FILE);
+    }
+
+    private static final Object PLAY_RECORDS_LOCK = new Object();
+
+    private static JSONArray readPlayRecordsArray(Context context) {
+        File file = getPlayRecordsFile(context);
+        if (!file.exists()) return new JSONArray();
+        try {
+            String json = readText(file);
+            JSONObject root = new JSONObject(json);
+            JSONArray arr = root.optJSONArray("records");
+            return arr != null ? arr : new JSONArray();
+        } catch (Exception e) {
+            return new JSONArray();
+        }
+    }
+
+    private static boolean writePlayRecordsFile(File file, JSONArray arr) {
+        try {
+            JSONObject root = new JSONObject();
+            root.put("version", PLAY_RECORDS_VERSION);
+            root.put("records", arr);
+            writeText(file, root.toString(2));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // ══════════════════════════════════════════════════

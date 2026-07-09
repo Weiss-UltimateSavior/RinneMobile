@@ -38,7 +38,7 @@
         <View
             android:id="@+id/navSelectionIndicator"
             android:layout_width="0dp"
-            android:layout_height="59dp"
+            android:layout_height="54dp"
             android:layout_gravity="center_vertical"
             android:background="@drawable/launcher_nav_selected" />
 
@@ -181,7 +181,7 @@
             <LinearLayout
                 android:id="@+id/navAccount"
                 android:layout_width="0dp"
-                android:layout_height="59dp"
+                android:layout_height="54dp"
                 android:layout_weight="1"
                 android:background="@drawable/launcher_nav_unselected"
                 android:clickable="true"

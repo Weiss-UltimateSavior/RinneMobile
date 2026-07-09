@@ -11,7 +11,10 @@ import android.util.Log;
 import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 
+import org.json.JSONObject;
+
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * 每晚 00:00 自动备份用户配置到服务端。
@@ -134,5 +137,29 @@ public class LauncherSyncScheduler {
         } else {
             scheduleNextBackup(context);
         }
+
+        // 上传实际游玩时长记录（增量累加，独立于 SQL 快照），成功后清空本地缓冲
+        uploadPlayTimeRecords(context);
+    }
+
+    /**
+     * 将本地暂存的游玩时长记录批量上传到服务端，上传成功后清空缓冲。
+     * 与配置/SQL 备份相互独立，失败不影响其他备份流程。
+     */
+    private static void uploadPlayTimeRecords(Context context) {
+        List<JSONObject> records = LauncherUserData.readPlayRecords(context);
+        if (records == null || records.isEmpty()) return;
+        LauncherAuthBridge.uploadPlayTime(context, records, new LauncherAuthBridge.PlayTimeCallback() {
+            @Override
+            public void onSuccess(String statsJson) {
+                LauncherUserData.clearPlayRecords(context);
+                Log.d(TAG, "游玩时长上传成功");
+            }
+
+            @Override
+            public void onError(String message) {
+                Log.w(TAG, "游玩时长上传失败: " + message);
+            }
+        });
     }
 }

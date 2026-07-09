@@ -45,7 +45,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
     private void bindActions() {
         binding.rowSyncConfig.setOnClickListener(v -> onSyncConfigClick());
-        binding.rowRealtimePlaytime.setOnClickListener(v -> toggleAndRender("realtime_playtime", binding.chipRealtimePlaytime));
+        binding.rowRealtimePlaytime.setOnClickListener(v -> onRealtimePlaytimeClick());
         binding.rowProfileDisplay.setOnClickListener(v -> toggleAndRender("profile_display", binding.chipProfileDisplay));
         binding.rowModelFeature.setOnClickListener(v -> toggleAndRender("model_feature", binding.chipModelFeature));
         binding.rowEmailSubscribe.setOnClickListener(v -> toggleAndRender("email_subscribe", binding.chipEmailSubscribe));
@@ -63,6 +63,79 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
         }
         // 开启：弹窗确认是否上传当前配置
         showSyncConfirmDialog();
+    }
+
+    private void onRealtimePlaytimeClick() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+        boolean currentEnabled = prefs.getBoolean("realtime_playtime", getDefault("realtime_playtime"));
+        if (currentEnabled) {
+            // 关闭：直接关闭
+            prefs.edit().putBoolean("realtime_playtime", false).apply();
+            renderChip(binding.chipRealtimePlaytime, false);
+            return;
+        }
+        // 开启：弹窗确认
+        showRealtimePlaytimeConfirmDialog();
+    }
+
+    private void showRealtimePlaytimeConfirmDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(this);
+        title.setText("实时游玩时间");
+        title.setGravity(Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(this);
+        message.setText("此功能启用将实时上传游玩详细信息，确定要使用吗？");
+        message.setGravity(Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
+        message.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(message, msgLp);
+
+        TextView confirmBtn = new TextView(this);
+        confirmBtn.setText("确定开启");
+        confirmBtn.setGravity(Gravity.CENTER);
+        LauncherTheme.primaryButton(confirmBtn);
+        confirmBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("realtime_playtime", true).apply();
+            renderChip(binding.chipRealtimePlaytime, true);
+        });
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        confirmLp.setMargins(0, dp(11), 0, 0);
+        root.addView(confirmBtn, confirmLp);
+
+        TextView cancelBtn = new TextView(this);
+        cancelBtn.setText("取消");
+        cancelBtn.setGravity(Gravity.CENTER);
+        cancelBtn.setTextColor(LauncherTheme.primary(this));
+        cancelBtn.setTextSize(13);
+        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancelBtn.setBackground(LauncherTheme.cancelChip(this));
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancelBtn, cancelLp);
+
+        window.setContentView(root);
     }
 
     private void showSyncConfirmDialog() {

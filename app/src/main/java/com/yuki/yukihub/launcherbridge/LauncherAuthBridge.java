@@ -7,12 +7,14 @@ import android.os.Looper;
 
 import com.yuki.yukihub.util.AppExecutors;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 
 /**
  * 启动器认证桥接层。
@@ -305,6 +307,58 @@ public final class LauncherAuthBridge {
         });
     }
 
+    // ========== 游玩时长统计 ==========
+
+    /**
+     * 上传实际游玩记录到服务端（增量累加）。
+     * 前端调用 LauncherUserData.readPlayRecords() 读取本地缓冲后上传，
+     * 上传成功后可调用 LauncherUserData.clearPlayRecords() 清空缓冲。
+     *
+     * @param records 游玩记录列表（每条为 JSONObject，字段与 LauncherUserData.appendPlayRecord 一致）
+     * @param callback 回调：onSuccess 返回服务端累计统计 JSON 数组字符串
+     */
+    public static void uploadPlayTime(Context context, List<JSONObject> records, PlayTimeCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                if (records == null || records.isEmpty()) throw new RuntimeException("记录列表为空");
+                JSONObject body = new JSONObject();
+                JSONArray arr = new JSONArray();
+                for (JSONObject r : records) arr.put(r);
+                body.put("records", arr);
+                String response = post("/auth/play-time", body, token);
+                postMain(() -> callback.onSuccess(response));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "上传游玩时长失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    /**
+     * 获取当前用户所有游戏的累计游玩时长统计（按时长降序）。
+     *
+     * @param callback 回调：onSuccess 返回 JSON 数组字符串，每项含 game_id/game_title/total_duration_ms/play_count/last_played_at
+     */
+    public static void fetchPlayTime(Context context, PlayTimeCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                String response = get("/auth/play-time", token);
+                postMain(() -> callback.onSuccess(response));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "获取游玩时长失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
     // ========== 网络工具 ==========
 
     /** 大数据量 PUT：超时更长，响应缓冲更大（适配游玩记录上传/下载）。 */
@@ -489,6 +543,11 @@ public final class LauncherAuthBridge {
 
     public interface PlayDataCallback {
         void onSuccess(String playSql);
+        void onError(String message);
+    }
+
+    public interface PlayTimeCallback {
+        void onSuccess(String statsJson);
         void onError(String message);
     }
 }
