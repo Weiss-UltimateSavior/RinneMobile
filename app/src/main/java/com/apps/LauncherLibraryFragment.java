@@ -76,6 +76,8 @@ public class LauncherLibraryFragment extends Fragment {
     private boolean loading;
     private boolean fullyLoaded;
     private boolean categoriesCollapsed;
+    private boolean dataLoaded;
+    private boolean needsRefresh;
     private long runningSessionId = -1L;
     private Runnable searchDebounce;
     private GestureDetector swipeGestureDetector;
@@ -105,7 +107,7 @@ public class LauncherLibraryFragment extends Fragment {
         checkStoragePermission();
         if (runningSessionId > 0L) {
             finishDirectPlaySessionIfNeeded();
-        } else {
+        } else if (!dataLoaded || needsRefresh) {
             loadGames();
         }
     }
@@ -334,7 +336,7 @@ public class LauncherLibraryFragment extends Fragment {
         }
         // 列表淡入动画
         binding.libraryRecycler.setAlpha(0.7f);
-        binding.libraryRecycler.animate().alpha(1f).setDuration(1500).setInterpolator(new AccelerateDecelerateInterpolator()).start();
+        binding.libraryRecycler.animate().alpha(1f).setDuration(250).setInterpolator(new AccelerateDecelerateInterpolator()).start();
     }
 
     private void setupSearchAndCategories() {
@@ -372,20 +374,43 @@ public class LauncherLibraryFragment extends Fragment {
 
     private void loadGames() {
         setLoading(true);
+        needsRefresh = false;
         Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             List<Game> games;
+            Map<Long, List<String>> developers;
+            List<CategoryOption> builtCategories;
             try {
-                games = new GameRepository(appContext).getAll();
+                GameRepository repo = new GameRepository(appContext);
+                games = repo.getAll();
             } catch (Throwable throwable) {
                 games = Collections.emptyList();
             }
+            // 在后台线程构建分类（含元数据查询），避免主线程卡顿
+            try {
+                CategoryBuildResult result = buildCategoriesInBackground(appContext, games);
+                developers = result.developers;
+                builtCategories = result.categories;
+            } catch (Throwable throwable) {
+                developers = Collections.emptyMap();
+                builtCategories = Collections.emptyList();
+            }
             List<Game> loadedGames = games;
+            Map<Long, List<String>> loadedDevelopers = developers;
+            List<CategoryOption> loadedCategories = builtCategories;
             mainHandler.post(() -> {
                 if (binding == null) return;
                 allGames.clear();
                 allGames.addAll(loadedGames);
-                rebuildCategories();
+                gameDevelopers.clear();
+                gameDevelopers.putAll(loadedDevelopers);
+                categories.clear();
+                categories.addAll(loadedCategories);
+                if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
+                    selectedCategory = "";
+                }
+                renderCategories();
+                dataLoaded = true;
                 applyFilters();
             });
         });
@@ -405,7 +430,6 @@ public class LauncherLibraryFragment extends Fragment {
         }
         visibleGames.clear();
         fullyLoaded = filteredGames.isEmpty();
-        if (adapter != null) adapter.submit(Collections.emptyList());
         loadNextPage();
         renderState();
     }
@@ -670,7 +694,10 @@ public class LauncherLibraryFragment extends Fragment {
                     repo.update(latest);
                 }
             } catch (Throwable ignored) {}
-            if (getActivity() != null) getActivity().runOnUiThread(this::loadGames);
+            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+                needsRefresh = true;
+                loadGames();
+            });
         });
     }
 
@@ -832,7 +859,10 @@ public class LauncherLibraryFragment extends Fragment {
                 if (addMinutes != null) finalDuration += addMinutes * 60_000L;
                 repo.setManualPlayTimeForGame(latest.id, Math.max(0, finalDuration));
             } catch (Throwable ignored) {}
-            if (getActivity() != null) getActivity().runOnUiThread(this::loadGames);
+            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+                needsRefresh = true;
+                loadGames();
+            });
         });
     }
 
@@ -918,7 +948,10 @@ public class LauncherLibraryFragment extends Fragment {
                     repo.update(latest);
                 }
             } catch (Throwable ignored) {}
-            if (getActivity() != null) getActivity().runOnUiThread(this::loadGames);
+            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+                needsRefresh = true;
+                loadGames();
+            });
         });
     }
 
@@ -1058,6 +1091,38 @@ public class LauncherLibraryFragment extends Fragment {
             selectedCategory = "";
         }
         renderCategories();
+    }
+
+    private static final class CategoryBuildResult {
+        final List<CategoryOption> categories;
+        final Map<Long, List<String>> developers;
+        CategoryBuildResult(List<CategoryOption> categories, Map<Long, List<String>> developers) {
+            this.categories = categories;
+            this.developers = developers;
+        }
+    }
+
+    private CategoryBuildResult buildCategoriesInBackground(Context appContext, List<Game> games) {
+        List<CategoryOption> cats = new ArrayList<>();
+        Map<Long, List<String>> devs = new HashMap<>();
+        cats.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
+        cats.add(new CategoryOption("在玩", CATEGORY_PLAYING));
+        cats.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
+        cats.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
+
+        Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        MetadataRepository metadataRepository = new MetadataRepository(appContext);
+        for (Game game : games) {
+            List<String> developers = parseDevelopers(developerOf(metadataRepository, game));
+            if (game != null) devs.put(game.id, developers);
+            for (String developer : developers) {
+                developerCounts.put(developer, developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
+            cats.add(new CategoryOption("开发商 · " + entry.getKey() + " (" + entry.getValue() + ")", CATEGORY_DEVELOPER_PREFIX + entry.getKey()));
+        }
+        return new CategoryBuildResult(cats, devs);
     }
 
     private void renderCategories() {

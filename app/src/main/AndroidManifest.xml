@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Winlator 直启使用导出 Activity，不再依赖 Shizuku 权限。 -->
 
     <queries>
@@ -284,6 +285,10 @@
             android:process=":ons"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|screenSize" />
+
+        <receiver
+            android:name="com.apps.LauncherSyncReceiver"
+            android:exported="false" />
 
     </application>
 </manifest>

@@ -220,6 +220,89 @@ public final class LauncherAuthBridge {
         });
     }
 
+    // ========== 配置同步 ==========
+
+    /**
+     * 从服务端获取 Launcher 配置 JSON。
+     */
+    public static void fetchConfig(Context context, ConfigCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                String response = get("/auth/config", token);
+                postMain(() -> callback.onSuccess(response));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "获取配置失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    /**
+     * 上传 Launcher 配置到服务端。
+     */
+    public static void uploadConfig(Context context, String configJson, ConfigCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONObject body = new JSONObject(configJson);
+                put("/auth/config", body, token);
+                postMain(() -> callback.onSuccess(configJson));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "上传配置失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    /**
+     * 从服务端获取游玩记录 SQL。
+     */
+    public static void fetchPlayData(Context context, PlayDataCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                String response = get("/auth/config/play-data", token);
+                JSONObject json = new JSONObject(response == null ? "{}" : response);
+                String playData = json.optString("play_data", "");
+                postMain(() -> callback.onSuccess(playData));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "获取游玩记录失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    /**
+     * 上传游玩记录 SQL 到服务端。
+     */
+    public static void uploadPlayData(Context context, String playSql, PlayDataCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONObject body = new JSONObject();
+                body.put("play_data", playSql);
+                put("/auth/config/play-data", body, token);
+                postMain(() -> callback.onSuccess(playSql));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "上传游玩记录失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
     // ========== 网络工具 ==========
 
     private static String put(String path, JSONObject body, String authToken) throws Exception {
@@ -277,7 +360,18 @@ public final class LauncherAuthBridge {
             String detail = text;
             try {
                 JSONObject err = new JSONObject(text == null ? "{}" : text);
-                detail = err.optString("detail", text);
+                // 适配统一错误格式: {"detail": {"code": "...", "message": "..."}}
+                Object detailObj = err.get("detail");
+                if (detailObj instanceof JSONObject) {
+                    JSONObject detailJson = (JSONObject) detailObj;
+                    if (detailJson.has("message")) {
+                        detail = detailJson.optString("message", text);
+                    } else {
+                        detail = detailObj.toString();
+                    }
+                } else {
+                    detail = String.valueOf(detailObj);
+                }
             } catch (Throwable ignored) {
             }
             throw new RuntimeException("HTTP " + code + ": " + trim(detail, 200));
@@ -328,6 +422,16 @@ public final class LauncherAuthBridge {
 
     public interface UserInfoCallback {
         void onSuccess(String nickname, String email);
+        void onError(String message);
+    }
+
+    public interface ConfigCallback {
+        void onSuccess(String configJson);
+        void onError(String message);
+    }
+
+    public interface PlayDataCallback {
+        void onSuccess(String playSql);
         void onError(String message);
     }
 }

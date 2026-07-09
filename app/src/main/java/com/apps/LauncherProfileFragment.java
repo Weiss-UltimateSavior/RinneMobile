@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.FragmentLauncherProfileBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
@@ -31,6 +33,7 @@ public class LauncherProfileFragment extends Fragment {
     private static final String KEY_CUSTOM_AVATAR = "custom_avatar_uri";
 
     private FragmentLauncherProfileBinding binding;
+    private AlertDialog loadingDialog;
 
     @Nullable
     @Override
@@ -60,6 +63,7 @@ public class LauncherProfileFragment extends Fragment {
             startActivity(intent);
             LauncherMotion.applyActivityOpen(requireActivity());
         });
+        binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
         renderUserInfo();
     }
@@ -96,6 +100,220 @@ public class LauncherProfileFragment extends Fragment {
             binding.profileNickname.setText("本地用户");
             binding.profileEmail.setVisibility(View.GONE);
         }
+    }
+
+    private void showCloudRestoreConfirmDialog() {
+        if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
+            Toast.makeText(requireContext(), "当前未登录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("云端恢复");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(requireContext());
+        message.setText("将从云端下载配置并覆盖当前设置，确定恢复吗？");
+        message.setGravity(android.view.Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
+        message.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(message, msgLp);
+
+        TextView confirm = new TextView(requireContext());
+        confirm.setText("确定恢复");
+        confirm.setGravity(android.view.Gravity.CENTER);
+        LauncherTheme.primaryButton(confirm);
+        confirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            performCloudRestore();
+        });
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        confirmLp.setMargins(0, dp(11), 0, 0);
+        root.addView(confirm, confirmLp);
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        cancel.setTextColor(LauncherTheme.primary(requireContext()));
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    private void performCloudRestore() {
+        loadingDialog = showLoadingDialog("正在恢复配置...", "请不要关闭应用及网络，否则可能导致配置出错");
+
+        LauncherAuthBridge.fetchConfig(requireContext(), new LauncherAuthBridge.ConfigCallback() {
+            @Override
+            public void onSuccess(String configJson) {
+                LauncherAuthBridge.fetchPlayData(requireContext(), new LauncherAuthBridge.PlayDataCallback() {
+                    @Override
+                    public void onSuccess(String playSql) {
+                        // 先导入设置
+                        boolean settingsOk = LauncherUserData.importSettingsFromJson(requireContext(), configJson);
+                        // 再导入游玩记录
+                        boolean playOk = true;
+                        if (playSql != null && !playSql.trim().isEmpty()) {
+                            // 写入本地 SQL 文件后导入
+                            try {
+                                LauncherUserData.exportAll(requireContext()); // 确保目录存在
+                                java.io.File sqlFile = LauncherUserData.getPlaySqlFile(requireContext());
+                                LauncherUserData.writeText(sqlFile, playSql);
+                                playOk = LauncherUserData.importAll(requireContext());
+                            } catch (Exception e) {
+                                playOk = false;
+                            }
+                        }
+                        dismissLoadingDialog();
+                        if (settingsOk && playOk) {
+                            showResultDialog("恢复成功", "配置已从云端恢复，即将重启生效");
+                        } else {
+                            showResultDialog("部分恢复失败", settingsOk ? "设置已恢复，游玩记录恢复失败" : "设置恢复失败");
+                        }
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        // 仅恢复设置
+                        boolean ok = LauncherUserData.importSettingsFromJson(requireContext(), configJson);
+                        dismissLoadingDialog();
+                        showResultDialog(ok ? "部分恢复成功" : "恢复失败", ok ? "设置已恢复，游玩记录获取失败：" + message : message);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                dismissLoadingDialog();
+                showResultDialog("恢复失败", message);
+            }
+        });
+    }
+
+    private AlertDialog showLoadingDialog(String titleText, String hintText) {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.setCancelable(false);
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return dialog;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText(titleText);
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        ProgressBar progressBar = new ProgressBar(requireContext());
+        progressBar.setIndeterminate(true);
+        progressBar.getIndeterminateDrawable().setColorFilter(
+                LauncherTheme.primary(requireContext()), android.graphics.PorterDuff.Mode.SRC_IN);
+        LinearLayout.LayoutParams pbLp = new LinearLayout.LayoutParams(dp(32), dp(32));
+        pbLp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        pbLp.setMargins(0, dp(14), 0, 0);
+        root.addView(progressBar, pbLp);
+
+        TextView hint = new TextView(requireContext());
+        hint.setText(hintText);
+        hint.setGravity(android.view.Gravity.CENTER);
+        hint.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
+        hint.setTextSize(11);
+        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        hintLp.setMargins(0, dp(10), 0, 0);
+        root.addView(hint, hintLp);
+
+        window.setContentView(root);
+        return dialog;
+    }
+
+    private void dismissLoadingDialog() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+            loadingDialog = null;
+        }
+    }
+
+    private void showResultDialog(String title, String message) {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView titleView = new TextView(requireContext());
+        titleView.setText(title);
+        titleView.setGravity(android.view.Gravity.CENTER);
+        titleView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
+        titleView.setTextSize(16);
+        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView msgView = new TextView(requireContext());
+        msgView.setText(message);
+        msgView.setGravity(android.view.Gravity.CENTER);
+        msgView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
+        msgView.setTextSize(12);
+        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        msgLp.setMargins(0, dp(13), 0, 0);
+        root.addView(msgView, msgLp);
+
+        TextView okBtn = new TextView(requireContext());
+        okBtn.setText("知道了");
+        okBtn.setGravity(android.view.Gravity.CENTER);
+        LauncherTheme.primaryButton(okBtn);
+        okBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            // 恢复成功后重启 Launcher 使设置生效
+            LauncherUserData.importAndRestart(requireActivity());
+        });
+        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        okLp.setMargins(0, dp(11), 0, 0);
+        root.addView(okBtn, okLp);
+
+        window.setContentView(root);
     }
 
     private void showLogoutDialog() {
@@ -422,7 +640,11 @@ public class LauncherProfileFragment extends Fragment {
         String customUri = requireContext().getSharedPreferences(PREFS_NAME, 0)
                 .getString(KEY_CUSTOM_COVER, null);
         if (customUri != null) {
-            binding.profileBgImage.setImageURI(Uri.parse(customUri));
+            try {
+                binding.profileBgImage.setImageURI(Uri.parse(customUri));
+            } catch (SecurityException e) {
+                binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg);
+            }
             return;
         }
         if (LauncherActivity.isRinneTheme(requireContext())) {
@@ -440,14 +662,22 @@ public class LauncherProfileFragment extends Fragment {
         String customAvatarUri = requireContext().getSharedPreferences(PREFS_NAME, 0)
                 .getString(KEY_CUSTOM_AVATAR, null);
         if (customAvatarUri != null) {
-            binding.profileAvatar.setImageURI(Uri.parse(customAvatarUri));
+            try {
+                binding.profileAvatar.setImageURI(Uri.parse(customAvatarUri));
+            } catch (SecurityException e) {
+                binding.profileAvatar.setImageResource(R.drawable.launcher_default_avatar);
+            }
             return;
         }
         // 再检查主页头像
         String homeAvatar = requireContext().getSharedPreferences("yukihub_prefs", 0)
                 .getString("profile_avatar", null);
         if (homeAvatar != null && !homeAvatar.trim().isEmpty()) {
-            binding.profileAvatar.setImageURI(Uri.parse(homeAvatar));
+            try {
+                binding.profileAvatar.setImageURI(Uri.parse(homeAvatar));
+            } catch (SecurityException e) {
+                binding.profileAvatar.setImageResource(R.drawable.launcher_default_avatar);
+            }
             return;
         }
         // 默认头像

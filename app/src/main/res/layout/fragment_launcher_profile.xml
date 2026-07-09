@@ -154,6 +154,23 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/cloudRestoreRow"
+                    style="@style/LauncherManageItem">
+
+                    <TextView
+                        style="@style/LauncherManageIcon"
+                        android:text="C" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="云端恢复" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/helpCenterRow"
                     style="@style/LauncherManageItem">
 
