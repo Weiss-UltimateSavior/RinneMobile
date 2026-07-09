@@ -84,6 +84,8 @@ public class LauncherLibraryFragment extends Fragment {
     private Runnable searchDebounce;
     private GestureDetector swipeGestureDetector;
     private boolean swipeConsumed;
+    private float loadMoreDragStartY;
+    private boolean loadMoreDragCandidate;
 
     @Nullable
     @Override
@@ -227,6 +229,24 @@ public class LauncherLibraryFragment extends Fragment {
                     loadNextPage();
                 }
             }
+        });
+
+        // 当分类收起后，第一页可能铺不满屏幕，RecyclerView 没有滚动距离，onScrolled 不会触发。
+        // 这里单独监听“向上拉”的手势，每次手势最多加载一页，避免一次性加载全部。
+        binding.libraryRecycler.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                handleLoadMoreDragWhenNotScrollable(rv, e);
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                handleLoadMoreDragWhenNotScrollable(rv, e);
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) { }
         });
     }
 
@@ -470,6 +490,33 @@ private void loadNextPage(boolean forceFullRefresh) {
         } else {
             binding.libraryFooter.setVisibility(fullyLoaded ? View.GONE : View.VISIBLE);
             binding.libraryFooter.setText("上拉加载");
+        }
+    }
+
+
+    private void handleLoadMoreDragWhenNotScrollable(@NonNull RecyclerView recyclerView, @NonNull MotionEvent event) {
+        if (loading || fullyLoaded || filteredGames.isEmpty() || visibleGames.size() >= filteredGames.size()) {
+            loadMoreDragCandidate = false;
+            return;
+        }
+
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                loadMoreDragStartY = event.getY();
+                loadMoreDragCandidate = !recyclerView.canScrollVertically(1);
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                if (loadMoreDragCandidate && loadMoreDragStartY - event.getY() > dp(48)) {
+                    loadMoreDragCandidate = false;
+                    loadNextPage();
+                }
+                break;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                loadMoreDragCandidate = false;
+                break;
         }
     }
 
