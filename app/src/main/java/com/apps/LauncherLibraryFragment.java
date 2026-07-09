@@ -1378,63 +1378,151 @@ mainHandler.post(() -> {
     }
 
     private void rebuildCategories() {
-        categories.clear();
-        gameDevelopers.clear();
-        categories.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
-        categories.add(new CategoryOption("在玩", CATEGORY_PLAYING));
-        categories.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
-        categories.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
+    categories.clear();
+    gameDevelopers.clear();
 
-        Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        MetadataRepository metadataRepository = new MetadataRepository(requireContext().getApplicationContext());
-        for (Game game : allGames) {
-            List<String> developers = parseDevelopers(developerOf(metadataRepository, game));
-            if (game != null) gameDevelopers.put(game.id, developers);
-            for (String developer : developers) {
-                developerCounts.put(developer, developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1);
-            }
-        }
-        for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
-            categories.add(new CategoryOption("开发商 · " + entry.getKey() + " (" + entry.getValue() + ")", CATEGORY_DEVELOPER_PREFIX + entry.getKey()));
+    int recentCount = 0;
+    int playingCount = 0;
+    int completedCount = 0;
+    int unplayedCount = 0;
+
+    Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    MetadataRepository metadataRepository = new MetadataRepository(requireContext().getApplicationContext());
+
+    for (Game game : allGames) {
+        if (game == null) continue;
+
+        if (game.lastPlayedAt > 0L) {
+            recentCount++;
         }
 
-        if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
-            selectedCategory = "";
+        String status = normalizePlayStatus(game.playStatus);
+        if ("playing".equals(status)) {
+            playingCount++;
+        } else if ("completed".equals(status)) {
+            completedCount++;
+        } else {
+            unplayedCount++;
         }
-        renderCategories();
+
+        List<String> developers = parseDevelopers(developerOf(metadataRepository, game));
+        gameDevelopers.put(game.id, developers);
+
+        for (String developer : developers) {
+            developerCounts.put(
+                    developer,
+                    developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1
+            );
+        }
     }
+
+    // 只添加有数据的固定分类
+    if (recentCount > 0) {
+        categories.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
+    }
+    if (playingCount > 0) {
+        categories.add(new CategoryOption("在玩", CATEGORY_PLAYING));
+    }
+    if (completedCount > 0) {
+        categories.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
+    }
+    if (unplayedCount > 0) {
+        categories.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
+    }
+
+    // 开发商分类本来就是统计出来的，这里也加一层保护
+    for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
+        if (entry.getValue() > 0) {
+            categories.add(new CategoryOption(
+                    "开发商 · " + entry.getKey() + " (" + entry.getValue() + ")",
+                    CATEGORY_DEVELOPER_PREFIX + entry.getKey()
+            ));
+        }
+    }
+
+    if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
+        selectedCategory = "";
+    }
+
+    renderCategories();
+}
 
     private static final class CategoryBuildResult {
-        final List<CategoryOption> categories;
-        final Map<Long, List<String>> developers;
-        CategoryBuildResult(List<CategoryOption> categories, Map<Long, List<String>> developers) {
-            this.categories = categories;
-            this.developers = developers;
-        }
+    final List<CategoryOption> categories;
+    final Map<Long, List<String>> developers;
+
+    CategoryBuildResult(List<CategoryOption> categories, Map<Long, List<String>> developers) {
+        this.categories = categories;
+        this.developers = developers;
     }
+}
 
     private CategoryBuildResult buildCategoriesInBackground(Context appContext, List<Game> games) {
-        List<CategoryOption> cats = new ArrayList<>();
-        Map<Long, List<String>> devs = new HashMap<>();
-        cats.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
-        cats.add(new CategoryOption("在玩", CATEGORY_PLAYING));
-        cats.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
-        cats.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
+    List<CategoryOption> cats = new ArrayList<>();
+    Map<Long, List<String>> devs = new HashMap<>();
 
-        Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        MetadataRepository metadataRepository = new MetadataRepository(appContext);
+    int recentCount = 0;
+    int playingCount = 0;
+    int completedCount = 0;
+    int unplayedCount = 0;
+
+    Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    MetadataRepository metadataRepository = new MetadataRepository(appContext);
+
+    if (games != null) {
         for (Game game : games) {
+            if (game == null) continue;
+
+            if (game.lastPlayedAt > 0L) {
+                recentCount++;
+            }
+
+            String status = normalizePlayStatus(game.playStatus);
+            if ("playing".equals(status)) {
+                playingCount++;
+            } else if ("completed".equals(status)) {
+                completedCount++;
+            } else {
+                unplayedCount++;
+            }
+
             List<String> developers = parseDevelopers(developerOf(metadataRepository, game));
-            if (game != null) devs.put(game.id, developers);
+            devs.put(game.id, developers);
+
             for (String developer : developers) {
-                developerCounts.put(developer, developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1);
+                developerCounts.put(
+                        developer,
+                        developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1
+                );
             }
         }
-        for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
-            cats.add(new CategoryOption("开发商 · " + entry.getKey() + " (" + entry.getValue() + ")", CATEGORY_DEVELOPER_PREFIX + entry.getKey()));
-        }
-        return new CategoryBuildResult(cats, devs);
     }
+
+    // 只添加有数据的固定分类
+    if (recentCount > 0) {
+        cats.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
+    }
+    if (playingCount > 0) {
+        cats.add(new CategoryOption("在玩", CATEGORY_PLAYING));
+    }
+    if (completedCount > 0) {
+        cats.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
+    }
+    if (unplayedCount > 0) {
+        cats.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
+    }
+
+    for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
+        if (entry.getValue() > 0) {
+            cats.add(new CategoryOption(
+                    "开发商 · " + entry.getKey() + " (" + entry.getValue() + ")",
+                    CATEGORY_DEVELOPER_PREFIX + entry.getKey()
+            ));
+        }
+    }
+
+    return new CategoryBuildResult(cats, devs);
+}
 
     private void renderCategories() {
         if (binding == null) return;
