@@ -1,6 +1,7 @@
 package com.apps;
 
 import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -13,6 +14,7 @@ import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherChatSelectBinding;
+import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 
 public class LauncherChatSelectActivity extends AppCompatActivity {
     private ActivityLauncherChatSelectBinding binding;
@@ -55,12 +57,24 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
         binding.publicChatRow.setOnClickListener(view -> selectChat("公共聊天室"));
         binding.yukiAiRow.setOnClickListener(view -> selectChat("Yuki娘（AI）"));
         binding.rinmiAiRow.setOnClickListener(view -> selectChat("园神凛弥（AI）"));
-        binding.chatSelectContinue.setOnClickListener(view ->
-                Toast.makeText(this, selectedChat + " 待接入", Toast.LENGTH_SHORT).show());
+        binding.chatSelectContinue.setOnClickListener(view -> openSelectedChat());
     }
 
     private void applyIconTone() {
         binding.publicChatRow.getChildAt(0).setBackground(LauncherTheme.circle(this));
+    }
+
+    private void openSelectedChat() {
+        if (!"公共聊天室".equals(selectedChat)) {
+            Toast.makeText(this, selectedChat + " 暂未开放", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!LauncherAuthBridge.isLoggedIn(this)) {
+            Toast.makeText(this, "请先在个人中心登录后再进入公共聊天室", Toast.LENGTH_LONG).show();
+            return;
+        }
+        startActivity(new Intent(this, LauncherPublicChatActivity.class));
+        LauncherMotion.applyActivityOpen(this);
     }
 
     private void selectChat(String chatName) {

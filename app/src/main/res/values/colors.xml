@@ -54,6 +54,9 @@
     <color name="launcher_accent_red_color">#FF4F6B</color>
     <color name="launcher_accent_pink_color">#FF7BA5</color>
     <color name="launcher_accent_purple_color">#D8A9C9</color>
+    <color name="launcher_rank_gold_color">#D6A300</color>
+    <color name="launcher_rank_silver_color">#8A98A3</color>
+    <color name="launcher_rank_bronze_color">#B36B3C</color>
     <color name="launcher_game_chip_color">#EAF7EF</color>
     <color name="launcher_game_text_overlay_color">#D9FFFFFF</color>
 </resources>

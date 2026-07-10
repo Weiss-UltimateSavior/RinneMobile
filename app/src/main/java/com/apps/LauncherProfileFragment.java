@@ -3,6 +3,7 @@ package com.apps;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -22,8 +23,16 @@ import androidx.fragment.app.Fragment;
 
 import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.R;
+import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.databinding.FragmentLauncherProfileBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.yuki.yukihub.util.TimeFormatUtil;
+import com.yuki.yukihub.util.AppExecutors;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.Map;
 
 public class LauncherProfileFragment extends Fragment {
     private static final int REQUEST_PICK_COVER = 10021;
@@ -65,7 +74,9 @@ public class LauncherProfileFragment extends Fragment {
         });
         binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
+        binding.profilePlaytimeRankCard.setOnClickListener(v -> showLeaderboardConfirmDialog());
         renderUserInfo();
+        renderPlayTimeRankLoading();
     }
 
     @Override
@@ -86,6 +97,8 @@ public class LauncherProfileFragment extends Fragment {
                 }
             });
         }
+        refreshPlayTimeRank();
+        refreshWeeklyPlaytimeChart();
     }
 
     private void renderUserInfo() {
@@ -100,6 +113,71 @@ public class LauncherProfileFragment extends Fragment {
             binding.profileNickname.setText("本地用户");
             binding.profileEmail.setVisibility(View.GONE);
         }
+    }
+
+    private void refreshPlayTimeRank() {
+        if (binding == null || !isAdded()) return;
+        if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
+            binding.profilePlaytimeRankValue.setText("登录后可查看");
+            binding.profilePlaytimeTotalValue.setText("--");
+            return;
+        }
+        renderPlayTimeRankLoading();
+        LauncherAuthBridge.fetchMyPlayTimeRank(requireContext(), new LauncherAuthBridge.MyRankCallback() {
+            @Override public void onSuccess(LauncherAuthBridge.MyRank rank) {
+                if (binding == null || !isAdded()) return;
+                binding.profilePlaytimeRankValue.setText(rank.rank > 0 ? "全站第 " + rank.rank + " 名" : "暂无游玩记录");
+                binding.profilePlaytimeTotalValue.setText(TimeFormatUtil.playTime(rank.totalDurationMs));
+            }
+
+            @Override public void onError(String message) {
+                if (binding == null || !isAdded()) return;
+                binding.profilePlaytimeRankValue.setText("排名暂不可用");
+                binding.profilePlaytimeTotalValue.setText("--");
+            }
+        });
+    }
+
+    private void renderPlayTimeRankLoading() {
+        if (binding == null) return;
+        if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
+            binding.profilePlaytimeRankValue.setText("登录后可查看");
+            binding.profilePlaytimeTotalValue.setText("--");
+            return;
+        }
+        binding.profilePlaytimeRankValue.setText("加载中…");
+        binding.profilePlaytimeTotalValue.setText("--");
+    }
+
+    private void refreshWeeklyPlaytimeChart() {
+        if (!isAdded()) return;
+        final android.content.Context appContext = requireContext().getApplicationContext();
+        AppExecutors.runOnIo(() -> {
+            long[] durations = new long[7];
+            String[] labels = new String[7];
+            GameRepository repository = new GameRepository(appContext);
+            Calendar day = Calendar.getInstance();
+            day.set(Calendar.HOUR_OF_DAY, 0);
+            day.set(Calendar.MINUTE, 0);
+            day.set(Calendar.SECOND, 0);
+            day.set(Calendar.MILLISECOND, 0);
+            day.add(Calendar.DAY_OF_YEAR, -6);
+            SimpleDateFormat formatter = new SimpleDateFormat("E", Locale.CHINA);
+            for (int i = 0; i < 7; i++) {
+                long start = day.getTimeInMillis();
+                long end = start + 24L * 60L * 60L * 1000L;
+                long total = 0L;
+                for (Long duration : repository.getPlayDurationsBetween(start, end).values()) {
+                    if (duration != null) total += Math.max(0L, duration);
+                }
+                durations[i] = total;
+                labels[i] = formatter.format(day.getTime());
+                day.add(Calendar.DAY_OF_YEAR, 1);
+            }
+            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+                if (binding != null) binding.profileWeeklyPlaytimeChart.setDailyDurations(durations, labels);
+            });
+        });
     }
 
     private void showCloudRestoreConfirmDialog() {
@@ -163,6 +241,29 @@ public class LauncherProfileFragment extends Fragment {
         root.addView(cancel, cancelLp);
 
         window.setContentView(root);
+    }
+
+    private void showLeaderboardConfirmDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(280), WindowManager.LayoutParams.WRAP_CONTENT);
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_launcher_confirm, null);
+        window.setContentView(view);
+        ((TextView) view.findViewById(R.id.dialogTitle)).setText("全站排行榜");
+        ((TextView) view.findViewById(R.id.dialogMessage)).setText("是否查看全站游玩时长排行榜？");
+        TextView cancel = view.findViewById(R.id.dialogBtnCancel);
+        TextView confirm = view.findViewById(R.id.dialogBtnConfirm);
+        LauncherTheme.dialogButtons(cancel, confirm);
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        confirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivity(new Intent(requireContext(), LauncherLeaderboardActivity.class));
+            LauncherMotion.applyActivityOpen(requireActivity());
+        });
     }
 
     private void performCloudRestore() {
@@ -622,6 +723,8 @@ public class LauncherProfileFragment extends Fragment {
                 ((TextView) icon).setTextColor(LauncherTheme.onPrimary(requireContext()));
             }
         }
+        binding.profilePlaytimeTotalIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(requireContext())));
+        binding.profileWeeklyPlaytimeChart.invalidate();
     }
 
     private void applyProfileBgImage() {

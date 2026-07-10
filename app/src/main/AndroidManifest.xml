@@ -90,6 +90,20 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
+            android:name="com.apps.LauncherPublicChatActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
+            android:name="com.apps.LauncherLeaderboardActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
             android:name="com.apps.LauncherThemeMenuActivity"
             android:exported="false"
             android:screenOrientation="portrait"

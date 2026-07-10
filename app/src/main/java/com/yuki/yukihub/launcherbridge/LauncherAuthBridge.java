@@ -359,6 +359,46 @@ public final class LauncherAuthBridge {
         });
     }
 
+    /** 获取全站游玩时长前 15 名，仅使用普通用户鉴权。 */
+    public static void fetchPlayTimeLeaderboard(Context context, LeaderboardCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONArray array = new JSONArray(get("/auth/play-time/leaderboard", token));
+                java.util.ArrayList<LeaderboardEntry> entries = new java.util.ArrayList<>();
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject item = array.getJSONObject(i);
+                    entries.add(new LeaderboardEntry(item.optInt("rank"), item.optString("username"), item.optLong("total_duration_ms")));
+                }
+                postMain(() -> callback.onSuccess(entries));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "获取游玩时长排行榜失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    /** 获取当前用户的全站游玩时长排名。 */
+    public static void fetchMyPlayTimeRank(Context context, MyRankCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONObject item = new JSONObject(get("/auth/play-time/rank", token));
+                MyRank rank = new MyRank(item.optInt("rank"), item.optLong("total_duration_ms"));
+                postMain(() -> callback.onSuccess(rank));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "获取我的游玩时长排名失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
     // ========== 网络工具 ==========
 
     /** 大数据量 PUT：超时更长，响应缓冲更大（适配游玩记录上传/下载）。 */
@@ -548,6 +588,38 @@ public final class LauncherAuthBridge {
 
     public interface PlayTimeCallback {
         void onSuccess(String statsJson);
+        void onError(String message);
+    }
+
+    public static final class LeaderboardEntry {
+        public final int rank;
+        public final String username;
+        public final long totalDurationMs;
+
+        public LeaderboardEntry(int rank, String username, long totalDurationMs) {
+            this.rank = rank;
+            this.username = username;
+            this.totalDurationMs = totalDurationMs;
+        }
+    }
+
+    public static final class MyRank {
+        public final int rank;
+        public final long totalDurationMs;
+
+        MyRank(int rank, long totalDurationMs) {
+            this.rank = rank;
+            this.totalDurationMs = totalDurationMs;
+        }
+    }
+
+    public interface LeaderboardCallback {
+        void onSuccess(List<LeaderboardEntry> entries);
+        void onError(String message);
+    }
+
+    public interface MyRankCallback {
+        void onSuccess(MyRank rank);
         void onError(String message);
     }
 }

@@ -558,9 +558,10 @@ private void loadNextPage(boolean forceFullRefresh) {
         long endTime = System.currentTimeMillis();
         // 1) 主项目会话收尾（写入 play_sessions 表 + 累加 total_play_time）
         LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
-        // 2) 并行写入 LauncherUserData 实际游玩记录缓冲（供后续上传）
-        if (runningGameId > 0L && runningSessionStart > 0L) {
-            LauncherUserData.appendPlayRecord(context.getApplicationContext(),
+        // 2) 仅在登录状态下记录每一次实际游玩会话到本地缓冲（供后续上传，不直接传游戏库时长）
+        Context app = context.getApplicationContext();
+        if (LauncherAuthBridge.isLoggedIn(app) && runningGameId > 0L && runningSessionStart > 0L) {
+            LauncherUserData.appendPlayRecord(app,
                     runningGameId, runningGameTitle, runningSessionStart, endTime,
                     Math.max(0L, endTime - runningSessionStart), runningLaunchType);
         }

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/leaderboardRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_bg"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="22dp"
+        android:paddingBottom="14dp"
+        android:text="全站游玩时长排行榜"
+        android:textColor="@color/launcher_text_color"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="累计实际游玩时长前 15 名"
+        android:textColor="@color/launcher_text_muted_color"
+        android:textSize="12sp" />
+
+    <FrameLayout
+        android:id="@+id/leaderboardTopThree"
+        android:layout_width="match_parent"
+        android:layout_height="138dp"
+        android:layout_marginTop="16dp"
+        android:clipChildren="false">
+
+        <LinearLayout android:id="@+id/leaderboardFirst" android:layout_width="104dp" android:layout_height="98dp" android:layout_gravity="top|center_horizontal" android:gravity="center" android:orientation="vertical" android:padding="8dp">
+            <ImageView android:id="@+id/leaderboardFirstRank" android:layout_width="34dp" android:layout_height="34dp" android:contentDescription="第 1 名" android:src="@drawable/launcher_ic_rank_medal" />
+            <TextView android:id="@+id/leaderboardFirstName" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/launcher_text_color" android:textSize="12sp" android:textStyle="bold" />
+            <TextView android:id="@+id/leaderboardFirstDuration" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/launcher_text_muted_color" android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/leaderboardSecond" android:layout_width="100dp" android:layout_height="92dp" android:layout_gravity="bottom|start" android:gravity="center" android:orientation="vertical" android:padding="8dp">
+            <ImageView android:id="@+id/leaderboardSecondRank" android:layout_width="31dp" android:layout_height="31dp" android:contentDescription="第 2 名" android:src="@drawable/launcher_ic_rank_medal" />
+            <TextView android:id="@+id/leaderboardSecondName" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/launcher_text_color" android:textSize="12sp" android:textStyle="bold" />
+            <TextView android:id="@+id/leaderboardSecondDuration" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/launcher_text_muted_color" android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/leaderboardThird" android:layout_width="100dp" android:layout_height="92dp" android:layout_gravity="bottom|end" android:gravity="center" android:orientation="vertical" android:padding="8dp">
+            <ImageView android:id="@+id/leaderboardThirdRank" android:layout_width="31dp" android:layout_height="31dp" android:contentDescription="第 3 名" android:src="@drawable/launcher_ic_rank_medal" />
+            <TextView android:id="@+id/leaderboardThirdName" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/launcher_text_color" android:textSize="12sp" android:textStyle="bold" />
+            <TextView android:id="@+id/leaderboardThirdDuration" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="@color/launcher_text_muted_color" android:textSize="10sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <TextView android:id="@+id/leaderboardState" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:gravity="center" android:text="加载中…" android:textColor="@color/launcher_text_muted_color" android:textSize="13sp" />
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/leaderboardList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="10dp" android:clipToPadding="false" android:paddingBottom="16dp" />
+</LinearLayout>

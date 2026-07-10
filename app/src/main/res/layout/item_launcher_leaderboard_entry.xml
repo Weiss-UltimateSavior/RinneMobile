@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="58dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/launcher_white_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="13dp"
+    android:paddingEnd="13dp">
+
+    <TextView android:id="@+id/leaderboardItemRank" android:layout_width="28dp" android:layout_height="28dp" android:gravity="center" android:textColor="@color/launcher_on_primary_color" android:textSize="12sp" android:textStyle="bold" />
+    <TextView android:id="@+id/leaderboardItemName" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="11dp" android:layout_weight="1" android:ellipsize="end" android:maxLines="1" android:textColor="@color/launcher_text_color" android:textSize="13sp" android:textStyle="bold" />
+    <TextView android:id="@+id/leaderboardItemDuration" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/launcher_text_muted_color" android:textSize="12sp" />
+</LinearLayout>
