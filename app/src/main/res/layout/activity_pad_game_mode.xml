@@ -82,10 +82,13 @@
                 android:orientation="vertical">
 
                 <FrameLayout
-                    android:id="@+id/navLaunchCenterCircle"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:background="@drawable/launcher_icon_circle_green">
+                     android:id="@+id/navLaunchCenterCircle"
+                     android:layout_width="46dp"
+                     android:layout_height="46dp"
+                     android:background="@drawable/launcher_icon_circle_green"
+                     android:elevation="3dp"
+                     android:translationZ="1dp"
+                     android:outlineProvider="background">
 
                     <ImageView
                         android:layout_width="25dp"
