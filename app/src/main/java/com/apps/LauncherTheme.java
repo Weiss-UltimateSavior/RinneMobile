@@ -33,11 +33,11 @@ public final class LauncherTheme {
         return ContextCompat.getColor(uiContext(context), colorResId);
     }
 
-    static int primary(Context context) {
+    public static int primary(Context context) {
         return LauncherActivity.launcherPrimaryColor(context);
     }
 
-    static int onPrimary(Context context) {
+    public static int onPrimary(Context context) {
         return color(context, R.color.launcher_on_primary_color);
     }
 
@@ -112,11 +112,11 @@ public final class LauncherTheme {
         return drawable;
     }
 
-    static GradientDrawable selectedChip(Context context) {
+    public static GradientDrawable selectedChip(Context context) {
         return primaryButton(context, 999f);
     }
 
-    static GradientDrawable cancelChip(Context context) {
+    public static GradientDrawable cancelChip(Context context) {
         return secondaryButton(context, 999f);
     }
 
@@ -173,25 +173,25 @@ public final class LauncherTheme {
         view.setBackground(primaryButton(view.getContext(), 20f));
     }
 
-    static void secondaryButton(TextView view) {
+    public static void secondaryButton(TextView view) {
         if (view == null) return;
         view.setTextColor(primary(view.getContext()));
         view.setBackground(secondaryButton(view.getContext(), 20f));
     }
 
-    static void dangerButton(TextView view) {
+    public static void dangerButton(TextView view) {
         if (view == null) return;
         view.setTextColor(onDanger(view.getContext()));
         view.setBackground(dangerButton(view.getContext(), 20f));
     }
 
-    static void menuItem(TextView view) {
+    public static void menuItem(TextView view) {
         if (view == null) return;
         view.setTextColor(primary(view.getContext()));
         view.setBackground(secondaryButton(view.getContext(), 999f));
     }
 
-    static void dangerMenuItem(TextView view) {
+    public static void dangerMenuItem(TextView view) {
         if (view == null) return;
         view.setTextColor(danger(view.getContext()));
         view.setBackground(secondaryButton(view.getContext(), 999f));

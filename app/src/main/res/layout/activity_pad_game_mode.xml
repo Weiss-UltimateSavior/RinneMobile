@@ -55,7 +55,7 @@
                     android:id="@+id/navGameIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="G"
+                    android:text="H"
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -65,7 +65,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="游戏"
+                    android:text="首页"
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -113,7 +113,7 @@
                     android:id="@+id/navManageIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="S"
+                    android:text="G"
                     android:textColor="@color/launcher_nav_muted_color"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -123,7 +123,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="管理"
+                    android:text="游戏"
                     android:textColor="@color/launcher_nav_muted_color"
                     android:textSize="10sp" />
             </LinearLayout>

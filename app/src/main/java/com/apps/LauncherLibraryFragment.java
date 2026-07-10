@@ -58,8 +58,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class LauncherLibraryFragment extends Fragment {
-    private static final int GRID_COLUMNS = 2;
-    private static final int PAGE_SIZE = 8;
+    private static final int DEFAULT_GRID_COLUMNS = 2;
+    private static final int DEFAULT_PAGE_SIZE = 8;
     private static final long MIN_PLAY_SESSION_MS = 0L;
     private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
     private static final String CATEGORY_RECENT = "status:recent";
@@ -94,6 +94,31 @@ public class LauncherLibraryFragment extends Fragment {
     private boolean swipeConsumed;
     private float loadMoreDragStartY;
     private boolean loadMoreDragCandidate;
+    private int currentPage;
+
+    /**
+     * Configuration hooks used by the landscape game repository. Keeping the shared library
+     * implementation here means search, categories, sync and game actions stay identical.
+     */
+    protected int getGridColumns() {
+        return DEFAULT_GRID_COLUMNS;
+    }
+
+    protected int getPageSize() {
+        return DEFAULT_PAGE_SIZE;
+    }
+
+    protected int getFixedGridRows() {
+        return 0;
+    }
+
+    protected boolean usesHorizontalPaging() {
+        return false;
+    }
+
+    protected String getLibraryTitle() {
+        return "游戏库";
+    }
 
     @Nullable
     @Override
@@ -107,6 +132,7 @@ public class LauncherLibraryFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        binding.libraryTitle.setText(getLibraryTitle());
         setupSearchAndCategories();
         setupRecycler();
         loadGames();
@@ -219,7 +245,8 @@ public class LauncherLibraryFragment extends Fragment {
             }
         });
 
-        GridLayoutManager layoutManager = new GridLayoutManager(requireContext(), GRID_COLUMNS);
+        final int gridColumns = Math.max(1, getGridColumns());
+        GridLayoutManager layoutManager = new GridLayoutManager(requireContext(), gridColumns);
         binding.libraryRecycler.setLayoutManager(layoutManager);
         binding.libraryRecycler.setAdapter(adapter);
         binding.libraryRecycler.setHasFixedSize(true);
@@ -227,13 +254,28 @@ public class LauncherLibraryFragment extends Fragment {
         RecyclerView.RecycledViewPool pool = new RecyclerView.RecycledViewPool();
         pool.setMaxRecycledViews(0, 30);
         binding.libraryRecycler.setRecycledViewPool(pool);
+        if (usesHorizontalPaging()) {
+            // The floating landscape navigation occupies the bottom of the Fragment. Reserve its
+            // height so the fourth card row is never obscured, then size all four rows from the
+            // actual remaining viewport (rather than assuming a particular screen density).
+            binding.libraryRecycler.setPadding(
+                    binding.libraryRecycler.getPaddingLeft(),
+                    binding.libraryRecycler.getPaddingTop(),
+                    binding.libraryRecycler.getPaddingRight(),
+                    dp(72));
+            binding.libraryRecycler.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                                                oldLeft, oldTop, oldRight, oldBottom) -> {
+                if (bottom - top != oldBottom - oldTop) updateFixedGridCardHeight();
+            });
+            binding.libraryRecycler.post(this::updateFixedGridCardHeight);
+        }
         binding.libraryRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (dy <= 0 || loading || fullyLoaded) return;
+                if (usesHorizontalPaging() || dy <= 0 || loading || fullyLoaded) return;
                 int lastVisible = layoutManager.findLastVisibleItemPosition();
-                if (lastVisible >= Math.max(0, visibleGames.size() - GRID_COLUMNS)) {
+                if (lastVisible >= Math.max(0, visibleGames.size() - gridColumns)) {
                     loadNextPage();
                 }
             }
@@ -258,10 +300,27 @@ public class LauncherLibraryFragment extends Fragment {
         });
     }
 
+    private void updateFixedGridCardHeight() {
+        if (binding == null || adapter == null) return;
+        int rows = getFixedGridRows();
+        int height = binding.libraryRecycler.getHeight();
+        if (rows <= 0 || height <= 0) return;
+        int usableHeight = height
+                - binding.libraryRecycler.getPaddingTop()
+                - binding.libraryRecycler.getPaddingBottom();
+        // item_launcher_game_card contributes 5dp top + 5dp bottom margins per row.
+        adapter.setFixedCardHeight(Math.max(dp(34), usableHeight / rows - dp(10)));
+    }
+
     private void setupSwipeGesture() {
         swipeGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
             private static final int SWIPE_THRESHOLD = 80;
             private static final int SWIPE_VELOCITY = 200;
+
+            @Override
+            public boolean onDown(MotionEvent event) {
+                return true;
+            }
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
@@ -269,13 +328,9 @@ public class LauncherLibraryFragment extends Fragment {
                 float diffX = e2.getX() - e1.getX();
                 float diffY = e2.getY() - e1.getY();
                 if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY) {
-                    swipeConsumed = true;
-                    if (diffX < 0) {
-                        switchToNextCategory();
-                    } else {
-                        switchToPreviousCategory();
-                    }
-                    return true;
+                    boolean handled = diffX < 0 ? handleSwipeLeft() : handleSwipeRight();
+                    if (handled) swipeConsumed = true;
+                    return handled;
                 }
                 return false;
             }
@@ -311,6 +366,16 @@ public class LauncherLibraryFragment extends Fragment {
         });
     }
 
+    private boolean handleSwipeLeft() {
+        if (usesHorizontalPaging()) return showNextPage();
+        return switchToNextCategory();
+    }
+
+    private boolean handleSwipeRight() {
+        if (usesHorizontalPaging()) return showPreviousPage();
+        return switchToPreviousCategory();
+    }
+
     private List<CategoryOption> getFlatCategories() {
         List<CategoryOption> flat = new ArrayList<>();
         flat.add(new CategoryOption("全部", ""));
@@ -326,7 +391,7 @@ public class LauncherLibraryFragment extends Fragment {
         return 0;
     }
 
-    private void switchToNextCategory() {
+    private boolean switchToNextCategory() {
         List<CategoryOption> flat = getFlatCategories();
         int idx = getCurrentCategoryIndex();
         if (idx < flat.size() - 1) {
@@ -334,10 +399,12 @@ public class LauncherLibraryFragment extends Fragment {
             renderCategories();
             applyFilters();
             animateCategorySwitch();
+            return true;
         }
+        return false;
     }
 
-    private void switchToPreviousCategory() {
+    private boolean switchToPreviousCategory() {
         List<CategoryOption> flat = getFlatCategories();
         int idx = getCurrentCategoryIndex();
         if (idx > 0) {
@@ -345,7 +412,9 @@ public class LauncherLibraryFragment extends Fragment {
             renderCategories();
             applyFilters();
             animateCategorySwitch();
+            return true;
         }
+        return false;
     }
 
     private void animateCategorySwitch() {
@@ -464,9 +533,62 @@ private void applyFilters(boolean forceFullRefresh) {
         sortGamesByTitle(filteredGames);
     }
     visibleGames.clear();
+    currentPage = 0;
     fullyLoaded = filteredGames.isEmpty();
-    loadNextPage(forceFullRefresh);
+    if (usesHorizontalPaging()) {
+        renderPagedGrid(forceFullRefresh);
+    } else {
+        loadNextPage(forceFullRefresh);
+    }
     renderState();
+}
+
+private void renderPagedGrid(boolean forceFullRefresh) {
+    if (adapter == null) return;
+    int pageSize = Math.max(1, getPageSize());
+    int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
+    currentPage = Math.max(0, Math.min(currentPage, totalPages - 1));
+    int start = currentPage * pageSize;
+    int end = Math.min(start + pageSize, filteredGames.size());
+    visibleGames.clear();
+    if (start < end) visibleGames.addAll(filteredGames.subList(start, end));
+    adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
+    fullyLoaded = currentPage >= totalPages - 1;
+}
+
+private boolean showNextPage() {
+    if (!usesHorizontalPaging() || loading) return false;
+    int pageSize = Math.max(1, getPageSize());
+    int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
+    if (currentPage + 1 >= totalPages) return false;
+    currentPage++;
+    renderPagedGrid(false);
+    renderState();
+    animatePageChange(true);
+    return true;
+}
+
+private boolean showPreviousPage() {
+    if (!usesHorizontalPaging() || loading || currentPage <= 0) return false;
+    currentPage--;
+    renderPagedGrid(false);
+    renderState();
+    animatePageChange(false);
+    return true;
+}
+
+private void animatePageChange(boolean forward) {
+    if (binding == null) return;
+    float distance = dp(36) * (forward ? 1f : -1f);
+    binding.libraryRecycler.animate().cancel();
+    binding.libraryRecycler.setTranslationX(distance);
+    binding.libraryRecycler.setAlpha(0.72f);
+    binding.libraryRecycler.animate()
+            .translationX(0f)
+            .alpha(1f)
+            .setDuration(220L)
+            .setInterpolator(new AccelerateDecelerateInterpolator())
+            .start();
 }
 
 private void loadNextPage() {
@@ -477,7 +599,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     if (adapter == null || loading && !visibleGames.isEmpty()) return;
     loading = true;
     int start = visibleGames.size();
-    int end = Math.min(start + PAGE_SIZE, filteredGames.size());
+    int end = Math.min(start + Math.max(1, getPageSize()), filteredGames.size());
     if (start < end) {
         visibleGames.addAll(filteredGames.subList(start, end));
         adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
@@ -491,6 +613,9 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (binding == null) return;
         boolean hasGames = !visibleGames.isEmpty();
         binding.libraryRecycler.setVisibility(hasGames ? View.VISIBLE : View.GONE);
+        if (hasGames && usesHorizontalPaging()) {
+            binding.libraryRecycler.post(this::updateFixedGridCardHeight);
+        }
         binding.libraryEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
         if (allGames.isEmpty() || filteredGames.isEmpty()) {

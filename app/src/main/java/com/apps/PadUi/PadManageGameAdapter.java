@@ -1,5 +1,6 @@
-package com.apps;
+package com.apps.PadUi;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.apps.LauncherCoverLoader;
+import com.apps.LauncherTheme;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ItemLauncherGameCardBinding;
 import com.yuki.yukihub.model.Game;
@@ -16,7 +19,11 @@ import com.yuki.yukihub.util.TimeFormatUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapter.Holder> {
+/**
+ * 横屏手机游戏仓库专用适配器：5 × 2 卡片分页展示。
+ * 不复用 LauncherGameAdapter，独立维护仓库卡片的绑定与动态固定高度逻辑。
+ */
+public class PadManageGameAdapter extends RecyclerView.Adapter<PadManageGameAdapter.Holder> {
     public interface OnGameCardListener {
         void onGameClick(Game game);
         void onGameLongClick(Game game);
@@ -26,64 +33,92 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
     private OnGameCardListener listener;
     private long selectedGameId = -1L;
     private int fixedCardHeight;
+    private RecyclerView attachedRecyclerView;
 
     public void setOnGameCardListener(OnGameCardListener listener) {
         this.listener = listener;
     }
 
-    /** Allows landscape grids to reuse the card while supplying their own aspect ratio. */
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        attachedRecyclerView = recyclerView;
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        attachedRecyclerView = null;
+    }
+
+    /**
+     * 横屏紧凑布局下按 RecyclerView 可用行高固定卡片高度，
+     * 避免第二行被底部悬浮导航栏遮挡。
+     * 注意：不调用 notifyDataSetChanged()，否则会在页面切换时打断 DiffUtil 动画，
+     * 导致卡片尺寸跳变。这里直接更新已附着卡片，后续新卡片在 bind() 中应用高度。
+     */
     public void setFixedCardHeight(int heightPx) {
         int newHeight = Math.max(0, heightPx);
         if (newHeight == fixedCardHeight) return;
         fixedCardHeight = newHeight;
-        notifyDataSetChanged();
+        applyHeightToAttached();
+    }
+
+    private void applyHeightToAttached() {
+        RecyclerView rv = attachedRecyclerView;
+        if (rv == null) return;
+        for (int i = 0; i < rv.getChildCount(); i++) {
+            View child = rv.getChildAt(i);
+            if (child == null) continue;
+            applyFixedCardLayout(ItemLauncherGameCardBinding.bind(child));
+        }
     }
 
     public void submit(List<Game> newGames) {
-    submit(newGames, false);
-}
-
-public void submit(List<Game> newGames, boolean forceFullRefresh) {
-    if (newGames == null) newGames = new ArrayList<>();
-
-    final List<Game> oldGames = new ArrayList<>(games);
-    games.clear();
-    games.addAll(newGames);
-
-    // 批量同步封面后强制刷新当前页面所有卡片
-    if (forceFullRefresh) {
-        notifyDataSetChanged();
-        return;
+        submit(newGames, false);
     }
 
-    DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-        @Override
-        public int getOldListSize() { return oldGames.size(); }
+    public void submit(List<Game> newGames, boolean forceFullRefresh) {
+        if (newGames == null) newGames = new ArrayList<>();
 
-        @Override
-        public int getNewListSize() { return games.size(); }
+        final List<Game> oldGames = new ArrayList<>(games);
+        games.clear();
+        games.addAll(newGames);
 
-        @Override
-        public boolean areItemsTheSame(int oldPos, int newPos) {
-            Game o = oldGames.get(oldPos), n = games.get(newPos);
-            return o != null && n != null && o.id == n.id;
+        // 批量同步封面后强制刷新当前页面所有卡片
+        if (forceFullRefresh) {
+            notifyDataSetChanged();
+            return;
         }
 
-        @Override
-        public boolean areContentsTheSame(int oldPos, int newPos) {
-            Game o = oldGames.get(oldPos), n = games.get(newPos);
-            if (o == null || n == null) return false;
-            return o.id == n.id
-                    && eq(o.title, n.title)
-                    && o.totalPlayTime == n.totalPlayTime
-                    && eq(o.playStatus, n.playStatus)
-                    && o.favorite == n.favorite
-                    && eq(o.coverPersistUri, n.coverPersistUri)
-                    && eq(o.coverUri, n.coverUri);
-        }
-    });
-    result.dispatchUpdatesTo(this);
-}
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() { return oldGames.size(); }
+
+            @Override
+            public int getNewListSize() { return games.size(); }
+
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                Game o = oldGames.get(oldPos), n = games.get(newPos);
+                return o != null && n != null && o.id == n.id;
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                Game o = oldGames.get(oldPos), n = games.get(newPos);
+                if (o == null || n == null) return false;
+                return o.id == n.id
+                        && eq(o.title, n.title)
+                        && o.totalPlayTime == n.totalPlayTime
+                        && eq(o.playStatus, n.playStatus)
+                        && o.favorite == n.favorite
+                        && eq(o.coverPersistUri, n.coverPersistUri)
+                        && eq(o.coverUri, n.coverUri);
+            }
+        });
+        result.dispatchUpdatesTo(this);
+    }
 
     public void setSelectedGameId(long id) {
         long oldId = selectedGameId;
@@ -142,6 +177,7 @@ public void submit(List<Game> newGames, boolean forceFullRefresh) {
             LauncherTheme.textPrimary(binding.launcherGameTitle);
             LauncherTheme.textPrimary(binding.launcherGamePlayStatus);
             LauncherTheme.textPrimary(binding.launcherGameInitial);
+            applyTextSpacingLayout(binding);
             binding.launcherGameFavorite.setVisibility(game.favorite ? View.VISIBLE : View.GONE);
             bindCover(game);
 
@@ -193,14 +229,67 @@ public void submit(List<Game> newGames, boolean forceFullRefresh) {
             cardParams.height = fixedCardHeight;
             binding.getRoot().setLayoutParams(cardParams);
         }
-        // On compact 4-row landscape pages the normal 41dp caption can exceed the card itself.
-        // Shrink only the overlay container; the normal portrait library remains unchanged.
+
+        // 不缩小两行文字字体，只给底部文字层预留稳定高度。
+        // 通过压缩 overlay 自身上下 padding 和两行 TextView 的 margin，避免“游玩时间”被裁剪。
         ViewGroup.LayoutParams overlayParams = binding.launcherGameTextOverlay.getLayoutParams();
-        int compactOverlayHeight = Math.min(dp(binding.getRoot(), 41), fixedCardHeight);
+        int minOverlayHeight = dp(binding.getRoot(), 35);
+        int maxOverlayHeight = dp(binding.getRoot(), 38);
+        int proportionalHeight = fixedCardHeight / 4;
+        int compactOverlayHeight = Math.min(
+                fixedCardHeight,
+                Math.max(minOverlayHeight, Math.min(maxOverlayHeight, proportionalHeight))
+        );
         if (overlayParams.height != compactOverlayHeight) {
             overlayParams.height = compactOverlayHeight;
             binding.launcherGameTextOverlay.setLayoutParams(overlayParams);
         }
+        applyTextSpacingLayout(binding);
+    }
+
+    /**
+     * 只调整两行文字的上下边距，不修改字体大小。
+     * 标题和游玩时间保持 XML/主题里的原字号，避免因为强制缩小导致视觉不一致。
+     */
+    private void applyTextSpacingLayout(ItemLauncherGameCardBinding binding) {
+        if (binding == null) return;
+
+        int horizontalPadding = dp(binding.getRoot(), 8);
+        int verticalPadding = dp(binding.getRoot(), 2);
+        binding.launcherGameTextOverlay.setPadding(
+                horizontalPadding,
+                verticalPadding,
+                horizontalPadding,
+                verticalPadding
+        );
+
+        binding.launcherGameTitle.setSingleLine(true);
+        binding.launcherGameTitle.setMaxLines(1);
+        binding.launcherGameTitle.setEllipsize(TextUtils.TruncateAt.END);
+        binding.launcherGameTitle.setIncludeFontPadding(false);
+
+        binding.launcherGamePlayStatus.setSingleLine(true);
+        binding.launcherGamePlayStatus.setMaxLines(1);
+        binding.launcherGamePlayStatus.setEllipsize(TextUtils.TruncateAt.END);
+        binding.launcherGamePlayStatus.setIncludeFontPadding(false);
+
+        setTextMargins(binding.launcherGameTitle, 0, 0, 0, dp(binding.getRoot(), 1));
+        setTextMargins(binding.launcherGamePlayStatus, 0, 0, 0, 0);
+    }
+
+    private void setTextMargins(View view, int left, int top, int right, int bottom) {
+        if (view == null) return;
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (!(params instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+        if (marginParams.leftMargin == left
+                && marginParams.topMargin == top
+                && marginParams.rightMargin == right
+                && marginParams.bottomMargin == bottom) {
+            return;
+        }
+        marginParams.setMargins(left, top, right, bottom);
+        view.setLayoutParams(marginParams);
     }
 
     private int dp(View view, int value) {
