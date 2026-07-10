@@ -41,10 +41,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-/** 横屏游戏库：每页 1 行 × 5 列，卡片宽高比 3:5，横向手势切换分页。 */
+/** 横屏游戏库：手机每页 1 行 × 5 列，平板每页 2 行 × 5 列，横向手势切换分页。 */
 public class PadGameFragment extends Fragment {
     private static final int GRID_COLUMNS = 5;
-    private static final int PAGE_SIZE = 5;
+    private static final int PHONE_GRID_ROWS = 1;
+    private static final int TABLET_GRID_ROWS = 2;
+    private static final int TABLET_MIN_SMALLEST_WIDTH_DP = 600;
     private static final long MIN_PLAY_SESSION_MS = 0L;
     private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
 
@@ -58,6 +60,8 @@ public class PadGameFragment extends Fragment {
     private boolean needsRefresh;
     private boolean swipeConsumed;
     private boolean pageAnimating;
+    private int gridRows = PHONE_GRID_ROWS;
+    private int pageSize = GRID_COLUMNS * PHONE_GRID_ROWS;
     private long runningSessionId = -1L;
 
     @Nullable
@@ -73,11 +77,17 @@ public class PadGameFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.padSearchIcon.setColorFilter(LauncherActivity.launcherPrimaryColor(requireContext()));
+        binding.padGameNextPage.setColorFilter(LauncherActivity.launcherPrimaryColor(requireContext()));
+        binding.padGameSettingsButton.setColorFilter(LauncherActivity.launcherPrimaryColor(requireContext()));
         binding.padAvatarContainer.setClipToOutline(true);
+        gridRows = isTabletLayout() ? TABLET_GRID_ROWS : PHONE_GRID_ROWS;
+        pageSize = GRID_COLUMNS * gridRows;
         renderAvatar();
         renderAccountInfo();
         setupRecycler();
         setupSearch();
+        setupSettingsButton();
+        setupNextPageButton();
         setupPagingGesture();
         loadGames();
     }
@@ -87,6 +97,8 @@ public class PadGameFragment extends Fragment {
         super.onResume();
         if (binding != null) {
             binding.padSearchIcon.setColorFilter(LauncherActivity.launcherPrimaryColor(requireContext()));
+            binding.padGameNextPage.setColorFilter(LauncherActivity.launcherPrimaryColor(requireContext()));
+            binding.padGameSettingsButton.setColorFilter(LauncherActivity.launcherPrimaryColor(requireContext()));
         }
         renderAvatar();
         renderAccountInfo();
@@ -149,7 +161,7 @@ public class PadGameFragment extends Fragment {
                                     intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, target.id);
                                     startActivity(intent);
                                 }
-                            });
+                            }, false);
                 }
             }
         });
@@ -157,7 +169,37 @@ public class PadGameFragment extends Fragment {
         binding.padGameRecycler.setAdapter(adapter);
         binding.padGameRecycler.setItemAnimator(null);
         binding.padGameRecycler.setHasFixedSize(true);
-        binding.padGameRecycler.setItemViewCacheSize(PAGE_SIZE);
+        binding.padGameRecycler.setItemViewCacheSize(pageSize);
+        binding.padGameRecycler.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                                            oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) {
+                updateCardHeight();
+            }
+        });
+        binding.padGameRecycler.post(this::updateCardHeight);
+    }
+
+    private void updateCardHeight() {
+        if (binding == null || adapter == null) return;
+        RecyclerView recyclerView = binding.padGameRecycler;
+        int availableWidth = recyclerView.getWidth()
+                - recyclerView.getPaddingLeft()
+                - recyclerView.getPaddingRight();
+        View parent = (View) recyclerView.getParent();
+        int availableHeight = parent.getHeight()
+                - parent.getPaddingTop()
+                - parent.getPaddingBottom();
+        if (availableWidth <= 0 || availableHeight <= 0) return;
+
+        int cardWidth = Math.max(1, (availableWidth - dp(10) * GRID_COLUMNS) / GRID_COLUMNS);
+        int heightByRatio = Math.max(1, Math.round(cardWidth * 5f / 3f));
+        int heightByRows = Math.max(1, (availableHeight - dp(10) * gridRows) / gridRows);
+        adapter.setFixedCardHeight(Math.min(heightByRatio, heightByRows));
+    }
+
+    private boolean isTabletLayout() {
+        return getResources().getConfiguration().smallestScreenWidthDp
+                >= TABLET_MIN_SMALLEST_WIDTH_DP;
     }
 
     private void setupSearch() {
@@ -168,6 +210,20 @@ public class PadGameFragment extends Fragment {
                 return true;
             }
             return false;
+        });
+    }
+
+    private void setupNextPageButton() {
+        binding.padGameNextPage.setOnClickListener(view -> {
+            view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            showNextPage();
+        });
+    }
+
+    private void setupSettingsButton() {
+        binding.padGameSettingsButton.setOnClickListener(view -> {
+            view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            startActivity(new android.content.Intent(requireContext(), PadSettingsActivity.class));
         });
     }
 
@@ -300,8 +356,8 @@ public class PadGameFragment extends Fragment {
         if (binding == null || adapter == null) return;
         int totalPages = totalPages();
         currentPage = Math.max(0, Math.min(currentPage, totalPages - 1));
-        int start = currentPage * PAGE_SIZE;
-        int end = Math.min(start + PAGE_SIZE, filteredGames.size());
+        int start = currentPage * pageSize;
+        int end = Math.min(start + pageSize, filteredGames.size());
         List<Game> pageGames = start < end
                 ? new ArrayList<>(filteredGames.subList(start, end))
                 : Collections.emptyList();
@@ -311,10 +367,12 @@ public class PadGameFragment extends Fragment {
         binding.padGameRecycler.setVisibility(hasGames ? View.VISIBLE : View.GONE);
         binding.padGameEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
         binding.padGameEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
+        binding.padGameNextPage.setVisibility(
+                hasGames && currentPage + 1 < totalPages ? View.VISIBLE : View.GONE);
     }
 
     private int totalPages() {
-        return Math.max(1, (filteredGames.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+        return Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
     }
 
     private void loadGames() {
@@ -322,6 +380,7 @@ public class PadGameFragment extends Fragment {
         loading = true;
         binding.padGameLoading.setVisibility(View.VISIBLE);
         binding.padGameRecycler.setVisibility(View.GONE);
+        binding.padGameNextPage.setVisibility(View.GONE);
         binding.padGameEmpty.setVisibility(View.GONE);
         Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {

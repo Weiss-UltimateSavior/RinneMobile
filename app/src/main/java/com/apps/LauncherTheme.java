@@ -120,18 +120,18 @@ public final class LauncherTheme {
         return secondaryButton(context, 999f);
     }
 
-    static GradientDrawable selectedOption(Context context) {
+    public static GradientDrawable selectedOption(Context context) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(card(context));
         drawable.setCornerRadius(dp(context, 9f));
         return drawable;
     }
 
-    static GradientDrawable circle(Context context) {
+    public static GradientDrawable circle(Context context) {
         return circle(context, primary(context));
     }
 
-    static GradientDrawable circle(Context context, int color) {
+    public static GradientDrawable circle(Context context, int color) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.OVAL);
         drawable.setColor(color);
@@ -197,7 +197,7 @@ public final class LauncherTheme {
         view.setBackground(secondaryButton(view.getContext(), 999f));
     }
 
-    static void styleSpinner(Spinner spinner) {
+    public static void styleSpinner(Spinner spinner) {
         if (spinner == null) return;
         Context context = spinner.getContext();
         spinner.setBackground(secondaryButton(context, 20f));
@@ -209,7 +209,7 @@ public final class LauncherTheme {
      * 统一 SwitchCompat 启停按钮的色调：开启时使用主题主色，关闭时使用中性灰。
      * 必须在 Activity 创建后调用，确保主题已加载。
      */
-    static void styleSwitch(SwitchCompat switchCompat) {
+    public static void styleSwitch(SwitchCompat switchCompat) {
         if (switchCompat == null) return;
         Context context = switchCompat.getContext();
         int primary = primary(context);
@@ -241,7 +241,7 @@ public final class LauncherTheme {
         return Color.rgb(r, g, b);
     }
 
-    static <T> ArrayAdapter<T> spinnerAdapter(Context context, T[] items) {
+    public static <T> ArrayAdapter<T> spinnerAdapter(Context context, T[] items) {
         return new ArrayAdapter<T>(context, R.layout.spinner_item_themed, items) {
             @NonNull
             @Override

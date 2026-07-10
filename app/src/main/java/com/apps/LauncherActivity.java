@@ -36,11 +36,11 @@ public class LauncherActivity extends AppCompatActivity {
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
     static final String KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style";
     static final String KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled";
-    static final String THEME_STYLE_DEFAULT = "default";
-    static final String THEME_STYLE_RINNE = "rinne";
-    static final String THEME_STYLE_ANRI = "anri";
-    static final int RINNE_PRIMARY_COLOR = Color.rgb(216, 169, 201);
-    static final int ANRI_PRIMARY_COLOR = Color.rgb(77, 53, 89);
+    public static final String THEME_STYLE_DEFAULT = "default";
+    public static final String THEME_STYLE_RINNE = "rinne";
+    public static final String THEME_STYLE_ANRI = "anri";
+    public static final int RINNE_PRIMARY_COLOR = Color.rgb(216, 169, 201);
+    public static final int ANRI_PRIMARY_COLOR = Color.rgb(77, 53, 89);
 
     private ActivityLauncherBinding binding;
     private LauncherViewModel viewModel;
@@ -379,8 +379,8 @@ public class LauncherActivity extends AppCompatActivity {
         TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
         TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
 
-        titleView.setText("进入横屏模式");
-        messageView.setText("要横屏吗？通常推荐平板使用");
+        titleView.setText("横屏游戏模式");
+        messageView.setText("要进入横屏游戏沉浸模式吗？");
         LauncherTheme.dialogButtons(btnCancel, btnConfirm);
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {
@@ -403,7 +403,7 @@ public class LauncherActivity extends AppCompatActivity {
                 .getBoolean(KEY_LAUNCHER_DARK_MODE, false);
     }
 
-    static void setLauncherThemeStyle(android.content.Context context, String style) {
+    public static void setLauncherThemeStyle(android.content.Context context, String style) {
         String value;
         if (THEME_STYLE_RINNE.equals(style) || THEME_STYLE_ANRI.equals(style)) {
             value = style;
@@ -417,7 +417,7 @@ public class LauncherActivity extends AppCompatActivity {
                 .apply();
     }
 
-    static String getLauncherThemeStyle(android.content.Context context) {
+    public static String getLauncherThemeStyle(android.content.Context context) {
         return context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .getString(KEY_LAUNCHER_THEME_STYLE, THEME_STYLE_DEFAULT);
@@ -431,7 +431,7 @@ public class LauncherActivity extends AppCompatActivity {
         return THEME_STYLE_ANRI.equals(getLauncherThemeStyle(context));
     }
 
-    static void setLauncherParticlesEnabled(android.content.Context context, boolean enabled) {
+    public static void setLauncherParticlesEnabled(android.content.Context context, boolean enabled) {
         context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .edit()
@@ -439,7 +439,7 @@ public class LauncherActivity extends AppCompatActivity {
                 .apply();
     }
 
-    static boolean isLauncherParticlesEnabled(android.content.Context context) {
+    public static boolean isLauncherParticlesEnabled(android.content.Context context) {
         return context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .getBoolean(KEY_LAUNCHER_PARTICLES_ENABLED, true);

@@ -32,9 +32,17 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
     private final List<Game> games = new ArrayList<>();
     private OnGameCardListener listener;
     private long selectedGameId = -1L;
+    private int fixedCardHeight;
 
     public void setOnGameCardListener(OnGameCardListener listener) {
         this.listener = listener;
+    }
+
+    public void setFixedCardHeight(int height) {
+        int normalizedHeight = Math.max(0, height);
+        if (fixedCardHeight == normalizedHeight) return;
+        fixedCardHeight = normalizedHeight;
+        notifyItemRangeChanged(0, games.size());
     }
 
     public void submit(List<Game> newGames) {
@@ -119,6 +127,7 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
 
         void bind(Game game, boolean selected) {
             if (game == null) return;
+            binding.getRoot().setFixedCardHeight(fixedCardHeight);
             binding.getRoot().setBackgroundResource(
                     selected ? R.drawable.launcher_game_card_selected : R.drawable.launcher_game_card);
             binding.padGameTitle.setText(safeTitle(game));

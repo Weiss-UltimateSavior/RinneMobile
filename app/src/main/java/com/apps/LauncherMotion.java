@@ -63,7 +63,7 @@ public final class LauncherMotion {
      * 切换色调模式：在新窗口淡入的同时渲染新主题页面，旧窗口保持不透明，
      * 避免黑底穿透。动画进行中即完成页面重建。
      */
-    static void recreateWithToneOverlay(Activity activity, Runnable beforeRecreate) {
+    public static void recreateWithToneOverlay(Activity activity, Runnable beforeRecreate) {
         if (activity == null) return;
         if (beforeRecreate != null) beforeRecreate.run();
         Intent intent = new Intent(activity, activity.getClass());

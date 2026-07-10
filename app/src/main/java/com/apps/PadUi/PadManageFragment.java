@@ -62,13 +62,14 @@ import java.util.TreeMap;
 
 /**
  * 横屏手机游戏仓库自包含实现：直接继承 {@link Fragment}，使用 {@link PadManageGameAdapter}。
- * 以 5 × 2 卡片分页展示，卡片高度根据 RecyclerView 的实际可用空间动态计算，
- * 并为底部悬浮导航栏保留安全区域。不再继承 LauncherLibraryFragment，所有逻辑独立维护。
+ * 横屏手机以 1 × 6、平板以 2 × 6 卡片分页展示，卡片高度根据 RecyclerView 的实际可用空间动态计算。
+ * 不再继承 LauncherLibraryFragment，所有逻辑独立维护。
  */
 public class PadManageFragment extends Fragment {
-    private static final int GRID_COLUMNS = 5;
-    private static final int GRID_ROWS = 2;
-    private static final int PAGE_SIZE = GRID_COLUMNS * GRID_ROWS;
+    private static final int GRID_COLUMNS = 6;
+    private static final int PHONE_GRID_ROWS = 1;
+    private static final int TABLET_GRID_ROWS = 2;
+    private static final int TABLET_MIN_SMALLEST_WIDTH_DP = 600;
     private static final long MIN_PLAY_SESSION_MS = 0L;
     private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
     private static final String CATEGORY_RECENT = "status:recent";
@@ -104,6 +105,8 @@ public class PadManageFragment extends Fragment {
     private float loadMoreDragStartY;
     private boolean loadMoreDragCandidate;
     private int currentPage;
+    private int gridRows = PHONE_GRID_ROWS;
+    private int pageSize = GRID_COLUMNS * PHONE_GRID_ROWS;
     private AlertDialog syncLoadingDialog;
 
     @Nullable
@@ -116,13 +119,30 @@ public class PadManageFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        applyPadContentSpacing();
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.libraryTitle.setText("游戏仓库");
+        gridRows = isTabletLayout() ? TABLET_GRID_ROWS : PHONE_GRID_ROWS;
+        pageSize = GRID_COLUMNS * gridRows;
         setupSearchAndCategories();
         setupRecycler();
         loadGames();
         setupSwipeGesture();
+    }
+
+    /** 压缩通用游戏库布局为 Launcher 底栏预留的底部空白，仅影响 Pad 管理页。 */
+    private void applyPadContentSpacing() {
+        binding.libraryContent.setPadding(
+                binding.libraryContent.getPaddingLeft(),
+                binding.libraryContent.getPaddingTop(),
+                binding.libraryContent.getPaddingRight(),
+                dp(6));
+        binding.libraryRecycler.setPadding(
+                binding.libraryRecycler.getPaddingLeft(),
+                binding.libraryRecycler.getPaddingTop(),
+                binding.libraryRecycler.getPaddingRight(),
+                0);
     }
 
     @Override
@@ -236,17 +256,10 @@ public class PadManageFragment extends Fragment {
         binding.libraryRecycler.setLayoutManager(layoutManager);
         binding.libraryRecycler.setAdapter(adapter);
         binding.libraryRecycler.setHasFixedSize(true);
-        binding.libraryRecycler.setItemViewCacheSize(20);
+        binding.libraryRecycler.setItemViewCacheSize(pageSize);
         RecyclerView.RecycledViewPool pool = new RecyclerView.RecycledViewPool();
-        pool.setMaxRecycledViews(0, 30);
+        pool.setMaxRecycledViews(0, pageSize * 2);
         binding.libraryRecycler.setRecycledViewPool(pool);
-        // 页面底部存在悬浮导航栏，保留 72dp 安全区域，避免第二行卡片被遮挡。
-        // 卡片高度会在 updateFixedGridCardHeight() 中扣除这部分空间后重新计算。
-        binding.libraryRecycler.setPadding(
-                binding.libraryRecycler.getPaddingLeft(),
-                binding.libraryRecycler.getPaddingTop(),
-                binding.libraryRecycler.getPaddingRight(),
-                dp(72));
         binding.libraryRecycler.addOnLayoutChangeListener((view, left, top, right, bottom,
                                                             oldLeft, oldTop, oldRight, oldBottom) -> {
             if (bottom - top != oldBottom - oldTop) updateFixedGridCardHeight();
@@ -283,9 +296,9 @@ public class PadManageFragment extends Fragment {
     /**
      * 横屏手机高度有限，不能只根据卡片宽度按固定比例反推高度。
      * 这里同时计算：
-     * 1. 五列布局允许的卡片宽度；
-     * 2. 扣除底部悬浮导航栏安全区域后，两行布局允许的最大高度；
-     * 最终取两者较小值，确保两行卡片完整显示。
+     * 1. 六列布局允许的卡片宽度；
+     * 2. 当前设备一行或两行布局允许的最大高度；
+     * 最终取两者较小值，确保所有卡片完整显示。
      */
     private void updateFixedGridCardHeight() {
         if (binding == null || adapter == null) return;
@@ -310,19 +323,24 @@ public class PadManageFragment extends Fragment {
                 (usableWidth - totalHorizontalMargins) / GRID_COLUMNS
         );
 
-        // 每行卡片上下 margin 合计约 10dp，两行都需要计入。
-        int totalVerticalMargins = dp(10) * GRID_ROWS;
+        // 每行卡片上下 margin 合计约 10dp。
+        int totalVerticalMargins = dp(10) * gridRows;
         int heightByAvailableSpace = Math.max(
                 1,
-                (usableHeight - totalVerticalMargins) / GRID_ROWS
+                (usableHeight - totalVerticalMargins) / gridRows
         );
 
         // 横屏手机使用更紧凑的封面比例，避免按原 5:3 比例生成过高卡片。
         int heightByCompactRatio = Math.max(1, Math.round(cardWidth * 1.25f));
 
-        // 优先保证完整显示两行，卡片绝不超过 RecyclerView 当前可用高度。
+        // 优先保证当前行数完整显示，卡片绝不超过 RecyclerView 当前可用高度。
         int finalCardHeight = Math.min(heightByAvailableSpace, heightByCompactRatio);
         adapter.setFixedCardHeight(finalCardHeight);
+    }
+
+    private boolean isTabletLayout() {
+        return getResources().getConfiguration().smallestScreenWidthDp
+                >= TABLET_MIN_SMALLEST_WIDTH_DP;
     }
 
     private void setupSwipeGesture() {
@@ -460,6 +478,9 @@ public class PadManageFragment extends Fragment {
                 }
                 renderCategories();
                 dataLoaded = true;
+                // 数据已经落到内存，解除翻页锁。showNextPage()/showPreviousPage()
+                // 会在 loading=true 时直接拒绝手势；此前这里没有复位，导致列表永远停在第一页。
+                setLoading(false);
                 applyFilters();
             });
         });
@@ -491,7 +512,6 @@ private void applyFilters(boolean forceFullRefresh) {
 
 private void renderPagedGrid(boolean forceFullRefresh) {
     if (adapter == null) return;
-    int pageSize = PAGE_SIZE;
     int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
     currentPage = Math.max(0, Math.min(currentPage, totalPages - 1));
     int start = currentPage * pageSize;
@@ -504,7 +524,6 @@ private void renderPagedGrid(boolean forceFullRefresh) {
 
 private boolean showNextPage() {
     if (loading) return false;
-    int pageSize = PAGE_SIZE;
     int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
     if (currentPage + 1 >= totalPages) return false;
     currentPage++;
@@ -545,7 +564,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     if (adapter == null || loading && !visibleGames.isEmpty()) return;
     loading = true;
     int start = visibleGames.size();
-    int end = Math.min(start + PAGE_SIZE, filteredGames.size());
+    int end = Math.min(start + pageSize, filteredGames.size());
     if (start < end) {
         visibleGames.addAll(filteredGames.subList(start, end));
         adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);

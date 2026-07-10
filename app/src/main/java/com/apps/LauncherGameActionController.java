@@ -43,15 +43,21 @@ public final class LauncherGameActionController {
 
     private final Fragment fragment;
     private final Host host;
+    private final boolean includeEditAction;
 
-    private LauncherGameActionController(Fragment fragment, Host host) {
+    private LauncherGameActionController(Fragment fragment, Host host, boolean includeEditAction) {
         this.fragment = fragment;
         this.host = host;
+        this.includeEditAction = includeEditAction;
     }
 
     public static void show(Fragment fragment, Game game, Host host) {
+        show(fragment, game, host, true);
+    }
+
+    public static void show(Fragment fragment, Game game, Host host, boolean includeEditAction) {
         if (fragment == null || game == null || host == null || !fragment.isAdded()) return;
-        new LauncherGameActionController(fragment, host).showGameActionMenu(game);
+        new LauncherGameActionController(fragment, host, includeEditAction).showGameActionMenu(game);
     }
 
     private Context context() {
@@ -63,7 +69,9 @@ public final class LauncherGameActionController {
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle(safeTitle(game)));
         addAction(root, "详情", dialog, () -> showGameDetailDialog(game));
-        addAction(root, "编辑", dialog, () -> host.editGame(game));
+        if (includeEditAction) {
+            addAction(root, "编辑", dialog, () -> host.editGame(game));
+        }
         addAction(root, "状态", dialog, () -> showPlayStatusDialog(game));
         addAction(root, "修改时长", dialog, () -> showEditPlayTimeDialog(game));
         addAction(root, "更多选项", dialog, () -> showMoreOptionsDialog(game));

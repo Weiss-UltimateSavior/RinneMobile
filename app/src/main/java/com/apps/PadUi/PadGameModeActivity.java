@@ -44,13 +44,19 @@ public class PadGameModeActivity extends AppCompatActivity {
 
         binding = ActivityPadGameModeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        renderParticles();
         bindActions();
-        applyBottomInset();
 
         Page initialPage = savedInstanceState == null
                 ? Page.GAME
                 : Page.valueOf(savedInstanceState.getString("pad_page", Page.GAME.name()));
         selectPage(initialPage);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        renderParticles();
     }
 
     @Override
@@ -77,8 +83,7 @@ public class PadGameModeActivity extends AppCompatActivity {
         }
 
         int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         if (!LauncherActivity.isLauncherDarkMode(this)) {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         }
@@ -98,6 +103,13 @@ public class PadGameModeActivity extends AppCompatActivity {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             LauncherMotion.runAfterPulse(binding.navLaunchCenterCircle, this::confirmReturnToPortrait);
         });
+    }
+
+    private void renderParticles() {
+        if (binding == null) return;
+        boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
+        binding.padLauncherParticleView.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        binding.padLauncherParticleView.setParticlesEnabled(enabled);
     }
 
     private void confirmReturnToPortrait() {
@@ -120,8 +132,8 @@ public class PadGameModeActivity extends AppCompatActivity {
         TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
         TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
 
-        titleView.setText("返回竖屏模式");
-        messageView.setText("要返回竖屏吗？");
+        titleView.setText("竖屏管理模式");
+        messageView.setText("要返回竖屏管理模式吗？");
         LauncherTheme.dialogButtons(btnCancel, btnConfirm);
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {
@@ -201,17 +213,4 @@ public class PadGameModeActivity extends AppCompatActivity {
         });
     }
 
-    private void applyBottomInset() {
-        final int initialBottomMargin = ((androidx.constraintlayout.widget.ConstraintLayout.LayoutParams)
-                binding.bottomNav.getLayoutParams()).bottomMargin;
-        binding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params =
-                    (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams)
-                            binding.bottomNav.getLayoutParams();
-            params.bottomMargin = initialBottomMargin + insets.getSystemWindowInsetBottom();
-            binding.bottomNav.setLayoutParams(params);
-            return insets;
-        });
-        binding.getRoot().requestApplyInsets();
-    }
 }

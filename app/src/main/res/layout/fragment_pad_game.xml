@@ -2,8 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/launcher_bg">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:id="@+id/padGamePanel"
@@ -112,8 +111,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="10dp"
-            android:layout_weight="1"
-            android:paddingBottom="88dp">
+            android:layout_weight="1">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/padGameRecycler"
@@ -122,7 +120,38 @@
                 android:layout_gravity="center"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
+                android:paddingStart="44dp"
+                android:paddingEnd="44dp"
                 android:scrollbars="none" />
+
+            <ImageView
+                android:id="@+id/padGameSettingsButton"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="设置"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/pad_game_settings_button" />
+
+            <ImageView
+                android:id="@+id/padGameNextPage"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="下一页"
+                android:elevation="4dp"
+                android:focusable="true"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/pad_game_next_arrow"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/padGameEmpty"

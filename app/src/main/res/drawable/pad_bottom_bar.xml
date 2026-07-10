@@ -3,5 +3,7 @@
     <solid android:color="@color/launcher_card_color" />
     <corners
         android:topLeftRadius="28dp"
-        android:topRightRadius="28dp" />
+        android:topRightRadius="28dp"
+        android:bottomLeftRadius="28dp"
+        android:bottomRightRadius="28dp" />
 </shape>
