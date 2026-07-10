@@ -25,9 +25,18 @@ public class LauncherGameAdapter extends RecyclerView.Adapter<LauncherGameAdapte
     private final List<Game> games = new ArrayList<>();
     private OnGameCardListener listener;
     private long selectedGameId = -1L;
+    private int fixedCardHeight;
 
     public void setOnGameCardListener(OnGameCardListener listener) {
         this.listener = listener;
+    }
+
+    /** Allows landscape grids to reuse the card while supplying their own aspect ratio. */
+    public void setFixedCardHeight(int heightPx) {
+        int newHeight = Math.max(0, heightPx);
+        if (newHeight == fixedCardHeight) return;
+        fixedCardHeight = newHeight;
+        notifyDataSetChanged();
     }
 
     public void submit(List<Game> newGames) {
@@ -95,6 +104,10 @@ public void submit(List<Game> newGames, boolean forceFullRefresh) {
                 parent,
                 false
         );
+        if (fixedCardHeight > 0) {
+            ViewGroup.LayoutParams params = binding.getRoot().getLayoutParams();
+            if (params != null) params.height = fixedCardHeight;
+        }
         return new Holder(binding);
     }
 
@@ -124,6 +137,11 @@ public void submit(List<Game> newGames, boolean forceFullRefresh) {
 
         void bind(Game game, boolean selected) {
             if (game == null) return;
+            if (fixedCardHeight > 0 && binding.getRoot().getLayoutParams().height != fixedCardHeight) {
+                ViewGroup.LayoutParams params = binding.getRoot().getLayoutParams();
+                params.height = fixedCardHeight;
+                binding.getRoot().setLayoutParams(params);
+            }
             binding.getRoot().setBackgroundResource(selected ? R.drawable.launcher_game_card_selected : R.drawable.launcher_game_card);
             binding.launcherGameTitle.setText(safeTitle(game));
             binding.launcherGamePlayStatus.setText(playStatus(game));

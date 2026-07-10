@@ -17,7 +17,7 @@ import java.io.InputStream;
  * 封面异步加载器：在 IO 线程解码 + 内存缓存 + 采样降采样，
  * 避免 RecyclerView 绑定期间在主线程同步解码导致的掉帧。
  */
-final class LauncherCoverLoader {
+public final class LauncherCoverLoader {
     private LauncherCoverLoader() {}
 
     /** 内存缓存：取应用可用内存的 1/8，至少 2MB */
@@ -36,11 +36,11 @@ final class LauncherCoverLoader {
     private static final int TARGET_WIDTH = 480;
     private static final int TARGET_HEIGHT = 432;
 
-    interface Callback {
+    public interface Callback {
         void onLoaded(boolean success);
     }
 
-    static void loadInto(ImageView imageView, String uriText, Callback callback) {
+    public static void loadInto(ImageView imageView, String uriText, Callback callback) {
         if (imageView == null) return;
         final String key = uriText == null ? "" : uriText.trim();
         // 用 tag 记录当前请求，避免回收/复用后旧请求覆盖新内容
@@ -76,7 +76,7 @@ final class LauncherCoverLoader {
     }
 
     /** 取消该 ImageView 上的待加载请求并清空显示 */
-    static void clear(ImageView imageView) {
+    public static void clear(ImageView imageView) {
         if (imageView == null) return;
         imageView.setTag(null);
         imageView.setImageDrawable(null);

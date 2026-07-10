@@ -25,7 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.yuki.yukihub.MainActivity;
+import com.apps.PadUi.PadGameModeActivity;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherBinding;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
@@ -205,7 +205,7 @@ public class LauncherActivity extends AppCompatActivity {
         });
         binding.navLaunchCenter.setOnClickListener(view -> {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            LauncherMotion.runAfterPulse(binding.navLaunchCenterCircle, this::confirmOpenMainActivity);
+            LauncherMotion.runAfterPulse(binding.navLaunchCenterCircle, this::confirmOpenPadGameModeActivity);
         });
     }
 
@@ -353,13 +353,13 @@ public class LauncherActivity extends AppCompatActivity {
         }
     }
 
-    private void openMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
+    private void openPadGameModeActivity() {
+        Intent intent = new Intent(this, PadGameModeActivity.class);
         startActivity(intent);
         LauncherMotion.applyActivityOpen(this);
     }
 
-    private void confirmOpenMainActivity() {
+    private void confirmOpenPadGameModeActivity() {
         AlertDialog dialog = new AlertDialog.Builder(this).create();
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
@@ -385,7 +385,7 @@ public class LauncherActivity extends AppCompatActivity {
         btnCancel.setOnClickListener(view -> dialog.dismiss());
         btnConfirm.setOnClickListener(view -> {
             dialog.dismiss();
-            openMainActivity();
+            openPadGameModeActivity();
         });
     }
 
@@ -397,7 +397,7 @@ public class LauncherActivity extends AppCompatActivity {
                 .apply();
     }
 
-    static boolean isLauncherDarkMode(android.content.Context context) {
+    public static boolean isLauncherDarkMode(android.content.Context context) {
         return context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .getBoolean(KEY_LAUNCHER_DARK_MODE, false);
@@ -452,7 +452,7 @@ public class LauncherActivity extends AppCompatActivity {
         binding.launcherParticleView.setParticlesEnabled(enabled);
     }
 
-    static int launcherPrimaryColor(android.content.Context context) {
+    public static int launcherPrimaryColor(android.content.Context context) {
         if (isRinneTheme(context)) return RINNE_PRIMARY_COLOR;
         if (isAnriTheme(context)) return ANRI_PRIMARY_COLOR;
         return ContextCompat.getColor(wrapLauncherUiMode(context), R.color.launcher_primary_color);
@@ -466,14 +466,14 @@ public class LauncherActivity extends AppCompatActivity {
         return isLauncherDarkMode(this);
     }
 
-    static void applySavedToneMode(AppCompatActivity activity) {
+    public static void applySavedToneMode(AppCompatActivity activity) {
         if (activity == null) return;
         activity.getDelegate().setLocalNightMode(isLauncherDarkMode(activity)
                 ? AppCompatDelegate.MODE_NIGHT_YES
                 : AppCompatDelegate.MODE_NIGHT_NO);
     }
 
-    static android.content.Context wrapLauncherUiMode(android.content.Context base) {
+    public static android.content.Context wrapLauncherUiMode(android.content.Context base) {
         if (base == null) return null;
         Configuration configuration = new Configuration(base.getResources().getConfiguration());
         int targetNightMode = isLauncherDarkMode(base)

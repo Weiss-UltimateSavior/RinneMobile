@@ -13,11 +13,11 @@ import androidx.annotation.Nullable;
 
 import com.yuki.yukihub.R;
 
-final class LauncherMotion {
+public final class LauncherMotion {
     private LauncherMotion() {
     }
 
-    static void applyDialogMotion(Dialog dialog) {
+    public static void applyDialogMotion(Dialog dialog) {
         if (dialog == null) return;
         Window window = dialog.getWindow();
         if (window != null) {
@@ -43,7 +43,7 @@ final class LauncherMotion {
         applyActivityClose(activity);
     }
 
-    static void pulse(View view) {
+    public static void pulse(View view) {
         if (view == null) return;
         view.animate()
                 .scaleX(1.2f)
@@ -72,7 +72,7 @@ final class LauncherMotion {
         activity.overridePendingTransition(R.anim.launcher_tone_enter, R.anim.launcher_tone_exit);
     }
 
-    static void runAfterPulse(@Nullable View view, Runnable action) {
+    public static void runAfterPulse(@Nullable View view, Runnable action) {
         pulse(view);
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (action != null) action.run();

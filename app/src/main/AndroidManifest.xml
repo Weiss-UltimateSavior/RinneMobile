@@ -76,6 +76,13 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
+            android:name="com.apps.PadUi.PadGameModeActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
             android:name="com.apps.ResourceStationActivity"
             android:exported="false"
             android:screenOrientation="portrait"

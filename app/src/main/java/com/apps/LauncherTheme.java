@@ -20,7 +20,7 @@ import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
 
-final class LauncherTheme {
+public final class LauncherTheme {
     private LauncherTheme() {
     }
 
@@ -153,7 +153,7 @@ final class LauncherTheme {
         );
     }
 
-    static void textPrimary(TextView view) {
+    public static void textPrimary(TextView view) {
         if (view != null) view.setTextColor(primary(view.getContext()));
     }
 
@@ -167,7 +167,7 @@ final class LauncherTheme {
         view.setBackground(selected ? selectedChip(view.getContext()) : secondaryButton(view.getContext(), 999f));
     }
 
-    static void primaryButton(TextView view) {
+    public static void primaryButton(TextView view) {
         if (view == null) return;
         view.setTextColor(onPrimary(view.getContext()));
         view.setBackground(primaryButton(view.getContext(), 20f));
@@ -268,14 +268,14 @@ final class LauncherTheme {
         };
     }
 
-    static void dialogButtons(TextView cancel, TextView confirm) {
+    public static void dialogButtons(TextView cancel, TextView confirm) {
         if (cancel != null) {
             secondaryButton(cancel);
         }
         primaryButton(confirm);
     }
 
-    static void applyPrimaryTone(View root) {
+    public static void applyPrimaryTone(View root) {
         if (root == null) return;
         Context context = root.getContext();
         int defaultPrimary = primaryText(context);
