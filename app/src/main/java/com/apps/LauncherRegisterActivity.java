@@ -3,6 +3,7 @@ package com.apps;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -20,6 +21,7 @@ import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 
 public class LauncherRegisterActivity extends AppCompatActivity {
     private ActivityLauncherRegisterBinding binding;
+    private CountDownTimer verificationCodeTimer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,6 +34,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         applySystemBarInsets();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.primaryButton(binding.registerSendCode);
     }
 
     private void applySystemBarInsets() {
@@ -54,6 +57,50 @@ public class LauncherRegisterActivity extends AppCompatActivity {
 
     private void bindActions() {
         binding.registerCreate.setOnClickListener(view -> performRegister());
+        binding.registerSendCode.setOnClickListener(view -> sendVerificationCode());
+    }
+
+    private void sendVerificationCode() {
+        String email = binding.registerEmail.getText() == null ? "" : binding.registerEmail.getText().toString().trim();
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.registerEmail.setError("请输入正确的邮箱");
+            return;
+        }
+        binding.registerSendCode.setEnabled(false);
+        binding.registerSendCode.setText("发送中...");
+        LauncherAuthBridge.sendRegistrationVerificationCode(this, email, new LauncherAuthBridge.SimpleCallback() {
+            @Override
+            public void onSuccess() {
+                if (isFinishing()) return;
+                Toast.makeText(LauncherRegisterActivity.this, "验证码已发送，请查收邮箱", Toast.LENGTH_SHORT).show();
+                startVerificationCodeCountdown();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isFinishing()) return;
+                binding.registerSendCode.setEnabled(true);
+                binding.registerSendCode.setText("获取验证码");
+                showAuthResultDialog("验证码发送失败", message);
+            }
+        });
+    }
+
+    private void startVerificationCodeCountdown() {
+        if (verificationCodeTimer != null) verificationCodeTimer.cancel();
+        verificationCodeTimer = new CountDownTimer(60_000L, 1_000L) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                binding.registerSendCode.setEnabled(false);
+                binding.registerSendCode.setText((millisUntilFinished + 999L) / 1000L + " 秒后重试");
+            }
+
+            @Override
+            public void onFinish() {
+                binding.registerSendCode.setEnabled(true);
+                binding.registerSendCode.setText("获取验证码");
+            }
+        }.start();
     }
 
     private void performRegister() {
@@ -62,13 +109,14 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         String password = binding.registerPassword.getText() == null ? "" : binding.registerPassword.getText().toString().trim();
         String confirmPassword = binding.registerConfirmPassword.getText() == null ? "" : binding.registerConfirmPassword.getText().toString().trim();
         String inviteCode = binding.registerKey.getText() == null ? "" : binding.registerKey.getText().toString().trim();
+        String verificationCode = binding.registerVerificationCode.getText() == null ? "" : binding.registerVerificationCode.getText().toString().trim();
 
         if (username.isEmpty()) {
             binding.registerName.setError("请输入用户名");
             return;
         }
-        if (username.length() < 3) {
-            binding.registerName.setError("用户名至少 3 位");
+        if (!username.matches("[A-Za-z0-9_]{3,32}")) {
+            binding.registerName.setError("用户名需为 3-32 位字母、数字或下划线");
             return;
         }
         if (email.isEmpty()) {
@@ -91,15 +139,19 @@ public class LauncherRegisterActivity extends AppCompatActivity {
             binding.registerConfirmPassword.setError("两次密码不一致");
             return;
         }
-        if (inviteCode.isEmpty()) {
-            binding.registerKey.setError("请输入邀请码");
+        if (!inviteCode.matches("[A-Za-z0-9]{7}")) {
+            binding.registerKey.setError("请输入 7 位邀请码");
+            return;
+        }
+        if (!verificationCode.matches("\\d{6}")) {
+            binding.registerVerificationCode.setError("请输入 6 位邮箱验证码");
             return;
         }
 
         binding.registerCreate.setEnabled(false);
         binding.registerCreate.setText("注册中...");
 
-        LauncherAuthBridge.register(this, username, email, password, inviteCode, new LauncherAuthBridge.AuthCallback() {
+        LauncherAuthBridge.register(this, username, email, password, inviteCode, verificationCode, new LauncherAuthBridge.AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {
@@ -121,6 +173,12 @@ public class LauncherRegisterActivity extends AppCompatActivity {
                 showAuthResultDialog("注册失败", message);
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (verificationCodeTimer != null) verificationCodeTimer.cancel();
+        super.onDestroy();
     }
 
     private void showAuthResultDialog(String title, String message) {

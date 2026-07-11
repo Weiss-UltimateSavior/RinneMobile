@@ -25,7 +25,7 @@ import okhttp3.WebSocketListener;
 
 /** User-side client for the system public chat. It deliberately contains no admin endpoints. */
 public final class LauncherPublicChatBridge {
-    private static final String API_BASE = "http://192.168.1.5:8000";
+    private static final String API_BASE = "https://api.rinne.cyou:9999";
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final OkHttpClient WEB_SOCKET_CLIENT = new OkHttpClient();
 

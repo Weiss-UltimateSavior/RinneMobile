@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -26,6 +27,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
     private ActivityLauncherAccountSettingsBinding binding;
     private AlertDialog loadingDialog;
+    private boolean emailSubscriptionUpdating;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,15 +42,136 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
         bindActions();
         renderAllChips();
+        refreshEmailSubscription();
         LauncherSyncScheduler.updateSchedule(this);
     }
 
     private void bindActions() {
         binding.rowSyncConfig.setOnClickListener(v -> onSyncConfigClick());
         binding.rowRealtimePlaytime.setOnClickListener(v -> onRealtimePlaytimeClick());
-        binding.rowProfileDisplay.setOnClickListener(v -> toggleAndRender("profile_display", binding.chipProfileDisplay));
-        binding.rowModelFeature.setOnClickListener(v -> toggleAndRender("model_feature", binding.chipModelFeature));
-        binding.rowEmailSubscribe.setOnClickListener(v -> toggleAndRender("email_subscribe", binding.chipEmailSubscribe));
+        binding.rowEmailSubscribe.setOnClickListener(v -> onEmailSubscriptionClick());
+    }
+
+    private void refreshEmailSubscription() {
+        if (!LauncherAuthBridge.isLoggedIn(this)) return;
+        LauncherAuthBridge.fetchEmailSubscription(this, new LauncherAuthBridge.SubscriptionCallback() {
+            @Override
+            public void onSuccess(boolean subscribed) {
+                if (isFinishing()) return;
+                saveEmailSubscription(subscribed);
+                renderChip(binding.chipEmailSubscribe, subscribed);
+            }
+
+            @Override
+            public void onError(String message) {
+                // 保留本地缓存状态；网络错误不打断账号设置页的其他操作。
+            }
+        });
+    }
+
+    private void onEmailSubscriptionClick() {
+        if (emailSubscriptionUpdating) return;
+        if (!LauncherAuthBridge.isLoggedIn(this)) {
+            showResultDialog("需要登录", "登录后才能管理邮件订阅");
+            return;
+        }
+        boolean subscribed = getSharedPreferences(PREFS_NAME, 0).getBoolean("email_subscribe", false);
+        if (subscribed) {
+            updateEmailSubscription(false);
+        } else {
+            showEmailSubscriptionConfirmDialog();
+        }
+    }
+
+    private void showEmailSubscriptionConfirmDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(this);
+        title.setText("开启邮件订阅");
+        title.setGravity(Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView message = new TextView(this);
+        message.setText("开启后，管理员可向你的注册邮箱发送系统通知和广播邮件。");
+        message.setGravity(Gravity.CENTER);
+        message.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
+        message.setTextSize(12);
+        LinearLayout.LayoutParams messageLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        messageLp.setMargins(0, dp(13), 0, 0);
+        root.addView(message, messageLp);
+
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        buttonsLp.setMargins(0, dp(14), 0, 0);
+
+        TextView cancel = new TextView(this);
+        cancel.setText("取消");
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(cancel);
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        buttons.addView(cancel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+
+        TextView confirm = new TextView(this);
+        confirm.setText("开启订阅");
+        confirm.setGravity(Gravity.CENTER);
+        confirm.setTextSize(13);
+        confirm.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.primaryButton(confirm);
+        confirm.setOnClickListener(view -> {
+            dialog.dismiss();
+            updateEmailSubscription(true);
+        });
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        confirmLp.setMargins(dp(8), 0, 0, 0);
+        buttons.addView(confirm, confirmLp);
+        root.addView(buttons, buttonsLp);
+        window.setContentView(root);
+    }
+
+    private void updateEmailSubscription(boolean subscribed) {
+        emailSubscriptionUpdating = true;
+        binding.rowEmailSubscribe.setEnabled(false);
+        LauncherAuthBridge.updateEmailSubscription(this, subscribed, new LauncherAuthBridge.SubscriptionCallback() {
+            @Override
+            public void onSuccess(boolean actualSubscribed) {
+                if (isFinishing()) return;
+                emailSubscriptionUpdating = false;
+                binding.rowEmailSubscribe.setEnabled(true);
+                saveEmailSubscription(actualSubscribed);
+                renderChip(binding.chipEmailSubscribe, actualSubscribed);
+                Toast.makeText(LauncherAccountSettingsActivity.this,
+                        actualSubscribed ? "已开启邮件订阅" : "已取消邮件订阅", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isFinishing()) return;
+                emailSubscriptionUpdating = false;
+                binding.rowEmailSubscribe.setEnabled(true);
+                showResultDialog("邮件订阅更新失败", message);
+            }
+        });
+    }
+
+    private void saveEmailSubscription(boolean subscribed) {
+        getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("email_subscribe", subscribed).apply();
     }
 
     private void onSyncConfigClick() {
@@ -339,19 +462,10 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
         window.setContentView(root);
     }
 
-    private void toggleAndRender(String key, android.widget.TextView chip) {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
-        boolean enabled = !prefs.getBoolean(key, getDefault(key));
-        prefs.edit().putBoolean(key, enabled).apply();
-        renderChip(chip, enabled);
-    }
-
     private void renderAllChips() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
         renderChip(binding.chipSyncConfig, prefs.getBoolean("sync_config", getDefault("sync_config")));
         renderChip(binding.chipRealtimePlaytime, prefs.getBoolean("realtime_playtime", getDefault("realtime_playtime")));
-        renderChip(binding.chipProfileDisplay, prefs.getBoolean("profile_display", getDefault("profile_display")));
-        renderChip(binding.chipModelFeature, prefs.getBoolean("model_feature", getDefault("model_feature")));
         renderChip(binding.chipEmailSubscribe, prefs.getBoolean("email_subscribe", getDefault("email_subscribe")));
     }
 
@@ -363,7 +477,6 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     private boolean getDefault(String key) {
         switch (key) {
             case "realtime_playtime":
-            case "profile_display":
                 return true;
             default:
                 return false;

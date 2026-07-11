@@ -65,15 +65,25 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
     }
 
     private void openSelectedChat() {
-        if (!"公共聊天室".equals(selectedChat)) {
-            Toast.makeText(this, selectedChat + " 暂未开放", Toast.LENGTH_SHORT).show();
-            return;
-        }
         if (!LauncherAuthBridge.isLoggedIn(this)) {
-            Toast.makeText(this, "请先在个人中心登录后再进入公共聊天室", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "请先在个人中心登录后再进入聊天室", Toast.LENGTH_LONG).show();
             return;
         }
-        startActivity(new Intent(this, LauncherPublicChatActivity.class));
+        Intent intent;
+        if ("Yuki娘（AI）".equals(selectedChat)) {
+            intent = new Intent(this, LauncherAiChatActivity.class)
+                    .putExtra(LauncherAiChatActivity.EXTRA_PERSONA, "persona_yuki")
+                    .putExtra(LauncherAiChatActivity.EXTRA_THREAD_ID, "launcher-yuki")
+                    .putExtra(LauncherAiChatActivity.EXTRA_TITLE, "Yuki娘（AI）");
+        } else if ("园神凛弥（AI）".equals(selectedChat)) {
+            intent = new Intent(this, LauncherAiChatActivity.class)
+                    .putExtra(LauncherAiChatActivity.EXTRA_PERSONA, "persona_rinne")
+                    .putExtra(LauncherAiChatActivity.EXTRA_THREAD_ID, "launcher-rinne")
+                    .putExtra(LauncherAiChatActivity.EXTRA_TITLE, "园神凛弥（AI）");
+        } else {
+            intent = new Intent(this, LauncherPublicChatActivity.class);
+        }
+        startActivity(intent);
         LauncherMotion.applyActivityOpen(this);
     }
 

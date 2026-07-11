@@ -184,6 +184,20 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
+            android:name="com.apps.LauncherAiChatActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
+            android:name="com.apps.LauncherPasswordResetActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
             android:name="com.apps.LauncherProfileEditActivity"
             android:exported="false"
             android:screenOrientation="portrait"

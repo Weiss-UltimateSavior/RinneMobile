@@ -84,7 +84,7 @@ public class LauncherAccountFragment extends Fragment {
         binding.btnGoogle.setOnClickListener(view -> showQQGroupDialog());
         binding.btnFacebook.setOnClickListener(view -> showGitHubDialog());
         binding.forgotPassword.setOnClickListener(view ->
-                Toast.makeText(requireContext(), "密码找回待接入", Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(requireContext(), LauncherPasswordResetActivity.class)));
     }
 
     private void renderMode() {
