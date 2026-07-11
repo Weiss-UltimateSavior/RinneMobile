@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -19,6 +20,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,9 +42,13 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     private final List<LauncherAiChatBridge.Message> messages = new ArrayList<>();
     private LauncherAiChatMessageAdapter adapter;
     private RecyclerView messageList;
+    private View topOverlay;
+    private View titleBar;
+    private View composerOverlay;
     private EditText input;
     private ImageView send;
     private TextView hint;
+    private int messageListBaseBottomPadding;
     private String persona;
     private String threadId;
     private String characterName;
@@ -65,13 +72,20 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             return;
         }
         setContentView(R.layout.activity_launcher_ai_chat);
-        applyInsets();
         characterName = title == null || title.trim().isEmpty() ? "AI" : title.replace("（AI）", "");
         ((TextView) findViewById(R.id.aiChatTitle)).setText(title == null || title.trim().isEmpty() ? "AI 聊天" : title);
         hint = findViewById(R.id.aiChatHint);
         input = findViewById(R.id.aiChatInput);
         send = findViewById(R.id.aiChatSend);
         messageList = findViewById(R.id.aiChatMessages);
+        topOverlay = findViewById(R.id.aiChatTopOverlay);
+        titleBar = findViewById(R.id.aiChatTitleBar);
+        composerOverlay = findViewById(R.id.aiChatComposerOverlay);
+        messageListBaseBottomPadding = messageList.getPaddingBottom();
+        topOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        titleBar.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        composerOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        applyInsets();
         adapter = new LauncherAiChatMessageAdapter(messages, characterName);
         messageList.setLayoutManager(new LinearLayoutManager(this));
         messageList.setAdapter(adapter);
@@ -379,8 +393,57 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     private void scrollToEnd() { if (!messages.isEmpty()) messageList.scrollToPosition(messages.size() - 1); }
     private void showError(String message) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
     private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
-    private void applyInsets() { View root = findViewById(R.id.aiChatRoot); root.setOnApplyWindowInsetsListener((view, insets) -> { view.setPadding(view.getPaddingLeft(), insets.getSystemWindowInsetTop(), view.getPaddingRight(), insets.getSystemWindowInsetBottom()); return insets; }); root.requestApplyInsets(); }
-    private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }
+    private void applyInsets() {
+        View root = findViewById(R.id.aiChatRoot);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            setOverlayMargins(topOverlay, topInset, 0);
+            setOverlayMargins(composerOverlay, 0, Math.max(systemBottom, imeBottom) + dp(10));
+            updateMessageListOverlayPadding();
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
+    }
+
+    private void setOverlayMargins(View view, int top, int bottom) {
+        if (view == null) return;
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (!(params instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
+        if (margins.topMargin == top && margins.bottomMargin == bottom) return;
+        margins.topMargin = top;
+        margins.bottomMargin = bottom;
+        view.setLayoutParams(margins);
+    }
+
+    private void updateMessageListOverlayPadding() {
+        if (messageList == null || topOverlay == null || composerOverlay == null) return;
+        int listTop = topOverlay.getVisibility() == View.GONE
+                ? 0
+                : Math.max(0, topOverlay.getBottom());
+        setMessageListTopMargin(listTop);
+        int bottomSpace = composerOverlay.getVisibility() == View.GONE
+                ? 0
+                : Math.max(0, messageList.getBottom() - composerOverlay.getTop()) + dp(8);
+        messageList.setPadding(
+                messageList.getPaddingLeft(),
+                messageList.getPaddingTop(),
+                messageList.getPaddingRight(),
+                messageListBaseBottomPadding + bottomSpace);
+    }
+
+    private void setMessageListTopMargin(int topMargin) {
+        ViewGroup.LayoutParams params = messageList.getLayoutParams();
+        if (!(params instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
+        if (margins.topMargin == topMargin) return;
+        margins.topMargin = topMargin;
+        messageList.setLayoutParams(margins);
+    }
+
+    private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }
     private void applySavedToneMode() { LauncherActivity.applySavedToneMode(this); }
     @Override protected void attachBaseContext(android.content.Context context) { super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(context)); }
     @Override public void onBackPressed() { LauncherMotion.finish(this); }
