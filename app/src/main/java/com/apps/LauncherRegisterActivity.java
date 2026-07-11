@@ -2,6 +2,7 @@ package com.apps;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
@@ -14,6 +15,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherRegisterBinding;
@@ -22,6 +26,14 @@ import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 public class LauncherRegisterActivity extends AppCompatActivity {
     private ActivityLauncherRegisterBinding binding;
     private CountDownTimer verificationCodeTimer;
+    private View focusedInput;
+    private int registerScrollOriginalLeft;
+    private int registerScrollOriginalTop;
+    private int registerScrollOriginalRight;
+    private int registerScrollOriginalBottom;
+    private int systemTopInset;
+    private int windowBottomInset;
+    private int layoutKeyboardInset;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,27 +44,81 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         binding = ActivityLauncherRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         applySystemBarInsets();
+        bindKeyboardVisibility();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.primaryButton(binding.registerSendCode);
     }
 
     private void applySystemBarInsets() {
-        int originalLeft = binding.registerScroll.getPaddingLeft();
-        int originalTop = binding.registerScroll.getPaddingTop();
-        int originalRight = binding.registerScroll.getPaddingRight();
-        int originalBottom = binding.registerScroll.getPaddingBottom();
+        registerScrollOriginalLeft = binding.registerScroll.getPaddingLeft();
+        registerScrollOriginalTop = binding.registerScroll.getPaddingTop();
+        registerScrollOriginalRight = binding.registerScroll.getPaddingRight();
+        registerScrollOriginalBottom = binding.registerScroll.getPaddingBottom();
 
-        binding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
-            binding.registerScroll.setPadding(
-                    originalLeft,
-                    originalTop + insets.getSystemWindowInsetTop(),
-                    originalRight,
-                    originalBottom
-            );
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            systemTopInset = systemBars.top;
+            windowBottomInset = Math.max(systemBars.bottom, ime.bottom);
+            applyRegisterScrollPadding();
+            if (ime.bottom > 0) {
+                revealFocusedInput();
+            }
             return insets;
         });
-        binding.getRoot().requestApplyInsets();
+        binding.getRoot().getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (binding == null) return;
+            Rect visibleFrame = new Rect();
+            binding.getRoot().getWindowVisibleDisplayFrame(visibleFrame);
+            int rootHeight = binding.getRoot().getRootView().getHeight();
+            int hiddenBottom = Math.max(0, rootHeight - visibleFrame.bottom);
+            int keyboardThreshold = Math.max(dp(120), rootHeight / 5);
+            layoutKeyboardInset = hiddenBottom > keyboardThreshold ? hiddenBottom : 0;
+            applyRegisterScrollPadding();
+            if (layoutKeyboardInset > 0) {
+                revealFocusedInput();
+            }
+        });
+        ViewCompat.requestApplyInsets(binding.getRoot());
+    }
+
+    private void applyRegisterScrollPadding() {
+        if (binding == null) return;
+        binding.registerScroll.setPadding(
+                registerScrollOriginalLeft,
+                registerScrollOriginalTop + systemTopInset,
+                registerScrollOriginalRight,
+                registerScrollOriginalBottom + Math.max(windowBottomInset, layoutKeyboardInset)
+        );
+    }
+
+    private void bindKeyboardVisibility() {
+        View.OnFocusChangeListener listener = (view, hasFocus) -> {
+            if (hasFocus) {
+                focusedInput = view;
+                revealFocusedInput();
+                view.postDelayed(this::revealFocusedInput, 260L);
+            } else if (focusedInput == view) {
+                focusedInput = null;
+            }
+        };
+        binding.registerName.setOnFocusChangeListener(listener);
+        binding.registerEmail.setOnFocusChangeListener(listener);
+        binding.registerVerificationCode.setOnFocusChangeListener(listener);
+        binding.registerPassword.setOnFocusChangeListener(listener);
+        binding.registerConfirmPassword.setOnFocusChangeListener(listener);
+        binding.registerKey.setOnFocusChangeListener(listener);
+    }
+
+    private void revealFocusedInput() {
+        View input = focusedInput;
+        if (input == null || !input.hasFocus() || binding == null) return;
+        input.post(() -> {
+            if (!input.hasFocus() || binding == null) return;
+            Rect rect = new Rect(0, 0, input.getWidth(), input.getHeight() + dp(24));
+            input.requestRectangleOnScreen(rect, true);
+        });
     }
 
     private void bindActions() {
@@ -229,6 +295,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));

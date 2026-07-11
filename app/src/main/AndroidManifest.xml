@@ -181,6 +181,7 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
+            android:windowSoftInputMode="adjustResize"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
