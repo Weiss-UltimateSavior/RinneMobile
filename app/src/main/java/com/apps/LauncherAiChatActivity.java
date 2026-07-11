@@ -76,8 +76,8 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         messageList.setLayoutManager(new LinearLayoutManager(this));
         messageList.setAdapter(adapter);
         LauncherTheme.applyPrimaryTone(findViewById(R.id.aiChatRoot));
-        LauncherTheme.menuItem((TextView) findViewById(R.id.aiChatClear));
-        LauncherTheme.menuItem((TextView) findViewById(R.id.aiChatCustomModel));
+        LauncherTheme.primaryButton((TextView) findViewById(R.id.aiChatClear));
+        LauncherTheme.primaryButton((TextView) findViewById(R.id.aiChatCustomModel));
         findViewById(R.id.aiChatCharacterIcon).setBackground(LauncherTheme.circle(this));
         send.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
         findViewById(R.id.aiChatClear).setOnClickListener(view -> showClearConfirmDialog());

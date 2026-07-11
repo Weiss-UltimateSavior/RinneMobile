@@ -20,7 +20,7 @@
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/publicChatMessages" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingTop="8dp" android:paddingBottom="8dp" />
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="10dp">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingBottom="6dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@android:color/transparent" android:orientation="horizontal" android:paddingBottom="6dp">
             <TextView android:id="@+id/publicChatPlaytimePlaceholder" android:layout_width="wrap_content" android:layout_height="31dp" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="游玩时长" android:textColor="@color/launcher_text_muted_color" android:textSize="11sp" />
             <TextView android:id="@+id/publicChatGameInfoPlaceholder" android:layout_width="wrap_content" android:layout_height="31dp" android:layout_marginStart="7dp" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="游戏信息" android:textColor="@color/launcher_text_muted_color" android:textSize="11sp" />
         </LinearLayout>
