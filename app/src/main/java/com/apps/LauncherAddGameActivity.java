@@ -33,6 +33,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
@@ -60,7 +61,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private ScrollView scroll;
     private EditText nameInput;
     private TextView launchTargetText;
-    private Uri launchTargetUri;
+    private String launchTargetName = "";
     private TextView emulatorText;
     private EditText descriptionInput;
     private TextView dirText;
@@ -78,14 +79,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 gameDirUri = uri;
                 dirText.setText(displayUri(uri));
                 fillTitleFromDirIfEmpty(uri);
-            });
-
-    private final ActivityResultLauncher<String[]> launchTargetPicker =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-                if (uri == null) return;
-                persistUriPermission(uri);
-                launchTargetUri = uri;
-                launchTargetText.setText(displayUri(uri));
+                launchTargetName = "";
+                launchTargetText.setText("点击选择启动文件");
             });
 
     private final ActivityResultLauncher<String[]> coverPicker =
@@ -173,7 +168,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void bindActions() {
         dirText.setOnClickListener(view -> directoryPicker.launch(null));
-        launchTargetText.setOnClickListener(view -> launchTargetPicker.launch(new String[]{"*/*"}));
+        launchTargetText.setOnClickListener(view -> showLaunchTargetPicker());
         emulatorText.setOnClickListener(view -> showAppPicker(emulatorText));
         coverText.setOnClickListener(view -> coverPicker.launch(new String[]{"image/*"}));
         saveButton.setOnClickListener(view -> saveGame());
@@ -182,6 +177,170 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private void applyThemeTone() {
         saveButton.setBackground(LauncherTheme.primaryButton(this, 24f));
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
+    }
+
+    /** 扫描游戏目录下的相关游戏文件，弹出列表供用户选择启动入口。 */
+    private void showLaunchTargetPicker() {
+        if (gameDirUri == null) {
+            Toast.makeText(this, "请先选择游戏目录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(this);
+        title.setText("选择启动文件");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView status = new TextView(this);
+        status.setText("正在扫描游戏文件...");
+        status.setGravity(android.view.Gravity.CENTER);
+        status.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
+        status.setTextSize(13);
+        LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        statusLp.setMargins(0, dp(13), 0, 0);
+        root.addView(status, statusLp);
+
+        window.setContentView(root);
+
+        android.content.Context appContext = getApplicationContext();
+        Uri dirUri = gameDirUri;
+        AppExecutors.runOnIo(() -> {
+            List<String> files = scanGameFiles(appContext, dirUri);
+            runOnUiThread(() -> {
+                if (!dialog.isShowing()) return;
+                root.removeView(status);
+                if (files.isEmpty()) {
+                    status.setText("未找到游戏文件");
+                    root.addView(status, statusLp);
+                } else {
+                    ScrollView scroll = new ScrollView(this);
+                    LinearLayout list = new LinearLayout(this);
+                    list.setOrientation(LinearLayout.VERTICAL);
+                    for (String file : files) {
+                        TextView item = new TextView(this);
+                        item.setText(file);
+                        item.setGravity(android.view.Gravity.CENTER);
+                        item.setSingleLine(true);
+                        item.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
+                        item.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+                        item.setTextSize(13);
+                        item.setBackground(LauncherTheme.cancelChip(this));
+                        LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+                        itemLp.setMargins(0, dp(7), 0, 0);
+                        String selected = file;
+                        item.setOnClickListener(v -> {
+                            launchTargetName = selected;
+                            launchTargetText.setText(selected);
+                            dialog.dismiss();
+                        });
+                        list.addView(item, itemLp);
+                    }
+                    scroll.addView(list);
+                    int maxScrollHeight = dp(280);
+                    int listHeight = dp(7) + files.size() * (dp(38) + dp(7));
+                    LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            Math.min(listHeight, maxScrollHeight));
+                    scrollLp.setMargins(0, dp(7), 0, 0);
+                    root.addView(scroll, scrollLp);
+                }
+                TextView cancel = new TextView(this);
+                cancel.setText("取消");
+                cancel.setGravity(android.view.Gravity.CENTER);
+                cancel.setTextColor(LauncherTheme.primary(this));
+                cancel.setTextSize(13);
+                cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+                cancel.setBackground(LauncherTheme.cancelChip(this));
+                LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+                cancelLp.setMargins(0, dp(9), 0, 0);
+                cancel.setOnClickListener(v -> dialog.dismiss());
+                root.addView(cancel, cancelLp);
+            });
+        });
+    }
+
+    /** 扫描游戏目录（深度2层）收集相关游戏文件。 */
+    private List<String> scanGameFiles(android.content.Context context, Uri dirUri) {
+        List<String> result = new ArrayList<>();
+        if (dirUri == null) return result;
+        try {
+            DocumentFile root = DocumentFile.fromTreeUri(context, dirUri);
+            if (root == null) return result;
+            collectGameFiles(root, "", 1, 2, result);
+        } catch (Throwable ignored) {
+        }
+        return result;
+    }
+
+    private void collectGameFiles(DocumentFile dir, String prefix, int level, int maxLevel, List<String> result) {
+        DocumentFile[] files;
+        try {
+            if (dir == null || !dir.isDirectory()) return;
+            files = dir.listFiles();
+        } catch (Throwable ignored) {
+            return;
+        }
+        if (files == null) return;
+        for (DocumentFile f : files) {
+            if (f == null) continue;
+            String name = safeName(f);
+            String lower = name.toLowerCase(Locale.ROOT);
+            if (lower.isEmpty()) continue;
+            boolean isDirectory = false;
+            try { isDirectory = f.isDirectory(); } catch (Throwable ignored) { }
+            if (isDirectory) {
+                if (level < maxLevel) {
+                    collectGameFiles(f, prefix.isEmpty() ? name : prefix + "/" + name,
+                            level + 1, maxLevel, result);
+                }
+                continue;
+            }
+            if (isGameFile(lower)) {
+                result.add(prefix.isEmpty() ? name : prefix + "/" + name);
+            }
+        }
+    }
+
+    private boolean isGameFile(String lowerName) {
+        if (lowerName.endsWith(".xp3") || lowerName.endsWith(".pfs")
+                || lowerName.endsWith(".iso") || lowerName.endsWith(".cso")
+                || lowerName.endsWith(".chd") || lowerName.endsWith(".elf")
+                || lowerName.endsWith(".pbp") || lowerName.endsWith(".desktop")
+                || lowerName.endsWith(".exe")) {
+            return true;
+        }
+        return lowerName.equals("0.txt") || lowerName.equals("00.txt")
+                || lowerName.equals("nscript.dat") || lowerName.equals("nscr_sec.dat")
+                || lowerName.equals("onscript.nt2") || lowerName.equals("onscript.nt3")
+                || lowerName.equals("index.html") || lowerName.equals("startup.tjs");
+    }
+
+    private String safeName(DocumentFile file) {
+        try {
+            String name = file == null ? null : file.getName();
+            return name == null ? "" : name;
+        } catch (Throwable ignored) {
+            return "";
+        }
     }
 
     private void saveGame() {
@@ -200,9 +359,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
         android.content.Context appContext = getApplicationContext();
         EngineType selectedEngine = selectedEngine();
-        String selectedLaunchTarget = launchTargetUri != null
-                ? extractFileName(launchTargetUri)
-                : "";
+        String selectedLaunchTarget = launchTargetName;
         String selectedEmulator = textOf(emulatorText);
         String selectedDescription = textOf(descriptionInput);
         Uri selectedGameDir = gameDirUri;
@@ -259,18 +416,6 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 }
             });
         });
-    }
-
-    private String extractFileName(Uri uri) {
-        if (uri == null) return "";
-        try {
-            DocumentFile docFile = DocumentFile.fromSingleUri(this, uri);
-            if (docFile != null && docFile.getName() != null) return docFile.getName();
-        } catch (Throwable ignored) {
-        }
-        String display = displayUri(uri);
-        int slash = display.lastIndexOf('/');
-        return slash >= 0 && slash < display.length() - 1 ? display.substring(slash + 1) : display;
     }
 
     private EngineType selectedEngine() {

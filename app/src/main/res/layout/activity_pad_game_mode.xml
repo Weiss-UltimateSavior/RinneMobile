@@ -102,13 +102,23 @@
                      android:outlineProvider="background">
 
                     <ImageView
+                        android:id="@+id/navLaunchCenterImage"
                         android:layout_width="25dp"
                         android:layout_height="25dp"
                         android:layout_gravity="center"
                         android:contentDescription="@string/game_center"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/launcher_game_center_default"
-                        android:tint="@android:color/white" />
+                        android:src="@drawable/launcher_game_center_default" />
+
+                    <ImageView
+                        android:id="@+id/navLaunchCenterText"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/game_center"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/launcher_theme_rinne_def"
+                        android:visibility="gone" />
                 </FrameLayout>
             </LinearLayout>
 

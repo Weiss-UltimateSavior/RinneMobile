@@ -1,7 +1,7 @@
 package com.apps.PadUi;
 
 import android.content.Context;
-import android.graphics.drawable.GradientDrawable;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
@@ -56,6 +56,7 @@ public class PadGameModeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        renderSelectedNav(currentPage == null ? Page.GAME : currentPage);
         renderParticles();
     }
 
@@ -172,11 +173,31 @@ public class PadGameModeActivity extends AppCompatActivity {
         setNavSelected(binding.navManage, binding.navManageIcon, binding.navManageLabel,
                 page == Page.MANAGE, primary, muted);
 
-        GradientDrawable centerBackground = new GradientDrawable();
-        centerBackground.setShape(GradientDrawable.OVAL);
-        centerBackground.setColor(primary);
-        binding.navLaunchCenterCircle.setBackground(centerBackground);
+        applyLauncherThemeTone();
         moveNavIndicator(page == Page.GAME ? binding.navGame : binding.navManage);
+    }
+
+    /** 跟随主题切换中间图标：默认图标或主题风格图标（凛弥/杏璃）。 */
+    private void applyLauncherThemeTone() {
+        if (binding == null) return;
+        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circle(this));
+        String style = LauncherActivity.getLauncherThemeStyle(this);
+        boolean rinneTheme = LauncherActivity.THEME_STYLE_RINNE.equals(style);
+        boolean anriTheme = LauncherActivity.THEME_STYLE_ANRI.equals(style);
+        boolean themedIcon = rinneTheme || anriTheme;
+        binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
+        binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);
+        if (rinneTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_rinne_def);
+            binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
+        } else if (anriTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_anri_def);
+            binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
+        } else {
+            binding.navLaunchCenterImage.setColorFilter(Color.WHITE);
+        }
     }
 
     private void setNavSelected(LinearLayout container, TextView icon, TextView label,

@@ -47,6 +47,15 @@
                 android:textSize="14sp" />
 
             <TextView
+                android:id="@+id/padSettingsSidebarMetadata"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:gravity="center"
+                android:text="封面设置"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="14sp" />
+
+            <TextView
                 android:id="@+id/padSettingsSidebarAccount"
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
@@ -263,7 +272,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="清新绿意（默认）"
+                            android:text="丛雨（默认）"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -466,6 +475,99 @@
                     android:text="应用"
                     android:textSize="13sp"
                     android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/padSettingsMetadataActionList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="资料源"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/padMetadataSourceSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Bangumi Access Token"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/padMetadataTokenInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:hint="选择 Bangumi 时必填"
+                    android:inputType="textVisiblePassword"
+                    android:paddingStart="13dp"
+                    android:paddingEnd="13dp"
+                    android:textColor="@color/launcher_text_color"
+                    android:textColorHint="@color/launcher_input_hint_color"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/padMetadataTokenLink"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text="没有 Token？前往申请"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Bangumi Token 建议使用注册超过三个月的账号申请。月幕 Gal 使用公开 API，无需 Token。切换资料源后，可对当前游戏重新匹配以刷新资料与封面。"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/padMetadataCancelButton"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="取消"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/padMetadataSaveButton"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="保存"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout

@@ -46,7 +46,6 @@ import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
 
-import com.apps.LauncherGameEditActivity;
 import com.apps.LauncherMotion;
 import com.apps.LauncherTheme;
 import com.apps.UserData.LauncherUserData;
@@ -766,7 +765,6 @@ private void loadNextPage(boolean forceFullRefresh) {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         addGameActionOption(root, "详情", dialog, game, () -> showGameDetailDialog(game));
-        addGameActionOption(root, "编辑", dialog, game, () -> startEditGameActivity(game));
         addGameActionOption(root, "状态", dialog, game, () -> showPlayStatusDialog(game));
         addGameActionOption(root, "修改时长", dialog, game, () -> showEditPlayTimeDialog(game));
         addGameActionOption(root, "更多选项", dialog, game, () -> showMoreOptionsDialog(game));
@@ -1549,13 +1547,6 @@ mainHandler.post(() -> {
                 if (success) loadGames();
             });
         });
-    }
-
-    private void startEditGameActivity(Game game) {
-        needsRefresh = true;
-        android.content.Intent intent = new android.content.Intent(requireContext(), LauncherGameEditActivity.class);
-        intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, game.id);
-        startActivity(intent);
     }
 
     private String playStatusText(String status) {

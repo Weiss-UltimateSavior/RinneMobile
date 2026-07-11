@@ -1,7 +1,9 @@
 package com.apps.PadUi;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -29,10 +31,12 @@ import com.yuki.yukihub.databinding.ActivityPadSettingsBinding;
 import com.yuki.yukihub.launcher.EmulatorLauncher;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge;
+import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
+import com.yuki.yukihub.metadata.MetadataController;
 
 /** 横屏设置页，仅提供与 Pad 游戏模式一致的设置入口布局。 */
 public class PadSettingsActivity extends AppCompatActivity {
-    private enum Section { GENERAL, THEME, ACCOUNT }
+    private enum Section { GENERAL, THEME, METADATA, ACCOUNT }
 
     private static final String ACCOUNT_SETTINGS_PREFS = "launcher_account_settings";
     private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
@@ -59,6 +63,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         applySystemBarInsets();
         restoreSelectedTheme();
         setupKrkrControls();
+        setupMetadataControls();
         updateAccountSectionVisibility();
         bindActions();
         selectSection(Section.GENERAL);
@@ -76,6 +81,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void bindActions() {
         binding.padSettingsSidebarGeneral.setOnClickListener(view -> selectSection(Section.GENERAL));
         binding.padSettingsSidebarTheme.setOnClickListener(view -> selectSection(Section.THEME));
+        binding.padSettingsSidebarMetadata.setOnClickListener(view -> selectSection(Section.METADATA));
         binding.padSettingsSidebarAccount.setOnClickListener(view -> selectSection(Section.ACCOUNT));
         binding.padSettingsBackButton.setOnClickListener(view -> {
             view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
@@ -89,6 +95,9 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padKrkrSaveButton.setOnClickListener(view -> saveKrkrConfig());
         binding.padKrkrCancelButton.setOnClickListener(view -> finish());
         binding.padNativeKrkrButton.setOnClickListener(view -> enterNativeKrkr());
+        binding.padMetadataSaveButton.setOnClickListener(view -> saveMetadataConfig());
+        binding.padMetadataCancelButton.setOnClickListener(view -> finish());
+        binding.padMetadataTokenLink.setOnClickListener(view -> openMetadataTokenUrl());
         binding.padRowSyncConfig.setOnClickListener(view -> onSyncConfigClick());
         binding.padRowRealtimePlaytime.setOnClickListener(view -> onRealtimePlaytimeClick());
         binding.padRowProfileDisplay.setOnClickListener(view ->
@@ -116,6 +125,22 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padArtemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
     }
 
+    private void setupMetadataControls() {
+        binding.padMetadataSourceSpinner.setAdapter(LauncherTheme.spinnerAdapter(this,
+                new String[]{"VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"}));
+        loadMetadataConfig();
+    }
+
+    private void loadMetadataConfig() {
+        String source = LauncherMetadataBridge.getMetadataSource(this);
+        int selection = 0;
+        if (MetadataController.SOURCE_BANGUMI.equals(source)) selection = 1;
+        else if (MetadataController.SOURCE_BANGUMI_MIRROR.equals(source)) selection = 2;
+        else if (MetadataController.SOURCE_YMGAL.equals(source)) selection = 3;
+        binding.padMetadataSourceSpinner.setSelection(selection);
+        binding.padMetadataTokenInput.setText(LauncherMetadataBridge.getBangumiToken(this));
+    }
+
     private void restoreSelectedTheme() {
         String style = LauncherActivity.getLauncherThemeStyle(this);
         if (LauncherActivity.THEME_STYLE_RINNE.equals(style)) {
@@ -139,14 +164,18 @@ public class PadSettingsActivity extends AppCompatActivity {
         }
         currentSection = section;
         boolean showTheme = section == Section.THEME;
+        boolean showMetadata = section == Section.METADATA;
         boolean showAccount = section == Section.ACCOUNT;
         binding.padSettingsGeneralActionList.setVisibility(
                 section == Section.GENERAL ? View.VISIBLE : View.GONE);
         binding.padSettingsThemeActionList.setVisibility(showTheme ? View.VISIBLE : View.GONE);
+        binding.padSettingsMetadataActionList.setVisibility(showMetadata ? View.VISIBLE : View.GONE);
         binding.padSettingsAccountActionList.setVisibility(showAccount ? View.VISIBLE : View.GONE);
-        binding.padSettingsPageTitle.setText(showTheme ? "主题设置" : showAccount ? "账号设置" : "KRKR 引擎");
+        binding.padSettingsPageTitle.setText(showTheme ? "主题设置"
+                : showMetadata ? "资料源设置" : showAccount ? "账号设置" : "KRKR 引擎");
         binding.padSettingsPageDescription.setText(showTheme
                 ? "选择 Launcher 的主题风格与动态背景"
+                : showMetadata ? "选择游戏信息与封面获取的资料源"
                 : showAccount ? "管理云端同步、资料显示与账户功能偏好"
                 : "华为等部分机型如因存储权限导致引擎崩溃或闪退，可开启对应引擎的独立存档目录。");
         if (showAccount) renderAllAccountChips();
@@ -199,6 +228,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         styleSidebarItem(binding.padSettingsSidebarGeneral, currentSection == Section.GENERAL);
         styleSidebarItem(binding.padSettingsSidebarTheme, currentSection == Section.THEME);
+        styleSidebarItem(binding.padSettingsSidebarMetadata, currentSection == Section.METADATA);
         styleSidebarItem(binding.padSettingsSidebarAccount, currentSection == Section.ACCOUNT);
         LauncherTheme.secondaryButton(binding.padSettingsBackButton);
         LauncherTheme.textPrimary(binding.padSettingsPageTitle);
@@ -206,9 +236,13 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleSwitch(binding.padCompatModeSwitch);
         LauncherTheme.styleSwitch(binding.padKrScopedSwitch);
         LauncherTheme.styleSwitch(binding.padArtemisScopedSwitch);
+        LauncherTheme.styleSpinner(binding.padMetadataSourceSpinner);
         LauncherTheme.secondaryButton(binding.padNativeKrkrButton);
         LauncherTheme.secondaryButton(binding.padKrkrCancelButton);
         LauncherTheme.primaryButton(binding.padKrkrSaveButton);
+        LauncherTheme.textPrimary(binding.padMetadataTokenLink);
+        LauncherTheme.secondaryButton(binding.padMetadataCancelButton);
+        LauncherTheme.primaryButton(binding.padMetadataSaveButton);
         applyThemeMenuTone();
         renderThemeSelection();
         renderParticleToggle();
@@ -335,6 +369,34 @@ public class PadSettingsActivity extends AppCompatActivity {
             startActivity(EmulatorLauncher.buildInternalKrkrIntent(this, "", "", true));
         } catch (Throwable throwable) {
             Toast.makeText(this, "无法进入原生 KRKR", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveMetadataConfig() {
+        int position = binding.padMetadataSourceSpinner.getSelectedItemPosition();
+        String source = MetadataController.SOURCE_VNDB;
+        if (position == 1) source = MetadataController.SOURCE_BANGUMI;
+        else if (position == 2) source = MetadataController.SOURCE_BANGUMI_MIRROR;
+        else if (position == 3) source = MetadataController.SOURCE_YMGAL;
+
+        String token = binding.padMetadataTokenInput.getText().toString().trim();
+        if ((position == 1 || position == 2) && token.isEmpty()) {
+            Toast.makeText(this, "选择 Bangumi 时需要填写 Token", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        LauncherMetadataBridge.setMetadataSource(this, source);
+        LauncherMetadataBridge.setBangumiToken(this, token);
+        Toast.makeText(this, "已保存资料源：" + LauncherMetadataBridge.sourceLabel(source),
+                Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    private void openMetadataTokenUrl() {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://next.bgm.tv/demo/access-token/create")));
+        } catch (Throwable throwable) {
+            Toast.makeText(this, "无法打开链接", Toast.LENGTH_SHORT).show();
         }
     }
 
