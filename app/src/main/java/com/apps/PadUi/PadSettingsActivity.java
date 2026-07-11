@@ -171,6 +171,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padSettingsThemeActionList.setVisibility(showTheme ? View.VISIBLE : View.GONE);
         binding.padSettingsMetadataActionList.setVisibility(showMetadata ? View.VISIBLE : View.GONE);
         binding.padSettingsAccountActionList.setVisibility(showAccount ? View.VISIBLE : View.GONE);
+        binding.padSettingsActionScroll.scrollTo(0, 0);
         binding.padSettingsPageTitle.setText(showTheme ? "主题设置"
                 : showMetadata ? "资料源设置" : showAccount ? "账号设置" : "KRKR 引擎");
         binding.padSettingsPageDescription.setText(showTheme

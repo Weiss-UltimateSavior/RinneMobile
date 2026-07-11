@@ -105,11 +105,24 @@
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
+            <ScrollView
+                android:id="@+id/padSettingsActionScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="18dp"
+                android:fillViewport="true"
+                android:layout_weight="1"
+                android:overScrollMode="ifContentScrolls">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
             <LinearLayout
                 android:id="@+id/padSettingsGeneralActionList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -732,6 +745,8 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
