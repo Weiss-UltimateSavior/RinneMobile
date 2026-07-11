@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment;
 import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherManageBinding;
 import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
+import com.yuki.yukihub.scanner.GameScanner;
 import com.yuki.yukihub.sync.SyncManager;
 import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
@@ -210,9 +211,12 @@ public class LauncherManageFragment extends Fragment {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         // 深度选择区域
-        String[] depthLabels = {"浅层扫描（1层）", "标准扫描（2层）", "深层扫描（3层）", "深度扫描（4层）"};
+        String[] depthLabels = {
+                "浅层扫描（1层）", "标准扫描（2层）", "深层扫描（3层）", "深度扫描（4层）",
+                "遍历扫描（all层）", "递归扫描（命中）"
+        };
         int currentDepth = scanDepth();
-        int[] depthValues = {1, 2, 3, 4};
+        int[] depthValues = {1, 2, 3, 4, GameScanner.SCAN_ALL_LEVELS, GameScanner.SCAN_UNTIL_GAME_MATCH};
 
         for (int i = 0; i < depthLabels.length; i++) {
             final int depth = depthValues[i];
@@ -719,6 +723,9 @@ public class LauncherManageFragment extends Fragment {
 
     private int scanDepth() {
         int depth = prefs().getInt(KEY_STARTUP_SCAN_DEPTH, DEFAULT_SCAN_DEPTH);
+        if (depth == GameScanner.SCAN_ALL_LEVELS || depth == GameScanner.SCAN_UNTIL_GAME_MATCH) {
+            return depth;
+        }
         return Math.max(1, Math.min(MAX_SCAN_DEPTH, depth));
     }
 

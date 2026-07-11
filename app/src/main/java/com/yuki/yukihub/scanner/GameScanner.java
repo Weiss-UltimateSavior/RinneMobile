@@ -14,6 +14,10 @@ import java.util.Set;
 
 public class GameScanner {
     private static final String TAG = "GameScanner";
+    /** Traverse every descendant directory regardless of depth. */
+    public static final int SCAN_ALL_LEVELS = -1;
+    /** Traverse descendants until a directory is identified as a game, then stop below it. */
+    public static final int SCAN_UNTIL_GAME_MATCH = -2;
 
     public static List<ScanResult> scan(Context context, Uri rootUri) {
         return scan(context, rootUri, 2);
@@ -23,7 +27,9 @@ public class GameScanner {
         List<ScanResult> results = new ArrayList<>();
         Set<String> seenUris = new HashSet<>();
         if (context == null || rootUri == null) return results;
-        int depth = Math.max(1, Math.min(4, maxDepth));
+        boolean scanAllLevels = maxDepth == SCAN_ALL_LEVELS || maxDepth == SCAN_UNTIL_GAME_MATCH;
+        boolean stopAtGameMatch = maxDepth == SCAN_UNTIL_GAME_MATCH;
+        int depth = scanAllLevels ? Integer.MAX_VALUE : Math.max(1, Math.min(4, maxDepth));
 
         DocumentFile root;
         try {
@@ -39,11 +45,11 @@ public class GameScanner {
             Log.w(TAG, "root isDirectory failed uri=" + rootUri, t);
             return results;
         }
-        scanChildren(root, 1, depth, results, seenUris);
+        scanChildren(root, 1, depth, stopAtGameMatch, results, seenUris);
         return results;
     }
 
-    private static void scanChildren(DocumentFile dir, int level, int maxDepth, List<ScanResult> results, Set<String> seenUris) {
+    private static void scanChildren(DocumentFile dir, int level, int maxDepth, boolean stopAtGameMatch, List<ScanResult> results, Set<String> seenUris) {
         if (dir == null || results == null) return;
         DocumentFile[] children;
         try {
@@ -73,27 +79,28 @@ public class GameScanner {
                 }
                 if (!child.isDirectory()) continue;
 
-                // 情况2/3：优先检查子文件夹里的 PSP文件。
-                if (tryAddPspDirectory(child, results, seenUris)) continue;
-                // 情况2/3：优先检查子文件夹里的 desktop。
-                if (tryAddDesktopDirectory(child, results, seenUris)) continue;
+                // 识别目录本身的 PSP / desktop 入口；是否继续遍历由扫描模式决定。
+                // 全层模式会继续扫描嵌套游戏，命中模式则在识别游戏目录后停止向下。
+                boolean pspDirectory = tryAddPspDirectory(child, results, seenUris);
+                boolean desktopDirectory = tryAddDesktopDirectory(child, results, seenUris);
 
                 String childName = safeName(child).toLowerCase(Locale.ROOT);
                 boolean internalAssetDir = isInternalAssetDir(childName);
 
-                if (!internalAssetDir) {
+                boolean gameDirectoryMatched = pspDirectory || desktopDirectory;
+                if (!internalAssetDir && !gameDirectoryMatched) {
                     EngineDetector.Result detected = EngineDetector.detect(child, 2);
                     if (detected != null && detected.confidence > 0) {
                         String uri = child.getUri().toString();
                         if (markSeen(seenUris, uri)) {
                             results.add(new ScanResult(safeName(child), uri, detected.engine, detected.confidence, detected.launchTarget));
                         }
-                        continue;
+                        gameDirectoryMatched = true;
                     }
                 }
 
-                if (level < maxDepth) {
-                    scanChildren(child, level + 1, maxDepth, results, seenUris);
+                if (level < maxDepth && !(stopAtGameMatch && gameDirectoryMatched)) {
+                    scanChildren(child, level + 1, maxDepth, stopAtGameMatch, results, seenUris);
                 }
             } catch (Throwable t) {
                 Log.w(TAG, "scan child failed uri=" + safeUri(child), t);
