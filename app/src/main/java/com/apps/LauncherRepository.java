@@ -4,10 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.data.GameRepository;
-import com.yuki.yukihub.data.GameRepository.PlayActivity;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge.RecentActivity;
+import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
 import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.sync.SyncManager;
 import com.yuki.yukihub.util.TimeFormatUtil;
 
 import java.text.SimpleDateFormat;
@@ -31,14 +31,10 @@ public class LauncherRepository {
 
     private final Context appContext;
     private final SharedPreferences appPrefs;
-    private final GameRepository gameRepository;
-    private final SyncManager syncManager;
 
     public LauncherRepository(Context context) {
         appContext = context.getApplicationContext();
         appPrefs = appContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
-        gameRepository = new GameRepository(appContext);
-        syncManager = new SyncManager(appContext);
     }
 
     public LauncherSnapshot loadSnapshot() {
@@ -55,7 +51,7 @@ public class LauncherRepository {
     }
 
     public StatsSnapshot loadStatsSnapshot() {
-        List<Game> games = gameRepository.getAll();
+        List<Game> games = LauncherRepositoryBridge.getAllGames(appContext);
         long totalPlayTime = 0L;
         for (Game game : games) {
             if (game != null) totalPlayTime += Math.max(0L, game.totalPlayTime);
@@ -64,7 +60,7 @@ public class LauncherRepository {
         long todayStart = startOfToday();
         long todayEnd = todayStart + 24L * 60L * 60L * 1000L;
         long todayPlayTime = 0L;
-        Map<String, Long> todayDurations = gameRepository.getPlayDurationsBetween(todayStart, todayEnd);
+        Map<String, Long> todayDurations = LauncherRepositoryBridge.getPlayDurationsBetween(appContext, todayStart, todayEnd);
         for (Long duration : todayDurations.values()) {
             if (duration != null) todayPlayTime += Math.max(0L, duration);
         }
@@ -81,13 +77,13 @@ public class LauncherRepository {
 
     public List<RecentItem> loadRecentItems() {
         List<RecentItem> recentItems = new ArrayList<>();
-        for (PlayActivity activity : gameRepository.getRecentPlayActivities(RECENT_ITEM_LIMIT)) {
+        for (RecentActivity activity : LauncherRepositoryBridge.getRecentPlayActivities(appContext, RECENT_ITEM_LIMIT)) {
             recentItems.add(toRecentItem(activity));
         }
         return recentItems;
     }
 
-    private RecentItem toRecentItem(PlayActivity activity) {
+    private RecentItem toRecentItem(RecentActivity activity) {
         String fullTitle = activity.gameTitle == null || activity.gameTitle.trim().isEmpty()
                 ? "未命名游戏"
                 : activity.gameTitle.trim();
@@ -118,10 +114,10 @@ public class LauncherRepository {
     }
 
     private String syncStatus() {
-        if (!syncManager.isConfigured()) return "WebDAV 未配置";
+        if (!LauncherSyncBridge.isConfigured(appContext)) return "WebDAV 未配置";
         StringBuilder builder = new StringBuilder("WebDAV 已配置");
-        builder.append(syncManager.isAutoSyncEnabled() ? " · 自动同步开启" : " · 自动同步关闭");
-        long lastSync = syncManager.getLastSyncTime();
+        builder.append(LauncherSyncBridge.isAutoSyncEnabled(appContext) ? " · 自动同步开启" : " · 自动同步关闭");
+        long lastSync = LauncherSyncBridge.lastSyncTime(appContext);
         if (lastSync > 0) {
             builder.append(" · 上次同步 ").append(formatSyncTime(lastSync));
         } else {

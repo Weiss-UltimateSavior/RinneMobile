@@ -21,7 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
-import com.yuki.yukihub.data.GameRepository;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
@@ -99,8 +99,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         long gameId = getIntent().getLongExtra(EXTRA_GAME_ID, -1);
         if (gameId <= 0) { finish(); return; }
         AppExecutors.io().execute(() -> {
-            GameRepository repo = new GameRepository(this);
-            Game g = repo.findById(gameId);
+            Game g = LauncherRepositoryBridge.findGameById(this, gameId);
             runOnUiThread(() -> {
                 if (g == null) { Toast.makeText(this, "游戏不存在", Toast.LENGTH_SHORT).show(); finish(); return; }
                 game = g;
@@ -145,8 +144,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                         game.coverSourceType = 1;
                     }
                 }
-                GameRepository repo = new GameRepository(this);
-                repo.update(game);
+                LauncherRepositoryBridge.updateGame(this, game);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);

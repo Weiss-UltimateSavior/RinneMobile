@@ -485,14 +485,17 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
     }
 
     public int importGamesJson(JSONArray arr) throws Exception {
+        return importGamesJson(helper.getWritableDatabase(), arr);
+    }
+
+    public int importGamesJson(SQLiteDatabase db, JSONArray arr) throws Exception {
         if (arr == null) return 0;
         int changed = 0;
-        SQLiteDatabase db = helper.getWritableDatabase();
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
             if (o == null) continue;
             String rootUri = o.optString("root_uri", "").trim();
-            Game g = findBySyncIdentity(o, rootUri);
+            Game g = findBySyncIdentity(db, o, rootUri);
             boolean exists = g != null;
             if (g == null) g = new Game();
             long existingUpdatedAt = exists ? Math.max(0L, g.updatedAt) : 0L;
@@ -564,14 +567,17 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
             }
             changed++;
         }
-        recalculatePlayStats();
+        recalculatePlayStats(db);
         return changed;
     }
 
     public int importPlaySessionsJson(JSONArray arr) throws Exception {
+        return importPlaySessionsJson(helper.getWritableDatabase(), arr);
+    }
+
+    public int importPlaySessionsJson(SQLiteDatabase db, JSONArray arr) throws Exception {
         if (arr == null) return 0;
         int changed = 0;
-        SQLiteDatabase db = helper.getWritableDatabase();
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
             if (o == null) continue;
@@ -587,7 +593,7 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
                 }
             } finally { dup.close(); }
             String rootUri = o.optString("game_root_uri", "").trim();
-            Game g = findByRootUri(rootUri);
+            Game g = findByRootUri(db, rootUri);
             if (g == null) {
                 JSONObject identity = new JSONObject();
                 identity.put("root_uri", rootUri);
@@ -596,7 +602,7 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
                 identity.put("title", o.optString("game_title", ""));
                 identity.put("engine", o.optString("game_engine", ""));
                 identity.put("emulator_package", o.optString("game_emulator_package", ""));
-                g = findBySyncIdentity(identity, rootUri);
+                g = findBySyncIdentity(db, identity, rootUri);
             }
             if (g == null || g.id <= 0) continue;
             long endTime = o.has("end_time") && !o.isNull("end_time") ? o.optLong("end_time") : 0L;
@@ -628,12 +634,15 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
             }
             changed++;
         }
-        recalculatePlayStats();
+        recalculatePlayStats(db);
         return changed;
     }
 
     public void recalculatePlayStats() {
-        SQLiteDatabase db = helper.getWritableDatabase();
+        recalculatePlayStats(helper.getWritableDatabase());
+    }
+
+    private void recalculatePlayStats(SQLiteDatabase db) {
         // Preserve imported/manual aggregate play time when the synced snapshot only
         // contains a limited tail of play_sessions. Explicit clear/manual reset is
         // represented by a newer playtime_reset_at plus the aggregate value imported
@@ -642,8 +651,11 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
     }
 
     private Game findByRootUri(String rootUri) {
+        return findByRootUri(helper.getReadableDatabase(), rootUri);
+    }
+
+    private Game findByRootUri(SQLiteDatabase db, String rootUri) {
         if (rootUri == null || rootUri.trim().isEmpty()) return null;
-        SQLiteDatabase db = helper.getReadableDatabase();
         String key = normalizeRootUriKey(rootUri);
         Cursor c = db.query("games", null, "root_uri IS NOT NULL AND root_uri != ''", null, null, null, null);
         try {
@@ -704,20 +716,27 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
     }
 
     private Game findBySyncIdentity(JSONObject o, String rootUri) {
-        Game byRoot = findByRootUri(rootUri);
+        return findBySyncIdentity(helper.getReadableDatabase(), o, rootUri);
+    }
+
+    private Game findBySyncIdentity(SQLiteDatabase db, JSONObject o, String rootUri) {
+        Game byRoot = findByRootUri(db, rootUri);
         if (byRoot != null) return byRoot;
         if (o == null) return null;
         String gamehubId = o.optString("gamehub_local_game_id", o.optString("gaishi_local_game_id", "")).trim();
         if (!gamehubId.isEmpty()) {
-            Game byGameHub = findByGameHubLocalId(gamehubId);
+            Game byGameHub = findByGameHubLocalId(db, gamehubId);
             if (byGameHub != null) return byGameHub;
         }
-        return findByTitleForEmptyRoot(o.optString("title", "").trim());
+        return findByTitleForEmptyRoot(db, o.optString("title", "").trim());
     }
 
     private Game findByGameHubLocalId(String gamehubId) {
+        return findByGameHubLocalId(helper.getReadableDatabase(), gamehubId);
+    }
+
+    private Game findByGameHubLocalId(SQLiteDatabase db, String gamehubId) {
         if (gamehubId == null || gamehubId.trim().isEmpty()) return null;
-        SQLiteDatabase db = helper.getReadableDatabase();
         Cursor c = db.query("games", null, "gamehub_local_game_id=? OR gaishi_local_game_id=?", new String[]{gamehubId, gamehubId}, null, null, "updated_at DESC", "1");
         try {
             if (!c.moveToFirst()) return null;
@@ -728,8 +747,11 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
     }
 
     private Game findByTitleForEmptyRoot(String title) {
+        return findByTitleForEmptyRoot(helper.getReadableDatabase(), title);
+    }
+
+    private Game findByTitleForEmptyRoot(SQLiteDatabase db, String title) {
         if (title == null || title.trim().isEmpty()) return null;
-        SQLiteDatabase db = helper.getReadableDatabase();
         Cursor c = db.query("games", null,
                 "IFNULL(root_uri,'')='' AND IFNULL(title,'')=?",
                 new String[]{title.trim()},

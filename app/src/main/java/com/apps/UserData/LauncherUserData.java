@@ -2,11 +2,9 @@ package com.apps.UserData;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
-import com.yuki.yukihub.data.YukiDatabaseHelper;
-import com.yuki.yukihub.sync.SyncManager;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
+import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -102,7 +100,7 @@ public class LauncherUserData {
             writeText(new File(dir, SETTINGS_FILE), root.toString(2));
 
             // 游玩记录 → SQL
-            String sql = exportPlaySql(context);
+            String sql = LauncherRepositoryBridge.exportPlaySql(context);
             writeText(new File(dir, PLAY_SQL_FILE), sql);
 
             return dir.getAbsolutePath();
@@ -134,18 +132,13 @@ public class LauncherUserData {
      */
     public static String exportCloudPlayData(Context context) {
         if (context == null) return null;
-        try {
-            JSONObject root = new SyncManager(context.getApplicationContext()).exportSnapshotForLocalBackup();
-            root.put("backup_type", "launcher_cloud_play_v2");
-            return root.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        JSONObject root = LauncherSyncBridge.exportCloudSnapshot(context);
+        if (root == null) return null;
+        return root.toString();
     }
 
     /**
-     * 导入账户云备份。新版 JSON 走 SyncManager 的稳定身份合并；旧版 SQL 继续兼容。
+     * 导入账户云备份。新版 JSON 走 LauncherSyncBridge 的稳定身份合并；旧版 SQL 继续兼容。
      */
     public static boolean importCloudPlayData(Context context, String playData) {
         if (context == null || playData == null || playData.trim().isEmpty()) return false;
@@ -153,19 +146,16 @@ public class LauncherUserData {
         if (trimmed.startsWith("{")) {
             try {
                 JSONObject root = new JSONObject(trimmed);
-                if (!"YukiHub".equals(root.optString("app", ""))
-                        || root.optJSONArray("games") == null
-                        || root.optJSONArray("play_sessions") == null) {
-                    return false;
+                if (LauncherSyncBridge.importCloudSnapshot(context, root)) {
+                    return true;
                 }
-                new SyncManager(context.getApplicationContext()).importSnapshotFromLocalBackup(root);
-                return true;
+                return false;
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;
             }
         }
-        return importPlaySql(context, playData);
+        return LauncherRepositoryBridge.importPlaySql(context, playData);
     }
 
     // ══════════════════════════════════════════════════
@@ -195,7 +185,7 @@ public class LauncherUserData {
         if (sqlFile.exists()) {
             try {
                 String sql = readText(sqlFile);
-                ok = importPlaySql(context, sql) && ok;
+                ok = LauncherRepositoryBridge.importPlaySql(context, sql) && ok;
             } catch (Exception e) {
                 ok = false;
             }
@@ -342,210 +332,6 @@ public class LauncherUserData {
     }
 
     return editor.commit();
-    }
-
-    // ══════════════════════════════════════════════════
-    //  游玩记录 SQL 导出/导入
-    // ══════════════════════════════════════════════════
-
-    private static String exportPlaySql(Context context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("-- Launcher Play Data Export\n");
-        sb.append("-- Export time: ").append(System.currentTimeMillis()).append("\n\n");
-
-        YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
-        SQLiteDatabase db = helper.getReadableDatabase();
-
-        try {
-            // games 表
-            sb.append("-- games\n");
-            Cursor gc = db.query("games", null, null, null, null, null, "id ASC");
-            sb.append(tableToInsertSql(gc, "games"));
-            gc.close();
-
-            // play_sessions 表
-            sb.append("\n-- play_sessions\n");
-            Cursor pc = db.query("play_sessions", null, null, null, null, null, "id ASC");
-            sb.append(tableToInsertSql(pc, "play_sessions"));
-            pc.close();
-
-            // metadata_cache 表（VNDB/Bangumi/Ymgal 元数据，复合主键 game_id+source）
-            sb.append("\n-- metadata_cache\n");
-            Cursor mc = db.query("metadata_cache", null, null, null, null, null, "game_id ASC, source ASC");
-            sb.append(tableToInsertSql(mc, "metadata_cache"));
-            mc.close();
-
-            // settings 表（键值对，主键 key）
-            sb.append("\n-- settings\n");
-            Cursor sc = db.query("settings", null, null, null, null, null, "\"key\" ASC");
-            sb.append(tableToInsertSql(sc, "settings"));
-            sc.close();
-        } finally {
-            db.close();
-        }
-
-        return sb.toString();
-    }
-
-    private static String tableToInsertSql(Cursor cursor, String tableName) {
-        StringBuilder sb = new StringBuilder();
-        String[] columns = cursor.getColumnNames();
-        int colCount = columns.length;
-
-        while (cursor.moveToNext()) {
-            sb.append("INSERT OR REPLACE INTO ").append(tableName).append(" (");
-            for (int i = 0; i < colCount; i++) {
-                if (i > 0) sb.append(", ");
-                sbappendIdentifier(sb, columns[i]);
-            }
-            sb.append(") VALUES (");
-            for (int i = 0; i < colCount; i++) {
-                if (i > 0) sb.append(", ");
-                if (cursor.isNull(i)) {
-                    sb.append("NULL");
-                } else {
-                    int type = cursor.getType(i);
-                    if (type == Cursor.FIELD_TYPE_INTEGER) {
-                        sb.append(cursor.getLong(i));
-                    } else if (type == Cursor.FIELD_TYPE_FLOAT) {
-                        sb.append(cursor.getDouble(i));
-                    } else {
-                        sbappendEscapedString(sb, cursor.getString(i));
-                    }
-                }
-            }
-            sb.append(");\n");
-        }
-        return sb.toString();
-    }
-
-    private static void sbappendIdentifier(StringBuilder sb, String id) {
-        sb.append('"').append(id.replace("\"", "\"\"")).append('"');
-    }
-
-    private static void sbappendEscapedString(StringBuilder sb, String value) {
-        sb.append('\'');
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c == '\'') sb.append("''");
-            else sb.append(c);
-        }
-        sb.append('\'');
-    }
-
-    /**
-     * 导入旧版游玩记录 SQL。
-     * 旧格式携带数据库本地主键，只能作为完整快照恢复：先校验全部语句，
-     * 再在同一事务中清空相关表并导入；任一语句失败都会整体回滚。
-     *
-     * @return 完整恢复成功返回 true；校验或执行失败返回 false，数据库保持恢复前状态
-     */
-    public static boolean importPlaySql(Context context, String sql) {
-    if (sql == null || sql.trim().isEmpty()) return false;
-
-    YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
-    SQLiteDatabase db = helper.getWritableDatabase();
-
-    try {
-        List<String> statements = splitSqlStatements(sql);
-        List<String> validated = new ArrayList<>();
-        for (String stmt : statements) {
-            String trimmed = removeLeadingSqlComments(stmt).trim();
-            if (trimmed.isEmpty()) continue;
-            if (!isAllowedLegacyInsert(trimmed)) return false;
-            validated.add(trimmed);
-        }
-        if (validated.isEmpty()) return false;
-
-        db.beginTransaction();
-        db.delete("play_sessions", null, null);
-        db.delete("metadata_cache", null, null);
-        db.delete("settings", null, null);
-        db.delete("games", null, null);
-        for (String stmt : validated) db.execSQL(stmt);
-        db.setTransactionSuccessful();
-        return true;
-    } catch (Exception e) {
-        e.printStackTrace();
-        return false;
-    } finally {
-        try {
-            db.endTransaction();
-        } catch (Exception ignored) {
-        }
-        db.close();
-    }
-}
-
-private static boolean isAllowedLegacyInsert(String sql) {
-    String normalized = sql.replaceAll("\\s+", " ").trim().toLowerCase(java.util.Locale.ROOT);
-    if (!normalized.startsWith("insert or replace into ")) return false;
-    String rest = normalized.substring("insert or replace into ".length()).trim();
-    if (rest.startsWith("\"")) rest = rest.substring(1);
-    return rest.startsWith("games\"") || rest.startsWith("games ") || rest.startsWith("games(")
-            || rest.startsWith("play_sessions\"") || rest.startsWith("play_sessions ") || rest.startsWith("play_sessions(")
-            || rest.startsWith("metadata_cache\"") || rest.startsWith("metadata_cache ") || rest.startsWith("metadata_cache(")
-            || rest.startsWith("settings\"") || rest.startsWith("settings ") || rest.startsWith("settings(");
-}
-
-private static String removeLeadingSqlComments(String stmt) {
-    String[] lines = stmt.split("\\r?\\n");
-    StringBuilder sb = new StringBuilder();
-
-    for (String line : lines) {
-        String trimmed = line.trim();
-        if (trimmed.startsWith("--")) {
-            continue;
-        }
-        sb.append(line).append('\n');
-    }
-
-    return sb.toString();
-}
-
-    /**
-     * 正确拆分 SQL 语句，跳过字符串字面量中的分号。
-     * 例如: INSERT INTO t VALUES ('a;b'); INSERT INTO t VALUES('c');
-     * → ["INSERT INTO t VALUES ('a;b')", "INSERT INTO t VALUES('c')"]
-     */
-    private static List<String> splitSqlStatements(String sql) {
-    List<String> result = new ArrayList<>();
-    StringBuilder sb = new StringBuilder();
-    boolean inSingleQuote = false;
-
-    for (int i = 0; i < sql.length(); i++) {
-        char c = sql.charAt(i);
-
-        if (c == '\'') {
-            if (inSingleQuote && i + 1 < sql.length() && sql.charAt(i + 1) == '\'') {
-                // 关键修复：SQL 字符串里的转义单引号必须保留两个 ''
-                sb.append("''");
-                i++;
-                continue;
-            }
-
-            inSingleQuote = !inSingleQuote;
-            sb.append(c);
-            continue;
-        }
-
-        if (c == ';' && !inSingleQuote) {
-            String stmt = sb.toString().trim();
-            if (!stmt.isEmpty()) {
-                result.add(stmt);
-            }
-            sb.setLength(0);
-        } else {
-            sb.append(c);
-        }
-    }
-
-    String remaining = sb.toString().trim();
-    if (!remaining.isEmpty()) {
-        result.add(remaining);
-    }
-
-    return result;
     }
 
     // ══════════════════════════════════════════════════

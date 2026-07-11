@@ -21,8 +21,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.yuki.yukihub.R;
-import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
@@ -200,13 +200,12 @@ public final class LauncherGameActionController {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
             try {
-                GameRepository repository = new GameRepository(app);
-                Game latest = repository.findById(game.id);
+                Game latest = LauncherRepositoryBridge.findGameById(app, game.id);
                 if (latest != null) {
                     long duration = latest.totalPlayTime;
                     if (totalMinutes != null) duration = totalMinutes * 60_000L;
                     if (addMinutes != null) duration += addMinutes * 60_000L;
-                    repository.setManualPlayTimeForGame(latest.id, Math.max(0L, duration));
+                    LauncherRepositoryBridge.setManualPlayTimeForGame(app, latest.id, Math.max(0L, duration));
                 }
             } catch (Throwable ignored) { }
             postRefresh(null);
@@ -240,6 +239,8 @@ public final class LauncherGameActionController {
                 () -> toggleFavorite(game));
         addMoreOption(root, dialog, "重新匹配 VNDB 元数据", false,
                 () -> rematchMetadata(game));
+        addMoreOption(root, dialog, "自定义搜索 VNDB", false,
+                () -> LauncherCustomVndbSearchDialog.show(fragment, game, host::refreshGames));
         addMoreOption(root, dialog, "同步元数据封面到卡片", false,
                 () -> syncMetadataToCard(game));
         addMoreOption(root, dialog, "删除游戏", true, () -> confirmDeleteGame(game));
@@ -314,7 +315,7 @@ public final class LauncherGameActionController {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
             try {
-                new GameRepository(app).delete(game.id);
+                LauncherRepositoryBridge.deleteGame(app, game.id);
             } catch (Throwable ignored) { }
             postRefresh("已删除");
         });
@@ -328,11 +329,10 @@ public final class LauncherGameActionController {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
             try {
-                GameRepository repository = new GameRepository(app);
-                Game latest = repository.findById(game.id);
+                Game latest = LauncherRepositoryBridge.findGameById(app, game.id);
                 if (latest != null) {
                     mutation.apply(latest);
-                    repository.update(latest);
+                    LauncherRepositoryBridge.updateGame(app, latest);
                 }
             } catch (Throwable ignored) { }
             postRefresh(message);

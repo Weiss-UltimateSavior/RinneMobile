@@ -2,10 +2,12 @@ package com.yuki.yukihub.sync;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.data.MetadataRepository;
+import com.yuki.yukihub.data.YukiDatabaseHelper;
 import com.yuki.yukihub.util.AppExecutors;
 
 import org.json.JSONArray;
@@ -301,19 +303,19 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
     private void importSnapshot(JSONObject root) throws Exception {
         if (root == null) return;
         if (!"YukiHub".equals(root.optString("app", ""))) throw new Exception("不是有效的 YukiHub 同步文件");
+        SharedPreferences.Editor prefsEditor = appPrefs.edit();
         JSONObject profile = root.optJSONObject("profile");
         if (profile != null) {
             String incomingAvatar = profile.optString("avatar_uri", "");
             if (incomingAvatar == null || !(incomingAvatar.startsWith("http://") || incomingAvatar.startsWith("https://"))) incomingAvatar = "";
-            appPrefs.edit()
+            prefsEditor
                     .putString(KEY_PROFILE_NAME, profile.optString("name", appPrefs.getString(KEY_PROFILE_NAME, "Yuki")))
                     .putString(KEY_PROFILE_SIGNATURE, profile.optString("signature", appPrefs.getString(KEY_PROFILE_SIGNATURE, "")))
-                    .putString(KEY_PROFILE_AVATAR, incomingAvatar)
-                    .apply();
+                    .putString(KEY_PROFILE_AVATAR, incomingAvatar);
         }
         JSONObject settings = root.optJSONObject("settings");
         if (settings != null) {
-            SharedPreferences.Editor e = appPrefs.edit();
+            SharedPreferences.Editor e = prefsEditor;
             String source = settings.optString("metadata_source", "");
             if (SOURCE_VNDB.equals(source) || SOURCE_BANGUMI.equals(source) || SOURCE_BANGUMI_MIRROR.equals(source) || SOURCE_YMGAL.equals(source)) e.putString(KEY_METADATA_SOURCE, source);
             // 兼容旧备份：忽略扫描目录（last_scan_root_uri/scan_root_uris），避免导入跨设备无效路径或泄露本机目录。
@@ -338,13 +340,23 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
             if (settings.has("background_dim_alpha")) e.putInt(KEY_BACKGROUND_DIM_ALPHA, settings.optInt("background_dim_alpha", 120));
             if (settings.has("game_columns")) e.putInt(KEY_GAME_COLUMNS, Math.max(2, Math.min(10, settings.optInt("game_columns", 5))));
             if (settings.has("ui_scale")) e.putFloat(KEY_UI_SCALE, (float) Math.max(0.70d, Math.min(1.50d, settings.optDouble("ui_scale", 1.0d))));
-            e.apply();
         }
         GameRepository gameRepo = new GameRepository(context);
         MetadataRepository metaRepo = new MetadataRepository(context);
-        gameRepo.importGamesJson(root.optJSONArray("games"));
-        gameRepo.importPlaySessionsJson(root.optJSONArray("play_sessions"));
-        if (root.has("metadata_cache")) metaRepo.importMetadataJson(root.optJSONArray("metadata_cache"));
+        YukiDatabaseHelper helper = new YukiDatabaseHelper(context);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            gameRepo.importGamesJson(db, root.optJSONArray("games"));
+            gameRepo.importPlaySessionsJson(db, root.optJSONArray("play_sessions"));
+            if (root.has("metadata_cache")) metaRepo.importMetadataJson(db, root.optJSONArray("metadata_cache"));
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+        // 偏好设置在数据库完整提交后一次性落盘，失败的数据库导入不会污染配置。
+        if (!prefsEditor.commit()) throw new Exception("同步设置保存失败");
     }
 
     private JSONObject mergeSnapshots(JSONObject local, JSONObject remote) throws Exception {

@@ -27,10 +27,10 @@ import com.apps.LauncherGameEditActivity;
 import com.apps.LauncherMotion;
 import com.apps.LauncherTheme;
 import com.yuki.yukihub.R;
-import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.databinding.FragmentPadGameBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.SafeImageLoader;
@@ -386,7 +386,7 @@ public class PadGameFragment extends Fragment {
         AppExecutors.runOnSingle(() -> {
             List<Game> games;
             try {
-                games = new GameRepository(appContext).getAll();
+                games = LauncherRepositoryBridge.getAllGames(appContext);
                 Collator collator = Collator.getInstance(Locale.getDefault());
                 games.sort((left, right) -> collator.compare(safeTitle(left), safeTitle(right)));
             } catch (Throwable throwable) {

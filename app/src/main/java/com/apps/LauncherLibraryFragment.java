@@ -35,12 +35,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.MainActivity;
-import com.yuki.yukihub.data.GameRepository;
-import com.yuki.yukihub.data.MetadataRepository;
 import com.yuki.yukihub.databinding.FragmentLauncherLibraryBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
+import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.metadata.VnMetadata;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
@@ -481,8 +480,7 @@ public class LauncherLibraryFragment extends Fragment {
             Map<Long, List<String>> developers;
             List<CategoryOption> builtCategories;
             try {
-                GameRepository repo = new GameRepository(appContext);
-                games = repo.getAll();
+                games = LauncherRepositoryBridge.getAllGames(appContext);
             } catch (Throwable throwable) {
                 games = Collections.emptyList();
             }
@@ -939,11 +937,10 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void updateGameStatus(Game game, String status) {
         AppExecutors.io().execute(() -> {
             try {
-                GameRepository repo = new GameRepository(requireContext());
-                Game latest = repo.findById(game.id);
+                Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
                 if (latest != null) {
                     latest.playStatus = status;
-                    repo.update(latest);
+                    LauncherRepositoryBridge.updateGame(requireContext(), latest);
                 }
             } catch (Throwable ignored) {}
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
@@ -1103,13 +1100,12 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void updatePlayTime(Game game, Long totalMinutes, Long addMinutes) {
         AppExecutors.io().execute(() -> {
             try {
-                GameRepository repo = new GameRepository(requireContext());
-                Game latest = repo.findById(game.id);
+                Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
                 if (latest == null) return;
                 long finalDuration = latest.totalPlayTime;
                 if (totalMinutes != null) finalDuration = totalMinutes * 60_000L;
                 if (addMinutes != null) finalDuration += addMinutes * 60_000L;
-                repo.setManualPlayTimeForGame(latest.id, Math.max(0, finalDuration));
+                LauncherRepositoryBridge.setManualPlayTimeForGame(requireContext(), latest.id, Math.max(0, finalDuration));
             } catch (Throwable ignored) {}
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
                 needsRefresh = true;
@@ -1157,6 +1153,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         String[][] options = {
             {favoriteLabel, "favorite"},
             {"重新匹配 VNDB 元数据", "rematch"},
+            {"自定义搜索 VNDB", "custom_vndb"},
             {"同步元数据封面到卡片", "sync"},
             {"删除游戏", "delete"}
         };
@@ -1177,6 +1174,7 @@ private void loadNextPage(boolean forceFullRefresh) {
                 switch (action) {
                     case "favorite": toggleFavorite(game); break;
                     case "rematch": rematchMetadata(game); break;
+                    case "custom_vndb": LauncherCustomVndbSearchDialog.show(this, game, this::loadGames); break;
                     case "sync": syncMetadataToCard(game); break;
                     case "delete": confirmDeleteGame(game); break;
                 }
@@ -1193,11 +1191,10 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void toggleFavorite(Game game) {
         AppExecutors.io().execute(() -> {
             try {
-                GameRepository repo = new GameRepository(requireContext());
-                Game latest = repo.findById(game.id);
+                Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
                 if (latest != null) {
                     latest.favorite = !latest.favorite;
-                    repo.update(latest);
+                    LauncherRepositoryBridge.updateGame(requireContext(), latest);
                 }
             } catch (Throwable ignored) {}
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
@@ -1257,8 +1254,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void deleteGame(Game game) {
         AppExecutors.io().execute(() -> {
             try {
-                GameRepository repo = new GameRepository(requireContext());
-                repo.delete(game.id);
+                LauncherRepositoryBridge.deleteGame(requireContext(), game.id);
             } catch (Throwable ignored) {}
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
                 loadGames();
@@ -1337,8 +1333,7 @@ private void loadNextPage(boolean forceFullRefresh) {
             // 获取所有游戏
             List<Game> syncGames;
             try {
-                GameRepository repo = new GameRepository(appContext);
-                syncGames = repo.getAll();
+                syncGames = LauncherRepositoryBridge.getAllGames(appContext);
             } catch (Throwable e) {
                 syncGames = Collections.emptyList();
             }
@@ -1354,13 +1349,9 @@ private void loadNextPage(boolean forceFullRefresh) {
                     continue;
                 }
                 try {
-                    // 1. 重新匹配 VNDB 元数据
-                    List<VnMetadata> candidates = com.yuki.yukihub.metadata.VndbClient.searchCandidates(game.title, 1);
-                    if (candidates != null && !candidates.isEmpty()) {
-                        VnMetadata meta = candidates.get(0);
-                        MetadataRepository metaRepo = new MetadataRepository(appContext);
-                        metaRepo.saveVndb(game.id, meta);
-
+                    // 1. 重新匹配 VNDB 元数据（通过 Bridge 调用，内部封装 VndbClient + MetadataRepository）
+                    VnMetadata meta = LauncherMetadataBridge.fetchAndSaveVndbSync(appContext, game);
+                    if (meta != null) {
                         // 2. 同步封面到卡片
                         if (meta.coverUrl != null && !meta.coverUrl.trim().isEmpty()) {
                             String cover = com.yuki.yukihub.launcherbridge.LauncherCoverBridge.downloadCover(
@@ -1369,13 +1360,12 @@ private void loadNextPage(boolean forceFullRefresh) {
                                   "sync_cover_" + game.id + "_" + syncBatchVersion
                             );
                             if (cover != null) {
-                                GameRepository repo = new GameRepository(appContext);
-                                Game latest = repo.findById(game.id);
+                                Game latest = LauncherRepositoryBridge.findGameById(appContext, game.id);
                                 if (latest != null) {
                                     latest.coverUri = cover;
                                     latest.coverPersistUri = cover;
                                     latest.coverSourceType = 1;
-                                    repo.update(latest);
+                                    LauncherRepositoryBridge.updateGame(appContext, latest);
                                 }
                             }
                         }
@@ -1406,8 +1396,7 @@ private void loadNextPage(boolean forceFullRefresh) {
             // 同步完成后：在 IO 线程直接重新加载游戏列表，然后一次性刷新 UI
             List<Game> finalGames;
             try {
-                GameRepository repo = new GameRepository(appContext);
-                finalGames = repo.getAll();
+                finalGames = LauncherRepositoryBridge.getAllGames(appContext);
             } catch (Throwable e) {
                 finalGames = Collections.emptyList();
             }
@@ -1628,7 +1617,7 @@ mainHandler.post(() -> {
     int unplayedCount = 0;
 
     Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    MetadataRepository metadataRepository = new MetadataRepository(requireContext().getApplicationContext());
+    android.content.Context appContext = requireContext().getApplicationContext();
 
     for (Game game : allGames) {
         if (game == null) continue;
@@ -1646,7 +1635,7 @@ mainHandler.post(() -> {
             unplayedCount++;
         }
 
-        List<String> developers = parseDevelopers(developerOf(metadataRepository, game));
+        List<String> developers = parseDevelopers(LauncherMetadataBridge.getDeveloperOf(appContext, game.id));
         gameDevelopers.put(game.id, developers);
 
         for (String developer : developers) {
@@ -1708,7 +1697,6 @@ mainHandler.post(() -> {
     int unplayedCount = 0;
 
     Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    MetadataRepository metadataRepository = new MetadataRepository(appContext);
 
     if (games != null) {
         for (Game game : games) {
@@ -1727,7 +1715,7 @@ mainHandler.post(() -> {
                 unplayedCount++;
             }
 
-            List<String> developers = parseDevelopers(developerOf(metadataRepository, game));
+            List<String> developers = parseDevelopers(LauncherMetadataBridge.getDeveloperOf(appContext, game.id));
             devs.put(game.id, developers);
 
             for (String developer : developers) {
@@ -1857,14 +1845,6 @@ mainHandler.post(() -> {
         String value = status == null ? "" : status.trim().toLowerCase(Locale.ROOT);
         if ("completed".equals(value) || "playing".equals(value)) return value;
         return "unplayed";
-    }
-
-    private String developerOf(MetadataRepository metadataRepository, Game game) {
-        if (metadataRepository == null || game == null || game.id <= 0) return "";
-        VnMetadata meta = metadataRepository.getVndb(game.id);
-        if (meta == null) meta = metadataRepository.getBangumi(game.id);
-        if (meta == null) meta = metadataRepository.getYmgal(game.id);
-        return meta == null || meta.developer == null ? "" : meta.developer.trim();
     }
 
     private List<String> parseDevelopers(String developersText) {

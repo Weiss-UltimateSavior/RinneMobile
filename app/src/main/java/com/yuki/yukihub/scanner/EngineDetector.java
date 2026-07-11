@@ -7,6 +7,9 @@ import androidx.documentfile.provider.DocumentFile;
 import com.yuki.yukihub.model.EngineType;
 
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -24,6 +27,10 @@ public class EngineDetector {
         public EngineType engine = EngineType.UNKNOWN;
         public int confidence = 0;
         public String launchTarget = "";
+        /**
+         * 当目录内没有 data.xp3 且存在多个 XP3 时，由调用方让用户选择的候选入口。
+         */
+        public List<String> xp3Candidates = new ArrayList<>();
     }
 
     public static Result detect(DocumentFile dir) {
@@ -38,6 +45,13 @@ public class EngineDetector {
         FeatureState s = new FeatureState();
         collectFeatures(dir, "", 1, depth, s);
         if (s.empty) return r;
+        Collections.sort(s.xp3Files, String.CASE_INSENSITIVE_ORDER);
+        Collections.sort(s.gameNamedXp3Files, String.CASE_INSENSITIVE_ORDER);
+        // 游戏名中明确包含“游戏”的归档通常是 Kirikiri 的启动归档，优先于 data.xp3。
+        // 同名规则命中多个时保留候选列表，由扫描页要求用户确认，不能按文件顺序猜测。
+        s.firstXp3 = s.gameNamedXp3Files.size() == 1 ? s.gameNamedXp3Files.get(0)
+                : s.dataXp3 != null ? s.dataXp3
+                : (s.xp3Files.isEmpty() ? null : s.xp3Files.get(0));
 
         // 只对 Artemis 使用原 Tyranor 的判定：
         // system.ini + system/first.iet、root.pfs、或目录内任意 .pfs 都视为 Artemis。
@@ -57,6 +71,10 @@ public class EngineDetector {
             score(r, EngineType.ARTEMIS, (s.hasSystemIni && s.hasFirstIet) || s.hasRootPfs ? 95 : 90, "[游戏目录]");
         } else if (s.firstXp3 != null || s.hasStartupTjs || s.hasConfigTjs) {
             score(r, EngineType.KIRIKIRI, s.firstXp3 != null ? 95 : 80, s.firstXp3 != null ? s.firstXp3 : "[游戏目录]");
+            if (s.gameNamedXp3Files.size() > 1
+                    || (s.gameNamedXp3Files.isEmpty() && s.dataXp3 == null && s.xp3Files.size() > 1)) {
+                r.xp3Candidates.addAll(s.xp3Files);
+            }
         } else if (s.hasOnsScript || s.hasOnsArchive) {
             score(r, EngineType.ONS, s.hasOnsScript ? 90 : 70, "[游戏目录]");
         } else if (s.firstDesktop != null) {
@@ -71,7 +89,10 @@ public class EngineDetector {
         boolean empty = true;
         Set<String> names = new HashSet<>();
         Set<String> relativeNames = new HashSet<>();
+        List<String> xp3Files = new ArrayList<>();
+        List<String> gameNamedXp3Files = new ArrayList<>();
         String firstXp3 = null;
+        String dataXp3 = null;
         String firstDesktop = null;
         boolean hasIndex = false;
         boolean hasTyranoDir = false;
@@ -170,8 +191,10 @@ public class EngineDetector {
             if (lower.startsWith("chrome_") && lower.endsWith(".pak")) s.hasElectronPak = true;
             if (lower.endsWith(".desktop") && s.firstDesktop == null) s.firstDesktop = original;
             if (lower.endsWith(".xp3")) {
-                if (lower.equals("data.xp3")) s.firstXp3 = rel.contains("/") ? rel : "data.xp3";
-                else if (s.firstXp3 == null) s.firstXp3 = rel.contains("/") ? rel : original;
+                String xp3Path = rel.contains("/") ? rel : original;
+                s.xp3Files.add(xp3Path);
+                if (lower.contains("游戏")) s.gameNamedXp3Files.add(xp3Path);
+                if (lower.equals("data.xp3") && s.dataXp3 == null) s.dataXp3 = xp3Path;
             }
             // PSP游戏文件检测
             if (lower.endsWith(".iso") || lower.endsWith(".cso") || lower.endsWith(".chd") || 

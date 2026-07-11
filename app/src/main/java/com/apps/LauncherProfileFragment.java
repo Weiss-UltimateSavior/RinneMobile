@@ -24,9 +24,9 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.R;
-import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.databinding.FragmentLauncherProfileBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.util.TimeFormatUtil;
 import com.yuki.yukihub.util.AppExecutors;
 
@@ -156,7 +156,6 @@ public class LauncherProfileFragment extends Fragment {
         AppExecutors.runOnIo(() -> {
             long[] durations = new long[7];
             String[] labels = new String[7];
-            GameRepository repository = new GameRepository(appContext);
             Calendar day = Calendar.getInstance();
             day.set(Calendar.HOUR_OF_DAY, 0);
             day.set(Calendar.MINUTE, 0);
@@ -168,7 +167,7 @@ public class LauncherProfileFragment extends Fragment {
                 long start = day.getTimeInMillis();
                 long end = start + 24L * 60L * 60L * 1000L;
                 long total = 0L;
-                for (Long duration : repository.getPlayDurationsBetween(start, end).values()) {
+                for (Long duration : LauncherRepositoryBridge.getPlayDurationsBetween(appContext, start, end).values()) {
                     if (duration != null) total += Math.max(0L, duration);
                 }
                 durations[i] = total;

@@ -108,9 +108,12 @@ public class MetadataRepository {
     }
 
     public int importMetadataJson(JSONArray arr) throws Exception {
+        return importMetadataJson(helper.getWritableDatabase(), arr);
+    }
+
+    public int importMetadataJson(SQLiteDatabase db, JSONArray arr) throws Exception {
         if (arr == null) return 0;
         int changed = 0;
-        SQLiteDatabase db = helper.getWritableDatabase();
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
             if (o == null) continue;
@@ -133,7 +136,9 @@ public class MetadataRepository {
             v.put("source_id", o.optString("source_id", ""));
             v.put("json", json);
             v.put("updated_at", incomingUpdatedAt);
-            db.insertWithOnConflict("metadata_cache", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+            if (db.insertWithOnConflict("metadata_cache", null, v, SQLiteDatabase.CONFLICT_REPLACE) <= 0) {
+                throw new IllegalStateException("导入元数据失败: game=" + gameId + ", source=" + source);
+            }
             changed++;
         }
         return changed;

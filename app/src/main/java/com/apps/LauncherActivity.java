@@ -49,6 +49,7 @@ public class LauncherActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.Theme_YukiHub_Launcher);
         applySavedToneMode();
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();

@@ -1,10 +1,16 @@
 package com.yuki.yukihub.launcherbridge;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 
 import com.yuki.yukihub.sync.SyncManager;
+
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 public final class LauncherSyncBridge {
     private LauncherSyncBridge() {
@@ -19,14 +25,101 @@ public final class LauncherSyncBridge {
         return new SyncManager(context.getApplicationContext()).getLastSyncTime();
     }
 
-    public static SyncManager.SyncConfig getConfig(Context context) {
-        if (context == null) return new SyncManager.SyncConfig("", "", "", false);
-        return new SyncManager(context.getApplicationContext()).getConfig();
+    public static SyncConfigSnapshot getConfig(Context context) {
+        if (context == null) return new SyncConfigSnapshot("", "", "", false);
+        SyncManager.SyncConfig source = new SyncManager(context.getApplicationContext()).getConfig();
+        if (source == null) return new SyncConfigSnapshot("", "", "", false);
+        return new SyncConfigSnapshot(source.serverUrl, source.username, source.password, source.autoSync);
+    }
+
+    /** Immutable snapshot of WebDAV sync configuration. Mirrors SyncManager.SyncConfig. */
+    public static final class SyncConfigSnapshot {
+        public final String serverUrl;
+        public final String username;
+        public final String password;
+        public final boolean autoSync;
+
+        public SyncConfigSnapshot(String serverUrl, String username, String password, boolean autoSync) {
+            this.serverUrl = serverUrl;
+            this.username = username;
+            this.password = password;
+            this.autoSync = autoSync;
+        }
     }
 
     public static void saveConfig(Context context, String serverUrl, String username, String password, boolean autoSync) {
         if (context == null) return;
         new SyncManager(context.getApplicationContext()).saveConfig(serverUrl, username, password, autoSync);
+    }
+
+    public static JSONObject exportLocalBackup(Context context) throws Exception {
+        if (context == null) throw new Exception("上下文不可用");
+        JSONObject root = new SyncManager(context.getApplicationContext()).exportSnapshotForLocalBackup();
+        root.put("created_at", System.currentTimeMillis());
+        root.put("backup_type", "local_full");
+        root.put("note", "Local backup uses the same schema as WebDAV sync, but keeps full play session history.");
+        return root;
+    }
+
+    public static void importLocalBackup(Context context, JSONObject snapshot) throws Exception {
+        if (context == null) throw new Exception("上下文不可用");
+        if (snapshot == null) throw new Exception("备份内容为空");
+        if (!"YukiHub".equals(snapshot.optString("app", ""))) {
+            throw new Exception("不是有效的 YukiHub 备份");
+        }
+        new SyncManager(context.getApplicationContext()).importSnapshotFromLocalBackup(snapshot);
+    }
+
+    public static void importLocalBackupFromUri(Context context, Uri uri) throws Exception {
+        if (context == null) throw new Exception("上下文不可用");
+        if (uri == null) throw new Exception("备份文件不可用");
+        String text = readTextFromUri(context, uri);
+        JSONObject root = new JSONObject(text);
+        importLocalBackup(context, root);
+    }
+
+    /**
+     * 导出用于账户云备份的结构化快照。与 {@link #exportLocalBackup} 不同：
+     * 不附加 created_at/note 字段，backup_type 标记为 launcher_cloud_play_v2，
+     * 供 Launcher 账户系统作为可恢复的云备份 payload 使用。
+     */
+    public static JSONObject exportCloudSnapshot(Context context) {
+        if (context == null) return null;
+        try {
+            JSONObject root = new SyncManager(context.getApplicationContext()).exportSnapshotForLocalBackup();
+            root.put("backup_type", "launcher_cloud_play_v2");
+            return root;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 导入账户云备份 JSON。仅接受 YukiHub schema 且包含 games/play_sessions 数组的快照。
+     *
+     * @return 成功导入返回 true；上下文无效、格式不符或导入异常返回 false
+     */
+    public static boolean importCloudSnapshot(Context context, JSONObject root) {
+        if (context == null || root == null) return false;
+        try {
+            if (!"YukiHub".equals(root.optString("app", ""))) return false;
+            if (root.optJSONArray("games") == null || root.optJSONArray("play_sessions") == null) return false;
+            new SyncManager(context.getApplicationContext()).importSnapshotFromLocalBackup(root);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static String readTextFromUri(Context context, Uri uri) throws Exception {
+        try (InputStream in = context.getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            if (in == null) throw new Exception("openInputStream failed");
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) != -1) bos.write(buf, 0, len);
+            return bos.toString("UTF-8");
+        }
     }
 
     public static boolean testConnection(Context context) {

@@ -58,22 +58,16 @@
         </provider>
 
         <activity
-            android:name=".LaunchEntryActivity"
+            android:name="com.apps.LauncherActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Splash"
-            android:configChanges="keyboardHidden|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name="com.apps.LauncherActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
             android:name="com.apps.PadUi.PadGameModeActivity"
@@ -202,19 +196,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:screenOrientation="sensorLandscape"
-            android:configChanges="keyboardHidden|screenSize" />
-
-        <activity
-            android:name=".AuthActivity"
-            android:exported="false"
-            android:screenOrientation="sensorLandscape"
-            android:theme="@style/Theme.YukiHub.AuthDialog"
-            android:configChanges="keyboardHidden|screenSize" />
 
         <activity
             android:name="org.tvp.kirikiri2.KR2Activity"

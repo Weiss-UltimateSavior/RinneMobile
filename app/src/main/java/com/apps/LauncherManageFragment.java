@@ -25,14 +25,11 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.MainActivity;
 import com.yuki.yukihub.databinding.FragmentLauncherManageBinding;
 import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
-import com.yuki.yukihub.scanner.GameScanner;
-import com.yuki.yukihub.sync.SyncManager;
 import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
-import com.yuki.yukihub.launcherbridge.YukiHubBridge;
+import com.yuki.yukihub.scanner.ScanResult;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.DevLogger;
 
@@ -144,10 +141,6 @@ public class LauncherManageFragment extends Fragment {
         }
     }
 
-    private void openAction(String action) {
-        YukiHubBridge.openAction(requireContext(), action);
-    }
-
     private void confirmAddDirectory() {
         showLauncherConfirmDialog("添加目录", "部分模拟器属于外置跳转，不可直接扫描游玩（PPSSPP、Winlator 等）可通过工具箱进行下载", "添加", () ->
                 scanDirectoryPicker.launch(null));
@@ -216,7 +209,7 @@ public class LauncherManageFragment extends Fragment {
                 "遍历扫描（all层）", "递归扫描（命中）"
         };
         int currentDepth = scanDepth();
-        int[] depthValues = {1, 2, 3, 4, GameScanner.SCAN_ALL_LEVELS, GameScanner.SCAN_UNTIL_GAME_MATCH};
+        int[] depthValues = {1, 2, 3, 4, LauncherScanBridge.SCAN_ALL_LEVELS, LauncherScanBridge.SCAN_UNTIL_GAME_MATCH};
 
         for (int i = 0; i < depthLabels.length; i++) {
             final int depth = depthValues[i];
@@ -262,24 +255,144 @@ public class LauncherManageFragment extends Fragment {
     private AlertDialog scanLoadingDialog;
 
     private void executeScan(List<String> roots, int depth) {
+        scanAndResolveXp3Targets(roots, depth);
+    }
+
+    private void scanSingleRoot(String rootUri) {
+        scanAndResolveXp3Targets(java.util.Collections.singletonList(rootUri), scanDepth());
+    }
+
+    private void scanAndResolveXp3Targets(List<String> roots, int depth) {
         scanLoadingDialog = showScanLoadingDialog();
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
-            LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, roots, depth);
+            List<ScanResult> results = LauncherScanBridge.scan(appContext, roots, depth);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
                 dismissScanLoadingDialog();
-                showScanResultDialog(stats);
+                resolveXp3Candidates(results, 0);
             });
         });
     }
 
-    private void scanSingleRoot(String rootUri) {
-        scanLoadingDialog = showScanLoadingDialog();
-        int depth = scanDepth();
+    /**
+     * data.xp3 is selected automatically by the scanner. A directory with multiple non-data
+     * XP3 archives cannot be guessed reliably, so import waits for an explicit user choice.
+     */
+    private void resolveXp3Candidates(List<ScanResult> results, int startIndex) {
+        if (!isAdded()) return;
+        if (results == null) {
+            importResolvedScanResults(new ArrayList<>());
+            return;
+        }
+        for (int i = startIndex; i < results.size(); i++) {
+            ScanResult result = results.get(i);
+            if (result == null || result.xp3Candidates == null || result.xp3Candidates.size() < 2) continue;
+            showXp3TargetDialog(results, i, result);
+            return;
+        }
+        importResolvedScanResults(results);
+    }
+
+    private void showXp3TargetDialog(List<ScanResult> results, int index, ScanResult result) {
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(18), dp(22), dp(15));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(requireContext());
+        title.setText("选择 XP3 入口");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextSize(16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView info = new TextView(requireContext());
+        info.setText("《" + result.title + "》检测到多个 XP3 文件，请选择启动入口");
+        info.setGravity(android.view.Gravity.CENTER);
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextSize(12);
+        info.setLineSpacing(dp(4), 1f);
+        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        infoLp.setMargins(0, dp(10), 0, 0);
+        root.addView(info, infoLp);
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(requireContext());
+        LinearLayout choices = new LinearLayout(requireContext());
+        choices.setOrientation(LinearLayout.VERTICAL);
+        for (String candidate : result.xp3Candidates) {
+            TextView option = new TextView(requireContext());
+            option.setText(candidate);
+            option.setGravity(android.view.Gravity.CENTER);
+            option.setSingleLine(true);
+            option.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+            option.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+            option.setTextSize(13);
+            option.setBackground(LauncherTheme.cancelChip(requireContext()));
+            option.setOnClickListener(view -> {
+                result.launchTarget = candidate;
+                dialog.dismiss();
+                resolveXp3Candidates(results, index + 1);
+            });
+            LinearLayout.LayoutParams optionLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
+            optionLp.setMargins(0, dp(8), 0, 0);
+            choices.addView(option, optionLp);
+        }
+        scroll.addView(choices);
+        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                Math.min(dp(250), dp(8) + result.xp3Candidates.size() * dp(46)));
+        scrollLp.setMargins(0, dp(4), 0, 0);
+        root.addView(scroll, scrollLp);
+
+        LinearLayout buttons = new LinearLayout(requireContext());
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        buttons.setWeightSum(2);
+        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        buttonsLp.setMargins(0, dp(12), 0, 0);
+
+        TextView skip = new TextView(requireContext());
+        skip.setText("跳过此游戏");
+        skip.setGravity(android.view.Gravity.CENTER);
+        skip.setTextSize(13);
+        skip.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(skip);
+        skip.setOnClickListener(view -> {
+            results.remove(index);
+            dialog.dismiss();
+            resolveXp3Candidates(results, index);
+        });
+        buttons.addView(skip, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消扫描");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        cancel.setTextSize(13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(cancel);
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        cancelLp.setMargins(dp(8), 0, 0, 0);
+        buttons.addView(cancel, cancelLp);
+        root.addView(buttons, buttonsLp);
+        window.setContentView(root);
+    }
+
+    private void importResolvedScanResults(List<ScanResult> results) {
+        scanLoadingDialog = showScanLoadingDialog("正在导入...", "正在写入游戏库");
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
-            LauncherScanBridge.ImportStats stats = LauncherScanBridge.scanAndImport(appContext, java.util.Collections.singletonList(rootUri), depth);
+            LauncherScanBridge.ImportStats stats = LauncherScanBridge.importScanResults(appContext, results);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
                 dismissScanLoadingDialog();
@@ -289,6 +402,10 @@ public class LauncherManageFragment extends Fragment {
     }
 
     private AlertDialog showScanLoadingDialog() {
+        return showScanLoadingDialog("正在扫描...", "请不要关闭应用，扫描可能需要一些时间");
+    }
+
+    private AlertDialog showScanLoadingDialog(String titleText, String hintText) {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.setCancelable(false);
         dialog.show();
@@ -305,7 +422,7 @@ public class LauncherManageFragment extends Fragment {
         root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
-        title.setText("正在扫描...");
+        title.setText(titleText);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         title.setTextSize(16);
@@ -322,7 +439,7 @@ public class LauncherManageFragment extends Fragment {
         root.addView(progressBar, pbLp);
 
         TextView hint = new TextView(requireContext());
-        hint.setText("请不要关闭应用，扫描可能需要一些时间");
+        hint.setText(hintText);
         hint.setGravity(android.view.Gravity.CENTER);
         hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
         hint.setTextSize(11);
@@ -723,7 +840,7 @@ public class LauncherManageFragment extends Fragment {
 
     private int scanDepth() {
         int depth = prefs().getInt(KEY_STARTUP_SCAN_DEPTH, DEFAULT_SCAN_DEPTH);
-        if (depth == GameScanner.SCAN_ALL_LEVELS || depth == GameScanner.SCAN_UNTIL_GAME_MATCH) {
+        if (depth == LauncherScanBridge.SCAN_ALL_LEVELS || depth == LauncherScanBridge.SCAN_UNTIL_GAME_MATCH) {
             return depth;
         }
         return Math.max(1, Math.min(MAX_SCAN_DEPTH, depth));
@@ -763,7 +880,7 @@ public class LauncherManageFragment extends Fragment {
                     });
                     return;
                 }
-                new SyncManager(appContext).importSnapshotFromLocalBackup(root);
+                LauncherSyncBridge.importLocalBackup(appContext, root);
                 int gameCount = root.optJSONArray("games") == null ? 0 : root.optJSONArray("games").length();
                 int sessionCount = root.optJSONArray("play_sessions") == null ? 0 : root.optJSONArray("play_sessions").length();
                 int metaCount = root.optJSONArray("metadata_cache") == null ? 0 : root.optJSONArray("metadata_cache").length();
@@ -793,10 +910,7 @@ public class LauncherManageFragment extends Fragment {
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             try {
-                JSONObject root = new SyncManager(appContext).exportSnapshotForLocalBackup();
-                root.put("created_at", System.currentTimeMillis());
-                root.put("backup_type", "local_full");
-                root.put("note", "Local backup uses the same schema as WebDAV sync, but keeps full play session history.");
+                JSONObject root = LauncherSyncBridge.exportLocalBackup(appContext);
                 byte[] bytes = root.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8);
                 try (java.io.OutputStream out = appContext.getContentResolver().openOutputStream(uri)) {
                     if (out == null) throw new Exception("openOutputStream failed");

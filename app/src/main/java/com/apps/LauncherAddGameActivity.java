@@ -41,11 +41,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yuki.yukihub.R;
-import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.launcherbridge.LauncherCoverBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
+import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.scanner.EngineDetector;
 import com.yuki.yukihub.util.AppExecutors;
 
 import java.io.File;
@@ -365,11 +365,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         Uri selectedGameDir = gameDirUri;
         Uri selectedCover = coverUri;
         AppExecutors.runOnSingle(() -> {
-            EngineDetector.Result detected = null;
+            LauncherScanBridge.DetectionResult detected = null;
             if (selectedEngine == EngineType.AUTO) {
                 try {
                     DocumentFile root = DocumentFile.fromTreeUri(appContext, selectedGameDir);
-                    detected = EngineDetector.detect(root, 2);
+                    detected = LauncherScanBridge.detectEngine(root, 2);
                 } catch (Throwable ignored) {
                 }
             }
@@ -398,8 +398,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 game.gamehubLaunchMode = "program";
             }
 
-            GameRepository repository = new GameRepository(appContext);
-            long id = repository.insertIfNotExists(game);
+            long id = LauncherRepositoryBridge.insertGameIfNotExists(appContext, game);
             if (id > 0 && copiedCover == null) {
                 game.id = id;
                 LauncherCoverBridge.fetchCoverForGameAsync(appContext, game);

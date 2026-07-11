@@ -93,7 +93,8 @@ public class GameScanner {
                     if (detected != null && detected.confidence > 0) {
                         String uri = child.getUri().toString();
                         if (markSeen(seenUris, uri)) {
-                            results.add(new ScanResult(safeName(child), uri, detected.engine, detected.confidence, detected.launchTarget));
+                            results.add(new ScanResult(safeName(child), uri, detected.engine, detected.confidence,
+                                    detected.launchTarget, "", detected.xp3Candidates));
                         }
                         gameDirectoryMatched = true;
                     }

@@ -25,6 +25,10 @@ public final class LauncherMetadataBridge {
         void onResult(boolean success);
     }
 
+    public interface CandidatesCallback {
+        void onResult(List<VnMetadata> candidates, String errorMessage);
+    }
+
     // 资料源配置桥接
     public static String getMetadataSource(Context context) {
         if (context == null) return MetadataController.SOURCE_VNDB;
@@ -61,6 +65,29 @@ public final class LauncherMetadataBridge {
         return "VNDB";
     }
 
+    /**
+     * Searches VNDB for candidates matching the given title, saves the top
+     * candidate's metadata locally, and returns the fetched metadata
+     * (or null if no match or an error occurred). Runs on the calling thread;
+     * callers should dispatch off the main thread.
+     */
+    public static VnMetadata fetchAndSaveVndbSync(Context context, Game game) {
+        if (context == null || game == null || game.title == null || game.title.trim().isEmpty()) {
+            return null;
+        }
+        Context app = context.getApplicationContext();
+        try {
+            List<VnMetadata> candidates = VndbClient.searchCandidates(game.title, 1);
+            if (candidates == null || candidates.isEmpty()) return null;
+            VnMetadata meta = candidates.get(0);
+            MetadataRepository metaRepo = new MetadataRepository(app);
+            metaRepo.saveVndb(game.id, meta);
+            return meta;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     public static void fetchAndSaveMetadataAsync(Context context, Game game, Callback callback) {
         if (game == null || game.title == null || game.title.trim().isEmpty()) {
             callback.onResult(false);
@@ -94,6 +121,70 @@ public final class LauncherMetadataBridge {
             final boolean success = ok;
             new Handler(Looper.getMainLooper()).post(() -> callback.onResult(success));
         });
+    }
+
+    /** 按用户输入的关键词搜索多个 VNDB 候选，结果始终回调到主线程。 */
+    public static void searchVndbCandidatesAsync(Context context, String keyword, int limit,
+                                                  CandidatesCallback callback) {
+        if (callback == null) return;
+        String query = keyword == null ? "" : keyword.trim();
+        if (context == null || query.isEmpty()) {
+            callback.onResult(java.util.Collections.emptyList(), "请输入搜索关键词");
+            return;
+        }
+        AppExecutors.io().execute(() -> {
+            List<VnMetadata> candidates = java.util.Collections.emptyList();
+            String error = null;
+            try {
+                candidates = VndbClient.searchCandidates(query, Math.max(1, Math.min(10, limit)));
+            } catch (Throwable t) {
+                error = t.getMessage() == null || t.getMessage().trim().isEmpty() ? "VNDB 搜索失败" : t.getMessage();
+            }
+            List<VnMetadata> result = candidates == null
+                    ? java.util.Collections.emptyList() : new java.util.ArrayList<>(candidates);
+            String finalError = error;
+            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(result, finalError));
+        });
+    }
+
+    /** 保存用户明确选择的 VNDB 候选；不自动覆盖游戏卡片，仍由“同步封面到卡片”控制。 */
+    public static void saveSelectedVndbMetadataAsync(Context context, Game game, VnMetadata metadata,
+                                                      Callback callback) {
+        if (callback == null) return;
+        if (context == null || game == null || game.id <= 0 || metadata == null) {
+            callback.onResult(false);
+            return;
+        }
+        Context app = context.getApplicationContext();
+        AppExecutors.io().execute(() -> {
+            boolean success = false;
+            try {
+                new MetadataRepository(app).saveVndb(game.id, metadata);
+                success = true;
+            } catch (Throwable ignored) {
+            }
+            boolean finalSuccess = success;
+            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(finalSuccess));
+        });
+    }
+
+    /**
+     * Returns the developer string for a game by consulting the available
+     * metadata sources in order: VNDB, Bangumi, Ymgal. Returns empty string
+     * when no metadata or developer is available.
+     */
+    public static String getDeveloperOf(Context context, long gameId) {
+        if (context == null || gameId <= 0) return "";
+        Context app = context.getApplicationContext();
+        MetadataRepository metaRepo = new MetadataRepository(app);
+        VnMetadata meta = metaRepo.getVndb(gameId);
+        if (meta == null || meta.developer == null || meta.developer.trim().isEmpty()) {
+            meta = metaRepo.getBangumi(gameId);
+        }
+        if (meta == null || meta.developer == null || meta.developer.trim().isEmpty()) {
+            meta = metaRepo.getYmgal(gameId);
+        }
+        return meta == null || meta.developer == null ? "" : meta.developer.trim();
     }
 
     public static void syncCoverToGameAsync(Context context, Game game, Callback callback) {

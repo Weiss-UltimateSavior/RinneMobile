@@ -28,8 +28,8 @@ import com.apps.LauncherTheme;
 import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityPadSettingsBinding;
-import com.yuki.yukihub.launcher.EmulatorLauncher;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
 import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge;
 import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
 import com.yuki.yukihub.metadata.MetadataController;
@@ -367,7 +367,7 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void enterNativeKrkr() {
         try {
-            startActivity(EmulatorLauncher.buildInternalKrkrIntent(this, "", "", true));
+            startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(this));
         } catch (Throwable throwable) {
             Toast.makeText(this, "无法进入原生 KRKR", Toast.LENGTH_SHORT).show();
         }

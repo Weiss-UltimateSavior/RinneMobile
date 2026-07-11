@@ -48,6 +48,17 @@ public final class LauncherGameLaunchBridge {
         );
     }
 
+    /**
+     * 构建进入原生 KRKR 引擎（origin 模式、无具体游戏路径）的 Intent。
+     * 供设置页面"进入原生 KRKR"入口使用，避免 com.apps 直接依赖 EmulatorLauncher。
+     *
+     * @return 可用于 {@link android.app.Activity#startActivity(Intent)} 的 Intent；上下文无效时返回 null
+     */
+    public static Intent buildInternalKrkrOriginIntent(Context context) {
+        if (context == null) return null;
+        return EmulatorLauncher.buildInternalKrkrIntent(context, "", "", true);
+    }
+
     private static String validate(Context context, Game game, String emulatorPackage) {
         if (game.engine == EngineType.GAMEHUB) {
             String ghMode = game.gamehubLaunchMode == null ? "game" : game.gamehubLaunchMode.trim().toLowerCase(Locale.ROOT);

@@ -9,8 +9,11 @@ import android.provider.DocumentsContract;
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
+import com.yuki.yukihub.scanner.EngineDetector;
 import com.yuki.yukihub.scanner.GameScanner;
 import com.yuki.yukihub.scanner.ScanResult;
+
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,11 +26,41 @@ public final class LauncherScanBridge {
     private LauncherScanBridge() {
     }
 
+    /** Scan depth constant: scan all levels. Mirrors GameScanner.SCAN_ALL_LEVELS. */
+    public static final int SCAN_ALL_LEVELS = -1;
+
+    /** Scan depth constant: scan until first game match. Mirrors GameScanner.SCAN_UNTIL_GAME_MATCH. */
+    public static final int SCAN_UNTIL_GAME_MATCH = -2;
+
+    /**
+     * Detects the engine of a game directory by probing its file features.
+     * Returns a DetectionResult with UNKNOWN engine and 0 confidence on failure.
+     */
+    public static DetectionResult detectEngine(DocumentFile dir, int featureDepth) {
+        DetectionResult out = new DetectionResult();
+        if (dir == null) return out;
+        try {
+            EngineDetector.Result source = EngineDetector.detect(dir, featureDepth);
+            if (source == null) return out;
+            out.engine = source.engine == null ? EngineType.UNKNOWN : source.engine;
+            out.confidence = source.confidence;
+            out.launchTarget = source.launchTarget == null ? "" : source.launchTarget;
+        } catch (Throwable ignored) {
+        }
+        return out;
+    }
+
+    /** Value class equivalent to EngineDetector.Result, exposed without importing scanner layer. */
+    public static final class DetectionResult {
+        public EngineType engine = EngineType.UNKNOWN;
+        public int confidence = 0;
+        public String launchTarget = "";
+    }
+
     public static ImportStats scanAndImport(Context context, List<String> roots, int depth) {
         ImportStats stats = new ImportStats();
         if (context == null || roots == null || roots.isEmpty()) return stats;
         Context appContext = context.getApplicationContext();
-        GameRepository repository = new GameRepository(appContext);
         List<ScanResult> results = new ArrayList<>();
         for (String root : roots) {
             if (root == null || root.trim().isEmpty()) continue;
@@ -39,7 +72,30 @@ public final class LauncherScanBridge {
             } catch (Throwable ignored) {
             }
         }
-        importScannedGames(appContext, repository, results, stats);
+        importScannedGames(appContext, new GameRepository(appContext), results, stats);
+        return stats;
+    }
+
+    /** Performs discovery only. Callers may resolve {@link ScanResult#xp3Candidates} before importing. */
+    public static List<ScanResult> scan(Context context, List<String> roots, int depth) {
+        List<ScanResult> results = new ArrayList<>();
+        if (context == null || roots == null || roots.isEmpty()) return results;
+        Context appContext = context.getApplicationContext();
+        for (String root : roots) {
+            if (root == null || root.trim().isEmpty()) continue;
+            try {
+                results.addAll(GameScanner.scan(appContext, Uri.parse(root), depth));
+            } catch (Throwable ignored) {
+            }
+        }
+        return results;
+    }
+
+    /** Imports results after any interactive launch-target selection has been completed. */
+    public static ImportStats importScanResults(Context context, List<ScanResult> results) {
+        ImportStats stats = new ImportStats();
+        if (context == null) return stats;
+        importScannedGames(context.getApplicationContext(), new GameRepository(context.getApplicationContext()), results, stats);
         return stats;
     }
 
