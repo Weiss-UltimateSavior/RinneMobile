@@ -81,7 +81,6 @@ public class LauncherHomeFragment extends Fragment {
         applyIconTone();
         bindActions();
         observeState();
-        viewModel.refreshRecentItemsIfNeeded();
     }
 
     @Override
@@ -91,6 +90,7 @@ public class LauncherHomeFragment extends Fragment {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyIconTone();
         renderAvatar();
+        viewModel.refreshRecentItems();
         startStatsRefresh();
     }
 

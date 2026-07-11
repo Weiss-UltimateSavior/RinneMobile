@@ -498,19 +498,13 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherAuthBridge.uploadConfig(this, settingsJson, new LauncherAuthBridge.ConfigCallback() {
             @Override
             public void onSuccess(String configJson) {
-                String exportPath = LauncherUserData.exportAll(PadSettingsActivity.this);
-                if (exportPath == null) {
+                String playData = LauncherUserData.exportCloudPlayData(PadSettingsActivity.this);
+                if (playData == null || playData.trim().isEmpty()) {
                     dismissAccountLoading();
                     showAccountResult("部分上传失败", "配置已上传，但本地数据导出失败，游玩记录未能上传");
                     return;
                 }
-                String playSql = LauncherUserData.readExportedSql(PadSettingsActivity.this);
-                if (playSql == null || playSql.trim().isEmpty()) {
-                    dismissAccountLoading();
-                    showAccountResult("上传成功", "配置已同步到云端");
-                    return;
-                }
-                LauncherAuthBridge.uploadPlayData(PadSettingsActivity.this, playSql,
+                LauncherAuthBridge.uploadPlayData(PadSettingsActivity.this, playData,
                         new LauncherAuthBridge.PlayDataCallback() {
                             @Override
                             public void onSuccess(String playData) {

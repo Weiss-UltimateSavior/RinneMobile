@@ -212,32 +212,26 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String configJson) {
                 // 上传游玩记录
-                String exportPath = LauncherUserData.exportAll(LauncherAccountSettingsActivity.this);
-                if (exportPath == null) {
+                String playData = LauncherUserData.exportCloudPlayData(LauncherAccountSettingsActivity.this);
+                if (playData == null || playData.trim().isEmpty()) {
                     // 导出失败，仅配置上传成功
                     dismissLoading();
                     showResultDialog("部分上传失败", "配置已上传，但本地数据导出失败，游玩记录未能上传");
                     return;
                 }
-                String playSql = LauncherUserData.readExportedSql(LauncherAccountSettingsActivity.this);
-                if (playSql != null && !playSql.trim().isEmpty()) {
-                    LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playSql, new LauncherAuthBridge.PlayDataCallback() {
-                        @Override
-                        public void onSuccess(String playData) {
-                            dismissLoading();
-                            showResultDialog("上传成功", "配置及游玩记录已同步到云端");
-                        }
+                LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playData, new LauncherAuthBridge.PlayDataCallback() {
+                    @Override
+                    public void onSuccess(String playData) {
+                        dismissLoading();
+                        showResultDialog("上传成功", "配置及游玩记录已同步到云端");
+                    }
 
-                        @Override
-                        public void onError(String message) {
-                            dismissLoading();
-                            showResultDialog("部分上传失败", "配置已上传，游玩记录上传失败：" + message);
-                        }
-                    });
-                } else {
-                    dismissLoading();
-                    showResultDialog("上传成功", "配置已同步到云端");
-                }
+                    @Override
+                    public void onError(String message) {
+                        dismissLoading();
+                        showResultDialog("部分上传失败", "配置已上传，游玩记录上传失败：" + message);
+                    }
+                });
             }
 
             @Override

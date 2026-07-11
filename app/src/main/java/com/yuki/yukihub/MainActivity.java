@@ -6762,6 +6762,15 @@ try {
             if (r.engine == EngineType.ARTEMIS) g.emulatorPackage = resolveArtemisPackageFromMarkers(g.rootUri);
             if (r.engine == EngineType.PSP) g.emulatorPackage = "org.ppsspp.ppsspp";
             if (isDesktopLaunchTarget(g.launchTarget)) g.emulatorPackage = guessInstalledWinlatorPackage();
+            Game restored = repository.findScannedMatch(g);
+            if (restored != null) {
+                if (!rootKey.equals(GameRepository.normalizeRootUriKey(restored.rootUri))) {
+                    repository.bindScannedLocation(restored, g);
+                }
+                existing.add(rootKey);
+                stats.skipped++;
+                continue;
+            }
             long newId = repository.insertIfNotExists(g);
             if (newId > 0) {
                 g.id = newId;

@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.yuki.yukihub.data.YukiDatabaseHelper;
+import com.yuki.yukihub.sync.SyncManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -125,6 +126,46 @@ public class LauncherUserData {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 导出用于账户云备份的结构化快照。
+     * 游戏按稳定身份恢复，游玩会话按 session_uuid 去重，不携带跨设备无效的本地主键关系。
+     */
+    public static String exportCloudPlayData(Context context) {
+        if (context == null) return null;
+        try {
+            JSONObject root = new SyncManager(context.getApplicationContext()).exportSnapshotForLocalBackup();
+            root.put("backup_type", "launcher_cloud_play_v2");
+            return root.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 导入账户云备份。新版 JSON 走 SyncManager 的稳定身份合并；旧版 SQL 继续兼容。
+     */
+    public static boolean importCloudPlayData(Context context, String playData) {
+        if (context == null || playData == null || playData.trim().isEmpty()) return false;
+        String trimmed = playData.trim();
+        if (trimmed.startsWith("{")) {
+            try {
+                JSONObject root = new JSONObject(trimmed);
+                if (!"YukiHub".equals(root.optString("app", ""))
+                        || root.optJSONArray("games") == null
+                        || root.optJSONArray("play_sessions") == null) {
+                    return false;
+                }
+                new SyncManager(context.getApplicationContext()).importSnapshotFromLocalBackup(root);
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return importPlaySql(context, playData);
     }
 
     // ══════════════════════════════════════════════════
@@ -393,41 +434,40 @@ public class LauncherUserData {
     }
 
     /**
-     * 导入游玩记录 SQL。
-     * 逐条执行 INSERT 语句，单条失败仅跳过（不回滚已成功的语句），
-     * 确保部分数据损坏/截断时不丢失全部数据。
+     * 导入旧版游玩记录 SQL。
+     * 旧格式携带数据库本地主键，只能作为完整快照恢复：先校验全部语句，
+     * 再在同一事务中清空相关表并导入；任一语句失败都会整体回滚。
      *
-     * @return 全部成功返回 true，有跳过返回 false（但已执行的数据仍保留）
+     * @return 完整恢复成功返回 true；校验或执行失败返回 false，数据库保持恢复前状态
      */
     public static boolean importPlaySql(Context context, String sql) {
-    if (sql == null || sql.trim().isEmpty()) return true;
+    if (sql == null || sql.trim().isEmpty()) return false;
 
     YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
     SQLiteDatabase db = helper.getWritableDatabase();
 
-    boolean allOk = true;
-
     try {
         List<String> statements = splitSqlStatements(sql);
-
-        db.beginTransaction();
-
+        List<String> validated = new ArrayList<>();
         for (String stmt : statements) {
             String trimmed = removeLeadingSqlComments(stmt).trim();
             if (trimmed.isEmpty()) continue;
-
-            try {
-                db.execSQL(trimmed);
-            } catch (Exception e) {
-                e.printStackTrace();
-                allOk = false;
-            }
+            if (!isAllowedLegacyInsert(trimmed)) return false;
+            validated.add(trimmed);
         }
+        if (validated.isEmpty()) return false;
 
+        db.beginTransaction();
+        db.delete("play_sessions", null, null);
+        db.delete("metadata_cache", null, null);
+        db.delete("settings", null, null);
+        db.delete("games", null, null);
+        for (String stmt : validated) db.execSQL(stmt);
         db.setTransactionSuccessful();
+        return true;
     } catch (Exception e) {
         e.printStackTrace();
-        allOk = false;
+        return false;
     } finally {
         try {
             db.endTransaction();
@@ -435,8 +475,17 @@ public class LauncherUserData {
         }
         db.close();
     }
+}
 
-    return allOk;
+private static boolean isAllowedLegacyInsert(String sql) {
+    String normalized = sql.replaceAll("\\s+", " ").trim().toLowerCase(java.util.Locale.ROOT);
+    if (!normalized.startsWith("insert or replace into ")) return false;
+    String rest = normalized.substring("insert or replace into ".length()).trim();
+    if (rest.startsWith("\"")) rest = rest.substring(1);
+    return rest.startsWith("games\"") || rest.startsWith("games ") || rest.startsWith("games(")
+            || rest.startsWith("play_sessions\"") || rest.startsWith("play_sessions ") || rest.startsWith("play_sessions(")
+            || rest.startsWith("metadata_cache\"") || rest.startsWith("metadata_cache ") || rest.startsWith("metadata_cache(")
+            || rest.startsWith("settings\"") || rest.startsWith("settings ") || rest.startsWith("settings(");
 }
 
 private static String removeLeadingSqlComments(String stmt) {

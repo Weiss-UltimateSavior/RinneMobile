@@ -109,6 +109,32 @@ public class GameRepository {
         return insert(game);
     }
 
+    /**
+     * 查找扫描结果对应的现有游戏。云端恢复后的 SAF URI 可能因重新授权或换设备而变化，
+     * 因此在完整 URI 之外，允许用同引擎下唯一的路径末段或标题进行保守匹配。
+     */
+    public Game findScannedMatch(Game scanned) {
+        if (scanned == null) return null;
+        Game exact = findByRootUri(scanned.rootUri);
+        if (exact != null) return exact;
+
+        List<Game> games = getAllIncludingHidden();
+        String scannedLeaf = portableRootLeaf(scanned.rootUri);
+        Game leafMatch = uniqueScannedMatch(games, scanned, scannedLeaf, true);
+        if (leafMatch != null) return leafMatch;
+        return uniqueScannedMatch(games, scanned, normalizeIdentityText(scanned.title), false);
+    }
+
+    /** 更新云端恢复卡片的本机扫描路径，保留游玩统计、封面和用户编辑字段。 */
+    public int bindScannedLocation(Game existing, Game scanned) {
+        if (existing == null || existing.id <= 0 || scanned == null) return 0;
+        existing.rootUri = scanned.rootUri;
+        if (scanned.engine != null && scanned.engine != EngineType.UNKNOWN) existing.engine = scanned.engine;
+        if (scanned.launchTarget != null && !scanned.launchTarget.trim().isEmpty()) existing.launchTarget = scanned.launchTarget;
+        if (scanned.emulatorPackage != null && !scanned.emulatorPackage.trim().isEmpty()) existing.emulatorPackage = scanned.emulatorPackage;
+        return update(existing);
+    }
+
     public int update(Game game) {
         SQLiteDatabase db = helper.getWritableDatabase();
         game.updatedAt = System.currentTimeMillis();
@@ -525,9 +551,12 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
             if (g.createdAt <= 0) g.createdAt = System.currentTimeMillis();
             if (g.updatedAt <= 0) g.updatedAt = g.createdAt;
             if (exists) {
-                db.update("games", toValues(g), "id=?", new String[]{String.valueOf(g.id)});
+                if (db.update("games", toValues(g), "id=?", new String[]{String.valueOf(g.id)}) <= 0) {
+                    throw new IllegalStateException("更新云端游戏失败: " + g.id);
+                }
             } else {
                 long id = db.insert("games", null, toValues(g));
+                if (id <= 0) throw new IllegalStateException("插入云端游戏失败: " + g.title);
                 g.id = id;
             }
             if (resetAdvanced && g.id > 0) {
@@ -589,9 +618,13 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
             v.put("dirty", 1);
             v.put("deleted", 0);
             if (existingSessionId > 0) {
-                db.update("play_sessions", v, "id=?", new String[]{String.valueOf(existingSessionId)});
+                if (db.update("play_sessions", v, "id=?", new String[]{String.valueOf(existingSessionId)}) <= 0) {
+                    throw new IllegalStateException("更新云端游玩记录失败: " + uuid);
+                }
             } else {
-                db.insert("play_sessions", null, v);
+                if (db.insert("play_sessions", null, v) <= 0) {
+                    throw new IllegalStateException("插入云端游玩记录失败: " + uuid);
+                }
             }
             changed++;
         }
@@ -622,6 +655,52 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
         } finally {
             c.close();
         }
+    }
+
+    private List<Game> getAllIncludingHidden() {
+        List<Game> list = new ArrayList<>();
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor c = db.query("games", null, null, null, null, null, "updated_at DESC");
+        try {
+            while (c.moveToNext()) list.add(fromCursor(c));
+        } finally {
+            c.close();
+        }
+        return list;
+    }
+
+    private Game uniqueScannedMatch(List<Game> games, Game scanned, String key, boolean byLeaf) {
+        if (games == null || key == null || key.isEmpty()) return null;
+        Game match = null;
+        for (Game candidate : games) {
+            if (candidate == null || candidate.engine != scanned.engine) continue;
+            boolean same;
+            if (byLeaf) {
+                same = key.equals(portableRootLeaf(candidate.rootUri));
+            } else {
+                same = key.equals(normalizeIdentityText(candidate.title))
+                        || key.equals(normalizeIdentityText(candidate.originalTitle));
+            }
+            if (!same) continue;
+            if (match != null && match.id != candidate.id) return null;
+            match = candidate;
+        }
+        return match;
+    }
+
+    private static String portableRootLeaf(String value) {
+        String key = normalizeRootUriKey(value);
+        if (key.isEmpty()) return "";
+        int slash = key.lastIndexOf('/');
+        String leaf = slash >= 0 ? key.substring(slash + 1) : key;
+        int colon = leaf.lastIndexOf(':');
+        if (colon >= 0 && colon < leaf.length() - 1) leaf = leaf.substring(colon + 1);
+        return normalizeIdentityText(leaf);
+    }
+
+    private static String normalizeIdentityText(String value) {
+        if (value == null) return "";
+        return value.trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
     }
 
     private Game findBySyncIdentity(JSONObject o, String rootUri) {

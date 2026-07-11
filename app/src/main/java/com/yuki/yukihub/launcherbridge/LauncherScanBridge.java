@@ -78,6 +78,16 @@ public final class LauncherScanBridge {
                     ? defaultLaunchTargetForEngine(result.engine)
                     : result.launchTarget;
             game.emulatorPackage = emulatorPackageForEngine(result.engine);
+            Game restored = repository.findScannedMatch(game);
+            if (restored != null) {
+                if (!rootKey.equals(GameRepository.normalizeRootUriKey(restored.rootUri))) {
+                    repository.bindScannedLocation(restored, game);
+                }
+                existing.add(rootKey);
+                stats.skipped++;
+                stats.skippedItems.add(emptyText(result.title, result.uri));
+                continue;
+            }
             long id = repository.insertIfNotExists(game);
             if (id > 0) {
                 existing.add(rootKey);

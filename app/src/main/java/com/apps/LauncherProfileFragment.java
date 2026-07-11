@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.R;
@@ -278,9 +279,10 @@ public class LauncherProfileFragment extends Fragment {
                         // 直接导入云端设置
                         boolean settingsOk = LauncherUserData.importSettingsFromJson(requireContext(), configJson);
                         // 直接导入云端游玩记录
-                        boolean playOk = LauncherUserData.importPlaySql(requireContext(), playSql);
+                        boolean playOk = LauncherUserData.importCloudPlayData(requireContext(), playSql);
                         dismissLoadingDialog();
                         if (settingsOk && playOk) {
+                            new ViewModelProvider(requireActivity()).get(LauncherViewModel.class).refresh();
                             showResultDialog("恢复成功", "配置已从云端恢复，即将重启生效");
                         } else {
                             showResultDialog("部分恢复失败", settingsOk ? "设置已恢复，游玩记录部分导入失败" : "设置恢复失败");

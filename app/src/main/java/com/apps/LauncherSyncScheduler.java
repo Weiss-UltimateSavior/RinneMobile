@@ -108,31 +108,26 @@ public class LauncherSyncScheduler {
             });
         }
 
-        // 导出游玩记录 SQL
-        String exportPath = LauncherUserData.exportAll(context); // 先写入本地文件
-        if (exportPath == null) {
+        // 导出结构化游戏/游玩快照，避免跨设备复用 SQLite 自增主键。
+        String playData = LauncherUserData.exportCloudPlayData(context);
+        if (playData == null || playData.trim().isEmpty()) {
             Log.w(TAG, "本地数据导出失败，跳过游玩记录备份");
             scheduleNextBackup(context);
             return;
         }
-        String playSql = LauncherUserData.readExportedSql(context);
-        if (playSql != null && !playSql.trim().isEmpty()) {
-            LauncherAuthBridge.uploadPlayData(context, playSql, new LauncherAuthBridge.PlayDataCallback() {
-                @Override
-                public void onSuccess(String playData) {
-                    Log.d(TAG, "游玩记录备份成功");
-                    // 备份成功后注册下一次
-                    scheduleNextBackup(context);
-                }
+        LauncherAuthBridge.uploadPlayData(context, playData, new LauncherAuthBridge.PlayDataCallback() {
+            @Override
+            public void onSuccess(String playData) {
+                Log.d(TAG, "游玩记录备份成功");
+                // 备份成功后注册下一次
+                scheduleNextBackup(context);
+            }
 
-                @Override
-                public void onError(String message) {
-                    Log.w(TAG, "游玩记录备份失败: " + message);
-                    scheduleNextBackup(context);
-                }
-            });
-        } else {
-            scheduleNextBackup(context);
-        }
+            @Override
+            public void onError(String message) {
+                Log.w(TAG, "游玩记录备份失败: " + message);
+                scheduleNextBackup(context);
+            }
+        });
     }
 }
