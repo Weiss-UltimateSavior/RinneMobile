@@ -6,6 +6,7 @@ import android.net.Uri;
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.util.RxMainScheduler;
 import com.yuki.yukihub.data.MetadataRepository;
+import com.yuki.yukihub.metadata.BangumiClient;
 import com.yuki.yukihub.metadata.MetadataController;
 import com.yuki.yukihub.metadata.VnMetadata;
 import com.yuki.yukihub.metadata.VndbClient;
@@ -158,6 +159,57 @@ public final class LauncherMetadataBridge {
             boolean success = false;
             try {
                 new MetadataRepository(app).saveVndb(game.id, metadata);
+                success = true;
+            } catch (Throwable ignored) {
+            }
+            boolean finalSuccess = success;
+            RxMainScheduler.post(() -> callback.onResult(finalSuccess));
+        });
+    }
+
+    /** 按用户输入的关键词搜索 Bangumi 候选，结果始终回调到主线程。 */
+    public static void searchBangumiCandidatesAsync(Context context, String keyword, int limit,
+                                                      CandidatesCallback callback) {
+        if (callback == null) return;
+        String query = keyword == null ? "" : keyword.trim();
+        if (context == null || query.isEmpty()) {
+            callback.onResult(java.util.Collections.emptyList(), "请输入搜索关键词");
+            return;
+        }
+        String token = getBangumiToken(context);
+        if (token == null || token.trim().isEmpty()) {
+            callback.onResult(java.util.Collections.emptyList(), "请先在设置中配置 Bangumi Token");
+            return;
+        }
+        boolean useMirror = MetadataController.SOURCE_BANGUMI_MIRROR.equals(getMetadataSource(context));
+        AppExecutors.io().execute(() -> {
+            List<VnMetadata> candidates = java.util.Collections.emptyList();
+            String error = null;
+            try {
+                candidates = BangumiClient.searchCandidates(query, token, Math.max(1, Math.min(10, limit)), useMirror);
+            } catch (Throwable t) {
+                error = t.getMessage() == null || t.getMessage().trim().isEmpty() ? "Bangumi 搜索失败" : t.getMessage();
+            }
+            List<VnMetadata> result = candidates == null
+                    ? java.util.Collections.emptyList() : new java.util.ArrayList<>(candidates);
+            String finalError = error;
+            RxMainScheduler.post(() -> callback.onResult(result, finalError));
+        });
+    }
+
+    /** 保存用户明确选择的 Bangumi 候选。 */
+    public static void saveSelectedBangumiMetadataAsync(Context context, Game game, VnMetadata metadata,
+                                                         Callback callback) {
+        if (callback == null) return;
+        if (context == null || game == null || game.id <= 0 || metadata == null) {
+            callback.onResult(false);
+            return;
+        }
+        Context app = context.getApplicationContext();
+        AppExecutors.io().execute(() -> {
+            boolean success = false;
+            try {
+                new MetadataRepository(app).saveBangumi(game.id, metadata);
                 success = true;
             } catch (Throwable ignored) {
             }

@@ -301,8 +301,10 @@
 - Min SDK: `26`
 - Target SDK: `33`
 - Compile SDK: `36`
-- Java: `11`
+- Java: `17`
 - Android Gradle Plugin: `8.13.2`
+- 多模块架构：`app` + `engine`（引擎独立 library 模块）
+- 代码压缩：R8 + 资源压缩（Release）
 - 当前版本：`0.1.4`（Version Code: `6`）
 
 ***

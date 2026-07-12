@@ -258,8 +258,12 @@ Then open the project and run the build.
 * Application ID: `com.yuki.yukihub`
 * Min SDK: `26`
 * Target SDK: `33`
-* Compile SDK: `33`
-* Current version: `0.1`
+* Compile SDK: `36`
+* Java: `17`
+* Android Gradle Plugin: `8.13.2`
+* Multi-module architecture: `app` + `engine` (standalone engine library module)
+* Code shrinking: R8 + resource shrinking (Release)
+* Current version: `0.1.4` (Version Code: `6`)
 
 ---
 

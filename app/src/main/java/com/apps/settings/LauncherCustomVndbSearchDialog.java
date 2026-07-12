@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
+import com.yuki.yukihub.metadata.MetadataController;
 import com.yuki.yukihub.metadata.VnMetadata;
 import com.yuki.yukihub.model.Game;
 
@@ -32,11 +33,44 @@ public final class LauncherCustomVndbSearchDialog {
 
     public static void show(Fragment fragment, Game game, Runnable onSaved) {
         if (fragment == null || game == null || !fragment.isAdded()) return;
+        final String[] selectedSource = {MetadataController.SOURCE_VNDB};
         Dialog dialog = createDialog(fragment);
         LinearLayout root = createRoot(fragment);
-        root.addView(title(fragment, "自定义搜索 VNDB"));
+        TextView titleView = title(fragment, sourceSearchTitle(selectedSource[0]));
+        root.addView(titleView);
 
-        TextView info = info(fragment, "使用自定义关键词在 VNDB 搜索，并从候选结果中选择要绑定的元数据。");
+        // 数据源选择器
+        LinearLayout sourceRow = new LinearLayout(fragment.requireContext());
+        sourceRow.setOrientation(LinearLayout.HORIZONTAL);
+        sourceRow.setWeightSum(3f);
+        String[] sources = {MetadataController.SOURCE_VNDB, MetadataController.SOURCE_BANGUMI, MetadataController.SOURCE_BANGUMI_MIRROR};
+        String[] sourceLabels = {"VNDB", "Bangumi", "Bangumi镜像"};
+        TextView[] sourceChips = new TextView[3];
+        for (int i = 0; i < 3; i++) {
+            final int idx = i;
+            TextView chip = new TextView(fragment.requireContext());
+            chip.setText(sourceLabels[i]);
+            chip.setGravity(Gravity.CENTER);
+            chip.setTextSize(12);
+            chip.setTypeface(null, Typeface.BOLD);
+            chip.setPadding(dp(fragment, 10), dp(fragment, 7), dp(fragment, 10), dp(fragment, 7));
+            LauncherTheme.chip(chip, sources[i].equals(selectedSource[0]));
+            chip.setOnClickListener(v -> {
+                selectedSource[0] = sources[idx];
+                titleView.setText(sourceSearchTitle(selectedSource[0]));
+                for (int j = 0; j < 3; j++) LauncherTheme.chip(sourceChips[j], j == idx);
+            });
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            if (i < 2) chipParams.setMarginEnd(dp(fragment, 6));
+            sourceRow.addView(chip, chipParams);
+            sourceChips[i] = chip;
+        }
+        LinearLayout.LayoutParams sourceRowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        sourceRowParams.setMargins(0, dp(fragment, 13), 0, 0);
+        root.addView(sourceRow, sourceRowParams);
+
+        TextView info = info(fragment, "使用自定义关键词搜索，并从候选结果中选择要绑定的元数据。");
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoParams.setMargins(0, dp(fragment, 13), 0, 0);
@@ -52,7 +86,7 @@ public final class LauncherCustomVndbSearchDialog {
         input.setSingleLine(true);
         input.setText(safe(game.title));
         input.setSelectAllOnFocus(true);
-        input.setHint("输入 VNDB 搜索关键词或原名");
+        input.setHint("输入搜索关键词或原名");
         input.setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_text_color));
         input.setHintTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_input_hint_color));
         input.setTextSize(13);
@@ -63,7 +97,7 @@ public final class LauncherCustomVndbSearchDialog {
         inputParams.setMargins(0, dp(fragment, 5), 0, 0);
         root.addView(input, inputParams);
 
-        TextView hint = hint(fragment, "默认填入当前游戏标题，可改成原名、别名或 VNDB 关键词");
+        TextView hint = hint(fragment, "默认填入当前游戏标题，可改成原名、别名或关键词");
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hintParams.setMargins(0, dp(fragment, 7), 0, 0);
@@ -96,20 +130,25 @@ public final class LauncherCustomVndbSearchDialog {
             }
             search.setEnabled(false);
             search.setText("正在搜索...");
-            LauncherMetadataBridge.searchVndbCandidatesAsync(fragment.requireContext(), keyword, 8,
-                    (candidates, error) -> {
-                        if (!fragment.isAdded()) return;
-                        dialog.dismiss();
-                        if (error != null) {
-                            Toast.makeText(fragment.requireContext(), "VNDB 搜索失败：" + error, Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        if (candidates == null || candidates.isEmpty()) {
-                            Toast.makeText(fragment.requireContext(), "没有匹配到 VNDB 结果", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        showCandidates(fragment, game, candidates, onSaved);
-                    });
+            String src = selectedSource[0];
+            LauncherMetadataBridge.CandidatesCallback cb = (candidates, error) -> {
+                if (!fragment.isAdded()) return;
+                dialog.dismiss();
+                if (error != null) {
+                    Toast.makeText(fragment.requireContext(), sourceLabel(src) + " 搜索失败：" + error, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (candidates == null || candidates.isEmpty()) {
+                    Toast.makeText(fragment.requireContext(), "没有匹配到" + sourceLabel(src) + "结果", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                showCandidates(fragment, game, candidates, onSaved, src);
+            };
+            if (MetadataController.SOURCE_VNDB.equals(src)) {
+                LauncherMetadataBridge.searchVndbCandidatesAsync(fragment.requireContext(), keyword, 8, cb);
+            } else {
+                LauncherMetadataBridge.searchBangumiCandidatesAsync(fragment.requireContext(), keyword, 8, cb);
+            }
         });
         btnRow.addView(search);
         root.addView(btnRow);
@@ -117,13 +156,24 @@ public final class LauncherCustomVndbSearchDialog {
         focusAndShowKeyboard(dialog, input, fragment);
     }
 
+    private static String sourceLabel(String source) {
+        if (MetadataController.SOURCE_BANGUMI.equals(source)) return "Bangumi";
+        if (MetadataController.SOURCE_BANGUMI_MIRROR.equals(source)) return "Bangumi镜像";
+        return "VNDB";
+    }
+
+    private static String sourceSearchTitle(String source) {
+        return "自定义搜索 " + sourceLabel(source);
+    }
+
     private static void showCandidates(Fragment fragment, Game game, List<VnMetadata> candidates,
-                                       Runnable onSaved) {
+                                       Runnable onSaved, String source) {
+        String label = sourceLabel(source);
         Dialog dialog = createDialog(fragment);
         LinearLayout root = createRoot(fragment);
-        root.addView(title(fragment, "选择 VNDB 匹配结果"));
+        root.addView(title(fragment, "选择 " + label + " 匹配结果"));
 
-        TextView info = info(fragment, "点选一个候选项后会保存 VNDB 元数据绑定。封面同步仍使用更多选项里的同步功能。");
+        TextView info = info(fragment, "点选一个候选项后会保存 " + label + " 元数据绑定。封面同步仍使用更多选项里的同步功能。");
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoParams.setMargins(0, dp(fragment, 13), 0, 0);
@@ -136,7 +186,7 @@ public final class LauncherCustomVndbSearchDialog {
             TextView row = new TextView(fragment.requireContext());
             String displayTitle = first(metadata.chineseTitle, metadata.romanTitle, "未命名");
             String original = first(metadata.originalTitle, metadata.id, "");
-            String developer = first(metadata.developer, "VNDB 候选");
+            String developer = first(metadata.developer, label + " 候选");
             row.setText(displayTitle + "\n" + original + "\n" + developer);
             row.setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_text_color));
             row.setTextSize(12);
@@ -145,14 +195,18 @@ public final class LauncherCustomVndbSearchDialog {
             row.setBackground(LauncherTheme.cancelChip(fragment.requireContext()));
             row.setOnClickListener(view -> {
                 row.setEnabled(false);
-                LauncherMetadataBridge.saveSelectedVndbMetadataAsync(fragment.requireContext(), game, metadata,
-                        success -> {
-                            if (!fragment.isAdded()) return;
-                            dialog.dismiss();
-                            Toast.makeText(fragment.requireContext(),
-                                    success ? "VNDB 元数据已绑定" : "VNDB 元数据保存失败", Toast.LENGTH_SHORT).show();
-                            if (success && onSaved != null) onSaved.run();
-                        });
+                LauncherMetadataBridge.Callback saveCb = success -> {
+                    if (!fragment.isAdded()) return;
+                    dialog.dismiss();
+                    Toast.makeText(fragment.requireContext(),
+                            success ? label + " 元数据已绑定" : label + " 元数据保存失败", Toast.LENGTH_SHORT).show();
+                    if (success && onSaved != null) onSaved.run();
+                };
+                if (MetadataController.SOURCE_VNDB.equals(source)) {
+                    LauncherMetadataBridge.saveSelectedVndbMetadataAsync(fragment.requireContext(), game, metadata, saveCb);
+                } else {
+                    LauncherMetadataBridge.saveSelectedBangumiMetadataAsync(fragment.requireContext(), game, metadata, saveCb);
+                }
             });
             LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
