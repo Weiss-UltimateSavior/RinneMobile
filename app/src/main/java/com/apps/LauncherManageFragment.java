@@ -2,12 +2,14 @@ package com.apps;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,6 +84,7 @@ public class LauncherManageFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        applyTabletPortraitLayout();
         applySystemBarInsets();
         bindActions();
         applyThemeTone();
@@ -203,7 +206,7 @@ public class LauncherManageFragment extends Fragment {
         title.setText("扫描游戏");
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
+        setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -220,7 +223,7 @@ public class LauncherManageFragment extends Fragment {
             TextView option = new TextView(requireContext());
             option.setText((depth == currentDepth ? "● " : "○ ") + depthLabels[i]);
             option.setGravity(android.view.Gravity.CENTER);
-            option.setTextSize(13);
+            setResponsiveTextSize(option, 13);
             option.setTypeface(null, android.graphics.Typeface.BOLD);
             if (depth == currentDepth) {
                 LauncherTheme.primaryButton(option);
@@ -241,7 +244,7 @@ public class LauncherManageFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
+        setResponsiveTextSize(cancel, 13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(view -> dialog.dismiss());
@@ -350,7 +353,7 @@ public class LauncherManageFragment extends Fragment {
         title.setText("选择 XP3 入口");
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
+        setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -358,7 +361,7 @@ public class LauncherManageFragment extends Fragment {
         info.setText("《" + result.title + "》检测到多个 XP3 文件，请选择启动入口");
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        info.setTextSize(12);
+        setResponsiveTextSize(info, 12);
         info.setLineSpacing(dp(4), 1f);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(10), 0, 0);
@@ -374,7 +377,7 @@ public class LauncherManageFragment extends Fragment {
             option.setSingleLine(true);
             option.setEllipsize(TextUtils.TruncateAt.MIDDLE);
             option.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-            option.setTextSize(13);
+            setResponsiveTextSize(option, 13);
             option.setBackground(LauncherTheme.cancelChip(requireContext()));
             option.setOnClickListener(view -> {
                 result.launchTarget = candidate;
@@ -400,7 +403,7 @@ public class LauncherManageFragment extends Fragment {
         TextView skip = new TextView(requireContext());
         skip.setText("跳过此游戏");
         skip.setGravity(android.view.Gravity.CENTER);
-        skip.setTextSize(13);
+        setResponsiveTextSize(skip, 13);
         skip.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.secondaryButton(skip);
         skip.setOnClickListener(view -> {
@@ -413,7 +416,7 @@ public class LauncherManageFragment extends Fragment {
         TextView cancel = new TextView(requireContext());
         cancel.setText("取消扫描");
         cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextSize(13);
+        setResponsiveTextSize(cancel, 13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.secondaryButton(cancel);
         cancel.setOnClickListener(view -> dialog.dismiss());
@@ -461,7 +464,7 @@ public class LauncherManageFragment extends Fragment {
         title.setText(titleText);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
+        setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -478,7 +481,7 @@ public class LauncherManageFragment extends Fragment {
         hint.setText(hintText);
         hint.setGravity(android.view.Gravity.CENTER);
         hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        hint.setTextSize(11);
+        setResponsiveTextSize(hint, 11);
         LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hintLp.setMargins(0, dp(10), 0, 0);
         root.addView(hint, hintLp);
@@ -530,7 +533,7 @@ public class LauncherManageFragment extends Fragment {
         TextView title = new TextView(requireContext());
         title.setText(directoryLabel(root));
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(13);
+        setResponsiveTextSize(title, 13);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
@@ -566,7 +569,7 @@ public class LauncherManageFragment extends Fragment {
         view.setText(text);
         view.setGravity(android.view.Gravity.CENTER);
         view.setSingleLine(true);
-        view.setTextSize(11);
+        setResponsiveTextSize(view, 11);
         view.setTypeface(null, android.graphics.Typeface.BOLD);
         if (selected) {
             view.setTextColor(LauncherTheme.onPrimary(requireContext()));
@@ -611,7 +614,7 @@ public class LauncherManageFragment extends Fragment {
         info.setGravity(android.view.Gravity.CENTER);
         info.setText(syncStatusText());
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        info.setTextSize(12);
+        setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(11), 0, 0);
         root.addView(info, infoLp);
@@ -698,7 +701,7 @@ public class LauncherManageFragment extends Fragment {
                 + " · 当前大小：" + DevLogger.formatSize(LauncherDiagnosticsBridge.logSize()));
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        info.setTextSize(12);
+        setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(11), 0, 0);
         root.addView(info, infoLp);
@@ -720,7 +723,7 @@ public class LauncherManageFragment extends Fragment {
         title.setText(text);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
+        setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         return title;
     }
@@ -730,7 +733,7 @@ public class LauncherManageFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
+        setResponsiveTextSize(cancel, 13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(view -> dialog.dismiss());
@@ -765,7 +768,7 @@ public class LauncherManageFragment extends Fragment {
         option.setText(label);
         option.setGravity(android.view.Gravity.CENTER);
         option.setSingleLine(true);
-        option.setTextSize(13);
+        setResponsiveTextSize(option, 13);
         option.setTypeface(null, android.graphics.Typeface.BOLD);
         LauncherTheme.menuItem(option);
         option.setOnClickListener(view -> {
@@ -787,6 +790,7 @@ public class LauncherManageFragment extends Fragment {
         window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
+        applyScaleToViewTree(dialogView, tabletPortraitScale());
         window.setContentView(dialogView);
 
         TextView titleView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogTitle);
@@ -894,8 +898,94 @@ public class LauncherManageFragment extends Fragment {
         return colon >= 0 && colon < last.length() - 1 ? last.substring(colon + 1) : last;
     }
 
+    /**
+     * 手机竖屏维持原尺寸；仅在 smallestWidth >= 600dp 的平板竖屏中按比例放大。
+     * 600dp 平板约 1.25 倍，更宽的竖屏平板最高限制为 1.30 倍，避免界面过度膨胀。
+     */
+    private float tabletPortraitScale() {
+        Configuration configuration = getResources().getConfiguration();
+        if (configuration.orientation != Configuration.ORIENTATION_PORTRAIT
+                || configuration.smallestScreenWidthDp < 600) {
+            return 1f;
+        }
+
+        int widthDp = configuration.screenWidthDp > 0
+                ? configuration.screenWidthDp
+                : configuration.smallestScreenWidthDp;
+        return Math.min(1.30f, Math.max(1f, widthDp / 480f));
+    }
+
+    /** 对 XML 中已经解析出的行高、边距、内边距、文字和最小尺寸统一缩放。 */
+    private void applyTabletPortraitLayout() {
+        if (binding == null) return;
+        applyScaleToViewTree(binding.getRoot(), tabletPortraitScale());
+    }
+
+    private void applyScaleToViewTree(View view, float scale) {
+        if (view == null || scale <= 1f) return;
+
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params != null) {
+            if (params.width > 0) params.width = scalePx(params.width, scale);
+            if (params.height > 0) params.height = scalePx(params.height, scale);
+
+            if (params instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
+                margins.leftMargin = scalePx(margins.leftMargin, scale);
+                margins.topMargin = scalePx(margins.topMargin, scale);
+                margins.rightMargin = scalePx(margins.rightMargin, scale);
+                margins.bottomMargin = scalePx(margins.bottomMargin, scale);
+            }
+            view.setLayoutParams(params);
+        }
+
+        view.setPaddingRelative(
+                scalePx(view.getPaddingStart(), scale),
+                scalePx(view.getPaddingTop(), scale),
+                scalePx(view.getPaddingEnd(), scale),
+                scalePx(view.getPaddingBottom(), scale)
+        );
+
+        if (view.getMinimumWidth() > 0) {
+            view.setMinimumWidth(scalePx(view.getMinimumWidth(), scale));
+        }
+        if (view.getMinimumHeight() > 0) {
+            view.setMinimumHeight(scalePx(view.getMinimumHeight(), scale));
+        }
+        if (view.getElevation() > 0f) {
+            view.setElevation(view.getElevation() * scale);
+        }
+
+        if (view instanceof TextView) {
+            TextView textView = (TextView) view;
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textView.getTextSize() * scale);
+            textView.setCompoundDrawablePadding(scalePx(textView.getCompoundDrawablePadding(), scale));
+            textView.setLineSpacing(textView.getLineSpacingExtra() * scale, textView.getLineSpacingMultiplier());
+        }
+
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                applyScaleToViewTree(group.getChildAt(i), scale);
+            }
+        }
+    }
+
+    private int scalePx(int value, float scale) {
+        return value == 0 ? 0 : Math.round(value * scale);
+    }
+
+    /** 用于 Java 动态创建的 TextView，确保它们与 XML 内容采用同一缩放比例。 */
+    private void setResponsiveTextSize(TextView view, float baseSp) {
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, baseSp * tabletPortraitScale());
+    }
+
+    /** Java 动态创建的尺寸统一走这里，手机保持原 dp，平板竖屏自动放大。 */
     private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+        return (int) (value
+                * getResources().getDisplayMetrics().density
+                * tabletPortraitScale()
+                + 0.5f);
     }
 
     private void confirmImportLocalBackup() {

@@ -1,6 +1,7 @@
 package com.apps;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -178,18 +179,19 @@ public class LauncherAccountFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(dialogWidthDp()), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setPadding(dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()),
+                dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView titleView = new TextView(requireContext());
         titleView.setText(title);
         titleView.setGravity(android.view.Gravity.CENTER);
         titleView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        titleView.setTextSize(16);
+        titleView.setTextSize(dialogTitleTextSp());
         titleView.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -197,7 +199,7 @@ public class LauncherAccountFragment extends Fragment {
         msgView.setText(message);
         msgView.setGravity(android.view.Gravity.CENTER);
         msgView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
+        msgView.setTextSize(dialogMessageTextSp());
         LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         msgLp.setMargins(0, dp(13), 0, 0);
         root.addView(msgView, msgLp);
@@ -207,7 +209,7 @@ public class LauncherAccountFragment extends Fragment {
         okBtn.setGravity(android.view.Gravity.CENTER);
         LauncherTheme.primaryButton(okBtn);
         okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
         okLp.setMargins(0, dp(11), 0, 0);
         root.addView(okBtn, okLp);
 
@@ -222,18 +224,19 @@ public class LauncherAccountFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(dialogWidthDp()), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setPadding(dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()),
+                dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText("QQ群聊");
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
+        title.setTextSize(dialogTitleTextSp());
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -241,7 +244,7 @@ public class LauncherAccountFragment extends Fragment {
         msg.setText("将跳转到QQ加入交流群，是否继续？");
         msg.setGravity(android.view.Gravity.CENTER);
         msg.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msg.setTextSize(12);
+        msg.setTextSize(dialogMessageTextSp());
         LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         msgLp.setMargins(0, dp(13), 0, 0);
         root.addView(msg, msgLp);
@@ -254,7 +257,7 @@ public class LauncherAccountFragment extends Fragment {
             dialog.dismiss();
             openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info");
         });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
         confirmLp.setMargins(0, dp(11), 0, 0);
         root.addView(confirm, confirmLp);
 
@@ -262,11 +265,11 @@ public class LauncherAccountFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
+        cancel.setTextSize(dialogActionTextSp());
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
         cancelLp.setMargins(0, dp(9), 0, 0);
         root.addView(cancel, cancelLp);
 
@@ -281,18 +284,19 @@ public class LauncherAccountFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(dialogWidthDp()), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setPadding(dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()),
+                dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText("官网首页");
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
+        title.setTextSize(dialogTitleTextSp());
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -300,7 +304,7 @@ public class LauncherAccountFragment extends Fragment {
         msg.setText("将跳转到GitHub仓库页面，是否继续？");
         msg.setGravity(android.view.Gravity.CENTER);
         msg.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msg.setTextSize(12);
+        msg.setTextSize(dialogMessageTextSp());
         LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         msgLp.setMargins(0, dp(13), 0, 0);
         root.addView(msg, msgLp);
@@ -313,7 +317,7 @@ public class LauncherAccountFragment extends Fragment {
             dialog.dismiss();
             openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile");
         });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
         confirmLp.setMargins(0, dp(11), 0, 0);
         root.addView(confirm, confirmLp);
 
@@ -321,11 +325,11 @@ public class LauncherAccountFragment extends Fragment {
         cancel.setText("取消");
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
+        cancel.setTextSize(dialogActionTextSp());
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
         cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
         cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
         cancelLp.setMargins(0, dp(9), 0, 0);
         root.addView(cancel, cancelLp);
 
@@ -338,6 +342,43 @@ public class LauncherAccountFragment extends Fragment {
         } catch (Throwable t) {
             Toast.makeText(requireContext(), "无法打开链接", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    /**
+     * 仅在平板竖屏下放大弹窗，手机和横屏继续沿用原尺寸。
+     */
+    private boolean isTabletPortrait() {
+        Configuration configuration = requireContext().getResources().getConfiguration();
+        return configuration.smallestScreenWidthDp >= 600
+                && configuration.orientation == Configuration.ORIENTATION_PORTRAIT;
+    }
+
+    private int dialogWidthDp() {
+        return isTabletPortrait() ? 360 : 270;
+    }
+
+    private int dialogHorizontalPaddingDp() {
+        return isTabletPortrait() ? 28 : 22;
+    }
+
+    private int dialogVerticalPaddingDp() {
+        return isTabletPortrait() ? 24 : 20;
+    }
+
+    private int dialogButtonHeightDp() {
+        return isTabletPortrait() ? 44 : 36;
+    }
+
+    private float dialogTitleTextSp() {
+        return isTabletPortrait() ? 18f : 16f;
+    }
+
+    private float dialogMessageTextSp() {
+        return isTabletPortrait() ? 14f : 12f;
+    }
+
+    private float dialogActionTextSp() {
+        return isTabletPortrait() ? 15f : 13f;
     }
 
     private int dp(int value) {
