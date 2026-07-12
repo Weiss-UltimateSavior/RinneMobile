@@ -147,6 +147,51 @@
 
 ***
 
+## 项目结构
+
+```
+YukiHub/
+├── app/                              # 主应用模块
+│   └── src/main/
+│       ├── java/
+│       │   ├── com/apps/             # Launcher UI 层
+│       │   │   ├── account/          # 账号（登录/注册/免责声明）
+│       │   │   ├── chat/             # AI 对话与公共聊天
+│       │   │   ├── game/             # 游戏库管理
+│       │   │   ├── home/             # 首页
+│       │   │   ├── profile/          # 个人中心
+│       │   │   ├── leaderboard/      # 排行榜
+│       │   │   ├── settings/         # 设置与工具箱
+│       │   │   ├── sync/             # 数据同步
+│       │   │   ├── theme/            # 主题与动效
+│       │   │   ├── widget/           # 自定义控件
+│       │   │   ├── data/             # 仓库与 ViewModel
+│       │   │   ├── PadUi/            # 平板适配 UI
+│       │   │   └── UserData/         # 用户数据导入导出
+│       │   └── com/yuki/yukihub/     # Core 层 + Bridge
+│       │       ├── data/             # 数据库与仓库
+│       │       ├── metadata/         # 元数据（VNDB / Bangumi）
+│       │       ├── launcher/         # 启动器
+│       │       ├── launcherbridge/   # Bridge 通道
+│       │       ├── model/            # 数据模型
+│       │       ├── net/              # 网络层
+│       │       ├── scanner/          # 引擎检测与扫描
+│       │       ├── sync/             # 同步管理
+│       │       ├── tyrano/           # Tyrano 引擎
+│       │       └── util/             # 工具类
+│       └── res/                      # 资源文件
+├── engine/                           # 引擎独立 library 模块
+│   └── src/main/
+│       ├── java/                     # KRKR / ONS / Artemis / RMMZ 等引擎
+│       ├── jniLibs/                  # 原生库（arm64）
+│       └── assets/                   # 引擎运行时资源
+├── gradle/
+│   └── libs.versions.toml            # 版本目录
+└── third_party/                      # 第三方组件
+```
+
+***
+
 ## 核心功能
 
 ### 1. 游戏管理
@@ -259,7 +304,6 @@
 ## 系统要求
 
 - Android 8.0（API 26）及以上
-- 建议使用横屏设备或横屏模式
 - 需授予部分文件访问权限
 - 部分功能受系统兼容性和第三方组件支持情况影响
 

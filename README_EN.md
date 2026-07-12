@@ -64,6 +64,51 @@ It is suitable for the following scenarios:
 
 ---
 
+## Project Structure
+
+```
+YukiHub/
+├── app/                              # Main application module
+│   └── src/main/
+│       ├── java/
+│       │   ├── com/apps/             # Launcher UI layer
+│       │   │   ├── account/          # Account (login/register/disclaimer)
+│       │   │   ├── chat/             # AI chat & public chat
+│       │   │   ├── game/             # Game library management
+│       │   │   ├── home/             # Home screen
+│       │   │   ├── profile/          # Profile
+│       │   │   ├── leaderboard/      # Leaderboard
+│       │   │   ├── settings/         # Settings & toolbox
+│       │   │   ├── sync/             # Data sync
+│       │   │   ├── theme/            # Theme & animations
+│       │   │   ├── widget/           # Custom widgets
+│       │   │   ├── data/             # Repository & ViewModel
+│       │   │   ├── PadUi/            # Tablet UI
+│       │   │   └── UserData/         # User data import/export
+│       │   └── com/yuki/yukihub/     # Core layer + Bridge
+│       │       ├── data/             # Database & repository
+│       │       ├── metadata/         # Metadata (VNDB / Bangumi)
+│       │       ├── launcher/         # Launcher
+│       │       ├── launcherbridge/   # Bridge channel
+│       │       ├── model/            # Data models
+│       │       ├── net/              # Network layer
+│       │       ├── scanner/          # Engine detection & scanning
+│       │       ├── sync/             # Sync manager
+│       │       ├── tyrano/           # Tyrano engine
+│       │       └── util/             # Utilities
+│       └── res/                      # Resources
+├── engine/                           # Standalone engine library module
+│   └── src/main/
+│       ├── java/                     # KRKR / ONS / Artemis / RMMZ engines
+│       ├── jniLibs/                  # Native libraries (arm64)
+│       └── assets/                   # Engine runtime assets
+├── gradle/
+│   └── libs.versions.toml            # Version catalog
+└── third_party/                      # Third-party components
+```
+
+---
+
 ## Core Features
 
 ### 1. Game Management
@@ -211,7 +256,6 @@ This project does not provide:
 ## System Requirements
 
 * Android 8.0 or above
-* Landscape experience is better
 * Requires partial file access permissions
 * Some features may depend on system compatibility or third-party component support
 
