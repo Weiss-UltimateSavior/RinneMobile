@@ -12,6 +12,8 @@ import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherPendingBinding;
+import com.apps.theme.LauncherTheme;
+import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherPendingActivity extends AppCompatActivity {
     private ActivityLauncherPendingBinding binding;

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import com.apps.LauncherActivity;
 
 /**
  * 统一管理 Launcher 所有用户设置的导出/导入。

@@ -2,7 +2,7 @@ package com.apps.PadUi;
 
 import android.view.ViewGroup;
 
-import com.apps.BaseGameCardAdapter;
+import com.apps.game.BaseGameCardAdapter;
 import com.yuki.yukihub.databinding.ItemLauncherGameCardBinding;
 
 /** Pad-only compact-card layout policy; data and interaction binding remain shared. */

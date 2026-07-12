@@ -84,49 +84,49 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.ResourceStationActivity"
+            android:name="com.apps.settings.ResourceStationActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherChatSelectActivity"
+            android:name="com.apps.chat.LauncherChatSelectActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherPublicChatActivity"
+            android:name="com.apps.chat.LauncherPublicChatActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherLeaderboardActivity"
+            android:name="com.apps.leaderboard.LauncherLeaderboardActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherThemeMenuActivity"
+            android:name="com.apps.theme.LauncherThemeMenuActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherToolboxActivity"
+            android:name="com.apps.settings.LauncherToolboxActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherAddGameActivity"
+            android:name="com.apps.game.LauncherAddGameActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
@@ -141,7 +141,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherDisclaimerActivity"
+            android:name="com.apps.account.LauncherDisclaimerActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
@@ -149,35 +149,35 @@
 
 
         <activity
-            android:name="com.apps.LauncherGameEditActivity"
+            android:name="com.apps.game.LauncherGameEditActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherSyncCenterActivity"
+            android:name="com.apps.sync.LauncherSyncCenterActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherMetadataSourceActivity"
+            android:name="com.apps.settings.LauncherMetadataSourceActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherKrkrSettingsActivity"
+            android:name="com.apps.settings.LauncherKrkrSettingsActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherRegisterActivity"
+            android:name="com.apps.account.LauncherRegisterActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
@@ -185,28 +185,28 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherAiChatActivity"
+            android:name="com.apps.chat.LauncherAiChatActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherPasswordResetActivity"
+            android:name="com.apps.account.LauncherPasswordResetActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherProfileEditActivity"
+            android:name="com.apps.profile.LauncherProfileEditActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="com.apps.LauncherAccountSettingsActivity"
+            android:name="com.apps.account.LauncherAccountSettingsActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
@@ -311,7 +311,7 @@
             android:configChanges="keyboardHidden|screenSize" />
 
         <receiver
-            android:name="com.apps.LauncherSyncReceiver"
+            android:name="com.apps.sync.LauncherSyncReceiver"
             android:exported="false" />
 
     </application>

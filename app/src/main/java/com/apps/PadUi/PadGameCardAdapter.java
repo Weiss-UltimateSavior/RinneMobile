@@ -8,8 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.apps.LauncherCoverLoader;
-import com.apps.LauncherTheme;
+import com.apps.widget.LauncherCoverLoader;
+import com.apps.theme.LauncherTheme;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ItemPadGameCardBinding;
 import com.yuki.yukihub.model.Game;

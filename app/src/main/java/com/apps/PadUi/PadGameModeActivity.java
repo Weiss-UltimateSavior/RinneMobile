@@ -18,8 +18,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.apps.LauncherActivity;
-import com.apps.LauncherMotion;
-import com.apps.LauncherTheme;
+import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherTheme;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityPadGameModeBinding;
 

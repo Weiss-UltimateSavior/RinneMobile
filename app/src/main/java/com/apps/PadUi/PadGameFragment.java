@@ -22,10 +22,10 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.apps.LauncherActivity;
-import com.apps.LauncherGameActionController;
-import com.apps.LauncherGameEditActivity;
-import com.apps.LauncherMotion;
-import com.apps.LauncherTheme;
+import com.apps.game.LauncherGameActionController;
+import com.apps.game.LauncherGameEditActivity;
+import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherTheme;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.FragmentPadGameBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;

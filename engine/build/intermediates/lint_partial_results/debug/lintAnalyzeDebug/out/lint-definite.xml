@@ -1,0 +1,1840 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.13.2" type="incidents">
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="189"
+            column="83"
+            startOffset="9422"
+            endLine="189"
+            endColumn="91"
+            endOffset="9430"/>
+    </incident>
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="195"
+            column="105"
+            startOffset="10057"
+            endLine="195"
+            endColumn="113"
+            endOffset="10065"/>
+    </incident>
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="196"
+            column="100"
+            startOffset="10168"
+            endLine="196"
+            endColumn="108"
+            endOffset="10176"/>
+    </incident>
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="197"
+            column="102"
+            startOffset="10281"
+            endLine="197"
+            endColumn="110"
+            endOffset="10289"/>
+    </incident>
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="198"
+            column="112"
+            startOffset="10404"
+            endLine="198"
+            endColumn="120"
+            endOffset="10412"/>
+    </incident>
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="199"
+            column="105"
+            startOffset="10520"
+            endLine="199"
+            endColumn="113"
+            endOffset="10528"/>
+    </incident>
+
+    <incident
+        id="ApplySharedPref"
+        severity="warning"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background">
+        <fix-replace
+            description="Replace commit() with apply()"
+            oldPattern="(commit)\s*\("
+            replacement="apply"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceManager.java"
+            line="404"
+            column="20"
+            startOffset="17706"
+            endLine="404"
+            endColumn="28"
+            endOffset="17714"/>
+    </incident>
+
+    <incident
+        id="DefaultLocale"
+        severity="warning"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceUSB.java"
+            line="129"
+            column="16"
+            startOffset="4715"
+            endLine="129"
+            endColumn="204"
+            endOffset="4903"/>
+    </incident>
+
+    <incident
+        id="DefaultLocale"
+        severity="warning"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`.">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="127"
+            column="72"
+            startOffset="5861"
+            endLine="127"
+            endColumn="83"
+            endOffset="5872"/>
+    </incident>
+
+    <incident
+        id="DefaultLocale"
+        severity="warning"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`.">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="69"
+            column="30"
+            startOffset="2720"
+            endLine="69"
+            endColumn="41"
+            endOffset="2731"/>
+    </incident>
+
+    <incident
+        id="DefaultLocale"
+        severity="warning"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`.">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="325"
+            column="49"
+            startOffset="15261"
+            endLine="325"
+            endColumn="60"
+            endOffset="15272"/>
+    </incident>
+
+    <incident
+        id="DefaultLocale"
+        severity="warning"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`.">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/T3/r.java"
+            line="131"
+            column="26"
+            startOffset="5188"
+            endLine="131"
+            endColumn="37"
+            endOffset="5199"/>
+    </incident>
+
+    <incident
+        id="DiscouragedPrivateApi"
+        severity="warning"
+        message="Reflective access to getInt$, which is not part of the public SDK and therefore likely to change in future Android releases">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="412"
+            column="25"
+            startOffset="19610"
+            endLine="412"
+            endColumn="74"
+            endOffset="19659"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="440"
+            column="26"
+            startOffset="20832"
+            endLine="440"
+            endColumn="35"
+            endOffset="20841"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="440"
+            column="57"
+            startOffset="20863"
+            endLine="440"
+            endColumn="67"
+            endOffset="20873"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="441"
+            column="21"
+            startOffset="20898"
+            endLine="441"
+            endColumn="30"
+            endOffset="20907"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="232"
+            column="57"
+            startOffset="10556"
+            endLine="232"
+            endColumn="66"
+            endOffset="10565"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="241"
+            column="33"
+            startOffset="10912"
+            endLine="241"
+            endColumn="43"
+            endOffset="10922"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="243"
+            column="31"
+            startOffset="10989"
+            endLine="243"
+            endColumn="41"
+            endOffset="10999"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/bridge/NativeBridge.java"
+            line="244"
+            column="20"
+            startOffset="11030"
+            endLine="244"
+            endColumn="29"
+            endOffset="11039"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/T3/r.java"
+            line="133"
+            column="30"
+            startOffset="5316"
+            endLine="133"
+            endColumn="40"
+            endOffset="5326"/>
+    </incident>
+
+    <incident
+        id="SdCardPath"
+        severity="warning"
+        message="Do not hardcode &quot;/sdcard/&quot;; use `Environment.getExternalStorageDirectory().getPath()` instead">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/T3/r.java"
+            line="133"
+            column="50"
+            startOffset="5336"
+            endLine="133"
+            endColumn="59"
+            endOffset="5345"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one or more of: Intent.FLAG_GRANT_READ_URI_PERMISSION, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, Intent.FLAG_FROM_BACKGROUND, Intent.FLAG_DEBUG_LOG_RESOLUTION, Intent.FLAG_EXCLUDE_STOPPED_PACKAGES, Intent.FLAG_INCLUDE_STOPPED_PACKAGES, Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION, Intent.FLAG_GRANT_PREFIX_URI_PERMISSION, Intent.FLAG_ACTIVITY_MATCH_EXTERNAL, Intent.FLAG_ACTIVITY_NO_HISTORY, Intent.FLAG_ACTIVITY_SINGLE_TOP, Intent.FLAG_ACTIVITY_NEW_TASK, Intent.FLAG_ACTIVITY_MULTIPLE_TASK, Intent.FLAG_ACTIVITY_CLEAR_TOP, Intent.FLAG_ACTIVITY_FORWARD_RESULT, Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS, Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT, Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED, Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY, Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET, Intent.FLAG_ACTIVITY_NEW_DOCUMENT, Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET, Intent.FLAG_ACTIVITY_NO_USER_ACTION, Intent.FLAG_ACTIVITY_REORDER_TO_FRONT, Intent.FLAG_ACTIVITY_NO_ANIMATION, Intent.FLAG_ACTIVITY_CLEAR_TASK, Intent.FLAG_ACTIVITY_TASK_ON_HOME, Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS, Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT, Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER, Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT, Intent.FLAG_RECEIVER_REGISTERED_ONLY, Intent.FLAG_RECEIVER_REPLACE_PENDING, Intent.FLAG_RECEIVER_FOREGROUND, Intent.FLAG_RECEIVER_NO_ABORT, Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS">
+        <fix-replace
+            description="Change to Intent.FLAG_ACTIVITY_NO_ANIMATION (65536)"
+            replacement="android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/com/ies_net/artemis/ArtemisActivity.java"
+            line="32"
+            column="25"
+            startOffset="1036"
+            endLine="32"
+            endColumn="30"
+            endOffset="1041"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxEditBoxHelper.java"
+            line="54"
+            column="270"
+            startOffset="4919"
+            endLine="54"
+            endColumn="284"
+            endOffset="4933"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxEditBoxHelper.java"
+            line="55"
+            column="250"
+            startOffset="5213"
+            endLine="55"
+            endColumn="264"
+            endOffset="5227"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxGLSurfaceView.java"
+            line="101"
+            column="118"
+            startOffset="4523"
+            endLine="101"
+            endColumn="132"
+            endOffset="4537"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxGLSurfaceView.java"
+            line="106"
+            column="118"
+            startOffset="5072"
+            endLine="106"
+            endColumn="132"
+            endOffset="5086"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxGLSurfaceView.java"
+            line="225"
+            column="69"
+            startOffset="9104"
+            endLine="225"
+            endColumn="83"
+            endOffset="9118"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.VIBRATOR_SERVICE (vibrator)"
+            replacement="android.content.Context.VIBRATOR_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="75"
+            column="64"
+            startOffset="2975"
+            endLine="75"
+            endColumn="74"
+            endOffset="2985"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: View.VISIBLE, View.INVISIBLE, View.GONE">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to View.VISIBLE (0)"
+                replacement="android.view.View.VISIBLE"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to View.INVISIBLE"
+                replacement="android.view.View.INVISIBLE"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to View.GONE"
+                replacement="android.view.View.GONE"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/DummyEdit.java"
+            line="43"
+            column="129"
+            startOffset="1505"
+            endLine="43"
+            endColumn="130"
+            endOffset="1506"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.BLUETOOTH_SERVICE (bluetooth)"
+            replacement="android.content.Context.BLUETOOTH_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceBLESteamController.java"
+            line="214"
+            column="96"
+            startOffset="9570"
+            endLine="214"
+            endColumn="107"
+            endOffset="9581"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: PackageManager.PERMISSION_GRANTED, PackageManager.PERMISSION_DENIED">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to PackageManager.PERMISSION_GRANTED (0)"
+                replacement="android.content.pm.PackageManager.PERMISSION_GRANTED"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to PackageManager.PERMISSION_DENIED"
+                replacement="android.content.pm.PackageManager.PERMISSION_DENIED"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceManager.java"
+            line="191"
+            column="161"
+            startOffset="8639"
+            endLine="191"
+            endColumn="162"
+            endOffset="8640"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.BLUETOOTH_SERVICE (bluetooth)"
+            replacement="android.content.Context.BLUETOOTH_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceManager.java"
+            line="199"
+            column="95"
+            startOffset="9105"
+            endLine="199"
+            endColumn="106"
+            endOffset="9116"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.USB_SERVICE (usb)"
+            replacement="android.content.Context.USB_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceManager.java"
+            line="221"
+            column="77"
+            startOffset="10165"
+            endLine="221"
+            endColumn="82"
+            endOffset="10170"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one or more of: PendingIntent.FLAG_ONE_SHOT, PendingIntent.FLAG_NO_CREATE, PendingIntent.FLAG_CANCEL_CURRENT, PendingIntent.FLAG_UPDATE_CURRENT, PendingIntent.FLAG_IMMUTABLE, PendingIntent.FLAG_MUTABLE, PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT, Intent.FILL_IN_ACTION, Intent.FILL_IN_DATA, Intent.FILL_IN_CATEGORIES, Intent.FILL_IN_COMPONENT, Intent.FILL_IN_PACKAGE, Intent.FILL_IN_SOURCE_BOUNDS, Intent.FILL_IN_SELECTOR, Intent.FILL_IN_CLIP_DATA">
+        <fix-replace
+            description="Change to PendingIntent.FLAG_MUTABLE (33554432)"
+            replacement="android.app.PendingIntent.FLAG_MUTABLE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceManager.java"
+            line="460"
+            column="167"
+            startOffset="19603"
+            endLine="460"
+            endColumn="175"
+            endOffset="19611"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.POWER_SERVICE (power)"
+            replacement="android.content.Context.POWER_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/tv/danmaku/ijk/media/player/IjkMediaPlayer.java"
+            line="767"
+            column="94"
+            startOffset="29124"
+            endLine="767"
+            endColumn="101"
+            endOffset="29131"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="162"
+            column="82"
+            startOffset="7603"
+            endLine="162"
+            endColumn="96"
+            endOffset="7617"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="184"
+            column="62"
+            startOffset="8434"
+            endLine="184"
+            endColumn="76"
+            endOffset="8448"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.ACTIVITY_SERVICE (activity)"
+            replacement="android.content.Context.ACTIVITY_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="189"
+            column="105"
+            startOffset="8667"
+            endLine="189"
+            endColumn="115"
+            endOffset="8677"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="149"
+            column="68"
+            startOffset="6508"
+            endLine="149"
+            endColumn="82"
+            endOffset="6522"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: View.VISIBLE, View.INVISIBLE, View.GONE">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to View.VISIBLE (0)"
+                replacement="android.view.View.VISIBLE"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to View.INVISIBLE"
+                replacement="android.view.View.INVISIBLE"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to View.GONE"
+                replacement="android.view.View.GONE"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="215"
+            column="49"
+            startOffset="9120"
+            endLine="215"
+            endColumn="50"
+            endOffset="9121"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="217"
+            column="69"
+            startOffset="9242"
+            endLine="217"
+            endColumn="83"
+            endOffset="9256"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.UI_MODE_SERVICE (uimode)"
+            replacement="android.content.Context.UI_MODE_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="450"
+            column="60"
+            startOffset="17124"
+            endLine="450"
+            endColumn="68"
+            endOffset="17132"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="487"
+            column="76"
+            startOffset="18518"
+            endLine="487"
+            endColumn="90"
+            endOffset="18532"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one or more of: Intent.FLAG_GRANT_READ_URI_PERMISSION, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, Intent.FLAG_FROM_BACKGROUND, Intent.FLAG_DEBUG_LOG_RESOLUTION, Intent.FLAG_EXCLUDE_STOPPED_PACKAGES, Intent.FLAG_INCLUDE_STOPPED_PACKAGES, Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION, Intent.FLAG_GRANT_PREFIX_URI_PERMISSION, Intent.FLAG_ACTIVITY_MATCH_EXTERNAL, Intent.FLAG_ACTIVITY_NO_HISTORY, Intent.FLAG_ACTIVITY_SINGLE_TOP, Intent.FLAG_ACTIVITY_NEW_TASK, Intent.FLAG_ACTIVITY_MULTIPLE_TASK, Intent.FLAG_ACTIVITY_CLEAR_TOP, Intent.FLAG_ACTIVITY_FORWARD_RESULT, Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS, Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT, Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED, Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY, Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET, Intent.FLAG_ACTIVITY_NEW_DOCUMENT, Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET, Intent.FLAG_ACTIVITY_NO_USER_ACTION, Intent.FLAG_ACTIVITY_REORDER_TO_FRONT, Intent.FLAG_ACTIVITY_NO_ANIMATION, Intent.FLAG_ACTIVITY_CLEAR_TASK, Intent.FLAG_ACTIVITY_TASK_ON_HOME, Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS, Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT, Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER, Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT, Intent.FLAG_RECEIVER_REGISTERED_ONLY, Intent.FLAG_RECEIVER_REPLACE_PENDING, Intent.FLAG_RECEIVER_FOREGROUND, Intent.FLAG_RECEIVER_NO_ABORT, Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS">
+        <fix-replace
+            description="Change to Intent.FLAG_ACTIVITY_NEW_TASK (268435456)"
+            replacement="android.content.Intent.FLAG_ACTIVITY_NEW_TASK"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="513"
+            column="25"
+            startOffset="19241"
+            endLine="513"
+            endColumn="34"
+            endOffset="19250"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one or more of: Intent.FLAG_GRANT_READ_URI_PERMISSION, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, Intent.FLAG_FROM_BACKGROUND, Intent.FLAG_DEBUG_LOG_RESOLUTION, Intent.FLAG_EXCLUDE_STOPPED_PACKAGES, Intent.FLAG_INCLUDE_STOPPED_PACKAGES, Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION, Intent.FLAG_GRANT_PREFIX_URI_PERMISSION, Intent.FLAG_ACTIVITY_MATCH_EXTERNAL, Intent.FLAG_ACTIVITY_NO_HISTORY, Intent.FLAG_ACTIVITY_SINGLE_TOP, Intent.FLAG_ACTIVITY_NEW_TASK, Intent.FLAG_ACTIVITY_MULTIPLE_TASK, Intent.FLAG_ACTIVITY_CLEAR_TOP, Intent.FLAG_ACTIVITY_FORWARD_RESULT, Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS, Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT, Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED, Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY, Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET, Intent.FLAG_ACTIVITY_NEW_DOCUMENT, Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET, Intent.FLAG_ACTIVITY_NO_USER_ACTION, Intent.FLAG_ACTIVITY_REORDER_TO_FRONT, Intent.FLAG_ACTIVITY_NO_ANIMATION, Intent.FLAG_ACTIVITY_CLEAR_TASK, Intent.FLAG_ACTIVITY_TASK_ON_HOME, Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS, Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT, Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER, Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT, Intent.FLAG_RECEIVER_REGISTERED_ONLY, Intent.FLAG_RECEIVER_REPLACE_PENDING, Intent.FLAG_RECEIVER_FOREGROUND, Intent.FLAG_RECEIVER_NO_ABORT, Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="581"
+            column="29"
+            startOffset="21402"
+            endLine="581"
+            endColumn="39"
+            endOffset="21412"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: PackageManager.PERMISSION_GRANTED, PackageManager.PERMISSION_DENIED">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to PackageManager.PERMISSION_GRANTED (0)"
+                replacement="android.content.pm.PackageManager.PERMISSION_GRANTED"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to PackageManager.PERMISSION_DENIED"
+                replacement="android.content.pm.PackageManager.PERMISSION_DENIED"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="595"
+            column="50"
+            startOffset="21843"
+            endLine="595"
+            endColumn="51"
+            endOffset="21844"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: LinearLayout.HORIZONTAL, LinearLayout.VERTICAL">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to LinearLayout.HORIZONTAL (0)"
+                replacement="android.widget.LinearLayout.HORIZONTAL"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to LinearLayout.VERTICAL"
+                replacement="android.widget.LinearLayout.VERTICAL"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="816"
+            column="37"
+            startOffset="28967"
+            endLine="816"
+            endColumn="38"
+            endOffset="28968"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: LinearLayout.HORIZONTAL, LinearLayout.VERTICAL">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to LinearLayout.VERTICAL (1)"
+                replacement="android.widget.LinearLayout.VERTICAL"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to LinearLayout.HORIZONTAL"
+                replacement="android.widget.LinearLayout.HORIZONTAL"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="852"
+            column="38"
+            startOffset="30431"
+            endLine="852"
+            endColumn="39"
+            endOffset="30432"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.WINDOW_SERVICE (window)"
+            replacement="android.content.Context.WINDOW_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="1174"
+            column="76"
+            startOffset="42250"
+            endLine="1174"
+            endColumn="84"
+            endOffset="42258"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_USER, ActivityInfo.SCREEN_ORIENTATION_BEHIND, ActivityInfo.SCREEN_ORIENTATION_SENSOR, ActivityInfo.SCREEN_ORIENTATION_NOSENSOR, ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE, ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR, ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE, ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT, ActivityInfo.SCREEN_ORIENTATION_FULL_USER, ActivityInfo.SCREEN_ORIENTATION_LOCKED">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="1228"
+            column="44"
+            startOffset="44465"
+            endLine="1228"
+            endColumn="47"
+            endOffset="44468"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioTrack.WRITE_BLOCKING, AudioTrack.WRITE_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioTrack.WRITE_BLOCKING (0)"
+                replacement="android.media.AudioTrack.WRITE_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioTrack.WRITE_NON_BLOCKING"
+                replacement="android.media.AudioTrack.WRITE_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="71"
+            column="72"
+            startOffset="2252"
+            endLine="71"
+            endColumn="73"
+            endOffset="2253"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioRecord.READ_BLOCKING, AudioRecord.READ_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioRecord.READ_NON_BLOCKING (1)"
+                replacement="android.media.AudioRecord.READ_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioRecord.READ_BLOCKING"
+                replacement="android.media.AudioRecord.READ_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="124"
+            column="132"
+            startOffset="3965"
+            endLine="124"
+            endColumn="133"
+            endOffset="3966"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioRecord.READ_BLOCKING, AudioRecord.READ_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioRecord.READ_BLOCKING (0)"
+                replacement="android.media.AudioRecord.READ_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioRecord.READ_NON_BLOCKING"
+                replacement="android.media.AudioRecord.READ_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="124"
+            column="136"
+            startOffset="3969"
+            endLine="124"
+            endColumn="137"
+            endOffset="3970"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioRecord.READ_BLOCKING, AudioRecord.READ_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioRecord.READ_NON_BLOCKING (1)"
+                replacement="android.media.AudioRecord.READ_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioRecord.READ_BLOCKING"
+                replacement="android.media.AudioRecord.READ_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="128"
+            column="61"
+            startOffset="4112"
+            endLine="128"
+            endColumn="62"
+            endOffset="4113"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioRecord.READ_BLOCKING, AudioRecord.READ_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioRecord.READ_BLOCKING (0)"
+                replacement="android.media.AudioRecord.READ_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioRecord.READ_NON_BLOCKING"
+                replacement="android.media.AudioRecord.READ_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="128"
+            column="65"
+            startOffset="4116"
+            endLine="128"
+            endColumn="66"
+            endOffset="4117"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioRecord.READ_BLOCKING, AudioRecord.READ_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioRecord.READ_NON_BLOCKING (1)"
+                replacement="android.media.AudioRecord.READ_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioRecord.READ_BLOCKING"
+                replacement="android.media.AudioRecord.READ_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="132"
+            column="132"
+            startOffset="4330"
+            endLine="132"
+            endColumn="133"
+            endOffset="4331"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: AudioRecord.READ_BLOCKING, AudioRecord.READ_NON_BLOCKING">
+        <fix-alternatives>
+            <fix-replace
+                description="Change to AudioRecord.READ_BLOCKING (0)"
+                replacement="android.media.AudioRecord.READ_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+            <fix-replace
+                description="Change to AudioRecord.READ_NON_BLOCKING"
+                replacement="android.media.AudioRecord.READ_NON_BLOCKING"
+                shortenNames="true"
+                priority="0"/>
+        </fix-alternatives>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="132"
+            column="136"
+            startOffset="4334"
+            endLine="132"
+            endColumn="137"
+            endOffset="4335"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.CLIPBOARD_SERVICE (clipboard)"
+            replacement="android.content.Context.CLIPBOARD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLClipboardHandler.java"
+            line="11"
+            column="98"
+            startOffset="401"
+            endLine="11"
+            endColumn="109"
+            endOffset="412"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.VIBRATOR_SERVICE (vibrator)"
+            replacement="android.content.Context.VIBRATOR_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLHapticHandler.java"
+            line="49"
+            column="75"
+            startOffset="1629"
+            endLine="49"
+            endColumn="85"
+            endOffset="1639"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.WINDOW_SERVICE (window)"
+            replacement="android.content.Context.WINDOW_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLSurface.java"
+            line="38"
+            column="67"
+            startOffset="1291"
+            endLine="38"
+            endColumn="75"
+            endOffset="1299"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.SENSOR_SERVICE (sensor)"
+            replacement="android.content.Context.SENSOR_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLSurface.java"
+            line="39"
+            column="72"
+            startOffset="1394"
+            endLine="39"
+            endColumn="80"
+            endOffset="1402"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/d.java"
+            line="21"
+            column="78"
+            startOffset="839"
+            endLine="21"
+            endColumn="92"
+            endOffset="853"/>
+    </incident>
+
+    <incident
+        id="WrongConstant"
+        severity="error"
+        message="Must be one of: Context.POWER_SERVICE, Context.WINDOW_SERVICE, Context.LAYOUT_INFLATER_SERVICE, Context.ACCOUNT_SERVICE, Context.ACTIVITY_SERVICE, Context.ALARM_SERVICE, Context.NOTIFICATION_SERVICE, Context.ACCESSIBILITY_SERVICE, Context.CAPTIONING_SERVICE, Context.KEYGUARD_SERVICE, Context.LOCATION_SERVICE, Context.HEALTHCONNECT_SERVICE, Context.SEARCH_SERVICE, Context.SENSOR_SERVICE, Context.STORAGE_SERVICE, Context.STORAGE_STATS_SERVICE, Context.WALLPAPER_SERVICE, Context.VIBRATOR_MANAGER_SERVICE, Context.VIBRATOR_SERVICE, Context.CONNECTIVITY_SERVICE, Context.TETHERING_SERVICE, Context.IPSEC_SERVICE, Context.VPN_MANAGEMENT_SERVICE, Context.NETWORK_STATS_SERVICE, Context.WIFI_SERVICE, Context.WIFI_AWARE_SERVICE, Context.WIFI_P2P_SERVICE, Context.WIFI_RTT_RANGING_SERVICE, Context.NSD_SERVICE, Context.AUDIO_SERVICE, Context.FINGERPRINT_SERVICE, Context.BIOMETRIC_SERVICE, Context.MEDIA_ROUTER_SERVICE, Context.TELEPHONY_SERVICE, Context.TELEPHONY_SUBSCRIPTION_SERVICE, Context.CARRIER_CONFIG_SERVICE, Context.EUICC_SERVICE, Context.TELECOM_SERVICE, Context.CLIPBOARD_SERVICE, Context.INPUT_METHOD_SERVICE, Context.TEXT_SERVICES_MANAGER_SERVICE, Context.TEXT_CLASSIFICATION_SERVICE, Context.APPWIDGET_SERVICE, Context.DROPBOX_SERVICE, Context.DEVICE_POLICY_SERVICE, Context.UI_MODE_SERVICE, Context.DOWNLOAD_SERVICE, Context.NFC_SERVICE, Context.BLUETOOTH_SERVICE, Context.USB_SERVICE, Context.LAUNCHER_APPS_SERVICE, Context.INPUT_SERVICE, Context.DISPLAY_SERVICE, Context.USER_SERVICE, Context.RESTRICTIONS_SERVICE, Context.APP_OPS_SERVICE, Context.ROLE_SERVICE, Context.CAMERA_SERVICE, Context.PRINT_SERVICE, Context.CONSUMER_IR_SERVICE, Context.TV_INTERACTIVE_APP_SERVICE, Context.TV_INPUT_SERVICE, Context.USAGE_STATS_SERVICE, Context.MEDIA_SESSION_SERVICE, Context.MEDIA_COMMUNICATION_SERVICE, Context.BATTERY_SERVICE, Context.JOB_SCHEDULER_SERVICE, Context.PERSISTENT_DATA_BLOCK_SERVICE, Context.MEDIA_PROJECTION_SERVICE, Context.MIDI_SERVICE, Context.HARDWARE_PROPERTIES_SERVICE, Context.SHORTCUT_SERVICE, Context.SYSTEM_HEALTH_SERVICE, Context.COMPANION_DEVICE_SERVICE, Context.VIRTUAL_DEVICE_SERVICE, Context.CROSS_PROFILE_APPS_SERVICE, Context.LOCALE_SERVICE, Context.MEDIA_METRICS_SERVICE, Context.DISPLAY_HASH_SERVICE, Context.CREDENTIAL_SERVICE, Context.DEVICE_LOCK_SERVICE, Context.GRAMMATICAL_INFLECTION_SERVICE, Context.SECURITY_STATE_SERVICE, Context.CONTACT_KEYS_SERVICE, Context.MEDIA_QUALITY_SERVICE, Context.ADVANCED_PROTECTION_SERVICE">
+        <fix-replace
+            description="Change to Context.INPUT_METHOD_SERVICE (input_method)"
+            replacement="android.content.Context.INPUT_METHOD_SERVICE"
+            shortenNames="true"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/g.java"
+            line="30"
+            column="78"
+            startOffset="1115"
+            endLine="30"
+            endColumn="92"
+            endOffset="1129"/>
+    </incident>
+
+    <incident
+        id="AppCompatCustomView"
+        severity="error"
+        message="This custom view should extend `androidx.appcompat.widget.AppCompatEditText` instead">
+        <fix-replace
+            description="Extend AppCompat widget instead"
+            family="Extend AppCompat widget instead"
+            robot="true"
+            independent="true"
+            replacement="androidx.appcompat.widget.AppCompatEditText"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxEditBox.java"
+            line="7"
+            column="38"
+            startOffset="163"
+            endLine="7"
+            endColumn="46"
+            endOffset="171"/>
+    </incident>
+
+    <incident
+        id="SetWorldReadable"
+        severity="warning"
+        message="Setting file permissions to world-readable can be risky, review carefully">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/com/yuki/yukihub/ons/OnsLibLoader.java"
+            line="61"
+            column="17"
+            startOffset="2352"
+            endLine="61"
+            endColumn="45"
+            endOffset="2380"/>
+    </incident>
+
+    <incident
+        id="UnsafeDynamicallyLoadedCode"
+        severity="warning"
+        message="Dynamically loading code using `load` is risky, please use `loadLibrary` instead when possible">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/com/yuki/yukihub/ons/OnsLibLoader.java"
+            line="31"
+            column="13"
+            startOffset="1147"
+            endLine="31"
+            endColumn="46"
+            endOffset="1180"/>
+    </incident>
+
+    <incident
+        id="DrawAllocation"
+        severity="warning"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/ResizeLayout.java"
+            line="25"
+            column="13"
+            startOffset="734"
+            endLine="25"
+            endColumn="26"
+            endOffset="747"/>
+    </incident>
+
+    <incident
+        id="WakelockTimeout"
+        severity="warning"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery.">
+        <fix-replace
+            description="Set timeout to 10 minutes"
+            oldPattern="acquire\s*\(()\s*\)"
+            replacement="10*60*1000L /*10 minutes*/"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/tv/danmaku/ijk/media/player/IjkMediaPlayer.java"
+            line="404"
+            column="17"
+            startOffset="17603"
+            endLine="404"
+            endColumn="41"
+            endOffset="17627"/>
+    </incident>
+
+    <incident
+        id="WakelockTimeout"
+        severity="warning"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery.">
+        <fix-replace
+            description="Set timeout to 10 minutes"
+            oldPattern="acquire\s*\(()\s*\)"
+            replacement="10*60*1000L /*10 minutes*/"
+            priority="0"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/tv/danmaku/ijk/media/player/IjkMediaPlayer.java"
+            line="771"
+            column="13"
+            startOffset="29326"
+            endLine="771"
+            endColumn="37"
+            endOffset="29350"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceBLESteamController.java"
+            line="55"
+            column="13"
+            startOffset="2518"
+            endLine="55"
+            endColumn="39"
+            endOffset="2544"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is always >= 26">
+        <fix-data conditional="true"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="223"
+            column="27"
+            startOffset="9409"
+            endLine="223"
+            endColumn="54"
+            endOffset="9436"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="242"
+            column="13"
+            startOffset="10023"
+            endLine="242"
+            endColumn="39"
+            endOffset="10049"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is always >= 26">
+        <fix-data conditional="true"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="254"
+            column="13"
+            startOffset="10382"
+            endLine="254"
+            endColumn="40"
+            endOffset="10409"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="471"
+            column="13"
+            startOffset="17800"
+            endLine="471"
+            endColumn="39"
+            endOffset="17826"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="590"
+            column="13"
+            startOffset="21635"
+            endLine="590"
+            endColumn="39"
+            endOffset="21661"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="615"
+            column="13"
+            startOffset="22412"
+            endLine="615"
+            endColumn="39"
+            endOffset="22438"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="680"
+            column="13"
+            startOffset="24114"
+            endLine="680"
+            endColumn="39"
+            endOffset="24140"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="990"
+            column="17"
+            startOffset="36252"
+            endLine="990"
+            endColumn="43"
+            endOffset="36278"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="124"
+            column="16"
+            startOffset="3849"
+            endLine="124"
+            endColumn="42"
+            endOffset="3875"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is never &lt; 26">
+        <fix-data conditional="false"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLAudioManager.java"
+            line="132"
+            column="16"
+            startOffset="4214"
+            endLine="132"
+            endColumn="42"
+            endOffset="4240"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is always >= 26">
+        <fix-data conditional="true"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLControllerManager.java"
+            line="30"
+            column="17"
+            startOffset="917"
+            endLine="30"
+            endColumn="44"
+            endOffset="944"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is always >= 26">
+        <fix-data conditional="true"/>
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLSurface.java"
+            line="236"
+            column="18"
+            startOffset="9856"
+            endLine="236"
+            endColumn="45"
+            endOffset="9883"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxBitmap.java"
+            line="6"
+            column="13"
+            startOffset="102"
+            endLine="6"
+            endColumn="19"
+            endOffset="108"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="26"
+            column="13"
+            startOffset="778"
+            endLine="26"
+            endColumn="19"
+            endOffset="784"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields (static reference to `Cocos2dxMusic` which has field `mContext` pointing to `Context`); this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="29"
+            column="13"
+            startOffset="909"
+            endLine="29"
+            endColumn="19"
+            endOffset="915"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields (static reference to `Cocos2dxSound` which has field `mContext` pointing to `Context`); this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxHelper.java"
+            line="30"
+            column="13"
+            startOffset="957"
+            endLine="30"
+            endColumn="19"
+            endOffset="963"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxWebViewHelper.java"
+            line="13"
+            column="13"
+            startOffset="368"
+            endLine="13"
+            endColumn="19"
+            endOffset="374"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields (static reference to `HIDDeviceManager` which has field `mContext` pointing to `Context`); this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/HIDDeviceManager.java"
+            line="28"
+            column="13"
+            startOffset="923"
+            endLine="28"
+            endColumn="19"
+            endOffset="929"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields (static reference to `KR2Activity` which has field `mTextEdit` pointing to `View`); this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="25"
+            column="12"
+            startOffset="756"
+            endLine="25"
+            endColumn="18"
+            endOffset="762"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields (static reference to `f` which has field `f19632d` pointing to `EditText`); this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="27"
+            column="5"
+            startOffset="821"
+            endLine="27"
+            endColumn="11"
+            endOffset="827"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/KR2Activity.java"
+            line="28"
+            column="15"
+            startOffset="870"
+            endLine="28"
+            endColumn="21"
+            endOffset="876"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDL.java"
+            line="7"
+            column="15"
+            startOffset="133"
+            endLine="7"
+            endColumn="21"
+            endOffset="139"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields (static reference to `HIDDeviceManager` which has field `mContext` pointing to `Context`); this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="75"
+            column="15"
+            startOffset="3194"
+            endLine="75"
+            endColumn="21"
+            endOffset="3200"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/libsdl/app/SDLActivity.java"
+            line="80"
+            column="15"
+            startOffset="3421"
+            endLine="80"
+            endColumn="21"
+            endOffset="3427"/>
+    </incident>
+
+    <incident
+        id="StaticFieldLeak"
+        severity="warning"
+        message="Do not place Android context classes in static fields; this is a memory leak">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/T3/r.java"
+            line="18"
+            column="12"
+            startOffset="419"
+            endLine="18"
+            endColumn="18"
+            endOffset="425"/>
+    </incident>
+
+    <incident
+        id="HandlerLeak"
+        severity="warning"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxGLSurfaceView.java"
+            line="89"
+            column="20"
+            startOffset="3485"
+            endLine="112"
+            endColumn="10"
+            endOffset="5374"/>
+    </incident>
+
+    <incident
+        id="ViewConstructor"
+        severity="warning"
+        message="Custom view `Cocos2dxVideoView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxVideoView.java"
+            line="8"
+            column="14"
+            startOffset="165"
+            endLine="8"
+            endColumn="31"
+            endOffset="182"/>
+    </incident>
+
+    <incident
+        id="ViewConstructor"
+        severity="warning"
+        message="Custom view `c` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/A4/c.java"
+            line="18"
+            column="20"
+            startOffset="532"
+            endLine="18"
+            endColumn="21"
+            endOffset="533"/>
+    </incident>
+
+    <incident
+        id="ClickableViewAccessibility"
+        severity="warning"
+        message="Custom view `Cocos2dxGLSurfaceView` overrides `onTouchEvent` but not `performClick`">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/cocos2dx/lib/Cocos2dxGLSurfaceView.java"
+            line="218"
+            column="20"
+            startOffset="8740"
+            endLine="218"
+            endColumn="32"
+            endOffset="8752"/>
+    </incident>
+
+    <incident
+        id="ClickableViewAccessibility"
+        severity="warning"
+        message="Custom view ``TextView`` has `setOnTouchListener` called on it but does not override `performClick`">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/com/yuri/onscripter/ONScripter.java"
+            line="282"
+            column="9"
+            startOffset="11804"
+            endLine="303"
+            endColumn="11"
+            endOffset="12630"/>
+    </incident>
+
+    <incident
+        id="ClickableViewAccessibility"
+        severity="warning"
+        message="`onTouch` lambda should call `View#performClick` when a click is detected">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/com/yuri/onscripter/ONScripter.java"
+            line="282"
+            column="31"
+            startOffset="11826"
+            endLine="303"
+            endColumn="10"
+            endOffset="12629"/>
+    </incident>
+
+    <incident
+        id="ClickableViewAccessibility"
+        severity="warning"
+        message="Custom view `c` overrides `onTouchEvent` but not `performClick`">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/A4/c.java"
+            line="291"
+            column="26"
+            startOffset="9544"
+            endLine="291"
+            endColumn="38"
+            endOffset="9556"/>
+    </incident>
+
+    <incident
+        id="ClickableViewAccessibility"
+        severity="warning"
+        message="Custom view `h` overrides `onTouchEvent` but not `performClick`">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/org/tvp/kirikiri2/h.java"
+            line="67"
+            column="36"
+            startOffset="2839"
+            endLine="67"
+            endColumn="48"
+            endOffset="2851"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:engine*debug*MAIN*sourceProvider*0*javaDir*0}/T3/r.java"
+            line="31"
+            column="26"
+            startOffset="826"
+            endLine="31"
+            endColumn="38"
+            endOffset="838"/>
+    </incident>
+
+</incidents>

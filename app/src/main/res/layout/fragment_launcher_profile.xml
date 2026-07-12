@@ -128,7 +128,7 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <com.apps.LauncherWeeklyPlaytimeChartView
+                <com.apps.widget.LauncherWeeklyPlaytimeChartView
                     android:id="@+id/profileWeeklyPlaytimeChart"
                     android:layout_width="match_parent"
                     android:layout_height="126dp"

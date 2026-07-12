@@ -22,9 +22,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
-import com.apps.LauncherMotion;
-import com.apps.LauncherSyncScheduler;
-import com.apps.LauncherTheme;
+import com.apps.theme.LauncherMotion;
+import com.apps.sync.LauncherSyncScheduler;
+import com.apps.theme.LauncherTheme;
 import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityPadSettingsBinding;

@@ -44,10 +44,10 @@ import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.RxMainQueue;
 
-import com.apps.LauncherMotion;
-import com.apps.LauncherTheme;
-import com.apps.LauncherCustomVndbSearchDialog;
-import com.apps.GameLibraryState;
+import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherTheme;
+import com.apps.settings.LauncherCustomVndbSearchDialog;
+import com.apps.game.GameLibraryState;
 import com.apps.UserData.LauncherUserData;
 
 import java.text.Collator;
@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import com.apps.game.LauncherLibraryFragment;
 
 /**
  * 横屏手机游戏仓库自包含实现：直接继承 {@link Fragment}，使用 {@link PadManageGameAdapter}。

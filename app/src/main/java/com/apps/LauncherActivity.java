@@ -29,6 +29,14 @@ import com.apps.PadUi.PadGameModeActivity;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherBinding;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
+import com.apps.account.LauncherAccountFragment;
+import com.apps.data.LauncherViewModel;
+import com.apps.game.LauncherLibraryFragment;
+import com.apps.game.LauncherManageFragment;
+import com.apps.home.LauncherHomeFragment;
+import com.apps.home.LauncherPlaceholderFragment;
+import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherTheme;
 
 public class LauncherActivity extends AppCompatActivity {
     static final String APP_PREFS = "yukihub_prefs";
@@ -402,7 +410,7 @@ public class LauncherActivity extends AppCompatActivity {
         });
     }
 
-    static void setLauncherDarkMode(android.content.Context context, boolean darkMode) {
+    public static void setLauncherDarkMode(android.content.Context context, boolean darkMode) {
         context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .edit()
@@ -438,15 +446,15 @@ public class LauncherActivity extends AppCompatActivity {
                 .getString(KEY_LAUNCHER_THEME_STYLE, THEME_STYLE_DEFAULT);
     }
 
-    static boolean isRinneTheme(android.content.Context context) {
+    public static boolean isRinneTheme(android.content.Context context) {
         return THEME_STYLE_RINNE.equals(getLauncherThemeStyle(context));
     }
 
-    static boolean isAnriTheme(android.content.Context context) {
+    public static boolean isAnriTheme(android.content.Context context) {
         return THEME_STYLE_ANRI.equals(getLauncherThemeStyle(context));
     }
 
-    static boolean isXinhaitianTheme(android.content.Context context) {
+    public static boolean isXinhaitianTheme(android.content.Context context) {
         return THEME_STYLE_XINHAITIAN.equals(getLauncherThemeStyle(context));
     }
 
