@@ -654,68 +654,6 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/padRowProfileDisplay"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/launcher_white_card"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="13dp"
-                    android:paddingEnd="13dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="个人资料显示"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/padChipProfileDisplay"
-                        android:layout_width="52dp"
-                        android:layout_height="30dp"
-                        android:gravity="center"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/padRowModelFeature"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/launcher_white_card"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="13dp"
-                    android:paddingEnd="13dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="启用模型功能"
-                        android:textColor="@color/launcher_text_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/padChipModelFeature"
-                        android:layout_width="52dp"
-                        android:layout_height="30dp"
-                        android:gravity="center"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/padRowEmailSubscribe"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"

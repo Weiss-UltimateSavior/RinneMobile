@@ -83,6 +83,17 @@ public class LauncherProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        refreshProfileRankFromServer();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) refreshProfileRankFromServer();
+    }
+
+    private void refreshProfileRankFromServer() {
+        if (binding == null || !isAdded() || !isResumed() || isHidden()) return;
         renderUserInfo();
         // 如果已登录，刷新用户信息
         if (LauncherAuthBridge.isLoggedIn(requireContext())) {

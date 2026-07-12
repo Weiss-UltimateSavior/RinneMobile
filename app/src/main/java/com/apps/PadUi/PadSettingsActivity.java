@@ -100,10 +100,6 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padMetadataTokenLink.setOnClickListener(view -> openMetadataTokenUrl());
         binding.padRowSyncConfig.setOnClickListener(view -> onSyncConfigClick());
         binding.padRowRealtimePlaytime.setOnClickListener(view -> onRealtimePlaytimeClick());
-        binding.padRowProfileDisplay.setOnClickListener(view ->
-                toggleAccountSetting("profile_display", binding.padChipProfileDisplay));
-        binding.padRowModelFeature.setOnClickListener(view ->
-                toggleAccountSetting("model_feature", binding.padChipModelFeature));
         binding.padRowEmailSubscribe.setOnClickListener(view ->
                 toggleAccountSetting("email_subscribe", binding.padChipEmailSubscribe));
     }
@@ -441,16 +437,12 @@ public class PadSettingsActivity extends AppCompatActivity {
                 prefs.getBoolean("sync_config", accountDefault("sync_config")));
         renderAccountChip(binding.padChipRealtimePlaytime,
                 prefs.getBoolean("realtime_playtime", accountDefault("realtime_playtime")));
-        renderAccountChip(binding.padChipProfileDisplay,
-                prefs.getBoolean("profile_display", accountDefault("profile_display")));
-        renderAccountChip(binding.padChipModelFeature,
-                prefs.getBoolean("model_feature", accountDefault("model_feature")));
         renderAccountChip(binding.padChipEmailSubscribe,
                 prefs.getBoolean("email_subscribe", accountDefault("email_subscribe")));
     }
 
     private boolean accountDefault(String key) {
-        return "realtime_playtime".equals(key) || "profile_display".equals(key);
+        return "realtime_playtime".equals(key);
     }
 
     private void renderAccountChip(TextView chip, boolean enabled) {

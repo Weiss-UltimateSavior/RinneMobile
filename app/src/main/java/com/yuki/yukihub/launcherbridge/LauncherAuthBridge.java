@@ -459,10 +459,70 @@ public final class LauncherAuthBridge {
 
     // ========== 游玩时长统计 ==========
 
+    public static void startPlayTimeSession(Context context, long gameId, String gameTitle, String deviceId,
+                                            PlaySessionCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                JSONObject body = new JSONObject();
+                body.put("gameId", gameId);
+                body.put("gameTitle", gameTitle == null ? "" : gameTitle);
+                body.put("deviceId", deviceId == null ? "" : deviceId);
+                PlaySession session = parsePlaySession(new JSONObject(post("/auth/play-time/sessions/start", body, token)));
+                postMain(() -> callback.onSuccess(session));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, "启动服务端游玩会话失败");
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    public static void heartbeatPlayTimeSession(Context context, String sessionId, PlaySessionCallback callback) {
+        postPlayTimeSessionEvent(context, sessionId, "heartbeat", "服务端游玩心跳失败", callback);
+    }
+
+    public static void finishPlayTimeSession(Context context, String sessionId, PlaySessionCallback callback) {
+        postPlayTimeSessionEvent(context, sessionId, "finish", "结束服务端游玩会话失败", callback);
+    }
+
+    private static void postPlayTimeSessionEvent(Context context, String sessionId, String action,
+                                                 String fallback, PlaySessionCallback callback) {
+        AppExecutors.runOnIo(() -> {
+            try {
+                String token = getToken(context);
+                if (token.isEmpty()) throw new RuntimeException("未登录");
+                if (sessionId == null || sessionId.trim().isEmpty()) throw new RuntimeException("会话不存在");
+                PlaySession session = parsePlaySession(new JSONObject(postNoBody(
+                        "/auth/play-time/sessions/" + sessionId.trim() + "/" + action,
+                        token)));
+                postMain(() -> callback.onSuccess(session));
+            } catch (Throwable t) {
+                String msg = parseErrorMessage(t, fallback);
+                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                final String errMsg = msg;
+                postMain(() -> callback.onError(errMsg));
+            }
+        });
+    }
+
+    private static PlaySession parsePlaySession(JSONObject json) {
+        return new PlaySession(
+                json.optString("session_id", ""),
+                json.optLong("game_id"),
+                json.optString("status", ""),
+                json.optLong("started_at"),
+                json.optLong("last_heartbeat_at"),
+                json.optLong("ended_at"),
+                json.optLong("duration_ms"));
+    }
+
     /**
-     * 上传实际游玩记录到服务端（增量累加）。
-     * 前端调用 LauncherUserData.readPlayRecords() 读取本地缓冲后上传，
-     * 上传成功后可调用 LauncherUserData.clearPlayRecords() 清空缓冲。
+     * 旧版实际游玩记录上传入口，仅保留兼容。
+     * 新流程必须使用 startPlayTimeSession/heartbeatPlayTimeSession/finishPlayTimeSession，
+     * 不再向 /auth/play-time 提交前端计算的 duration。
      *
      * @param records 游玩记录列表（每条为 JSONObject，字段与 LauncherUserData.appendPlayRecord 一致）
      * @param callback 回调：onSuccess 返回服务端累计统计 JSON 数组字符串
@@ -603,6 +663,18 @@ public final class LauncherAuthBridge {
         c.setFixedLengthStreamingMode(bytes.length);
         c.getOutputStream().write(bytes);
         c.getOutputStream().flush();
+        return readResponse(c);
+    }
+
+    private static String postNoBody(String path, String authToken) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(API_BASE + path).openConnection();
+        c.setRequestMethod("POST");
+        c.setConnectTimeout(10000);
+        c.setReadTimeout(12000);
+        c.setRequestProperty("Accept", "application/json");
+        if (authToken != null && !authToken.isEmpty()) {
+            c.setRequestProperty("Authorization", "Bearer " + authToken);
+        }
         return readResponse(c);
     }
 
@@ -800,6 +872,32 @@ public final class LauncherAuthBridge {
 
     public interface PlayTimeCallback {
         void onSuccess(String statsJson);
+        void onError(String message);
+    }
+
+    public static final class PlaySession {
+        public final String sessionId;
+        public final long gameId;
+        public final String status;
+        public final long startedAt;
+        public final long lastHeartbeatAt;
+        public final long endedAt;
+        public final long durationMs;
+
+        PlaySession(String sessionId, long gameId, String status, long startedAt,
+                    long lastHeartbeatAt, long endedAt, long durationMs) {
+            this.sessionId = sessionId;
+            this.gameId = gameId;
+            this.status = status;
+            this.startedAt = startedAt;
+            this.lastHeartbeatAt = lastHeartbeatAt;
+            this.endedAt = endedAt;
+            this.durationMs = durationMs;
+        }
+    }
+
+    public interface PlaySessionCallback {
+        void onSuccess(PlaySession session);
         void onError(String message);
     }
 

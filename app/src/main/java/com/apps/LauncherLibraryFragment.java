@@ -61,6 +61,7 @@ public class LauncherLibraryFragment extends Fragment {
     private static final int DEFAULT_PAGE_SIZE = 8;
     private static final long MIN_PLAY_SESSION_MS = 0L;
     private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
+    private static final long PLAY_SESSION_HEARTBEAT_MS = 60L * 1000L;
     private static final String CATEGORY_RECENT = "status:recent";
     private static final String CATEGORY_PLAYING = "status:playing";
     private static final String CATEGORY_COMPLETED = "status:completed";
@@ -83,12 +84,20 @@ public class LauncherLibraryFragment extends Fragment {
     private boolean dataLoaded;
     private boolean needsRefresh;
     private long runningSessionId = -1L;
-    // 实际游玩时间监控：在主项目 play_sessions 之外，并行记录一份用于后续上传
+    // 实际游玩时间监控：本地仍维护 play_sessions，线上排行榜使用服务端会话结算。
     private long runningGameId = -1L;
     private String runningGameTitle = "";
     private long runningSessionStart = 0L;
+    private String runningServerSessionId = "";
     private String runningLaunchType = "external";
     private Runnable searchDebounce;
+    private final Runnable playSessionHeartbeat = new Runnable() {
+        @Override
+        public void run() {
+            heartbeatServerPlaySession();
+            mainHandler.postDelayed(this, PLAY_SESSION_HEARTBEAT_MS);
+        }
+    };
     private GestureDetector swipeGestureDetector;
     private boolean swipeConsumed;
     private float loadMoreDragStartY;
@@ -191,6 +200,7 @@ public class LauncherLibraryFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        mainHandler.removeCallbacks(playSessionHeartbeat);
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
             binding.libraryRecycler.setAdapter(null);
@@ -664,11 +674,12 @@ private void loadNextPage(boolean forceFullRefresh) {
         LauncherGameLaunchBridge.LaunchResult result = LauncherGameLaunchBridge.launch(requireContext(), game);
         if (result.success) {
             runningSessionId = result.sessionId;
-            // 记录会话元信息，用于结束时写入实际游玩记录缓冲
+            // 记录会话元信息；线上实际游玩时长由服务端 session 结算。
             runningGameId = game.id;
             runningGameTitle = safeTitle(game);
             runningSessionStart = System.currentTimeMillis();
             runningLaunchType = resolveLaunchTypeForRecord(game);
+            startServerPlaySession(game, result.sessionId);
         } else if (result.message != null && !result.message.trim().isEmpty()) {
             Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
         }
@@ -678,48 +689,76 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (runningSessionId <= 0L) return;
         Context context = getContext();
         if (context == null) return;
-        long endTime = System.currentTimeMillis();
         // 1) 主项目会话收尾（写入 play_sessions 表 + 累加 total_play_time）
         LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
-        // 2) 仅在登录状态下记录每一次实际游玩会话到本地缓冲（供后续上传，不直接传游戏库时长）
         Context app = context.getApplicationContext();
-        if (LauncherAuthBridge.isLoggedIn(app) && runningGameId > 0L && runningSessionStart > 0L) {
-            LauncherUserData.appendPlayRecord(app,
-                    runningGameId, runningGameTitle, runningSessionStart, endTime,
-                    Math.max(0L, endTime - runningSessionStart), runningLaunchType);
-        }
+        // 2) 线上实际游玩时长只结束服务端 session，不提交本地 duration。
+        finishServerPlaySession(app, runningSessionId);
         runningSessionId = -1L;
         runningGameId = -1L;
         runningGameTitle = "";
         runningSessionStart = 0L;
+        runningServerSessionId = "";
         runningLaunchType = "external";
         loadGames();
-        // 3) 若开启「实时游玩时间」且已登录，静默上传本地缓冲到服务端
-        maybeUploadPlayRecords();
     }
 
-    /**
-     * 当用户已登录且开启了「实时游玩时间」（account_settings.realtime_playtime）时，
-     * 将本地暂存的游玩记录批量上传到服务端，上传成功后清空本地缓冲。
-     * 失败时保留缓冲，等待下次会话结束或手动同步重试。
-     */
-    private void maybeUploadPlayRecords() {
+    private void startServerPlaySession(Game game, long localSessionId) {
         Context context = getContext();
-        if (context == null) return;
+        if (context == null || game == null || localSessionId <= 0L) return;
         Context app = context.getApplicationContext();
         if (!LauncherAuthBridge.isLoggedIn(app)) return;
         android.content.SharedPreferences prefs = app.getSharedPreferences("launcher_account_settings", Context.MODE_PRIVATE);
         if (!prefs.getBoolean("realtime_playtime", true)) return;
-        java.util.List<org.json.JSONObject> records = LauncherUserData.readPlayRecords(app);
-        if (records == null || records.isEmpty()) return;
-        LauncherAuthBridge.uploadPlayTime(app, records, new LauncherAuthBridge.PlayTimeCallback() {
+        String deviceId = LauncherUserData.getRealtimePlaytimeDeviceId(app);
+        LauncherAuthBridge.startPlayTimeSession(app, game.id, safeTitle(game), deviceId,
+                new LauncherAuthBridge.PlaySessionCallback() {
             @Override
-            public void onSuccess(String statsJson) {
-                LauncherUserData.clearPlayRecords(app);
+            public void onSuccess(LauncherAuthBridge.PlaySession session) {
+                if (session == null || session.sessionId == null || session.sessionId.trim().isEmpty()) return;
+                if (runningSessionId != localSessionId) return;
+                runningServerSessionId = session.sessionId;
+                LauncherUserData.rememberServerPlaySession(app, localSessionId, game.id, safeTitle(game), session.sessionId);
+                scheduleServerPlayHeartbeat();
             }
+
             @Override
             public void onError(String message) {
-                // 静默失败，保留本地缓冲等待下次重试
+                // 静默失败：不能回退到本地 duration 上传。
+            }
+        });
+    }
+
+    private void scheduleServerPlayHeartbeat() {
+        mainHandler.removeCallbacks(playSessionHeartbeat);
+        mainHandler.postDelayed(playSessionHeartbeat, PLAY_SESSION_HEARTBEAT_MS);
+    }
+
+    private void heartbeatServerPlaySession() {
+        Context context = getContext();
+        if (context == null || runningServerSessionId == null || runningServerSessionId.trim().isEmpty()) return;
+        Context app = context.getApplicationContext();
+        LauncherAuthBridge.heartbeatPlayTimeSession(app, runningServerSessionId, new LauncherAuthBridge.PlaySessionCallback() {
+            @Override public void onSuccess(LauncherAuthBridge.PlaySession session) { }
+            @Override public void onError(String message) { }
+        });
+    }
+
+    private void finishServerPlaySession(Context app, long localSessionId) {
+        mainHandler.removeCallbacks(playSessionHeartbeat);
+        String serverSessionId = runningServerSessionId == null || runningServerSessionId.trim().isEmpty()
+                ? LauncherUserData.findServerPlaySessionId(app, localSessionId)
+                : runningServerSessionId;
+        if (serverSessionId == null || serverSessionId.trim().isEmpty()) return;
+        LauncherAuthBridge.finishPlayTimeSession(app, serverSessionId, new LauncherAuthBridge.PlaySessionCallback() {
+            @Override
+            public void onSuccess(LauncherAuthBridge.PlaySession session) {
+                LauncherUserData.removeServerPlaySession(app, localSessionId);
+            }
+
+            @Override
+            public void onError(String message) {
+                // finish 可重试；失败时保留 session_id 映射，等待后续恢复流程处理。
             }
         });
     }

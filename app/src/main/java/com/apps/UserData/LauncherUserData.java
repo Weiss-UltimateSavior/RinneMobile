@@ -34,6 +34,7 @@ public class LauncherUserData {
     private static final String SETTINGS_FILE = "launcher_user_data.json";
     private static final String PLAY_SQL_FILE = "launcher_play_data.sql";
     private static final String PLAY_RECORDS_FILE = "launcher_play_records.json";
+    private static final String PLAY_SERVER_SESSIONS_FILE = "launcher_play_server_sessions.json";
     private static final int VERSION = 1;
     private static final int PLAY_RECORDS_VERSION = 1;
     // 单条游玩记录最长 12 小时，与主项目 MAX_PLAY_SESSION_MS 保持一致
@@ -43,6 +44,7 @@ public class LauncherUserData {
     private static final String PREFS_MAIN = "yukihub_prefs";
     private static final String PREFS_PROFILE = "launcher_profile_prefs";
     private static final String PREFS_ACCOUNT_SETTINGS = "launcher_account_settings";
+    private static final String KEY_REALTIME_DEVICE_ID = "realtime_playtime_device_id";
 
     // ── yukihub_prefs 键 ──
     private static final String[] MAIN_PREF_KEYS = {
@@ -491,6 +493,81 @@ public class LauncherUserData {
     }
 
     private static final Object PLAY_RECORDS_LOCK = new Object();
+    private static final Object SERVER_SESSIONS_LOCK = new Object();
+
+    /**
+     * 取得服务端实际游玩计时使用的设备 ID。安装后生成并持久化，不能每次启动都变化。
+     */
+    public static String getRealtimePlaytimeDeviceId(Context context) {
+        if (context == null) return "";
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS_MAIN, Context.MODE_PRIVATE);
+        String existing = prefs.getString(KEY_REALTIME_DEVICE_ID, "");
+        if (existing != null && !existing.trim().isEmpty()) return existing;
+        String created = UUID.randomUUID().toString();
+        prefs.edit().putString(KEY_REALTIME_DEVICE_ID, created).apply();
+        return created;
+    }
+
+    /**
+     * 保存本地 play_session 与服务端 session_id 的映射。应用异常退出后可据此恢复 finish。
+     */
+    public static boolean rememberServerPlaySession(Context context, long localSessionId, long gameId,
+                                                    String gameTitle, String serverSessionId) {
+        if (context == null || localSessionId <= 0L || gameId <= 0L || serverSessionId == null || serverSessionId.trim().isEmpty()) {
+            return false;
+        }
+        synchronized (SERVER_SESSIONS_LOCK) {
+            JSONArray arr = readServerSessionsArray(context);
+            JSONArray kept = new JSONArray();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject old = arr.optJSONObject(i);
+                if (old == null || old.optLong("localSessionId", -1L) == localSessionId) continue;
+                kept.put(old);
+            }
+            JSONObject item = new JSONObject();
+            try {
+                item.put("localSessionId", localSessionId);
+                item.put("gameId", gameId);
+                item.put("gameTitle", gameTitle == null ? "" : gameTitle);
+                item.put("serverSessionId", serverSessionId);
+                item.put("createdAt", System.currentTimeMillis());
+            } catch (JSONException e) {
+                return false;
+            }
+            kept.put(item);
+            return writeServerSessionsFile(getServerSessionsFile(context), kept);
+        }
+    }
+
+    public static String findServerPlaySessionId(Context context, long localSessionId) {
+        if (context == null || localSessionId <= 0L) return "";
+        JSONArray arr = readServerSessionsArray(context);
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject item = arr.optJSONObject(i);
+            if (item != null && item.optLong("localSessionId", -1L) == localSessionId) {
+                return item.optString("serverSessionId", "");
+            }
+        }
+        return "";
+    }
+
+    public static boolean removeServerPlaySession(Context context, long localSessionId) {
+        if (context == null || localSessionId <= 0L) return false;
+        synchronized (SERVER_SESSIONS_LOCK) {
+            JSONArray arr = readServerSessionsArray(context);
+            JSONArray kept = new JSONArray();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject item = arr.optJSONObject(i);
+                if (item == null || item.optLong("localSessionId", -1L) == localSessionId) continue;
+                kept.put(item);
+            }
+            return writeServerSessionsFile(getServerSessionsFile(context), kept);
+        }
+    }
+
+    public static File getServerSessionsFile(Context context) {
+        return new File(getUserDataDir(context), PLAY_SERVER_SESSIONS_FILE);
+    }
 
     private static JSONArray readPlayRecordsArray(Context context) {
         File file = getPlayRecordsFile(context);
@@ -510,6 +587,31 @@ public class LauncherUserData {
             JSONObject root = new JSONObject();
             root.put("version", PLAY_RECORDS_VERSION);
             root.put("records", arr);
+            writeText(file, root.toString(2));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static JSONArray readServerSessionsArray(Context context) {
+        File file = getServerSessionsFile(context);
+        if (!file.exists()) return new JSONArray();
+        try {
+            String json = readText(file);
+            JSONObject root = new JSONObject(json);
+            JSONArray arr = root.optJSONArray("sessions");
+            return arr != null ? arr : new JSONArray();
+        } catch (Exception e) {
+            return new JSONArray();
+        }
+    }
+
+    private static boolean writeServerSessionsFile(File file, JSONArray arr) {
+        try {
+            JSONObject root = new JSONObject();
+            root.put("version", PLAY_RECORDS_VERSION);
+            root.put("sessions", arr);
             writeText(file, root.toString(2));
             return true;
         } catch (Exception e) {
