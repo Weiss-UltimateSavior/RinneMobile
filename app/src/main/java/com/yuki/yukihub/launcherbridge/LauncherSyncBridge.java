@@ -1,6 +1,7 @@
 package com.yuki.yukihub.launcherbridge;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 public final class LauncherSyncBridge {
+    private static final int MAX_LOCAL_BACKUP_BYTES = SyncManager.MAX_LOCAL_BACKUP_BYTES;
     private LauncherSyncBridge() {
     }
 
@@ -112,12 +114,28 @@ public final class LauncherSyncBridge {
     }
 
     private static String readTextFromUri(Context context, Uri uri) throws Exception {
+        long declaredLength = -1L;
+        try (AssetFileDescriptor descriptor = context.getContentResolver().openAssetFileDescriptor(uri, "r")) {
+            if (descriptor != null) declaredLength = descriptor.getLength();
+        } catch (Exception ignored) {
+            // Some document providers cannot report a length; the stream limit below remains authoritative.
+        }
+        if (declaredLength > MAX_LOCAL_BACKUP_BYTES) {
+            throw new Exception("本地备份文件过大（文件声明 " + declaredLength + " 字节，最大允许 " + MAX_LOCAL_BACKUP_BYTES + " 字节）");
+        }
         try (InputStream in = context.getContentResolver().openInputStream(uri);
              ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             if (in == null) throw new Exception("openInputStream failed");
             byte[] buf = new byte[8192];
+            long total = 0;
             int len;
-            while ((len = in.read(buf)) != -1) bos.write(buf, 0, len);
+            while ((len = in.read(buf)) != -1) {
+                total += len;
+                if (total > MAX_LOCAL_BACKUP_BYTES) {
+                    throw new Exception("本地备份文件过大（最大允许 " + MAX_LOCAL_BACKUP_BYTES + " 字节）");
+                }
+                bos.write(buf, 0, len);
+            }
             return bos.toString("UTF-8");
         }
     }

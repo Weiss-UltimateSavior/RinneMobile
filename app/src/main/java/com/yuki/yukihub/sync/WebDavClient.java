@@ -6,6 +6,7 @@ import com.yuki.yukihub.net.HttpClient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import okhttp3.ResponseBody;
  */
 public class WebDavClient {
     private static final String TAG = "WebDavClient";
+    private static final long DEFAULT_MAX_DOWNLOAD_BYTES = 16L * 1024L * 1024L;
 
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType MEDIA_TYPE_XML = MediaType.parse("application/xml");
@@ -145,6 +147,15 @@ public class WebDavClient {
      * 读取文件内容
      */
     public byte[] readFile(String path) throws IOException {
+        return readFileLimited(path, DEFAULT_MAX_DOWNLOAD_BYTES);
+    }
+
+    /**
+     * 读取文件内容，可选限制最大字节数。调用同步/导入路径时必须传入上限，
+     * 防止异常 WebDAV 服务端用未知长度的响应耗尽应用内存。
+     */
+    public byte[] readFileLimited(String path, long maxBytes) throws IOException {
+        if (maxBytes == 0 || maxBytes < -1) throw new IllegalArgumentException("maxBytes must be positive or -1");
         Request request = new Request.Builder()
                 .url(resolveUrl(path))
                 .get()
@@ -153,12 +164,12 @@ public class WebDavClient {
             if (!response.isSuccessful()) {
                 String err = "";
                 ResponseBody errBody = response.body();
-                if (errBody != null) err = errBody.string();
+                if (errBody != null) err = new String(readBodyLimited(errBody, 64 * 1024L, "WebDAV 错误响应"), StandardCharsets.UTF_8);
                 throw new IOException("HTTP " + response.code() + (err.isEmpty() ? "" : ": " + err));
             }
             ResponseBody body = response.body();
             if (body == null) throw new IOException("Empty response body");
-            return body.bytes();
+            return readBodyLimited(body, maxBytes, "远程同步文件");
         }
     }
 
@@ -174,33 +185,8 @@ public class WebDavClient {
      * 流式读取，超过限制立即停止。
      */
     public String readTextLimited(String path, int maxBytes) throws IOException {
-        Request request = new Request.Builder()
-                .url(resolveUrl(path))
-                .get()
-                .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                String err = "";
-                ResponseBody errBody = response.body();
-                if (errBody != null) err = errBody.string();
-                throw new IOException("HTTP " + response.code() + (err.isEmpty() ? "" : ": " + err));
-            }
-            ResponseBody body = response.body();
-            if (body == null) throw new IOException("Empty response body");
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            okio.Source source = body.source();
-            okio.Buffer buffer = new okio.Buffer();
-            long totalRead = 0;
-            while (source.read(buffer, 8192) != -1) {
-                totalRead += buffer.size();
-                if (totalRead > maxBytes) {
-                    throw new IOException("远程同步文件过大，已超过 " + (maxBytes / 1024) + "KB");
-                }
-                baos.write(buffer.readByteArray());
-            }
-            return new String(baos.toByteArray(), StandardCharsets.UTF_8);
-        }
+        if (maxBytes <= 0) throw new IllegalArgumentException("maxBytes must be positive");
+        return new String(readFileLimited(path, maxBytes), StandardCharsets.UTF_8);
     }
 
     /**
@@ -216,7 +202,7 @@ public class WebDavClient {
             if (!response.isSuccessful()) {
                 String err = "";
                 ResponseBody errBody = response.body();
-                if (errBody != null) err = errBody.string();
+                if (errBody != null) err = new String(readBodyLimited(errBody, 64 * 1024L, "WebDAV 错误响应"), StandardCharsets.UTF_8);
                 throw new IOException("PUT " + path + " failed: HTTP " + response.code() + (err.isEmpty() ? "" : ": " + err));
             }
         }
@@ -264,12 +250,12 @@ public class WebDavClient {
             if (!response.isSuccessful()) {
                 String err = "";
                 ResponseBody errBody = response.body();
-                if (errBody != null) err = errBody.string();
+                if (errBody != null) err = new String(readBodyLimited(errBody, 64 * 1024L, "WebDAV 错误响应"), StandardCharsets.UTF_8);
                 throw new IOException("HTTP " + response.code() + ": " + err);
             }
             ResponseBody resBody = response.body();
             if (resBody == null) throw new IOException("Empty response body");
-            String responseText = resBody.string();
+            String responseText = new String(readBodyLimited(resBody, 1024 * 1024L, "WebDAV 目录列表"), StandardCharsets.UTF_8);
             return parsePropfindResponse(responseText, path);
         }
     }
@@ -294,6 +280,27 @@ public class WebDavClient {
     private String resolveUrl(String path) {
         String fullPath = path.startsWith("/") ? path.substring(1) : path;
         return serverUrl + fullPath;
+    }
+
+    private static byte[] readBodyLimited(ResponseBody body, long maxBytes, String label) throws IOException {
+        long declaredLength = body.contentLength();
+        if (maxBytes >= 0 && declaredLength > maxBytes) {
+            throw new IOException(label + "过大（服务端声明 " + declaredLength + " 字节，最大允许 " + maxBytes + " 字节）");
+        }
+        try (InputStream in = body.byteStream(); ByteArrayOutputStream out = new ByteArrayOutputStream(
+                declaredLength > 0 && declaredLength <= Integer.MAX_VALUE ? (int) declaredLength : 8192)) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                total += read;
+                if (maxBytes >= 0 && total > maxBytes) {
+                    throw new IOException(label + "过大（读取超过最大允许 " + maxBytes + " 字节）");
+                }
+                out.write(buffer, 0, read);
+            }
+            return out.toByteArray();
+        }
     }
 
     /**

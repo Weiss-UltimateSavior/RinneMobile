@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -29,6 +30,10 @@ public final class LauncherAuthBridge {
     private static final String KEY_AUTH_NICKNAME = "auth_nickname";
     private static final String KEY_AUTH_EMAIL = "auth_email";
     private static final String KEY_AUTH_STATUS = "auth_status";
+    private static final int MAX_RESPONSE_BYTES = 256 * 1024;
+    private static final int MAX_ERROR_RESPONSE_BYTES = 64 * 1024;
+    /** 账户游玩数据的云备份/恢复上限；与本地和 WebDAV 快照上限保持一致量级。 */
+    private static final int MAX_PLAY_DATA_RESPONSE_BYTES = 16 * 1024 * 1024;
 
     private LauncherAuthBridge() {
     }
@@ -446,6 +451,9 @@ public final class LauncherAuthBridge {
             try {
                 String token = getToken(context);
                 if (token.isEmpty()) throw new RuntimeException("未登录");
+                if (utf8Length(playSql) > MAX_PLAY_DATA_RESPONSE_BYTES) {
+                    throw new RuntimeException("游玩数据过大（最大允许 " + MAX_PLAY_DATA_RESPONSE_BYTES + " 字节）");
+                }
                 JSONObject body = new JSONObject();
                 body.put("play_data", playSql);
                 putLarge("/auth/config/play-data", body, token);
@@ -625,10 +633,7 @@ public final class LauncherAuthBridge {
         if (authToken != null && !authToken.isEmpty()) {
             c.setRequestProperty("Authorization", "Bearer " + authToken);
         }
-        byte[] bytes = body.toString().getBytes("UTF-8");
-        c.setFixedLengthStreamingMode(bytes.length);
-        c.getOutputStream().write(bytes);
-        c.getOutputStream().flush();
+        writeRequestBody(c, body, MAX_PLAY_DATA_RESPONSE_BYTES, "游玩数据请求");
         return readLargeResponse(c);
     }
 
@@ -643,10 +648,7 @@ public final class LauncherAuthBridge {
         if (authToken != null && !authToken.isEmpty()) {
             c.setRequestProperty("Authorization", "Bearer " + authToken);
         }
-        byte[] bytes = body.toString().getBytes("UTF-8");
-        c.setFixedLengthStreamingMode(bytes.length);
-        c.getOutputStream().write(bytes);
-        c.getOutputStream().flush();
+        writeRequestBody(c, body, -1, "请求");
         return readResponse(c);
     }
 
@@ -661,10 +663,7 @@ public final class LauncherAuthBridge {
         if (authToken != null && !authToken.isEmpty()) {
             c.setRequestProperty("Authorization", "Bearer " + authToken);
         }
-        byte[] bytes = body.toString().getBytes("UTF-8");
-        c.setFixedLengthStreamingMode(bytes.length);
-        c.getOutputStream().write(bytes);
-        c.getOutputStream().flush();
+        writeRequestBody(c, body, -1, "请求");
         return readResponse(c);
     }
 
@@ -690,10 +689,7 @@ public final class LauncherAuthBridge {
         c.setRequestProperty("Content-Type", "application/json");
         c.setRequestProperty("Accept", "application/json");
         if (authToken != null && !authToken.isEmpty()) c.setRequestProperty("Authorization", "Bearer " + authToken);
-        byte[] bytes = body.toString().getBytes("UTF-8");
-        c.setFixedLengthStreamingMode(bytes.length);
-        c.getOutputStream().write(bytes);
-        c.getOutputStream().flush();
+        writeRequestBody(c, body, -1, "请求");
         return readResponse(c);
     }
 
@@ -724,14 +720,16 @@ public final class LauncherAuthBridge {
 
     private static String readResponse(HttpURLConnection c) throws Exception {
         int code = c.getResponseCode();
-        String text = readSmallText(code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream());
+        String text = readTextLimited(c, code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream(),
+                code >= 200 && code < 300 ? MAX_RESPONSE_BYTES : MAX_ERROR_RESPONSE_BYTES, "服务器响应");
         return checkResponse(code, text);
     }
 
-    /** 大响应读取：不限制缓冲大小，适配服务端回传大数据。 */
+    /** 大响应读取：仅用于账户游玩数据，仍设置明确上限避免异常服务端耗尽内存。 */
     private static String readLargeResponse(HttpURLConnection c) throws Exception {
         int code = c.getResponseCode();
-        String text = readLargeText(code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream());
+        String text = readTextLimited(c, code >= 200 && code < 300 ? c.getInputStream() : c.getErrorStream(),
+                code >= 200 && code < 300 ? MAX_PLAY_DATA_RESPONSE_BYTES : MAX_ERROR_RESPONSE_BYTES, "账户游玩数据响应");
         return checkResponse(code, text);
     }
 
@@ -760,28 +758,50 @@ public final class LauncherAuthBridge {
         return text;
     }
 
-    private static String readSmallText(InputStream is) throws Exception {
-        if (is == null) return "";
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        byte[] buf = new byte[4096];
-        int total = 0, len;
-        while ((len = is.read(buf)) != -1 && total < 64 * 1024) {
-            bos.write(buf, 0, len);
-            total += len;
+    private static void writeRequestBody(HttpURLConnection connection, JSONObject body, int maxBytes, String label) throws Exception {
+        byte[] bytes = body.toString().getBytes("UTF-8");
+        if (maxBytes > 0 && bytes.length > maxBytes) {
+            connection.disconnect();
+            throw new RuntimeException(label + "过大（最大允许 " + maxBytes + " 字节）");
         }
-        return bos.toString("UTF-8");
+        connection.setFixedLengthStreamingMode(bytes.length);
+        try (OutputStream output = connection.getOutputStream()) {
+            output.write(bytes);
+            output.flush();
+        } catch (Exception e) {
+            connection.disconnect();
+            throw e;
+        }
     }
 
-    /** 大响应读取：无 64KB 限制，适配游玩记录等大数据回传。 */
-    private static String readLargeText(InputStream is) throws Exception {
+    private static String readTextLimited(HttpURLConnection connection, InputStream is, int maxBytes, String label) throws Exception {
         if (is == null) return "";
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        byte[] buf = new byte[8192];
-        int len;
-        while ((len = is.read(buf)) != -1) {
-            bos.write(buf, 0, len);
+        long declaredLength = connection.getContentLengthLong();
+        if (declaredLength > maxBytes) {
+            RuntimeException oversized = new RuntimeException(label + "过大（服务端声明 " + declaredLength + " 字节，最大允许 " + maxBytes + " 字节）");
+            try {
+                is.close();
+            } catch (Exception closeError) {
+                oversized.addSuppressed(closeError);
+            } finally {
+                connection.disconnect();
+            }
+            throw oversized;
         }
-        return bos.toString("UTF-8");
+        try (InputStream input = is; ByteArrayOutputStream bos = new ByteArrayOutputStream(
+                declaredLength > 0 && declaredLength <= Integer.MAX_VALUE ? (int) declaredLength : 8192)) {
+            byte[] buf = new byte[8192];
+            int total = 0;
+            int len;
+            while ((len = input.read(buf)) != -1) {
+                total += len;
+                if (total > maxBytes) throw new RuntimeException(label + "过大（读取超过最大允许 " + maxBytes + " 字节）");
+                bos.write(buf, 0, len);
+            }
+            return bos.toString("UTF-8");
+        } finally {
+            connection.disconnect();
+        }
     }
 
     private static String trim(String text, int max) {
@@ -789,6 +809,10 @@ public final class LauncherAuthBridge {
         String t = text.trim();
         if (max <= 0 || t.length() <= max) return t;
         return t.substring(0, max) + "...";
+    }
+
+    private static int utf8Length(String text) throws Exception {
+        return text == null ? 0 : text.getBytes("UTF-8").length;
     }
 
     private static String parseErrorMessage(Throwable t, String fallback) {

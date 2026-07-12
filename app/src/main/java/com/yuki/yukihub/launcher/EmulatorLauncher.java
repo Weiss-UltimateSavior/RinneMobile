@@ -20,96 +20,97 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.ons.OnsSettings;
 
 public class EmulatorLauncher {
     private static final List<FileObserver> ARTEMIS_SAVE_OBSERVERS = new ArrayList<>();
+    private static final List<EngineLaunchStrategy> ENGINE_STRATEGIES = new CopyOnWriteArrayList<>();
+
+    static {
+        // Keep this order aligned with the legacy condition chain.  Every strategy
+        // only claims its own package aliases, so unknown external packages still
+        // use the generic Kirikiri-compatible intent fallback below.
+        addBuiltInStrategy(new InternalKrkrStrategy());
+        addBuiltInStrategy(new InternalTyranoStrategy());
+        addBuiltInStrategy(new InternalOnsStrategy());
+        addBuiltInStrategy(new InternalArtemisStrategy());
+        addBuiltInStrategy(new PspStrategy());
+        addBuiltInStrategy(new GameHubStrategy());
+        addBuiltInStrategy(new WinlatorDesktopStrategy());
+    }
 
     public static boolean launchGame(Context context, String packageName, String rootUri, String launchTarget) {
-        return launchGame(context, packageName, rootUri, launchTarget, "game", null);
+        return launchGame(context, EngineType.UNKNOWN, packageName, rootUri, launchTarget, "game", "game", null);
     }
 
     public static boolean launchGame(Context context, String packageName, String rootUri, String launchTarget, String winlatorLaunchMode) {
-        return launchGame(context, packageName, rootUri, launchTarget, winlatorLaunchMode, "game", null);
+        return launchGame(context, EngineType.UNKNOWN, packageName, rootUri, launchTarget, winlatorLaunchMode, "game", null);
     }
 
     public static boolean launchGame(Context context, String packageName, String rootUri, String launchTarget, String winlatorLaunchMode, String gamehubLocalGameId) {
-        return launchGame(context, packageName, rootUri, launchTarget, winlatorLaunchMode, "game", gamehubLocalGameId);
+        return launchGame(context, EngineType.UNKNOWN, packageName, rootUri, launchTarget, winlatorLaunchMode, "game", gamehubLocalGameId);
     }
 
     public static boolean launchGame(Context context, String packageName, String rootUri, String launchTarget, String winlatorLaunchMode, String gamehubLaunchMode, String gamehubLocalGameId) {
-if (packageName == null || packageName.trim().isEmpty()) return false;
-        String pkg = packageName.trim();
-        if ("internal.krkr".equalsIgnoreCase(pkg) || "org.tvp.kirikiri2.internal".equalsIgnoreCase(pkg)) {
+        return launchGame(context, EngineType.UNKNOWN, packageName, rootUri, launchTarget,
+                winlatorLaunchMode, gamehubLaunchMode, gamehubLocalGameId);
+    }
+
+    /**
+     * Engine-aware extension point. Existing callers may keep using the package-only
+     * overloads; new integrations can identify their engine without changing the
+     * central dispatch chain.
+     */
+    public static boolean launchGame(Context context, EngineType engineType, String packageName,
+                                     String rootUri, String launchTarget, String winlatorLaunchMode,
+                                     String gamehubLaunchMode, String gamehubLocalGameId) {
+        LaunchRequest request = new LaunchRequest(engineType, packageName, rootUri, launchTarget,
+                winlatorLaunchMode, gamehubLaunchMode, gamehubLocalGameId);
+        if (context == null || request.packageName.isEmpty()) return false;
+        for (EngineLaunchStrategy strategy : ENGINE_STRATEGIES) {
+            if (!strategy.supports(request)) continue;
             try {
-                context.startActivity(buildInternalKrkrIntent(context, rootUri, launchTarget, false));
-                return true;
-            } catch (Exception ignored) { }
-            return false;
-        }
-        if ("internal.tyrano".equalsIgnoreCase(pkg) || "com.yuki.yukihub.tyrano".equalsIgnoreCase(pkg)) {
-            try {
-                context.startActivity(buildInternalTyranoIntent(context, rootUri, launchTarget));
-                return true;
-            } catch (Exception ignored) { }
-            return false;
-        }
-        if ("internal.ons".equalsIgnoreCase(pkg) || "internal.onscripter".equalsIgnoreCase(pkg) || "com.yuki.yukihub.ons".equalsIgnoreCase(pkg)) {
-            try {
-                context.startActivity(buildInternalOnsIntent(context, rootUri, launchTarget));
-                return true;
-            } catch (Exception ignored) { }
-            return false;
-        }
-        if ("internal.artemis".equalsIgnoreCase(pkg) || "com.yuki.yukihub.artemis".equalsIgnoreCase(pkg)
-            || "internal.artemis.compat".equalsIgnoreCase(pkg) || "internal.artemis.compatible".equalsIgnoreCase(pkg)
-            || "internal.artemis.compat.v2".equalsIgnoreCase(pkg) || "internal.artemis.compatible.v2".equalsIgnoreCase(pkg)) {
-            try {
-                context.startActivity(buildInternalArtemisIntent(context, pkg, rootUri, launchTarget));
-                return true;
-            } catch (Exception ignored) { }
-            return false;
-        }
-        if ("internal.psp".equalsIgnoreCase(pkg) || "org.ppsspp.ppsspp".equalsIgnoreCase(pkg) || isPPSSPPPackage(pkg)) {
-            // 检查PPSSPP是否安装
-            if (!isPPSSPPInstalled(context)) {
-                Log.w("EmulatorLauncher", "PPSSPP is not installed, cannot launch PSP game");
+                return strategy.launch(context, request);
+            } catch (Exception e) {
+                Log.w("EmulatorLauncher", "Launch strategy failed: " + strategy.getClass().getSimpleName(), e);
                 return false;
             }
-            try {
-                context.startActivity(buildInternalPspIntent(context, rootUri, launchTarget));
-                return true;
-            } catch (Exception ignored) { }
-            return false;
         }
-        if (isGameHubPackage(pkg)) {
-            String mode = gamehubLaunchMode == null ? "game" : gamehubLaunchMode.trim().toLowerCase(Locale.ROOT);
-            if ("program".equals(mode) || "normal".equals(mode)) {
-                return launch(context, pkg);
+        return launchGenericKirikiriCompatible(context, request);
+    }
+
+    /** Registers a new integration before built-ins; callers need not edit this class. */
+    public static void registerEngineLaunchStrategy(EngineLaunchStrategy strategy) {
+        if (strategy != null) ENGINE_STRATEGIES.add(0, strategy);
+    }
+
+    /** Exposes registered engine types for configuration/diagnostics UIs. */
+    public static List<EngineType> getRegisteredEngineTypes() {
+        List<EngineType> types = new ArrayList<>();
+        for (EngineLaunchStrategy strategy : ENGINE_STRATEGIES) {
+            if (strategy != null && strategy.getEngineType() != null && !types.contains(strategy.getEngineType())) {
+                types.add(strategy.getEngineType());
             }
-            if (gamehubLocalGameId != null && !gamehubLocalGameId.trim().isEmpty()) {
-                String gid = gamehubLocalGameId.trim();
-                try {
-                    context.startActivity(buildGameHubDetailIntent(pkg, gid, guessGameHubAppName(launchTarget)));
-                    return true;
-                } catch (Exception ignored) { }
-                try {
-                    context.startActivity(buildGameHubRouterIntent(pkg, gid, guessGameHubAppName(launchTarget)));
-                    return true;
-                } catch (Exception ignored) { }
-            }
-            return false;
         }
-        if (isWinlatorPackage(pkg) && isDesktopTarget(launchTarget)) {
-return launchWinlatorDesktop(context, pkg, rootUri, launchTarget, winlatorLaunchMode);
-}
-if (rootUri != null && !rootUri.trim().isEmpty()) {
-            List<Uri> launchUris = buildKirikiriLaunchUris(context, rootUri, launchTarget);
+        return Collections.unmodifiableList(types);
+    }
+
+    private static void addBuiltInStrategy(EngineLaunchStrategy strategy) {
+        ENGINE_STRATEGIES.add(strategy);
+    }
+
+    private static boolean launchGenericKirikiriCompatible(Context context, LaunchRequest request) {
+        String pkg = request.packageName;
+        if (request.rootUri != null && !request.rootUri.trim().isEmpty()) {
+            List<Uri> launchUris = buildKirikiriLaunchUris(context, request.rootUri, request.launchTarget);
             for (Uri uri : launchUris) {
-                Intent[] intents = buildLaunchIntents(pkg, uri, rootUri, launchTarget);
+                Intent[] intents = buildLaunchIntents(pkg, uri, request.rootUri, request.launchTarget);
                 for (Intent intent : intents) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
                     try {
@@ -120,6 +121,134 @@ if (rootUri != null && !rootUri.trim().isEmpty()) {
             }
         }
         return launch(context, pkg);
+    }
+
+    private abstract static class BuiltInStrategy implements EngineLaunchStrategy {
+        private final EngineType engineType;
+
+        BuiltInStrategy(EngineType engineType) {
+            this.engineType = engineType;
+        }
+
+        @Override
+        public EngineType getEngineType() {
+            return engineType;
+        }
+
+        boolean start(Context context, Intent intent) {
+            try {
+                context.startActivity(intent);
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+    }
+
+    private static final class InternalKrkrStrategy extends BuiltInStrategy {
+        InternalKrkrStrategy() { super(EngineType.KIRIKIRI); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return equalsAnyIgnoreCase(request.packageName, "internal.krkr", "org.tvp.kirikiri2.internal");
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            return start(context, buildInternalKrkrIntent(context, request.rootUri, request.launchTarget, false));
+        }
+    }
+
+    private static final class InternalTyranoStrategy extends BuiltInStrategy {
+        InternalTyranoStrategy() { super(EngineType.TYRANO); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return equalsAnyIgnoreCase(request.packageName, "internal.tyrano", "com.yuki.yukihub.tyrano");
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            return start(context, buildInternalTyranoIntent(context, request.rootUri, request.launchTarget));
+        }
+    }
+
+    private static final class InternalOnsStrategy extends BuiltInStrategy {
+        InternalOnsStrategy() { super(EngineType.ONS); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return equalsAnyIgnoreCase(request.packageName, "internal.ons", "internal.onscripter", "com.yuki.yukihub.ons");
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            return start(context, buildInternalOnsIntent(context, request.rootUri, request.launchTarget));
+        }
+    }
+
+    private static final class InternalArtemisStrategy extends BuiltInStrategy {
+        InternalArtemisStrategy() { super(EngineType.ARTEMIS); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return equalsAnyIgnoreCase(request.packageName, "internal.artemis", "com.yuki.yukihub.artemis",
+                    "internal.artemis.compat", "internal.artemis.compatible", "internal.artemis.compat.v2",
+                    "internal.artemis.compatible.v2");
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            return start(context, buildInternalArtemisIntent(context, request.packageName, request.rootUri, request.launchTarget));
+        }
+    }
+
+    private static final class PspStrategy extends BuiltInStrategy {
+        PspStrategy() { super(EngineType.PSP); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return equalsAnyIgnoreCase(request.packageName, "internal.psp", "org.ppsspp.ppsspp")
+                    || isPPSSPPPackage(request.packageName);
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            if (!isPPSSPPInstalled(context)) {
+                Log.w("EmulatorLauncher", "PPSSPP is not installed, cannot launch PSP game");
+                return false;
+            }
+            return start(context, buildInternalPspIntent(context, request.rootUri, request.launchTarget));
+        }
+    }
+
+    private static final class GameHubStrategy extends BuiltInStrategy {
+        GameHubStrategy() { super(EngineType.GAMEHUB); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return isGameHubPackage(request.packageName);
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            String mode = request.gameHubLaunchMode == null ? "game" : request.gameHubLaunchMode.trim().toLowerCase(Locale.ROOT);
+            if ("program".equals(mode) || "normal".equals(mode)) return EmulatorLauncher.launch(context, request.packageName);
+            if (request.gameHubLocalGameId == null || request.gameHubLocalGameId.trim().isEmpty()) return false;
+            String gameId = request.gameHubLocalGameId.trim();
+            String appName = guessGameHubAppName(request.launchTarget);
+            if (start(context, buildGameHubDetailIntent(request.packageName, gameId, appName))) return true;
+            return start(context, buildGameHubRouterIntent(request.packageName, gameId, appName));
+        }
+    }
+
+    private static final class WinlatorDesktopStrategy extends BuiltInStrategy {
+        WinlatorDesktopStrategy() { super(EngineType.WINLATOR); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return isWinlatorPackage(request.packageName) && isDesktopTarget(request.launchTarget);
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            return launchWinlatorDesktop(context, request.packageName, request.rootUri,
+                    request.launchTarget, request.winlatorLaunchMode);
+        }
+    }
+
+    private static boolean equalsAnyIgnoreCase(String value, String... candidates) {
+        if (value == null || candidates == null) return false;
+        for (String candidate : candidates) {
+            if (candidate != null && candidate.equalsIgnoreCase(value)) return true;
+        }
+        return false;
     }
 
     private static Intent[] buildLaunchIntents(String pkg, Uri uri, String rootUri, String launchTarget) {

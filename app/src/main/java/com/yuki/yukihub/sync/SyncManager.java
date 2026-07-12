@@ -21,6 +21,10 @@ public class SyncManager {
     // 请用户先在坚果云中创建 YukiHub 文件夹。
     private static final String REMOTE_DIR = "YukiHub";
     private static final String REMOTE_FILE = REMOTE_DIR + "/YukiHub_sync.json";
+    /** 远端同步快照仅包含文本元数据和最近 200 条会话；16 MiB 足以兼容正常大型游戏库。 */
+    public static final int MAX_REMOTE_SNAPSHOT_BYTES = 16 * 1024 * 1024;
+    /** 本地完整备份保留全量会话，允许比 WebDAV 同步快照更大。 */
+    public static final int MAX_LOCAL_BACKUP_BYTES = 32 * 1024 * 1024;
 
     private static final String KEY_SERVER_URL = "webdav_server";
     private static final String KEY_USERNAME = "webdav_username";
@@ -129,7 +133,7 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
                 // 坚果云根目录通常不可直接创建同步文件夹；要求用户先在坚果云创建 YukiHub 文件夹。
 
                 JSONObject local = buildLocalSnapshot();
-                String localText = local.toString();
+                String localText = snapshotToText(local, MAX_REMOTE_SNAPSHOT_BYTES, "本地同步快照");
                 String localHash = sha256(localText);
                 String lastHash = syncPrefs.getString(KEY_LAST_SYNC_HASH, "");
 
@@ -138,7 +142,7 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
                 String remoteHash = "";
                 boolean remoteExists = c.exists(REMOTE_FILE);
                 if (remoteExists) {
-                    remoteText = c.readText(REMOTE_FILE);
+                    remoteText = c.readTextLimited(REMOTE_FILE, MAX_REMOTE_SNAPSHOT_BYTES);
                     remote = new JSONObject(remoteText);
                     if (!"YukiHub".equals(remote.optString("app", ""))) throw new Exception("云端文件不是有效的 YukiHub 同步文件");
                     remoteHash = sha256(remoteText);
@@ -211,7 +215,7 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
                     result.uploaded = true;
                 } else {
                     JSONObject merged = mergeSnapshots(local, remote);
-                    String mergedText = merged.toString();
+                    String mergedText = snapshotToText(merged, MAX_REMOTE_SNAPSHOT_BYTES, "合并后的同步快照");
                     importSnapshot(new JSONObject(mergedText));
                     c.writeText(REMOTE_FILE, mergedText);
                     markSynced(sha256(mergedText));
@@ -226,10 +230,13 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
     }
 
     public JSONObject exportSnapshotForLocalBackup() throws Exception {
-        return buildLocalSnapshot(-1);
+        JSONObject snapshot = buildLocalSnapshot(-1);
+        snapshotToText(snapshot, MAX_LOCAL_BACKUP_BYTES, "本地完整备份");
+        return snapshot;
     }
 
     public void importSnapshotFromLocalBackup(JSONObject root) throws Exception {
+        snapshotToText(root, MAX_LOCAL_BACKUP_BYTES, "本地备份");
         importSnapshot(root);
     }
 
@@ -292,6 +299,15 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    private static String snapshotToText(JSONObject root, int maxBytes, String label) throws Exception {
+        String text = root == null ? "" : root.toString();
+        int bytes = text.getBytes("UTF-8").length;
+        if (bytes > maxBytes) {
+            throw new Exception(label + "过大（" + bytes + " 字节，最大允许 " + maxBytes + " 字节）");
+        }
+        return text;
     }
 
     private boolean isSnapshotEmpty(JSONObject root) {

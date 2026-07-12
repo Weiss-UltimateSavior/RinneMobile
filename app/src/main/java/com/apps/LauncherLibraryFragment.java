@@ -73,6 +73,7 @@ public class LauncherLibraryFragment extends Fragment {
     private final List<Game> allGames = new ArrayList<>();
     private final List<Game> filteredGames = new ArrayList<>();
     private final List<Game> visibleGames = new ArrayList<>();
+    private final GameLibraryState libraryState = new GameLibraryState();
     private final List<CategoryOption> categories = new ArrayList<>();
     private final Map<Long, List<String>> gameDevelopers = new HashMap<>();
     private LauncherGameAdapter adapter;
@@ -510,6 +511,7 @@ public class LauncherLibraryFragment extends Fragment {
                 if (binding == null) return;
                 allGames.clear();
                 allGames.addAll(loadedGames);
+                libraryState.replaceAll(loadedGames);
                 gameDevelopers.clear();
                 gameDevelopers.putAll(loadedDevelopers);
                 categories.clear();
@@ -519,6 +521,9 @@ public class LauncherLibraryFragment extends Fragment {
                 }
                 renderCategories();
                 dataLoaded = true;
+                // 后台数据已经加载完成，必须先解除 loading 状态。
+                // 否则 RecyclerView 的滚动监听和上拉手势都会被 loading 条件拦截。
+                setLoading(false);
                 applyFilters();
             });
         });
@@ -529,47 +534,33 @@ public class LauncherLibraryFragment extends Fragment {
 }
 
 private void applyFilters(boolean forceFullRefresh) {
-    filteredGames.clear();
-    String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
-    for (Game game : allGames) {
-        if (game == null) continue;
-        if (!query.isEmpty() && !safeTitle(game).toLowerCase(Locale.ROOT).contains(query)) continue;
-        if (selectedCategory != null && !selectedCategory.isEmpty() && !matchesCategory(game, selectedCategory)) continue;
-        filteredGames.add(game);
-    }
-    if (selectedCategory == null || selectedCategory.isEmpty()) {
-        sortGamesByTitle(filteredGames);
-    }
-    visibleGames.clear();
-    currentPage = 0;
-    fullyLoaded = filteredGames.isEmpty();
+    libraryState.setQuery(searchQuery);
+    libraryState.setCategory(selectedCategory);
+    libraryState.rebuild((game, query, category) -> {
+        String normalized = query.trim().toLowerCase(Locale.ROOT);
+        return (normalized.isEmpty() || safeTitle(game).toLowerCase(Locale.ROOT).contains(normalized))
+                && (category.trim().isEmpty() || matchesCategory(game, category));
+    }, (left, right) -> Collator.getInstance(Locale.CHINA).compare(safeTitle(left), safeTitle(right)), getPageSize(), usesHorizontalPaging());
+    syncLibraryLists();
     if (usesHorizontalPaging()) {
         renderPagedGrid(forceFullRefresh);
     } else {
-        loadNextPage(forceFullRefresh);
+        if (adapter != null) adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
     }
     renderState();
 }
 
 private void renderPagedGrid(boolean forceFullRefresh) {
     if (adapter == null) return;
-    int pageSize = Math.max(1, getPageSize());
-    int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
-    currentPage = Math.max(0, Math.min(currentPage, totalPages - 1));
-    int start = currentPage * pageSize;
-    int end = Math.min(start + pageSize, filteredGames.size());
-    visibleGames.clear();
-    if (start < end) visibleGames.addAll(filteredGames.subList(start, end));
+    libraryState.renderPage(getPageSize());
+    syncLibraryLists();
     adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-    fullyLoaded = currentPage >= totalPages - 1;
 }
 
 private boolean showNextPage() {
     if (!usesHorizontalPaging() || loading) return false;
-    int pageSize = Math.max(1, getPageSize());
-    int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
-    if (currentPage + 1 >= totalPages) return false;
-    currentPage++;
+    if (!libraryState.nextPage(getPageSize())) return false;
+    syncLibraryLists();
     renderPagedGrid(false);
     renderState();
     animatePageChange(true);
@@ -577,8 +568,8 @@ private boolean showNextPage() {
 }
 
 private boolean showPreviousPage() {
-    if (!usesHorizontalPaging() || loading || currentPage <= 0) return false;
-    currentPage--;
+    if (!usesHorizontalPaging() || loading || !libraryState.previousPage(getPageSize())) return false;
+    syncLibraryLists();
     renderPagedGrid(false);
     renderState();
     animatePageChange(false);
@@ -606,16 +597,18 @@ private void loadNextPage() {
 private void loadNextPage(boolean forceFullRefresh) {
     if (adapter == null || loading && !visibleGames.isEmpty()) return;
     loading = true;
-    int start = visibleGames.size();
-    int end = Math.min(start + Math.max(1, getPageSize()), filteredGames.size());
-    if (start < end) {
-        visibleGames.addAll(filteredGames.subList(start, end));
-        adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-    }
-    fullyLoaded = end >= filteredGames.size();
+    libraryState.loadNext(getPageSize());
+    syncLibraryLists();
+    adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
     loading = false;
     renderState();
 }
+
+    private void syncLibraryLists() {
+        filteredGames.clear(); filteredGames.addAll(libraryState.getFiltered());
+        visibleGames.clear(); visibleGames.addAll(libraryState.getVisible());
+        currentPage = libraryState.getPage(); fullyLoaded = libraryState.isFullyLoaded();
+    }
 
     private void renderState() {
         if (binding == null) return;

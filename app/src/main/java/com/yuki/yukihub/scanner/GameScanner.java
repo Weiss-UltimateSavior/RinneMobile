@@ -24,43 +24,68 @@ public class GameScanner {
     }
 
     public static List<ScanResult> scan(Context context, Uri rootUri, int maxDepth) {
-        List<ScanResult> results = new ArrayList<>();
+        return scan(context, rootUri, ScanRequest.defaults(maxDepth)).getResults();
+    }
+
+    /** Runs a bounded scan and returns both partial results and stop/error information. */
+    public static ScanReport scan(Context context, Uri rootUri, ScanRequest request) {
+        ScanReport report = new ScanReport();
         Set<String> seenUris = new HashSet<>();
-        if (context == null || rootUri == null) return results;
-        boolean scanAllLevels = maxDepth == SCAN_ALL_LEVELS || maxDepth == SCAN_UNTIL_GAME_MATCH;
-        boolean stopAtGameMatch = maxDepth == SCAN_UNTIL_GAME_MATCH;
-        int depth = scanAllLevels ? Integer.MAX_VALUE : Math.max(1, Math.min(4, maxDepth));
+        if (context == null || rootUri == null) {
+            report.setStopReason(ScanReport.StopReason.INVALID_ROOT);
+            report.addError("扫描目录不可用");
+            return report;
+        }
+        ScanRequest safeRequest = request == null ? ScanRequest.defaults(2) : request;
+        int requestedDepth = safeRequest.getMaxDepth();
+        boolean scanAllLevels = requestedDepth == SCAN_ALL_LEVELS || requestedDepth == SCAN_UNTIL_GAME_MATCH;
+        boolean stopAtGameMatch = requestedDepth == SCAN_UNTIL_GAME_MATCH;
+        int depth = scanAllLevels ? Integer.MAX_VALUE : Math.max(1, Math.min(4, requestedDepth));
 
         DocumentFile root;
         try {
             root = DocumentFile.fromTreeUri(context, rootUri);
         } catch (Throwable t) {
             Log.w(TAG, "fromTreeUri failed uri=" + rootUri, t);
-            return results;
+            report.setStopReason(ScanReport.StopReason.INVALID_ROOT);
+            report.addError("无法访问扫描目录：" + rootUri);
+            return report;
         }
-        if (root == null) return results;
+        if (root == null) {
+            report.setStopReason(ScanReport.StopReason.INVALID_ROOT);
+            report.addError("扫描目录不存在：" + rootUri);
+            return report;
+        }
         try {
-            if (!root.isDirectory()) return results;
+            if (!root.isDirectory()) {
+                report.setStopReason(ScanReport.StopReason.INVALID_ROOT);
+                report.addError("扫描目标不是目录：" + rootUri);
+                return report;
+            }
         } catch (Throwable t) {
             Log.w(TAG, "root isDirectory failed uri=" + rootUri, t);
-            return results;
+            report.setStopReason(ScanReport.StopReason.INVALID_ROOT);
+            report.addError("无法读取扫描目录：" + rootUri);
+            return report;
         }
-        scanChildren(root, 1, depth, stopAtGameMatch, results, seenUris);
-        return results;
+        scanChildren(root, 1, depth, stopAtGameMatch, report, seenUris, safeRequest);
+        return report;
     }
 
-    private static void scanChildren(DocumentFile dir, int level, int maxDepth, boolean stopAtGameMatch, List<ScanResult> results, Set<String> seenUris) {
-        if (dir == null || results == null) return;
+    private static void scanChildren(DocumentFile dir, int level, int maxDepth, boolean stopAtGameMatch, ScanReport report, Set<String> seenUris, ScanRequest request) {
+        if (dir == null || report == null || report.shouldStop(request)) return;
         DocumentFile[] children;
         try {
             children = dir.listFiles();
         } catch (Throwable t) {
             Log.w(TAG, "listFiles failed uri=" + safeUri(dir), t);
+            report.addError("无法读取目录：" + safeUri(dir));
             return;
         }
         if (children == null) return;
 
         for (DocumentFile child : children) {
+            if (!report.tryVisit(request, safeUri(child))) return;
             if (child == null) continue;
             try {
                 if (child.isFile()) {
@@ -69,11 +94,11 @@ public class GameScanner {
                     // 情况1：单个PSP文件在根目录
                     if (lowerName.endsWith(".iso") || lowerName.endsWith(".cso") || lowerName.endsWith(".chd") || 
                         lowerName.endsWith(".elf") || lowerName.endsWith(".pbp")) {
-                        addPspFileResult(results, seenUris, child, name);
+                        addPspFileResult(report, seenUris, child, name);
                         continue;
                     }
                     if (lowerName.endsWith(".desktop")) {
-                        addDesktopResult(results, seenUris, stripDesktopSuffix(name), child.getUri().toString(), name, "");
+                        addDesktopResult(report, seenUris, stripDesktopSuffix(name), child.getUri().toString(), name, "");
                     }
                     continue;
                 }
@@ -81,8 +106,8 @@ public class GameScanner {
 
                 // 识别目录本身的 PSP / desktop 入口；是否继续遍历由扫描模式决定。
                 // 全层模式会继续扫描嵌套游戏，命中模式则在识别游戏目录后停止向下。
-                boolean pspDirectory = tryAddPspDirectory(child, results, seenUris);
-                boolean desktopDirectory = tryAddDesktopDirectory(child, results, seenUris);
+                boolean pspDirectory = tryAddPspDirectory(child, report, seenUris);
+                boolean desktopDirectory = tryAddDesktopDirectory(child, report, seenUris);
 
                 String childName = safeName(child).toLowerCase(Locale.ROOT);
                 boolean internalAssetDir = isInternalAssetDir(childName);
@@ -93,7 +118,7 @@ public class GameScanner {
                     if (detected != null && detected.confidence > 0) {
                         String uri = child.getUri().toString();
                         if (markSeen(seenUris, uri)) {
-                            results.add(new ScanResult(safeName(child), uri, detected.engine, detected.confidence,
+                            report.addResult(new ScanResult(safeName(child), uri, detected.engine, detected.confidence,
                                     detected.launchTarget, "", detected.xp3Candidates));
                         }
                         gameDirectoryMatched = true;
@@ -101,16 +126,17 @@ public class GameScanner {
                 }
 
                 if (level < maxDepth && !(stopAtGameMatch && gameDirectoryMatched)) {
-                    scanChildren(child, level + 1, maxDepth, stopAtGameMatch, results, seenUris);
+                    scanChildren(child, level + 1, maxDepth, stopAtGameMatch, report, seenUris, request);
                 }
             } catch (Throwable t) {
                 Log.w(TAG, "scan child failed uri=" + safeUri(child), t);
+                report.addError("扫描项目失败：" + safeUri(child));
             }
         }
     }
 
-    private static boolean tryAddDesktopDirectory(DocumentFile dir, List<ScanResult> results, Set<String> seenUris) {
-        if (dir == null || results == null) return false;
+    private static boolean tryAddDesktopDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris) {
+        if (dir == null || report == null) return false;
         try {
             DocumentFile[] files = dir.listFiles();
             if (files == null || files.length == 0) return false;
@@ -130,14 +156,14 @@ public class GameScanner {
             if (desktops.size() == 1) {
                 // 情况2：文件夹内只有一个 desktop，标题取文件夹名，但入口仍然是 .desktop 文件本身。
                 DocumentFile desktop = desktops.get(0);
-                return addDesktopResult(results, seenUris, safeName(dir), desktop.getUri().toString(), safeName(desktop), coverUri);
+                return addDesktopResult(report, seenUris, safeName(dir), desktop.getUri().toString(), safeName(desktop), coverUri);
             }
 
             // 情况3：文件夹里有多个 desktop，按多个单独条目识别。
             boolean added = false;
             for (DocumentFile desktop : desktops) {
                 String name = safeName(desktop);
-                added |= addDesktopResult(results, seenUris, stripDesktopSuffix(name), desktop.getUri().toString(), name, coverUri);
+                added |= addDesktopResult(report, seenUris, stripDesktopSuffix(name), desktop.getUri().toString(), name, coverUri);
             }
             return added;
         } catch (Throwable t) {
@@ -146,9 +172,9 @@ public class GameScanner {
         }
     }
 
-    private static boolean addDesktopResult(List<ScanResult> results, Set<String> seenUris, String title, String resultUri, String launchTarget, String coverUri) {
-        if (results == null || resultUri == null || !markSeen(seenUris, resultUri)) return false;
-        results.add(new ScanResult(
+    private static boolean addDesktopResult(ScanReport report, Set<String> seenUris, String title, String resultUri, String launchTarget, String coverUri) {
+        if (report == null || resultUri == null || !markSeen(seenUris, resultUri)) return false;
+        report.addResult(new ScanResult(
                 title == null || title.trim().isEmpty() ? "未命名游戏" : title,
                 resultUri,
                 com.yuki.yukihub.model.EngineType.WINLATOR,
@@ -159,8 +185,8 @@ public class GameScanner {
         return true;
     }
 
-    private static boolean addPspFileResult(List<ScanResult> results, Set<String> seenUris, DocumentFile pspFile, String fileName) {
-        if (results == null || pspFile == null) return false;
+    private static boolean addPspFileResult(ScanReport report, Set<String> seenUris, DocumentFile pspFile, String fileName) {
+        if (report == null || pspFile == null) return false;
         String uri = pspFile.getUri().toString();
         if (!markSeen(seenUris, uri)) return false;
         
@@ -171,7 +197,7 @@ public class GameScanner {
             title = title.substring(0, dotIndex);
         }
         
-        results.add(new ScanResult(
+        report.addResult(new ScanResult(
                 title == null || title.trim().isEmpty() ? "未命名PSP游戏" : title,
                 uri,
                 com.yuki.yukihub.model.EngineType.PSP,
@@ -187,8 +213,8 @@ public class GameScanner {
      * 情况2：文件夹里只有1个PSP文件，游戏名取文件夹名，但入口仍然是PSP文件本身
      * 情况3：文件夹里有多个PSP文件，按多个单独条目识别
      */
-    private static boolean tryAddPspDirectory(DocumentFile dir, List<ScanResult> results, Set<String> seenUris) {
-        if (dir == null || results == null) return false;
+    private static boolean tryAddPspDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris) {
+        if (dir == null || report == null) return false;
         try {
             DocumentFile[] files = dir.listFiles();
             if (files == null || files.length == 0) return false;
@@ -211,7 +237,7 @@ public class GameScanner {
             if (pspFiles.size() == 1) {
                 // 情况2：文件夹内只有一个 PSP文件，标题取文件夹名，但入口仍然是 PSP文件本身。
                 DocumentFile pspFile = pspFiles.get(0);
-                return addPspFileResultWithCover(results, seenUris, safeName(dir), pspFile.getUri().toString(), safeName(pspFile), coverUri);
+                return addPspFileResultWithCover(report, seenUris, safeName(dir), pspFile.getUri().toString(), safeName(pspFile), coverUri);
             }
 
             // 情况3：文件夹里有多个 PSP文件，按多个单独条目识别。
@@ -223,7 +249,7 @@ public class GameScanner {
                 if (dotIndex > 0) {
                     title = title.substring(0, dotIndex);
                 }
-                added |= addPspFileResultWithCover(results, seenUris, title, pspFile.getUri().toString(), name, coverUri);
+                added |= addPspFileResultWithCover(report, seenUris, title, pspFile.getUri().toString(), name, coverUri);
             }
             return added;
         } catch (Throwable t) {
@@ -232,9 +258,9 @@ public class GameScanner {
         }
     }
 
-    private static boolean addPspFileResultWithCover(List<ScanResult> results, Set<String> seenUris, String title, String resultUri, String launchTarget, String coverUri) {
-        if (results == null || resultUri == null || !markSeen(seenUris, resultUri)) return false;
-        results.add(new ScanResult(
+    private static boolean addPspFileResultWithCover(ScanReport report, Set<String> seenUris, String title, String resultUri, String launchTarget, String coverUri) {
+        if (report == null || resultUri == null || !markSeen(seenUris, resultUri)) return false;
+        report.addResult(new ScanResult(
                 title == null || title.trim().isEmpty() ? "未命名PSP游戏" : title,
                 resultUri,
                 com.yuki.yukihub.model.EngineType.PSP,

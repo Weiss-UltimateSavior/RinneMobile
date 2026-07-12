@@ -48,6 +48,7 @@ import com.yuki.yukihub.util.AppExecutors;
 import com.apps.LauncherMotion;
 import com.apps.LauncherTheme;
 import com.apps.LauncherCustomVndbSearchDialog;
+import com.apps.GameLibraryState;
 import com.apps.UserData.LauncherUserData;
 
 import java.text.Collator;
@@ -83,6 +84,7 @@ public class PadManageFragment extends Fragment {
     private final List<Game> allGames = new ArrayList<>();
     private final List<Game> filteredGames = new ArrayList<>();
     private final List<Game> visibleGames = new ArrayList<>();
+    private final GameLibraryState libraryState = new GameLibraryState();
     private final List<CategoryOption> categories = new ArrayList<>();
     private final Map<Long, List<String>> gameDevelopers = new HashMap<>();
     private PadManageGameAdapter adapter;
@@ -477,6 +479,7 @@ public class PadManageFragment extends Fragment {
                 if (binding == null) return;
                 allGames.clear();
                 allGames.addAll(loadedGames);
+                libraryState.replaceAll(loadedGames);
                 gameDevelopers.clear();
                 gameDevelopers.putAll(loadedDevelopers);
                 categories.clear();
@@ -499,20 +502,14 @@ public class PadManageFragment extends Fragment {
 }
 
 private void applyFilters(boolean forceFullRefresh) {
-    filteredGames.clear();
-    String query = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
-    for (Game game : allGames) {
-        if (game == null) continue;
-        if (!query.isEmpty() && !safeTitle(game).toLowerCase(Locale.ROOT).contains(query)) continue;
-        if (selectedCategory != null && !selectedCategory.isEmpty() && !matchesCategory(game, selectedCategory)) continue;
-        filteredGames.add(game);
-    }
-    if (selectedCategory == null || selectedCategory.isEmpty()) {
-        sortGamesByTitle(filteredGames);
-    }
-    visibleGames.clear();
-    currentPage = 0;
-    fullyLoaded = filteredGames.isEmpty();
+    libraryState.setQuery(searchQuery);
+    libraryState.setCategory(selectedCategory);
+    libraryState.rebuild((game, query, category) -> {
+        String normalized = query.trim().toLowerCase(Locale.ROOT);
+        return (normalized.isEmpty() || safeTitle(game).toLowerCase(Locale.ROOT).contains(normalized))
+                && (category.trim().isEmpty() || matchesCategory(game, category));
+    }, (left, right) -> Collator.getInstance(Locale.CHINA).compare(safeTitle(left), safeTitle(right)), pageSize, true);
+    syncLibraryLists();
     // 横向分页恒为 true：直接走分页渲染
     renderPagedGrid(forceFullRefresh);
     renderState();
@@ -520,21 +517,15 @@ private void applyFilters(boolean forceFullRefresh) {
 
 private void renderPagedGrid(boolean forceFullRefresh) {
     if (adapter == null) return;
-    int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
-    currentPage = Math.max(0, Math.min(currentPage, totalPages - 1));
-    int start = currentPage * pageSize;
-    int end = Math.min(start + pageSize, filteredGames.size());
-    visibleGames.clear();
-    if (start < end) visibleGames.addAll(filteredGames.subList(start, end));
+    libraryState.renderPage(pageSize);
+    syncLibraryLists();
     adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-    fullyLoaded = currentPage >= totalPages - 1;
 }
 
 private boolean showNextPage() {
     if (loading) return false;
-    int totalPages = Math.max(1, (filteredGames.size() + pageSize - 1) / pageSize);
-    if (currentPage + 1 >= totalPages) return false;
-    currentPage++;
+    if (!libraryState.nextPage(pageSize)) return false;
+    syncLibraryLists();
     renderPagedGrid(false);
     renderState();
     animatePageChange(true);
@@ -542,8 +533,8 @@ private boolean showNextPage() {
 }
 
 private boolean showPreviousPage() {
-    if (loading || currentPage <= 0) return false;
-    currentPage--;
+    if (loading || !libraryState.previousPage(pageSize)) return false;
+    syncLibraryLists();
     renderPagedGrid(false);
     renderState();
     animatePageChange(false);
@@ -571,16 +562,18 @@ private void loadNextPage() {
 private void loadNextPage(boolean forceFullRefresh) {
     if (adapter == null || loading && !visibleGames.isEmpty()) return;
     loading = true;
-    int start = visibleGames.size();
-    int end = Math.min(start + pageSize, filteredGames.size());
-    if (start < end) {
-        visibleGames.addAll(filteredGames.subList(start, end));
-        adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-    }
-    fullyLoaded = end >= filteredGames.size();
+    libraryState.loadNext(pageSize);
+    syncLibraryLists();
+    adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
     loading = false;
     renderState();
 }
+
+    private void syncLibraryLists() {
+        filteredGames.clear(); filteredGames.addAll(libraryState.getFiltered());
+        visibleGames.clear(); visibleGames.addAll(libraryState.getVisible());
+        currentPage = libraryState.getPage(); fullyLoaded = libraryState.isFullyLoaded();
+    }
 
     private void renderState() {
         if (binding == null) return;

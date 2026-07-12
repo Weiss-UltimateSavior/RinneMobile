@@ -11,6 +11,8 @@ import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.scanner.EngineDetector;
 import com.yuki.yukihub.scanner.GameScanner;
+import com.yuki.yukihub.scanner.ScanRequest;
+import com.yuki.yukihub.scanner.ScanReport;
 import com.yuki.yukihub.scanner.ScanResult;
 
 import androidx.documentfile.provider.DocumentFile;
@@ -58,37 +60,63 @@ public final class LauncherScanBridge {
     }
 
     public static ImportStats scanAndImport(Context context, List<String> roots, int depth) {
+        return scanAndImport(context, roots, ScanRequest.defaults(depth)).importStats;
+    }
+
+    /** Controlled variant; callers can inspect partial discovery before or after importing it. */
+    public static ScanAndImportResult scanAndImport(Context context, List<String> roots, ScanRequest request) {
+        ScanBatchResult scan = scanWithReport(context, roots, request);
         ImportStats stats = new ImportStats();
-        if (context == null || roots == null || roots.isEmpty()) return stats;
-        Context appContext = context.getApplicationContext();
-        List<ScanResult> results = new ArrayList<>();
-        for (String root : roots) {
-            if (root == null || root.trim().isEmpty()) continue;
-            try {
-                results.addAll(GameScanner.scan(appContext, Uri.parse(root), depth));
-            } catch (SecurityException e) {
-                stats.failed++;
-                stats.failedItems.add("目录权限已失效，请重新添加：" + simplifyUri(root));
-            } catch (Throwable ignored) {
-            }
+        stats.scanStopReason = scan.getStopReason();
+        stats.partialDiscovery = scan.isPartial();
+        for (String error : scan.getErrors()) { stats.failed++; stats.failedItems.add(error); }
+        // Partial discovery must never be silently persisted. UI callers must explicitly confirm
+        // the returned ScanBatchResult and then call importScanResults(results).
+        if (scan.isPartial()) {
+            stats.failed++;
+            stats.failedItems.add("扫描未完整结束，未自动导入；请确认后导入已发现结果。");
+            return new ScanAndImportResult(scan, stats);
         }
-        importScannedGames(appContext, new GameRepository(appContext), results, stats);
-        return stats;
+        if (context != null) importScannedGames(context.getApplicationContext(), new GameRepository(context.getApplicationContext()), scan.getResults(), stats);
+        return new ScanAndImportResult(scan, stats);
     }
 
     /** Performs discovery only. Callers may resolve {@link ScanResult#xp3Candidates} before importing. */
     public static List<ScanResult> scan(Context context, List<String> roots, int depth) {
-        List<ScanResult> results = new ArrayList<>();
-        if (context == null || roots == null || roots.isEmpty()) return results;
+        return scanWithReport(context, roots, ScanRequest.defaults(depth)).getResults();
+    }
+
+    /**
+     * Performs bounded discovery across roots. Completed roots are retained when a later root
+     * fails or the request is stopped, allowing callers to offer a partial import.
+     */
+    public static ScanBatchResult scanWithReport(Context context, List<String> roots, ScanRequest request) {
+        ScanBatchResult batch = new ScanBatchResult();
+        if (context == null || roots == null || roots.isEmpty()) return batch;
         Context appContext = context.getApplicationContext();
+        ScanRequest safeRequest = request == null ? ScanRequest.defaults(2) : request;
         for (String root : roots) {
+            if (safeRequest.isCancelled()) {
+                batch.stopReason = ScanReport.StopReason.CANCELLED;
+                break;
+            }
             if (root == null || root.trim().isEmpty()) continue;
             try {
-                results.addAll(GameScanner.scan(appContext, Uri.parse(root), depth));
-            } catch (Throwable ignored) {
+                ScanReport report = GameScanner.scan(appContext, Uri.parse(root), safeRequest);
+                batch.results.addAll(report.getResults());
+                batch.errors.addAll(report.getErrors());
+                batch.visitedNodes += report.getVisitedNodes();
+                if (report.getStopReason() != ScanReport.StopReason.COMPLETED) {
+                    batch.stopReason = report.getStopReason();
+                    break;
+                }
+            } catch (SecurityException e) {
+                batch.errors.add("目录权限已失效，请重新添加：" + simplifyUri(root));
+            } catch (Throwable t) {
+                batch.errors.add("扫描目录失败：" + simplifyUri(root));
             }
         }
-        return results;
+        return batch;
     }
 
     /** Imports results after any interactive launch-target selection has been completed. */
@@ -270,5 +298,28 @@ public final class LauncherScanBridge {
         public final List<String> addedItems = new ArrayList<>();
         public final List<String> skippedItems = new ArrayList<>();
         public final List<String> failedItems = new ArrayList<>();
+        /** Diagnostics for legacy scanAndImport callers. */
+        public ScanReport.StopReason scanStopReason = ScanReport.StopReason.COMPLETED;
+        public boolean partialDiscovery;
+    }
+
+    /** Aggregated outcome for a multi-root scan. Results can be imported even when partial. */
+    public static final class ScanBatchResult {
+        private final List<ScanResult> results = new ArrayList<>();
+        private final List<String> errors = new ArrayList<>();
+        private int visitedNodes;
+        private ScanReport.StopReason stopReason = ScanReport.StopReason.COMPLETED;
+
+        public List<ScanResult> getResults() { return new ArrayList<>(results); }
+        public List<String> getErrors() { return new ArrayList<>(errors); }
+        public int getVisitedNodes() { return visitedNodes; }
+        public ScanReport.StopReason getStopReason() { return stopReason; }
+        public boolean isPartial() { return stopReason != ScanReport.StopReason.COMPLETED; }
+    }
+
+    public static final class ScanAndImportResult {
+        public final ScanBatchResult scan;
+        public final ImportStats importStats;
+        ScanAndImportResult(ScanBatchResult scan, ImportStats importStats) { this.scan = scan; this.importStats = importStats; }
     }
 }

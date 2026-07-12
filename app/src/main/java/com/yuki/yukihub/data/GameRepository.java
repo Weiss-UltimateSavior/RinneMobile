@@ -55,6 +55,7 @@ public class GameRepository {
     }
 
     public long insert(Game game) {
+        if (game == null) throw new IllegalArgumentException("game must not be null");
         SQLiteDatabase db = helper.getWritableDatabase();
         long now = System.currentTimeMillis();
         game.createdAt = game.createdAt == 0 ? now : game.createdAt;
@@ -68,12 +69,9 @@ public class GameRepository {
         if (rootUri == null || rootUri.trim().isEmpty()) return false;
         SQLiteDatabase db = helper.getReadableDatabase();
         String key = normalizeRootUriKey(rootUri);
-        Cursor c = db.rawQuery("SELECT root_uri FROM games WHERE root_uri IS NOT NULL AND root_uri != ''", null);
+        Cursor c = db.rawQuery("SELECT 1 FROM games WHERE root_uri_key=? LIMIT 1", new String[]{key});
         try {
-            while (c.moveToNext()) {
-                if (key.equals(normalizeRootUriKey(c.getString(0)))) return true;
-            }
-            return false;
+            return c.moveToFirst();
         } finally {
             c.close();
         }
@@ -94,9 +92,9 @@ public class GameRepository {
     public Set<String> getRootUriKeySet() {
         Set<String> set = new HashSet<>();
         SQLiteDatabase db = helper.getReadableDatabase();
-        Cursor c = db.rawQuery("SELECT root_uri FROM games WHERE root_uri IS NOT NULL AND root_uri != ''", null);
+        Cursor c = db.rawQuery("SELECT root_uri_key FROM games WHERE root_uri_key != ''", null);
         try {
-            while (c.moveToNext()) set.add(normalizeRootUriKey(c.getString(0)));
+            while (c.moveToNext()) set.add(c.getString(0));
         } finally {
             c.close();
         }
@@ -105,8 +103,15 @@ public class GameRepository {
 
     public long insertIfNotExists(Game game) {
         if (game == null || game.rootUri == null || game.rootUri.trim().isEmpty()) return -1;
-        if (existsByRootUri(game.rootUri)) return -1;
-        return insert(game);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        long now = System.currentTimeMillis();
+        game.createdAt = game.createdAt == 0 ? now : game.createdAt;
+        game.updatedAt = now;
+        long id = db.insertWithOnConflict("games", null, toValues(game), SQLiteDatabase.CONFLICT_IGNORE);
+        if (id > 0) game.id = id;
+        // CONFLICT_IGNORE makes the scan/import identity check atomic.  Keep the
+        // established -1 "already present" contract for callers.
+        return id;
     }
 
     /**
@@ -172,14 +177,24 @@ public class GameRepository {
     public void finishPlaySession(long sessionId, long end, long minDuration, long maxDuration) {
         if (sessionId <= 0) return;
         SQLiteDatabase db = helper.getWritableDatabase();
-        Cursor c = db.rawQuery("SELECT game_id,start_time FROM play_sessions WHERE id=? AND end_time IS NULL LIMIT 1", new String[]{String.valueOf(sessionId)});
+        db.beginTransaction();
         try {
-            if (!c.moveToFirst()) return;
-            long gameId = c.getLong(0);
-            long start = c.getLong(1);
+            long gameId;
+            long start;
+            Cursor c = db.rawQuery("SELECT game_id,start_time FROM play_sessions WHERE id=? AND end_time IS NULL LIMIT 1", new String[]{String.valueOf(sessionId)});
+            try {
+                if (!c.moveToFirst()) return;
+                gameId = c.getLong(0);
+                start = c.getLong(1);
+            } finally {
+                c.close();
+            }
             long rawDuration = Math.max(0L, end - start);
             if (rawDuration < minDuration) {
-                db.delete("play_sessions", "id=?", new String[]{String.valueOf(sessionId)});
+                if (db.delete("play_sessions", "id=?", new String[]{String.valueOf(sessionId)}) != 1) {
+                    throw new IllegalStateException("删除无效游玩会话失败: " + sessionId);
+                }
+                db.setTransactionSuccessful();
                 return;
             }
             long duration = Math.min(rawDuration, maxDuration);
@@ -188,11 +203,16 @@ public class GameRepository {
             values.put("duration", duration);
             values.put("updated_at", end);
             values.put("dirty", 1);
-            db.update("play_sessions", values, "id=?", new String[]{String.valueOf(sessionId)});
-            db.execSQL("UPDATE games SET total_play_time = total_play_time + ?, last_played_at = ?, updated_at = ? WHERE id = ?",
+            if (db.update("play_sessions", values, "id=?", new String[]{String.valueOf(sessionId)}) != 1) {
+                throw new IllegalStateException("结算游玩会话失败: " + sessionId);
+            }
+            // Keep the increment in SQL so a stale Game object cannot overwrite it.
+            db.execSQL("UPDATE games SET total_play_time = total_play_time + ?, last_played_at = MAX(IFNULL(last_played_at,0), ?), updated_at = ? WHERE id = ?",
                     new Object[]{duration, end, end, gameId});
+            ensureSingleChangedRow(db, "结算游玩会话时找不到游戏: " + gameId);
+            db.setTransactionSuccessful();
         } finally {
-            c.close();
+            db.endTransaction();
         }
     }
 
@@ -278,9 +298,18 @@ public class GameRepository {
         session.put("updated_at", now);
         session.put("dirty", 1);
         session.put("deleted", 0);
-        db.insert("play_sessions", null, session);
-        db.execSQL("UPDATE games SET total_play_time = total_play_time + ?, last_played_at = MAX(IFNULL(last_played_at,0), ?), updated_at = ? WHERE id = ?",
-                new Object[]{duration, safeEnd, now, gameId});
+        db.beginTransaction();
+        try {
+            if (db.insert("play_sessions", null, session) <= 0) {
+                throw new IllegalStateException("写入手动游玩记录失败: " + gameId);
+            }
+            db.execSQL("UPDATE games SET total_play_time = total_play_time + ?, last_played_at = MAX(IFNULL(last_played_at,0), ?), updated_at = ? WHERE id = ?",
+                    new Object[]{duration, safeEnd, now, gameId});
+            ensureSingleChangedRow(db, "累计手动游玩时长时找不到游戏: " + gameId);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     public void setManualPlayTimeForGame(long gameId, long totalDuration) {
@@ -288,9 +317,11 @@ public class GameRepository {
         SQLiteDatabase db = helper.getWritableDatabase();
         long now = System.currentTimeMillis();
         long safeDuration = Math.max(0L, totalDuration);
-        db.delete("play_sessions", "game_id=?", new String[]{String.valueOf(gameId)});
-        long lastPlayed = 0L;
-        if (safeDuration > 0) {
+        db.beginTransaction();
+        try {
+            db.delete("play_sessions", "game_id=?", new String[]{String.valueOf(gameId)});
+            long lastPlayed = 0L;
+            if (safeDuration > 0) {
             lastPlayed = now;
             long start = Math.max(0L, now - safeDuration);
             ContentValues session = new ContentValues();
@@ -305,14 +336,22 @@ public class GameRepository {
             session.put("updated_at", now);
             session.put("dirty", 1);
             session.put("deleted", 0);
-            db.insert("play_sessions", null, session);
+                if (db.insert("play_sessions", null, session) <= 0) {
+                    throw new IllegalStateException("写入手动总时长记录失败: " + gameId);
+                }
+            }
+            ContentValues v = new ContentValues();
+            v.put("total_play_time", safeDuration);
+            v.put("last_played_at", lastPlayed);
+            v.put("playtime_reset_at", now);
+            v.put("updated_at", now);
+            if (db.update("games", v, "id=?", new String[]{String.valueOf(gameId)}) != 1) {
+                throw new IllegalStateException("设置手动总时长时找不到游戏: " + gameId);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
-        ContentValues v = new ContentValues();
-        v.put("total_play_time", safeDuration);
-        v.put("last_played_at", lastPlayed);
-        v.put("playtime_reset_at", now);
-        v.put("updated_at", now);
-        db.update("games", v, "id=?", new String[]{String.valueOf(gameId)});
     }
 
     public static class PlayActivity {
@@ -558,9 +597,21 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
                     throw new IllegalStateException("更新云端游戏失败: " + g.id);
                 }
             } else {
-                long id = db.insert("games", null, toValues(g));
-                if (id <= 0) throw new IllegalStateException("插入云端游戏失败: " + g.title);
-                g.id = id;
+                long id = db.insertWithOnConflict("games", null, toValues(g), SQLiteDatabase.CONFLICT_IGNORE);
+                if (id > 0) {
+                    g.id = id;
+                } else if (!rootUri.isEmpty()) {
+                    // Another scan/import won the same URI identity concurrently.
+                    // Reapply this already-merged snapshot to that canonical row.
+                    Game concurrent = findByRootUri(db, rootUri);
+                    if (concurrent == null) throw new IllegalStateException("并发插入后无法找到云端游戏: " + g.title);
+                    g.id = concurrent.id;
+                    if (db.update("games", toValues(g), "id=?", new String[]{String.valueOf(g.id)}) != 1) {
+                        throw new IllegalStateException("并发合并云端游戏失败: " + g.title);
+                    }
+                } else {
+                    throw new IllegalStateException("插入云端游戏失败: " + g.title);
+                }
             }
             if (resetAdvanced && g.id > 0) {
                 db.delete("play_sessions", "game_id=? AND (COALESCE(end_time,start_time,0) <= ?)", new String[]{String.valueOf(g.id), String.valueOf(g.playtimeResetAt)});
@@ -657,13 +708,9 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
     private Game findByRootUri(SQLiteDatabase db, String rootUri) {
         if (rootUri == null || rootUri.trim().isEmpty()) return null;
         String key = normalizeRootUriKey(rootUri);
-        Cursor c = db.query("games", null, "root_uri IS NOT NULL AND root_uri != ''", null, null, null, null);
+        Cursor c = db.query("games", null, "root_uri_key=?", new String[]{key}, null, null, null, "1");
         try {
-            while (c.moveToNext()) {
-                Game g = fromCursor(c);
-                if (key.equals(normalizeRootUriKey(g.rootUri))) return g;
-            }
-            return null;
+            return c.moveToFirst() ? fromCursor(c) : null;
         } finally {
             c.close();
         }
@@ -789,6 +836,7 @@ o.put("description", c.getString(c.getColumnIndexOrThrow("description")));
         v.put("original_title", g.originalTitle);
         v.put("engine", g.engine == null ? EngineType.UNKNOWN.name() : g.engine.name());
         v.put("root_uri", nvl(g.rootUri));
+        v.put("root_uri_key", normalizeRootUriKey(g.rootUri));
         v.put("cover_uri", g.coverUri);
         v.put("cover_persist_uri", g.coverPersistUri);
         v.put("cover_source_type", g.coverSourceType);
@@ -883,6 +931,15 @@ g.description = c.getString(c.getColumnIndexOrThrow("description"));
 
     private String nvl(String value) {
         return value == null ? "" : value;
+    }
+
+    private void ensureSingleChangedRow(SQLiteDatabase db, String message) {
+        Cursor changed = db.rawQuery("SELECT changes()", null);
+        try {
+            if (!changed.moveToFirst() || changed.getInt(0) != 1) throw new IllegalStateException(message);
+        } finally {
+            changed.close();
+        }
     }
 
     public static String normalizeRootUriKey(String value) {

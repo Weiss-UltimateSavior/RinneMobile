@@ -4,12 +4,23 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class YukiDatabaseHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "yukihub.db";
-    public static final int DB_VERSION = 12;
+    public static final int DB_VERSION = 13;
 
     public YukiDatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        // Foreign-key declarations are otherwise only documentation in SQLite.  This
+        // must run before every create/upgrade/open, not only when the schema changes.
+        db.setForeignKeyConstraintsEnabled(true);
     }
 
     @Override
@@ -20,6 +31,7 @@ public class YukiDatabaseHelper extends SQLiteOpenHelper {
                 "original_title TEXT," +
                 "engine TEXT NOT NULL," +
                 "root_uri TEXT NOT NULL," +
+                "root_uri_key TEXT NOT NULL DEFAULT ''," +
                 "cover_uri TEXT," +
                 "cover_persist_uri TEXT," +
                 "cover_source_type INTEGER DEFAULT 0," +
@@ -58,6 +70,7 @@ public class YukiDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT)");
         createMetadataCacheTable(db);
         try { db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_play_sessions_uuid ON play_sessions(session_uuid)"); } catch (Exception ignored) { }
+        createRootUriKeyIndex(db);
     }
 
     @Override
@@ -97,6 +110,9 @@ safeAlter(db, "ALTER TABLE games ADD COLUMN gaishi_local_game_id TEXT");
         }
         if (oldVersion < 12) {
             upgradeMetadataCachePrimaryKey(db);
+        }
+        if (oldVersion < 13) {
+            upgradeRootUriKeysAndIntegrity(db);
         }
     }
 
@@ -145,6 +161,69 @@ safeAlter(db, "ALTER TABLE games ADD COLUMN gaishi_local_game_id TEXT");
         try { db.execSQL("UPDATE play_sessions SET created_at=start_time WHERE created_at IS NULL OR created_at=0"); } catch (Exception ignored) { }
         try { db.execSQL("UPDATE play_sessions SET updated_at=COALESCE(end_time,start_time) WHERE updated_at IS NULL OR updated_at=0"); } catch (Exception ignored) { }
         try { db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_play_sessions_uuid ON play_sessions(session_uuid)"); } catch (Exception ignored) { }
+    }
+
+    /**
+     * Gives URI identity a database-level representation.  Older releases compared
+     * normalized URI strings in Java, which left a check-then-insert race and could
+     * not protect imports from duplicate cards.
+     */
+    private void upgradeRootUriKeysAndIntegrity(SQLiteDatabase db) {
+        safeAlter(db, "ALTER TABLE games ADD COLUMN root_uri_key TEXT NOT NULL DEFAULT ''");
+        db.beginTransaction();
+        try {
+            // Foreign keys were not enabled in previous app versions, so repair old
+            // orphan rows before the new enforcement becomes observable.
+            db.execSQL("DELETE FROM play_sessions WHERE NOT EXISTS (SELECT 1 FROM games WHERE games.id=play_sessions.game_id)");
+
+            Map<String, Long> canonicalByKey = new HashMap<>();
+            android.database.Cursor cursor = db.rawQuery(
+                    "SELECT id,root_uri,total_play_time,last_played_at,created_at,updated_at,hidden,favorite " +
+                            "FROM games ORDER BY updated_at DESC,id DESC", null);
+            try {
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(0);
+                    String key = GameRepository.normalizeRootUriKey(cursor.getString(1));
+                    db.execSQL("UPDATE games SET root_uri_key=? WHERE id=?", new Object[]{key, id});
+                    if (key.isEmpty()) continue;
+                    Long canonicalId = canonicalByKey.get(key);
+                    if (canonicalId == null) {
+                        canonicalByKey.put(key, id);
+                    } else {
+                        mergeDuplicateGame(db, canonicalId, id);
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+            createRootUriKeyIndex(db);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Moves dependent data before deleting an historical duplicate URI row. */
+    private void mergeDuplicateGame(SQLiteDatabase db, long canonicalId, long duplicateId) {
+        db.execSQL("INSERT OR REPLACE INTO metadata_cache(game_id,source,source_id,json,updated_at) " +
+                "SELECT ?,d.source,d.source_id,d.json,d.updated_at FROM metadata_cache d " +
+                "WHERE d.game_id=? AND NOT EXISTS (SELECT 1 FROM metadata_cache c " +
+                "WHERE c.game_id=? AND c.source=d.source AND c.updated_at>=d.updated_at)",
+                new Object[]{canonicalId, duplicateId, canonicalId});
+        db.delete("metadata_cache", "game_id=?", new String[]{String.valueOf(duplicateId)});
+        db.execSQL("UPDATE play_sessions SET game_id=? WHERE game_id=?", new Object[]{canonicalId, duplicateId});
+        db.execSQL("UPDATE games SET total_play_time=IFNULL(total_play_time,0)+(SELECT IFNULL(total_play_time,0) FROM games WHERE id=?), " +
+                        "last_played_at=MAX(IFNULL(last_played_at,0),(SELECT IFNULL(last_played_at,0) FROM games WHERE id=?)), " +
+                        "created_at=MIN(IFNULL(created_at,0),(SELECT IFNULL(created_at,0) FROM games WHERE id=?)), " +
+                        "updated_at=MAX(IFNULL(updated_at,0),(SELECT IFNULL(updated_at,0) FROM games WHERE id=?)), " +
+                        "hidden=MIN(IFNULL(hidden,0),(SELECT IFNULL(hidden,0) FROM games WHERE id=?)), " +
+                        "favorite=MAX(IFNULL(favorite,0),(SELECT IFNULL(favorite,0) FROM games WHERE id=?)) WHERE id=?",
+                new Object[]{duplicateId, duplicateId, duplicateId, duplicateId, duplicateId, duplicateId, canonicalId});
+        db.delete("games", "id=?", new String[]{String.valueOf(duplicateId)});
+    }
+
+    private void createRootUriKeyIndex(SQLiteDatabase db) {
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_games_root_uri_key ON games(root_uri_key) WHERE root_uri_key != ''");
     }
 
     private void safeAlter(SQLiteDatabase db, String sql) {

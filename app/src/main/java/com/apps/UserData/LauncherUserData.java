@@ -39,6 +39,10 @@ public class LauncherUserData {
     private static final int PLAY_RECORDS_VERSION = 1;
     // 单条游玩记录最长 12 小时，与主项目 MAX_PLAY_SESSION_MS 保持一致
     private static final long MAX_PLAY_RECORD_MS = 12L * 60L * 60L * 1000L;
+    private static final int MAX_SETTINGS_BYTES = 1024 * 1024;
+    private static final int MAX_PLAY_SQL_BYTES = 32 * 1024 * 1024;
+    private static final int MAX_CLOUD_PLAY_DATA_BYTES = 16 * 1024 * 1024;
+    private static final int MAX_RUNTIME_RECORDS_BYTES = 2 * 1024 * 1024;
 
     // ── SharedPreferences 文件名 ──
     private static final String PREFS_MAIN = "yukihub_prefs";
@@ -144,6 +148,7 @@ public class LauncherUserData {
      */
     public static boolean importCloudPlayData(Context context, String playData) {
         if (context == null || playData == null || playData.trim().isEmpty()) return false;
+        if (utf8Length(playData) > MAX_CLOUD_PLAY_DATA_BYTES) return false;
         String trimmed = playData.trim();
         if (trimmed.startsWith("{")) {
             try {
@@ -176,7 +181,7 @@ public class LauncherUserData {
         File settingsFile = new File(dir, SETTINGS_FILE);
         if (settingsFile.exists()) {
             try {
-                String json = readText(settingsFile);
+                String json = readText(settingsFile, MAX_SETTINGS_BYTES, "设置备份");
                 ok = importSettingsFromJson(context, json);
             } catch (Exception e) {
                 ok = false;
@@ -186,7 +191,7 @@ public class LauncherUserData {
         File sqlFile = new File(dir, PLAY_SQL_FILE);
         if (sqlFile.exists()) {
             try {
-                String sql = readText(sqlFile);
+                String sql = readText(sqlFile, MAX_PLAY_SQL_BYTES, "游玩记录备份");
                 ok = LauncherRepositoryBridge.importPlaySql(context, sql) && ok;
             } catch (Exception e) {
                 ok = false;
@@ -262,7 +267,7 @@ public class LauncherUserData {
         File file = getSettingsFile(context);
         if (!file.exists()) return null;
         try {
-            return readText(file);
+            return readText(file, MAX_SETTINGS_BYTES, "设置备份");
         } catch (Exception e) {
             return null;
         }
@@ -272,7 +277,7 @@ public class LauncherUserData {
         File file = getPlaySqlFile(context);
         if (!file.exists()) return null;
         try {
-            return readText(file);
+            return readText(file, MAX_PLAY_SQL_BYTES, "游玩记录备份");
         } catch (Exception e) {
             return null;
         }
@@ -573,7 +578,7 @@ public class LauncherUserData {
         File file = getPlayRecordsFile(context);
         if (!file.exists()) return new JSONArray();
         try {
-            String json = readText(file);
+            String json = readText(file, MAX_RUNTIME_RECORDS_BYTES, "游玩记录缓存");
             JSONObject root = new JSONObject(json);
             JSONArray arr = root.optJSONArray("records");
             return arr != null ? arr : new JSONArray();
@@ -598,7 +603,7 @@ public class LauncherUserData {
         File file = getServerSessionsFile(context);
         if (!file.exists()) return new JSONArray();
         try {
-            String json = readText(file);
+            String json = readText(file, MAX_RUNTIME_RECORDS_BYTES, "游玩会话缓存");
             JSONObject root = new JSONObject(json);
             JSONArray arr = root.optJSONArray("sessions");
             return arr != null ? arr : new JSONArray();
@@ -632,14 +637,27 @@ public class LauncherUserData {
         }
     }
 
-    private static String readText(File file) throws IOException {
-        FileInputStream fis = new FileInputStream(file);
-        try {
-            byte[] buf = new byte[(int) file.length()];
-            fis.read(buf);
-            return new String(buf, StandardCharsets.UTF_8);
-        } finally {
-            fis.close();
+    private static String readText(File file, int maxBytes, String label) throws IOException {
+        if (file == null || !file.isFile()) throw new IOException(label + "不存在或不是普通文件");
+        long declaredLength = file.length();
+        if (declaredLength > maxBytes) {
+            throw new IOException(label + "过大（文件声明 " + declaredLength + " 字节，最大允许 " + maxBytes + " 字节）");
         }
+        try (FileInputStream fis = new FileInputStream(file);
+             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream((int) Math.max(0, declaredLength))) {
+            byte[] buffer = new byte[8192];
+            int total = 0;
+            int read;
+            while ((read = fis.read(buffer)) != -1) {
+                total += read;
+                if (total > maxBytes) throw new IOException(label + "过大（读取超过最大允许 " + maxBytes + " 字节）");
+                out.write(buffer, 0, read);
+            }
+            return out.toString(StandardCharsets.UTF_8.name());
+        }
+    }
+
+    private static int utf8Length(String text) {
+        return text == null ? 0 : text.getBytes(StandardCharsets.UTF_8).length;
     }
 }

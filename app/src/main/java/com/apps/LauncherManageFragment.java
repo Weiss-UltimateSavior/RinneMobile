@@ -30,6 +30,8 @@ import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
 import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
 import com.yuki.yukihub.scanner.ScanResult;
+import com.yuki.yukihub.scanner.ScanRequest;
+import com.yuki.yukihub.scanner.ScanReport;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.DevLogger;
 
@@ -88,6 +90,8 @@ public class LauncherManageFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (activeScanRequest != null) activeScanRequest.cancel();
+        activeScanRequest = null;
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
         }
@@ -166,8 +170,8 @@ public class LauncherManageFragment extends Fragment {
         roots.add(value);
         saveScanRootUris(roots);
         renderScanDirectories();
-        Toast.makeText(requireContext(), "已添加目录，正在扫描...", Toast.LENGTH_SHORT).show();
-        scanSingleRoot(value);
+        Toast.makeText(requireContext(), "目录已添加，请选择扫描层次", Toast.LENGTH_SHORT).show();
+        showScanDepthDialog(java.util.Collections.singletonList(value));
     }
 
     private void scanConfiguredDirectories() {
@@ -253,26 +257,58 @@ public class LauncherManageFragment extends Fragment {
     }
 
     private AlertDialog scanLoadingDialog;
+    private ScanRequest activeScanRequest;
 
     private void executeScan(List<String> roots, int depth) {
         scanAndResolveXp3Targets(roots, depth);
     }
 
-    private void scanSingleRoot(String rootUri) {
-        scanAndResolveXp3Targets(java.util.Collections.singletonList(rootUri), scanDepth());
-    }
-
     private void scanAndResolveXp3Targets(List<String> roots, int depth) {
+        ScanRequest request = ScanRequest.defaults(depth);
+        activeScanRequest = request;
         scanLoadingDialog = showScanLoadingDialog();
+        scanLoadingDialog.setCancelable(true);
+        scanLoadingDialog.setCanceledOnTouchOutside(false);
+        scanLoadingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消扫描", (dialog, which) -> request.cancel());
+        scanLoadingDialog.setOnCancelListener(dialog -> request.cancel());
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
-            List<ScanResult> results = LauncherScanBridge.scan(appContext, roots, depth);
+            LauncherScanBridge.ScanBatchResult result = LauncherScanBridge.scanWithReport(appContext, roots, request);
             mainHandler.post(() -> {
                 if (!isAdded()) return;
                 dismissScanLoadingDialog();
-                resolveXp3Candidates(results, 0);
+                activeScanRequest = null;
+                handleScanDiscovery(result);
             });
         });
+    }
+
+    private void handleScanDiscovery(LauncherScanBridge.ScanBatchResult result) {
+        if (result == null) return;
+        List<ScanResult> results = result.getResults();
+        String summary = "已访问 " + result.getVisitedNodes() + " 个项目，发现 " + results.size() + " 个游戏";
+        if (!result.getErrors().isEmpty()) summary += "\n错误 " + result.getErrors().size() + " 项：\n• " + TextUtils.join("\n• ", result.getErrors());
+        if (result.isPartial()) {
+            summary += "\n扫描已" + stopReasonText(result.getStopReason()) + "。";
+            if (results.isEmpty()) {
+                showLauncherConfirmDialog("扫描未完成", summary, "知道了", () -> {});
+            } else {
+                showLauncherConfirmDialog("扫描未完成", summary + "\n是否导入已发现的结果？", "导入", () -> resolveXp3Candidates(results, 0));
+            }
+            return;
+        }
+        if (!result.getErrors().isEmpty() && results.isEmpty()) {
+            showLauncherConfirmDialog("扫描完成", summary, "知道了", () -> {});
+            return;
+        }
+        resolveXp3Candidates(results, 0);
+    }
+
+    private String stopReasonText(ScanReport.StopReason reason) {
+        if (reason == ScanReport.StopReason.CANCELLED) return "取消";
+        if (reason == ScanReport.StopReason.DEADLINE) return "超时停止";
+        if (reason == ScanReport.StopReason.NODE_LIMIT) return "达到项目上限";
+        return "停止";
     }
 
     /**
