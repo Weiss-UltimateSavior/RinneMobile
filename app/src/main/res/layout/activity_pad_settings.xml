@@ -424,6 +424,63 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/padXinhaitianThemeRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/launcher_chat_option_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <ImageView
+                        android:id="@+id/padXinhaitianThemeLogo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:clipToOutline="true"
+                        android:contentDescription="心海天主题"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/launcher_theme_xinhaitian_logo" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="心海天（风格）"
+                            android:textColor="@color/launcher_text_color"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="心海澄澈，天光温柔"
+                            android:textColor="@color/launcher_text_muted_color"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/padXinhaitianThemeCheck"
+                        android:layout_width="22dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="✓"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/padParticleToggleRow"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"

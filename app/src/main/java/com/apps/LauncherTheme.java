@@ -141,7 +141,7 @@ public final class LauncherTheme {
         return drawable;
     }
 
-    static GradientDrawable xinhaitianCircle(Context context) {
+    public static GradientDrawable xinhaitianCircle(Context context) {
         return xinhaitianGradient(context, 0f, true);
     }
 
@@ -181,7 +181,7 @@ public final class LauncherTheme {
         if (view != null) view.setTextColor(onPrimary(view.getContext()));
     }
 
-    static void chip(TextView view, boolean selected) {
+    public static void chip(TextView view, boolean selected) {
         if (view == null) return;
         view.setTextColor(selected ? onPrimary(view.getContext()) : primary(view.getContext()));
         view.setBackground(selected ? selectedChip(view.getContext()) : secondaryButton(view.getContext(), 999f));

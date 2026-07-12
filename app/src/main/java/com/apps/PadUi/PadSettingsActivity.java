@@ -42,6 +42,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
     private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
     private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
+    private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
 
     private ActivityPadSettingsBinding binding;
     private Section currentSection = Section.GENERAL;
@@ -92,7 +93,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padFreshThemeRow.setOnClickListener(view -> selectTheme(THEME_DEFAULT_LABEL));
         binding.padRinneThemeRow.setOnClickListener(view -> selectTheme(THEME_RINNE_LABEL));
         binding.padAnriThemeRow.setOnClickListener(view -> selectTheme(THEME_ANRI_LABEL));
-        binding.padParticleToggleRow.setOnClickListener(view -> toggleParticles());
+        binding.padXinhaitianThemeRow.setOnClickListener(view -> selectTheme(THEME_XINHAITIAN_LABEL));
+        binding.padParticleToggleRow.setOnClickListener(view -> showParticleStyleDialog());
         binding.padThemeApply.setOnClickListener(view -> applySelectedTheme());
         binding.padKrkrSaveButton.setOnClickListener(view -> saveKrkrConfig());
         binding.padKrkrCancelButton.setOnClickListener(view -> finish());
@@ -144,6 +146,8 @@ public class PadSettingsActivity extends AppCompatActivity {
             selectedTheme = THEME_RINNE_LABEL;
         } else if (LauncherActivity.THEME_STYLE_ANRI.equals(style)) {
             selectedTheme = THEME_ANRI_LABEL;
+        } else if (LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style)) {
+            selectedTheme = THEME_XINHAITIAN_LABEL;
         } else {
             selectedTheme = THEME_DEFAULT_LABEL;
         }
@@ -280,6 +284,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padAnriThemeLogo.setBackground(
                 LauncherTheme.circle(this, LauncherActivity.ANRI_PRIMARY_COLOR));
         binding.padAnriThemeLogo.setClipToOutline(true);
+        binding.padXinhaitianThemeLogo.setBackground(LauncherTheme.xinhaitianCircle(this));
+        binding.padXinhaitianThemeLogo.setClipToOutline(true);
         binding.padParticleToggleIcon.setBackground(LauncherTheme.circle(this));
         binding.padParticleToggleIcon.setTextColor(LauncherTheme.onPrimary(this));
         LauncherTheme.primaryButton(binding.padThemeApply);
@@ -294,16 +300,20 @@ public class PadSettingsActivity extends AppCompatActivity {
         boolean freshSelected = THEME_DEFAULT_LABEL.equals(selectedTheme);
         boolean rinneSelected = THEME_RINNE_LABEL.equals(selectedTheme);
         boolean anriSelected = THEME_ANRI_LABEL.equals(selectedTheme);
+        boolean xinhaitianSelected = THEME_XINHAITIAN_LABEL.equals(selectedTheme);
         styleThemeRow(binding.padFreshThemeRow, freshSelected);
         styleThemeRow(binding.padRinneThemeRow, rinneSelected);
         styleThemeRow(binding.padAnriThemeRow, anriSelected);
+        styleThemeRow(binding.padXinhaitianThemeRow, xinhaitianSelected);
         binding.padFreshThemeCheck.setVisibility(freshSelected ? View.VISIBLE : View.INVISIBLE);
         binding.padRinneThemeCheck.setVisibility(rinneSelected ? View.VISIBLE : View.INVISIBLE);
         binding.padAnriThemeCheck.setVisibility(anriSelected ? View.VISIBLE : View.INVISIBLE);
+        binding.padXinhaitianThemeCheck.setVisibility(xinhaitianSelected ? View.VISIBLE : View.INVISIBLE);
         int primary = LauncherTheme.primary(this);
         binding.padFreshThemeCheck.setTextColor(primary);
         binding.padRinneThemeCheck.setTextColor(primary);
         binding.padAnriThemeCheck.setTextColor(primary);
+        binding.padXinhaitianThemeCheck.setTextColor(primary);
     }
 
     private void styleThemeRow(View row, boolean selected) {
@@ -314,22 +324,67 @@ public class PadSettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void toggleParticles() {
-        boolean enabled = !LauncherActivity.isLauncherParticlesEnabled(this);
-        LauncherActivity.setLauncherParticlesEnabled(this, enabled);
-        renderParticles();
-        renderParticleToggle();
-        Toast.makeText(this, enabled ? "已开启动态粒子" : "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+    private void renderParticleToggle() {
+        binding.padParticleToggleState.setText("设置");
+        LauncherTheme.chip(binding.padParticleToggleState, true);
     }
 
-    private void renderParticleToggle() {
+    private void showParticleStyleDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = dialogButton("动态粒子样式", false);
+        title.setTextSize(16);
+        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+        title.setBackground(null);
+        root.addView(title, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(32)));
+
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
-        binding.padParticleToggleState.setText(enabled ? "关闭" : "开启");
-        if (enabled) {
-            LauncherTheme.primaryButton(binding.padParticleToggleState);
-        } else {
-            LauncherTheme.secondaryButton(binding.padParticleToggleState);
-        }
+        String selectedStyle = LauncherActivity.getLauncherParticleStyle(this);
+        addParticleStyleOption(root, dialog, "漂浮光点",
+                LauncherActivity.PARTICLE_STYLE_FLOATING, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "斜向雨滴",
+                LauncherActivity.PARTICLE_STYLE_RAIN, enabled, selectedStyle);
+
+        TextView disable = dialogButton("关闭动态粒子", false);
+        disable.setOnClickListener(view -> {
+            LauncherActivity.setLauncherParticlesEnabled(this, false);
+            renderParticles();
+            renderParticleToggle();
+            dialog.dismiss();
+            Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+        });
+        addWithMargin(root, disable, 10);
+
+        TextView cancel = dialogButton("取消", false);
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        addWithMargin(root, cancel, 8);
+        window.setContentView(root);
+    }
+
+    private void addParticleStyleOption(LinearLayout root, AlertDialog dialog, String title,
+                                        String style, boolean enabled, String selectedStyle) {
+        TextView option = dialogButton(title, enabled && style.equals(selectedStyle));
+        option.setOnClickListener(view -> {
+            LauncherActivity.setLauncherParticleStyle(this, style);
+            LauncherActivity.setLauncherParticlesEnabled(this, true);
+            renderParticles();
+            renderParticleToggle();
+            dialog.dismiss();
+            Toast.makeText(this, "已应用" + title + "效果", Toast.LENGTH_SHORT).show();
+        });
+        addWithMargin(root, option, 11);
     }
 
     private void applySelectedTheme() {
@@ -341,6 +396,9 @@ public class PadSettingsActivity extends AppCompatActivity {
         } else if (THEME_ANRI_LABEL.equals(selectedTheme)) {
             style = LauncherActivity.THEME_STYLE_ANRI;
             message = "已应用鹰仓杏璃风格";
+        } else if (THEME_XINHAITIAN_LABEL.equals(selectedTheme)) {
+            style = LauncherActivity.THEME_STYLE_XINHAITIAN;
+            message = "已应用心海天风格";
         } else {
             style = LauncherActivity.THEME_STYLE_DEFAULT;
             message = "已恢复默认主题";
