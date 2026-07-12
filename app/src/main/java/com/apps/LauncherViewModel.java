@@ -1,8 +1,6 @@
 package com.apps;
 
 import android.app.Application;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -10,6 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -102,7 +101,6 @@ public class LauncherViewModel extends AndroidViewModel {
     }
 
     private final LauncherRepository repository;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final MutableLiveData<LauncherState> launcherState = new MutableLiveData<>(emptyState(true));
     private final AtomicInteger recentRefreshToken = new AtomicInteger();
     private volatile NavItem selectedItem = NavItem.HOME;
@@ -132,7 +130,7 @@ public class LauncherViewModel extends AndroidViewModel {
     public void refresh() {
         AppExecutors.runOnSingle(() -> {
             LauncherRepository.LauncherSnapshot snapshot = repository.loadSnapshot();
-            mainHandler.post(() -> launcherState.setValue(new LauncherState(
+            RxMainScheduler.post(() -> launcherState.setValue(new LauncherState(
                     selectedItem,
                     snapshot.accountName,
                     snapshot.accountMode,
@@ -150,7 +148,7 @@ public class LauncherViewModel extends AndroidViewModel {
     public void refreshStats() {
         AppExecutors.runOnSingle(() -> {
             LauncherRepository.StatsSnapshot snapshot = repository.loadStatsSnapshot();
-            mainHandler.post(() -> {
+            RxMainScheduler.post(() -> {
                 LauncherState current = currentState();
                 launcherState.setValue(new LauncherState(
                         selectedItem,
@@ -190,7 +188,7 @@ public class LauncherViewModel extends AndroidViewModel {
         if (showRefreshing) visibleRecentRefreshToken = token;
         AppExecutors.runOnSingle(() -> {
             List<LauncherRepository.RecentItem> recentItems = repository.loadRecentItems();
-            mainHandler.post(() -> {
+            RxMainScheduler.post(() -> {
                 LauncherState current = currentState();
                 synchronized (LauncherViewModel.this) {
                     recentItemsLoaded = true;
@@ -214,7 +212,7 @@ public class LauncherViewModel extends AndroidViewModel {
     }
 
     private void setRecentRefreshing(boolean refreshing) {
-        mainHandler.post(() -> {
+        RxMainScheduler.post(() -> {
             LauncherState current = currentState();
             launcherState.setValue(new LauncherState(
                     selectedItem,

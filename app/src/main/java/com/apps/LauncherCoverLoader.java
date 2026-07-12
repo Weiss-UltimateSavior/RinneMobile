@@ -4,12 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.LruCache;
 import android.widget.ImageView;
 
 import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import java.io.InputStream;
 
@@ -29,8 +28,6 @@ public final class LauncherCoverLoader {
             return value.getByteCount();
         }
     };
-
-    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     /** 封面卡片目标尺寸（2 列网格下约 160dp × 144dp，按 3x 密度估算） */
     private static final int TARGET_WIDTH = 480;
@@ -65,7 +62,7 @@ public final class LauncherCoverLoader {
         AppExecutors.runOnIo(() -> {
             final Bitmap bitmap = decodeSampled(ctx, key);
             if (bitmap != null) cache.put(key, bitmap);
-            mainHandler.post(() -> {
+            RxMainScheduler.post(() -> {
                 if (!key.equals(imageView.getTag())) return;
                 if (bitmap != null) {
                     imageView.setImageBitmap(bitmap);

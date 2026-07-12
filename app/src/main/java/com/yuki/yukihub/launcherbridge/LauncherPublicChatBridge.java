@@ -1,10 +1,8 @@
 package com.yuki.yukihub.launcherbridge;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-
 import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -26,7 +24,6 @@ import okhttp3.WebSocketListener;
 /** User-side client for the system public chat. It deliberately contains no admin endpoints. */
 public final class LauncherPublicChatBridge {
     private static final String API_BASE = "https://api.rinne.cyou:9999";
-    private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final OkHttpClient WEB_SOCKET_CLIENT = new OkHttpClient();
 
     private LauncherPublicChatBridge() { }
@@ -167,7 +164,7 @@ public final class LauncherPublicChatBridge {
     }
     private static String detail(String response) { try { return new JSONObject(response).optString("detail", response); } catch (Throwable ignored) { return response; } }
     private static String errorMessage(Throwable error, String fallback) { String message = error.getMessage(); return message == null || message.trim().isEmpty() ? fallback : message; }
-    private static void post(Runnable runnable) { MAIN.post(runnable); }
+    private static void post(Runnable runnable) { RxMainScheduler.post(runnable); }
     private static List<Message> parseMessages(JSONArray array) throws Exception { List<Message> result = new ArrayList<>(); if (array != null) for (int i = 0; i < array.length(); i++) result.add(parseMessage(array.getJSONObject(i))); return result; }
     private static Message parseMessage(JSONObject json) { return new Message(json.optInt("id"), json.optString("sender_type"), json.optString("sender_id"), json.optString("sender_name"), json.optString("content"), json.optBoolean("is_pinned"), json.optLong("created_at")); }
     private static Announcement parseAnnouncement(JSONObject json) { return new Announcement(json.optInt("id"), json.optString("title"), json.optString("content"), json.optBoolean("is_active", true), json.optLong("created_at")); }

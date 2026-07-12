@@ -3,8 +3,6 @@ package com.apps;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -12,6 +10,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import androidx.annotation.Nullable;
 
 import com.yuki.yukihub.R;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 public final class LauncherMotion {
     private LauncherMotion() {
@@ -74,7 +73,7 @@ public final class LauncherMotion {
 
     public static void runAfterPulse(@Nullable View view, Runnable action) {
         pulse(view);
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        RxMainScheduler.postDelayed(() -> {
             if (action != null) action.run();
         }, 150L);
     }

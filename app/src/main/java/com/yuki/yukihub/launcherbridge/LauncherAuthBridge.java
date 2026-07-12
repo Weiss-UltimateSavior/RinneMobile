@@ -2,10 +2,8 @@ package com.yuki.yukihub.launcherbridge;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
-
 import com.apps.UserData.LauncherUserData;
+import com.yuki.yukihub.util.RxMainScheduler;
 import com.yuki.yukihub.util.AppExecutors;
 
 import org.json.JSONArray;
@@ -827,7 +825,7 @@ public final class LauncherAuthBridge {
     }
 
     private static void postMain(Runnable r) {
-        new Handler(Looper.getMainLooper()).post(r);
+        RxMainScheduler.post(r);
     }
 
     // ========== 回调接口 ==========

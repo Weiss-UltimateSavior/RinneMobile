@@ -3,10 +3,8 @@ package com.yuki.yukihub.launcherbridge;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
-
 import com.yuki.yukihub.sync.SyncManager;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import org.json.JSONObject;
 
@@ -155,26 +153,25 @@ public final class LauncherSyncBridge {
             if (callback != null) callback.onError("上下文不可用");
             return;
         }
-        Handler mainHandler = new Handler(Looper.getMainLooper());
         SyncManager syncManager = new SyncManager(context.getApplicationContext());
         syncManager.sync(new SyncManager.SyncListener() {
             @Override
             public void onSyncStart() {
-                post(mainHandler, () -> {
+                post(() -> {
                     if (callback != null) callback.onStart();
                 });
             }
 
             @Override
             public void onProgress(String item, boolean changed) {
-                post(mainHandler, () -> {
+                post(() -> {
                     if (callback != null) callback.onProgress(item, changed);
                 });
             }
 
             @Override
             public int onConflict(SyncManager.Conflict conflict) {
-                post(mainHandler, () -> {
+                post(() -> {
                     if (callback != null) callback.onError("检测到同步冲突，请打开同步中心处理");
                 });
                 return SyncManager.RESOLVE_CANCEL;
@@ -182,23 +179,22 @@ public final class LauncherSyncBridge {
 
             @Override
             public void onSyncComplete(SyncManager.SyncResult result) {
-                post(mainHandler, () -> {
+                post(() -> {
                     if (callback != null) callback.onComplete(summary(result));
                 });
             }
 
             @Override
             public void onError(String error) {
-                post(mainHandler, () -> {
+                post(() -> {
                     if (callback != null) callback.onError(error == null || error.trim().isEmpty() ? "同步失败" : error);
                 });
             }
         });
     }
 
-    private static void post(Handler handler, Runnable runnable) {
-        if (handler == null || runnable == null) return;
-        handler.post(runnable);
+    private static void post(Runnable runnable) {
+        if (runnable != null) RxMainScheduler.post(runnable);
     }
 
     private static String summary(SyncManager.SyncResult result) {

@@ -9,8 +9,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -44,6 +42,7 @@ import com.yuki.yukihub.metadata.VnMetadata;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainQueue;
 
 import com.apps.UserData.LauncherUserData;
 
@@ -67,7 +66,7 @@ public class LauncherLibraryFragment extends Fragment {
     private static final String CATEGORY_DEVELOPER_PREFIX = "developer:";
 
     private FragmentLauncherLibraryBinding binding;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final RxMainQueue mainQueue = new RxMainQueue();
     private final List<Game> allGames = new ArrayList<>();
     private final List<Game> filteredGames = new ArrayList<>();
     private final List<Game> visibleGames = new ArrayList<>();
@@ -94,7 +93,7 @@ public class LauncherLibraryFragment extends Fragment {
         @Override
         public void run() {
             heartbeatServerPlaySession();
-            mainHandler.postDelayed(this, PLAY_SESSION_HEARTBEAT_MS);
+            mainQueue.postDelayed(this, PLAY_SESSION_HEARTBEAT_MS);
         }
     };
     private GestureDetector swipeGestureDetector;
@@ -204,7 +203,7 @@ public class LauncherLibraryFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        mainHandler.removeCallbacks(playSessionHeartbeat);
+        mainQueue.removeCallbacks(playSessionHeartbeat);
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
             binding.libraryRecycler.setAdapter(null);
@@ -505,9 +504,9 @@ public class LauncherLibraryFragment extends Fragment {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 searchQuery = s == null ? "" : s.toString().trim();
-                if (searchDebounce != null) mainHandler.removeCallbacks(searchDebounce);
+                if (searchDebounce != null) mainQueue.removeCallbacks(searchDebounce);
                 searchDebounce = () -> applyFilters();
-                mainHandler.postDelayed(searchDebounce, 300);
+                mainQueue.postDelayed(searchDebounce, 300);
             }
             @Override public void afterTextChanged(Editable s) { }
         });
@@ -539,7 +538,7 @@ public class LauncherLibraryFragment extends Fragment {
             List<Game> loadedGames = games;
             Map<Long, List<String>> loadedDevelopers = developers;
             List<CategoryOption> loadedCategories = builtCategories;
-            mainHandler.post(() -> {
+            mainQueue.post(() -> {
                 if (binding == null) return;
                 allGames.clear();
                 allGames.addAll(loadedGames);
@@ -757,8 +756,8 @@ private void loadNextPage(boolean forceFullRefresh) {
     }
 
     private void scheduleServerPlayHeartbeat() {
-        mainHandler.removeCallbacks(playSessionHeartbeat);
-        mainHandler.postDelayed(playSessionHeartbeat, PLAY_SESSION_HEARTBEAT_MS);
+        mainQueue.removeCallbacks(playSessionHeartbeat);
+        mainQueue.postDelayed(playSessionHeartbeat, PLAY_SESSION_HEARTBEAT_MS);
     }
 
     private void heartbeatServerPlaySession() {
@@ -772,7 +771,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     }
 
     private void finishServerPlaySession(Context app, long localSessionId) {
-        mainHandler.removeCallbacks(playSessionHeartbeat);
+        mainQueue.removeCallbacks(playSessionHeartbeat);
         String serverSessionId = runningServerSessionId == null || runningServerSessionId.trim().isEmpty()
                 ? LauncherUserData.findServerPlaySessionId(app, localSessionId)
                 : runningServerSessionId;
@@ -1446,7 +1445,7 @@ private void loadNextPage(boolean forceFullRefresh) {
                 // 更新加载弹窗进度
                 final int progress = i + 1;
                 final int totalGames = total;
-                mainHandler.post(() -> {
+                mainQueue.post(() -> {
                     if (syncLoadingDialog != null && syncLoadingDialog.isShowing()) {
                         Window w = syncLoadingDialog.getWindow();
                         if (w != null) {
@@ -1479,7 +1478,7 @@ try {
 
 CategoryBuildResult loadedCategoryResult = categoryResult;
 
-mainHandler.post(() -> {
+mainQueue.post(() -> {
     if (!isAdded()) return;
 
     if (binding != null) {

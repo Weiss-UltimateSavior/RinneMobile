@@ -94,7 +94,7 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void scheduleAutoUpdateCheck() {
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+        com.yuki.yukihub.util.RxMainScheduler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
             LauncherUpdateBridge.checkUpdate(this, new LauncherUpdateBridge.Callback() {
                 @Override

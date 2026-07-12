@@ -1,10 +1,8 @@
 package com.yuki.yukihub.launcherbridge;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-
 import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -55,7 +53,7 @@ public final class LauncherUpdateBridge {
     }
 
     private static void postOnMain(Runnable runnable) {
-        new Handler(Looper.getMainLooper()).post(runnable);
+        RxMainScheduler.post(runnable);
     }
 
     private static UpdateInfo fetchLatestRelease() throws Exception {

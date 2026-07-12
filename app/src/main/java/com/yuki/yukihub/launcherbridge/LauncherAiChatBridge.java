@@ -150,6 +150,6 @@ public final class LauncherAiChatBridge {
     }
 
     private static void postMain(Runnable runnable) {
-        new android.os.Handler(android.os.Looper.getMainLooper()).post(runnable);
+        com.yuki.yukihub.util.RxMainScheduler.post(runnable);
     }
 }

@@ -5,8 +5,6 @@ import android.animation.ValueAnimator;
 import android.graphics.Color;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.view.animation.LinearInterpolator;
 import android.view.View;
@@ -30,12 +28,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherPublicChatBridge;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import okhttp3.WebSocket;
+import io.reactivex.disposables.Disposable;
 
 /** User-facing public channel. Moderation remains server/admin-only. */
 public class LauncherPublicChatActivity extends AppCompatActivity {
@@ -59,13 +59,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     private String connectionState = "连接中";
     private WebSocket socket;
     private ObjectAnimator sendAnimator;
-    private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
-    private final Runnable heartbeat = new Runnable() {
-        @Override public void run() {
-            if (socket != null) socket.send("ping");
-            heartbeatHandler.postDelayed(this, 25000L);
-        }
-    };
+    private Disposable heartbeatDisposable;
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
@@ -229,7 +223,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     private void showError(String message) { if (!isFinishing()) Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
 
     private final class RealtimeCallbacks implements LauncherPublicChatBridge.RealtimeListener {
-        @Override public void onConnected() { runOnUiThread(() -> { connectionState = "已连接"; renderStatus(); heartbeatHandler.removeCallbacks(heartbeat); heartbeatHandler.postDelayed(heartbeat, 25000L); }); }
+        @Override public void onConnected() { runOnUiThread(() -> { connectionState = "已连接"; renderStatus(); scheduleHeartbeat(); }); }
         @Override public void onMessageCreated(LauncherPublicChatBridge.Message message) { runOnUiThread(() -> upsert(message, true)); }
         @Override public void onMessageDeleted(int messageId) { runOnUiThread(() -> removeMessage(messageId)); }
         @Override public void onMessagePinned(LauncherPublicChatBridge.Message message) { runOnUiThread(() -> upsert(message, false)); }
@@ -239,7 +233,24 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         @Override public void onError(String message) { runOnUiThread(() -> { connectionState = "连接已断开"; renderStatus(); }); }
     }
 
-    @Override protected void onDestroy() { heartbeatHandler.removeCallbacks(heartbeat); stopSendAnimation(); if (socket != null) socket.close(1000, "页面关闭"); super.onDestroy(); }
+    @Override protected void onDestroy() { cancelHeartbeat(); stopSendAnimation(); if (socket != null) socket.close(1000, "页面关闭"); super.onDestroy(); }
+
+    private void scheduleHeartbeat() {
+        cancelHeartbeat();
+        heartbeatDisposable = RxMainScheduler.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (socket != null) socket.send("ping");
+                scheduleHeartbeat();
+            }
+        }, 25000L);
+    }
+
+    private void cancelHeartbeat() {
+        if (heartbeatDisposable != null) {
+            heartbeatDisposable.dispose();
+            heartbeatDisposable = null;
+        }
+    }
 
     private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
     private void applyInsets() {

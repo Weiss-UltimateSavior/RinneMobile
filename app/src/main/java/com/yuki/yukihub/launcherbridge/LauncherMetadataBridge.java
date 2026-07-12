@@ -3,10 +3,8 @@ package com.yuki.yukihub.launcherbridge;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
-
 import com.yuki.yukihub.data.GameRepository;
+import com.yuki.yukihub.util.RxMainScheduler;
 import com.yuki.yukihub.data.MetadataRepository;
 import com.yuki.yukihub.metadata.MetadataController;
 import com.yuki.yukihub.metadata.VnMetadata;
@@ -119,7 +117,7 @@ public final class LauncherMetadataBridge {
                 }
             } catch (Throwable ignored) {}
             final boolean success = ok;
-            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(success));
+            RxMainScheduler.post(() -> callback.onResult(success));
         });
     }
 
@@ -143,7 +141,7 @@ public final class LauncherMetadataBridge {
             List<VnMetadata> result = candidates == null
                     ? java.util.Collections.emptyList() : new java.util.ArrayList<>(candidates);
             String finalError = error;
-            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(result, finalError));
+            RxMainScheduler.post(() -> callback.onResult(result, finalError));
         });
     }
 
@@ -164,7 +162,7 @@ public final class LauncherMetadataBridge {
             } catch (Throwable ignored) {
             }
             boolean finalSuccess = success;
-            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(finalSuccess));
+            RxMainScheduler.post(() -> callback.onResult(finalSuccess));
         });
     }
 
@@ -218,7 +216,7 @@ public final class LauncherMetadataBridge {
                 }
             } catch (Throwable ignored) {}
             final boolean success = ok;
-            new Handler(Looper.getMainLooper()).post(() -> callback.onResult(success));
+            RxMainScheduler.post(() -> callback.onResult(success));
         });
     }
 }

@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +30,9 @@ import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 import com.yuki.yukihub.util.SafeImageLoader;
+import com.yuki.yukihub.util.RxMainScheduler;
+
+import io.reactivex.disposables.Disposable;
 
 import java.util.List;
 
@@ -43,15 +44,7 @@ public class LauncherHomeFragment extends Fragment {
     private FragmentLauncherHomeBinding binding;
     private LauncherViewModel viewModel;
     private ActivityResultLauncher<String[]> avatarPickerLauncher;
-    private final Handler statsRefreshHandler = new Handler(Looper.getMainLooper());
-    private final Runnable statsRefreshRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (binding == null || viewModel == null) return;
-            viewModel.refreshStats();
-            statsRefreshHandler.postDelayed(this, STATS_REFRESH_INTERVAL_MS);
-        }
-    };
+    private Disposable statsRefreshDisposable;
 
     public LauncherHomeFragment() {
         avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
@@ -558,11 +551,24 @@ public class LauncherHomeFragment extends Fragment {
     private void startStatsRefresh() {
         stopStatsRefresh();
         if (viewModel != null) viewModel.refreshStats();
-        statsRefreshHandler.postDelayed(statsRefreshRunnable, STATS_REFRESH_INTERVAL_MS);
+        scheduleNextStatsRefresh();
+    }
+
+    private void scheduleNextStatsRefresh() {
+        statsRefreshDisposable = RxMainScheduler.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (binding == null || viewModel == null) return;
+                viewModel.refreshStats();
+                scheduleNextStatsRefresh();
+            }
+        }, STATS_REFRESH_INTERVAL_MS);
     }
 
     private void stopStatsRefresh() {
-        statsRefreshHandler.removeCallbacks(statsRefreshRunnable);
+        if (statsRefreshDisposable != null) {
+            statsRefreshDisposable.dispose();
+            statsRefreshDisposable = null;
+        }
     }
 
     private int dp(int value) {

@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -34,6 +32,7 @@ import com.yuki.yukihub.scanner.ScanResult;
 import com.yuki.yukihub.scanner.ScanRequest;
 import com.yuki.yukihub.scanner.ScanReport;
 import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainQueue;
 import com.yuki.yukihub.util.DevLogger;
 
 import java.io.ByteArrayOutputStream;
@@ -54,7 +53,7 @@ public class LauncherManageFragment extends Fragment {
     private static final int MAX_SCAN_ROOTS = 3;
 
     private FragmentLauncherManageBinding binding;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final RxMainQueue mainQueue = new RxMainQueue();
     private final ActivityResultLauncher<Uri> scanDirectoryPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
                 if (uri == null) return;
@@ -276,7 +275,7 @@ public class LauncherManageFragment extends Fragment {
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ScanBatchResult result = LauncherScanBridge.scanWithReport(appContext, roots, request);
-            mainHandler.post(() -> {
+            mainQueue.post(() -> {
                 if (!isAdded()) return;
                 dismissScanLoadingDialog();
                 activeScanRequest = null;
@@ -431,7 +430,7 @@ public class LauncherManageFragment extends Fragment {
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.importScanResults(appContext, results);
-            mainHandler.post(() -> {
+            mainQueue.post(() -> {
                 if (!isAdded()) return;
                 dismissScanLoadingDialog();
                 showScanResultDialog(stats);
@@ -935,7 +934,7 @@ public class LauncherManageFragment extends Fragment {
                 String text = readTextFromUri(uri);
                 JSONObject root = new JSONObject(text);
                 if (!"YukiHub".equals(root.optString("app", ""))) {
-                    mainHandler.post(() -> {
+                    mainQueue.post(() -> {
                         if (!isAdded()) return;
                         showLauncherConfirmDialog("导入失败", "不是有效的 YukiHub 备份", "知道了", () -> {});
                     });
@@ -945,13 +944,13 @@ public class LauncherManageFragment extends Fragment {
                 int gameCount = root.optJSONArray("games") == null ? 0 : root.optJSONArray("games").length();
                 int sessionCount = root.optJSONArray("play_sessions") == null ? 0 : root.optJSONArray("play_sessions").length();
                 int metaCount = root.optJSONArray("metadata_cache") == null ? 0 : root.optJSONArray("metadata_cache").length();
-                mainHandler.post(() -> {
+                mainQueue.post(() -> {
                     if (!isAdded()) return;
                     showLauncherConfirmDialog("导入成功", "游戏 " + gameCount + "，记录 " + sessionCount + "，元数据 " + metaCount, "知道了", () -> {});
                 });
             } catch (Throwable t) {
                 Log.e("LauncherManage", "import backup failed", t);
-                mainHandler.post(() -> {
+                mainQueue.post(() -> {
                     if (!isAdded()) return;
                     showLauncherConfirmDialog("导入失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
                 });
@@ -979,13 +978,13 @@ public class LauncherManageFragment extends Fragment {
                     out.flush();
                 }
                 int sizeKb = bytes.length / 1024;
-                mainHandler.post(() -> {
+                mainQueue.post(() -> {
                     if (!isAdded()) return;
                     showLauncherConfirmDialog("导出成功", "备份大小：" + sizeKb + "KB", "知道了", () -> {});
                 });
             } catch (Throwable t) {
                 Log.e("LauncherManage", "export backup failed", t);
-                mainHandler.post(() -> {
+                mainQueue.post(() -> {
                     if (!isAdded()) return;
                     showLauncherConfirmDialog("导出失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
                 });
