@@ -110,11 +110,32 @@ public class LauncherLibraryFragment extends Fragment {
      * implementation here means search, categories, sync and game actions stay identical.
      */
     protected int getGridColumns() {
-        return DEFAULT_GRID_COLUMNS;
+        try {
+            return getResources().getInteger(com.yuki.yukihub.R.integer.launcher_library_grid_columns);
+        } catch (Throwable ignored) {
+            return DEFAULT_GRID_COLUMNS;
+        }
     }
 
     protected int getPageSize() {
-        return DEFAULT_PAGE_SIZE;
+        try {
+            return getResources().getInteger(com.yuki.yukihub.R.integer.launcher_library_page_size);
+        } catch (Throwable ignored) {
+            return DEFAULT_PAGE_SIZE;
+        }
+    }
+
+    /**
+     * 仅由 values-sw600dp-port / values-sw720dp-port 开启。
+     * 手机竖屏和横屏页面仍保持原来的卡片尺寸策略。
+     */
+    private boolean usesTabletPortraitCardSizing() {
+        try {
+            return getResources().getBoolean(
+                    com.yuki.yukihub.R.bool.launcher_library_use_tablet_portrait_card_ratio);
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     protected int getFixedGridRows() {
@@ -278,6 +299,14 @@ public class LauncherLibraryFragment extends Fragment {
                 if (bottom - top != oldBottom - oldTop) updateFixedGridCardHeight();
             });
             binding.libraryRecycler.post(this::updateFixedGridCardHeight);
+        } else if (usesTabletPortraitCardSizing()) {
+            // 平板竖屏增加列数后，根据每列实际宽度重新计算 5:3 卡片比例。
+            // 这样不会继续沿用手机写死高度，也不会影响手机竖屏。
+            binding.libraryRecycler.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                                                oldLeft, oldTop, oldRight, oldBottom) -> {
+                if (right - left != oldRight - oldLeft) updateTabletPortraitCardHeight();
+            });
+            binding.libraryRecycler.post(this::updateTabletPortraitCardHeight);
         }
         binding.libraryRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -320,6 +349,27 @@ public class LauncherLibraryFragment extends Fragment {
                 - binding.libraryRecycler.getPaddingBottom();
         // item_launcher_game_card contributes 5dp top + 5dp bottom margins per row.
         adapter.setFixedCardHeight(Math.max(dp(34), usableHeight / rows - dp(10)));
+    }
+
+    /**
+     * 平板竖屏卡片按列宽保持原来的高:宽 = 5:3。
+     * item_launcher_game_card 每张卡片左右各有约 5dp margin。
+     */
+    private void updateTabletPortraitCardHeight() {
+        if (binding == null || adapter == null || !usesTabletPortraitCardSizing()) return;
+
+        RecyclerView recyclerView = binding.libraryRecycler;
+        int recyclerWidth = recyclerView.getWidth();
+        int columns = Math.max(1, getGridColumns());
+        if (recyclerWidth <= 0) return;
+
+        int usableWidth = recyclerWidth
+                - recyclerView.getPaddingLeft()
+                - recyclerView.getPaddingRight();
+        int totalHorizontalMargins = dp(10) * columns;
+        int cardWidth = Math.max(1, (usableWidth - totalHorizontalMargins) / columns);
+        int cardHeight = Math.round(cardWidth * 5f / 3f);
+        adapter.setFixedCardHeight(Math.max(dp(34), cardHeight));
     }
 
     private void setupSwipeGesture() {
@@ -616,6 +666,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         binding.libraryRecycler.setVisibility(hasGames ? View.VISIBLE : View.GONE);
         if (hasGames && usesHorizontalPaging()) {
             binding.libraryRecycler.post(this::updateFixedGridCardHeight);
+        } else if (hasGames && usesTabletPortraitCardSizing()) {
+            binding.libraryRecycler.post(this::updateTabletPortraitCardHeight);
         }
         binding.libraryEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
@@ -1800,7 +1852,9 @@ mainHandler.post(() -> {
         chip.setText(label);
         chip.setSingleLine(true);
         chip.setGravity(android.view.Gravity.CENTER);
-        chip.setTextSize(12);
+        chip.setTextSize(
+                android.util.TypedValue.COMPLEX_UNIT_PX,
+                getResources().getDimension(com.yuki.yukihub.R.dimen.launcher_library_category_text_size));
         chip.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         chip.setTag(value);
         if (selected) {
@@ -1809,14 +1863,22 @@ mainHandler.post(() -> {
         } else {
             LauncherTheme.menuItem(chip);
         }
-        chip.setPadding(dp(13), 0, dp(13), 0);
+        int chipHorizontalPadding = getResources().getDimensionPixelSize(
+                com.yuki.yukihub.R.dimen.launcher_library_category_horizontal_padding);
+        chip.setPadding(chipHorizontalPadding, 0, chipHorizontalPadding, 0);
         chip.setOnClickListener(view -> {
             selectedCategory = value;
             renderCategories();
             applyFilters();
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(29));
-        lp.setMargins(0, 0, dp(7), 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                getResources().getDimensionPixelSize(
+                        com.yuki.yukihub.R.dimen.launcher_library_category_chip_height));
+        lp.setMargins(0, 0,
+                getResources().getDimensionPixelSize(
+                        com.yuki.yukihub.R.dimen.launcher_library_category_chip_margin_end),
+                0);
         binding.libraryCategoryRow.addView(chip, lp);
     }
 

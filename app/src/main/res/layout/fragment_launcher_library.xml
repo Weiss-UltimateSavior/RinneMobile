@@ -9,14 +9,14 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingTop="25dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="16dp">
+        android:paddingStart="@dimen/launcher_library_content_horizontal_padding"
+        android:paddingTop="@dimen/launcher_library_content_top_padding"
+        android:paddingEnd="@dimen/launcher_library_content_horizontal_padding"
+        android:paddingBottom="@dimen/launcher_library_content_bottom_padding">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="@dimen/launcher_library_toolbar_height"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -27,67 +27,67 @@
                 android:layout_weight="1"
                 android:text="游戏库"
                 android:textColor="@color/launcher_text_color"
-                android:textSize="22sp"
+                android:textSize="@dimen/launcher_library_title_text_size"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/librarySyncButton"
-                android:layout_width="49dp"
-                android:layout_height="31dp"
-                android:layout_marginEnd="5dp"
+                android:layout_width="@dimen/launcher_library_toolbar_button_width"
+                android:layout_height="@dimen/launcher_library_toolbar_button_height"
+                android:layout_marginEnd="@dimen/launcher_library_sync_button_margin_end"
                 android:background="@drawable/launcher_filter_chip_unselected"
                 android:gravity="center"
                 android:text="同步"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="12sp"
+                android:textSize="@dimen/launcher_library_toolbar_button_text_size"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/libraryCollapseButton"
-                android:layout_width="49dp"
-                android:layout_height="31dp"
-                android:layout_marginEnd="7dp"
+                android:layout_width="@dimen/launcher_library_toolbar_button_width"
+                android:layout_height="@dimen/launcher_library_toolbar_button_height"
+                android:layout_marginEnd="@dimen/launcher_library_collapse_button_margin_end"
                 android:background="@drawable/launcher_filter_chip_unselected"
                 android:gravity="center"
                 android:text="收起"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="12sp"
+                android:textSize="@dimen/launcher_library_toolbar_button_text_size"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/librarySearchButton"
-                android:layout_width="49dp"
-                android:layout_height="31dp"
+                android:layout_width="@dimen/launcher_library_toolbar_button_width"
+                android:layout_height="@dimen/launcher_library_toolbar_button_height"
                 android:background="@drawable/launcher_filter_chip_unselected"
                 android:gravity="center"
                 android:text="搜索"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="12sp"
+                android:textSize="@dimen/launcher_library_toolbar_button_text_size"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <EditText
             android:id="@+id/librarySearchInput"
             android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:layout_marginTop="7dp"
+            android:layout_height="@dimen/launcher_library_search_height"
+            android:layout_marginTop="@dimen/launcher_library_search_margin_top"
             android:background="@drawable/launcher_white_card"
             android:hint="输入游戏名称"
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:maxLines="1"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
+            android:paddingStart="@dimen/launcher_library_search_horizontal_padding"
+            android:paddingEnd="@dimen/launcher_library_search_horizontal_padding"
             android:textColor="@color/launcher_text_color"
             android:textColorHint="@color/launcher_text_muted_color"
-            android:textSize="13sp"
+            android:textSize="@dimen/launcher_library_search_text_size"
             android:visibility="gone" />
 
         <HorizontalScrollView
             android:id="@+id/libraryCategoryScroll"
             android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:layout_marginTop="9dp"
+            android:layout_height="@dimen/launcher_library_category_scroll_height"
+            android:layout_marginTop="@dimen/launcher_library_category_margin_top"
             android:fillViewport="false"
             android:overScrollMode="never"
             android:scrollbars="none">
@@ -103,7 +103,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="7dp"
+            android:layout_marginTop="@dimen/launcher_library_list_margin_top"
             android:layout_weight="1">
 
             <androidx.recyclerview.widget.RecyclerView
@@ -111,29 +111,29 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:paddingBottom="31dp"
+                android:paddingBottom="@dimen/launcher_library_recycler_bottom_padding"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/libraryEmpty"
                 android:layout_width="match_parent"
-                android:layout_height="86dp"
+                android:layout_height="@dimen/launcher_library_empty_height"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="还没有游戏"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="14sp"
+                android:textSize="@dimen/launcher_library_empty_text_size"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/libraryFooter"
                 android:layout_width="match_parent"
-                android:layout_height="29dp"
+                android:layout_height="@dimen/launcher_library_footer_height"
                 android:layout_gravity="bottom"
                 android:gravity="center"
                 android:text="正在加载..."
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="12sp"
+                android:textSize="@dimen/launcher_library_footer_text_size"
                 android:textStyle="bold"
                 android:visibility="gone" />
         </FrameLayout>
