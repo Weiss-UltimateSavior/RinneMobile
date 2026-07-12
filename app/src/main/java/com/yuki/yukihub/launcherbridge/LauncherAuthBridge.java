@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.apps.UserData.LauncherUserData;
 import com.yuki.yukihub.util.AppExecutors;
 
 import org.json.JSONArray;
@@ -142,12 +143,12 @@ public final class LauncherAuthBridge {
 
     /** 发送注册邮箱验证码。 */
     public static void sendRegistrationVerificationCode(Context context, String email, SimpleCallback callback) {
-        sendEmailCode("/auth/verify-code", email, "验证码发送失败", callback);
+        sendEmailCode(context, "/auth/verify-code", email, "验证码发送失败", callback);
     }
 
     /** 发送密码重置验证码；该验证码与注册验证码在服务端独立存储。 */
     public static void sendPasswordResetCode(Context context, String email, SimpleCallback callback) {
-        sendEmailCode("/auth/forgot-password", email, "验证码发送失败", callback);
+        sendEmailCode(context, "/auth/forgot-password", email, "验证码发送失败", callback);
     }
 
     /** 通过邮箱验证码重置密码，成功后清除本机登录状态。 */
@@ -212,11 +213,12 @@ public final class LauncherAuthBridge {
         });
     }
 
-    private static void sendEmailCode(String path, String email, String fallback, SimpleCallback callback) {
+    private static void sendEmailCode(Context context, String path, String email, String fallback, SimpleCallback callback) {
         AppExecutors.runOnIo(() -> {
             try {
                 JSONObject body = new JSONObject();
                 body.put("email", email);
+                body.put("deviceId", LauncherUserData.getRealtimePlaytimeDeviceId(context));
                 post(path, body, null);
                 postMain(callback::onSuccess);
             } catch (Throwable t) {
