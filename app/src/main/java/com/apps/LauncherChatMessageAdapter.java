@@ -46,11 +46,11 @@ final class LauncherChatMessageAdapter extends RecyclerView.Adapter<LauncherChat
         holder.time.setText(DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(message.createdAt)));
         holder.pinned.setVisibility(message.pinned ? View.VISIBLE : View.GONE);
         holder.content.setText(message.content);
-        int contentColor = outgoing ? LauncherTheme.onPrimary(holder.bubble.getContext()) : LauncherTheme.text(holder.bubble.getContext());
+        int contentColor = LauncherTheme.onPrimary(holder.bubble.getContext());
         holder.author.setTextColor(contentColor);
         holder.content.setTextColor(contentColor);
-        holder.time.setTextColor(outgoing ? LauncherTheme.onPrimary(holder.bubble.getContext()) : LauncherTheme.textMuted(holder.bubble.getContext()));
-        holder.pinned.setTextColor(outgoing ? LauncherTheme.onPrimary(holder.bubble.getContext()) : LauncherTheme.primaryText(holder.bubble.getContext()));
+        holder.time.setTextColor(contentColor);
+        holder.pinned.setTextColor(contentColor);
     }
 
     @Override public int getItemCount() { return messages.size(); }

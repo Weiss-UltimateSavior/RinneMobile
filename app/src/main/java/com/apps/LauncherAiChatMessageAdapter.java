@@ -9,7 +9,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yuki.yukihub.R;
@@ -45,8 +44,7 @@ final class LauncherAiChatMessageAdapter extends RecyclerView.Adapter<LauncherAi
         holder.author.setText(user ? "我" : ("tool".equals(message.role) ? "工具 · " + message.name : assistantName));
         holder.time.setVisibility(View.GONE);
         holder.pinned.setVisibility(View.GONE);
-        int textColor = user ? LauncherTheme.onPrimary(holder.bubble.getContext())
-                : ContextCompat.getColor(holder.bubble.getContext(), R.color.launcher_text_color);
+        int textColor = LauncherTheme.onPrimary(holder.bubble.getContext());
         holder.author.setTextColor(textColor);
         holder.content.setTextColor(textColor);
     }

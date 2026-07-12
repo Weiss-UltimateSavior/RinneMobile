@@ -106,8 +106,7 @@ public final class LauncherTheme {
 
     /** Shared chat bubble treatment: both directions retain the active Launcher tone. */
     static GradientDrawable chatBubble(Context context, boolean outgoing) {
-        if (outgoing) return primaryButton(context, 18f);
-        return secondaryButton(context, 18f);
+        return primaryButton(context, 18f);
     }
 
     public static GradientDrawable selectedChip(Context context) {
