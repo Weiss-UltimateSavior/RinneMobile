@@ -163,6 +163,9 @@ public class LauncherHomeFragment extends Fragment {
         } else if (LauncherActivity.isAnriTheme(requireContext())) {
             binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_bg_anri);
             binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
+        } else if (LauncherActivity.isXinhaitianTheme(requireContext())) {
+            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_xinhaitian_bg);
+            binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
         } else {
             binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_bg);
             binding.homeStatsScrim.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_home_stats_scrim);

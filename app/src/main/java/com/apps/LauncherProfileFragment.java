@@ -756,6 +756,8 @@ public class LauncherProfileFragment extends Fragment {
             binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_rinne_bg);
         } else if (LauncherActivity.isAnriTheme(requireContext())) {
             binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg_anri);
+        } else if (LauncherActivity.isXinhaitianTheme(requireContext())) {
+            binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_xinhaitian_bg);
         } else {
             binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg);
         }

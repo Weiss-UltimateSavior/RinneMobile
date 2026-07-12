@@ -70,6 +70,9 @@ public final class LauncherTheme {
     }
 
     static GradientDrawable primaryButton(Context context, float radiusDp) {
+        if (LauncherActivity.isXinhaitianTheme(context)) {
+            return xinhaitianGradient(context, radiusDp, false);
+        }
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(primary(context));
         drawable.setCornerRadius(dp(context, radiusDp));
@@ -125,6 +128,9 @@ public final class LauncherTheme {
     }
 
     public static GradientDrawable circle(Context context) {
+        if (LauncherActivity.isXinhaitianTheme(context)) {
+            return xinhaitianGradient(context, 0f, true);
+        }
         return circle(context, primary(context));
     }
 
@@ -132,6 +138,23 @@ public final class LauncherTheme {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.OVAL);
         drawable.setColor(color);
+        return drawable;
+    }
+
+    static GradientDrawable xinhaitianCircle(Context context) {
+        return xinhaitianGradient(context, 0f, true);
+    }
+
+    private static GradientDrawable xinhaitianGradient(Context context, float radiusDp, boolean oval) {
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{
+                        LauncherActivity.XINHAITIAN_PRIMARY_COLOR,
+                        LauncherActivity.XINHAITIAN_ACCENT_COLOR
+                }
+        );
+        drawable.setShape(oval ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE);
+        if (!oval) drawable.setCornerRadius(dp(context, radiusDp));
         return drawable;
     }
 

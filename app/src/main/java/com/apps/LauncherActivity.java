@@ -42,8 +42,11 @@ public class LauncherActivity extends AppCompatActivity {
     public static final String THEME_STYLE_DEFAULT = "default";
     public static final String THEME_STYLE_RINNE = "rinne";
     public static final String THEME_STYLE_ANRI = "anri";
+    public static final String THEME_STYLE_XINHAITIAN = "xinhaitian";
     public static final int RINNE_PRIMARY_COLOR = Color.rgb(216, 169, 201);
     public static final int ANRI_PRIMARY_COLOR = Color.rgb(77, 53, 89);
+    public static final int XINHAITIAN_PRIMARY_COLOR = Color.rgb(122, 131, 203);
+    public static final int XINHAITIAN_ACCENT_COLOR = Color.rgb(237, 173, 201);
 
     private ActivityLauncherBinding binding;
     private LauncherViewModel viewModel;
@@ -341,7 +344,8 @@ public class LauncherActivity extends AppCompatActivity {
         binding.navLaunchCenterCircle.setBackground(LauncherTheme.circle(this));
         boolean rinneTheme = isRinneTheme(this);
         boolean anriTheme = isAnriTheme(this);
-        boolean themedIcon = rinneTheme || anriTheme;
+        boolean xinhaitianTheme = isXinhaitianTheme(this);
+        boolean themedIcon = rinneTheme || anriTheme || xinhaitianTheme;
         binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
         binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);
         if (rinneTheme) {
@@ -350,6 +354,10 @@ public class LauncherActivity extends AppCompatActivity {
             binding.navLaunchCenterText.setColorFilter(Color.WHITE);
         } else if (anriTheme) {
             binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_anri_def);
+            binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
+        } else if (xinhaitianTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_xinhaitian_def);
             binding.navLaunchCenterImage.clearColorFilter();
             binding.navLaunchCenterText.setColorFilter(Color.WHITE);
         } else {
@@ -409,7 +417,9 @@ public class LauncherActivity extends AppCompatActivity {
 
     public static void setLauncherThemeStyle(android.content.Context context, String style) {
         String value;
-        if (THEME_STYLE_RINNE.equals(style) || THEME_STYLE_ANRI.equals(style)) {
+        if (THEME_STYLE_RINNE.equals(style)
+                || THEME_STYLE_ANRI.equals(style)
+                || THEME_STYLE_XINHAITIAN.equals(style)) {
             value = style;
         } else {
             value = THEME_STYLE_DEFAULT;
@@ -433,6 +443,10 @@ public class LauncherActivity extends AppCompatActivity {
 
     static boolean isAnriTheme(android.content.Context context) {
         return THEME_STYLE_ANRI.equals(getLauncherThemeStyle(context));
+    }
+
+    static boolean isXinhaitianTheme(android.content.Context context) {
+        return THEME_STYLE_XINHAITIAN.equals(getLauncherThemeStyle(context));
     }
 
     public static void setLauncherParticlesEnabled(android.content.Context context, boolean enabled) {
@@ -476,6 +490,7 @@ public class LauncherActivity extends AppCompatActivity {
     public static int launcherPrimaryColor(android.content.Context context) {
         if (isRinneTheme(context)) return RINNE_PRIMARY_COLOR;
         if (isAnriTheme(context)) return ANRI_PRIMARY_COLOR;
+        if (isXinhaitianTheme(context)) return XINHAITIAN_PRIMARY_COLOR;
         return ContextCompat.getColor(wrapLauncherUiMode(context), R.color.launcher_primary_color);
     }
 

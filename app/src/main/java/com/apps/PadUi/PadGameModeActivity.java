@@ -185,7 +185,8 @@ public class PadGameModeActivity extends AppCompatActivity {
         String style = LauncherActivity.getLauncherThemeStyle(this);
         boolean rinneTheme = LauncherActivity.THEME_STYLE_RINNE.equals(style);
         boolean anriTheme = LauncherActivity.THEME_STYLE_ANRI.equals(style);
-        boolean themedIcon = rinneTheme || anriTheme;
+        boolean xinhaitianTheme = LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style);
+        boolean themedIcon = rinneTheme || anriTheme || xinhaitianTheme;
         binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
         binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);
         if (rinneTheme) {
@@ -194,6 +195,10 @@ public class PadGameModeActivity extends AppCompatActivity {
             binding.navLaunchCenterText.setColorFilter(Color.WHITE);
         } else if (anriTheme) {
             binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_anri_def);
+            binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
+        } else if (xinhaitianTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_xinhaitian_def);
             binding.navLaunchCenterImage.clearColorFilter();
             binding.navLaunchCenterText.setColorFilter(Color.WHITE);
         } else {

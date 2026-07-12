@@ -21,6 +21,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
     private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
     private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
+    private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
 
     private ActivityLauncherThemeMenuBinding binding;
     private String selectedTheme = THEME_DEFAULT_LABEL;
@@ -39,6 +40,8 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
             selectedTheme = THEME_RINNE_LABEL;
         } else if (LauncherActivity.THEME_STYLE_ANRI.equals(style)) {
             selectedTheme = THEME_ANRI_LABEL;
+        } else if (LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style)) {
+            selectedTheme = THEME_XINHAITIAN_LABEL;
         } else {
             selectedTheme = THEME_DEFAULT_LABEL;
         }
@@ -72,6 +75,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         binding.freshThemeRow.setOnClickListener(view -> selectTheme(THEME_DEFAULT_LABEL));
         binding.nightThemeRow.setOnClickListener(view -> selectTheme(THEME_RINNE_LABEL));
         binding.pinkThemeRow.setOnClickListener(view -> selectTheme(THEME_ANRI_LABEL));
+        binding.xinhaitianThemeRow.setOnClickListener(view -> selectTheme(THEME_XINHAITIAN_LABEL));
         binding.particleToggleRow.setOnClickListener(view -> showParticleStyleDialog());
         binding.themeMenuApply.setOnClickListener(view -> applySelectedTheme());
     }
@@ -86,6 +90,8 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         binding.rinneThemeLogo.setClipToOutline(true);
         binding.anriThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.ANRI_PRIMARY_COLOR));
         binding.anriThemeLogo.setClipToOutline(true);
+        binding.xinhaitianThemeLogo.setBackground(LauncherTheme.xinhaitianCircle(this));
+        binding.xinhaitianThemeLogo.setClipToOutline(true);
         binding.particleToggleIcon.setBackground(LauncherTheme.circle(this));
     }
 
@@ -98,6 +104,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         boolean freshSelected = THEME_DEFAULT_LABEL.equals(selectedTheme);
         boolean nightSelected = THEME_RINNE_LABEL.equals(selectedTheme);
         boolean pinkSelected = THEME_ANRI_LABEL.equals(selectedTheme);
+        boolean xinhaitianSelected = THEME_XINHAITIAN_LABEL.equals(selectedTheme);
 
         binding.freshThemeRow.setBackgroundResource(freshSelected
                 ? 0
@@ -111,10 +118,15 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
                 ? 0
                 : R.drawable.launcher_chat_option_bg);
         if (pinkSelected) binding.pinkThemeRow.setBackground(LauncherTheme.selectedOption(this));
+        binding.xinhaitianThemeRow.setBackgroundResource(xinhaitianSelected
+                ? 0
+                : R.drawable.launcher_chat_option_bg);
+        if (xinhaitianSelected) binding.xinhaitianThemeRow.setBackground(LauncherTheme.selectedOption(this));
 
         binding.freshThemeCheck.setVisibility(freshSelected ? View.VISIBLE : View.INVISIBLE);
         binding.nightThemeCheck.setVisibility(nightSelected ? View.VISIBLE : View.INVISIBLE);
         binding.pinkThemeCheck.setVisibility(pinkSelected ? View.VISIBLE : View.INVISIBLE);
+        binding.xinhaitianThemeCheck.setVisibility(xinhaitianSelected ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void applySelectedTheme() {
@@ -124,6 +136,9 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         } else if (THEME_ANRI_LABEL.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_ANRI);
             Toast.makeText(this, "已应用鹰仓杏璃风格", Toast.LENGTH_SHORT).show();
+        } else if (THEME_XINHAITIAN_LABEL.equals(selectedTheme)) {
+            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_XINHAITIAN);
+            Toast.makeText(this, "已应用心海天风格", Toast.LENGTH_SHORT).show();
         } else if (THEME_DEFAULT_LABEL.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_DEFAULT);
             Toast.makeText(this, "已恢复默认主题", Toast.LENGTH_SHORT).show();
