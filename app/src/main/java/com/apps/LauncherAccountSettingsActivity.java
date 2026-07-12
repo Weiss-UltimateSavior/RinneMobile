@@ -352,6 +352,12 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                     @Override
                     public void onError(String message) {
                         dismissLoading();
+                        // 服务端对未变化的游玩数据会以 USER_NOT_FOUND 返回；
+                        // 前一步配置上传已成功，故将其视为无需重复上传。
+                        if (isUnchangedPlayDataError(message)) {
+                            showResultDialog("上传成功", "配置已上传，游玩记录没有变化，无需重复上传");
+                            return;
+                        }
                         showResultDialog("部分上传失败", "配置已上传，游玩记录上传失败：" + message);
                     }
                 });
@@ -363,6 +369,10 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                 showResultDialog("上传失败", message);
             }
         });
+    }
+
+    private boolean isUnchangedPlayDataError(String message) {
+        return message != null && (message.contains("USER_NOT_FOUND") || message.contains("用户不存在"));
     }
 
     private AlertDialog showLoadingDialog(String titleText, String hintText) {

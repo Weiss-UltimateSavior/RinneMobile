@@ -47,6 +47,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private Section currentSection = Section.GENERAL;
     private String selectedTheme = THEME_DEFAULT_LABEL;
     private AlertDialog accountLoadingDialog;
+    private boolean emailSubscriptionUpdating;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -74,6 +75,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         updateAccountSectionVisibility();
+        if (currentSection == Section.ACCOUNT) refreshEmailSubscription();
         applyTheme();
         renderParticles();
     }
@@ -100,8 +102,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padMetadataTokenLink.setOnClickListener(view -> openMetadataTokenUrl());
         binding.padRowSyncConfig.setOnClickListener(view -> onSyncConfigClick());
         binding.padRowRealtimePlaytime.setOnClickListener(view -> onRealtimePlaytimeClick());
-        binding.padRowEmailSubscribe.setOnClickListener(view ->
-                toggleAccountSetting("email_subscribe", binding.padChipEmailSubscribe));
+        binding.padRowEmailSubscribe.setOnClickListener(view -> onEmailSubscriptionClick());
     }
 
     private void setupKrkrControls() {
@@ -175,7 +176,10 @@ public class PadSettingsActivity extends AppCompatActivity {
                 : showMetadata ? "选择游戏信息与封面获取的资料源"
                 : showAccount ? "管理云端同步、资料显示与账户功能偏好"
                 : "华为等部分机型如因存储权限导致引擎崩溃或闪退，可开启对应引擎的独立存档目录。");
-        if (showAccount) renderAllAccountChips();
+        if (showAccount) {
+            renderAllAccountChips();
+            refreshEmailSubscription();
+        }
         applyTheme();
     }
 
@@ -424,11 +428,70 @@ public class PadSettingsActivity extends AppCompatActivity {
                 });
     }
 
-    private void toggleAccountSetting(String key, TextView chip) {
-        SharedPreferences prefs = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
-        boolean enabled = !prefs.getBoolean(key, accountDefault(key));
-        prefs.edit().putBoolean(key, enabled).apply();
-        renderAccountChip(chip, enabled);
+    private void refreshEmailSubscription() {
+        if (!LauncherAuthBridge.isLoggedIn(this)) return;
+        LauncherAuthBridge.fetchEmailSubscription(this, new LauncherAuthBridge.SubscriptionCallback() {
+            @Override
+            public void onSuccess(boolean subscribed) {
+                if (isFinishing()) return;
+                saveEmailSubscription(subscribed);
+                renderAccountChip(binding.padChipEmailSubscribe, subscribed);
+            }
+
+            @Override
+            public void onError(String message) {
+                // 保留本地缓存状态；网络错误不影响其他 Pad 设置项。
+            }
+        });
+    }
+
+    private void onEmailSubscriptionClick() {
+        if (emailSubscriptionUpdating) return;
+        if (!LauncherAuthBridge.isLoggedIn(this)) {
+            showAccountResult("需要登录", "登录后才能管理邮件订阅");
+            return;
+        }
+        boolean subscribed = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE)
+                .getBoolean("email_subscribe", false);
+        if (subscribed) {
+            updateEmailSubscription(false);
+            return;
+        }
+        showAccountConfirmDialog("开启邮件订阅",
+                "开启后，管理员可向你的注册邮箱发送系统通知和广播邮件。",
+                "开启订阅", () -> updateEmailSubscription(true));
+    }
+
+    private void updateEmailSubscription(boolean subscribed) {
+        emailSubscriptionUpdating = true;
+        binding.padRowEmailSubscribe.setEnabled(false);
+        LauncherAuthBridge.updateEmailSubscription(this, subscribed,
+                new LauncherAuthBridge.SubscriptionCallback() {
+                    @Override
+                    public void onSuccess(boolean actualSubscribed) {
+                        if (isFinishing()) return;
+                        emailSubscriptionUpdating = false;
+                        binding.padRowEmailSubscribe.setEnabled(true);
+                        saveEmailSubscription(actualSubscribed);
+                        renderAccountChip(binding.padChipEmailSubscribe, actualSubscribed);
+                        Toast.makeText(PadSettingsActivity.this,
+                                actualSubscribed ? "已开启邮件订阅" : "已取消邮件订阅",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (isFinishing()) return;
+                        emailSubscriptionUpdating = false;
+                        binding.padRowEmailSubscribe.setEnabled(true);
+                        showAccountResult("邮件订阅更新失败", message);
+                    }
+                });
+    }
+
+    private void saveEmailSubscription(boolean subscribed) {
+        getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
+                .putBoolean("email_subscribe", subscribed).apply();
     }
 
     private void renderAllAccountChips() {
