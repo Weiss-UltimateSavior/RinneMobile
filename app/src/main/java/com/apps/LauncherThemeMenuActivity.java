@@ -21,7 +21,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
     private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
     private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
-    private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
+    private static final String THEME_XINHAITIAN_LABEL = "新海天（风格）";
 
     private ActivityLauncherThemeMenuBinding binding;
     private String selectedTheme = THEME_DEFAULT_LABEL;
