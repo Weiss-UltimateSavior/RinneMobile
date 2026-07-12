@@ -684,6 +684,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         if (binding == null) return;
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
         binding.padSettingsParticleView.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        binding.padSettingsParticleView.setParticleStyle(LauncherActivity.getLauncherParticleStyle(this));
         binding.padSettingsParticleView.setParticlesEnabled(enabled);
     }
 }

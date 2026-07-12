@@ -29,6 +29,7 @@ public class LauncherParticleView extends View {
     private long lastFrameTime;
     private boolean running;
     private boolean particlesEnabled = true;
+    private String particleStyle = LauncherActivity.PARTICLE_STYLE_FLOATING;
     private String activeThemeStyle = "";
     private final Runnable frameRunnable = new Runnable() {
         @Override
@@ -109,7 +110,14 @@ public class LauncherParticleView extends View {
             particle.update(deltaSeconds, getWidth(), getHeight());
             paint.setColor(particle.color);
             paint.setAlpha(particle.alpha);
-            canvas.drawCircle(particle.x, particle.y, particle.radius, paint);
+            if (isRainStyle()) {
+                paint.setStrokeWidth(particle.radius);
+                paint.setStrokeCap(Paint.Cap.ROUND);
+                canvas.drawLine(particle.x - particle.length * 0.34f, particle.y - particle.length,
+                        particle.x, particle.y, paint);
+            } else {
+                canvas.drawCircle(particle.x, particle.y, particle.radius, paint);
+            }
         }
     }
 
@@ -139,13 +147,35 @@ public class LauncherParticleView extends View {
         }
     }
 
+    public void setParticleStyle(String style) {
+        String safeStyle = LauncherActivity.PARTICLE_STYLE_RAIN.equals(style)
+                ? LauncherActivity.PARTICLE_STYLE_RAIN
+                : LauncherActivity.PARTICLE_STYLE_FLOATING;
+        if (safeStyle.equals(particleStyle)) return;
+        particleStyle = safeStyle;
+        if (getWidth() > 0 && getHeight() > 0) {
+            for (int i = 0; i < particles.length; i++) {
+                particles[i] = createParticle(getWidth(), getHeight());
+            }
+        }
+        invalidate();
+    }
+
     private Particle createParticle(int width, int height) {
         Particle particle = new Particle();
         particle.x = random.nextFloat() * width;
         particle.y = random.nextFloat() * height;
-        particle.radius = dp(2.2f + random.nextFloat() * 4.2f);
-        particle.speedX = dp((random.nextFloat() - 0.5f) * 10f);
-        particle.speedY = -dp(7f + random.nextFloat() * 18f);
+        if (isRainStyle()) {
+            particle.radius = dp(1.6f + random.nextFloat() * 1.2f);
+            particle.length = dp(9f + random.nextFloat() * 13f);
+            particle.speedX = dp(42f + random.nextFloat() * 32f);
+            particle.speedY = dp(128f + random.nextFloat() * 96f);
+        } else {
+            particle.radius = dp(2.2f + random.nextFloat() * 4.2f);
+            particle.length = 0f;
+            particle.speedX = dp((random.nextFloat() - 0.5f) * 10f);
+            particle.speedY = -dp(7f + random.nextFloat() * 18f);
+        }
         particle.colorIndex = random.nextInt(COLORS.length);
         particle.color = particleColor(particle.colorIndex);
         particle.alpha = 58 + random.nextInt(54);
@@ -160,6 +190,10 @@ public class LauncherParticleView extends View {
             if (particle == null) continue;
             particle.color = particleColor(particle.colorIndex);
         }
+    }
+
+    private boolean isRainStyle() {
+        return LauncherActivity.PARTICLE_STYLE_RAIN.equals(particleStyle);
     }
 
     private int particleColor(int index) {
@@ -186,6 +220,7 @@ public class LauncherParticleView extends View {
         float radius;
         float speedX;
         float speedY;
+        float length;
         int colorIndex;
         int color;
         int alpha;
@@ -195,9 +230,9 @@ public class LauncherParticleView extends View {
             y += speedY * deltaSeconds;
 
             float margin = radius * 2f;
-            if (y < -margin) {
+            if (speedY < 0f && y < -margin) {
                 y = height + margin;
-            } else if (y > height + margin) {
+            } else if (speedY > 0f && y > height + margin) {
                 y = -margin;
             }
 

@@ -100,8 +100,6 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         sendView.setOnClickListener(view -> sendMessage());
         LauncherTheme.applyPrimaryTone(findViewById(R.id.publicChatRoot));
         findViewById(R.id.publicChatAnnouncementIcon).setBackground(LauncherTheme.circle(this));
-        LauncherTheme.primaryButton((TextView) findViewById(R.id.publicChatPlaytimePlaceholder));
-        LauncherTheme.primaryButton((TextView) findViewById(R.id.publicChatGameInfoPlaceholder));
         sendView.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
         renderStatus();
         loadChannel();

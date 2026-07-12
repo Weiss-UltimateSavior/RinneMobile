@@ -36,6 +36,9 @@ public class LauncherActivity extends AppCompatActivity {
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
     static final String KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style";
     static final String KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled";
+    static final String KEY_LAUNCHER_PARTICLE_STYLE = "launcher_particle_style";
+    public static final String PARTICLE_STYLE_FLOATING = "floating";
+    public static final String PARTICLE_STYLE_RAIN = "rain";
     public static final String THEME_STYLE_DEFAULT = "default";
     public static final String THEME_STYLE_RINNE = "rinne";
     public static final String THEME_STYLE_ANRI = "anri";
@@ -446,10 +449,27 @@ public class LauncherActivity extends AppCompatActivity {
                 .getBoolean(KEY_LAUNCHER_PARTICLES_ENABLED, true);
     }
 
+    public static void setLauncherParticleStyle(android.content.Context context, String style) {
+        String safeStyle = PARTICLE_STYLE_RAIN.equals(style) ? PARTICLE_STYLE_RAIN : PARTICLE_STYLE_FLOATING;
+        context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_LAUNCHER_PARTICLE_STYLE, safeStyle)
+                .apply();
+    }
+
+    public static String getLauncherParticleStyle(android.content.Context context) {
+        String style = context.getApplicationContext()
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .getString(KEY_LAUNCHER_PARTICLE_STYLE, PARTICLE_STYLE_FLOATING);
+        return PARTICLE_STYLE_RAIN.equals(style) ? PARTICLE_STYLE_RAIN : PARTICLE_STYLE_FLOATING;
+    }
+
     private void renderParticles() {
         if (binding == null) return;
         boolean enabled = isLauncherParticlesEnabled(this);
         binding.launcherParticleView.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        binding.launcherParticleView.setParticleStyle(getLauncherParticleStyle(this));
         binding.launcherParticleView.setParticlesEnabled(enabled);
     }
 

@@ -5,9 +5,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -69,7 +72,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         binding.freshThemeRow.setOnClickListener(view -> selectTheme(THEME_DEFAULT_LABEL));
         binding.nightThemeRow.setOnClickListener(view -> selectTheme(THEME_RINNE_LABEL));
         binding.pinkThemeRow.setOnClickListener(view -> selectTheme(THEME_ANRI_LABEL));
-        binding.particleToggleRow.setOnClickListener(view -> toggleParticles());
+        binding.particleToggleRow.setOnClickListener(view -> showParticleStyleDialog());
         binding.themeMenuApply.setOnClickListener(view -> applySelectedTheme());
     }
 
@@ -131,17 +134,93 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         LauncherMotion.finish(this);
     }
 
-    private void toggleParticles() {
-        boolean enabled = !LauncherActivity.isLauncherParticlesEnabled(this);
-        LauncherActivity.setLauncherParticlesEnabled(this, enabled);
-        renderParticleToggle();
-        Toast.makeText(this, enabled ? "已开启动态粒子" : "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+    private void showParticleStyleDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+
+        TextView title = dialogText("动态粒子样式", 16, R.color.launcher_text_color);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title);
+        boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
+        String selectedStyle = LauncherActivity.getLauncherParticleStyle(this);
+        addParticleStyleOption(root, dialog, "漂浮光点",
+                LauncherActivity.PARTICLE_STYLE_FLOATING, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "斜向雨滴",
+                LauncherActivity.PARTICLE_STYLE_RAIN, enabled, selectedStyle);
+
+        TextView disable = dialogText("关闭动态粒子", 13, R.color.launcher_text_color);
+        LauncherTheme.secondaryButton(disable);
+        disable.setOnClickListener(view -> {
+            LauncherActivity.setLauncherParticlesEnabled(this, false);
+            renderParticleToggle();
+            dialog.dismiss();
+            Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+        });
+        addWithTopMargin(root, disable, 10, dp(36));
+
+        TextView cancel = dialogText("取消", 13, R.color.launcher_text_color);
+        LauncherTheme.secondaryButton(cancel);
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        addWithTopMargin(root, cancel, 8, dp(36));
+        window.setContentView(root);
+    }
+
+    private void addParticleStyleOption(LinearLayout root, AlertDialog dialog, String title,
+                                        String style, boolean enabled,
+                                        String selectedStyle) {
+        TextView option = dialogText(title, 13,
+                enabled && style.equals(selectedStyle) ? R.color.launcher_on_primary_color : R.color.launcher_text_color);
+        option.setGravity(android.view.Gravity.CENTER);
+        option.setLineSpacing(dp(2), 1f);
+        if (enabled && style.equals(selectedStyle)) {
+            LauncherTheme.primaryButton(option);
+        } else {
+            LauncherTheme.secondaryButton(option);
+        }
+        option.setOnClickListener(view -> {
+            LauncherActivity.setLauncherParticleStyle(this, style);
+            LauncherActivity.setLauncherParticlesEnabled(this, true);
+            renderParticleToggle();
+            dialog.dismiss();
+            Toast.makeText(this, "已应用" + title + "效果", Toast.LENGTH_SHORT).show();
+        });
+        addWithTopMargin(root, option, 11, dp(40));
+    }
+
+    private TextView dialogText(String text, int sizeSp, int colorRes) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(sizeSp);
+        view.setTextColor(ContextCompat.getColor(this, colorRes));
+        view.setGravity(android.view.Gravity.CENTER);
+        view.setPadding(dp(12), 0, dp(12), 0);
+        return view;
+    }
+
+    private void addWithTopMargin(LinearLayout root, View view, int topMarginDp, int height) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, height);
+        params.setMargins(0, dp(topMarginDp), 0, 0);
+        root.addView(view, params);
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void renderParticleToggle() {
-        boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
-        binding.particleToggleState.setText(enabled ? "关闭" : "开启");
-        LauncherTheme.chip(binding.particleToggleState, enabled);
+        binding.particleToggleState.setText("设置");
+        LauncherTheme.chip(binding.particleToggleState, true);
     }
 
     private void configureEdgeToEdgeWindow() {

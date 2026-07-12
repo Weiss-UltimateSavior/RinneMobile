@@ -110,6 +110,7 @@ public class PadGameModeActivity extends AppCompatActivity {
         if (binding == null) return;
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
         binding.padLauncherParticleView.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        binding.padLauncherParticleView.setParticleStyle(LauncherActivity.getLauncherParticleStyle(this));
         binding.padLauncherParticleView.setParticlesEnabled(enabled);
     }
 

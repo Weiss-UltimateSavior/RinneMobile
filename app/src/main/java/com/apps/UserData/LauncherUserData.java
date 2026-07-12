@@ -55,6 +55,7 @@ public class LauncherUserData {
             "launcher_dark_mode",
             "launcher_theme_style",
             "launcher_particles_enabled",
+            "launcher_particle_style",
             "launcher_storage_permission_asked",
             "scan_root_uris",
             "scan_root_enabled",
