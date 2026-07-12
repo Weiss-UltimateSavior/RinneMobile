@@ -107,9 +107,13 @@
 <p align="center">
   <table>
     <tr>
-      <td><img src="screenshots/横屏首页.jpg" width="480" /></td>
-      <td><img src="screenshots/横屏游戏.jpg" width="480" /></td>
-      <td><img src="screenshots/横屏设置.jpg" width="480" /></td>
+      <td><img src="screenshots/横屏首页.jpg" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/横屏游戏.jpg" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/横屏设置.jpg" width="960" /></td>
     </tr>
   </table>
 </p>
