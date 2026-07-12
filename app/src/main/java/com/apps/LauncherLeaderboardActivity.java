@@ -36,6 +36,7 @@ public class LauncherLeaderboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
         setContentView(R.layout.activity_launcher_leaderboard);
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applyInsets();
         LauncherTheme.applyPrimaryTone(findViewById(R.id.leaderboardRoot));
         adapter = new LauncherLeaderboardAdapter();

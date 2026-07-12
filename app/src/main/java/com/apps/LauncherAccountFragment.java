@@ -1,7 +1,6 @@
 package com.apps;
 
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -35,6 +34,8 @@ public class LauncherAccountFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        LauncherTabletPortraitScaler.apply(binding.getRoot());
+        collapseTabletSubmitSpacer();
         applySystemBarInsets();
         bindActions();
         renderMode();
@@ -76,6 +77,17 @@ public class LauncherAccountFragment extends Fragment {
             return insets;
         });
         currentBinding.getRoot().requestApplyInsets();
+    }
+
+    /** Keep the form usable above the Launcher bottom navigation after its controls are enlarged. */
+    private void collapseTabletSubmitSpacer() {
+        if (!LauncherTabletPortraitScaler.isTabletPortrait(getResources())) return;
+        View spacer = binding.getRoot().findViewWithTag("account_submit_spacer");
+        if (spacer == null) return;
+        ViewGroup.LayoutParams params = spacer.getLayoutParams();
+        if (params == null || params.height == 0) return;
+        params.height = 0;
+        spacer.setLayoutParams(params);
     }
 
     private void bindActions() {
@@ -344,44 +356,39 @@ public class LauncherAccountFragment extends Fragment {
         }
     }
 
-    /**
-     * 仅在平板竖屏下放大弹窗，手机和横屏继续沿用原尺寸。
-     */
-    private boolean isTabletPortrait() {
-        Configuration configuration = requireContext().getResources().getConfiguration();
-        return configuration.smallestScreenWidthDp >= 600
-                && configuration.orientation == Configuration.ORIENTATION_PORTRAIT;
-    }
-
     private int dialogWidthDp() {
-        return isTabletPortrait() ? 360 : 270;
+        return 270;
     }
 
     private int dialogHorizontalPaddingDp() {
-        return isTabletPortrait() ? 28 : 22;
+        return 22;
     }
 
     private int dialogVerticalPaddingDp() {
-        return isTabletPortrait() ? 24 : 20;
+        return 20;
     }
 
     private int dialogButtonHeightDp() {
-        return isTabletPortrait() ? 44 : 36;
+        return 36;
     }
 
     private float dialogTitleTextSp() {
-        return isTabletPortrait() ? 18f : 16f;
+        return scaledSp(16f);
     }
 
     private float dialogMessageTextSp() {
-        return isTabletPortrait() ? 14f : 12f;
+        return scaledSp(12f);
     }
 
     private float dialogActionTextSp() {
-        return isTabletPortrait() ? 15f : 13f;
+        return scaledSp(13f);
+    }
+
+    private float scaledSp(float baseSp) {
+        return baseSp * LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot());
     }
 
     private int dp(int value) {
-        return (int) (value * requireContext().getResources().getDisplayMetrics().density + 0.5f);
+        return LauncherTabletPortraitScaler.dp(requireContext(), value);
     }
 }

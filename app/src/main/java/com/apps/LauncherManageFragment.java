@@ -2,7 +2,6 @@ package com.apps;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -790,7 +789,7 @@ public class LauncherManageFragment extends Fragment {
         window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
-        applyScaleToViewTree(dialogView, tabletPortraitScale());
+        LauncherTabletPortraitScaler.apply(dialogView);
         window.setContentView(dialogView);
 
         TextView titleView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogTitle);
@@ -899,80 +898,16 @@ public class LauncherManageFragment extends Fragment {
     }
 
     /**
-     * 手机竖屏维持原尺寸；仅在 smallestWidth >= 600dp 的平板竖屏中按比例放大。
-     * 600dp 平板约 1.25 倍，更宽的竖屏平板最高限制为 1.30 倍，避免界面过度膨胀。
+     * 与其余 Launcher 页面使用同一套平板竖屏倍率，避免页面之间的视觉比例不一致。
      */
     private float tabletPortraitScale() {
-        Configuration configuration = getResources().getConfiguration();
-        if (configuration.orientation != Configuration.ORIENTATION_PORTRAIT
-                || configuration.smallestScreenWidthDp < 600) {
-            return 1f;
-        }
-
-        int widthDp = configuration.screenWidthDp > 0
-                ? configuration.screenWidthDp
-                : configuration.smallestScreenWidthDp;
-        return Math.min(1.30f, Math.max(1f, widthDp / 480f));
+        return LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot());
     }
 
     /** 对 XML 中已经解析出的行高、边距、内边距、文字和最小尺寸统一缩放。 */
     private void applyTabletPortraitLayout() {
         if (binding == null) return;
-        applyScaleToViewTree(binding.getRoot(), tabletPortraitScale());
-    }
-
-    private void applyScaleToViewTree(View view, float scale) {
-        if (view == null || scale <= 1f) return;
-
-        ViewGroup.LayoutParams params = view.getLayoutParams();
-        if (params != null) {
-            if (params.width > 0) params.width = scalePx(params.width, scale);
-            if (params.height > 0) params.height = scalePx(params.height, scale);
-
-            if (params instanceof ViewGroup.MarginLayoutParams) {
-                ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
-                margins.leftMargin = scalePx(margins.leftMargin, scale);
-                margins.topMargin = scalePx(margins.topMargin, scale);
-                margins.rightMargin = scalePx(margins.rightMargin, scale);
-                margins.bottomMargin = scalePx(margins.bottomMargin, scale);
-            }
-            view.setLayoutParams(params);
-        }
-
-        view.setPaddingRelative(
-                scalePx(view.getPaddingStart(), scale),
-                scalePx(view.getPaddingTop(), scale),
-                scalePx(view.getPaddingEnd(), scale),
-                scalePx(view.getPaddingBottom(), scale)
-        );
-
-        if (view.getMinimumWidth() > 0) {
-            view.setMinimumWidth(scalePx(view.getMinimumWidth(), scale));
-        }
-        if (view.getMinimumHeight() > 0) {
-            view.setMinimumHeight(scalePx(view.getMinimumHeight(), scale));
-        }
-        if (view.getElevation() > 0f) {
-            view.setElevation(view.getElevation() * scale);
-        }
-
-        if (view instanceof TextView) {
-            TextView textView = (TextView) view;
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textView.getTextSize() * scale);
-            textView.setCompoundDrawablePadding(scalePx(textView.getCompoundDrawablePadding(), scale));
-            textView.setLineSpacing(textView.getLineSpacingExtra() * scale, textView.getLineSpacingMultiplier());
-        }
-
-        if (view instanceof ViewGroup) {
-            ViewGroup group = (ViewGroup) view;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                applyScaleToViewTree(group.getChildAt(i), scale);
-            }
-        }
-    }
-
-    private int scalePx(int value, float scale) {
-        return value == 0 ? 0 : Math.round(value * scale);
+        LauncherTabletPortraitScaler.apply(binding.getRoot());
     }
 
     /** 用于 Java 动态创建的 TextView，确保它们与 XML 内容采用同一缩放比例。 */

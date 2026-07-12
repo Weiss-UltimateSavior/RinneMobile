@@ -97,6 +97,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
         setContentView(R.layout.activity_launcher_add_game);
+        LauncherTabletPortraitScaler.applyActivityContent(this);
 
         bindViews();
         applySystemBarInsets();
@@ -658,8 +659,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_launcher_app_picker, parent, false);
+            LauncherTabletPortraitScaler.apply(v);
             RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT, dp(68));
+                    RecyclerView.LayoutParams.MATCH_PARENT,
+                    Math.round(dp(68) * LauncherTabletPortraitScaler.scaleFor(v)));
             lp.setMargins(0, 0, 0, dp(7));
             v.setLayoutParams(lp);
             return new Holder(v);

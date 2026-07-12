@@ -72,6 +72,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             return;
         }
         setContentView(R.layout.activity_launcher_ai_chat);
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         characterName = title == null || title.trim().isEmpty() ? "AI" : title.replace("（AI）", "");
         ((TextView) findViewById(R.id.aiChatTitle)).setText(title == null || title.trim().isEmpty() ? "AI 聊天" : title);
         hint = findViewById(R.id.aiChatHint);

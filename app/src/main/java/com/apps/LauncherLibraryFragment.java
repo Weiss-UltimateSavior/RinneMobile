@@ -57,8 +57,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class LauncherLibraryFragment extends Fragment {
-    private static final int DEFAULT_GRID_COLUMNS = 2;
-    private static final int DEFAULT_PAGE_SIZE = 8;
     private static final long MIN_PLAY_SESSION_MS = 0L;
     private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
     private static final long PLAY_SESSION_HEARTBEAT_MS = 60L * 1000L;
@@ -110,32 +108,15 @@ public class LauncherLibraryFragment extends Fragment {
      * implementation here means search, categories, sync and game actions stay identical.
      */
     protected int getGridColumns() {
-        try {
-            return getResources().getInteger(com.yuki.yukihub.R.integer.launcher_library_grid_columns);
-        } catch (Throwable ignored) {
-            return DEFAULT_GRID_COLUMNS;
-        }
+        return LauncherTabletPortraitScaler.libraryGridColumns(getResources());
     }
 
     protected int getPageSize() {
-        try {
-            return getResources().getInteger(com.yuki.yukihub.R.integer.launcher_library_page_size);
-        } catch (Throwable ignored) {
-            return DEFAULT_PAGE_SIZE;
-        }
+        return LauncherTabletPortraitScaler.libraryPageSize(getResources());
     }
 
-    /**
-     * 仅由 values-sw600dp-port / values-sw720dp-port 开启。
-     * 手机竖屏和横屏页面仍保持原来的卡片尺寸策略。
-     */
     private boolean usesTabletPortraitCardSizing() {
-        try {
-            return getResources().getBoolean(
-                    com.yuki.yukihub.R.bool.launcher_library_use_tablet_portrait_card_ratio);
-        } catch (Throwable ignored) {
-            return false;
-        }
+        return LauncherTabletPortraitScaler.isTabletPortrait(getResources());
     }
 
     protected int getFixedGridRows() {
@@ -160,6 +141,7 @@ public class LauncherLibraryFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        LauncherTabletPortraitScaler.apply(binding.getRoot());
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.libraryTitle.setText(getLibraryTitle());
@@ -1880,6 +1862,7 @@ mainHandler.post(() -> {
                         com.yuki.yukihub.R.dimen.launcher_library_category_chip_margin_end),
                 0);
         binding.libraryCategoryRow.addView(chip, lp);
+        LauncherTabletPortraitScaler.apply(chip);
     }
 
     private void renderToolbarButtonState() {

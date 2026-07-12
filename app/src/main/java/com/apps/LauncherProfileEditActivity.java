@@ -29,6 +29,7 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
 
         binding = ActivityLauncherProfileEditBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());

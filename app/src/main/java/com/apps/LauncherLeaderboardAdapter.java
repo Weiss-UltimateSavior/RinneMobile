@@ -25,7 +25,9 @@ final class LauncherLeaderboardAdapter extends RecyclerView.Adapter<LauncherLead
     }
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new Holder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_launcher_leaderboard_entry, parent, false));
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_launcher_leaderboard_entry, parent, false);
+        LauncherTabletPortraitScaler.apply(view);
+        return new Holder(view);
     }
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {

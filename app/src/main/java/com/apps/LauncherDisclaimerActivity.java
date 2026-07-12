@@ -26,6 +26,7 @@ public class LauncherDisclaimerActivity extends AppCompatActivity {
 
         binding = ActivityLauncherDisclaimerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         applyThemeTone();
 

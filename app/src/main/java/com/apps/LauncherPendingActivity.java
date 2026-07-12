@@ -24,6 +24,7 @@ public class LauncherPendingActivity extends AppCompatActivity {
 
         binding = ActivityLauncherPendingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         applyThemeTone();
         binding.pendingClose.setOnClickListener(view -> finish());

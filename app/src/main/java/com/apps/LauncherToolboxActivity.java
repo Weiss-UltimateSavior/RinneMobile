@@ -36,6 +36,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
 
         binding = ActivityLauncherToolboxBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         applyThemeTone();
 

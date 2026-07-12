@@ -31,6 +31,7 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
 
         binding = ActivityLauncherMetadataSourceBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         bindActions();
         applyThemeTone();

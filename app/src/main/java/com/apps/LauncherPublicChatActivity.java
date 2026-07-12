@@ -72,6 +72,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
         setContentView(R.layout.activity_launcher_public_chat);
+        LauncherTabletPortraitScaler.applyActivityContent(this);
 
         messageList = findViewById(R.id.publicChatMessages);
         noticeView = findViewById(R.id.publicChatNotice);

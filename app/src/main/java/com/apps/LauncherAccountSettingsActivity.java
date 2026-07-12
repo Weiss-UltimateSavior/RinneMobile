@@ -37,6 +37,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
         binding = ActivityLauncherAccountSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
 

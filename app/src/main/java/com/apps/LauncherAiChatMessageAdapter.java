@@ -27,7 +27,9 @@ final class LauncherAiChatMessageAdapter extends RecyclerView.Adapter<LauncherAi
     }
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new Holder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_launcher_chat_message, parent, false));
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_launcher_chat_message, parent, false);
+        LauncherTabletPortraitScaler.apply(view);
+        return new Holder(view);
     }
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {

@@ -30,6 +30,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
 
         binding = ActivityLauncherThemeMenuBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         String style = LauncherActivity.getLauncherThemeStyle(this);
         if (LauncherActivity.THEME_STYLE_RINNE.equals(style)) {
             selectedTheme = THEME_RINNE_LABEL;

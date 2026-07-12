@@ -50,6 +50,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         root.addView(webView);
         root.addView(createTopBar());
         setContentView(root);
+        LauncherTabletPortraitScaler.applyActivityContent(this);
 
         String url = getIntent().getStringExtra("resource_url");
         if (url == null || url.trim().isEmpty()) url = DEFAULT_URL;

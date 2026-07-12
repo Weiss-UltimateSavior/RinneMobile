@@ -59,6 +59,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
         setContentView(R.layout.activity_launcher_game_edit);
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         bindViews();
         applySystemBarInsets();
         bindActions();

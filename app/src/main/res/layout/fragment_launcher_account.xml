@@ -251,6 +251,7 @@
             </LinearLayout>
 
             <Space
+                android:tag="account_submit_spacer"
                 android:layout_width="match_parent"
                 android:layout_height="65dp" />
 

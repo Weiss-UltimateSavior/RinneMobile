@@ -30,6 +30,7 @@ final class LauncherChatMessageAdapter extends RecyclerView.Adapter<LauncherChat
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_launcher_chat_message, parent, false);
+        LauncherTabletPortraitScaler.apply(view);
         return new Holder(view);
     }
 

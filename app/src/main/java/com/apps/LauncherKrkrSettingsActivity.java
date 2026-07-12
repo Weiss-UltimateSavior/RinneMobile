@@ -28,6 +28,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
 
         binding = ActivityLauncherKrkrSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         bindActions();
         applyThemeTone();

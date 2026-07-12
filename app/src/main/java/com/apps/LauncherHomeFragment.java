@@ -70,6 +70,7 @@ public class LauncherHomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        LauncherTabletPortraitScaler.apply(binding.getRoot());
         viewModel = new ViewModelProvider(requireActivity()).get(LauncherViewModel.class);
 
         applySystemBarInsets();
@@ -407,6 +408,7 @@ public class LauncherHomeFragment extends Fragment {
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         for (LauncherRepository.RecentItem item : items) {
             View itemView = inflater.inflate(com.yuki.yukihub.R.layout.item_launcher_recent, binding.recentList, false);
+            LauncherTabletPortraitScaler.apply(itemView);
             TextView icon = itemView.findViewById(com.yuki.yukihub.R.id.recentIcon);
             TextView title = itemView.findViewById(com.yuki.yukihub.R.id.recentTitle);
             TextView meta = itemView.findViewById(com.yuki.yukihub.R.id.recentMeta);

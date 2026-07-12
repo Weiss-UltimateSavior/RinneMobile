@@ -34,6 +34,7 @@ public class LauncherPlaceholderFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        LauncherTabletPortraitScaler.apply(binding.getRoot());
         Bundle args = getArguments();
         binding.tvPlaceholderTitle.setText(args == null ? "占位" : args.getString(ARG_TITLE, "占位"));
     }

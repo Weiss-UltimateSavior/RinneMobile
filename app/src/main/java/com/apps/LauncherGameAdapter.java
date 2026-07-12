@@ -1,7 +1,6 @@
 package com.apps;
 
 import android.content.res.Resources;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -20,7 +19,9 @@ public class LauncherGameAdapter extends BaseGameCardAdapter {
             ItemLauncherGameCardBinding binding,
             int fixedHeightPx
     ) {
-        if (fixedHeightPx <= 0 || binding == null) return;
+        if (binding == null) return;
+        LauncherTabletPortraitScaler.apply(binding.getRoot());
+        if (fixedHeightPx <= 0) return;
 
         ViewGroup.LayoutParams card = binding.getRoot().getLayoutParams();
         if (card != null && card.height != fixedHeightPx) {
@@ -38,55 +39,8 @@ public class LauncherGameAdapter extends BaseGameCardAdapter {
             binding.launcherGameTextOverlay.setLayoutParams(overlay);
         }
 
-        // 只有 values-sw600dp-port / values-sw720dp-port 会开启内容缩放。
-        // 手机竖屏仍完全使用 item_launcher_game_card.xml 原有字号和留白。
-        if (!shouldScaleTabletPortraitContent(binding.getRoot())) return;
-
-        int horizontalPadding = dimen(
-                binding.getRoot(),
-                R.dimen.launcher_library_card_overlay_horizontal_padding,
-                8
-        );
-        int verticalPadding = dimen(
-                binding.getRoot(),
-                R.dimen.launcher_library_card_overlay_vertical_padding,
-                2
-        );
-        binding.launcherGameTextOverlay.setPadding(
-                horizontalPadding,
-                verticalPadding,
-                horizontalPadding,
-                verticalPadding
-        );
-
-        binding.launcherGameTitle.setTextSize(
-                TypedValue.COMPLEX_UNIT_PX,
-                binding.getRoot().getResources().getDimension(
-                        R.dimen.launcher_library_card_title_text_size)
-        );
-        binding.launcherGamePlayStatus.setTextSize(
-                TypedValue.COMPLEX_UNIT_PX,
-                binding.getRoot().getResources().getDimension(
-                        R.dimen.launcher_library_card_status_text_size)
-        );
-        binding.launcherGameInitial.setTextSize(
-                TypedValue.COMPLEX_UNIT_PX,
-                binding.getRoot().getResources().getDimension(
-                        R.dimen.launcher_library_card_initial_text_size)
-        );
-
         binding.launcherGameTitle.setIncludeFontPadding(false);
         binding.launcherGamePlayStatus.setIncludeFontPadding(false);
-    }
-
-    private static boolean shouldScaleTabletPortraitContent(View view) {
-        if (view == null) return false;
-        try {
-            return view.getResources().getBoolean(
-                    R.bool.launcher_library_scale_tablet_portrait_card_content);
-        } catch (Resources.NotFoundException ignored) {
-            return false;
-        }
     }
 
     private static int dimen(View view, int resId, int fallbackDp) {

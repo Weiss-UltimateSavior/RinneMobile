@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 手机竖屏：完全保持原尺寸 -->
-    <integer name="launcher_library_grid_columns">2</integer>
-    <integer name="launcher_library_page_size">8</integer>
-    <bool name="launcher_library_use_tablet_portrait_card_ratio">false</bool>
-    <bool name="launcher_library_scale_tablet_portrait_card_content">false</bool>
-
     <dimen name="launcher_library_content_horizontal_padding">20dp</dimen>
     <dimen name="launcher_library_content_top_padding">25dp</dimen>
     <dimen name="launcher_library_content_bottom_padding">16dp</dimen>
@@ -39,9 +34,4 @@
 
     <!-- 固定卡片高度仅在平板竖屏开启；基础值兼容横屏共享逻辑 -->
     <dimen name="launcher_library_card_text_overlay_height">41dp</dimen>
-    <dimen name="launcher_library_card_overlay_horizontal_padding">8dp</dimen>
-    <dimen name="launcher_library_card_overlay_vertical_padding">2dp</dimen>
-    <dimen name="launcher_library_card_title_text_size">13sp</dimen>
-    <dimen name="launcher_library_card_status_text_size">11sp</dimen>
-    <dimen name="launcher_library_card_initial_text_size">30sp</dimen>
 </resources>
