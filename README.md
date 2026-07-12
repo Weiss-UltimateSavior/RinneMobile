@@ -30,14 +30,14 @@
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>进入界面</b></td>
-      <td align="center"><b>同步页面</b></td>
-      <td align="center"><b>游戏仓库</b></td>
+      <td align="center"><b>页面主题1</b></td>
+      <td align="center"><b>页面主题2</b></td>
+      <td align="center"><b>页面主题3</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/main.jpg" width="280" /></td>
-      <td><img src="screenshots/tongbu.jpg" width="280" /></td>
-      <td><img src="screenshots/game.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题3.jpg" width="280" /></td>
     </tr>
   </table>
 </p>
@@ -45,17 +45,75 @@
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>风格主题</b></td>
+      <td align="center"><b>主题菜单</b></td>
+      <td align="center"><b>粒子背景</b></td>
       <td align="center"><b>深色模式</b></td>
-      <td align="center"><b>线上功能</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/theme.jpg" width="280" /></td>
-      <td><img src="screenshots/dark.jpg" width="280" /></td>
-      <td><img src="screenshots/net.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题菜单.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏粒子菜单.jpg" width="280" /></td>
+      <td><img src="screenshots/深色模式.jpg" width="280" /></td>
     </tr>
   </table>
 </p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>游戏仓库</b></td>
+      <td align="center"><b>管理设置</b></td>
+      <td align="center"><b>个人中心</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/竖屏游戏页.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏设置页.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏个人页.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>部分设置</b></td>
+      <td align="center"><b>部分设置</b></td>
+      <td align="center"><b>部分设置</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/竖屏游戏管理1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏游戏管理2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏游戏管理3.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>部分设置</b></td>
+      <td align="center"><b>部分设置</b></td>
+      <td align="center"><b>部分设置</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/竖屏功能1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏功能2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏功能3.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+
+
+<p align="center">
+  <table>
+    <tr>
+      <td><img src="screenshots/横屏首页.jpg" width="480" /></td>
+      <td><img src="screenshots/横屏游戏.jpg" width="480" /></td>
+      <td><img src="screenshots/横屏设置.jpg" width="480" /></td>
+    </tr>
+  </table>
+</p>
+
 
 ***
 
