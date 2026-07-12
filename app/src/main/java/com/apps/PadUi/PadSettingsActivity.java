@@ -356,6 +356,8 @@ public class PadSettingsActivity extends AppCompatActivity {
                 LauncherActivity.PARTICLE_STYLE_FLOATING, enabled, selectedStyle);
         addParticleStyleOption(root, dialog, "斜向雨滴",
                 LauncherActivity.PARTICLE_STYLE_RAIN, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "星星粒子",
+                LauncherActivity.PARTICLE_STYLE_STAR, enabled, selectedStyle);
 
         TextView disable = dialogButton("关闭动态粒子", false);
         disable.setOnClickListener(view -> {

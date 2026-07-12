@@ -172,6 +172,8 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
                 LauncherActivity.PARTICLE_STYLE_FLOATING, enabled, selectedStyle);
         addParticleStyleOption(root, dialog, "斜向雨滴",
                 LauncherActivity.PARTICLE_STYLE_RAIN, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "星星粒子",
+                LauncherActivity.PARTICLE_STYLE_STAR, enabled, selectedStyle);
 
         TextView disable = dialogText("关闭动态粒子", 13, R.color.launcher_text_color);
         LauncherTheme.secondaryButton(disable);

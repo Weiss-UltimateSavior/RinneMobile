@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import java.util.Random;
 
 public class LauncherParticleView extends View {
-    private static final int PARTICLE_COUNT = 34;
+    private static final int PARTICLE_COUNT = 56;
     private static final long FRAME_DELAY_MS = 16L;
     private static final float MAX_FRAME_SECONDS = 0.04f;
     private static final int[] COLORS = {
@@ -107,15 +107,25 @@ public class LauncherParticleView extends View {
 
         for (Particle particle : particles) {
             if (particle == null) continue;
-            particle.update(deltaSeconds, getWidth(), getHeight());
+            if (!isStarStyle()) particle.update(deltaSeconds, getWidth(), getHeight());
             paint.setColor(particle.color);
-            paint.setAlpha(particle.alpha);
+            paint.setAlpha(isStarStyle() ? starAlpha(particle, now) : particle.alpha);
             if (isRainStyle()) {
+                paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(particle.radius);
                 paint.setStrokeCap(Paint.Cap.ROUND);
                 canvas.drawLine(particle.x - particle.length * 0.34f, particle.y - particle.length,
                         particle.x, particle.y, paint);
+            } else if (isStarStyle()) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(dp(1f));
+                paint.setStrokeCap(Paint.Cap.ROUND);
+                canvas.drawLine(particle.x - particle.radius, particle.y,
+                        particle.x + particle.radius, particle.y, paint);
+                canvas.drawLine(particle.x, particle.y - particle.radius,
+                        particle.x, particle.y + particle.radius, paint);
             } else {
+                paint.setStyle(Paint.Style.FILL);
                 canvas.drawCircle(particle.x, particle.y, particle.radius, paint);
             }
         }
@@ -150,6 +160,8 @@ public class LauncherParticleView extends View {
     public void setParticleStyle(String style) {
         String safeStyle = LauncherActivity.PARTICLE_STYLE_RAIN.equals(style)
                 ? LauncherActivity.PARTICLE_STYLE_RAIN
+                : LauncherActivity.PARTICLE_STYLE_STAR.equals(style)
+                ? LauncherActivity.PARTICLE_STYLE_STAR
                 : LauncherActivity.PARTICLE_STYLE_FLOATING;
         if (safeStyle.equals(particleStyle)) return;
         particleStyle = safeStyle;
@@ -170,6 +182,15 @@ public class LauncherParticleView extends View {
             particle.length = dp(9f + random.nextFloat() * 13f);
             particle.speedX = dp(42f + random.nextFloat() * 32f);
             particle.speedY = dp(128f + random.nextFloat() * 96f);
+        } else if (isStarStyle()) {
+            particle.radius = dp(1.4f + random.nextFloat() * 2.5f);
+            particle.length = 0f;
+            particle.speedX = 0f;
+            particle.speedY = 0f;
+            particle.minAlpha = 18 + random.nextInt(28);
+            particle.maxAlpha = 178 + random.nextInt(68);
+            particle.pulsePhase = random.nextFloat() * (float) (Math.PI * 2d);
+            particle.pulseSpeed = 1.15f + random.nextFloat() * 1.35f;
         } else {
             particle.radius = dp(2.2f + random.nextFloat() * 4.2f);
             particle.length = 0f;
@@ -194,6 +215,17 @@ public class LauncherParticleView extends View {
 
     private boolean isRainStyle() {
         return LauncherActivity.PARTICLE_STYLE_RAIN.equals(particleStyle);
+    }
+
+    private boolean isStarStyle() {
+        return LauncherActivity.PARTICLE_STYLE_STAR.equals(particleStyle);
+    }
+
+    private int starAlpha(Particle particle, long nowNanos) {
+        float timeSeconds = nowNanos / 1_000_000_000f;
+        float progress = (float) ((Math.sin(timeSeconds * particle.pulseSpeed + particle.pulsePhase) + 1d) * 0.5d);
+        progress *= progress;
+        return (int) (particle.minAlpha + (particle.maxAlpha - particle.minAlpha) * progress);
     }
 
     private int particleColor(int index) {
@@ -227,6 +259,10 @@ public class LauncherParticleView extends View {
         int colorIndex;
         int color;
         int alpha;
+        int minAlpha;
+        int maxAlpha;
+        float pulsePhase;
+        float pulseSpeed;
 
         void update(float deltaSeconds, int width, int height) {
             x += speedX * deltaSeconds;
