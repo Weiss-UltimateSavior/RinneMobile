@@ -150,7 +150,7 @@
 ## 项目结构
 
 ```
-YukiHub/
+
 ├── app/                              # 主应用模块
 │   └── src/main/
 │       ├── java/
@@ -325,7 +325,7 @@ YukiHub/
 
 ### 方法 1：直接安装 APK
 
-从 [Releases](https://github.com/xm486/YukiHub/releases) 页面下载 APK 后安装。
+从 [Releases](https://github.com/Weiss-UltimateSavior/RinneMobile/releases) 页面下载 APK 后安装。
 
 ### 方法 2：自行编译
 
@@ -341,7 +341,6 @@ YukiHub/
 
 ## 构建信息
 
-- Application ID: `com.yuki.yukihub`
 - Min SDK: `26`
 - Target SDK: `33`
 - Compile SDK: `36`

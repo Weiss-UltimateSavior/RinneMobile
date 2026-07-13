@@ -132,6 +132,20 @@
                         android:text="shizuku" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/toolLunabox"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="LunaBox"
+                        android:src="@drawable/launcher_tool_icon_lunabox" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="LunaBox" />
+                </LinearLayout>
+
             </GridLayout>
         </LinearLayout>
     </ScrollView>

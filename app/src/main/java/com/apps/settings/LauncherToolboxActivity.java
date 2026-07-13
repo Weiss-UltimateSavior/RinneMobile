@@ -29,6 +29,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     private static final String WINLATOR_URL = "https://github.com/brunodev85/winlator/releases";
     private static final String GAISHI_URL = "https://hub.xiaoji.com/zh-cn";
     private static final String PPSSPP_URL = "https://www.ppsspp.org/";
+    private static final String LUNABOX_URL = "https://github.com/Saramanda9988/LunaBox/releases";
 
     private ActivityLauncherToolboxBinding binding;
 
@@ -50,6 +51,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         binding.toolWinlator.setOnClickListener(view -> confirmOpenExternalTool("winlator", WINLATOR_URL));
         binding.toolGaishi.setOnClickListener(view -> confirmOpenExternalTool("盖世模拟器", GAISHI_URL));
         binding.toolPpsspp.setOnClickListener(view -> confirmOpenExternalTool("PPSSPP", PPSSPP_URL));
+        binding.toolLunabox.setOnClickListener(view -> confirmOpenExternalTool("LunaBox", LUNABOX_URL));
         binding.toolboxBack.setOnClickListener(view -> LauncherMotion.finish(this));
     }
 
