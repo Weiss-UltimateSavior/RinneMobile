@@ -77,6 +77,7 @@ public class PadManageFragment extends Fragment {
     private static final String CATEGORY_PLAYING = "status:playing";
     private static final String CATEGORY_COMPLETED = "status:completed";
     private static final String CATEGORY_UNPLAYED = "status:unplayed";
+    private static final String CATEGORY_FAVORITE = "status:favorite";
     private static final String CATEGORY_DEVELOPER_PREFIX = "developer:";
 
     private FragmentLauncherLibraryBinding binding;
@@ -1602,6 +1603,7 @@ mainQueue.post(() -> {
     int playingCount = 0;
     int completedCount = 0;
     int unplayedCount = 0;
+    int favoriteCount = 0;
 
     Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     Context appContext = requireContext().getApplicationContext();
@@ -1621,6 +1623,9 @@ mainQueue.post(() -> {
         } else {
             unplayedCount++;
         }
+        if (game.favorite) {
+            favoriteCount++;
+        }
 
         List<String> developers = parseDevelopers(LauncherMetadataBridge.getDeveloperOf(appContext, game.id));
         gameDevelopers.put(game.id, developers);
@@ -1634,6 +1639,9 @@ mainQueue.post(() -> {
     }
 
     // 只添加有数据的固定分类
+    if (favoriteCount > 0) {
+        categories.add(new CategoryOption("收藏", CATEGORY_FAVORITE));
+    }
     if (recentCount > 0) {
         categories.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
     }
@@ -1682,6 +1690,7 @@ mainQueue.post(() -> {
     int playingCount = 0;
     int completedCount = 0;
     int unplayedCount = 0;
+    int favoriteCount = 0;
 
     Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -1701,6 +1710,9 @@ mainQueue.post(() -> {
             } else {
                 unplayedCount++;
             }
+            if (game.favorite) {
+                favoriteCount++;
+            }
 
             List<String> developers = parseDevelopers(LauncherMetadataBridge.getDeveloperOf(appContext, game.id));
             devs.put(game.id, developers);
@@ -1715,6 +1727,9 @@ mainQueue.post(() -> {
     }
 
     // 只添加有数据的固定分类
+    if (favoriteCount > 0) {
+        cats.add(new CategoryOption("收藏", CATEGORY_FAVORITE));
+    }
     if (recentCount > 0) {
         cats.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
     }
@@ -1810,6 +1825,7 @@ mainQueue.post(() -> {
         if (CATEGORY_PLAYING.equals(category)) return "playing".equals(normalizePlayStatus(game.playStatus));
         if (CATEGORY_COMPLETED.equals(category)) return "completed".equals(normalizePlayStatus(game.playStatus));
         if (CATEGORY_UNPLAYED.equals(category)) return "unplayed".equals(normalizePlayStatus(game.playStatus));
+        if (CATEGORY_FAVORITE.equals(category)) return game.favorite;
         if (category.startsWith(CATEGORY_DEVELOPER_PREFIX)) {
             String selectedDeveloper = category.substring(CATEGORY_DEVELOPER_PREFIX.length()).toLowerCase(Locale.ROOT);
             List<String> developers = gameDevelopers.get(game.id);
