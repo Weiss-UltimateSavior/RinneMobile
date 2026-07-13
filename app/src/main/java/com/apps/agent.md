@@ -35,6 +35,50 @@
 - 新增 Launcher Activity 在设置内容视图后调用 `LauncherTabletPortraitScaler.applyActivityContent(this)`；Fragment 根布局和动态列表项调用 `LauncherTabletPortraitScaler.apply(...)`。
 - 当前 `app` 模块使用 Min SDK 26、Target SDK 33、Compile SDK 36、Java 17 与 Android Gradle Plugin 8.13.2。新增代码不得引入低于 API 26 的兼容分支需求。
 
+## 全项目架构与核心链路
+
+### 模块边界
+
+- `app` 是业务模块：包含 Launcher、游戏库、扫描、元数据、WebDAV 同步、网络客户端、游戏启动策略，以及 `launcherbridge` 适配层。
+- `engine` 是内置运行时模块：封装 KRKR、Tyrano、Artemis、ONScripter 和相关 native `.so` / 资源。它不是普通 UI 依赖，修改时必须兼顾独立进程、Activity 声明和 native 库打包。
+- `com.apps` 只承载 Launcher 与 PadUi 体验层；通过 `com.yuki.yukihub.launcherbridge.*` 调用核心能力。新增 Launcher 功能不得绕过 bridge 直接拼接数据库 SQL 或复制核心业务逻辑。
+- 应用入口是 `com.apps.LauncherActivity`。内置引擎 Activity、`PadGameModeActivity` 与所有 Launcher 子页面均在 `AndroidManifest.xml` 显式声明；新增页面或引擎入口时必须同步检查导出状态、屏幕方向、进程和主题。
+
+### 领域模型、数据库与游玩记录
+
+- `Game` 是游戏条目的唯一领域模型；关键字段为 `engine`、`rootUri`、`launchTarget`、`emulatorPackage`、封面信息、GameHub / Winlator 启动参数与游玩统计。
+- `YukiDatabaseHelper` 当前 schema 版本为 13，维护 `games`、`play_sessions`、`metadata_cache`、`settings` 四张表，并在每次打开数据库时启用外键。
+- `GameRepository.normalizeRootUriKey(...)` 和 `games.root_uri_key` 的部分唯一索引是跨扫描、导入和恢复的稳定身份。插入和更新必须经由 `GameRepository`，不要用原始 URI 或本地自增 ID 判断跨设备同一游戏。
+- `play_sessions.session_uuid` 是游玩记录的跨设备身份；结算必须走 `startPlaySession(...)` → `finishPlaySession(...)` 或 `LauncherGameLaunchBridge.finishSession(...)`，不要由 UI 直接累计 `total_play_time`。
+- 旧版 `LauncherRepositoryBridge.importPlaySql(...)` 仅用于受控的完整本地恢复。跨设备同步和新功能必须使用 JSON 快照与 `GameRepository.importGamesJson(...)` / `importPlaySessionsJson(...)` 的身份合并逻辑，禁止重新引入按 raw ID 的 `INSERT OR REPLACE` 恢复。
+
+### 扫描、导入与元数据
+
+- 扫描入口为 `GameScanner`，目录特征判定集中在 `EngineDetector`；支持 Kirikiri、ONScripter、Tyrano、Artemis、Winlator `.desktop`、GameHub 和 PSP（ISO/CSO/CHD/ELF/PBP）。
+- 扫描深度与“候选目录内特征探测深度”是两层概念。新增扫描入口应复用现有深度选择流程，不能偷偷回到固定深度扫描。
+- 发现多个 XP3 候选入口时必须让用户确认，不得按文件系统顺序猜测启动文件。
+- 元数据读写通过 `MetadataRepository`、`VndbClient`、`BangumiClient` 与 `LauncherMetadataBridge` 集中处理；`metadata_cache` 按 `(game_id, source)` 唯一，更新时要保留来源与更新时间。
+- PSP 现阶段是外部 PPSSPP 启动与扩展名扫描；如未来接入 `PARAM.SFO` / `ICON0.PNG`，只应在扫描结果入库前补全标题、disc ID 和封面，并复用已有封面持久化路径，不在扫描阶段启动模拟器。
+
+### 启动策略与内置引擎
+
+- 启动主链为 `LauncherGameLaunchBridge` → `EmulatorLauncher` → `EngineLaunchStrategy` / 对应 Intent。`LaunchRequest` 是策略层的不可变输入；新增引擎需新增明确策略，而不是把特殊逻辑散落在页面事件中。
+- 内置 KRKR、Tyrano、ONS、Artemis 使用应用内 Activity；PSP 目前依赖已安装的 PPSSPP；Winlator 和 GameHub 采用包名及各自的启动参数。策略识别成功但启动失败时应返回失败，不得悄悄回退到模拟器首页。
+- 内置引擎大多运行在独立进程（如 `:kirikiri2`、`:tyrano`、`:artemis`、`:ons`）。涉及进程、task affinity、native 库或启动 Intent 的改动，必须以真机启动对应引擎验收。
+
+### 同步、网络与安全边界
+
+- `SyncManager` 负责 WebDAV JSON 快照、冲突处理和导入事务；远端快照上限 16 MiB、本地备份上限 32 MiB，远端只保留最近 200 条游玩会话。不要移除大小限制或把本地扫描目录、文件 URI、私有背景路径同步到云端。
+- `WebDavClient` 使用用户提供的服务器与 Basic Auth；应用为兼容现有 WebDAV 服务保留明文网络能力。新增账号、同步或远程资源功能默认要求 HTTPS，并在允许 `http://` 时明确提示凭据传输风险。
+- `HttpClient` 是 Retrofit / OkHttp 的公共入口，统一 User-Agent、超时和响应体关闭。网络调用必须放在 `AppExecutors` 等后台执行器中，UI 仅接收结果。
+- Tyrano 内置 WebView 使用本地 HTTP 服务和 JavaScript bridge。不要让任意外部 URL 获得 bridge 访问权，也不要扩大 file / universal access 的作用范围。
+
+### 验证与发布前检查
+
+- 当前仓库未发现 `app/src/test` 或 `app/src/androidTest` 下的自动化测试；修改核心数据、扫描、同步或启动链路时，应优先补充可离线执行的单元测试。
+- 最低验证命令：`./gradlew :app:compileDebugJavaWithJavac`、`git diff --check`；涉及资源、Manifest、依赖或安全配置时再运行 `./gradlew :app:lintDebug`。
+- 当前 lint 会报告 Tyrano WebView 图层类型的硬编码常量问题；不要通过关闭 lint 或建立空 baseline 掩盖它。后续修复应改用 Android 的 `View.LAYER_TYPE_*` 常量，并重新跑完整 lint。
+
 ## 颜色与主题
 
 - 禁止在新增 Launcher 页面、弹窗、drawable 中直接写业务色十六进制。
