@@ -68,8 +68,40 @@ public class GameScanner {
             report.addError("无法读取扫描目录：" + rootUri);
             return report;
         }
-        scanChildren(root, 1, depth, stopAtGameMatch, report, seenUris, safeRequest);
+        // A user may select one game directory itself rather than its parent. Probe the
+        // root before traversing children so that Kirikiri/ONS/Tyrano/Artemis roots are
+        // not skipped merely because they have no game-directory child.
+        boolean rootGameMatched = detectGameDirectory(root, report, seenUris, safeRequest);
+        if (!(stopAtGameMatch && rootGameMatched)) {
+            scanChildren(root, 1, depth, stopAtGameMatch, report, seenUris, safeRequest);
+        }
         return report;
+    }
+
+    private static boolean detectGameDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris, ScanRequest request) {
+        if (dir == null || report == null || !report.tryVisit(request, safeUri(dir))) return false;
+        try {
+            EngineDetector.Result detected = EngineDetector.detect(dir, 2);
+            if (detected == null || detected.confidence <= 0 || !isRootDirectoryEngine(detected.engine)) return false;
+            String uri = dir.getUri().toString();
+            if (markSeen(seenUris, uri)) {
+                report.addResult(new ScanResult(safeName(dir), uri, detected.engine, detected.confidence,
+                        detected.launchTarget, "", detected.xp3Candidates));
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.w(TAG, "root engine detection failed uri=" + safeUri(dir), t);
+            report.addError("识别扫描目录失败：" + safeUri(dir));
+            return false;
+        }
+    }
+
+    /** PSP and Winlator roots are already emitted per entry file, not as a directory entry. */
+    private static boolean isRootDirectoryEngine(com.yuki.yukihub.model.EngineType engine) {
+        return engine == com.yuki.yukihub.model.EngineType.KIRIKIRI
+                || engine == com.yuki.yukihub.model.EngineType.ONS
+                || engine == com.yuki.yukihub.model.EngineType.TYRANO
+                || engine == com.yuki.yukihub.model.EngineType.ARTEMIS;
     }
 
     private static void scanChildren(DocumentFile dir, int level, int maxDepth, boolean stopAtGameMatch, ScanReport report, Set<String> seenUris, ScanRequest request) {

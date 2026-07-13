@@ -200,14 +200,14 @@
 
 ### 2. 当前扫描与启动覆盖
 
-目录扫描用于发现**所选目录下的游戏子目录或入口文件**。扫描根目录本身不会被当作 Kirikiri、ONScripter、Tyrano 或 Artemis 游戏目录探测；选择单个游戏目录时，请改为选择它的上级目录，或使用“添加游戏”手动添加。
+目录扫描会先探测所选根目录本身，再扫描其子目录和入口文件；可直接选择单个游戏目录，也可选择包含多个游戏的上级目录。
 
 | 类型 | 自动扫描特征 | 扫描导入后的状态 |
 | --- | --- | --- |
 | Kirikiri | `.xp3`、`startup.tjs`、`config.tjs` | 使用内置 KRKR 启动。多个 XP3 候选会要求选择入口。 |
 | ONScripter | `0.txt`、`nscript.dat`、`onscript.nt*`、`.nsa`、`.sar` | 使用内置 ONScripter 启动。 |
 | Tyrano | `index.html` 与 Tyrano / Electron 目录特征 | 使用内置 Tyrano 启动。 |
-| Artemis | `system.ini`、`system/first.iet`、`.pfs` | 可识别；当前扫描导入后需在“编辑游戏”中确认或填写启动包名（`internal.artemis`）。 |
+| Artemis | `system.ini`、`system/first.iet`、`.pfs` | 使用内置 Artemis 启动。 |
 | Winlator | `.desktop` 快捷方式 | 可识别；需选择已安装且支持外部直启的 Winlator 包名。`.exe` 入口目前请通过“添加游戏”手动添加。 |
 | PSP | `.iso`、`.cso`、`.chd`、`.elf`、`.pbp` | 以实际文件 URI 导入，启动需要安装 PPSSPP。标题和封面当前主要取文件名与目录图片，尚未解析 `PARAM.SFO` / `ICON0.PNG`。 |
 | GameHub（盖世） | 不通过目录扫描 | 通过 Shizuku 读取盖世桌面快捷方式并导入 `localGameId`。 |

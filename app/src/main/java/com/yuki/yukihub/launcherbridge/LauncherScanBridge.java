@@ -278,6 +278,7 @@ public final class LauncherScanBridge {
         if (engine == EngineType.KIRIKIRI) return "internal.krkr";
         if (engine == EngineType.ONS) return "internal.ons";
         if (engine == EngineType.TYRANO) return "internal.tyrano";
+        if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         return "";
     }
