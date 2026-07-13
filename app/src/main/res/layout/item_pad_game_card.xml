@@ -30,25 +30,12 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:text="Y"
-            android:textColor="@color/launcher_primary_color"
+            android:textColor="@color/launcher_text_color"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/padGameFavorite"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_gravity="top|start"
-            android:layout_margin="7dp"
-            android:background="@drawable/launcher_game_chip"
-            android:gravity="center"
-            android:text="★"
-            android:textColor="@color/launcher_warning_color"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
-
         <LinearLayout
+            android:id="@+id/padGameTextOverlay"
             android:layout_width="match_parent"
             android:layout_height="41dp"
             android:layout_gravity="bottom"
@@ -65,7 +52,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Game"
-                android:textColor="@color/launcher_primary_color"
+                android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -76,7 +63,7 @@
                 android:layout_marginTop="2dp"
                 android:maxLines="1"
                 android:text="未游玩"
-                android:textColor="@color/launcher_primary_color"
+                android:textColor="@color/launcher_text_color"
                 android:textSize="9sp" />
         </LinearLayout>
     </FrameLayout>

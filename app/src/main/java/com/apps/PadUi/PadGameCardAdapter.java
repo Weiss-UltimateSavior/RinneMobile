@@ -133,10 +133,8 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
             binding.padGameTitle.setText(safeTitle(game));
             binding.padGamePlayStatus.setText(playStatus(game));
             binding.padGameInitial.setText(initial(game.title));
-            LauncherTheme.textPrimary(binding.padGameTitle);
-            LauncherTheme.textPrimary(binding.padGamePlayStatus);
-            LauncherTheme.textPrimary(binding.padGameInitial);
-            binding.padGameFavorite.setVisibility(game.favorite ? View.VISIBLE : View.GONE);
+            applyFavoriteAppearance(game.favorite);
+            binding.padGameInitial.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
             bindCover(game);
 
             binding.getRoot().setOnClickListener(view -> {
@@ -148,6 +146,21 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
                 if (listener != null) listener.onGameLongClick(game);
                 return true;
             });
+        }
+
+        private void applyFavoriteAppearance(boolean favorite) {
+            if (favorite) {
+                binding.padGameTextOverlay.setBackground(
+                        LauncherTheme.primaryTextOverlay(binding.getRoot().getContext()));
+                int onPrimary = LauncherTheme.onPrimary(binding.getRoot().getContext());
+                binding.padGameTitle.setTextColor(onPrimary);
+                binding.padGamePlayStatus.setTextColor(onPrimary);
+            } else {
+                binding.padGameTextOverlay.setBackgroundResource(R.drawable.launcher_game_text_overlay);
+                int text = LauncherTheme.text(binding.getRoot().getContext());
+                binding.padGameTitle.setTextColor(text);
+                binding.padGamePlayStatus.setTextColor(text);
+            }
         }
 
         void recycle() {

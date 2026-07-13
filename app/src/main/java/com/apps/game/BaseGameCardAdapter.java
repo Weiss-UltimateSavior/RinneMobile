@@ -104,13 +104,25 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
             binding.launcherGameTitle.setText(title(game));
             binding.launcherGamePlayStatus.setText(game.totalPlayTime <= 0L ? "未游玩" : TimeFormatUtil.playTime(game.totalPlayTime));
             binding.launcherGameInitial.setText(initial(game.title));
-            LauncherTheme.textPrimary(binding.launcherGameTitle);
-            LauncherTheme.textPrimary(binding.launcherGamePlayStatus);
-            LauncherTheme.textPrimary(binding.launcherGameInitial);
-            binding.launcherGameFavorite.setVisibility(game.favorite ? View.VISIBLE : View.GONE);
+            applyFavoriteAppearance(game.favorite);
+            binding.launcherGameInitial.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
             bindCover(game);
             binding.getRoot().setOnClickListener(v -> { setSelectedGameId(game.id); if (listener != null) listener.onGameClick(game); });
             binding.getRoot().setOnLongClickListener(v -> { setSelectedGameId(game.id); if (listener != null) listener.onGameLongClick(game); return true; });
+        }
+        private void applyFavoriteAppearance(boolean favorite) {
+            if (favorite) {
+                binding.launcherGameTextOverlay.setBackground(
+                        LauncherTheme.primaryTextOverlay(binding.getRoot().getContext()));
+                int onPrimary = LauncherTheme.onPrimary(binding.getRoot().getContext());
+                binding.launcherGameTitle.setTextColor(onPrimary);
+                binding.launcherGamePlayStatus.setTextColor(onPrimary);
+            } else {
+                binding.launcherGameTextOverlay.setBackgroundResource(R.drawable.launcher_game_text_overlay);
+                int text = LauncherTheme.text(binding.getRoot().getContext());
+                binding.launcherGameTitle.setTextColor(text);
+                binding.launcherGamePlayStatus.setTextColor(text);
+            }
         }
         void recycle() { LauncherCoverLoader.clear(binding.launcherGameCover); }
         private void bindCover(Game game) {

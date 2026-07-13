@@ -80,6 +80,13 @@ public final class LauncherTheme {
         return drawable;
     }
 
+    /** Theme-colored card copy overlay with the same opacity as launcher_game_text_overlay. */
+    public static GradientDrawable primaryTextOverlay(Context context) {
+        GradientDrawable drawable = primaryButton(context, 0f);
+        drawable.setAlpha(0xD9);
+        return drawable;
+    }
+
     public static GradientDrawable secondaryButton(Context context, float radiusDp) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(card(context));

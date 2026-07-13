@@ -132,7 +132,7 @@
                 android:layout_gravity="bottom"
                 android:gravity="center"
                 android:text="正在加载..."
-                android:textColor="@color/launcher_primary_color"
+                android:textColor="@color/launcher_text_color"
                 android:textSize="@dimen/launcher_library_footer_text_size"
                 android:textStyle="bold"
                 android:visibility="gone" />
