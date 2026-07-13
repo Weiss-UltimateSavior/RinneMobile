@@ -30,9 +30,6 @@ import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 import com.yuki.yukihub.util.SafeImageLoader;
-import com.yuki.yukihub.util.RxMainScheduler;
-
-import io.reactivex.disposables.Disposable;
 
 import java.util.List;
 import com.apps.LauncherActivity;
@@ -49,14 +46,12 @@ import com.apps.theme.LauncherThemeMenuActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherHomeFragment extends Fragment {
-    private static final long STATS_REFRESH_INTERVAL_MS = 3000L;
     private static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_PROFILE_AVATAR = "profile_avatar";
 
     private FragmentLauncherHomeBinding binding;
     private LauncherViewModel viewModel;
     private ActivityResultLauncher<String[]> avatarPickerLauncher;
-    private Disposable statsRefreshDisposable;
 
     public LauncherHomeFragment() {
         avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
@@ -97,18 +92,15 @@ public class LauncherHomeFragment extends Fragment {
         applyIconTone();
         renderAvatar();
         viewModel.refreshRecentItems();
-        startStatsRefresh();
     }
 
     @Override
     public void onPause() {
-        stopStatsRefresh();
         super.onPause();
     }
 
     @Override
     public void onDestroyView() {
-        stopStatsRefresh();
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
         }
@@ -145,7 +137,10 @@ public class LauncherHomeFragment extends Fragment {
                 startLauncherActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
         binding.actionAgent.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherPendingActivity.class)));
-        binding.recentRefresh.setOnRefreshListener(() -> viewModel.refreshRecentItems(true));
+        binding.recentRefresh.setOnRefreshListener(() -> {
+            viewModel.refreshStats();
+            viewModel.refreshRecentItems(true);
+        });
     }
 
     private void applyIconTone() {
@@ -188,7 +183,7 @@ public class LauncherHomeFragment extends Fragment {
         if (binding == null || anchor == null) return;
         LinearLayout menu = new LinearLayout(requireContext());
         menu.setOrientation(LinearLayout.VERTICAL);
-        menu.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_popup_menu_bg);
+        menu.setBackground(LauncherTheme.primaryButton(requireContext(), 18f));
         menu.setPadding(dp(7), dp(7), dp(7), dp(7));
 
         PopupWindow popupWindow = new PopupWindow(menu, dp(119), ViewGroup.LayoutParams.WRAP_CONTENT, true);
@@ -212,10 +207,10 @@ public class LauncherHomeFragment extends Fragment {
         item.setText(label);
         item.setTextSize(13);
         item.setTypeface(null, android.graphics.Typeface.BOLD);
-        item.setGravity(Gravity.CENTER_VERTICAL);
+        item.setGravity(Gravity.CENTER);
         item.setSingleLine(true);
         item.setPadding(dp(13), 0, dp(13), 0);
-        item.setTextColor(LauncherTheme.primary(requireContext()));
+        item.setTextColor(LauncherTheme.onPrimary(requireContext()));
         item.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         item.setOnClickListener(view -> {
             popupWindow.dismiss();
@@ -250,13 +245,14 @@ public class LauncherHomeFragment extends Fragment {
         root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
-        title.setText("资源站");
+        title.setText("资讯站");
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        addResourceOption(root, "聚合搜索", "https://searchgal.top", dialog);
         addResourceOption(root, "鲲Galgame", "https://www.kungal.com", dialog);
         addResourceOption(root, "真红小站", "https://www.shinnku.com/", dialog);
         addResourceOption(root, "Touch Gal", "https://www.touchgal.ink/", dialog);
@@ -561,29 +557,6 @@ public class LauncherHomeFragment extends Fragment {
 
     private SharedPreferences prefs() {
         return requireContext().getApplicationContext().getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE);
-    }
-
-    private void startStatsRefresh() {
-        stopStatsRefresh();
-        if (viewModel != null) viewModel.refreshStats();
-        scheduleNextStatsRefresh();
-    }
-
-    private void scheduleNextStatsRefresh() {
-        statsRefreshDisposable = RxMainScheduler.postDelayed(new Runnable() {
-            @Override public void run() {
-                if (binding == null || viewModel == null) return;
-                viewModel.refreshStats();
-                scheduleNextStatsRefresh();
-            }
-        }, STATS_REFRESH_INTERVAL_MS);
-    }
-
-    private void stopStatsRefresh() {
-        if (statsRefreshDisposable != null) {
-            statsRefreshDisposable.dispose();
-            statsRefreshDisposable = null;
-        }
     }
 
     private int dp(int value) {

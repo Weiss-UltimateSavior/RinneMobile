@@ -316,29 +316,34 @@ public class LauncherActivity extends AppCompatActivity {
         if (binding == null) return;
         View target = navTarget(navItem);
         if (target == null) return;
-        binding.bottomNav.post(() -> {
-            if (binding == null || target.getWidth() <= 0) return;
-            // 指示器与 bottomNavItems 都是 bottomNav 的子 View，且默认水平 gravity 均为 start，
-            // 二者 left 都等于 bottomNav 的 paddingLeft，所以只需用 target 在 bottomNavItems
-            // 内部的 left 作为 translationX，避免重复叠加 paddingLeft 导致指示器整体右移。
-            int left = target.getLeft();
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) binding.navSelectionIndicator.getLayoutParams();
-            if (params.width != target.getWidth()) {
-                params.width = target.getWidth();
-                binding.navSelectionIndicator.setLayoutParams(params);
-            }
-            binding.navSelectionIndicator.setBackgroundResource(R.drawable.launcher_nav_selected);
-            if (!navIndicatorReady) {
-                binding.navSelectionIndicator.setTranslationX(left);
-                navIndicatorReady = true;
-                return;
-            }
-            binding.navSelectionIndicator.animate()
-                    .translationX(left)
-                    .setDuration(220L)
-                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
-                    .start();
-        });
+        if (!binding.bottomNav.isLaidOut() || target.getWidth() <= 0) {
+            binding.bottomNav.post(() -> moveNavIndicator(navItem));
+            return;
+        }
+
+        // 指示器与 bottomNavItems 都是 bottomNav 的子 View，且默认水平 gravity 均为 start，
+        // 二者 left 都等于 bottomNav 的 paddingLeft，所以只需用 target 在 bottomNavItems
+        // 内部的 left 作为 translationX，避免重复叠加 paddingLeft 导致指示器整体右移。
+        int left = target.getLeft();
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) binding.navSelectionIndicator.getLayoutParams();
+        if (params.width != target.getWidth()) {
+            params.width = target.getWidth();
+            binding.navSelectionIndicator.setLayoutParams(params);
+        }
+        binding.navSelectionIndicator.setBackgroundResource(R.drawable.launcher_nav_selected);
+        if (!navIndicatorReady) {
+            binding.navSelectionIndicator.setTranslationX(left);
+            navIndicatorReady = true;
+            return;
+        }
+        binding.navSelectionIndicator.animate()
+                .cancel();
+        binding.navSelectionIndicator.animate()
+                .translationX(left)
+                .setDuration(220L)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .withLayer()
+                .start();
     }
 
     private View navTarget(LauncherViewModel.NavItem navItem) {

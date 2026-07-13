@@ -27,7 +27,7 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class ResourceStationActivity extends AppCompatActivity {
     private static final String DEFAULT_URL = "https://www.kungal.com";
-    private static final String DEFAULT_TITLE = "资源站";
+    private static final String DEFAULT_TITLE = "资讯站";
 
     private WebView webView;
 
