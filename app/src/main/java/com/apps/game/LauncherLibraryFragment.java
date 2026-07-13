@@ -1054,6 +1054,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         totalInput.setTextSize(13);
         totalInput.setPadding(dp(13), dp(9), dp(13), dp(9));
         totalInput.setBackground(LauncherTheme.cancelChip(requireContext()));
+        LauncherTheme.styleTextInput(totalInput);
         LinearLayout.LayoutParams tiLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         tiLp.setMargins(0, dp(5), 0, 0);
         root.addView(totalInput, tiLp);
@@ -1074,6 +1075,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         addInput.setTextSize(13);
         addInput.setPadding(dp(13), dp(9), dp(13), dp(9));
         addInput.setBackground(LauncherTheme.cancelChip(requireContext()));
+        LauncherTheme.styleTextInput(addInput);
         LinearLayout.LayoutParams aiLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         aiLp.setMargins(0, dp(5), 0, 0);
         root.addView(addInput, aiLp);

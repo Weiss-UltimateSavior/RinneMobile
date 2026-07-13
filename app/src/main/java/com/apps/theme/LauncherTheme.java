@@ -3,14 +3,16 @@ package com.apps.theme;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -262,6 +264,14 @@ public final class LauncherTheme {
         switchCompat.setTrackTintList(new ColorStateList(trackStates, trackColors));
     }
 
+    /** Applies the active Launcher tone to a text input's insertion cursor. */
+    public static void styleTextInput(EditText input) {
+        if (input == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
+        GradientDrawable cursor = new GradientDrawable();
+        cursor.setColor(primary(input.getContext()));
+        input.setTextCursorDrawable(cursor);
+    }
+
     private static int blend(int color1, int color2, float ratio) {
         int r = (int) (Color.red(color1) * (1 - ratio) + Color.red(color2) * ratio);
         int g = (int) (Color.green(color1) * (1 - ratio) + Color.green(color2) * ratio);
@@ -320,6 +330,9 @@ public final class LauncherTheme {
                     new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
                     new int[]{themedPrimary, textMuted(context)}
             ));
+        }
+        if (root instanceof EditText) {
+            styleTextInput((EditText) root);
         }
 
         String idName = idName(root);

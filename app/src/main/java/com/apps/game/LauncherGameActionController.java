@@ -433,6 +433,7 @@ public final class LauncherGameActionController {
         input.setTextSize(13);
         input.setPadding(dp(13), dp(8), dp(13), dp(8));
         input.setBackground(LauncherTheme.cancelChip(context()));
+        LauncherTheme.styleTextInput(input);
         return input;
     }
 

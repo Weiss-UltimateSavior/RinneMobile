@@ -91,6 +91,7 @@ public final class LauncherCustomVndbSearchDialog {
         input.setHintTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_input_hint_color));
         input.setTextSize(13);
         input.setBackground(LauncherTheme.cancelChip(fragment.requireContext()));
+        LauncherTheme.styleTextInput(input);
         input.setPadding(dp(fragment, 13), dp(fragment, 9), dp(fragment, 13), dp(fragment, 9));
         LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);

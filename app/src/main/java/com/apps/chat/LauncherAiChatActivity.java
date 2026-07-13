@@ -274,6 +274,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         field.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
         field.setHintTextColor(ContextCompat.getColor(this, R.color.launcher_input_hint_color));
         field.setBackgroundResource(R.drawable.launcher_account_input);
+        LauncherTheme.styleTextInput(field);
         field.setPadding(dp(13), 0, dp(13), 0);
         root.addView(field, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38)));
         return field;
