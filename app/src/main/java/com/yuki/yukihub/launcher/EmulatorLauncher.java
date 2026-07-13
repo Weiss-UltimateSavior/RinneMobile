@@ -31,6 +31,8 @@ import com.yuki.yukihub.ons.OnsSettings;
 public class EmulatorLauncher {
     private static final List<FileObserver> ARTEMIS_SAVE_OBSERVERS = new ArrayList<>();
     private static final List<EngineLaunchStrategy> ENGINE_STRATEGIES = new CopyOnWriteArrayList<>();
+    private static final String PREFS_NAME = "yukihub_prefs";
+    private static final String KEY_ARTEMIS_ENGINE_PREFIX = "artemis_engine.";
 
     static {
         // Keep this order aligned with the legacy condition chain.  Every strategy
@@ -749,7 +751,7 @@ public class EmulatorLauncher {
         return i;
     }
 
-    public static Intent buildInternalArtemisIntent(Context context, String packageName, String gamePath, String launchTarget) {
+public static Intent buildInternalArtemisIntent(Context context, String packageName, String gamePath, String launchTarget) {
 String resolvedPath = resolveInternalArtemisPath(gamePath, launchTarget);
 String rootPath = stripFileScheme(resolvedPath);
 String path = rootPath;
@@ -762,9 +764,12 @@ Log.i("EmulatorLauncher", "internal Artemis scoped mirror root=" + rootPath + " 
 path = mirror.rootPath;
 }
 }
-Class<?> activityClass = chooseArtemisActivity(packageName, path);
+String requestedPackage = packageName == null ? "" : packageName.trim();
+boolean autoFallback = "internal.artemis".equalsIgnoreCase(requestedPackage);
+String effectivePackage = autoFallback ? preferredArtemisPackage(context, requestedPackage, rootPath) : requestedPackage;
+Class<?> activityClass = chooseArtemisActivity(effectivePackage, path);
 Intent i = new Intent(context, activityClass);
-Log.i("EmulatorLauncher", "ARTEMIS_SCOPED_V2 pkg=" + packageName + " activity=" + activityClass.getSimpleName() + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath + " path=" + path + " scoped=" + scopedSaveDir + " saveName=" + saveName);
+Log.i("EmulatorLauncher", "ARTEMIS_SCOPED_V2 pkg=" + requestedPackage + " effectivePkg=" + effectivePackage + " activity=" + activityClass.getSimpleName() + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath + " path=" + path + " scoped=" + scopedSaveDir + " saveName=" + saveName);
 if (path != null && !path.isEmpty()) {
 // The embedded Artemis activity reads getIntent().getStringExtra("path") directly
 // and returns it from getExternalFilesDir(). It expects a normal filesystem path.
@@ -777,9 +782,29 @@ i.putExtra("launchMode", "internal.artemis");
 i.putExtra("orientation", 6);
 i.putExtra("scopedSaveDir", scopedSaveDir);
 i.putExtra("scopedSaveName", saveName);
+i.putExtra("artemisAutoFallback", autoFallback);
+i.putExtra("artemisFallbackStage", artemisFallbackStage(effectivePackage));
 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
 return i;
 }
+
+    private static String preferredArtemisPackage(Context context, String requestedPackage, String rootPath) {
+        if (context == null || rootPath == null || rootPath.trim().isEmpty()) return requestedPackage;
+        String saved = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(artemisEnginePreferenceKey(rootPath), null);
+        return saved == null || saved.trim().isEmpty() ? requestedPackage : saved;
+    }
+
+    private static String artemisEnginePreferenceKey(String rootPath) {
+        return KEY_ARTEMIS_ENGINE_PREFIX + Integer.toHexString(rootPath.hashCode());
+    }
+
+    private static int artemisFallbackStage(String packageName) {
+        String pkg = packageName == null ? "" : packageName.trim().toLowerCase(Locale.ROOT);
+        if (pkg.contains("compat.v2") || pkg.contains("compatible_v2") || pkg.endsWith(".2")) return 2;
+        if (pkg.contains("compat")) return 1;
+        return 0;
+    }
 
     public static Intent buildInternalArtemisIntent(Context context, String gamePath, String launchTarget) {
         return buildInternalArtemisIntent(context, "internal.artemis", gamePath, launchTarget);
