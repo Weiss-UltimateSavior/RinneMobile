@@ -9,7 +9,10 @@ import java.util.Map;
 
 public class YukiDatabaseHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "yukihub.db";
-    public static final int DB_VERSION = 13;
+    // Keep this monotonic for the production package.  The launcher now uses the
+    // same applicationId as existing installs; lowering this value makes SQLite
+    // reject those installs before the launcher can load any data.
+    public static final int DB_VERSION = 14;
 
     public YukiDatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
