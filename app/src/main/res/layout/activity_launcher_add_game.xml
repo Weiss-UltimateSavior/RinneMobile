@@ -92,6 +92,45 @@
 
             <TextView
                 style="@style/LauncherAddGameLabel"
+                android:text="GameHub localGameId" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/addGameGameHubIdInput"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/launcher_account_input"
+                    android:hint="仅 GameHub，需要 Shizuku 导入或手填"
+                    android:inputType="text"
+                    android:paddingStart="13dp"
+                    android:paddingEnd="13dp"
+                    android:textColor="@color/launcher_text_color"
+                    android:textColorHint="@color/launcher_input_hint_color"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/addGameImportGameHubShortcut"
+                    android:layout_width="wrap_content"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="7dp"
+                    android:background="@drawable/launcher_filter_chip_unselected"
+                    android:gravity="center"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="导入"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/LauncherAddGameLabel"
                 android:text="模拟器包名" />
 
             <TextView

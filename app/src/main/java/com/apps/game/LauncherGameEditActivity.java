@@ -2,6 +2,7 @@ package com.apps.game;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
@@ -26,25 +28,46 @@ import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import rikka.shizuku.Shizuku;
+
+import com.yuki.yukihub.launcherbridge.LauncherGameHubShortcutBridge;
+
 public class LauncherGameEditActivity extends AppCompatActivity {
     public static final String EXTRA_GAME_ID = "extra_game_id";
+    private static final int SHIZUKU_GAMEHUB_PERMISSION_REQUEST = 62001;
 
     private EditText etTitle;
     private Spinner spEngine;
     private EditText etEmulator;
     private EditText etLaunchTarget;
+    private EditText etGameHubLocalGameId;
     private EditText etDescription;
     private TextView tvDir;
     private TextView tvCoverStatus;
     private TextView btnPickCover;
+    private TextView btnImportGameHubShortcut;
     private TextView btnCancel;
     private TextView btnSave;
 
     private Game game;
     private Uri selectedCoverUri;
+
+    private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
+            (requestCode, grantResult) -> {
+                if (requestCode != SHIZUKU_GAMEHUB_PERMISSION_REQUEST) return;
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    importGameHubShortcutFromShizuku();
+                } else {
+                    Toast.makeText(this, "未获得 Shizuku 授权，仍可手动填写 localGameId", Toast.LENGTH_LONG).show();
+                }
+            };
 
     private final ActivityResultLauncher<Intent> coverPicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -67,6 +90,10 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         applySystemBarInsets();
         bindActions();
         applyThemeTone();
+        try {
+            Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
+        } catch (Throwable ignored) {
+        }
         loadGame();
     }
 
@@ -75,10 +102,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         spEngine = findViewById(R.id.editEngine);
         etEmulator = findViewById(R.id.editEmulator);
         etLaunchTarget = findViewById(R.id.editLaunchTarget);
+        etGameHubLocalGameId = findViewById(R.id.editGameHubLocalGameId);
         etDescription = findViewById(R.id.editDescription);
         tvDir = findViewById(R.id.editDir);
         tvCoverStatus = findViewById(R.id.editCoverStatus);
         btnPickCover = findViewById(R.id.btnPickCover);
+        btnImportGameHubShortcut = findViewById(R.id.btnImportGameHubShortcut);
         btnCancel = findViewById(R.id.btnCancel);
         btnSave = findViewById(R.id.btnSave);
 
@@ -95,6 +124,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             intent.setType("image/*");
             coverPicker.launch(intent);
         });
+        btnImportGameHubShortcut.setOnClickListener(v -> importGameHubShortcutFromShizuku());
         btnCancel.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> saveGame());
     }
@@ -111,6 +141,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 spEngine.setSelection(engineIndex(game.engine));
                 etEmulator.setText(game.emulatorPackage);
                 etLaunchTarget.setText(game.launchTarget);
+                etGameHubLocalGameId.setText(game.gamehubLocalGameId);
                 etDescription.setText(game.description);
                 tvDir.setText(game.rootUri);
                 if (game.coverUri != null && !game.coverUri.trim().isEmpty()) {
@@ -136,6 +167,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         game.emulatorPackage = etEmulator.getText().toString().trim();
         game.launchTarget = etLaunchTarget.getText().toString().trim();
         if (game.launchTarget.isEmpty()) game.launchTarget = "[游戏目录]";
+        game.gamehubLocalGameId = etGameHubLocalGameId.getText().toString().trim();
         game.description = etDescription.getText().toString().trim();
 
         AppExecutors.io().execute(() -> {
@@ -166,9 +198,90 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.menuItem(btnPickCover);
+        LauncherTheme.primaryButton(btnImportGameHubShortcut);
+        btnImportGameHubShortcut.setTextSize(14);
+        btnImportGameHubShortcut.setTypeface(null, android.graphics.Typeface.NORMAL);
         LauncherTheme.secondaryButton(btnCancel);
         LauncherTheme.primaryButton(btnSave);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
+    }
+
+    private void importGameHubShortcutFromShizuku() {
+        if (engineFromIndex(spEngine.getSelectedItemPosition()) != EngineType.GAMEHUB) {
+            Toast.makeText(this, "请先将引擎设为 GameHub", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            if (!Shizuku.pingBinder()) {
+                Toast.makeText(this, "请先启动 Shizuku，再授权读取盖世快捷方式", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                Shizuku.requestPermission(SHIZUKU_GAMEHUB_PERMISSION_REQUEST);
+                return;
+            }
+        } catch (Throwable error) {
+            Toast.makeText(this, "无法连接 Shizuku：" + error.getClass().getSimpleName(), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        btnImportGameHubShortcut.setEnabled(false);
+        btnImportGameHubShortcut.setText("读取中...");
+        AppExecutors.runOnIo(() -> {
+            List<LauncherGameHubShortcutBridge.Shortcut> items;
+            try {
+                items = LauncherGameHubShortcutBridge.loadShortcuts();
+            } catch (Throwable ignored) {
+                items = new ArrayList<>();
+            }
+            List<LauncherGameHubShortcutBridge.Shortcut> result = items;
+            runOnUiThread(() -> {
+                btnImportGameHubShortcut.setEnabled(true);
+                btnImportGameHubShortcut.setText("导入");
+                if (isFinishing()) return;
+                if (result.isEmpty()) {
+                    showGameHubImportUnavailableDialog();
+                    return;
+                }
+                showGameHubShortcutPicker(result);
+            });
+        });
+    }
+
+    private void showGameHubShortcutPicker(List<LauncherGameHubShortcutBridge.Shortcut> items) {
+        CharSequence[] labels = new CharSequence[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            LauncherGameHubShortcutBridge.Shortcut item = items.get(i);
+            labels[i] = item.displayLabel + "\n" + item.localGameId;
+        }
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("选择盖世快捷方式")
+                .setItems(labels, (ignored, which) -> applyGameHubShortcut(items.get(which)))
+                .setNegativeButton("取消", null)
+                .create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+    }
+
+    private void applyGameHubShortcut(LauncherGameHubShortcutBridge.Shortcut item) {
+        if (item == null) return;
+        etGameHubLocalGameId.setText(item.localGameId);
+        if (etTitle.getText() == null || etTitle.getText().toString().trim().isEmpty()) {
+            etTitle.setText(item.localAppName);
+        }
+        if (etEmulator.getText() == null || etEmulator.getText().toString().trim().isEmpty()) {
+            etEmulator.setText("com.xiaoji.egggamz");
+        }
+    }
+
+    private void showGameHubImportUnavailableDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("未读取到盖世快捷方式")
+                .setMessage("请确认：\n1. Shizuku 正在运行且已授权；\n2. 盖世已创建桌面快捷方式；\n3. 已安装 com.xiaoji.egggamz 或 com.xiaoji.egggame。\n\n也可以手动填写 localGameId。")
+                .setPositiveButton("知道了", null)
+                .create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
     }
 
     private int engineIndex(EngineType engine) {
@@ -228,5 +341,14 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
+    }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
+        } catch (Throwable ignored) {
+        }
+        super.onDestroy();
     }
 }

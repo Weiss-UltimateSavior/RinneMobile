@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.launcherbridge.LauncherCoverBridge;
+import com.yuki.yukihub.launcherbridge.LauncherGameHubShortcutBridge;
 import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.model.EngineType;
@@ -56,6 +57,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import rikka.shizuku.Shizuku;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -67,6 +69,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private TextView launchTargetText;
     private String launchTargetName = "";
     private TextView emulatorText;
+    private EditText gameHubIdInput;
+    private TextView importGameHubShortcutButton;
     private EditText descriptionInput;
     private TextView dirText;
     private TextView coverText;
@@ -75,6 +79,14 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private Uri gameDirUri;
     private Uri coverUri;
     private String lastEngineDefaultPackage = "";
+    private static final int SHIZUKU_GAMEHUB_PERMISSION_REQUEST = 62002;
+
+    private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
+            (requestCode, grantResult) -> {
+                if (requestCode != SHIZUKU_GAMEHUB_PERMISSION_REQUEST) return;
+                if (grantResult == PackageManager.PERMISSION_GRANTED) importGameHubShortcutFromShizuku();
+                else Toast.makeText(this, "未获得 Shizuku 授权，仍可手动填写 localGameId", Toast.LENGTH_LONG).show();
+            };
 
     private final ActivityResultLauncher<Uri> directoryPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
@@ -108,6 +120,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         setupEngineSpinner();
         bindActions();
         applyThemeTone();
+        try { Shizuku.addRequestPermissionResultListener(shizukuPermissionListener); } catch (Throwable ignored) { }
     }
 
     private void bindViews() {
@@ -115,6 +128,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         nameInput = findViewById(R.id.addGameNameInput);
         launchTargetText = findViewById(R.id.addGameLaunchTargetInput);
         emulatorText = findViewById(R.id.addGameEmulatorInput);
+        gameHubIdInput = findViewById(R.id.addGameGameHubIdInput);
+        importGameHubShortcutButton = findViewById(R.id.addGameImportGameHubShortcut);
         descriptionInput = findViewById(R.id.addGameDescriptionInput);
         dirText = findViewById(R.id.addGameDirText);
         coverText = findViewById(R.id.addGameCoverText);
@@ -175,13 +190,65 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         dirText.setOnClickListener(view -> directoryPicker.launch(null));
         launchTargetText.setOnClickListener(view -> showLaunchTargetPicker());
         emulatorText.setOnClickListener(view -> showAppPicker(emulatorText));
+        importGameHubShortcutButton.setOnClickListener(view -> importGameHubShortcutFromShizuku());
         coverText.setOnClickListener(view -> coverPicker.launch(new String[]{"image/*"}));
         saveButton.setOnClickListener(view -> saveGame());
     }
 
     private void applyThemeTone() {
         saveButton.setBackground(LauncherTheme.primaryButton(this, 24f));
+        LauncherTheme.primaryButton(importGameHubShortcutButton);
+        importGameHubShortcutButton.setTextSize(14);
+        importGameHubShortcutButton.setTypeface(null, android.graphics.Typeface.NORMAL);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
+    }
+
+    private void importGameHubShortcutFromShizuku() {
+        if (selectedEngine() != EngineType.GAMEHUB) {
+            Toast.makeText(this, "请先将游戏引擎设为 GameHub", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!LauncherGameHubShortcutBridge.isShizukuRunning()) {
+            Toast.makeText(this, "请先启动 Shizuku，再授权读取盖世快捷方式", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!LauncherGameHubShortcutBridge.hasShizukuPermission()) {
+            try { LauncherGameHubShortcutBridge.requestShizukuPermission(SHIZUKU_GAMEHUB_PERMISSION_REQUEST); }
+            catch (Throwable error) { Toast.makeText(this, "无法请求 Shizuku 授权", Toast.LENGTH_LONG).show(); }
+            return;
+        }
+        importGameHubShortcutButton.setEnabled(false);
+        importGameHubShortcutButton.setText("读取中...");
+        AppExecutors.runOnIo(() -> {
+            List<LauncherGameHubShortcutBridge.Shortcut> items;
+            try { items = LauncherGameHubShortcutBridge.loadShortcuts(); }
+            catch (Throwable ignored) { items = new ArrayList<>(); }
+            final List<LauncherGameHubShortcutBridge.Shortcut> shortcuts = items;
+            runOnUiThread(() -> {
+                importGameHubShortcutButton.setEnabled(true);
+                importGameHubShortcutButton.setText("导入");
+                if (isFinishing()) return;
+                if (shortcuts.isEmpty()) {
+                    Toast.makeText(this, "未读取到快捷方式；请确认盖世已创建桌面快捷方式", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                CharSequence[] labels = new CharSequence[shortcuts.size()];
+                for (int i = 0; i < shortcuts.size(); i++) labels[i] = shortcuts.get(i).displayLabel + "\n" + shortcuts.get(i).localGameId;
+                AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setTitle("选择盖世快捷方式")
+                        .setItems(labels, (ignored, which) -> applyGameHubShortcut(shortcuts.get(which)))
+                        .setNegativeButton("取消", null).create();
+                dialog.show();
+                LauncherMotion.applyDialogMotion(dialog);
+            });
+        });
+    }
+
+    private void applyGameHubShortcut(LauncherGameHubShortcutBridge.Shortcut item) {
+        if (item == null) return;
+        gameHubIdInput.setText(item.localGameId);
+        if (textOf(nameInput).isEmpty()) nameInput.setText(item.localAppName);
+        if (textOf(emulatorText).isEmpty()) emulatorText.setText("com.xiaoji.egggamz");
     }
 
     /** 扫描游戏目录下的相关游戏文件，弹出列表供用户选择启动入口。 */
@@ -366,6 +433,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         EngineType selectedEngine = selectedEngine();
         String selectedLaunchTarget = launchTargetName;
         String selectedEmulator = textOf(emulatorText);
+        String selectedGameHubId = textOf(gameHubIdInput);
         String selectedDescription = textOf(descriptionInput);
         Uri selectedGameDir = gameDirUri;
         Uri selectedCover = coverUri;
@@ -399,7 +467,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             );
             game.emulatorPackage = textOrDefault(selectedEmulator, defaultEmulatorPackage(finalEngine));
             game.description = selectedDescription;
-            if (game.engine == EngineType.GAMEHUB && (game.gamehubLocalGameId == null || game.gamehubLocalGameId.trim().isEmpty())) {
+            game.gamehubLocalGameId = selectedGameHubId;
+            if (game.engine == EngineType.GAMEHUB && selectedGameHubId.isEmpty()) {
                 game.gamehubLaunchMode = "program";
             }
 
@@ -741,5 +810,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
+    }
+
+    @Override
+    protected void onDestroy() {
+        try { Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener); } catch (Throwable ignored) { }
+        super.onDestroy();
     }
 }

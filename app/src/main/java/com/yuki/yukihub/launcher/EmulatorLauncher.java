@@ -234,7 +234,7 @@ public class EmulatorLauncher {
         WinlatorDesktopStrategy() { super(EngineType.WINLATOR); }
 
         @Override public boolean supports(LaunchRequest request) {
-            return isWinlatorPackage(request.packageName) && isDesktopTarget(request.launchTarget);
+            return isWinlatorPackage(request.packageName) && isWinlatorTarget(request.launchTarget);
         }
 
         @Override public boolean launch(Context context, LaunchRequest request) {
@@ -312,6 +312,12 @@ public class EmulatorLauncher {
 
     private static boolean isDesktopTarget(String launchTarget) {
         return launchTarget != null && launchTarget.trim().toLowerCase(Locale.ROOT).endsWith(".desktop");
+    }
+
+    private static boolean isWinlatorTarget(String launchTarget) {
+        if (launchTarget == null) return false;
+        String target = launchTarget.trim().toLowerCase(Locale.ROOT);
+        return target.endsWith(".desktop") || target.endsWith(".exe");
     }
 
     private static boolean launchWinlatorDesktop(Context context, String pkg, String rootUri, String launchTarget, String mode) {
@@ -598,7 +604,7 @@ public class EmulatorLauncher {
         if (rootPath.startsWith("content://")) {
             try {
                 DocumentFile dir = DocumentFile.fromTreeUri(context, Uri.parse(rootUri));
-                DocumentFile child = dir == null ? null : dir.findFile(target);
+                DocumentFile child = findTreeChild(dir, target);
                 if (child != null) {
                     String childPath = uriToFilePath(child.getUri().toString());
                     if (childPath != null && !childPath.startsWith("content://")) return childPath;
@@ -607,6 +613,16 @@ public class EmulatorLauncher {
             return rootPath;
         }
         return rootPath.endsWith("/") ? rootPath + target : rootPath + "/" + target;
+    }
+
+    private static DocumentFile findTreeChild(DocumentFile root, String relativePath) {
+        if (root == null || relativePath == null) return null;
+        DocumentFile current = root;
+        for (String segment : relativePath.split("/")) {
+            if (segment.isEmpty()) continue;
+            current = current == null ? null : current.findFile(segment);
+        }
+        return current;
     }
 
     private static List<Uri> buildKirikiriLaunchUris(Context context, String rootUri, String launchTarget) {

@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.launcher.EmulatorLauncher;
 import com.yuki.yukihub.model.EngineType;
@@ -115,12 +117,29 @@ public final class LauncherGameLaunchBridge {
                 if (!EmulatorLauncher.isPPSSPPInstalled(context)) {
                     return false;
                 }
-                return startActivitySafely(context, EmulatorLauncher.buildInternalPspIntent(context, game.rootUri, launchTarget));
+                return startActivitySafely(context, EmulatorLauncher.buildInternalPspIntent(
+                        context, resolvePspLaunchUri(context, game.rootUri, launchTarget), launchTarget));
             }
             return EmulatorLauncher.launchGame(context, pkg, game.rootUri, launchTarget, game.winlatorLaunchMode, game.gamehubLaunchMode, game.gamehubLocalGameId);
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    /** PPSSPP must receive the selected disc file rather than its containing SAF tree. */
+    private static String resolvePspLaunchUri(Context context, String rootUri, String launchTarget) {
+        if (rootUri == null || rootUri.trim().isEmpty() || launchTarget == null || launchTarget.trim().isEmpty()
+                || "[游戏目录]".equals(launchTarget)) return rootUri;
+        try {
+            DocumentFile current = DocumentFile.fromTreeUri(context, android.net.Uri.parse(rootUri));
+            for (String segment : launchTarget.split("/")) {
+                if (current == null || segment.isEmpty()) continue;
+                current = current.findFile(segment);
+            }
+            if (current != null && current.isFile()) return current.getUri().toString();
+        } catch (Throwable ignored) {
+        }
+        return rootUri;
     }
 
     private static boolean startActivitySafely(Context context, Intent intent) {
