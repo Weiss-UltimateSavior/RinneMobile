@@ -7,7 +7,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.yuki.yukihub.rinne"
+        applicationId "com.yuki.yukihub"
         minSdk 26
         targetSdk 33
         versionCode 6

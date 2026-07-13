@@ -22,7 +22,6 @@
     <color name="launcher_home_stats_scrim_start">#E622D88E</color>
     <color name="launcher_home_stats_scrim_mid">#B322D88E</color>
     <color name="launcher_home_stats_scrim_end">#0022D88E</color>
-    <color name="launcher_warning_color">#F0B429</color>
     <color name="launcher_danger_color">#F06B6B</color>
     <color name="launcher_on_danger_color">#06120D</color>
     <color name="launcher_accent_blue_soft_color">#7CCBFF</color>
@@ -32,6 +31,5 @@
     <color name="launcher_rank_gold_color">#FFD45C</color>
     <color name="launcher_rank_silver_color">#C4CDD4</color>
     <color name="launcher_rank_bronze_color">#E39A67</color>
-    <color name="launcher_game_chip_color">#203129</color>
     <color name="launcher_game_text_overlay_color">#D91A1A1A</color>
 </resources>
