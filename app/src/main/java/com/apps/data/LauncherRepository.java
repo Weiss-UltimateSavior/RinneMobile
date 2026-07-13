@@ -105,11 +105,11 @@ public class LauncherRepository {
     }
 
     private String accountMode() {
-        if (!LauncherAuthBridge.isLoggedIn(appContext)) return "本地模式";
         String status = appPrefs.getString(KEY_AUTH_STATUS, "");
+        if (AUTH_STATUS_EXPIRED.equals(status)) return "本地模式 · 登录过期";
+        if (!LauncherAuthBridge.isLoggedIn(appContext)) return "本地模式";
         if (AUTH_STATUS_ONLINE.equals(status)) return "在线模式";
         if (AUTH_STATUS_SYNCING.equals(status)) return "在线模式 · 同步中";
-        if (AUTH_STATUS_EXPIRED.equals(status)) return "在线模式 · 登录过期";
         return "在线模式";
     }
 

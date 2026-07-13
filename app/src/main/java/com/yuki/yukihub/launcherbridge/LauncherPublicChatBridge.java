@@ -37,7 +37,7 @@ public final class LauncherPublicChatBridge {
                 Integer cursor = response.isNull("next_before_id") ? null : response.optInt("next_before_id");
                 post(() -> callback.onSuccess(messages, cursor));
             } catch (Throwable error) {
-                post(() -> callback.onError(errorMessage(error, "加载消息失败")));
+                post(() -> callback.onError(errorMessage(context, error, "加载消息失败")));
             }
         });
     }
@@ -51,7 +51,7 @@ public final class LauncherPublicChatBridge {
                 Integer cursor = response.isNull("next_before_id") ? null : response.optInt("next_before_id");
                 post(() -> callback.onSuccess(messages, cursor));
             } catch (Throwable error) {
-                post(() -> callback.onError(errorMessage(error, "加载历史消息失败")));
+                post(() -> callback.onError(errorMessage(context, error, "加载历史消息失败")));
             }
         });
     }
@@ -64,7 +64,7 @@ public final class LauncherPublicChatBridge {
                 Message message = parseMessage(new JSONObject(postJson("/chat/public/messages", body, token)));
                 post(() -> callback.onSuccess(message));
             } catch (Throwable error) {
-                post(() -> callback.onError(errorMessage(error, "发送失败")));
+                post(() -> callback.onError(errorMessage(context, error, "发送失败")));
             }
         });
     }
@@ -76,7 +76,7 @@ public final class LauncherPublicChatBridge {
                 post(() -> callback.onSuccess(new Status(json.optBoolean("readonly"), json.optBoolean("muted"),
                         json.isNull("muted_until") ? null : json.optLong("muted_until"), json.optString("mute_reason"))));
             } catch (Throwable error) {
-                post(() -> callback.onError(errorMessage(error, "获取频道状态失败")));
+                post(() -> callback.onError(errorMessage(context, error, "获取频道状态失败")));
             }
         });
     }
@@ -89,7 +89,7 @@ public final class LauncherPublicChatBridge {
                 for (int i = 0; i < array.length(); i++) announcements.add(parseAnnouncement(array.getJSONObject(i)));
                 post(() -> callback.onSuccess(announcements));
             } catch (Throwable error) {
-                post(() -> callback.onError(errorMessage(error, "获取公告失败")));
+                post(() -> callback.onError(errorMessage(context, error, "获取公告失败")));
             }
         });
     }
@@ -119,7 +119,11 @@ public final class LauncherPublicChatBridge {
                         else if ("announcement_created".equals(type) || "announcement_updated".equals(type)) listener.onAnnouncementChanged(parseAnnouncement(data.getJSONObject("announcement")));
                     } catch (Throwable ignored) { }
                 }
-                @Override public void onFailure(WebSocket webSocket, Throwable error, Response response) { post(() -> listener.onError("实时连接已断开")); }
+                @Override public void onFailure(WebSocket webSocket, Throwable error, Response response) {
+                    boolean expired = response != null && response.code() == 401;
+                    if (expired) LauncherAuthBridge.expireSession(context);
+                    post(() -> listener.onError(expired ? "登录已过期，请重新登录" : "实时连接已断开"));
+                }
             });
         } catch (Throwable error) {
             post(() -> listener.onError("无法建立实时连接"));
@@ -163,7 +167,14 @@ public final class LauncherPublicChatBridge {
         return output.toString("UTF-8");
     }
     private static String detail(String response) { try { return new JSONObject(response).optString("detail", response); } catch (Throwable ignored) { return response; } }
-    private static String errorMessage(Throwable error, String fallback) { String message = error.getMessage(); return message == null || message.trim().isEmpty() ? fallback : message; }
+    private static String errorMessage(Context context, Throwable error, String fallback) {
+        String message = error == null ? null : error.getMessage();
+        if (message != null && message.contains("401")) {
+            LauncherAuthBridge.expireSession(context);
+            return "登录已过期，请重新登录";
+        }
+        return message == null || message.trim().isEmpty() ? fallback : message;
+    }
     private static void post(Runnable runnable) { RxMainScheduler.post(runnable); }
     private static List<Message> parseMessages(JSONArray array) throws Exception { List<Message> result = new ArrayList<>(); if (array != null) for (int i = 0; i < array.length(); i++) result.add(parseMessage(array.getJSONObject(i))); return result; }
     private static Message parseMessage(JSONObject json) { return new Message(json.optInt("id"), json.optString("sender_type"), json.optString("sender_id"), json.optString("sender_name"), json.optString("content"), json.optBoolean("is_pinned"), json.optLong("created_at")); }

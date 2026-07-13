@@ -32,6 +32,16 @@ public final class LauncherAuthBridge {
     private static final int MAX_ERROR_RESPONSE_BYTES = 64 * 1024;
     /** 账户游玩数据的云备份/恢复上限；与本地和 WebDAV 快照上限保持一致量级。 */
     private static final int MAX_PLAY_DATA_RESPONSE_BYTES = 16 * 1024 * 1024;
+    private static volatile SessionExpiredListener sessionExpiredListener;
+
+    /**
+     * UI 层可注册一个全局会话监听器。认证桥只负责判定失效和清理凭据，
+     * 不直接持有 Activity，避免后台游玩心跳等调用泄漏界面。
+     */
+    public interface SessionExpiredListener {
+        void onSessionExpired();
+        void onSessionRestored();
+    }
 
     private LauncherAuthBridge() {
     }
@@ -40,14 +50,31 @@ public final class LauncherAuthBridge {
 
     public static void saveToken(Context context, String token) {
         prefs(context).edit().putString(KEY_AUTH_ACCESS_TOKEN, token).apply();
+        SessionExpiredListener listener = sessionExpiredListener;
+        if (listener != null) postMain(listener::onSessionRestored);
+    }
+
+    public static void setSessionExpiredListener(SessionExpiredListener listener) {
+        sessionExpiredListener = listener;
     }
 
     public static void clearToken(Context context) {
+        clearSession(context, "");
+    }
+
+    /** 清理无效凭据，并通知前台统一提供重新登录入口。 */
+    public static void expireSession(Context context) {
+        clearSession(context, "expired");
+        SessionExpiredListener listener = sessionExpiredListener;
+        if (listener != null) postMain(listener::onSessionExpired);
+    }
+
+    private static void clearSession(Context context, String status) {
         prefs(context).edit()
                 .remove(KEY_AUTH_ACCESS_TOKEN)
                 .remove(KEY_AUTH_NICKNAME)
                 .remove(KEY_AUTH_EMAIL)
-                .putString(KEY_AUTH_STATUS, "")
+                .putString(KEY_AUTH_STATUS, status)
                 .apply();
     }
 
@@ -185,7 +212,7 @@ public final class LauncherAuthBridge {
             } catch (Throwable t) {
                 String message = parseErrorMessage(t, "获取邮件订阅状态失败");
                 if (message.contains("401")) {
-                    clearToken(context);
+                    expireSession(context);
                     message = "登录已过期，请重新登录";
                 }
                 final String error = message;
@@ -207,7 +234,7 @@ public final class LauncherAuthBridge {
             } catch (Throwable t) {
                 String message = parseErrorMessage(t, "更新邮件订阅失败");
                 if (message.contains("401")) {
-                    clearToken(context);
+                    expireSession(context);
                     message = "登录已过期，请重新登录";
                 }
                 final String error = message;
@@ -262,7 +289,7 @@ public final class LauncherAuthBridge {
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "获取用户信息失败");
                 if (msg.contains("401")) {
-                    clearToken(context);
+                    expireSession(context);
                     msg = "登录已过期，请重新登录";
                 }
                 final String errMsg = msg;
@@ -289,7 +316,7 @@ public final class LauncherAuthBridge {
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "修改用户名失败");
                 if (msg.contains("401")) {
-                    clearToken(context);
+                    expireSession(context);
                     msg = "登录已过期，请重新登录";
                 } else if (msg.contains("用户名已存在")) {
                     msg = "该用户名已存在";
@@ -317,7 +344,7 @@ public final class LauncherAuthBridge {
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "修改密码失败");
                 if (msg.contains("401")) {
-                    clearToken(context);
+                    expireSession(context);
                     msg = "登录已过期，请重新登录";
                 } else if (msg.contains("旧密码错误")) {
                     msg = "旧密码错误";
@@ -361,7 +388,7 @@ public final class LauncherAuthBridge {
     private static void postLlmError(Context context, Throwable error, String fallback, LlmConfigCallback callback) {
         String message = parseErrorMessage(error, fallback);
         if (isNetworkTimeout(error, message)) message = "模型服务不可达或响应超时，请检查接口地址和网络连接";
-        else if (message.contains("401")) { clearToken(context); message = "登录已过期，请重新登录"; }
+        else if (message.contains("401")) { expireSession(context); message = "登录已过期，请重新登录"; }
         else if (message.contains("AI_CONNECTION_TEST_FAILED")) message = "模型连通性验证失败，请检查接口地址、API Key 和模型名称";
         else if (message.contains("422")) message = "模型配置格式不正确，请检查地址、模型名与温度";
         else if (message.contains("404") || message.contains("用户不存在")) message = "用户不存在，请重新登录后重试";
@@ -391,7 +418,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(response));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "获取配置失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -411,7 +438,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(configJson));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "上传配置失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -433,7 +460,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(playData));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "获取游玩记录失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -458,7 +485,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(playSql));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "上传游玩记录失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -481,7 +508,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(session));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "启动服务端游玩会话失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -509,7 +536,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(session));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, fallback);
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -549,7 +576,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(response));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "上传游玩时长失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -570,7 +597,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(response));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "获取游玩时长失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -592,7 +619,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(entries));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "获取游玩时长排行榜失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }
@@ -610,7 +637,7 @@ public final class LauncherAuthBridge {
                 postMain(() -> callback.onSuccess(rank));
             } catch (Throwable t) {
                 String msg = parseErrorMessage(t, "获取我的游玩时长排名失败");
-                if (msg.contains("401")) { clearToken(context); msg = "登录已过期，请重新登录"; }
+                if (msg.contains("401")) { expireSession(context); msg = "登录已过期，请重新登录"; }
                 final String errMsg = msg;
                 postMain(() -> callback.onError(errMsg));
             }

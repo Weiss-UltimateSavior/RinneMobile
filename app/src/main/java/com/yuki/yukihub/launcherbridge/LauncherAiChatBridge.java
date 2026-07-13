@@ -138,7 +138,7 @@ public final class LauncherAiChatBridge {
     private static void postError(Context context, Throwable error, String fallback, ErrorSink sink) {
         String message = error == null || error.getMessage() == null ? fallback : error.getMessage();
         if (message.contains("401")) {
-            LauncherAuthBridge.clearToken(context);
+            LauncherAuthBridge.expireSession(context);
             message = "登录已过期，请重新登录";
         } else if (message.contains("502") || message.contains("CHAT_SERVICE_UNAVAILABLE")) {
             message = "聊天服务暂时不可用，请稍后重试";

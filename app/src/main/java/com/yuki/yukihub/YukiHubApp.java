@@ -4,6 +4,7 @@ import android.app.Application;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.apps.account.LauncherSessionExpiredNotifier;
 import com.yuki.yukihub.util.UiScaleUtil;
 
 public class YukiHubApp extends Application {
@@ -11,6 +12,7 @@ public class YukiHubApp extends Application {
     public void onCreate() {
         super.onCreate();
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        LauncherSessionExpiredNotifier.install(this);
     }
 
     @Override

@@ -39,6 +39,7 @@ import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 
 public class LauncherActivity extends AppCompatActivity {
+    public static final String EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login";
     static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked";
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
@@ -79,6 +80,7 @@ public class LauncherActivity extends AppCompatActivity {
         bindActions();
         observeState();
         scheduleAutoUpdateCheck();
+        openAccountLoginIfRequested(getIntent());
     }
 
     @Override
@@ -89,6 +91,19 @@ public class LauncherActivity extends AppCompatActivity {
             renderParticles();
         }
         if (viewModel != null) viewModel.refreshStats();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        openAccountLoginIfRequested(intent);
+    }
+
+    private void openAccountLoginIfRequested(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(EXTRA_OPEN_ACCOUNT_LOGIN, false) || viewModel == null) return;
+        intent.removeExtra(EXTRA_OPEN_ACCOUNT_LOGIN);
+        viewModel.selectNavItem(LauncherViewModel.NavItem.ACCOUNT);
     }
 
     private void configureEdgeToEdgeWindow() {
