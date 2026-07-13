@@ -183,13 +183,12 @@ public class LauncherHomeFragment extends Fragment {
         if (binding == null || anchor == null) return;
         LinearLayout menu = new LinearLayout(requireContext());
         menu.setOrientation(LinearLayout.VERTICAL);
-        menu.setBackground(LauncherTheme.primaryButton(requireContext(), 18f));
+        menu.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_white_card);
         menu.setPadding(dp(7), dp(7), dp(7), dp(7));
 
         PopupWindow popupWindow = new PopupWindow(menu, dp(119), ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setOutsideTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        popupWindow.setElevation(dp(7));
         popupWindow.setAnimationStyle(com.yuki.yukihub.R.style.LauncherDialogAnimation);
 
         addMenuItem(menu, "主题管理", popupWindow, () ->
@@ -210,7 +209,7 @@ public class LauncherHomeFragment extends Fragment {
         item.setGravity(Gravity.CENTER);
         item.setSingleLine(true);
         item.setPadding(dp(13), 0, dp(13), 0);
-        item.setTextColor(LauncherTheme.onPrimary(requireContext()));
+        item.setTextColor(LauncherTheme.primary(requireContext()));
         item.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         item.setOnClickListener(view -> {
             popupWindow.dismiss();
