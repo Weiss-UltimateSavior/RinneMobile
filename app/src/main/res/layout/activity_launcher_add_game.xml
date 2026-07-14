@@ -116,7 +116,7 @@
 
                 <TextView
                     android:id="@+id/addGameImportGameHubShortcut"
-                    android:layout_width="wrap_content"
+                    android:layout_width="64dp"
                     android:layout_height="45dp"
                     android:layout_marginStart="7dp"
                     android:background="@drawable/launcher_filter_chip_unselected"

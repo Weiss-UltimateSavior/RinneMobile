@@ -9,8 +9,9 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
+        android:layout_marginBottom="@dimen/launcher_bottom_nav_height"
         android:overScrollMode="never"
-        android:paddingBottom="@dimen/launcher_nav_overlay_scroll_bottom_padding"
+        android:paddingBottom="0dp"
         android:scrollbars="none">
 
         <LinearLayout
@@ -22,7 +23,7 @@
             <!-- 顶部个人信息区域 -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="225dp"
+                android:layout_height="180dp"
                 android:background="@drawable/launcher_profile_list_bg"
                 android:clipToOutline="true">
 
