@@ -58,13 +58,6 @@ public abstract class r extends KR2Activity {
             Log.e(TAG, "native bridge initialization failed; skip KRKR hook setup");
             return;
         }
-        try {
-            boolean exitGuardInstalled = NativeBridge.installExitGuard(soName());
-            Log.i(TAG, "native exit guard installed=" + exitGuardInstalled + " so=" + soName());
-        } catch (Throwable t) {
-            // The guard is a crash workaround; an unavailable hook must not block game launch.
-            Log.e(TAG, "install native exit guard failed", t);
-        }
         Intent intent = getIntent();
         boolean scopedSaveDir = intent != null && intent.getBooleanExtra("scopedSaveDir", false);
         boolean safFileFallback = intent != null && intent.getBooleanExtra("safFileFallback", false);
@@ -75,8 +68,8 @@ public abstract class r extends KR2Activity {
 
         // The scoped launcher keeps game assets at their original path and
         // provides a real app-private savedata directory through the Java
-        // write bridge. Keep native filesystem calls intact: libkirikiroid3
-        // only hooks open(path, flags), while games also use other write APIs.
+        // write bridge. Keep native filesystem calls intact: krkr_bridge
+        // only hooks open/open64(path, flags), while games also use other write APIs.
         if (scopedSaveDir) {
             Log.i(TAG, "KRKR scoped save uses direct savedata directory; native open interceptor disabled");
             return;

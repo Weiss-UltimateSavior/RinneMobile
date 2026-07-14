@@ -7,8 +7,7 @@ public final class Kirikiroid134 extends r {
     public void onLoadNativeLibraries() {
         System.loadLibrary("ffmpeg");
         System.loadLibrary("game134");
-        System.loadLibrary("kirikiroid3");
-        System.loadLibrary("krkr_exit_guard");
+        System.loadLibrary("krkr_bridge");
         super.onLoadNativeLibraries();
     }
 

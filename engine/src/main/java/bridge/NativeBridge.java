@@ -25,7 +25,6 @@ public final class NativeBridge {
     private NativeBridge() { }
 
     public static native boolean initialize(String so);
-    public static native boolean installExitGuard(String so);
     public static native boolean launch(String so, String path, boolean useMaps);
     public static native void interceptor(String prefix);
     public static native void relocate();

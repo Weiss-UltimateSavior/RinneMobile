@@ -193,15 +193,18 @@ public class KR2Activity extends Cocos2dxActivity {
     public static long getAvailMemory() { return memoryInfo.availMem; }
     public static long getUsedMemory() { return mDbgMemoryInfo.getTotalPss(); }
     public static void exit() {
-    try {
-        final KR2Activity activity = sInstance;
-        if (activity != null) {
-            activity.runOnUiThread(() -> {
-                try { activity.finish(); } catch (Throwable ignored) { }
-            });
-        }
-    } catch (Throwable ignored) { }
-}
+        // All KRKR activities are declared in the isolated :kirikiri2 process.
+        // Calling finish() first causes GLSurfaceView.onPause() to asynchronously
+        // tear down Cocos state while HWUI worker threads can still access it. On
+        // current Android releases this becomes a FORTIFY abort on a destroyed
+        // mutex. End the dedicated process at the engine's real exit callback
+        // instead; Android will return to the launcher task without running that
+        // unsafe mixed Java/native teardown.
+        try {
+            android.util.Log.i("KR2Activity", "engine exit: terminate dedicated KRKR process");
+            android.os.Process.killProcess(android.os.Process.myPid());
+        } catch (Throwable ignored) { }
+    }
     public static boolean isWritableNormal(String path) { return true; }
     public static boolean isWritableNormalOrSaf(String path) { return true; }
     public static void requireLEXA(String path) { }
@@ -361,7 +364,7 @@ public class KR2Activity extends Cocos2dxActivity {
         System.loadLibrary("SDL2");
         System.loadLibrary("ffmpeg");
         System.loadLibrary("game");
-        System.loadLibrary("kirikiroid3");
+        System.loadLibrary("krkr_bridge");
     }
     @Override public void onCreate(Bundle savedInstanceState) {
         sInstance = this;

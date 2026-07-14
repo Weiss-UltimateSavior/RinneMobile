@@ -25,6 +25,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import io.reactivex.disposables.Disposable;
+
 import com.apps.PadUi.PadGameModeActivity;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherBinding;
@@ -39,6 +41,7 @@ import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 
 public class LauncherActivity extends AppCompatActivity {
+    private static final long SPLASH_DELAY_MS = 1500L;
     public static final String EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login";
     static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked";
@@ -62,6 +65,7 @@ public class LauncherActivity extends AppCompatActivity {
     private LauncherViewModel viewModel;
     private LauncherViewModel.NavItem currentNavItem;
     private boolean navIndicatorReady;
+    private Disposable splashDelay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +73,16 @@ public class LauncherActivity extends AppCompatActivity {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
+
+        // Android 12+ replaces a legacy window background with the system icon splash.
+        // Draw the wallpaper as real Activity content so it is also visible on Honor/MagicOS.
+        setContentView(R.layout.activity_launcher_splash);
+        splashDelay = com.yuki.yukihub.util.RxMainScheduler.postDelayed(
+                this::showLauncherContent, SPLASH_DELAY_MS);
+    }
+
+    private void showLauncherContent() {
+        if (isFinishing() || isDestroyed()) return;
 
         binding = ActivityLauncherBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -81,6 +95,12 @@ public class LauncherActivity extends AppCompatActivity {
         observeState();
         scheduleAutoUpdateCheck();
         openAccountLoginIfRequested(getIntent());
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (splashDelay != null && !splashDelay.isDisposed()) splashDelay.dispose();
+        super.onDestroy();
     }
 
     @Override
