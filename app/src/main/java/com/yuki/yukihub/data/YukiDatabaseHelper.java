@@ -119,6 +119,17 @@ safeAlter(db, "ALTER TABLE games ADD COLUMN gaishi_local_game_id TEXT");
         }
     }
 
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Version 15 was produced by a temporary build and did not introduce a
+        // schema change.  Allow returning to the checked-in v14 build without
+        // deleting the user's game library or crashing during startup.
+        if (oldVersion == 15 && newVersion == 14) {
+            return;
+        }
+        super.onDowngrade(db, oldVersion, newVersion);
+    }
+
     private void createMetadataCacheTable(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS metadata_cache (" +
                 "game_id INTEGER NOT NULL," +
