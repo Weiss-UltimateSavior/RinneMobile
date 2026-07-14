@@ -12,14 +12,11 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -62,13 +59,11 @@ import com.apps.game.LauncherLibraryFragment;
 
 /**
  * 横屏手机游戏仓库自包含实现：直接继承 {@link Fragment}，使用 {@link PadManageGameAdapter}。
- * 横屏手机以 1 × 6、平板以 2 × 6 卡片分页展示，卡片高度根据 RecyclerView 的实际可用空间动态计算。
+ * 卡片高度根据实际列宽自适应，列表纵向连续加载，不再锁定固定行数分页。
  * 不再继承 LauncherLibraryFragment，所有逻辑独立维护。
  */
 public class PadManageFragment extends Fragment {
     private static final int GRID_COLUMNS = 6;
-    private static final int PHONE_GRID_ROWS = 1;
-    private static final int TABLET_GRID_ROWS = 2;
     private static final int TABLET_MIN_SMALLEST_WIDTH_DP = 600;
     private static final long MIN_PLAY_SESSION_MS = 0L;
     private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
@@ -111,13 +106,8 @@ public class PadManageFragment extends Fragment {
             mainQueue.postDelayed(this, PLAY_SESSION_HEARTBEAT_MS);
         }
     };
-    private GestureDetector swipeGestureDetector;
-    private boolean swipeConsumed;
-    private float loadMoreDragStartY;
-    private boolean loadMoreDragCandidate;
-    private int currentPage;
-    private int gridRows = PHONE_GRID_ROWS;
-    private int pageSize = GRID_COLUMNS * PHONE_GRID_ROWS;
+    private boolean viewportFillCheckPending;
+    private int pageSize = GRID_COLUMNS;
     private AlertDialog syncLoadingDialog;
 
     @Nullable
@@ -134,12 +124,10 @@ public class PadManageFragment extends Fragment {
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.libraryTitle.setText("游戏仓库");
-        gridRows = isTabletLayout() ? TABLET_GRID_ROWS : PHONE_GRID_ROWS;
-        pageSize = GRID_COLUMNS * gridRows;
+        pageSize = GRID_COLUMNS * (isTabletLayout() ? 2 : 1);
         setupSearchAndCategories();
         setupRecycler();
         loadGames();
-        setupSwipeGesture();
     }
 
     /** 压缩通用游戏库布局为 Launcher 底栏预留的底部空白，仅影响 Pad 管理页。 */
@@ -243,10 +231,6 @@ public class PadManageFragment extends Fragment {
         adapter.setOnGameCardListener(new PadManageGameAdapter.OnGameCardListener() {
             @Override
             public void onGameClick(Game game) {
-                if (swipeConsumed) {
-                    swipeConsumed = false;
-                    return;
-                }
                 if (game != null) {
                     adapter.setSelectedGameId(game.id);
                     confirmLaunchGame(game);
@@ -255,10 +239,6 @@ public class PadManageFragment extends Fragment {
 
             @Override
             public void onGameLongClick(Game game) {
-                if (swipeConsumed) {
-                    swipeConsumed = false;
-                    return;
-                }
                 if (game != null) showGameActionMenu(game);
             }
         });
@@ -274,59 +254,33 @@ public class PadManageFragment extends Fragment {
         binding.libraryRecycler.setRecycledViewPool(pool);
         binding.libraryRecycler.addOnLayoutChangeListener((view, left, top, right, bottom,
                                                             oldLeft, oldTop, oldRight, oldBottom) -> {
-            if (bottom - top != oldBottom - oldTop) updateFixedGridCardHeight();
+            if (right - left != oldRight - oldLeft) updateAdaptiveCardHeight();
         });
-        binding.libraryRecycler.post(this::updateFixedGridCardHeight);
+        binding.libraryRecycler.post(this::updateAdaptiveCardHeight);
         binding.libraryRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                // 横向分页模式下不通过滚动加载更多
-                return;
+                if (dy <= 0 || loading || fullyLoaded) return;
+                if (layoutManager.findLastVisibleItemPosition() >= Math.max(0, visibleGames.size() - GRID_COLUMNS)) {
+                    loadNextPage();
+                }
             }
-        });
-
-        // 当分类收起后，第一页可能铺不满屏幕，RecyclerView 没有滚动距离，onScrolled 不会触发。
-        // 这里单独监听“向上拉”的手势，每次手势最多加载一页，避免一次性加载全部。
-        binding.libraryRecycler.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                handleLoadMoreDragWhenNotScrollable(rv, e);
-                return false;
-            }
-
-            @Override
-            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                handleLoadMoreDragWhenNotScrollable(rv, e);
-            }
-
-            @Override
-            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) { }
         });
     }
 
-    /**
-     * 横屏手机高度有限，不能只根据卡片宽度按固定比例反推高度。
-     * 这里同时计算：
-     * 1. 六列布局允许的卡片宽度；
-     * 2. 当前设备一行或两行布局允许的最大高度；
-     * 最终取两者较小值，确保所有卡片完整显示。
-     */
-    private void updateFixedGridCardHeight() {
+    /** Keeps compact landscape cards proportional to the actual available column width. */
+    private void updateAdaptiveCardHeight() {
         if (binding == null || adapter == null) return;
 
         RecyclerView recyclerView = binding.libraryRecycler;
         int recyclerWidth = recyclerView.getWidth();
-        int recyclerHeight = recyclerView.getHeight();
-        if (recyclerWidth <= 0 || recyclerHeight <= 0) return;
+        if (recyclerWidth <= 0) return;
 
         int usableWidth = recyclerWidth
                 - recyclerView.getPaddingLeft()
                 - recyclerView.getPaddingRight();
-        int usableHeight = recyclerHeight
-                - recyclerView.getPaddingTop()
-                - recyclerView.getPaddingBottom();
-        if (usableWidth <= 0 || usableHeight <= 0) return;
+        if (usableWidth <= 0) return;
 
         // item_launcher_game_card 每张卡片左右各约 5dp margin。
         int totalHorizontalMargins = dp(10) * GRID_COLUMNS;
@@ -335,86 +289,12 @@ public class PadManageFragment extends Fragment {
                 (usableWidth - totalHorizontalMargins) / GRID_COLUMNS
         );
 
-        // 每行卡片上下 margin 合计约 10dp。
-        int totalVerticalMargins = dp(10) * gridRows;
-        int heightByAvailableSpace = Math.max(
-                1,
-                (usableHeight - totalVerticalMargins) / gridRows
-        );
-
-        // 横屏手机使用更紧凑的封面比例，避免按原 5:3 比例生成过高卡片。
-        int heightByCompactRatio = Math.max(1, Math.round(cardWidth * 1.25f));
-
-        // 优先保证当前行数完整显示，卡片绝不超过 RecyclerView 当前可用高度。
-        int finalCardHeight = Math.min(heightByAvailableSpace, heightByCompactRatio);
-        adapter.setFixedCardHeight(finalCardHeight);
+        adapter.setFixedCardHeight(Math.max(dp(34), Math.round(cardWidth * 1.25f)));
     }
 
     private boolean isTabletLayout() {
         return getResources().getConfiguration().smallestScreenWidthDp
                 >= TABLET_MIN_SMALLEST_WIDTH_DP;
-    }
-
-    private void setupSwipeGesture() {
-        swipeGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
-            private static final int SWIPE_THRESHOLD = 80;
-            private static final int SWIPE_VELOCITY = 200;
-
-            @Override
-            public boolean onDown(MotionEvent event) {
-                return true;
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (e1 == null || e2 == null) return false;
-                float diffX = e2.getX() - e1.getX();
-                float diffY = e2.getY() - e1.getY();
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY) {
-                    boolean handled = diffX < 0 ? handleSwipeLeft() : handleSwipeRight();
-                    if (handled) swipeConsumed = true;
-                    return handled;
-                }
-                return false;
-            }
-        });
-
-        // RecyclerView 区域：通过 OnItemTouchListener 获取触摸事件
-        binding.libraryRecycler.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                swipeGestureDetector.onTouchEvent(e);
-                return false;
-            }
-            @Override
-            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                swipeGestureDetector.onTouchEvent(e);
-            }
-            @Override
-            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
-        });
-
-        // 非列表区域（背景、分类栏、空提示等）
-        binding.getRoot().setOnTouchListener((v, event) -> {
-            swipeGestureDetector.onTouchEvent(event);
-            return false;
-        });
-        binding.libraryContent.setOnTouchListener((v, event) -> {
-            swipeGestureDetector.onTouchEvent(event);
-            return false;
-        });
-        binding.libraryEmpty.setOnTouchListener((v, event) -> {
-            swipeGestureDetector.onTouchEvent(event);
-            return false;
-        });
-    }
-
-    private boolean handleSwipeLeft() {
-        return showNextPage();
-    }
-
-    private boolean handleSwipeRight() {
-        return showPreviousPage();
     }
 
     private void setupSearchAndCategories() {
@@ -490,8 +370,7 @@ public class PadManageFragment extends Fragment {
                 }
                 renderCategories();
                 dataLoaded = true;
-                // 数据已经落到内存，解除翻页锁。showNextPage()/showPreviousPage()
-                // 会在 loading=true 时直接拒绝手势；此前这里没有复位，导致列表永远停在第一页。
+                // 数据已经落到内存，解除加载锁，允许自动补页或滚动加载继续执行。
                 setLoading(false);
                 applyFilters();
             });
@@ -509,51 +388,10 @@ private void applyFilters(boolean forceFullRefresh) {
         String normalized = query.trim().toLowerCase(Locale.ROOT);
         return (normalized.isEmpty() || safeTitle(game).toLowerCase(Locale.ROOT).contains(normalized))
                 && (category.trim().isEmpty() || matchesCategory(game, category));
-    }, (left, right) -> Collator.getInstance(Locale.CHINA).compare(safeTitle(left), safeTitle(right)), pageSize, true);
+    }, (left, right) -> Collator.getInstance(Locale.CHINA).compare(safeTitle(left), safeTitle(right)), pageSize, false);
     syncLibraryLists();
-    // 横向分页恒为 true：直接走分页渲染
-    renderPagedGrid(forceFullRefresh);
+    if (adapter != null) adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
     renderState();
-}
-
-private void renderPagedGrid(boolean forceFullRefresh) {
-    if (adapter == null) return;
-    libraryState.renderPage(pageSize);
-    syncLibraryLists();
-    adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-}
-
-private boolean showNextPage() {
-    if (loading) return false;
-    if (!libraryState.nextPage(pageSize)) return false;
-    syncLibraryLists();
-    renderPagedGrid(false);
-    renderState();
-    animatePageChange(true);
-    return true;
-}
-
-private boolean showPreviousPage() {
-    if (loading || !libraryState.previousPage(pageSize)) return false;
-    syncLibraryLists();
-    renderPagedGrid(false);
-    renderState();
-    animatePageChange(false);
-    return true;
-}
-
-private void animatePageChange(boolean forward) {
-    if (binding == null) return;
-    float distance = dp(36) * (forward ? 1f : -1f);
-    binding.libraryRecycler.animate().cancel();
-    binding.libraryRecycler.setTranslationX(distance);
-    binding.libraryRecycler.setAlpha(0.72f);
-    binding.libraryRecycler.animate()
-            .translationX(0f)
-            .alpha(1f)
-            .setDuration(220L)
-            .setInterpolator(new AccelerateDecelerateInterpolator())
-            .start();
 }
 
 private void loadNextPage() {
@@ -573,7 +411,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void syncLibraryLists() {
         filteredGames.clear(); filteredGames.addAll(libraryState.getFiltered());
         visibleGames.clear(); visibleGames.addAll(libraryState.getVisible());
-        currentPage = libraryState.getPage(); fullyLoaded = libraryState.isFullyLoaded();
+        fullyLoaded = libraryState.isFullyLoaded();
     }
 
     private void renderState() {
@@ -581,37 +419,27 @@ private void loadNextPage(boolean forceFullRefresh) {
         boolean hasGames = !visibleGames.isEmpty();
         binding.libraryRecycler.setVisibility(hasGames ? View.VISIBLE : View.GONE);
         if (hasGames) {
-            binding.libraryRecycler.post(this::updateFixedGridCardHeight);
+            binding.libraryRecycler.post(this::updateAdaptiveCardHeight);
+            scheduleLoadUntilViewportFilled();
         }
         binding.libraryEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
     }
 
-
-    private void handleLoadMoreDragWhenNotScrollable(@NonNull RecyclerView recyclerView, @NonNull MotionEvent event) {
-        if (loading || fullyLoaded || filteredGames.isEmpty() || visibleGames.size() >= filteredGames.size()) {
-            loadMoreDragCandidate = false;
+    private void scheduleLoadUntilViewportFilled() {
+        if (binding == null || viewportFillCheckPending || loading || fullyLoaded
+                || visibleGames.size() >= filteredGames.size()) {
             return;
         }
-
-        switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                loadMoreDragStartY = event.getY();
-                loadMoreDragCandidate = !recyclerView.canScrollVertically(1);
-                break;
-
-            case MotionEvent.ACTION_MOVE:
-                if (loadMoreDragCandidate && loadMoreDragStartY - event.getY() > dp(48)) {
-                    loadMoreDragCandidate = false;
-                    loadNextPage();
-                }
-                break;
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                loadMoreDragCandidate = false;
-                break;
-        }
+        viewportFillCheckPending = true;
+        RecyclerView recyclerView = binding.libraryRecycler;
+        recyclerView.post(() -> {
+            viewportFillCheckPending = false;
+            if (binding == null || loading || fullyLoaded || visibleGames.size() >= filteredGames.size()) {
+                return;
+            }
+            if (!recyclerView.canScrollVertically(1)) loadNextPage();
+        });
     }
 
     private void setLoading(boolean value) {

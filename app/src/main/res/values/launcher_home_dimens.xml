@@ -2,6 +2,8 @@
 <resources>
     <!-- 手机竖屏：保持原布局尺寸 -->
     <dimen name="launcher_home_scroll_bottom_padding">16dp</dimen>
+    <!-- Bottom navigation overlays the Launcher fragment container. -->
+    <dimen name="launcher_nav_overlay_scroll_bottom_padding">101dp</dimen>
     <dimen name="launcher_home_content_horizontal_padding">20dp</dimen>
     <dimen name="launcher_home_content_top_padding">25dp</dimen>
     <dimen name="launcher_home_content_bottom_padding">16dp</dimen>
