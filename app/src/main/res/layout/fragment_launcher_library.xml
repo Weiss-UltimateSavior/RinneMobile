@@ -39,8 +39,7 @@
                 android:gravity="center"
                 android:text="同步"
                 android:textColor="@color/launcher_primary_color"
-                android:textSize="@dimen/launcher_library_toolbar_button_text_size"
-                android:textStyle="bold" />
+                android:textSize="@dimen/launcher_library_toolbar_button_text_size" />
 
             <TextView
                 android:id="@+id/libraryCollapseButton"
@@ -49,7 +48,7 @@
                 android:layout_marginEnd="@dimen/launcher_library_collapse_button_margin_end"
                 android:background="@drawable/launcher_filter_chip_unselected"
                 android:gravity="center"
-                android:text="收起"
+                android:text="分类"
                 android:textColor="@color/launcher_primary_color"
                 android:textSize="@dimen/launcher_library_toolbar_button_text_size"
                 android:textStyle="bold" />
@@ -90,7 +89,8 @@
             android:layout_marginTop="@dimen/launcher_library_category_margin_top"
             android:fillViewport="false"
             android:overScrollMode="never"
-            android:scrollbars="none">
+            android:scrollbars="none"
+            android:visibility="gone">
 
             <LinearLayout
                 android:id="@+id/libraryCategoryRow"
@@ -123,18 +123,6 @@
                 android:text="还没有游戏"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="@dimen/launcher_library_empty_text_size"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/libraryFooter"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/launcher_library_footer_height"
-                android:layout_gravity="bottom"
-                android:gravity="center"
-                android:text="正在加载..."
-                android:textColor="@color/launcher_text_color"
-                android:textSize="@dimen/launcher_library_footer_text_size"
-                android:textStyle="bold"
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

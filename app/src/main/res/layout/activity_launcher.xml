@@ -19,7 +19,7 @@
         android:id="@+id/launcherFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -27,7 +27,7 @@
     <FrameLayout
         android:id="@+id/bottomNav"
         android:layout_width="0dp"
-        android:layout_height="85dp"
+        android:layout_height="@dimen/launcher_bottom_nav_height"
         android:background="@drawable/launcher_bottom_bar"
         android:paddingStart="11dp"
         android:paddingEnd="11dp"

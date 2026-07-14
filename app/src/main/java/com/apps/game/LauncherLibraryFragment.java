@@ -33,6 +33,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.apps.LauncherActivity;
+import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.FragmentLauncherLibraryBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
@@ -83,7 +85,8 @@ public class LauncherLibraryFragment extends Fragment {
     private String searchQuery = "";
     private boolean loading;
     private boolean fullyLoaded;
-    private boolean categoriesCollapsed;
+    private boolean viewportFillCheckPending;
+    private boolean categoriesCollapsed = true;
     private boolean dataLoaded;
     private boolean needsRefresh;
     private long runningSessionId = -1L;
@@ -267,6 +270,15 @@ public class LauncherLibraryFragment extends Fragment {
         binding.libraryRecycler.setLayoutManager(layoutManager);
         binding.libraryRecycler.setAdapter(adapter);
         binding.libraryRecycler.setHasFixedSize(true);
+        int bottomPadding = getResources().getDimensionPixelSize(R.dimen.launcher_library_recycler_bottom_padding);
+        if (getActivity() instanceof LauncherActivity) {
+            bottomPadding += getResources().getDimensionPixelSize(R.dimen.launcher_bottom_nav_height);
+        }
+        binding.libraryRecycler.setPadding(
+                binding.libraryRecycler.getPaddingLeft(),
+                binding.libraryRecycler.getPaddingTop(),
+                binding.libraryRecycler.getPaddingRight(),
+                bottomPadding);
         binding.libraryRecycler.setItemViewCacheSize(20);
         RecyclerView.RecycledViewPool pool = new RecyclerView.RecycledViewPool();
         pool.setMaxRecycledViews(0, 30);
@@ -657,12 +669,27 @@ private void loadNextPage(boolean forceFullRefresh) {
         }
         binding.libraryEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
-        if (allGames.isEmpty() || filteredGames.isEmpty()) {
-            binding.libraryFooter.setVisibility(View.GONE);
-        } else {
-            binding.libraryFooter.setVisibility(fullyLoaded ? View.GONE : View.VISIBLE);
-            binding.libraryFooter.setText("上拉加载");
+        if (hasGames) scheduleLoadUntilViewportFilled();
+    }
+
+    /**
+     * A short first page can leave no scroll range, which previously required a manual upward
+     * drag to reveal more games. Add pages after layout until the list is scrollable or exhausted.
+     */
+    private void scheduleLoadUntilViewportFilled() {
+        if (binding == null || viewportFillCheckPending || usesHorizontalPaging()
+                || loading || fullyLoaded || visibleGames.size() >= filteredGames.size()) {
+            return;
         }
+        viewportFillCheckPending = true;
+        RecyclerView recyclerView = binding.libraryRecycler;
+        recyclerView.post(() -> {
+            viewportFillCheckPending = false;
+            if (binding == null || loading || fullyLoaded || visibleGames.size() >= filteredGames.size()) {
+                return;
+            }
+            if (!recyclerView.canScrollVertically(1)) loadNextPage();
+        });
     }
 
 
@@ -694,10 +721,6 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void setLoading(boolean value) {
         loading = value;
-        if (binding != null) {
-            binding.libraryFooter.setVisibility(value ? View.VISIBLE : View.GONE);
-            binding.libraryFooter.setText("正在加载...");
-        }
     }
 
     private void launchGameDirectly(Game game) {
@@ -1888,7 +1911,7 @@ mainQueue.post(() -> {
     private void renderToolbarButtonState() {
         if (binding == null) return;
         applyToolbarChipState(binding.librarySearchButton, binding.librarySearchInput.getVisibility() == View.VISIBLE);
-        applyToolbarChipState(binding.libraryCollapseButton, categoriesCollapsed);
+        applyToolbarChipState(binding.libraryCollapseButton, !categoriesCollapsed);
     }
 
     private void applyToolbarChipState(TextView view, boolean selected) {

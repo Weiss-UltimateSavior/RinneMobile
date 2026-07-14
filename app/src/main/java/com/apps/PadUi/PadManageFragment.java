@@ -93,7 +93,7 @@ public class PadManageFragment extends Fragment {
     private String searchQuery = "";
     private boolean loading;
     private boolean fullyLoaded;
-    private boolean categoriesCollapsed;
+    private boolean categoriesCollapsed = true;
     private boolean dataLoaded;
     private boolean needsRefresh;
     private long runningSessionId = -1L;
@@ -585,12 +585,6 @@ private void loadNextPage(boolean forceFullRefresh) {
         }
         binding.libraryEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
-        if (allGames.isEmpty() || filteredGames.isEmpty()) {
-            binding.libraryFooter.setVisibility(View.GONE);
-        } else {
-            binding.libraryFooter.setVisibility(fullyLoaded ? View.GONE : View.VISIBLE);
-            binding.libraryFooter.setText("上拉加载");
-        }
     }
 
 
@@ -622,10 +616,6 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void setLoading(boolean value) {
         loading = value;
-        if (binding != null) {
-            binding.libraryFooter.setVisibility(value ? View.VISIBLE : View.GONE);
-            binding.libraryFooter.setText("正在加载...");
-        }
     }
 
     private void launchGameDirectly(Game game) {
@@ -1795,7 +1785,7 @@ mainQueue.post(() -> {
     private void renderToolbarButtonState() {
         if (binding == null) return;
         applyToolbarChipState(binding.librarySearchButton, binding.librarySearchInput.getVisibility() == View.VISIBLE);
-        applyToolbarChipState(binding.libraryCollapseButton, categoriesCollapsed);
+        applyToolbarChipState(binding.libraryCollapseButton, !categoriesCollapsed);
     }
 
     private void applyToolbarChipState(TextView view, boolean selected) {

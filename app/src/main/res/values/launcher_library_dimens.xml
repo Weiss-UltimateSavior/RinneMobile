@@ -3,7 +3,7 @@
     <!-- 手机竖屏：完全保持原尺寸 -->
     <dimen name="launcher_library_content_horizontal_padding">20dp</dimen>
     <dimen name="launcher_library_content_top_padding">25dp</dimen>
-    <dimen name="launcher_library_content_bottom_padding">16dp</dimen>
+    <dimen name="launcher_library_content_bottom_padding">0dp</dimen>
 
     <dimen name="launcher_library_toolbar_height">40dp</dimen>
     <dimen name="launcher_library_title_text_size">22sp</dimen>
@@ -31,6 +31,7 @@
     <dimen name="launcher_library_empty_text_size">14sp</dimen>
     <dimen name="launcher_library_footer_height">29dp</dimen>
     <dimen name="launcher_library_footer_text_size">12sp</dimen>
+    <dimen name="launcher_bottom_nav_height">85dp</dimen>
 
     <!-- 固定卡片高度仅在平板竖屏开启；基础值兼容横屏共享逻辑 -->
     <dimen name="launcher_library_card_text_overlay_height">41dp</dimen>
