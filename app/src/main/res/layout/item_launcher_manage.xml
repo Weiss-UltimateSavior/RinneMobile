@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/manageItemRoot"
+    style="@style/LauncherManageItem">
+
+    <TextView
+        android:id="@+id/manageItemIcon"
+        style="@style/LauncherManageIcon" />
+
+    <TextView
+        android:id="@+id/manageItemTitle"
+        style="@style/LauncherManageTitle" />
+
+    <TextView
+        android:id="@+id/manageItemArrow"
+        style="@style/LauncherManageArrow"
+        android:text=">" />
+</LinearLayout>

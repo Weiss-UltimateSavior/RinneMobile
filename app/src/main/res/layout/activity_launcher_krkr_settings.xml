@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="华为等部分机型如因存储权限导致引擎崩溃或闪退，可开启对应引擎的独立存档目录。"
+                android:text="Rinne 默认使用统一存档管理目录，便于统一管理；遇到兼容性问题可关闭并使用游戏原目录。"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="KR 独立存档目录\n（权限异常闪退时开启）"
+                    android:text="KRKR 统一存档目录"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -113,7 +113,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="Artemis 独立存档目录\n（权限异常闪退时开启）"
+                    android:text="Artemis 统一存档目录"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -121,7 +121,8 @@
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/artemisScopedSwitch"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:enabled="false" />
             </LinearLayout>
 
             <TextView

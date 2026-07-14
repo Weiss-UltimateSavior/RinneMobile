@@ -79,9 +79,19 @@ public final class NativeBridge {
                 }
             }
             String rel = p.length() > idx + folderLen ? p.substring(idx + folderLen) : "";
-            File base = new File(activity.getExternalFilesDir(null), "save");
-            String name = activity.getIntent().getStringExtra("scopedSaveName");
-            File dir = new File(base, (name == null || name.trim().isEmpty()) ? "default" : name);
+            String root = normalizeFilePath(activity.getIntent().getStringExtra("scopedSaveRoot"));
+            if (root != null && !root.trim().isEmpty() && root.startsWith("/")) {
+                File dir = new File(root);
+                File out = rel.isEmpty() ? dir : new File(dir, rel);
+                File parent = out.isDirectory() ? out : out.getParentFile();
+                if (parent != null && !parent.exists()) parent.mkdirs();
+                Log.i("NativeBridge", "redirect KR save " + p + " -> " + out.getAbsolutePath());
+                return out.getAbsolutePath();
+            }
+            root = normalizeFilePath(activity.getIntent().getStringExtra("projectRoot"));
+            if (root == null || root.trim().isEmpty()) root = normalizeFilePath(activity.getIntent().getStringExtra("gamedir"));
+            if (root == null || root.trim().isEmpty() || !root.startsWith("/")) return null;
+            File dir = new File(root, "savedata");
             File out = rel.isEmpty() ? dir : new File(dir, rel);
             File parent = out.isDirectory() ? out : out.getParentFile();
             if (parent != null && !parent.exists()) parent.mkdirs();

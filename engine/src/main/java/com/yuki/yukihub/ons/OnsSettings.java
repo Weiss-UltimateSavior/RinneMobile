@@ -87,6 +87,11 @@ public final class OnsSettings {
     }
 
     public ArrayList<String> buildArgs(Context context, String gameDir) {
+        return buildArgs(context, gameDir, resolveScopedSaveDirectory(context, gameDir));
+    }
+
+    /** Builds ONS arguments with the caller's already-resolved real save directory. */
+    public ArrayList<String> buildArgs(Context context, String gameDir, File saveDir) {
         String root = gameDir == null ? "" : gameDir;
         ArrayList<String> args = new ArrayList<>();
         args.add("--root");
@@ -96,22 +101,26 @@ public final class OnsSettings {
         args.add(stretchFull ? "--fullscreen2" : "--fullscreen");
         if (disableVideo) args.add("--no-video");
         args.add("--enc:" + normalizeEncoding(encoding));
-        if (scopedSaveDir) {
-            File base = context.getExternalFilesDir(null);
-            if (base != null) {
-                String saveName = guessName(root);
-                File saveDir = new File(new File(base, "save"), saveName);
-                if (saveDir.exists() || saveDir.mkdirs()) {
-                    args.add("--save-dir");
-                    args.add(saveDir.getAbsolutePath());
-                }
-            }
+        // ONS saves always use the app-scoped directory so the launcher and save
+        // manager have one stable, writable location. Keep guessName() unchanged:
+        // it is the existing game identifier used by prior saves.
+        if (saveDir != null && (saveDir.exists() || saveDir.mkdirs())) {
+            args.add("--save-dir");
+            args.add(saveDir.getAbsolutePath());
         }
         if (sharpness) {
             args.add("--sharpness");
             args.add(safeSharpness());
         }
         return args;
+    }
+
+    /** Returns the exact directory supplied to ONS through {@code --save-dir}. */
+    public static File resolveScopedSaveDirectory(Context context, String gameDir) {
+        if (context == null) return null;
+        File base = context.getExternalFilesDir(null);
+        if (base == null) return null;
+        return new File(new File(base, "save"), guessName(gameDir));
     }
 
     private String safeSharpness() {

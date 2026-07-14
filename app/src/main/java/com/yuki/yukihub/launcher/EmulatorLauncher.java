@@ -34,6 +34,27 @@ public class EmulatorLauncher {
     private static final String PREFS_NAME = "yukihub_prefs";
     private static final String KEY_ARTEMIS_ENGINE_PREFIX = "artemis_engine.";
 
+    /** Actual built-in-engine save directory shared by launch and save-management flows. */
+    public static final class ActualSaveLocation {
+        public final File directory;
+        public final String description;
+        public final boolean available;
+
+        private ActualSaveLocation(File directory, String description, boolean available) {
+            this.directory = directory;
+            this.description = description == null ? "" : description;
+            this.available = available;
+        }
+
+        private static ActualSaveLocation available(File directory, String description) {
+            return new ActualSaveLocation(directory, description, true);
+        }
+
+        private static ActualSaveLocation unavailable(String description) {
+            return new ActualSaveLocation(null, description, false);
+        }
+    }
+
     static {
         // Keep this order aligned with the legacy condition chain.  Every strategy
         // only claims its own package aliases, so unknown external packages still
@@ -703,7 +724,7 @@ public class EmulatorLauncher {
 
     public static Intent buildInternalTyranoIntent(Context context, String gamePath, String launchTarget) {
         Intent i = new Intent(context, com.yuki.yukihub.tyrano.TyranoActivity.class);
-        String resolvedPath = resolveInternalTyranoPath(gamePath, launchTarget);
+        String resolvedPath = resolveInternalTyranoGameDirectory(gamePath, launchTarget);
         Log.i("EmulatorLauncher", "internal Tyrano root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath);
         if (resolvedPath != null && !resolvedPath.isEmpty()) {
             String path = stripFileScheme(resolvedPath);
@@ -721,14 +742,19 @@ public class EmulatorLauncher {
         return i;
     }
 
-    private static String resolveInternalTyranoPath(String rootUri, String launchTarget) {
+    /**
+     * Returns the exact directory passed to {@link com.yuki.yukihub.tyrano.TyranoActivity}.
+     * Keep save-related features on this resolver so SAF document URIs cannot resolve to
+     * their selected parent tree instead of the scanned game directory.
+     */
+    public static String resolveInternalTyranoGameDirectory(String rootUri, String launchTarget) {
         String rootPath = uriToFilePath(rootUri);
         if (rootPath == null || rootPath.isEmpty()) return rootUri;
         String target = launchTarget == null ? "" : launchTarget.trim();
         if (target.isEmpty() || "[游戏目录]".equals(target) || "DIR".equalsIgnoreCase(target)) return rootPath;
-        if (target.startsWith("/")) {
-            File f = new File(target);
-            return f.isFile() ? f.getParent() : target;
+        if (target.startsWith("/") || target.startsWith("file://")) {
+            File f = new File(stripFileScheme(target));
+            return f.isFile() ? f.getParent() : f.getAbsolutePath();
         }
         File f = new File(rootPath, target);
         return f.isFile() ? f.getParent() : f.getAbsolutePath();
@@ -737,9 +763,13 @@ public class EmulatorLauncher {
     public static Intent buildInternalOnsIntent(Context context, String gamePath, String launchTarget) {
         Intent i = new Intent(context, com.yuri.onscripter.ONScripter.class);
         String rootPath = stripFileScheme(uriToFilePath(gamePath));
+        ActualSaveLocation saveLocation = resolveActualSaveLocation(context, EngineType.ONS, gamePath, launchTarget);
+        if (!saveLocation.available || saveLocation.directory == null) {
+            throw new IllegalStateException(saveLocation.description);
+        }
         Log.i("EmulatorLauncher", "internal ONS root=" + gamePath + " target=" + launchTarget + " resolved=" + rootPath);
         OnsSettings settings = OnsSettings.load(context);
-        ArrayList<String> args = settings.buildArgs(context, rootPath);
+        ArrayList<String> args = settings.buildArgs(context, rootPath, saveLocation.directory);
         i.putStringArrayListExtra(OnsSettings.EXTRA_GAME_ARGS, args);
         i.putExtra(OnsSettings.EXTRA_IGNORE_CUTOUT, settings.ignoreCutout);
         i.putExtra("path", rootPath);
@@ -755,13 +785,17 @@ public static Intent buildInternalArtemisIntent(Context context, String packageN
 String resolvedPath = resolveInternalArtemisPath(gamePath, launchTarget);
 String rootPath = stripFileScheme(resolvedPath);
 String path = rootPath;
-boolean scopedSaveDir = context != null && context.getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE).getBoolean("artemis_scoped_save_dir", false);
-String saveName = safeSaveName(rootPath);
+boolean scopedSaveDir = true;
+ActualSaveLocation saveLocation = resolveActualSaveLocation(context, EngineType.ARTEMIS, gamePath, launchTarget);
+if (!saveLocation.available || saveLocation.directory == null) throw new IllegalStateException(saveLocation.description);
+String saveName = saveLocation.directory.getName();
 if (scopedSaveDir) {
 ArtemisMirror mirror = prepareArtemisScopedMirror(context, rootPath, saveName);
 if (mirror != null) {
 Log.i("EmulatorLauncher", "internal Artemis scoped mirror root=" + rootPath + " -> " + mirror.rootPath);
 path = mirror.rootPath;
+} else {
+throw new IllegalStateException("无法创建 Artemis 应用独立存档目录");
 }
 }
 String requestedPackage = packageName == null ? "" : packageName.trim();
@@ -918,6 +952,25 @@ return false;
 }
 }
 
+private static int copyRegularFilesRecursively(File fromDir, File toDir, boolean onlyNewer) {
+if (fromDir == null || toDir == null || !fromDir.isDirectory()) return 0;
+if (!toDir.exists() && !toDir.mkdirs()) return 0;
+File[] children = fromDir.listFiles();
+if (children == null) return 0;
+int count = 0;
+for (File child : children) {
+if (child == null || isSymlink(child)) continue;
+File target = new File(toDir, child.getName());
+if (child.isDirectory()) {
+count += copyRegularFilesRecursively(child, target, onlyNewer);
+} else if (child.isFile()) {
+if (onlyNewer && target.exists() && target.lastModified() >= child.lastModified() && target.length() == child.length()) continue;
+if (copyFile(child, target)) count++;
+}
+}
+return count;
+}
+
 private static boolean isArtemisResourceName(String name) {
 if (name == null) return false;
 String n = name.trim().toLowerCase(Locale.ROOT);
@@ -946,6 +999,122 @@ if (pkg.contains("compat.v2") || pkg.contains("compatible_v2") || pkg.endsWith("
 if (pkg.contains("compat")) return com.akira.tyranoemu.remote.ArtemisActivityV2.class;
 return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
 }
+
+    /**
+     * Resolves the same save directory used by the built-in engine launch path.
+     * KRKR, Artemis and ONS are intentionally fixed to app-scoped saves; their
+     * existing directory-name rules are preserved for compatibility.
+     */
+    public static ActualSaveLocation resolveActualSaveLocation(Context context, EngineType engine,
+                                                                 String rootUri, String launchTarget) {
+        if (context == null) return ActualSaveLocation.unavailable("应用上下文不可用");
+        if (engine == null) return ActualSaveLocation.unavailable("游戏引擎信息不可用");
+        try {
+            switch (engine) {
+                case KIRIKIRI: {
+                    String resolvedPath = resolveInternalKrkrPath(context, rootUri, launchTarget);
+                    String rawRootPath = stripFileScheme(uriToFilePath(rootUri));
+                    String rootPath = krkrRootForPath(rawRootPath, stripFileScheme(resolvedPath));
+                    if (!isKrScopedSaveDirEnabled(context)) {
+                        if (rootPath == null || rootPath.trim().isEmpty() || rootPath.startsWith("content://")) {
+                            return ActualSaveLocation.unavailable("无法解析 KRKR 实际游戏目录");
+                        }
+                        return ActualSaveLocation.available(new File(rootPath, "savedata"), "KRKR 游戏目录存档");
+                    }
+                    return krkrScopedSaveLocation(context, rootPath);
+                }
+                case ARTEMIS: {
+                    String rootPath = stripFileScheme(resolveInternalArtemisPath(rootUri, launchTarget));
+                    return appScopedSaveLocation(context, rootPath, "Artemis 独立存档目录");
+                }
+                case ONS: {
+                    String rootPath = stripFileScheme(uriToFilePath(rootUri));
+                    File directory = OnsSettings.resolveScopedSaveDirectory(context, rootPath);
+                    return directory == null
+                            ? ActualSaveLocation.unavailable("应用独立存储目录不可用")
+                            : ActualSaveLocation.available(directory, "ONS 独立存档目录");
+                }
+                case TYRANO: {
+                    String gameDirectory = resolveInternalTyranoGameDirectory(rootUri, launchTarget);
+                    if (gameDirectory == null || gameDirectory.trim().isEmpty()
+                            || gameDirectory.startsWith("content://")) {
+                        return ActualSaveLocation.unavailable("无法解析 Tyrano 实际游戏目录");
+                    }
+                    File root = new File(stripFileScheme(gameDirectory));
+                    if (root.isFile()) root = root.getParentFile();
+                    return root == null
+                            ? ActualSaveLocation.unavailable("无法解析 Tyrano 实际游戏目录")
+                            : ActualSaveLocation.available(new File(root, "savedata"), "Tyrano 实际游戏目录存档");
+                }
+                default:
+                    return ActualSaveLocation.unavailable("该内置引擎未提供可管理的存档目录");
+            }
+        } catch (Throwable t) {
+            Log.w("EmulatorLauncher", "resolve actual save location failed engine=" + engine + " root=" + rootUri, t);
+            return ActualSaveLocation.unavailable("无法解析实际存档目录");
+        }
+    }
+
+    /**
+     * Returns every directory currently consulted by a built-in engine for one
+     * game's saves. KRKR keeps its callback-written files in app storage, but
+     * some native games still access <game-root>/savedata directly. Save
+     * import/export must operate on both locations as one save set.
+     */
+    public static List<File> resolveActualSaveDirectories(Context context, EngineType engine,
+                                                           String rootUri, String launchTarget) {
+        java.util.LinkedHashMap<String, File> directories = new java.util.LinkedHashMap<>();
+        ActualSaveLocation primary = resolveActualSaveLocation(context, engine, rootUri, launchTarget);
+        addActualSaveDirectory(directories, primary == null ? null : primary.directory);
+        if (engine == EngineType.KIRIKIRI && isKrScopedSaveDirEnabled(context)) {
+            try {
+                String resolved = resolveInternalKrkrPath(context, rootUri, launchTarget);
+                String rawRoot = stripFileScheme(uriToFilePath(rootUri));
+                String root = krkrRootForPath(rawRoot, stripFileScheme(resolved));
+                if (root != null && !root.trim().isEmpty() && !root.startsWith("content://")) {
+                    addActualSaveDirectory(directories, new File(root, "savedata"));
+                }
+            } catch (Throwable t) {
+                Log.w("EmulatorLauncher", "resolve KRKR native save directory failed root=" + rootUri, t);
+            }
+        }
+        return new ArrayList<>(directories.values());
+    }
+
+    private static void addActualSaveDirectory(java.util.LinkedHashMap<String, File> output, File directory) {
+        if (output == null || directory == null) return;
+        try {
+            File canonical = directory.getCanonicalFile();
+            output.put(canonical.getPath(), canonical);
+        } catch (IOException ignored) {
+            output.put(directory.getAbsolutePath(), directory.getAbsoluteFile());
+        }
+    }
+
+    private static ActualSaveLocation appScopedSaveLocation(Context context, String rootPath, String description) {
+        if (rootPath == null || rootPath.trim().isEmpty() || rootPath.startsWith("content://")) {
+            return ActualSaveLocation.unavailable("无法解析游戏本地目录");
+        }
+        File external = context.getExternalFilesDir(null);
+        if (external == null) return ActualSaveLocation.unavailable("应用独立存储目录不可用");
+        return ActualSaveLocation.available(new File(new File(external, "save"), safeSaveName(rootPath)), description);
+    }
+
+    /** KRKR keeps its original game root and redirects only savedata to this private directory. */
+    private static ActualSaveLocation krkrScopedSaveLocation(Context context, String rootPath) {
+        if (rootPath == null || rootPath.trim().isEmpty() || rootPath.startsWith("content://")) {
+            return ActualSaveLocation.unavailable("无法解析游戏本地目录");
+        }
+        File internal = context.getFilesDir();
+        if (internal == null) return ActualSaveLocation.unavailable("应用内部存储目录不可用");
+        File mirrorRoot = new File(new File(internal, "krkr_mirror"), safeSaveName(rootPath));
+        return ActualSaveLocation.available(new File(mirrorRoot, "savedata"), "KRKR 独立存档目录");
+    }
+
+    private static boolean isKrScopedSaveDirEnabled(Context context) {
+        return context == null || context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean("kr_scoped_save_dir", true);
+    }
 
 private static String resolveInternalArtemisPath(String rootUri, String launchTarget) {
         // Artemis launches by game directory. The .pfs file is only used for detection.
@@ -987,21 +1156,30 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         String rawRootPath = stripFileScheme(uriToFilePath(gamePath));
         String path = resolvedPath == null ? null : stripFileScheme(resolvedPath);
         String rootPath = krkrRootForPath(rawRootPath, path);
-        boolean globalScopedSaveDir = context != null && context.getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE).getBoolean("kr_scoped_save_dir", false);
-        boolean autoSdCardMirror = !originMode && !globalScopedSaveDir && isExternalSdCardKrPath(rootPath);
-        boolean scopedSaveDir = globalScopedSaveDir || autoSdCardMirror;
+        boolean globalScopedSaveDir = isKrScopedSaveDirEnabled(context);
+        boolean autoSdCardMirror = false;
+        boolean scopedSaveDir = globalScopedSaveDir;
+        ActualSaveLocation saveLocation = originMode ? null
+                : resolveActualSaveLocation(context, EngineType.KIRIKIRI, gamePath, launchTarget);
+        if (!originMode && (saveLocation == null || !saveLocation.available || saveLocation.directory == null)) {
+            throw new IllegalStateException(saveLocation == null ? "无法解析实际存档目录" : saveLocation.description);
+        }
+        // Do not derive this from the final directory name: for KRKR it is always
+        // "savedata". The game identifier remains the original root directory name.
         String saveName = safeSaveName(rootPath);
+        String scopedSaveRoot = null;
         if (!originMode && scopedSaveDir) {
-            KrkrMirror mirror = prepareKrkrScopedMirror(context, rootPath, path, saveName);
-            if (mirror != null) {
-                Log.i("EmulatorLauncher", "internal KRKR scoped mirror root=" + rootPath + " -> " + mirror.rootPath + " path=" + path + " -> " + mirror.launchPath + " globalScoped=" + globalScopedSaveDir + " autoSdMirror=" + autoSdCardMirror);
-                rootPath = mirror.rootPath;
-                path = mirror.launchPath;
-            } else if (autoSdCardMirror) {
-                scopedSaveDir = globalScopedSaveDir;
-                autoSdCardMirror = false;
-                Log.w("EmulatorLauncher", "internal KRKR auto SD mirror failed, fallback normal root=" + rootPath + " path=" + path);
+            if (!prepareKrkrScopedSaveDirectory(context, saveLocation.directory, saveName)) {
+                throw new IllegalStateException("无法创建 KRKR 应用独立存档目录");
             }
+            // Keep the executable and every read-only asset on the original
+            // game path. Some titles inspect their own root with native
+            // Storages APIs, which do not consistently follow app-private
+            // symlinks. Only savedata is redirected by the engine bridge.
+            scopedSaveRoot = saveLocation.directory.getAbsolutePath();
+            Log.i("EmulatorLauncher", "KRKR direct save redirect root=" + rootPath
+                    + " path=" + path + " save=" + scopedSaveRoot
+                    + " globalScoped=" + globalScopedSaveDir);
         }
         boolean use134 = !originMode && shouldUseKrkr134(rootPath, engineVersion);
         Intent i = new Intent(context, originMode ? org.tvp.kirikiri2.KR2Activity.class : (use134 ? com.akira.tyranoemu.remote.Kirikiroid134.class : com.akira.tyranoemu.remote.Kirikiroid139.class));
@@ -1035,52 +1213,35 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         i.putExtra("autoKrMirror", autoSdCardMirror);
         i.putExtra("terminateKrProcessOnDestroy", scopedSaveDir || safFileFallback || autoSdCardMirror);
         i.putExtra("scopedSaveName", saveName);
+        if (scopedSaveRoot != null) i.putExtra("scopedSaveRoot", scopedSaveRoot);
         i.putExtra("safFileFallback", safFileFallback);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return i;
     }
 
-    private static class KrkrMirror {
-        final String rootPath;
-        final String launchPath;
-        KrkrMirror(String rootPath, String launchPath) {
-            this.rootPath = rootPath;
-            this.launchPath = launchPath;
-        }
-    }
-
-    private static KrkrMirror prepareKrkrScopedMirror(Context context, String rootPath, String launchPath, String saveName) {
-        if (context == null || rootPath == null || rootPath.trim().isEmpty()) return null;
+    private static boolean prepareKrkrScopedSaveDirectory(Context context, File saveDirectory, String saveName) {
+        if (context == null || saveDirectory == null) return false;
         try {
-            File sourceRoot = new File(rootPath);
-            if (!sourceRoot.isDirectory()) return null;
             File internal = context.getFilesDir();
             File external = context.getExternalFilesDir(null);
-            if (internal == null || external == null) return null;
-            String name = (saveName == null || saveName.trim().isEmpty()) ? safeSaveName(rootPath) : saveName;
-            File mirrorRoot = new File(new File(internal, "krkr_mirror"), name);
-            File saveRoot = new File(new File(external, "save"), name);
-            if (!mirrorRoot.exists() && !mirrorRoot.mkdirs()) return null;
-            if (!saveRoot.exists() && !saveRoot.mkdirs()) return null;
-            File mirrorSave = new File(mirrorRoot, "savedata");
-            if (!ensureSymlink(mirrorSave, saveRoot)) return null;
-            File[] children = sourceRoot.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    if (child == null) continue;
-                    String childName = child.getName();
-                    if (childName == null || childName.isEmpty()) continue;
-                    if ("savedata".equalsIgnoreCase(childName)) continue;
-                    File link = new File(mirrorRoot, childName);
-                    ensureSymlink(link, child);
-                }
+            if (internal == null) return false;
+            String name = saveName == null ? "" : saveName.trim();
+            if (name.isEmpty()) return false;
+            if (isSymlink(saveDirectory) && !saveDirectory.delete()) return false;
+            if (saveDirectory.exists() && !saveDirectory.isDirectory()) return false;
+            if (!saveDirectory.exists() && !saveDirectory.mkdirs()) return false;
+            if (external != null) {
+                File legacySaveRoot = new File(new File(external, "save"), name);
+                int migrated = copyRegularFilesRecursively(legacySaveRoot, saveDirectory, true);
+                if (migrated > 0) Log.i("EmulatorLauncher", "migrated KRKR external saves count=" + migrated + " from=" + legacySaveRoot + " to=" + saveDirectory);
             }
-            String mappedLaunch = mapPathIntoMirror(rootPath, launchPath, mirrorRoot.getAbsolutePath());
-            Log.i("EmulatorLauncher", "KRKR scoped mirror ready source=" + rootPath + " mirror=" + mirrorRoot.getAbsolutePath() + " save=" + saveRoot.getAbsolutePath());
-            return new KrkrMirror(mirrorRoot.getAbsolutePath(), mappedLaunch);
+            File previousInternalSaveRoot = new File(new File(internal, "save"), name);
+            int migrated = copyRegularFilesRecursively(previousInternalSaveRoot, saveDirectory, true);
+            if (migrated > 0) Log.i("EmulatorLauncher", "migrated KRKR internal saves count=" + migrated + " from=" + previousInternalSaveRoot + " to=" + saveDirectory);
+            return true;
         } catch (Throwable t) {
-            Log.w("EmulatorLauncher", "prepare KRKR scoped mirror failed root=" + rootPath + " path=" + launchPath, t);
-            return null;
+            Log.w("EmulatorLauncher", "prepare KRKR scoped save directory failed save=" + saveDirectory, t);
+            return false;
         }
     }
 
@@ -1123,17 +1284,6 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         } catch (Throwable ignored) {
             return false;
         }
-    }
-
-    private static String mapPathIntoMirror(String sourceRoot, String launchPath, String mirrorRoot) {
-        if (launchPath == null || launchPath.trim().isEmpty()) return mirrorRoot;
-        String src = stripFileScheme(sourceRoot);
-        String path = stripFileScheme(launchPath);
-        if (src == null || path == null) return mirrorRoot;
-        while (src.endsWith("/") && src.length() > 1) src = src.substring(0, src.length() - 1);
-        if (path.equals(src)) return mirrorRoot;
-        if (path.startsWith(src + "/")) return mirrorRoot + path.substring(src.length());
-        return path;
     }
 
     private static boolean shouldUseKrkr134(String rootPath, String engineVersion) {

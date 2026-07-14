@@ -48,8 +48,10 @@ public final class LauncherKrkrBridge {
     }
 
     public static boolean isKrScopedSaveDir(Context context) {
-        if (context == null) return false;
-        return prefs(context).getBoolean(KEY_KR_SCOPED_SAVE_DIR, false);
+        if (context == null) return true;
+        // Keep the new app-scoped mode as the default, while allowing a game
+        // with stricter filesystem assumptions to use its original directory.
+        return prefs(context).getBoolean(KEY_KR_SCOPED_SAVE_DIR, true);
     }
 
     public static void setKrScopedSaveDir(Context context, boolean enabled) {
@@ -58,13 +60,12 @@ public final class LauncherKrkrBridge {
     }
 
     public static boolean isArtemisScopedSaveDir(Context context) {
-        if (context == null) return false;
-        return prefs(context).getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, false);
+        return true;
     }
 
     public static void setArtemisScopedSaveDir(Context context, boolean enabled) {
         if (context == null) return;
-        prefs(context).edit().putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, enabled).apply();
+        prefs(context).edit().putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, true).apply();
     }
 
     public static String normalizeEngineVersion(String value) {

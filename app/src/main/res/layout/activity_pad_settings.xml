@@ -172,7 +172,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="KR 独立存档目录（权限异常闪退时开启）"
+                        android:text="KR 独立存档目录（关闭后使用游戏原始 savedata）"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -194,7 +194,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Artemis 独立存档目录（权限异常闪退时开启）"
+                        android:text="Artemis 独立存档目录（已固定开启）"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -202,7 +202,8 @@
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/padArtemisScopedSwitch"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:enabled="false" />
                 </LinearLayout>
 
                 <LinearLayout

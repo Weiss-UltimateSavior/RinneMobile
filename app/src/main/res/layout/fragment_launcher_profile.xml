@@ -224,6 +224,23 @@
                 android:orientation="vertical">
 
                 <LinearLayout
+                    android:id="@+id/saveManagerRow"
+                    style="@style/LauncherManageItem">
+
+                    <TextView
+                        style="@style/LauncherManageIcon"
+                        android:text="V" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="存档管理" />
+
+                    <TextView
+                        style="@style/LauncherManageArrow"
+                        android:text=">" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/profileInfoRow"
                     style="@style/LauncherManageItem">
 
@@ -267,24 +284,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="云端恢复" />
-
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/helpCenterRow"
-                    style="@style/LauncherManageItem">
-
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="H" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="帮助中心" />
+                        android:text="配置恢复" />
 
                     <TextView
                         style="@style/LauncherManageArrow"

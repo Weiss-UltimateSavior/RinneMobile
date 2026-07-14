@@ -179,7 +179,7 @@ public class PadSettingsActivity extends AppCompatActivity {
                 ? "选择 Launcher 的主题风格与动态背景"
                 : showMetadata ? "选择游戏信息与封面获取的资料源"
                 : showAccount ? "管理云端同步、资料显示与账户功能偏好"
-                : "华为等部分机型如因存储权限导致引擎崩溃或闪退，可开启对应引擎的独立存档目录。");
+                : "KRKR、Artemis 与 ONS 固定使用应用独立存档目录，便于统一备份与恢复。");
         if (showAccount) {
             renderAllAccountChips();
             refreshEmailSubscription();

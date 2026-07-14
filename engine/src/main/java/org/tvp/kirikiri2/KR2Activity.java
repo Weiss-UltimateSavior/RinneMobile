@@ -300,9 +300,8 @@ public class KR2Activity extends Cocos2dxActivity {
                 }
             }
             String rel = p.length() > idx + folderLen ? p.substring(idx + folderLen) : "";
-            File base = new File(sInstance.getExternalFilesDir(null), "save");
-            String name = intent.getStringExtra("scopedSaveName");
-            File dir = new File(base, (name == null || name.trim().isEmpty()) ? "default" : name);
+            File dir = scopedSaveDirectory(intent);
+            if (dir == null) return path;
             File out = rel.isEmpty() ? dir : new File(dir, rel);
             File parent = out.isDirectory() ? out : out.getParentFile();
             if (parent != null && !parent.exists()) parent.mkdirs();
@@ -312,6 +311,18 @@ public class KR2Activity extends Cocos2dxActivity {
             android.util.Log.w("KR2Activity", "redirectScopedSavePath failed path=" + path, t);
             return path;
         }
+    }
+
+    private static File scopedSaveDirectory(Intent intent) {
+        if (sInstance == null || intent == null) return null;
+        String explicit = normalizeKrFilePath(intent.getStringExtra("scopedSaveRoot"));
+        if (explicit != null && !explicit.trim().isEmpty() && explicit.startsWith("/")) {
+            return new File(explicit);
+        }
+        String root = normalizeKrFilePath(intent.getStringExtra("projectRoot"));
+        if (root == null || root.trim().isEmpty()) root = normalizeKrFilePath(intent.getStringExtra("gamedir"));
+        if (root == null || root.trim().isEmpty() || !root.startsWith("/")) return null;
+        return new File(root, "savedata");
     }
     // 独立存档必须在文件写入入口完成重定向，禁止采用“先写原目录再周期复制/删除”的同步方案。
 
@@ -389,17 +400,22 @@ public class KR2Activity extends Cocos2dxActivity {
     @Override public void onLowMemory() { nativeOnLowMemory(); }
     @Override public void onWindowFocusChanged(boolean hasFocus) { super.onWindowFocusChanged(hasFocus); if (hasFocus) doSetSystemUiVisibility(); }
     public String[] getStoragePath() {
+        // The native engine uses this array for both its writable data root and
+        // archive/plugin discovery. The game root stays on external storage;
+        // only the first entry is the redirected app-private savedata path.
+        // Keep savedata first to preserve the app-scoped write target, then add
+        // the normal game roots below for read-only discovery.
+        java.util.LinkedHashSet<String> paths = new java.util.LinkedHashSet<>();
         try {
             if (getIntent() != null && getIntent().getBooleanExtra("scopedSaveDir", false)) {
-                File base = new File(getExternalFilesDir(null), "save");
-                String name = getIntent().getStringExtra("scopedSaveName");
-                File dir = new File(base, (name == null || name.trim().isEmpty()) ? "default" : name);
-                if (!dir.exists()) dir.mkdirs();
-                return new String[]{dir.getAbsolutePath()};
+                File dir = scopedSaveDirectory(getIntent());
+                if (dir != null) {
+                    if (!dir.exists()) dir.mkdirs();
+                    paths.add(dir.getAbsolutePath());
+                }
             }
         } catch (Throwable ignored) { }
 
-        java.util.LinkedHashSet<String> paths = new java.util.LinkedHashSet<>();
         try {
             Intent intent = getIntent();
             if (intent != null) {

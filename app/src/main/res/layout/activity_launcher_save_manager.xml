@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_bg">
+
+    <ScrollView
+        android:id="@+id/saveManagerScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="31dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="25dp">
+
+            <TextView
+                android:id="@+id/saveManagerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="存档管理"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/saveManagerStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
+                android:lineSpacingExtra="3dp"
+                android:text="导出与覆盖导入均使用 ZIP 压缩包。"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/saveGameLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="游戏"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <TextView
+                    android:id="@+id/btnExportSave"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/launcher_filter_chip_unselected"
+                    android:gravity="center"
+                    android:text="导出"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnOverwriteSave"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_marginStart="7dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="覆盖导入"
+                    android:textColor="@color/launcher_on_primary_color"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

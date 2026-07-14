@@ -38,6 +38,7 @@ import com.apps.LauncherActivity;
 import com.apps.account.LauncherAccountFragment;
 import com.apps.account.LauncherAccountSettingsActivity;
 import com.apps.data.LauncherViewModel;
+import com.apps.game.LauncherSaveCategoryActivity;
 import com.apps.leaderboard.LauncherLeaderboardActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -79,6 +80,11 @@ public class LauncherProfileFragment extends Fragment {
         });
         binding.accountSettingsRow.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), LauncherAccountSettingsActivity.class);
+            startActivity(intent);
+            LauncherMotion.applyActivityOpen(requireActivity());
+        });
+        binding.saveManagerRow.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LauncherSaveCategoryActivity.class);
             startActivity(intent);
             LauncherMotion.applyActivityOpen(requireActivity());
         });
@@ -220,7 +226,7 @@ public class LauncherProfileFragment extends Fragment {
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
-        title.setText("云端恢复");
+        title.setText("配置恢复");
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
         title.setTextSize(16);
@@ -302,7 +308,7 @@ public class LauncherProfileFragment extends Fragment {
                         dismissLoadingDialog();
                         if (settingsOk && playOk) {
                             new ViewModelProvider(requireActivity()).get(LauncherViewModel.class).refresh();
-                            showResultDialog("恢复成功", "配置已从云端恢复，即将重启生效");
+                            showResultDialog("恢复成功", "配置已恢复，即将重启生效");
                         } else {
                             showResultDialog("部分恢复失败", settingsOk ? "设置已恢复，游玩记录部分导入失败" : "设置恢复失败");
                         }

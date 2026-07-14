@@ -68,8 +68,22 @@ public abstract class r extends KR2Activity {
         Intent intent = getIntent();
         boolean scopedSaveDir = intent != null && intent.getBooleanExtra("scopedSaveDir", false);
         boolean safFileFallback = intent != null && intent.getBooleanExtra("safFileFallback", false);
-        if (intent == null || (!scopedSaveDir && !safFileFallback)) {
-            Log.i(TAG, "native interceptor skipped: scoped save and SAF fallback disabled");
+        if (intent == null) {
+            Log.i(TAG, "native interceptor skipped: no launch intent");
+            return;
+        }
+
+        // The scoped launcher keeps game assets at their original path and
+        // provides a real app-private savedata directory through the Java
+        // write bridge. Keep native filesystem calls intact: libkirikiroid3
+        // only hooks open(path, flags), while games also use other write APIs.
+        if (scopedSaveDir) {
+            Log.i(TAG, "KRKR scoped save uses direct savedata directory; native open interceptor disabled");
+            return;
+        }
+
+        if (!safFileFallback) {
+            Log.i(TAG, "native interceptor skipped: SAF fallback disabled");
             return;
         }
         String prefix = null;
@@ -82,7 +96,7 @@ public abstract class r extends KR2Activity {
                 if (root != null) {
                     File saveRoot = new File(new File(getExternalFilesDir(null), "save"), safeSaveName(root.getAbsolutePath()));
                     if (saveRoot.exists() || saveRoot.mkdirs()) {
-                        Log.i(TAG, scopedSaveDir ? "KRKR scoped save uses private mirror root; native save hook enabled" : "KRKR SAF file fallback hook enabled");
+                        Log.i(TAG, "KRKR SAF file fallback hook enabled");
                         prefix = storagePrefix(root.getAbsolutePath());
                     }
                 }
