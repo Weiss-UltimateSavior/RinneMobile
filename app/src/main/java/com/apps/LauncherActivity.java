@@ -38,6 +38,7 @@ import com.apps.game.LauncherManageFragment;
 import com.apps.home.LauncherHomeFragment;
 import com.apps.home.LauncherPlaceholderFragment;
 import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
 
 public class LauncherActivity extends AppCompatActivity {
@@ -421,33 +422,13 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void confirmOpenPadGameModeActivity() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(
-                (int) (252 * getResources().getDisplayMetrics().density),
-                WindowManager.LayoutParams.WRAP_CONTENT
+        LauncherDialogFactory.showConfirm(
+                this,
+                "横屏游戏模式",
+                "要进入横屏游戏沉浸模式吗？",
+                "确定",
+                this::openPadGameModeActivity
         );
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_launcher_confirm, null);
-        window.setContentView(dialogView);
-
-        TextView titleView = dialogView.findViewById(R.id.dialogTitle);
-        TextView messageView = dialogView.findViewById(R.id.dialogMessage);
-        TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
-        TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
-
-        titleView.setText("横屏游戏模式");
-        messageView.setText("要进入横屏游戏沉浸模式吗？");
-        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
-        btnCancel.setOnClickListener(view -> dialog.dismiss());
-        btnConfirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            openPadGameModeActivity();
-        });
     }
 
     public static void setLauncherDarkMode(android.content.Context context, boolean darkMode) {

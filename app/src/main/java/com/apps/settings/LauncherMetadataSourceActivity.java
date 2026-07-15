@@ -65,6 +65,9 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
         binding.sourceSpinner.setAdapter(adapter);
         LauncherTheme.styleSpinner(binding.sourceSpinner);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.formInputs(binding.tokenInput);
+        LauncherTheme.longActionButton(binding.btnSave);
+        LauncherTheme.longActionButton(binding.btnCancel);
     }
 
     private void loadConfig() {

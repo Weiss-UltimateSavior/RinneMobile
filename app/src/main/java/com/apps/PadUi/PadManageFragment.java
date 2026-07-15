@@ -1,7 +1,6 @@
 package com.apps.PadUi;
 
 import android.content.Context;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.Manifest;
@@ -25,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -557,98 +557,22 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void confirmLaunchGame(Game game) {
         if (game == null) return;
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .create();
-        dialog.show();
-
-        android.view.Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-            window.setLayout(
-                    (int) (252 * getResources().getDisplayMetrics().density),
-                    android.view.WindowManager.LayoutParams.WRAP_CONTENT
-            );
-            android.view.View dialogView = android.view.LayoutInflater.from(requireContext())
-                    .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
-            window.setContentView(dialogView);
-
-            TextView titleView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogTitle);
-            TextView messageView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogMessage);
-            TextView btnCancel = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnCancel);
-            TextView btnConfirm = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnConfirm);
-
-            titleView.setText("启动游戏");
-            messageView.setText("确定启动「" + safeTitle(game) + "」吗？");
-            LauncherTheme.dialogButtons(btnCancel, btnConfirm);
-
-            btnCancel.setOnClickListener(v -> dialog.dismiss());
-            btnConfirm.setOnClickListener(v -> {
-                dialog.dismiss();
-                launchGameDirectly(game);
-            });
-        }
+        PadDialogFactory.showConfirm(requireContext(), "启动游戏",
+                "确定启动「" + safeTitle(game) + "」吗？", "确定",
+                () -> launchGameDirectly(game));
     }
 
     private void showGameActionMenu(Game game) {
         if (game == null) return;
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-
-        android.view.Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(safeTitle(game));
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setSingleLine(true);
-        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        addGameActionOption(root, "详情", dialog, game, () -> showGameDetailDialog(game));
-        addGameActionOption(root, "状态", dialog, game, () -> showPlayStatusDialog(game));
-        addGameActionOption(root, "修改时长", dialog, game, () -> showEditPlayTimeDialog(game));
-        addGameActionOption(root, "更多选项", dialog, game, () -> showMoreOptionsDialog(game));
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
-    }
-
-    private void addGameActionOption(LinearLayout root, String label, AlertDialog dialog, Game game, Runnable action) {
-        TextView option = new TextView(requireContext());
-        option.setText(label);
-        option.setGravity(android.view.Gravity.CENTER);
-        option.setSingleLine(true);
-        option.setTextSize(13);
-        option.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.menuItem(option);
-        option.setOnClickListener(view -> {
-            dialog.dismiss();
-            action.run();
-        });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        lp.setMargins(0, dp(11), 0, 0);
-        root.addView(option, lp);
+        PadDialogFactory.showActionChoices(requireContext(), safeTitle(game),
+                new String[]{"详情", "状态", "修改时长", "更多选项"}, -1, index -> {
+                    switch (index) {
+                        case 0: showGameDetailDialog(game); break;
+                        case 1: showPlayStatusDialog(game); break;
+                        case 2: showEditPlayTimeDialog(game); break;
+                        case 3: showMoreOptionsDialog(game); break;
+                    }
+                });
     }
 
     private String safeTitle(Game game) {
@@ -659,6 +583,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     private AlertDialog createLauncherDialog() {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -670,7 +595,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackground(LauncherTheme.secondaryButton(requireContext(), 20f));
         return root;
     }
 
@@ -721,32 +646,17 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void showPlayStatusDialog(Game game) {
         if (game == null) return;
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("设置游玩状态"));
-
         String[] labels = {"☆ 未玩", "🎮 在玩", "🏆 玩过"};
         String[] values = {"unplayed", "playing", "completed"};
-        for (int i = 0; i < labels.length; i++) {
-            final String status = values[i];
-            TextView option = new TextView(requireContext());
-            option.setText((status.equals(game.playStatus) ? "● " : "○ ") + labels[i]);
-            option.setGravity(android.view.Gravity.CENTER);
-            option.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-            option.setTextSize(13);
-            option.setTypeface(null, android.graphics.Typeface.BOLD);
-            option.setBackground(LauncherTheme.cancelChip(requireContext()));
-            option.setOnClickListener(v -> {
-                dialog.dismiss();
-                updateGameStatus(game, status);
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
-            lp.setMargins(0, dp(11), 0, 0);
-            root.addView(option, lp);
+        int checkedIndex = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(game.playStatus)) {
+                checkedIndex = i;
+                break;
+            }
         }
-        root.addView(createDialogCancelButton(dialog));
-        dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        PadDialogFactory.showSingleChoice(requireContext(), "设置游玩状态", labels, checkedIndex,
+                index -> updateGameStatus(game, values[index]));
     }
 
     private void updateGameStatus(Game game, String status) {
@@ -962,47 +872,18 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void showMoreOptionsDialog(Game game) {
         if (game == null) return;
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("更多选项"));
-
         String favoriteLabel = game.favorite ? "取消收藏" : "添加收藏";
-        String[][] options = {
-            {favoriteLabel, "favorite"},
-            {"重新匹配 VNDB 元数据", "rematch"},
-            {"自定义搜索 VNDB", "custom_vndb"},
-            {"同步元数据封面到卡片", "sync"},
-            {"删除游戏", "delete"}
-        };
-        for (String[] opt : options) {
-            TextView option = new TextView(requireContext());
-            option.setText(opt[0]);
-            option.setGravity(android.view.Gravity.CENTER);
-            option.setTextSize(13);
-            option.setTypeface(null, android.graphics.Typeface.BOLD);
-            if (opt[1].equals("delete")) {
-                LauncherTheme.dangerMenuItem(option);
-            } else {
-                LauncherTheme.menuItem(option);
+        PadDialogFactory.showActionChoices(requireContext(), "更多选项", new String[]{
+                favoriteLabel, "重新匹配 VNDB 元数据", "自定义搜索 VNDB", "同步元数据封面到卡片", "删除游戏"
+        }, 4, index -> {
+            switch (index) {
+                case 0: toggleFavorite(game); break;
+                case 1: rematchMetadata(game); break;
+                case 2: LauncherCustomVndbSearchDialog.show(this, game, this::loadGames); break;
+                case 3: syncMetadataToCard(game); break;
+                case 4: confirmDeleteGame(game); break;
             }
-            String action = opt[1];
-            option.setOnClickListener(v -> {
-                dialog.dismiss();
-                switch (action) {
-                    case "favorite": toggleFavorite(game); break;
-                    case "rematch": rematchMetadata(game); break;
-                    case "custom_vndb": LauncherCustomVndbSearchDialog.show(this, game, this::loadGames); break;
-                    case "sync": syncMetadataToCard(game); break;
-                    case "delete": confirmDeleteGame(game); break;
-                }
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
-            lp.setMargins(0, dp(11), 0, 0);
-            root.addView(option, lp);
-        }
-        root.addView(createDialogCancelButton(dialog));
-        dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        });
     }
 
     private void toggleFavorite(Game game) {
@@ -1022,50 +903,9 @@ private void loadNextPage(boolean forceFullRefresh) {
     }
 
     private void confirmDeleteGame(Game game) {
-        AlertDialog confirm = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("删除游戏"));
-        TextView msg = new TextView(requireContext());
-        msg.setText("要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。");
-        msg.setGravity(android.view.Gravity.CENTER);
-        msg.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        msg.setTextSize(12);
-        msg.setLineSpacing(dp(4), 1f);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msg, msgLp);
-
-        LinearLayout btnRow = new LinearLayout(requireContext());
-        btnRow.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow.setWeightSum(2f);
-        LinearLayout.LayoutParams brLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        brLp.setMargins(0, dp(13), 0, 0);
-        btnRow.setLayoutParams(brLp);
-
-        TextView cancelBtn = createDialogCancelButton(confirm);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        cancelLp.setMargins(0, 0, dp(5), 0);
-        cancelBtn.setLayoutParams(cancelLp);
-        btnRow.addView(cancelBtn);
-
-        TextView deleteBtn = new TextView(requireContext());
-        deleteBtn.setText("移除");
-        deleteBtn.setGravity(android.view.Gravity.CENTER);
-        deleteBtn.setTextSize(13);
-        deleteBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.dangerButton(deleteBtn);
-        LinearLayout.LayoutParams delLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        delLp.setMargins(dp(5), 0, 0, 0);
-        deleteBtn.setLayoutParams(delLp);
-        deleteBtn.setOnClickListener(v -> {
-            confirm.dismiss();
-            deleteGame(game);
-        });
-        btnRow.addView(deleteBtn);
-        root.addView(btnRow);
-
-        confirm.getWindow().setContentView(root);
-        confirm.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        PadDialogFactory.showDangerConfirm(requireContext(), "删除游戏",
+                "要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。",
+                "移除", () -> deleteGame(game));
     }
 
     private void deleteGame(Game game) {
@@ -1081,62 +921,9 @@ private void loadNextPage(boolean forceFullRefresh) {
     }
 
     private void showSyncDataConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("同步数据");
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setText("全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？");
-        message.setGravity(android.view.Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirmBtn = new TextView(requireContext());
-        confirmBtn.setText("确定同步");
-        confirmBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirmBtn);
-        confirmBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            performBatchSync();
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirmBtn, confirmLp);
-
-        TextView cancelBtn = new TextView(requireContext());
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(android.view.Gravity.CENTER);
-        cancelBtn.setTextColor(LauncherTheme.primary(requireContext()));
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancelBtn.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancelBtn, cancelLp);
-
-        window.setContentView(root);
+        PadDialogFactory.showStandardConfirm(requireContext(), "同步数据",
+                "全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？",
+                "确定同步", this::performBatchSync);
     }
 
     private void performBatchSync() {
@@ -1276,7 +1063,7 @@ mainQueue.post(() -> {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackground(LauncherTheme.secondaryButton(requireContext(), 20f));
 
         TextView title = new TextView(requireContext());
         title.setText(titleText);
@@ -1327,47 +1114,7 @@ mainQueue.post(() -> {
 
     private void showSyncResultDialog(int synced, int failed) {
         String message = "同步完成 " + synced + " 个" + (failed > 0 ? "\n失败 " + failed + " 个" : "");
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(requireContext());
-        titleView.setText("同步完成");
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(requireContext());
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(requireContext());
-        okBtn.setText("知道了");
-        okBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
+        PadDialogFactory.showInfo(requireContext(), "同步完成", message);
     }
 
     private void rematchMetadata(Game game) {

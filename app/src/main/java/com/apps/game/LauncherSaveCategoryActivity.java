@@ -85,12 +85,11 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
 
         TextView icon = itemBinding.manageItemIcon;
         icon.setText(engineIcon(engine));
-        icon.setTextColor(LauncherTheme.onPrimary(this));
-        icon.setBackground(LauncherTheme.circle(this));
 
         TextView title = itemBinding.manageItemTitle;
         title.setText(engineLabel(engine) + " · " + count + " 个游戏");
         LauncherTheme.applyPrimaryTone(row);
+        LauncherTheme.styleManageRow(row);
         binding.saveCategoryList.addView(row);
     }
 

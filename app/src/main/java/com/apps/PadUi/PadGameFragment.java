@@ -411,26 +411,8 @@ public class PadGameFragment extends Fragment {
     }
 
     private void confirmLaunchGame(Game game) {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        if (dialog.getWindow() == null) return;
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.getWindow().setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-        View content = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_launcher_confirm, null);
-        dialog.getWindow().setContentView(content);
-
-        TextView title = content.findViewById(R.id.dialogTitle);
-        TextView message = content.findViewById(R.id.dialogMessage);
-        TextView cancel = content.findViewById(R.id.dialogBtnCancel);
-        TextView confirm = content.findViewById(R.id.dialogBtnConfirm);
-        title.setText("启动游戏");
-        message.setText("确定启动「" + safeTitle(game) + "」吗？");
-        LauncherTheme.dialogButtons(cancel, confirm);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        confirm.setOnClickListener(view -> {
-            dialog.dismiss();
+        PadDialogFactory.showConfirm(requireContext(), "启动游戏",
+                "确定启动「" + safeTitle(game) + "」吗？", "确定", () -> {
             LauncherGameLaunchBridge.LaunchResult result =
                     LauncherGameLaunchBridge.launch(requireContext(), game);
             if (result.success) {

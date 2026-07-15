@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 
@@ -101,31 +102,22 @@ public final class LauncherGameActionController {
     }
 
     private void showPlayStatusDialog(Game game) {
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("设置游玩状态"));
         String[] labels = {"☆ 未玩", "🎮 在玩", "🏆 玩过"};
         String[] values = {"unplayed", "playing", "completed"};
-        for (int i = 0; i < labels.length; i++) {
-            String status = values[i];
-            TextView option = new TextView(context());
-            option.setText((status.equals(game.playStatus) ? "● " : "○ ") + labels[i]);
-            option.setGravity(Gravity.CENTER);
-            option.setTextColor(ContextCompat.getColor(context(), R.color.launcher_text_color));
-            option.setTextSize(13);
-            option.setTypeface(null, Typeface.BOLD);
-            option.setBackground(LauncherTheme.cancelChip(context()));
-            option.setOnClickListener(view -> {
-                dialog.dismiss();
-                updateGameStatus(game, status);
-            });
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
-            params.setMargins(0, dp(11), 0, 0);
-            root.addView(option, params);
+        int checkedIndex = -1;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(game.playStatus)) {
+                checkedIndex = i;
+                break;
+            }
         }
-        root.addView(createDialogCancelButton(dialog));
-        setDialogContent(dialog, root, 280);
+        LauncherDialogFactory.showSingleChoice(
+                context(),
+                "设置游玩状态",
+                labels,
+                checkedIndex,
+                index -> updateGameStatus(game, values[index])
+        );
     }
 
     private void updateGameStatus(Game game, String status) {

@@ -98,7 +98,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="45dp"
                 android:layout_marginTop="7dp"
                 android:orientation="horizontal">
 
@@ -120,14 +120,11 @@
 
                 <TextView
                     android:id="@+id/registerSendCode"
+                    style="@style/LauncherInlineActionButton"
                     android:layout_width="106dp"
-                    android:layout_height="match_parent"
                     android:layout_marginStart="9dp"
-                    android:gravity="center"
                     android:text="获取验证码"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    />
             </LinearLayout>
 
             <TextView
@@ -213,15 +210,10 @@
 
             <TextView
                 android:id="@+id/registerCreate"
-                android:layout_width="match_parent"
-                android:layout_height="41dp"
+                style="@style/LauncherLongActionButton"
                 android:layout_marginTop="25dp"
-                android:background="@drawable/launcher_account_primary_button"
-                android:gravity="center"
                 android:text="创建账户"
-                android:textColor="@color/launcher_on_primary_color"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                />
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

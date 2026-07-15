@@ -52,7 +52,11 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         bindKeyboardVisibility();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
-        LauncherTheme.primaryButton(binding.registerSendCode);
+        LauncherTheme.formInputs(binding.registerName, binding.registerEmail,
+                binding.registerVerificationCode, binding.registerPassword,
+                binding.registerConfirmPassword, binding.registerKey);
+        LauncherTheme.shortActionButton(binding.registerSendCode);
+        LauncherTheme.longActionButton(binding.registerCreate);
     }
 
     private void applySystemBarInsets() {
@@ -260,7 +264,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);

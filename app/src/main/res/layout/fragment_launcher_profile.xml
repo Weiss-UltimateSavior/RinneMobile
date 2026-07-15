@@ -235,9 +235,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="存档管理" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -252,9 +253,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="个人资料" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -269,9 +271,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="账号设置" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -286,9 +289,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="配置恢复" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -303,9 +307,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="退出登录" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

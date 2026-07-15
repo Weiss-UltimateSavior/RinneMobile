@@ -23,6 +23,7 @@ import com.yuki.yukihub.databinding.ActivityLauncherAccountSettingsBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
 import com.apps.sync.LauncherSyncScheduler;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -90,65 +91,13 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void showEmailSubscriptionConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(this);
-        title.setText("开启邮件订阅");
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(this);
-        message.setText("开启后，管理员可向你的注册邮箱发送系统通知和广播邮件。");
-        message.setGravity(Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams messageLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        messageLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, messageLp);
-
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        buttonsLp.setMargins(0, dp(14), 0, 0);
-
-        TextView cancel = new TextView(this);
-        cancel.setText("取消");
-        cancel.setGravity(Gravity.CENTER);
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.secondaryButton(cancel);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        buttons.addView(cancel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
-
-        TextView confirm = new TextView(this);
-        confirm.setText("开启订阅");
-        confirm.setGravity(Gravity.CENTER);
-        confirm.setTextSize(13);
-        confirm.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            updateEmailSubscription(true);
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        confirmLp.setMargins(dp(8), 0, 0, 0);
-        buttons.addView(confirm, confirmLp);
-        root.addView(buttons, buttonsLp);
-        window.setContentView(root);
+        LauncherDialogFactory.showConfirm(
+                this,
+                "开启邮件订阅",
+                "开启后，管理员可向你的注册邮箱发送系统通知和广播邮件。",
+                "开启订阅",
+                () -> updateEmailSubscription(true)
+        );
     }
 
     private void updateEmailSubscription(boolean subscribed) {
@@ -208,122 +157,26 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void showRealtimePlaytimeConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(this);
-        title.setText("实时游玩时间");
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(this);
-        message.setText("此功能启用将实时上传游玩详细信息，确定要使用吗？");
-        message.setGravity(Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirmBtn = new TextView(this);
-        confirmBtn.setText("确定开启");
-        confirmBtn.setGravity(Gravity.CENTER);
-        LauncherTheme.primaryButton(confirmBtn);
-        confirmBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("realtime_playtime", true).apply();
-            renderChip(binding.chipRealtimePlaytime, true);
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirmBtn, confirmLp);
-
-        TextView cancelBtn = new TextView(this);
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(Gravity.CENTER);
-        cancelBtn.setTextColor(LauncherTheme.primary(this));
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancelBtn.setBackground(LauncherTheme.cancelChip(this));
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancelBtn, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                this,
+                "实时游玩时间",
+                "此功能启用将实时上传游玩详细信息，确定要使用吗？",
+                "确定开启",
+                () -> {
+                    getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("realtime_playtime", true).apply();
+                    renderChip(binding.chipRealtimePlaytime, true);
+                }
+        );
     }
 
     private void showSyncConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(this);
-        title.setText("配置同步");
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(this);
-        message.setText("是否上传当前配置到云端？开启后将在每晚12点自动备份。");
-        message.setGravity(Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirmBtn = new TextView(this);
-        confirmBtn.setText("确定上传");
-        confirmBtn.setGravity(Gravity.CENTER);
-        LauncherTheme.primaryButton(confirmBtn);
-        confirmBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            enableSyncAndUpload();
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirmBtn, confirmLp);
-
-        TextView cancelBtn = new TextView(this);
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(Gravity.CENTER);
-        cancelBtn.setTextColor(LauncherTheme.primary(this));
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancelBtn.setBackground(LauncherTheme.cancelChip(this));
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancelBtn, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                this,
+                "配置同步",
+                "是否上传当前配置到云端？开启后将在每晚12点自动备份。",
+                "确定上传",
+                this::enableSyncAndUpload
+        );
     }
 
     private void enableSyncAndUpload() {
@@ -382,49 +235,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private AlertDialog showLoadingDialog(String titleText, String hintText) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.setCancelable(false);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return dialog;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(this);
-        title.setText(titleText);
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        ProgressBar progressBar = new ProgressBar(this);
-        progressBar.setIndeterminate(true);
-        progressBar.getIndeterminateDrawable().setColorFilter(
-                LauncherTheme.primary(this), android.graphics.PorterDuff.Mode.SRC_IN);
-        LinearLayout.LayoutParams pbLp = new LinearLayout.LayoutParams(dp(32), dp(32));
-        pbLp.gravity = Gravity.CENTER_HORIZONTAL;
-        pbLp.setMargins(0, dp(14), 0, 0);
-        root.addView(progressBar, pbLp);
-
-        TextView hint = new TextView(this);
-        hint.setText(hintText);
-        hint.setGravity(Gravity.CENTER);
-        hint.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        hint.setTextSize(11);
-        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hintLp.setMargins(0, dp(10), 0, 0);
-        root.addView(hint, hintLp);
-
-        window.setContentView(root);
-        return dialog;
+        return LauncherDialogFactory.showLoading(this, titleText, hintText);
     }
 
     private void dismissLoading() {
@@ -435,47 +246,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void showResultDialog(String title, String message) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(this);
-        titleView.setText(title);
-        titleView.setGravity(Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(this);
-        msgView.setText(message);
-        msgView.setGravity(Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(this);
-        okBtn.setText("知道了");
-        okBtn.setGravity(Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showInfo(this, title, message);
     }
 
     private void renderAllChips() {

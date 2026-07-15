@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -203,6 +204,48 @@ public final class LauncherTheme {
         view.setBackground(primaryButton(view.getContext(), 20f));
     }
 
+    /** Applies the common full-width action treatment used by Launcher setting pages. */
+    public static void longActionButton(TextView view) {
+        if (view == null) return;
+        view.setGravity(android.view.Gravity.CENTER);
+        view.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f);
+        view.setTypeface(null, android.graphics.Typeface.BOLD);
+        primaryButton(view);
+    }
+
+    /** Applies the compact form of the shared Launcher action treatment. */
+    public static void shortActionButton(TextView view) {
+        longActionButton(view);
+    }
+
+    /** Applies the compact secondary action treatment while preserving shared button metrics. */
+    public static void shortSecondaryActionButton(TextView view) {
+        if (view == null) return;
+        view.setGravity(android.view.Gravity.CENTER);
+        view.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f);
+        view.setTypeface(null, android.graphics.Typeface.BOLD);
+        secondaryButton(view);
+    }
+
+    /** Normalizes ordinary page form fields; call only from non-dialog page roots. */
+    public static void formInputs(EditText... views) {
+        if (views == null) return;
+        for (EditText view : views) {
+            if (view == null) continue;
+            Context context = view.getContext();
+            view.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f);
+            view.setPaddingRelative(dp(context, 13f), view.getPaddingTop(), dp(context, 13f), view.getPaddingBottom());
+            view.setBackground(secondaryButton(context, 20f));
+            int inputType = view.getInputType();
+            boolean multiline = (inputType & android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0;
+            if (!multiline && view.getLayoutParams() != null) {
+                view.getLayoutParams().height = dp(context, 45f);
+                view.requestLayout();
+            }
+            styleTextInput(view);
+        }
+    }
+
     public static void secondaryButton(TextView view) {
         if (view == null) return;
         view.setTextColor(primary(view.getContext()));
@@ -349,6 +392,22 @@ public final class LauncherTheme {
             for (int i = 0; i < group.getChildCount(); i++) {
                 applyPrimaryTone(group.getChildAt(i));
             }
+        }
+    }
+
+    /** Applies the shared icon and arrow treatment used by Launcher action rows. */
+    public static void styleManageRow(View row) {
+        if (!(row instanceof ViewGroup)) return;
+        Context context = row.getContext();
+        ViewGroup group = (ViewGroup) row;
+        if (group.getChildCount() > 0 && group.getChildAt(0) instanceof TextView) {
+            TextView icon = (TextView) group.getChildAt(0);
+            icon.setBackground(circle(context));
+            icon.setTextColor(onPrimary(context));
+        }
+        if (group.getChildCount() > 2 && group.getChildAt(2) instanceof ImageView) {
+            ((ImageView) group.getChildAt(2)).setImageTintList(
+                    ColorStateList.valueOf(primary(context)));
         }
     }
 

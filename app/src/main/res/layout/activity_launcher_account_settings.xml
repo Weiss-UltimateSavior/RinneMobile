@@ -31,17 +31,9 @@
 
             <LinearLayout
                 android:id="@+id/rowSyncConfig"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
+                style="@style/LauncherActionRow"
                 android:layout_marginTop="25dp"
-                android:layout_marginBottom="11dp"
-                android:background="@drawable/launcher_white_card"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp">
+                >
 
                 <TextView
                     android:layout_width="0dp"
@@ -65,16 +57,7 @@
 
             <LinearLayout
                 android:id="@+id/rowRealtimePlaytime"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginBottom="11dp"
-                android:background="@drawable/launcher_white_card"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp">
+                style="@style/LauncherActionRow">
 
                 <TextView
                     android:layout_width="0dp"
@@ -98,16 +81,7 @@
 
             <LinearLayout
                 android:id="@+id/rowEmailSubscribe"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginBottom="11dp"
-                android:background="@drawable/launcher_white_card"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp">
+                style="@style/LauncherActionRow">
 
                 <TextView
                     android:layout_width="0dp"

@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherToolboxBinding;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -56,33 +57,12 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     }
 
     private void confirmOpenExternalTool(String name, String url) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(
-                (int) (280 * getResources().getDisplayMetrics().density),
-                WindowManager.LayoutParams.WRAP_CONTENT
-        );
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_launcher_confirm, null);
-        window.setContentView(dialogView);
-
-        TextView titleView = dialogView.findViewById(R.id.dialogTitle);
-        TextView messageView = dialogView.findViewById(R.id.dialogMessage);
-        TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
-        TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
-
-        titleView.setText("跳转下载");
-        messageView.setText("即将跳转到浏览器下载 " + name + "，是否继续？");
-        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
-        btnCancel.setOnClickListener(view -> dialog.dismiss());
-        btnConfirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-        });
+        LauncherDialogFactory.showConfirm(
+                this,
+                "跳转下载",
+                "即将跳转到浏览器下载 " + name + "，是否继续？",
+                "确定",
+                () -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
     }
 
     private void applySystemBarInsets() {
@@ -105,7 +85,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
-        LauncherTheme.primaryButton(binding.toolboxBack);
+        LauncherTheme.longActionButton(binding.toolboxBack);
     }
 
     private void configureEdgeToEdgeWindow() {

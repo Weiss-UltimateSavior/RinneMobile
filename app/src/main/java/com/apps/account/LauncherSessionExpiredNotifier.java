@@ -63,7 +63,7 @@ public final class LauncherSessionExpiredNotifier implements LauncherAuthBridge.
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(activity, 276), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(activity, 252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);

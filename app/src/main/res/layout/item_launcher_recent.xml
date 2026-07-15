@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    style="@style/LauncherListCard"
     android:layout_height="68dp"
     android:layout_marginBottom="9dp"
-    android:background="@drawable/launcher_white_card"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="14dp"

@@ -67,6 +67,9 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleSwitch(binding.onsScopedSwitch);
         LauncherTheme.styleSwitch(binding.tyranoScopedSwitch);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.longActionButton(binding.btnNativeKrkr);
+        LauncherTheme.longActionButton(binding.btnSave);
+        LauncherTheme.longActionButton(binding.btnCancel);
     }
 
     private void loadConfig() {

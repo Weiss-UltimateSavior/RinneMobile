@@ -48,16 +48,10 @@
 
             <EditText
                 android:id="@+id/syncServerInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/launcher_account_input"
                 android:hint="例如 https://dav.jianguoyun.com/dav/"
-                android:inputType="textUri"
-                android:padding="13dp"
-                android:textColor="@color/launcher_text_color"
-                android:textColorHint="@color/launcher_input_hint_color"
-                android:textSize="13sp" />
+                android:inputType="textUri" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -70,16 +64,10 @@
 
             <EditText
                 android:id="@+id/syncUserInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/launcher_account_input"
                 android:hint="WebDAV 账号"
-                android:inputType="text"
-                android:padding="13dp"
-                android:textColor="@color/launcher_text_color"
-                android:textColorHint="@color/launcher_input_hint_color"
-                android:textSize="13sp" />
+                android:inputType="text" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -92,16 +80,10 @@
 
             <EditText
                 android:id="@+id/syncPasswordInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/launcher_account_input"
                 android:hint="WebDAV 密码 / 应用密码"
-                android:inputType="textPassword"
-                android:padding="13dp"
-                android:textColor="@color/launcher_text_color"
-                android:textColorHint="@color/launcher_input_hint_color"
-                android:textSize="13sp" />
+                android:inputType="textPassword" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -139,79 +121,47 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:orientation="horizontal"
-                android:weightSum="3">
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/btnTest"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_filter_chip_unselected"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
                     android:text="测试连接"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
 
                 <TextView
                     android:id="@+id/btnSyncNow"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_marginStart="7dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_filter_chip_unselected"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
+                    android:layout_marginTop="9dp"
                     android:text="立即同步"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
 
                 <TextView
                     android:id="@+id/btnSave"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_marginStart="7dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_account_primary_button"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
+                    android:layout_marginTop="9dp"
                     android:text="保存配置"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:orientation="horizontal"
-                android:weightSum="2">
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/btnExport"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_filter_chip_unselected"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
                     android:text="导出本地备份"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
 
                 <TextView
                     android:id="@+id/btnImport"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_marginStart="9dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_filter_chip_unselected"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
+                    android:layout_marginTop="9dp"
                     android:text="导入本地备份"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

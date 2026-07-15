@@ -58,6 +58,7 @@ public class LauncherDisclaimerActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.longActionButton(binding.disclaimerClose);
         View iconWrap = binding.disclaimerContent.getChildAt(1);
         if (iconWrap instanceof android.view.ViewGroup) {
             android.view.ViewGroup group = (android.view.ViewGroup) iconWrap;

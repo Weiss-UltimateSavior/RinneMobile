@@ -11,8 +11,9 @@
         android:id="@+id/manageItemTitle"
         style="@style/LauncherManageTitle" />
 
-    <TextView
+    <ImageView
         android:id="@+id/manageItemArrow"
-        style="@style/LauncherManageArrow"
-        android:text=">" />
+        style="@style/LauncherManageArrowIcon"
+        android:contentDescription="@null"
+        android:src="@drawable/launcher_manage_arrow" />
 </LinearLayout>

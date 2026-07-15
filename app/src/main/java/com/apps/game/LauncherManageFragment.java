@@ -44,6 +44,7 @@ import org.json.JSONObject;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.settings.LauncherMetadataSourceActivity;
 import com.apps.sync.LauncherSyncCenterActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -142,12 +143,7 @@ public class LauncherManageFragment extends Fragment {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         for (int i = 0; i < binding.manageActionList.getChildCount(); i++) {
             View row = binding.manageActionList.getChildAt(i);
-            if (!(row instanceof ViewGroup)) continue;
-            View icon = ((ViewGroup) row).getChildAt(0);
-            if (icon instanceof TextView) {
-                icon.setBackground(LauncherTheme.circle(requireContext()));
-                ((TextView) icon).setTextColor(LauncherTheme.onPrimary(requireContext()));
-            }
+            LauncherTheme.styleManageRow(row);
         }
     }
 
@@ -784,32 +780,7 @@ public class LauncherManageFragment extends Fragment {
     }
 
     private void showLauncherConfirmDialog(String title, String message, String confirmText, Runnable onConfirm) {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
-        LauncherTabletPortraitScaler.apply(dialogView);
-        window.setContentView(dialogView);
-
-        TextView titleView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogTitle);
-        TextView messageView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogMessage);
-        TextView btnCancel = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnCancel);
-        TextView btnConfirm = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnConfirm);
-
-        titleView.setText(title);
-        messageView.setText(message);
-        btnConfirm.setText(confirmText);
-        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
-        btnCancel.setOnClickListener(view -> dialog.dismiss());
-        btnConfirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            onConfirm.run();
-        });
+        LauncherDialogFactory.showConfirm(requireContext(), title, message, confirmText, onConfirm);
     }
 
     private List<String> getScanRootUris() {

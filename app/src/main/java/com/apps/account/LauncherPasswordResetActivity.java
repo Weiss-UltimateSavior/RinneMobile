@@ -37,8 +37,10 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
-        LauncherTheme.primaryButton(binding.resetSendCode);
-        LauncherTheme.primaryButton(binding.resetSubmit);
+        LauncherTheme.formInputs(binding.resetEmail, binding.resetVerificationCode,
+                binding.resetPassword, binding.resetConfirmPassword);
+        LauncherTheme.shortActionButton(binding.resetSendCode);
+        LauncherTheme.longActionButton(binding.resetSubmit);
         binding.resetSendCode.setOnClickListener(view -> sendVerificationCode());
         binding.resetSubmit.setOnClickListener(view -> resetPassword());
         LauncherMotion.applyActivityOpen(this);
@@ -136,7 +138,7 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));

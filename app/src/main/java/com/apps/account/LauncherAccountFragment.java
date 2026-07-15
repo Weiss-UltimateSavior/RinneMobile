@@ -44,6 +44,11 @@ public class LauncherAccountFragment extends Fragment {
         bindActions();
         renderMode();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.formInputs(binding.inputName, binding.inputEmail,
+                binding.inputPassword, binding.inputConfirmPassword);
+        LauncherTheme.longActionButton(binding.btnSubmit);
+        LauncherTheme.shortSecondaryActionButton(binding.btnGoogle);
+        LauncherTheme.shortSecondaryActionButton(binding.btnFacebook);
     }
 
     @Override
@@ -361,7 +366,7 @@ public class LauncherAccountFragment extends Fragment {
     }
 
     private int dialogWidthDp() {
-        return 270;
+        return 252;
     }
 
     private int dialogHorizontalPaddingDp() {

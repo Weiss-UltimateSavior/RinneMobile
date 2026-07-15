@@ -52,8 +52,9 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
         LauncherTabletPortraitScaler.applyActivityContent(this);
         saveManager = new GameSaveFileManager(this);
         applySystemBarInsets();
-        LauncherTheme.primaryButton(binding.btnOverwriteSave);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.shortSecondaryActionButton(binding.btnExportSave);
+        LauncherTheme.shortActionButton(binding.btnOverwriteSave);
         binding.btnExportSave.setOnClickListener(v -> chooseExportZip());
         binding.btnOverwriteSave.setOnClickListener(v -> confirmOverwrite());
         loadGame();
@@ -123,12 +124,9 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
 
     private void confirmOverwrite() {
         if (game == null) return;
-        new AlertDialog.Builder(this)
-                .setTitle("覆盖导入")
-                .setMessage("将清空当前游戏的真实存档目录，再从 ZIP 备份导入。是否继续？")
-                .setNegativeButton("取消", null)
-                .setPositiveButton("选择 ZIP", (dialog, which) -> chooseOverwriteZip())
-                .show();
+        com.apps.theme.LauncherDialogFactory.showStandardConfirm(this, "覆盖导入",
+                "将清空当前游戏的真实存档目录，再从 ZIP 备份导入。是否继续？",
+                "选择 ZIP", this::chooseOverwriteZip);
     }
 
     private void takeReadPermission(Uri uri) {
@@ -150,11 +148,8 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
     }
 
     private void showError(String title, Exception error) {
-        runOnUiThread(() -> new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(error.getMessage() == null ? "未知错误" : error.getMessage())
-                .setPositiveButton("知道了", null)
-                .show());
+        runOnUiThread(() -> com.apps.theme.LauncherDialogFactory.showInfo(this, title,
+                error.getMessage() == null ? "未知错误" : error.getMessage()));
     }
 
     private void applySystemBarInsets() {

@@ -196,11 +196,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
-        saveButton.setBackground(LauncherTheme.primaryButton(this, 24f));
-        LauncherTheme.primaryButton(importGameHubShortcutButton);
-        importGameHubShortcutButton.setTextSize(14);
-        importGameHubShortcutButton.setTypeface(null, android.graphics.Typeface.NORMAL);
+        LauncherTheme.longActionButton(saveButton);
+        LauncherTheme.shortActionButton(importGameHubShortcutButton);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
+        LauncherTheme.formInputs(nameInput, gameHubIdInput, descriptionInput);
+        LauncherTheme.shortActionButton(importGameHubShortcutButton);
     }
 
     private void importGameHubShortcutFromShizuku() {
@@ -234,12 +234,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 }
                 CharSequence[] labels = new CharSequence[shortcuts.size()];
                 for (int i = 0; i < shortcuts.size(); i++) labels[i] = shortcuts.get(i).displayLabel + "\n" + shortcuts.get(i).localGameId;
-                AlertDialog dialog = new AlertDialog.Builder(this)
-                        .setTitle("选择盖世快捷方式")
-                        .setItems(labels, (ignored, which) -> applyGameHubShortcut(shortcuts.get(which)))
-                        .setNegativeButton("取消", null).create();
-                dialog.show();
-                LauncherMotion.applyDialogMotion(dialog);
+                com.apps.theme.LauncherDialogFactory.showActionChoices(this, "选择盖世快捷方式",
+                        labels, which -> applyGameHubShortcut(shortcuts.get(which)));
             });
         });
     }

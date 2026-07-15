@@ -52,6 +52,7 @@ public class LauncherPendingActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.longActionButton(binding.pendingClose);
         View iconWrap = binding.pendingContent.getChildAt(1);
         if (iconWrap instanceof android.view.ViewGroup) {
             android.view.ViewGroup group = (android.view.ViewGroup) iconWrap;

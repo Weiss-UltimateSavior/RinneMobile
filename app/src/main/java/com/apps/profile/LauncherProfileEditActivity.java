@@ -18,6 +18,7 @@ import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherProfileEditBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -37,9 +38,9 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
         applySystemBarInsets();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
-        LauncherTheme.primaryButton(binding.profileEditBack);
-        LauncherTheme.primaryButton(binding.btnUpdateUsername);
-        LauncherTheme.primaryButton(binding.btnUpdatePassword);
+        LauncherTheme.longActionButton(binding.profileEditBack);
+        LauncherTheme.longActionButton(binding.btnUpdateUsername);
+        LauncherTheme.longActionButton(binding.btnUpdatePassword);
     }
 
     private void applySystemBarInsets() {
@@ -107,62 +108,7 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
     }
 
     private void showConfirmDialog(String title, String message, Runnable onConfirm) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(this);
-        titleView.setText(title);
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(this);
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView confirmBtn = new TextView(this);
-        confirmBtn.setText("确定");
-        confirmBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirmBtn);
-        confirmBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            onConfirm.run();
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirmBtn, confirmLp);
-
-        TextView cancelBtn = new TextView(this);
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(android.view.Gravity.CENTER);
-        cancelBtn.setTextColor(LauncherTheme.primary(this));
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancelBtn.setBackground(LauncherTheme.cancelChip(this));
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancelBtn, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(this, title, message, "确定", onConfirm);
     }
 
     private void performUpdateUsername() {
@@ -224,47 +170,7 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
     }
 
     private void showResultDialog(String title, String message) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(this);
-        titleView.setText(title);
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(this);
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(this);
-        okBtn.setText("知道了");
-        okBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showInfo(this, title, message);
     }
 
     private void configureEdgeToEdgeWindow() {

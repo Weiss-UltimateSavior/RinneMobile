@@ -31,6 +31,7 @@ import org.json.JSONObject;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -88,6 +89,12 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     private void applyThemeTone() {
         LauncherTheme.styleSwitch(binding.syncAutoSwitch);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.formInputs(binding.syncServerInput, binding.syncUserInput, binding.syncPasswordInput);
+        LauncherTheme.longActionButton(binding.btnTest);
+        LauncherTheme.longActionButton(binding.btnSyncNow);
+        LauncherTheme.longActionButton(binding.btnSave);
+        LauncherTheme.longActionButton(binding.btnExport);
+        LauncherTheme.longActionButton(binding.btnImport);
     }
 
     private void loadConfig() {
@@ -176,62 +183,13 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     }
 
     private void showImportConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(280), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(this);
-        title.setText("本地导入");
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(this);
-        message.setText("将从备份 JSON 导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？");
-        message.setGravity(Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirmBtn = new TextView(this);
-        confirmBtn.setText("选择文件");
-        confirmBtn.setGravity(Gravity.CENTER);
-        LauncherTheme.primaryButton(confirmBtn);
-        confirmBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            backupOpenLauncher.launch(new String[]{"application/json", "text/*", "*/*"});
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirmBtn, confirmLp);
-
-        TextView cancelBtn = new TextView(this);
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(Gravity.CENTER);
-        cancelBtn.setTextColor(LauncherTheme.primary(this));
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancelBtn.setBackground(LauncherTheme.cancelChip(this));
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancelBtn, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showLongMessageConfirm(
+                this,
+                "本地导入",
+                "将从备份 JSON 导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？",
+                "选择文件",
+                () -> backupOpenLauncher.launch(new String[]{"application/json", "text/*", "*/*"})
+        );
     }
 
     private void exportLocalBackup(Uri uri) {

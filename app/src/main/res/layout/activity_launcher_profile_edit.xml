@@ -162,38 +162,23 @@
 
                 <TextView
                     android:id="@+id/btnUpdateUsername"
-                    android:layout_width="match_parent"
-                    android:layout_height="41dp"
-                    android:background="@drawable/launcher_account_primary_button"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
                     android:text="修改用户名"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
 
                 <TextView
                     android:id="@+id/btnUpdatePassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="41dp"
+                    style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:background="@drawable/launcher_account_primary_button"
-                    android:gravity="center"
                     android:text="修改密码"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
 
                 <TextView
                     android:id="@+id/profileEditBack"
-                    android:layout_width="match_parent"
-                    android:layout_height="41dp"
+                    style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:background="@drawable/launcher_account_primary_button"
-                    android:gravity="center"
                     android:text="返回"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

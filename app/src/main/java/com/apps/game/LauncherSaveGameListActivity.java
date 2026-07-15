@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -135,39 +136,37 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     }
 
     private void showNoSaveDialog(Game game) {
-        showLauncherConfirmDialog("暂无存档", "“" + safeTitle(game) + "”当前没有可管理的存档文件。",
-                "知道了", () -> { });
+        LauncherDialogFactory.showInfo(this, "暂无存档",
+                "“" + safeTitle(game) + "”当前没有可管理的存档文件。");
     }
 
     private void showSaveActionsDialog(Game game) {
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle(abbreviateGameTitle(game) + " 存档"));
-
-        TextView export = createDialogOption("导出 ZIP");
-        export.setOnClickListener(view -> {
-            dialog.dismiss();
-            selectedSaveGame = game;
-            exportZipPicker.launch(buildArchiveFileName(game));
-        });
-        addWithTopMargin(root, export, 11);
-
-        TextView overwrite = createDialogOption("导入 ZIP");
-        overwrite.setOnClickListener(view -> {
-            dialog.dismiss();
-            showOverwriteConfirmDialog(game);
-        });
-        addWithTopMargin(root, overwrite, 11);
-        root.addView(createDialogCancelButton(dialog));
-        setDialogContent(dialog, root, 270);
+        LauncherDialogFactory.showStandardActionChoices(
+                this,
+                abbreviateGameTitle(game) + " 存档",
+                new String[]{"导出 ZIP", "导入 ZIP"},
+                index -> {
+                    if (index == 0) {
+                        selectedSaveGame = game;
+                        exportZipPicker.launch(buildArchiveFileName(game));
+                    } else {
+                        showOverwriteConfirmDialog(game);
+                    }
+                }
+        );
     }
 
     private void showOverwriteConfirmDialog(Game game) {
-        showLauncherConfirmDialog("覆盖导入", "将清空当前游戏的真实存档，再从 ZIP 备份导入。",
-                "选择 ZIP", () -> {
-            selectedSaveGame = game;
-            overwriteZipPicker.launch(new String[]{"application/zip", "application/x-zip-compressed"});
-        });
+        LauncherDialogFactory.showStandardConfirm(
+                this,
+                "覆盖导入",
+                "将清空当前游戏的真实存档，再从 ZIP 备份导入。",
+                "选择 ZIP",
+                () -> {
+                    selectedSaveGame = game;
+                    overwriteZipPicker.launch(new String[]{"application/zip", "application/x-zip-compressed"});
+                }
+        );
     }
 
     private void exportSaveToZip(Game game, Uri destinationUri) {
@@ -202,31 +201,8 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     }
 
     private void showError(String title, Exception error) {
-        runOnUiThread(() -> showLauncherConfirmDialog(title,
-                error.getMessage() == null ? "未知错误" : error.getMessage(), "知道了", () -> { }));
-    }
-
-    private void showLauncherConfirmDialog(String title, String message, String confirmText, Runnable onConfirm) {
-        AlertDialog dialog = createLauncherDialog();
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_launcher_confirm, null);
-        LauncherTabletPortraitScaler.apply(dialogView);
-        TextView titleView = dialogView.findViewById(R.id.dialogTitle);
-        TextView messageView = dialogView.findViewById(R.id.dialogMessage);
-        TextView cancelView = dialogView.findViewById(R.id.dialogBtnCancel);
-        TextView confirmView = dialogView.findViewById(R.id.dialogBtnConfirm);
-        titleView.setText(title);
-        messageView.setText(message);
-        confirmView.setText(confirmText);
-        LauncherTheme.dialogButtons(cancelView, confirmView);
-        cancelView.setOnClickListener(view -> dialog.dismiss());
-        confirmView.setOnClickListener(view -> {
-            dialog.dismiss();
-            onConfirm.run();
-        });
-        window.setContentView(dialogView);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
+        runOnUiThread(() -> LauncherDialogFactory.showInfo(this, title,
+                error.getMessage() == null ? "未知错误" : error.getMessage()));
     }
 
     private AlertDialog createLauncherDialog() {

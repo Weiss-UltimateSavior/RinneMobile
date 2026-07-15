@@ -115,33 +115,7 @@ public class PadGameModeActivity extends AppCompatActivity {
     }
 
     private void confirmReturnToPortrait() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(
-                (int) (252 * getResources().getDisplayMetrics().density),
-                WindowManager.LayoutParams.WRAP_CONTENT
-        );
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_launcher_confirm, null);
-        window.setContentView(dialogView);
-
-        TextView titleView = dialogView.findViewById(R.id.dialogTitle);
-        TextView messageView = dialogView.findViewById(R.id.dialogMessage);
-        TextView btnCancel = dialogView.findViewById(R.id.dialogBtnCancel);
-        TextView btnConfirm = dialogView.findViewById(R.id.dialogBtnConfirm);
-
-        titleView.setText("竖屏管理模式");
-        messageView.setText("要返回竖屏管理模式吗？");
-        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
-        btnCancel.setOnClickListener(view -> dialog.dismiss());
-        btnConfirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            finish();
-        });
+        PadDialogFactory.showConfirm(this, "竖屏管理模式", "要返回竖屏管理模式吗？", "确定", this::finish);
     }
 
     private void selectPage(Page page) {

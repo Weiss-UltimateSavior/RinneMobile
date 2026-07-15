@@ -60,26 +60,19 @@
                 <TextView
                     android:id="@+id/btnExportSave"
                     android:layout_width="0dp"
-                    android:layout_height="42dp"
+                    style="@style/LauncherShortSecondaryActionButton"
                     android:layout_weight="1"
-                    android:background="@drawable/launcher_filter_chip_unselected"
-                    android:gravity="center"
                     android:text="导出"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
 
                 <TextView
                     android:id="@+id/btnOverwriteSave"
                     android:layout_width="0dp"
-                    android:layout_height="42dp"
+                    style="@style/LauncherShortActionButton"
                     android:layout_marginStart="7dp"
                     android:layout_weight="1"
-                    android:gravity="center"
                     android:text="覆盖导入"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

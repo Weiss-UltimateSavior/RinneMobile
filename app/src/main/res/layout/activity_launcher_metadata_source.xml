@@ -99,33 +99,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <TextView
-                    android:id="@+id/btnCancel"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_filter_chip_unselected"
-                    android:gravity="center"
-                    android:text="取消"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/btnSave"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_marginStart="9dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/launcher_account_primary_button"
-                    android:gravity="center"
+                    style="@style/LauncherLongActionButton"
                     android:text="保存"
-                    android:textColor="@color/launcher_on_primary_color"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    />
+
+                <TextView
+                    android:id="@+id/btnCancel"
+                    style="@style/LauncherLongActionButton"
+                    android:layout_marginTop="9dp"
+                    android:text="取消"
+                    />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -49,9 +49,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="添加目录" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -66,9 +67,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="扫描游戏" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -83,9 +85,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="添加游戏" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -100,9 +103,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="云端同步" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -117,9 +121,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="日志诊断" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -134,9 +139,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="封面设置" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -151,9 +157,10 @@
                         style="@style/LauncherManageTitle"
                         android:text="引擎设置" />
 
-                    <TextView
-                        style="@style/LauncherManageArrow"
-                        android:text=">" />
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
             </LinearLayout>
 

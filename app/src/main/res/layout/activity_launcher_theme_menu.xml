@@ -351,14 +351,9 @@
 
             <TextView
                 android:id="@+id/themeMenuApply"
-                android:layout_width="match_parent"
-                android:layout_height="41dp"
-                android:background="@drawable/launcher_account_primary_button"
-                android:gravity="center"
+                style="@style/LauncherLongActionButton"
                 android:text="应用"
-                android:textColor="@color/launcher_on_primary_color"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                />
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

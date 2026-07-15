@@ -41,6 +41,7 @@ import com.apps.data.LauncherViewModel;
 import com.apps.settings.LauncherToolboxActivity;
 import com.apps.settings.ResourceStationActivity;
 import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
 import com.apps.theme.LauncherThemeMenuActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -236,7 +237,7 @@ public class LauncherHomeFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -299,7 +300,7 @@ public class LauncherHomeFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -353,32 +354,14 @@ public class LauncherHomeFragment extends Fragment {
     private void confirmToggleTone() {
         boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
         String nextTone = darkMode ? "浅色模式" : "深色模式";
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(com.yuki.yukihub.R.layout.dialog_launcher_confirm, null);
-        window.setContentView(dialogView);
-
-        TextView titleView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogTitle);
-        TextView messageView = dialogView.findViewById(com.yuki.yukihub.R.id.dialogMessage);
-        TextView btnCancel = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnCancel);
-        TextView btnConfirm = dialogView.findViewById(com.yuki.yukihub.R.id.dialogBtnConfirm);
-
-        titleView.setText("切换色调");
-        messageView.setText("确定切换到" + nextTone + "吗？");
-        LauncherTheme.dialogButtons(btnCancel, btnConfirm);
-        btnCancel.setOnClickListener(view -> dialog.dismiss());
-        btnConfirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            LauncherMotion.recreateWithToneOverlay(requireActivity(), () ->
-                    LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode));
-        });
+        LauncherDialogFactory.showConfirm(
+                requireContext(),
+                "切换色调",
+                "确定切换到" + nextTone + "吗？",
+                "确定",
+                () -> LauncherMotion.recreateWithToneOverlay(requireActivity(), () ->
+                        LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode))
+        );
     }
 
     private void setupRecentList() {
@@ -426,62 +409,13 @@ public class LauncherHomeFragment extends Fragment {
     }
 
     private void showChangeAvatarDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("修改头像");
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setText("是否从图库选择新头像？");
-        message.setGravity(Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText("确定");
-        confirm.setGravity(Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            avatarPickerLauncher.launch(new String[]{"image/*"});
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                requireContext(),
+                "修改头像",
+                "是否从图库选择新头像？",
+                "确定",
+                () -> avatarPickerLauncher.launch(new String[]{"image/*"})
+        );
     }
 
     private void persistAvatarUri(Uri uri) {

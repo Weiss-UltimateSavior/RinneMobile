@@ -1,7 +1,6 @@
 package com.apps.profile;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.net.Uri;
@@ -18,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -40,6 +40,7 @@ import com.apps.account.LauncherAccountSettingsActivity;
 import com.apps.data.LauncherViewModel;
 import com.apps.game.LauncherSaveCategoryActivity;
 import com.apps.leaderboard.LauncherLeaderboardActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -211,62 +212,13 @@ public class LauncherProfileFragment extends Fragment {
             Toast.makeText(requireContext(), "当前未登录", Toast.LENGTH_SHORT).show();
             return;
         }
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("配置恢复");
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setText("将从云端下载配置并覆盖当前设置，确定恢复吗？");
-        message.setGravity(android.view.Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText("确定恢复");
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            performCloudRestore();
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                requireContext(),
+                "配置恢复",
+                "将从云端下载配置并覆盖当前设置，确定恢复吗？",
+                "确定恢复",
+                this::performCloudRestore
+        );
     }
 
     private void showLeaderboardConfirmDialog() {
@@ -276,7 +228,7 @@ public class LauncherProfileFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(280), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
         View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_launcher_confirm, null);
         window.setContentView(view);
         ((TextView) view.findViewById(R.id.dialogTitle)).setText("全站排行榜");
@@ -333,49 +285,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private AlertDialog showLoadingDialog(String titleText, String hintText) {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.setCancelable(false);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return dialog;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(titleText);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        ProgressBar progressBar = new ProgressBar(requireContext());
-        progressBar.setIndeterminate(true);
-        progressBar.getIndeterminateDrawable().setColorFilter(
-                LauncherTheme.primary(requireContext()), android.graphics.PorterDuff.Mode.SRC_IN);
-        LinearLayout.LayoutParams pbLp = new LinearLayout.LayoutParams(dp(32), dp(32));
-        pbLp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
-        pbLp.setMargins(0, dp(14), 0, 0);
-        root.addView(progressBar, pbLp);
-
-        TextView hint = new TextView(requireContext());
-        hint.setText(hintText);
-        hint.setGravity(android.view.Gravity.CENTER);
-        hint.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        hint.setTextSize(11);
-        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hintLp.setMargins(0, dp(10), 0, 0);
-        root.addView(hint, hintLp);
-
-        window.setContentView(root);
-        return dialog;
+        return LauncherDialogFactory.showLoading(requireContext(), titleText, hintText);
     }
 
     private void dismissLoadingDialog() {
@@ -386,51 +296,12 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showResultDialog(String title, String message) {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(requireContext());
-        titleView.setText(title);
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(requireContext());
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(requireContext());
-        okBtn.setText("知道了");
-        okBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            // 数据已导入，直接重启使设置生效（不再重复 importAll）
-            LauncherUserData.restartLauncher(requireActivity());
-        });
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showInfo(
+                requireContext(),
+                title,
+                message,
+                () -> LauncherUserData.restartLauncher(requireActivity())
+        );
     }
 
     private void showLogoutDialog() {
@@ -445,7 +316,7 @@ public class LauncherProfileFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -524,127 +395,33 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showChangeCoverDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("更换背景");
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setText("是否从图库选择新的背景图片？");
-        message.setGravity(android.view.Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText("确定");
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("image/*");
-            startActivityForResult(intent, REQUEST_PICK_COVER);
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                requireContext(),
+                "更换背景",
+                "是否从图库选择新的背景图片？",
+                "确定",
+                () -> {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, REQUEST_PICK_COVER);
+                }
+        );
     }
 
     private void showChangeAvatarDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("修改头像");
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setText("是否从图库选择新头像？");
-        message.setGravity(android.view.Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText("确定");
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("image/*");
-            startActivityForResult(intent, REQUEST_PICK_AVATAR);
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                requireContext(),
+                "修改头像",
+                "是否从图库选择新头像？",
+                "确定",
+                () -> {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, REQUEST_PICK_AVATAR);
+                }
+        );
     }
 
     @Override
@@ -743,12 +520,7 @@ public class LauncherProfileFragment extends Fragment {
         }
         for (int i = 0; i < binding.profileActionList.getChildCount(); i++) {
             View row = binding.profileActionList.getChildAt(i);
-            if (!(row instanceof ViewGroup)) continue;
-            View icon = ((ViewGroup) row).getChildAt(0);
-            if (icon instanceof TextView) {
-                icon.setBackground(LauncherTheme.circle(requireContext()));
-                ((TextView) icon).setTextColor(LauncherTheme.onPrimary(requireContext()));
-            }
+            LauncherTheme.styleManageRow(row);
         }
         binding.profilePlaytimeTotalIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(requireContext())));
         binding.profileWeeklyPlaytimeChart.invalidate();

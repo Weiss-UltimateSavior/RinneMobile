@@ -245,12 +245,12 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleSwitch(binding.padOnsScopedSwitch);
         LauncherTheme.styleSwitch(binding.padTyranoScopedSwitch);
         LauncherTheme.styleSpinner(binding.padMetadataSourceSpinner);
-        LauncherTheme.secondaryButton(binding.padNativeKrkrButton);
-        LauncherTheme.secondaryButton(binding.padKrkrCancelButton);
-        LauncherTheme.primaryButton(binding.padKrkrSaveButton);
+        PadDialogFactory.secondaryInlineAction(binding.padNativeKrkrButton);
+        PadDialogFactory.secondaryInlineAction(binding.padKrkrCancelButton);
+        PadDialogFactory.primaryInlineAction(binding.padKrkrSaveButton);
         LauncherTheme.textPrimary(binding.padMetadataTokenLink);
-        LauncherTheme.secondaryButton(binding.padMetadataCancelButton);
-        LauncherTheme.primaryButton(binding.padMetadataSaveButton);
+        PadDialogFactory.secondaryInlineAction(binding.padMetadataCancelButton);
+        PadDialogFactory.primaryInlineAction(binding.padMetadataSaveButton);
         applyThemeMenuTone();
         renderThemeSelection();
         renderParticleToggle();
@@ -291,7 +291,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padXinhaitianThemeLogo.setClipToOutline(true);
         binding.padParticleToggleIcon.setBackground(LauncherTheme.circle(this));
         binding.padParticleToggleIcon.setTextColor(LauncherTheme.onPrimary(this));
-        LauncherTheme.primaryButton(binding.padThemeApply);
+        PadDialogFactory.primaryInlineAction(binding.padThemeApply);
     }
 
     private void selectTheme(String themeName) {
@@ -344,7 +344,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+        root.setBackground(LauncherTheme.secondaryButton(this, 20f));
 
         TextView title = dialogButton("动态粒子样式", false);
         title.setTextSize(16);
@@ -585,28 +585,7 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void showAccountConfirmDialog(String title, String message, String confirmText,
                                           Runnable onConfirm) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = dialogRoot();
-        root.addView(dialogTitle(title));
-        TextView info = dialogMessage(message);
-        addWithMargin(root, info, 13);
-        TextView confirm = dialogButton(confirmText, true);
-        confirm.setOnClickListener(view -> {
-            dialog.dismiss();
-            if (onConfirm != null) onConfirm.run();
-        });
-        addWithMargin(root, confirm, 11);
-        TextView cancel = dialogButton("取消", false);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        addWithMargin(root, cancel, 9);
-        window.setContentView(root);
+        PadDialogFactory.showStandardConfirm(this, title, message, confirmText, onConfirm);
     }
 
     private void enableSyncAndUpload() {
@@ -650,27 +629,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private AlertDialog showAccountLoading(String title, String hint) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.setCancelable(false);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return dialog;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = dialogRoot();
-        root.addView(dialogTitle(title));
-        ProgressBar progress = new ProgressBar(this);
-        progress.getIndeterminateDrawable().setColorFilter(
-                LauncherTheme.primary(this), android.graphics.PorterDuff.Mode.SRC_IN);
-        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(dp(32), dp(32));
-        progressParams.gravity = Gravity.CENTER_HORIZONTAL;
-        progressParams.setMargins(0, dp(14), 0, 0);
-        root.addView(progress, progressParams);
-        addWithMargin(root, dialogMessage(hint), 10);
-        window.setContentView(root);
-        return dialog;
+        return PadDialogFactory.showLoading(this, title, hint);
     }
 
     private void dismissAccountLoading() {
@@ -681,27 +640,14 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void showAccountResult(String title, String message) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
-        LinearLayout root = dialogRoot();
-        root.addView(dialogTitle(title));
-        addWithMargin(root, dialogMessage(message), 13);
-        TextView ok = dialogButton("知道了", true);
-        ok.setOnClickListener(view -> dialog.dismiss());
-        addWithMargin(root, ok, 11);
-        window.setContentView(root);
+        PadDialogFactory.showInfo(this, title, message);
     }
 
     private LinearLayout dialogRoot() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
+        root.setBackground(LauncherTheme.secondaryButton(this, 20f));
         return root;
     }
 

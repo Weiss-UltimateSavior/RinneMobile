@@ -86,8 +86,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null && result.getData().getData() != null) {
                     selectedCoverUri = result.getData().getData();
-                    tvCoverStatus.setText("已选择封面");
-                    tvCoverStatus.setTextColor(LauncherTheme.primary(this));
+                    tvCoverStatus.setText("封面：已选择封面");
                 }
             });
 
@@ -165,8 +164,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                             ? "尚未选择游戏目录" : game.rootUri);
                 }
                 if (game.coverUri != null && !game.coverUri.trim().isEmpty()) {
-                    tvCoverStatus.setText("已有封面");
-                    tvCoverStatus.setTextColor(LauncherTheme.primary(this));
+                    tvCoverStatus.setText("封面：已有封面");
                 }
             });
         });
@@ -218,14 +216,13 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
-        LauncherTheme.menuItem(btnPickDirectory);
-        LauncherTheme.menuItem(btnPickCover);
-        LauncherTheme.primaryButton(btnImportGameHubShortcut);
-        btnImportGameHubShortcut.setTextSize(14);
-        btnImportGameHubShortcut.setTypeface(null, android.graphics.Typeface.NORMAL);
-        LauncherTheme.secondaryButton(btnCancel);
-        LauncherTheme.primaryButton(btnSave);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
+        LauncherTheme.formInputs(etTitle, etEmulator, etLaunchTarget, etGameHubLocalGameId, etDescription);
+        LauncherTheme.longActionButton(btnPickDirectory);
+        LauncherTheme.longActionButton(btnPickCover);
+        LauncherTheme.shortActionButton(btnImportGameHubShortcut);
+        LauncherTheme.longActionButton(btnSave);
+        LauncherTheme.longActionButton(btnCancel);
     }
 
     private void persistUriPermission(Uri uri) {
@@ -298,13 +295,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             LauncherGameHubShortcutBridge.Shortcut item = items.get(i);
             labels[i] = item.displayLabel + "\n" + item.localGameId;
         }
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("选择盖世快捷方式")
-                .setItems(labels, (ignored, which) -> applyGameHubShortcut(items.get(which)))
-                .setNegativeButton("取消", null)
-                .create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
+        com.apps.theme.LauncherDialogFactory.showActionChoices(this, "选择盖世快捷方式",
+                labels, which -> applyGameHubShortcut(items.get(which)));
     }
 
     private void applyGameHubShortcut(LauncherGameHubShortcutBridge.Shortcut item) {
@@ -319,13 +311,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void showGameHubImportUnavailableDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("未读取到盖世快捷方式")
-                .setMessage("请确认：\n1. Shizuku 正在运行且已授权；\n2. 盖世已创建桌面快捷方式；\n3. 已安装 com.xiaoji.egggamz 或 com.xiaoji.egggame。\n\n也可以手动填写 localGameId。")
-                .setPositiveButton("知道了", null)
-                .create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
+        com.apps.theme.LauncherDialogFactory.showInfo(this, "未读取到盖世快捷方式",
+                "请确认：\n1. Shizuku 正在运行且已授权；\n2. 盖世已创建桌面快捷方式；\n3. 已安装 com.xiaoji.egggamz 或 com.xiaoji.egggame。\n\n也可以手动填写 localGameId。");
     }
 
     private int engineIndex(EngineType engine) {

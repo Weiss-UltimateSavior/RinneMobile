@@ -36,6 +36,7 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
         applySystemBarInsets();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.longActionButton(binding.chatSelectContinue);
         applyIconTone();
         renderSelection();
     }

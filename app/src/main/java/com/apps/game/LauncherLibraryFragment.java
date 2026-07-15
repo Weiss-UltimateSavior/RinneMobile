@@ -34,6 +34,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.FragmentLauncherLibraryBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
@@ -999,32 +1000,22 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void showPlayStatusDialog(Game game) {
         if (game == null) return;
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("设置游玩状态"));
-
         String[] labels = {"☆ 未玩", "🎮 在玩", "🏆 玩过"};
         String[] values = {"unplayed", "playing", "completed"};
-        for (int i = 0; i < labels.length; i++) {
-            final String status = values[i];
-            TextView option = new TextView(requireContext());
-            option.setText((status.equals(game.playStatus) ? "● " : "○ ") + labels[i]);
-            option.setGravity(android.view.Gravity.CENTER);
-            option.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-            option.setTextSize(13);
-            option.setTypeface(null, android.graphics.Typeface.BOLD);
-            option.setBackground(LauncherTheme.cancelChip(requireContext()));
-            option.setOnClickListener(v -> {
-                dialog.dismiss();
-                updateGameStatus(game, status);
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
-            lp.setMargins(0, dp(11), 0, 0);
-            root.addView(option, lp);
+        int checkedIndex = -1;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(game.playStatus)) {
+                checkedIndex = i;
+                break;
+            }
         }
-        root.addView(createDialogCancelButton(dialog));
-        dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        LauncherDialogFactory.showSingleChoice(
+                requireContext(),
+                "设置游玩状态",
+                labels,
+                checkedIndex,
+                index -> updateGameStatus(game, values[index])
+        );
     }
 
     private void updateGameStatus(Game game, String status) {
@@ -1299,50 +1290,13 @@ private void loadNextPage(boolean forceFullRefresh) {
     }
 
     private void confirmDeleteGame(Game game) {
-        AlertDialog confirm = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("删除游戏"));
-        TextView msg = new TextView(requireContext());
-        msg.setText("要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。");
-        msg.setGravity(android.view.Gravity.CENTER);
-        msg.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
-        msg.setTextSize(12);
-        msg.setLineSpacing(dp(4), 1f);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msg, msgLp);
-
-        LinearLayout btnRow = new LinearLayout(requireContext());
-        btnRow.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow.setWeightSum(2f);
-        LinearLayout.LayoutParams brLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        brLp.setMargins(0, dp(13), 0, 0);
-        btnRow.setLayoutParams(brLp);
-
-        TextView cancelBtn = createDialogCancelButton(confirm);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        cancelLp.setMargins(0, 0, dp(5), 0);
-        cancelBtn.setLayoutParams(cancelLp);
-        btnRow.addView(cancelBtn);
-
-        TextView deleteBtn = new TextView(requireContext());
-        deleteBtn.setText("移除");
-        deleteBtn.setGravity(android.view.Gravity.CENTER);
-        deleteBtn.setTextSize(13);
-        deleteBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.dangerButton(deleteBtn);
-        LinearLayout.LayoutParams delLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        delLp.setMargins(dp(5), 0, 0, 0);
-        deleteBtn.setLayoutParams(delLp);
-        deleteBtn.setOnClickListener(v -> {
-            confirm.dismiss();
-            deleteGame(game);
-        });
-        btnRow.addView(deleteBtn);
-        root.addView(btnRow);
-
-        confirm.getWindow().setContentView(root);
-        confirm.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        LauncherDialogFactory.showDangerConfirm(
+                requireContext(),
+                "删除游戏",
+                "要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。",
+                "移除",
+                () -> deleteGame(game)
+        );
     }
 
     private void deleteGame(Game game) {
