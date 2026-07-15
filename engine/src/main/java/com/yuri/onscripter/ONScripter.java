@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Gravity;
@@ -30,6 +31,7 @@ import com.yuki.yukihub.ons.OnsSettings;
 import com.yuki.yukihub.ons.OnsVideoActivity;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
@@ -62,7 +64,7 @@ public class ONScripter extends SDLActivity {
     }
 
     @Override public String getMainSharedObject() {
-        return new File(getFilesDir(), "libs/" + YURI_VERSION + "/libonsyuri.so").getAbsolutePath();
+        return OnsLibLoader.getMainSharedObject(this).getAbsolutePath();
     }
 
     @Override public String[] getArguments() {
@@ -120,9 +122,14 @@ public class ONScripter extends SDLActivity {
     }
 
     public int getFD(byte[] pathbyte, int mode) {
+        String utf8Path = null;
+        String gbkPath = null;
+        File file = null;
         try {
             if (pathbyte == null || gameRoot == null || gameRoot.isEmpty()) return -1;
-            File file = resolveGameFile(decodePath(pathbyte));
+            utf8Path = decodePath(pathbyte);
+            gbkPath = decodePath(pathbyte, "GBK");
+            file = resolveGameFile(utf8Path);
             if (file == null) return -1;
             if (mode != 0) {
                 File parent = file.getParentFile();
@@ -133,6 +140,7 @@ public class ONScripter extends SDLActivity {
             Log.i(TAG, "getFD fd=" + fd + " mode=" + mode + " file=" + file);
             return fd;
         } catch (Throwable t) {
+            logGetFdFailure(pathbyte, mode, utf8Path, gbkPath, file);
             Log.w(TAG, "getFD failed", t);
             return -1;
         }
@@ -465,6 +473,56 @@ public class ONScripter extends SDLActivity {
 
     private String decodePath(byte[] pathbyte) {
         return new String(pathbyte, StandardCharsets.UTF_8).replace('\\', '/');
+    }
+
+    private String decodePath(byte[] pathbyte, String charsetName) {
+        try {
+            return new String(pathbyte, Charset.forName(charsetName)).replace('\\', '/');
+        } catch (Throwable ignored) {
+            return "<" + charsetName + " unavailable>";
+        }
+    }
+
+    private void logGetFdFailure(byte[] pathbyte, int mode, String utf8Path, String gbkPath, File file) {
+        try {
+            File root = gameRoot == null ? null : new File(gameRoot);
+            File parent = file == null ? null : file.getParentFile();
+            boolean allFilesAccess = Build.VERSION.SDK_INT < Build.VERSION_CODES.R
+                    || Environment.isExternalStorageManager();
+            Log.w(TAG, "getFD diagnostic"
+                    + " mode=" + mode
+                    + " bytes=" + bytesToHex(pathbyte, 96)
+                    + " utf8=" + printable(utf8Path)
+                    + " gbk=" + printable(gbkPath)
+                    + " resolved=" + printable(file == null ? null : file.getAbsolutePath())
+                    + " exists=" + (file != null && file.exists())
+                    + " readable=" + (file != null && file.canRead())
+                    + " parentExists=" + (parent != null && parent.exists())
+                    + " parentReadable=" + (parent != null && parent.canRead())
+                    + " root=" + printable(gameRoot)
+                    + " rootExists=" + (root != null && root.exists())
+                    + " rootReadable=" + (root != null && root.canRead())
+                    + " allFilesAccess=" + allFilesAccess);
+        } catch (Throwable diagnosticError) {
+            Log.w(TAG, "getFD diagnostic failed", diagnosticError);
+        }
+    }
+
+    private String bytesToHex(byte[] bytes, int maxBytes) {
+        if (bytes == null) return "null";
+        int count = Math.min(bytes.length, Math.max(0, maxBytes));
+        StringBuilder out = new StringBuilder(count * 2 + 16);
+        for (int i = 0; i < count; i++) {
+            int value = bytes[i] & 0xff;
+            if (value < 16) out.append('0');
+            out.append(Integer.toHexString(value));
+        }
+        if (bytes.length > count) out.append("…(").append(bytes.length).append(" bytes)");
+        return out.toString();
+    }
+
+    private String printable(String value) {
+        return value == null ? "<null>" : '"' + value.replace("\n", "\\n").replace("\r", "\\r") + '"';
     }
 
     private void copyFile(File from, File to) throws java.io.IOException {

@@ -110,7 +110,6 @@ public abstract class r extends KR2Activity {
         }
     }
 
-
     private void tryLaunchGame(String path, boolean maps) {
         if (!nativeBridgeInitialized) {
             Log.e(TAG, "skip launch because native bridge was not initialized");

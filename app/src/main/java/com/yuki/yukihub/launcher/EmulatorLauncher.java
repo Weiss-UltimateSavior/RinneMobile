@@ -762,12 +762,24 @@ public class EmulatorLauncher {
 
     public static Intent buildInternalOnsIntent(Context context, String gamePath, String launchTarget) {
         Intent i = new Intent(context, com.yuri.onscripter.ONScripter.class);
-        String rootPath = stripFileScheme(uriToFilePath(gamePath));
+        String requestedRootPath = stripFileScheme(uriToFilePath(gamePath));
+        String rootPath = resolveInternalOnsGameDirectory(requestedRootPath);
+        if (rootPath == null || rootPath.isEmpty()) {
+            String message = "未在所选目录、上一级或直属子目录中找到 ONS 启动文件";
+            Log.e("EmulatorLauncher", "internal ONS rejected: " + message + " root=" + requestedRootPath);
+            throw new IllegalStateException(message);
+        }
+        String archiveError = validateOnsArchiveLayout(rootPath);
+        if (archiveError != null) {
+            Log.e("EmulatorLauncher", "internal ONS rejected: " + archiveError + " root=" + rootPath);
+            throw new IllegalStateException(archiveError);
+        }
         ActualSaveLocation saveLocation = resolveActualSaveLocation(context, EngineType.ONS, gamePath, launchTarget);
         if (!saveLocation.available || saveLocation.directory == null) {
             throw new IllegalStateException(saveLocation.description);
         }
-        Log.i("EmulatorLauncher", "internal ONS root=" + gamePath + " target=" + launchTarget + " resolved=" + rootPath);
+        Log.i("EmulatorLauncher", "internal ONS root=" + gamePath + " target=" + launchTarget
+                + " requested=" + requestedRootPath + " resolved=" + rootPath);
         OnsSettings settings = OnsSettings.load(context);
         ArrayList<String> args = settings.buildArgs(context, rootPath, saveLocation.directory);
         i.putStringArrayListExtra(OnsSettings.EXTRA_GAME_ARGS, args);
@@ -779,6 +791,109 @@ public class EmulatorLauncher {
         i.putExtra("launchMode", "internal.ons");
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return i;
+    }
+
+    /**
+     * A present but empty extra NSA is not equivalent to an absent archive: Yuri
+     * opens it and parses past EOF.  Reject it before SDL starts so the launcher
+     * can report an actionable import error rather than showing a black screen
+     * or crashing in the native archive reader.
+     */
+    private static String validateOnsArchiveLayout(String rootPath) {
+        if (rootPath == null || rootPath.isEmpty()) return null;
+        File root = new File(rootPath);
+        File base = new File(root, "arc.nsa");
+        File extra = new File(root, "arc1.nsa");
+        if (base.isFile() && base.length() > 0 && extra.isFile() && extra.length() == 0) {
+            return "游戏资源不完整：arc1.nsa 为 0 字节。请重新解压或重新导入完整游戏目录。";
+        }
+        return null;
+    }
+
+    /**
+     * ONS games are sometimes imported from one level above or below their real
+     * directory. Only accept the selected directory, its parent, or one direct
+     * child when it contains an ONS script/archive. Deliberately do not recurse
+     * further: a broad search can select a neighbouring game in a shared library.
+     */
+    private static String resolveInternalOnsGameDirectory(String requestedRootPath) {
+        if (requestedRootPath == null || requestedRootPath.trim().isEmpty()) return null;
+        try {
+            File root = new File(requestedRootPath);
+            if (!root.isDirectory()) return null;
+            String rootEntry = findOnsBootEntry(root);
+            if (rootEntry != null) {
+                Log.i("EmulatorLauncher", "internal ONS accepted root=" + root.getAbsolutePath()
+                        + " entry=" + rootEntry);
+                return root.getAbsolutePath();
+            }
+
+            File parent = root.getParentFile();
+            String parentEntry = findOnsBootEntry(parent);
+            if (parentEntry != null) {
+                Log.i("EmulatorLauncher", "internal ONS auto-resolved parent "
+                        + root.getAbsolutePath() + " -> " + parent.getAbsolutePath()
+                        + " entry=" + parentEntry);
+                return parent.getAbsolutePath();
+            }
+
+            File[] children = root.listFiles();
+            if (children == null) return null;
+            for (File child : children) {
+                String childEntry = findOnsBootEntry(child);
+                if (childEntry != null) {
+                    Log.i("EmulatorLauncher", "internal ONS auto-resolved child "
+                            + root.getAbsolutePath() + " -> " + child.getAbsolutePath()
+                            + " entry=" + childEntry);
+                    return child.getAbsolutePath();
+                }
+            }
+            Log.w("EmulatorLauncher", "internal ONS has no boot entry root=" + root.getAbsolutePath()
+                    + " files=" + describeDirectory(root, 40));
+            return null;
+        } catch (Throwable t) {
+            Log.w("EmulatorLauncher", "internal ONS root resolve failed: " + requestedRootPath, t);
+            return null;
+        }
+    }
+
+    /**
+     * A loose '*.nsa' match is enough for scanner classification, but not for
+     * booting: ONSYuri probes a script or the fixed arc archive names first.
+     */
+    private static String findOnsBootEntry(File directory) {
+        if (directory == null || !directory.isDirectory()) return null;
+        File[] files = directory.listFiles();
+        if (files == null) return null;
+        for (File file : files) {
+            if (file == null || !file.isFile()) continue;
+            String name = file.getName();
+            if (name == null) continue;
+            String lower = name.toLowerCase(Locale.ROOT);
+            if ("0.txt".equals(lower) || "00.txt".equals(lower)
+                    || "nscr_sec.dat".equals(lower) || "nscript.dat".equals(lower)
+                    || "onscript.nt2".equals(lower) || "onscript.nt3".equals(lower)
+                    || "arc.nsa".equals(lower) || "arc.sar".equals(lower)) {
+                return name;
+            }
+        }
+        return null;
+    }
+
+    private static String describeDirectory(File directory, int maxEntries) {
+        if (directory == null) return "<null>";
+        File[] files = directory.listFiles();
+        if (files == null) return "<unavailable>";
+        StringBuilder result = new StringBuilder("[");
+        int limit = Math.max(1, maxEntries);
+        for (int i = 0; i < files.length && i < limit; i++) {
+            if (i > 0) result.append(", ");
+            File file = files[i];
+            result.append(file == null ? "<null>" : file.getName());
+            if (file != null && file.isDirectory()) result.append('/');
+        }
+        if (files.length > limit) result.append(", … total=").append(files.length);
+        return result.append(']').toString();
     }
 
 public static Intent buildInternalArtemisIntent(Context context, String packageName, String gamePath, String launchTarget) {

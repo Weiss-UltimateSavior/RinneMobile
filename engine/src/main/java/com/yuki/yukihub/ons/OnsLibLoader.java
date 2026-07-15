@@ -10,6 +10,9 @@ import java.io.InputStream;
 public final class OnsLibLoader {
     private static final String TAG = "OnsLibLoader";
     private static final String VERSION_DIR = "Yuri_0.7.6";
+    // Bump independently from the asset directory when the private extraction
+    // layout changes, so an old process cache can never retain a patched .so.
+    private static final String CACHE_DIR = VERSION_DIR + "-2";
     private static final String[] ASSET_LIBS = new String[]{
             "SDL2", "lua", "jpeg", "bz2", "SDL2_image", "SDL2_mixer", "SDL2_ttf", "onsyuri"
     };
@@ -20,7 +23,7 @@ public final class OnsLibLoader {
     public static synchronized void load(Context context) {
         if (loaded) return;
         Context app = context.getApplicationContext();
-        File outDir = new File(app.getFilesDir(), "libs/" + VERSION_DIR);
+        File outDir = new File(app.getFilesDir(), "libs/" + CACHE_DIR);
         if (!outDir.exists() && !outDir.mkdirs()) {
             Log.w(TAG, "mkdir failed: " + outDir);
         }
@@ -44,6 +47,10 @@ public final class OnsLibLoader {
         copyAssetFile(context, asset, out);
         out.setExecutable(true, false);
         return out;
+    }
+
+    public static File getMainSharedObject(Context context) {
+        return new File(context.getFilesDir(), "libs/" + CACHE_DIR + "/libonsyuri.so");
     }
 
     private static File copyAssetFile(Context context, String asset, File out) {
