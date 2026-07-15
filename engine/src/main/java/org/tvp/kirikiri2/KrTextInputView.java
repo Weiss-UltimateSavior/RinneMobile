@@ -6,19 +6,19 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
-public final class a extends View implements View.OnKeyListener {
-    public i f19625a;
-    public a(Context context) { super(context); }
+public final class KrTextInputView extends View implements View.OnKeyListener {
+    public KrInputConnection inputConnection;
+    public KrTextInputView(Context context) { super(context); }
     @Override public boolean onCheckIsTextEditor() { return true; }
     @Override public InputConnection onCreateInputConnection(EditorInfo editorInfo) {
-        i conn = new i(this, true);
-        this.f19625a = conn;
+        KrInputConnection conn = new KrInputConnection(this, true);
+        this.inputConnection = conn;
         editorInfo.imeOptions = 301989888;
         return conn;
     }
     @Override public boolean onKey(View view, int keyCode, KeyEvent event) {
         if (!event.isPrintingKey()) return false;
-        if (event.getAction() == KeyEvent.ACTION_DOWN && this.f19625a != null) this.f19625a.commitText(String.valueOf((char) event.getUnicodeChar()), 1);
+        if (event.getAction() == KeyEvent.ACTION_DOWN && this.inputConnection != null) this.inputConnection.commitText(String.valueOf((char) event.getUnicodeChar()), 1);
         return true;
     }
     @Override public boolean onKeyPreIme(int keyCode, KeyEvent event) {

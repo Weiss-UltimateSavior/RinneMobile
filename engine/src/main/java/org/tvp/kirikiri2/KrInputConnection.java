@@ -4,8 +4,8 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 
-public final class i extends BaseInputConnection {
-    public i(View targetView, boolean fullEditor) { super(targetView, fullEditor); }
+public final class KrInputConnection extends BaseInputConnection {
+    public KrInputConnection(View targetView, boolean fullEditor) { super(targetView, fullEditor); }
     @Override public boolean commitText(CharSequence text, int newCursorPosition) {
         KR2Activity.nativeCommitText(text.toString(), newCursorPosition);
         return super.commitText(text, newCursorPosition);

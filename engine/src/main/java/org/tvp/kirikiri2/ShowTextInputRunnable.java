@@ -5,18 +5,18 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import org.cocos2dx.lib.Cocos2dxActivity;
 
-public final class g implements Runnable {
-    public int f19633a;
-    public int f19634b;
-    public int f19635c;
-    public int f19636d;
+public final class ShowTextInputRunnable implements Runnable {
+    public int x;
+    public int y;
+    public int width;
+    public int height;
     @Override public void run() {
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(f19635c, f19636d + 15);
-        lp.leftMargin = f19633a;
-        lp.topMargin = f19634b;
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(width, height + 15);
+        lp.leftMargin = x;
+        lp.topMargin = y;
         View view = KR2Activity.mTextEdit;
         if (view == null) {
-            a v = new a(KR2Activity.sInstance);
+            KrTextInputView v = new KrTextInputView(KR2Activity.sInstance);
             v.setFocusableInTouchMode(true);
             v.setFocusable(true);
             v.setOnKeyListener(v);

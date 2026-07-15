@@ -24,7 +24,7 @@ import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 public class KR2Activity extends Cocos2dxActivity {
     public static KR2Activity sInstance;
     static Handler msgHandler;
-    static f mDialogMessage = new f();
+    static KrDialogModel mDialogMessage = new KrDialogModel();
     protected static View mTextEdit;
     static ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
     static ActivityManager mAcitivityManager = null;
@@ -128,28 +128,28 @@ public class KR2Activity extends Cocos2dxActivity {
     }
 
     public static void ShowMessageBox(String title, String msg, String[] buttons) {
-        f fVar = mDialogMessage;
-        fVar.f19629a = title;
-        fVar.f19630b = msg;
-        fVar.f19631c = buttons;
-        if (msgHandler != null) msgHandler.post(new c());
+        KrDialogModel dialogModel = mDialogMessage;
+        dialogModel.title = title;
+        dialogModel.message = msg;
+        dialogModel.buttons = buttons;
+        if (msgHandler != null) msgHandler.post(new ShowMessageBoxRunnable());
     }
     public static void ShowInputBox(String title, String msg, String text, String[] buttons) {
-        f fVar = mDialogMessage;
-        fVar.f19629a = title;
-        fVar.f19630b = msg;
-        fVar.f19631c = buttons;
-        if (msgHandler != null) msgHandler.post(new d(text));
+        KrDialogModel dialogModel = mDialogMessage;
+        dialogModel.title = title;
+        dialogModel.message = msg;
+        dialogModel.buttons = buttons;
+        if (msgHandler != null) msgHandler.post(new ShowInputBoxRunnable(text));
     }
 
 
     public static void showTextInput(int x, int y, int w, int h) {
         if (msgHandler == null) return;
-        g r = new g();
-        r.f19633a = x;
-        r.f19634b = y;
-        r.f19635c = w;
-        r.f19636d = h;
+        ShowTextInputRunnable r = new ShowTextInputRunnable();
+        r.x = x;
+        r.y = y;
+        r.width = w;
+        r.height = h;
         msgHandler.post(r);
     }
     public static void hideTextInput() { if (msgHandler != null) msgHandler.post(KR2Activity::lambdaHideTextInput); }
@@ -360,7 +360,7 @@ public class KR2Activity extends Cocos2dxActivity {
     }
 
     @Override public Cocos2dxGLSurfaceView onCreateView() {
-        h gl = new h(this);
+        KrGLSurfaceView gl = new KrGLSurfaceView(this);
         hideSystemUI();
         if (mGLContextAttrs != null && mGLContextAttrs.length > 3 && mGLContextAttrs[3] > 0) gl.getHolder().setFormat(-3);
         if (mGLContextAttrs != null) gl.setEGLConfigChooser(this.new Cocos2dxEGLConfigChooser(this, mGLContextAttrs));

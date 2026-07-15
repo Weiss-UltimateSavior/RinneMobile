@@ -5,8 +5,8 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 
-public final class h extends Cocos2dxGLSurfaceView {
-    public h(Context context) { super(context); }
+public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
+    public KrGLSurfaceView(Context context) { super(context); }
 
     private boolean usesCocosTouchPipeline() {
         try {
