@@ -4,12 +4,26 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class Cocos2dxRenderer implements GLSurfaceView.Renderer {
+    public interface RendererListener {
+        void onNativeReady();
+        void onFrameRendered();
+    }
+
     private static final long NANOSECONDSPERMICROSECOND = 1000000L;
     private static long sAnimationInterval = 16666666L;
     private long mLastTickInNanoSeconds;
     private boolean mNativeInitCompleted = false;
     private int mScreenWidth;
     private int mScreenHeight;
+    private final RendererListener mListener;
+
+    public Cocos2dxRenderer() {
+        this(null);
+    }
+
+    public Cocos2dxRenderer(RendererListener listener) {
+        mListener = listener;
+    }
 
     private static native void nativeInit(int w, int h);
     private static native void nativeOnSurfaceChanged(int w, int h);
@@ -61,6 +75,7 @@ public class Cocos2dxRenderer implements GLSurfaceView.Renderer {
         nativeInit(mScreenWidth, mScreenHeight);
         mLastTickInNanoSeconds = System.nanoTime();
         mNativeInitCompleted = true;
+        if (mListener != null) mListener.onNativeReady();
     }
 
     @Override
@@ -78,5 +93,6 @@ public class Cocos2dxRenderer implements GLSurfaceView.Renderer {
             mLastTickInNanoSeconds = System.nanoTime();
         }
         nativeRender();
+        if (mListener != null) mListener.onFrameRendered();
     }
 }

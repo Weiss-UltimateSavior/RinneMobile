@@ -75,7 +75,15 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
             this.mGLSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         }
 
-        this.mGLSurfaceView.setCocos2dxRenderer(new Cocos2dxRenderer());
+        this.mGLSurfaceView.setCocos2dxRenderer(new Cocos2dxRenderer(new Cocos2dxRenderer.RendererListener() {
+            @Override public void onNativeReady() {
+                Cocos2dxActivity.this.onCocosRendererReady();
+            }
+
+            @Override public void onFrameRendered() {
+                Cocos2dxActivity.this.onCocosFrameRendered();
+            }
+        }));
         this.mGLSurfaceView.setCocos2dxEditText(editBox);
         setContentView(this.mFrameLayout);
     }
@@ -127,6 +135,12 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
             e.printStackTrace();
         }
     }
+
+    /** Runs on the GL thread after nativeInit has created the Cocos scene. */
+    protected void onCocosRendererReady() { }
+
+    /** Runs on the GL thread immediately after each nativeRender call. */
+    protected void onCocosFrameRendered() { }
 
     @Override
     public void onPause() {

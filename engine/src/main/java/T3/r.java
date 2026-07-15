@@ -2,27 +2,42 @@ package T3;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import bridge.NativeBridge;
 import org.tvp.kirikiri2.KR2Activity;
 
 public abstract class r extends KR2Activity {
     private static final String TAG = "Kirikiroid2";
-    private static final int MAX_LAUNCH_ATTEMPTS = 15;
-    private static final long GL_LAUNCH_TIMEOUT_MS = 2500L;
+    private static final long SAFE_FALLBACK_REVEAL_MS = 20_000L;
     public static Context app;
-    private TextView mask;
+    private FrameLayout mask;
+    private TextView maskMessage;
+    private TextView maskHint;
+    private ProgressBar loadingSpinner;
     private volatile boolean nativeBridgeInitialized;
     private volatile boolean destroyed;
+    private volatile boolean firstFrameRendered;
+    private volatile boolean launchDispatched;
+    private volatile boolean launchSucceeded;
+    private volatile boolean maskRevealRequested;
+    private int launchReadinessFrames;
+    private String pendingGamePath;
+    private boolean pendingMaps;
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -32,19 +47,62 @@ public abstract class r extends KR2Activity {
         if (getIntent().getBooleanExtra("originMode", false)) {
             return;
         }
-        TextView textView = new TextView(this);
-        textView.setBackgroundColor(0xff000000);
-        textView.setText("Loading...");
-        textView.setTextColor(0xffffffff);
-        textView.setTextSize(32.0f);
-        textView.setGravity(17);
-        textView.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
-        this.mask = textView;
-        this.mFrameLayout.addView(textView);
+        int primaryColor = launcherPrimaryColor();
+        int backgroundColor = launcherColor("launcher_bg_color", Color.rgb(244, 245, 245));
+        int textColor = launcherColor("launcher_text_color", Color.rgb(20, 34, 27));
+        int mutedTextColor = launcherColor("launcher_text_muted_color", Color.rgb(130, 144, 138));
+
+        FrameLayout launchMask = new FrameLayout(this);
+        launchMask.setBackgroundColor(backgroundColor);
+        // Never expose the KRKR shell scene while the selected game is being
+        // started. The overlay is removed only after the game's first frames.
+        LinearLayout loadingPanel = new LinearLayout(this);
+        loadingPanel.setOrientation(LinearLayout.VERTICAL);
+        loadingPanel.setGravity(Gravity.CENTER_HORIZONTAL);
+        loadingPanel.setPadding(dp(22), dp(20), dp(22), dp(16));
+
+        ProgressBar spinner = new ProgressBar(this);
+        spinner.setIndeterminateTintList(ColorStateList.valueOf(primaryColor));
+        spinner.getIndeterminateDrawable().setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN);
+        spinner.setContentDescription("游戏加载中");
+
+        TextView title = new TextView(this);
+        title.setText("正在启动游戏");
+        title.setTextColor(textColor);
+        title.setTextSize(16.0f);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, -2);
+        titleParams.topMargin = dp(0);
+        loadingPanel.addView(title, titleParams);
+
+        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(dp(32), dp(32));
+        spinnerParams.gravity = Gravity.CENTER_HORIZONTAL;
+        spinnerParams.topMargin = dp(14);
+        loadingPanel.addView(spinner, spinnerParams);
+
+        TextView hint = new TextView(this);
+        hint.setText("请稍候，正在准备游戏内容");
+        hint.setTextColor(mutedTextColor);
+        hint.setTextSize(11.0f);
+        hint.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(-1, -2);
+        hintParams.topMargin = dp(10);
+        loadingPanel.addView(hint, hintParams);
+
+        FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER);
+        launchMask.addView(loadingPanel, panelParams);
+        launchMask.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
+        this.mask = launchMask;
+        this.maskMessage = title;
+        this.maskHint = hint;
+        this.loadingSpinner = spinner;
+        this.mFrameLayout.addView(launchMask);
+        NativeBridge.setKrkrGameReadyListener(this::revealGame);
         String path = getIntent().getStringExtra("path");
         boolean maps = getIntent().getBooleanExtra("maps", false);
         if (path != null && path.length() != 0) {
-            tryLaunchGame(path, maps);
+            requestGameLaunch(path, maps);
         } else {
             finish();
         }
@@ -58,6 +116,10 @@ public abstract class r extends KR2Activity {
             Log.e(TAG, "native bridge initialization failed; skip KRKR hook setup");
             return;
         }
+        // Do not bypass TVPMainScene's internal delay. It serializes teardown of
+        // the selector UI before the game UI is created; forcing it to zero can
+        // leave the KRKR shell above an otherwise running game.
+        Log.i(TAG, "direct game launch waits for native scene transition so=" + soName());
         Intent intent = getIntent();
         boolean scopedSaveDir = intent != null && intent.getBooleanExtra("scopedSaveDir", false);
         boolean safFileFallback = intent != null && intent.getBooleanExtra("safFileFallback", false);
@@ -110,58 +172,106 @@ public abstract class r extends KR2Activity {
         }
     }
 
-    private void tryLaunchGame(String path, boolean maps) {
+    private synchronized void requestGameLaunch(String path, boolean maps) {
         if (!nativeBridgeInitialized) {
             Log.e(TAG, "skip launch because native bridge was not initialized");
             showLaunchFailure("KRKR 引擎初始化失败");
             return;
         }
-        // Native launch must run on the GL thread. Wait for each queued call before retrying;
-        // otherwise the old loop can enqueue all retries before the first callback runs.
-        new Thread(() -> {
-            boolean launched = false;
-            for (int attempt = 1; !launched && attempt <= MAX_LAUNCH_ATTEMPTS; attempt++) {
-                if (destroyed || isFinishing()) break;
-                final int currentAttempt = attempt;
-                final boolean[] launchResult = new boolean[]{false};
-                final CountDownLatch launchCompleted = new CountDownLatch(1);
-                runOnGLThread(() -> {
-                    try {
-                        if (destroyed) return;
-                        launchResult[0] = NativeBridge.launch(soName(), path, maps);
-                        Log.i(TAG, "launch result=" + launchResult[0] + " path=" + path + " attempt=" + currentAttempt);
-                    } catch (Throwable t) {
-                        Log.e(TAG, "launch failed", t);
-                    } finally {
-                        launchCompleted.countDown();
-                    }
-                });
-                try {
-                    if (!launchCompleted.await(GL_LAUNCH_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                        Log.w(TAG, "launch callback timed out attempt=" + currentAttempt);
-                    }
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-                launched = launchResult[0];
-                if (launched && mask != null) {
-                    mask.post(() -> mask.animate().alpha(0.0f).setDuration(500L).setStartDelay(1500L).start());
-                } else if (!destroyed && currentAttempt < MAX_LAUNCH_ATTEMPTS) {
-                    try { Thread.sleep(1000L); } catch (InterruptedException ignored) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                }
+        pendingGamePath = path;
+        pendingMaps = maps;
+        dispatchPendingLaunchOnGlThread();
+    }
+
+    @Override
+    protected void onCocosRendererReady() {
+        // nativeInit only constructs the scene.  Its initial UI tasks are still
+        // queued until the first render pass, so starting a game here lets the
+        // shell initialise after (and above) the game scene.
+    }
+
+    @Override
+    protected void onCocosFrameRendered() {
+        if (!firstFrameRendered) firstFrameRendered = true;
+        // The file selector is registered a few frames after the renderer. Keep
+        // checking until startupFrom can actually dismiss it.
+        if (!launchDispatched) dispatchPendingLaunchOnGlThread();
+    }
+
+    private synchronized void dispatchPendingLaunchOnGlThread() {
+        if (!firstFrameRendered || launchDispatched || pendingGamePath == null || destroyed || isFinishing()) return;
+        if (!NativeBridge.isLaunchSceneReady(soName())) {
+            launchReadinessFrames++;
+            return;
+        }
+        launchDispatched = true;
+        try {
+            launchSucceeded = NativeBridge.launch(soName(), pendingGamePath, pendingMaps);
+            Log.i(TAG, "renderer-ready launch result=" + launchSucceeded + " path=" + pendingGamePath
+                    + " frames=" + launchReadinessFrames);
+        } catch (Throwable t) {
+            Log.e(TAG, "renderer-ready launch failed", t);
+        }
+        if (!launchSucceeded) {
+            showLaunchFailure("启动失败");
+        } else if (mask != null) {
+            // Keep the KRKR shell hidden until the native update hook reports
+            // that doStartup and the menu transition completed. The fallback
+            // includes the engine's original ten-second scene handoff.
+            mask.postDelayed(this::revealGame, SAFE_FALLBACK_REVEAL_MS);
+        }
+    }
+
+    private void revealGame() {
+        if (destroyed || mask == null || maskRevealRequested) return;
+        maskRevealRequested = true;
+        mask.post(() -> {
+            if (!destroyed && mask != null) {
+                Log.i(TAG, "hide KRKR launch mask after game-ready signal");
+                mask.animate().alpha(0.0f).setDuration(150L).withEndAction(() -> {
+                    if (mask != null) mask.setVisibility(android.view.View.GONE);
+                }).start();
             }
-            if (!launched && !destroyed) showLaunchFailure("启动失败");
-        }, "KrkrLaunch").start();
+        });
     }
 
     private void showLaunchFailure(String message) {
         runOnUiThread(() -> {
-            if (!destroyed && !isFinishing() && mask != null) mask.setText(message);
+            if (destroyed || isFinishing() || mask == null) return;
+            if (loadingSpinner != null) loadingSpinner.setVisibility(View.GONE);
+            if (maskMessage != null) maskMessage.setText(message);
+            if (maskHint != null) maskHint.setText("请返回后重试");
         });
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private int launcherPrimaryColor() {
+        try {
+            Object value = Class.forName("com.apps.LauncherActivity")
+                    .getMethod("launcherPrimaryColor", Context.class)
+                    .invoke(null, this);
+            if (value instanceof Integer) return (Integer) value;
+        } catch (Throwable ignored) { }
+        return launcherColor("launcher_primary_color", Color.rgb(24, 185, 120));
+    }
+
+    private int launcherColor(String name, int fallback) {
+        Context uiContext = launcherUiContext();
+        int id = uiContext.getResources().getIdentifier(name, "color", getPackageName());
+        return id == 0 ? fallback : uiContext.getColor(id);
+    }
+
+    private Context launcherUiContext() {
+        try {
+            Object value = Class.forName("com.apps.LauncherActivity")
+                    .getMethod("wrapLauncherUiMode", Context.class)
+                    .invoke(null, this);
+            if (value instanceof Context) return (Context) value;
+        } catch (Throwable ignored) { }
+        return this;
     }
 
     private static String normalizeKrPath(String path) {
@@ -233,6 +343,10 @@ public abstract class r extends KR2Activity {
         try {
             destroyed = true;
             mask = null;
+            maskMessage = null;
+            maskHint = null;
+            loadingSpinner = null;
+            NativeBridge.setKrkrGameReadyListener(null);
             if (app == this) app = null;
         } catch (Throwable ignored) { }
         // This Activity has a dedicated process. Do not enter Cocos teardown first:

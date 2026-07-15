@@ -894,7 +894,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         addGameActionOption(root, "详情", dialog, game, () -> showGameDetailDialog(game));
         addGameActionOption(root, "编辑", dialog, game, () -> startEditGameActivity(game));
         addGameActionOption(root, "状态", dialog, game, () -> showPlayStatusDialog(game));
-        addGameActionOption(root, "修改时长", dialog, game, () -> showEditPlayTimeDialog(game));
+        addGameActionOption(root, game.favorite ? "取消收藏" : "添加收藏", dialog, game, () -> toggleFavorite(game));
         addGameActionOption(root, "更多选项", dialog, game, () -> showMoreOptionsDialog(game));
 
         TextView cancel = new TextView(requireContext());
@@ -1244,9 +1244,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("更多选项"));
 
-        String favoriteLabel = game.favorite ? "取消收藏" : "添加收藏";
         String[][] options = {
-            {favoriteLabel, "favorite"},
+            {"修改时长", "edit_play_time"},
             {"重新匹配 VNDB 元数据", "rematch"},
             {"自定义搜索 VNDB", "custom_vndb"},
             {"同步元数据封面到卡片", "sync"},
@@ -1267,7 +1266,7 @@ private void loadNextPage(boolean forceFullRefresh) {
             option.setOnClickListener(v -> {
                 dialog.dismiss();
                 switch (action) {
-                    case "favorite": toggleFavorite(game); break;
+                    case "edit_play_time": showEditPlayTimeDialog(game); break;
                     case "rematch": rematchMetadata(game); break;
                     case "custom_vndb": LauncherCustomVndbSearchDialog.show(this, game, this::loadGames); break;
                     case "sync": syncMetadataToCard(game); break;

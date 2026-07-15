@@ -21,14 +21,28 @@ import java.util.List;
 public final class NativeBridge {
     private static final List<RandomAccessFile> OPEN_FILES = new ArrayList<>();
     private static final List<ParcelFileDescriptor> OPEN_PFDS = new ArrayList<>();
+    private static volatile Runnable krkrGameReadyListener;
 
     private NativeBridge() { }
 
     public static native boolean initialize(String so);
+    /** True only after TVPMainScene has registered the file-selector form that startupFrom must dismiss. */
+    public static native boolean isLaunchSceneReady(String so);
     public static native boolean launch(String so, String path, boolean useMaps);
     public static native void interceptor(String prefix);
     public static native void relocate();
     public static native boolean write(String path, byte[] data);
+
+    /** Called by the native TVPMainScene update hook after doStartup has returned. */
+    private static void onKrkrGameReady() {
+        Runnable listener = krkrGameReadyListener;
+        Log.i("NativeBridge", "KRKR game-ready callback listener=" + (listener != null));
+        if (listener != null) listener.run();
+    }
+
+    public static void setKrkrGameReadyListener(Runnable listener) {
+        krkrGameReadyListener = listener;
+    }
 
     public static synchronized int open(String path, int mode) {
         String normalized = canonicalizeKrStoragePath(normalizeFilePath(path));

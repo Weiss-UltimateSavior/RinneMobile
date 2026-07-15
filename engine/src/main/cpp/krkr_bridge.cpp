@@ -8,6 +8,11 @@
 #include <cstring>
 #include <mutex>
 #include <string>
+#include <cstdint>
+#include <atomic>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "krkr_bytehook.h"
 
@@ -16,6 +21,9 @@ namespace {
 constexpr const char* kTag = "KrkrBridge";
 constexpr const char* kGetSceneSymbol = "_ZN12TVPMainScene11GetInstanceEv";
 constexpr const char* kStartupSymbol = "_ZN12TVPMainScene11startupFromERKSs";
+constexpr const char* kUpdateSymbol = "_ZN12TVPMainScene6updateEf";
+constexpr size_t kUiFormContainerOffset = 0x348;
+constexpr size_t kUiFormCountVtableOffset = 0x238;
 
 using GetScene = void* (*)();
 // libgame was built against the old GNU libstdc++ copy-on-write string ABI.
@@ -50,6 +58,8 @@ struct LegacyCowString {
 };
 
 using StartupFrom = void (*)(void*, const LegacyCowString&);
+using Update = void (*)(void*, float);
+using UiFormCount = int (*)(void*);
 using OpenFn = int (*)(const char*, int, ...);
 
 struct GameApi {
@@ -57,6 +67,7 @@ struct GameApi {
     void* handle = nullptr;
     GetScene getScene = nullptr;
     StartupFrom startupFrom = nullptr;
+    Update update = nullptr;
 };
 
 JavaVM* gVm = nullptr;
@@ -66,6 +77,12 @@ std::string gPathPrefix;
 KrkrByteHook gByteHook;
 void* gOpenStub = nullptr;
 void* gOpen64Stub = nullptr;
+Update gOriginalSceneUpdate = nullptr;
+void** gSceneUpdateSlot = nullptr;
+std::atomic<bool> gGameReadyReported{false};
+std::atomic<int> gLastLaunchReadiness{-1};
+int64_t gFirstSceneUpdateNs = 0;
+constexpr int64_t kMenuShrinkWaitNs = 1200LL * 1000LL * 1000LL;
 
 bool supportedGameLibrary(const char* library) {
     return library != nullptr
@@ -107,10 +124,12 @@ bool resolveGameLocked(const char* library) {
     }
     auto getScene = reinterpret_cast<GetScene>(dlsym(handle, kGetSceneSymbol));
     auto startupFrom = reinterpret_cast<StartupFrom>(dlsym(handle, kStartupSymbol));
-    if (getScene == nullptr || startupFrom == nullptr) {
+    auto update = reinterpret_cast<Update>(dlsym(handle, kUpdateSymbol));
+    if (getScene == nullptr || startupFrom == nullptr || update == nullptr) {
         __android_log_print(ANDROID_LOG_ERROR, kTag,
-                            "required KRKR symbols missing in %s scene=%p startup=%p error=%s", library,
-                            reinterpret_cast<void*>(getScene), reinterpret_cast<void*>(startupFrom), dlerror());
+                            "required KRKR symbols missing in %s scene=%p startup=%p update=%p error=%s", library,
+                            reinterpret_cast<void*>(getScene), reinterpret_cast<void*>(startupFrom),
+                            reinterpret_cast<void*>(update), dlerror());
         dlclose(handle);
         return false;
     }
@@ -118,9 +137,110 @@ bool resolveGameLocked(const char* library) {
     gGame.handle = handle;
     gGame.getScene = getScene;
     gGame.startupFrom = startupFrom;
-    __android_log_print(ANDROID_LOG_INFO, kTag, "initialized %s scene=%p startup=%p", library,
-                        reinterpret_cast<void*>(getScene), reinterpret_cast<void*>(startupFrom));
+    gGame.update = update;
+    __android_log_print(ANDROID_LOG_INFO, kTag, "initialized %s scene=%p startup=%p update=%p", library,
+                        reinterpret_cast<void*>(getScene), reinterpret_cast<void*>(startupFrom),
+                        reinterpret_cast<void*>(update));
     return true;
+}
+
+bool setWritablePointer(void** slot, void* value) {
+    if (slot == nullptr) return false;
+    const long pageSize = sysconf(_SC_PAGESIZE);
+    if (pageSize <= 0) return false;
+    const uintptr_t address = reinterpret_cast<uintptr_t>(slot);
+    const uintptr_t page = address & ~static_cast<uintptr_t>(pageSize - 1);
+    if (mprotect(reinterpret_cast<void*>(page), static_cast<size_t>(pageSize),
+                 PROT_READ | PROT_WRITE) != 0) return false;
+    *slot = value;
+    __builtin___clear_cache(reinterpret_cast<char*>(slot), reinterpret_cast<char*>(slot + 1));
+    return mprotect(reinterpret_cast<void*>(page), static_cast<size_t>(pageSize), PROT_READ) == 0;
+}
+
+void notifyGameReady() {
+    if (gVm == nullptr) return;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (gVm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        if (gVm->AttachCurrentThread(&env, nullptr) != JNI_OK) return;
+        attached = true;
+    }
+    jclass bridge = env->FindClass("bridge/NativeBridge");
+    if (bridge != nullptr) {
+        jmethodID callback = env->GetStaticMethodID(bridge, "onKrkrGameReady", "()V");
+        if (callback != nullptr) env->CallStaticVoidMethod(bridge, callback);
+        env->DeleteLocalRef(bridge);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) gVm->DetachCurrentThread();
+}
+
+void hookedSceneUpdate(void* scene, float dt) {
+    Update original = gOriginalSceneUpdate;
+    if (original != nullptr) original(scene, dt);
+    if (gGameReadyReported.load()) return;
+
+    timespec now{};
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    const int64_t nowNs = static_cast<int64_t>(now.tv_sec) * 1000LL * 1000LL * 1000LL + now.tv_nsec;
+    if (gFirstSceneUpdateNs == 0) {
+        // doStartup schedules this update immediately after calling
+        // TVPGameMainMenu::shrinkWithTime(1.0f). Do not expose that menu while
+        // its move/fade action is still running.
+        gFirstSceneUpdateNs = nowNs;
+        __android_log_print(ANDROID_LOG_INFO, kTag, "TVPMainScene first update; waiting for menu shrink");
+        return;
+    }
+    if (nowNs - gFirstSceneUpdateNs < kMenuShrinkWaitNs) return;
+
+    if (!gGameReadyReported.exchange(true)) {
+        if (gSceneUpdateSlot != nullptr) {
+            // Restore after the one-off transition window so the hook has no
+            // steady-state per-frame cost.
+            setWritablePointer(gSceneUpdateSlot, reinterpret_cast<void*>(original));
+        }
+        __android_log_print(ANDROID_LOG_INFO, kTag, "TVPMainScene startup completed; menu shrink finished");
+        notifyGameReady();
+    }
+}
+
+bool installGameReadySignal(void* scene) {
+    if (scene == nullptr || gGame.update == nullptr) return false;
+    if (gSceneUpdateSlot != nullptr) return true;
+    auto** vtable = *reinterpret_cast<void***>(scene);
+    if (vtable == nullptr) return false;
+    for (size_t index = 0; index < 256; ++index) {
+        if (vtable[index] != reinterpret_cast<void*>(gGame.update)) continue;
+        gOriginalSceneUpdate = gGame.update;
+        if (!setWritablePointer(&vtable[index], reinterpret_cast<void*>(hookedSceneUpdate))) {
+            gOriginalSceneUpdate = nullptr;
+            __android_log_print(ANDROID_LOG_ERROR, kTag, "TVPMainScene update vtable patch failed index=%zu", index);
+            return false;
+        }
+        gSceneUpdateSlot = &vtable[index];
+        gGameReadyReported.store(false);
+        gFirstSceneUpdateNs = 0;
+        __android_log_print(ANDROID_LOG_INFO, kTag, "TVPMainScene ready signal installed vtableIndex=%zu", index);
+        return true;
+    }
+    __android_log_print(ANDROID_LOG_ERROR, kTag, "TVPMainScene update not found in vtable");
+    return false;
+}
+
+bool isLaunchSceneReady(void* scene) {
+    if (scene == nullptr) return false;
+    auto* uiForms = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(scene) + kUiFormContainerOffset);
+    if (uiForms == nullptr) return false;
+    auto** vtable = *reinterpret_cast<void***>(uiForms);
+    if (vtable == nullptr) return false;
+    auto count = reinterpret_cast<UiFormCount>(
+            vtable[kUiFormCountVtableOffset / sizeof(*vtable)]);
+    const int formCount = count(uiForms);
+    const int previous = gLastLaunchReadiness.exchange(formCount);
+    if (previous != formCount) {
+        __android_log_print(ANDROID_LOG_INFO, kTag, "launch UI forms ready count=%d", formCount);
+    }
+    return formCount > 0;
 }
 
 bool pathMatchesPrefix(const char* path) {
@@ -232,8 +352,21 @@ Java_bridge_NativeBridge_launch(JNIEnv* env, jclass, jstring gameLibrary, jstrin
         return JNI_FALSE;
     }
     startupFrom(scene, legacyPath);
-    __android_log_print(ANDROID_LOG_INFO, kTag, "started %s from %s", library.c_str(), gamePath.c_str());
+    const bool readySignal = installGameReadySignal(scene);
+    __android_log_print(ANDROID_LOG_INFO, kTag, "started %s from %s readySignal=%d", library.c_str(), gamePath.c_str(), readySignal);
     return JNI_TRUE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_bridge_NativeBridge_isLaunchSceneReady(JNIEnv* env, jclass, jstring gameLibrary) {
+    const std::string library = takeString(env, gameLibrary);
+    GetScene getScene = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        if (!resolveGameLocked(library.c_str())) return JNI_FALSE;
+        getScene = gGame.getScene;
+    }
+    return isLaunchSceneReady(getScene()) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -305,6 +438,8 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
              reinterpret_cast<void*>(Java_bridge_NativeBridge_initialize)},
             {const_cast<char*>("launch"), const_cast<char*>("(Ljava/lang/String;Ljava/lang/String;Z)Z"),
              reinterpret_cast<void*>(Java_bridge_NativeBridge_launch)},
+            {const_cast<char*>("isLaunchSceneReady"), const_cast<char*>("(Ljava/lang/String;)Z"),
+             reinterpret_cast<void*>(Java_bridge_NativeBridge_isLaunchSceneReady)},
             {const_cast<char*>("interceptor"), const_cast<char*>("(Ljava/lang/String;)V"),
              reinterpret_cast<void*>(Java_bridge_NativeBridge_interceptor)},
             {const_cast<char*>("relocate"), const_cast<char*>("()V"),
