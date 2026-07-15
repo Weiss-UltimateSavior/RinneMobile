@@ -2,6 +2,7 @@ package com.apps.game;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -529,6 +531,11 @@ public class LauncherManageFragment extends Fragment {
         row.setPadding(dp(13), 0, dp(9), 0);
         row.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_white_card);
 
+        ImageView directoryIcon = new ImageView(requireContext());
+        directoryIcon.setImageResource(com.yuki.yukihub.R.drawable.launcher_manage_scan_directory_icon);
+        directoryIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(requireContext())));
+        row.addView(directoryIcon, new LinearLayout.LayoutParams(dp(25), dp(25)));
+
         TextView title = new TextView(requireContext());
         title.setText(directoryLabel(root));
         title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
@@ -536,7 +543,10 @@ public class LauncherManageFragment extends Fragment {
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
-        row.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        titleLp.setMargins(dp(11), 0, 0, 0);
+        row.addView(title, titleLp);
 
         TextView toggle = smallAction(enabled ? "停用" : "启用", enabled);
         toggle.setOnClickListener(view -> {
