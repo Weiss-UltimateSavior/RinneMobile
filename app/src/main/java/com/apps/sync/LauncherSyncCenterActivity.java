@@ -90,11 +90,11 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         LauncherTheme.styleSwitch(binding.syncAutoSwitch);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.formInputs(binding.syncServerInput, binding.syncUserInput, binding.syncPasswordInput);
-        LauncherTheme.longActionButton(binding.btnTest);
-        LauncherTheme.longActionButton(binding.btnSyncNow);
+        LauncherTheme.shortActionButton(binding.btnTest);
+        LauncherTheme.shortActionButton(binding.btnSyncNow);
         LauncherTheme.longActionButton(binding.btnSave);
-        LauncherTheme.longActionButton(binding.btnExport);
-        LauncherTheme.longActionButton(binding.btnImport);
+        LauncherTheme.shortActionButton(binding.btnExport);
+        LauncherTheme.shortActionButton(binding.btnImport);
     }
 
     private void loadConfig() {

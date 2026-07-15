@@ -2,6 +2,7 @@ package com.apps.game;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -70,7 +71,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private String launchTargetName = "";
     private TextView emulatorText;
     private EditText gameHubIdInput;
-    private TextView importGameHubShortcutButton;
+    private ImageView importGameHubShortcutButton;
     private EditText descriptionInput;
     private TextView dirText;
     private TextView coverText;
@@ -197,10 +198,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.longActionButton(saveButton);
-        LauncherTheme.shortActionButton(importGameHubShortcutButton);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
         LauncherTheme.formInputs(nameInput, gameHubIdInput, descriptionInput);
-        LauncherTheme.shortActionButton(importGameHubShortcutButton);
+        importGameHubShortcutButton.setImageTintList(
+                ColorStateList.valueOf(LauncherTheme.primary(this)));
     }
 
     private void importGameHubShortcutFromShizuku() {
@@ -218,7 +219,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             return;
         }
         importGameHubShortcutButton.setEnabled(false);
-        importGameHubShortcutButton.setText("读取中...");
+        importGameHubShortcutButton.setAlpha(0.45f);
+        importGameHubShortcutButton.setContentDescription("正在读取 GameHub 快捷方式");
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try { items = LauncherGameHubShortcutBridge.loadShortcuts(); }
@@ -226,7 +228,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             final List<LauncherGameHubShortcutBridge.Shortcut> shortcuts = items;
             runOnUiThread(() -> {
                 importGameHubShortcutButton.setEnabled(true);
-                importGameHubShortcutButton.setText("导入");
+                importGameHubShortcutButton.setAlpha(1f);
+                importGameHubShortcutButton.setContentDescription("导入 GameHub 快捷方式");
                 if (isFinishing()) return;
                 if (shortcuts.isEmpty()) {
                     Toast.makeText(this, "未读取到快捷方式；请确认盖世已创建桌面快捷方式", Toast.LENGTH_LONG).show();

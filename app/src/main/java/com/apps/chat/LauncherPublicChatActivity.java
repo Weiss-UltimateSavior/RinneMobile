@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -96,7 +97,13 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         });
         sendView.setOnClickListener(view -> sendMessage());
         LauncherTheme.applyPrimaryTone(findViewById(R.id.publicChatRoot));
+        titleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
+        ((TextView) findViewById(R.id.publicChatTitle)).setTextColor(LauncherTheme.onPrimary(this));
+        connectionView.setTextColor(ColorUtils.setAlphaComponent(LauncherTheme.onPrimary(this), 190));
         findViewById(R.id.publicChatAnnouncementIcon).setBackground(LauncherTheme.circle(this));
+        findViewById(R.id.publicChatInputThemeBar).setBackground(LauncherTheme.primaryButton(this, 0f));
+        inputView.setTextColor(LauncherTheme.text(this));
+        inputView.setHintTextColor(LauncherTheme.textMuted(this));
         sendView.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
         renderStatus();
         loadChannel();
@@ -262,8 +269,16 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
             int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            setOverlayMargins(topOverlay, topInset, 0);
-            setOverlayMargins(composerOverlay, 0, Math.max(systemBottom, imeBottom) + dp(10));
+            setOverlayMargins(topOverlay, 0, 0);
+            titleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
+            boolean keyboardVisible = imeBottom > systemBottom;
+            setOverlayMargins(composerOverlay, 0, keyboardVisible ? imeBottom : 0);
+            View inputThemeBar = findViewById(R.id.publicChatInputThemeBar);
+            inputThemeBar.setPaddingRelative(
+                    inputThemeBar.getPaddingStart(),
+                    dp(13),
+                    inputThemeBar.getPaddingEnd(),
+                    keyboardVisible ? dp(14) : systemBottom + dp(14));
             updateMessageListOverlayPadding();
             return insets;
         });
@@ -282,9 +297,9 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
 
     private void updateMessageListOverlayPadding() {
         if (messageList == null || titleBar == null || composerOverlay == null) return;
-        int listTop = titleBar.getVisibility() == View.GONE
+        int listTop = topOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, topOverlay.getTop() + titleBar.getBottom());
+                : Math.max(0, topOverlay.getBottom());
         setMessageListTopMargin(listTop);
         int bottomSpace = composerOverlay.getVisibility() == View.GONE
                 ? 0
@@ -305,7 +320,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         messageList.setLayoutParams(margins);
     }
 
-    private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }
+    private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (ColorUtils.calculateLuminance(LauncherTheme.primary(this)) > 0.5d) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }
     private void applySavedToneMode() { LauncherActivity.applySavedToneMode(this); }
     @Override protected void attachBaseContext(android.content.Context newBase) { super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase)); }
 }

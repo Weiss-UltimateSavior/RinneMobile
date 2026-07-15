@@ -116,12 +116,16 @@
                     android:hint="选择 GameHub 引擎后可从盖世导入"
                     android:inputType="text" />
 
-                <TextView
+                <ImageView
                     android:id="@+id/btnImportGameHubShortcut"
-                    style="@style/LauncherInlineActionButton"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
                     android:layout_marginStart="7dp"
-                    android:text="导入"
-                    />
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="导入 GameHub 快捷方式"
+                    android:padding="6dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/launcher_import_gamehub_shortcut" />
             </LinearLayout>
 
             <TextView

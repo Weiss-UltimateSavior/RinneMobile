@@ -2,6 +2,7 @@ package com.apps.game;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
@@ -12,6 +13,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,7 +56,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private TextView btnPickDirectory;
     private TextView tvCoverStatus;
     private TextView btnPickCover;
-    private TextView btnImportGameHubShortcut;
+    private ImageView btnImportGameHubShortcut;
     private TextView btnCancel;
     private TextView btnSave;
 
@@ -220,7 +222,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         LauncherTheme.formInputs(etTitle, etEmulator, etLaunchTarget, etGameHubLocalGameId, etDescription);
         LauncherTheme.longActionButton(btnPickDirectory);
         LauncherTheme.longActionButton(btnPickCover);
-        LauncherTheme.shortActionButton(btnImportGameHubShortcut);
+        btnImportGameHubShortcut.setImageTintList(
+                ColorStateList.valueOf(LauncherTheme.primary(this)));
         LauncherTheme.longActionButton(btnSave);
         LauncherTheme.longActionButton(btnCancel);
     }
@@ -267,7 +270,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         }
 
         btnImportGameHubShortcut.setEnabled(false);
-        btnImportGameHubShortcut.setText("读取中...");
+        btnImportGameHubShortcut.setAlpha(0.45f);
+        btnImportGameHubShortcut.setContentDescription("正在读取 GameHub 快捷方式");
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try {
@@ -278,7 +282,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             List<LauncherGameHubShortcutBridge.Shortcut> result = items;
             runOnUiThread(() -> {
                 btnImportGameHubShortcut.setEnabled(true);
-                btnImportGameHubShortcut.setText("导入");
+                btnImportGameHubShortcut.setAlpha(1f);
+                btnImportGameHubShortcut.setContentDescription("导入 GameHub 快捷方式");
                 if (isFinishing()) return;
                 if (result.isEmpty()) {
                     showGameHubImportUnavailableDialog();
