@@ -141,31 +141,7 @@ public class KR2Activity extends Cocos2dxActivity {
         fVar.f19631c = buttons;
         if (msgHandler != null) msgHandler.post(new d(text));
     }
-    private static void showDialogInternal(String title, String msg, String inputText, String[] buttons) {
-        if (sInstance == null) return;
-        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(sInstance).setTitle(title).setMessage(msg).setCancelable(false);
-        final android.widget.EditText edit;
-        if (inputText != null) {
-            edit = new android.widget.EditText(sInstance);
-            edit.setLayoutParams(new android.widget.LinearLayout.LayoutParams(-1, -1));
-            edit.setText(inputText);
-            b.setView(edit);
-        } else edit = null;
-        String[] bs = buttons != null ? buttons : new String[]{"OK"};
-        if (bs.length >= 1) b.setPositiveButton(bs[0], (d, w) -> finishDialog(edit, 0));
-        if (bs.length >= 2) b.setNeutralButton(bs[1], (d, w) -> finishDialog(edit, 1));
-        if (bs.length >= 3) b.setNegativeButton(bs[2], (d, w) -> finishDialog(edit, 2));
-        android.app.AlertDialog dialog = b.create();
-        dialog.show();
-        if (edit != null) {
-            edit.requestFocus();
-            ((InputMethodManager) Cocos2dxActivity.getContext().getSystemService("input_method")).showSoftInput(edit, 0);
-        }
-    }
-    private static void finishDialog(android.widget.EditText edit, int which) {
-        if (edit != null) onMessageBoxText(edit.getText().toString());
-        onMessageBoxOK(which);
-    }
+
 
     public static void showTextInput(int x, int y, int w, int h) {
         if (msgHandler == null) return;
