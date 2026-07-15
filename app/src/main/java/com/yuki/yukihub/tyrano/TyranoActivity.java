@@ -50,6 +50,7 @@ public class TyranoActivity extends Activity {
     private WebView webView;
     private String gameDir;
     private File gameRootFile;
+    private File saveDirectory;
     private boolean gameUsesAsar = false;
     private String asarPath;
     private AsarArchive asarArchive;
@@ -71,6 +72,14 @@ public class TyranoActivity extends Activity {
         }
 
         gameRootFile = new File(gameDir);
+        saveDirectory = resolveSaveDirectory(getIntent(), gameRootFile);
+        if (!ensureWritableSaveDirectory(saveDirectory)) {
+            Toast.makeText(this, "Tyrano 启动失败：存档目录不可写", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        Log.i(TAG, "save directory=" + saveDirectory.getAbsolutePath()
+                + " scoped=" + getIntent().getBooleanExtra("scopedSaveDir", false));
         File asar = new File(gameRootFile, "app.asar");
         File resourcesAsar = new File(new File(gameRootFile, "resources"), "app.asar");
         File index = new File(gameRootFile, "index.html");
@@ -120,7 +129,7 @@ public class TyranoActivity extends Activity {
         setContentView(root);
 
         configureWebView(webView);
-        webView.addJavascriptInterface(new TyranoJsBridge(gameDir), "appJsInterface");
+        webView.addJavascriptInterface(new TyranoJsBridge(saveDirectory), "appJsInterface");
         String url = "http://localhost:" + localServer.getPort() + "/index.html";
         Log.i(TAG, "loadUrl=" + url);
         webView.loadUrl(url);
@@ -252,9 +261,7 @@ public class TyranoActivity extends Activity {
             String key = queryParam(url, "key");
             String data = queryParam(url, "data");
             if (key == null || key.trim().isEmpty()) return;
-            File dir = new File(gameDir, "savedata");
-            if (!dir.exists()) dir.mkdirs();
-            FileOutputStream out = new FileOutputStream(new File(dir, key + ".sav"));
+            FileOutputStream out = new FileOutputStream(new File(saveDirectory, key + ".sav"));
             if (data != null) out.write(data.getBytes(StandardCharsets.UTF_8));
             out.close();
         } catch (Throwable t) {
@@ -368,9 +375,39 @@ public class TyranoActivity extends Activity {
         try { getWindow().getDecorView().setSystemUiVisibility(5894); } catch (Throwable ignored) { }
     }
 
+    private File resolveSaveDirectory(Intent intent, File gameRoot) {
+        boolean scoped = intent != null && intent.getBooleanExtra("scopedSaveDir", false);
+        if (scoped) {
+            String explicit = intent.getStringExtra("scopedSaveRoot");
+            if (explicit == null || explicit.trim().isEmpty()) return null;
+            try {
+                File external = getExternalFilesDir(null);
+                if (external == null) return null;
+                File namespace = new File(new File(external, "save"), "tyrano").getCanonicalFile();
+                File candidate = new File(explicit).getCanonicalFile();
+                return candidate.getPath().startsWith(namespace.getPath() + File.separator)
+                        ? candidate : null;
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
+        return gameRoot == null ? null : new File(gameRoot, "savedata");
+    }
+
+    private static boolean ensureWritableSaveDirectory(File directory) {
+        try {
+            return directory != null
+                    && (directory.exists() || directory.mkdirs())
+                    && directory.isDirectory()
+                    && directory.canWrite();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     public class TyranoJsBridge {
-        private final String root;
-        TyranoJsBridge(String root) { this.root = root; }
+        private final File saveDirectory;
+        TyranoJsBridge(File saveDirectory) { this.saveDirectory = saveDirectory; }
 
         @JavascriptInterface
         public void closeGame() { runOnUiThread(() -> TyranoActivity.this.onBackPressed()); }
@@ -382,9 +419,7 @@ public class TyranoActivity extends Activity {
         public String getStorage(String key) {
             if (key == null) return "";
             try {
-                File dir = new File(root, "savedata");
-                if (!dir.exists()) dir.mkdirs();
-                File file = new File(dir, key + ".sav");
+                File file = new File(saveDirectory, key + ".sav");
                 if (!file.isFile()) return "";
                 FileInputStream in = new FileInputStream(file);
                 byte[] data = new byte[(int) file.length()];
@@ -401,9 +436,7 @@ public class TyranoActivity extends Activity {
         public void setStorage(String key, String value) {
             if (key == null) return;
             try {
-                File dir = new File(root, "savedata");
-                if (!dir.exists()) dir.mkdirs();
-                FileOutputStream out = new FileOutputStream(new File(dir, key + ".sav"));
+                FileOutputStream out = new FileOutputStream(new File(saveDirectory, key + ".sav"));
                 if (value != null) out.write(value.getBytes(StandardCharsets.UTF_8));
                 out.close();
             } catch (Throwable t) {

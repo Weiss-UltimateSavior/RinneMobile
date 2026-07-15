@@ -24,7 +24,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="KRKR 引擎"
+                android:text="引擎设置"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -54,29 +54,6 @@
                 android:layout_marginTop="5dp"
                 android:background="@drawable/launcher_account_input"
                 android:padding="9dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:lineSpacingExtra="2dp"
-                    android:text="KR 启动参数兼容模式"
-                    android:textColor="@color/launcher_text_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/compatModeSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -121,8 +98,53 @@
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/artemisScopedSwitch"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:enabled="false" />
+                    android:layout_weight="1"
+                    android:lineSpacingExtra="2dp"
+                    android:text="ONS 统一存档目录"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/onsScopedSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Tyrano 统一存档目录"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/tyranoScopedSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
 
             <TextView

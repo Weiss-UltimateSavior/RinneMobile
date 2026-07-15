@@ -132,7 +132,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="资料源设置" />
+                        android:text="封面设置" />
 
                     <TextView
                         style="@style/LauncherManageArrow"
@@ -149,7 +149,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="KRKR 引擎" />
+                        android:text="引擎设置" />
 
                     <TextView
                         style="@style/LauncherManageArrow"

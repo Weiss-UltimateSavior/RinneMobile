@@ -6,11 +6,14 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -54,8 +57,11 @@ public abstract class r extends KR2Activity {
 
         FrameLayout launchMask = new FrameLayout(this);
         launchMask.setBackgroundColor(backgroundColor);
+        configureLandscapeLoadingWindow(backgroundColor);
         // Never expose the KRKR shell scene while the selected game is being
         // started. The overlay is removed only after the game's first frames.
+        FrameLayout safeContent = new FrameLayout(this);
+        launchMask.addView(safeContent, new FrameLayout.LayoutParams(-1, -1));
         LinearLayout loadingPanel = new LinearLayout(this);
         loadingPanel.setOrientation(LinearLayout.VERTICAL);
         loadingPanel.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -91,7 +97,18 @@ public abstract class r extends KR2Activity {
         loadingPanel.addView(hint, hintParams);
 
         FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER);
-        launchMask.addView(loadingPanel, panelParams);
+        safeContent.addView(loadingPanel, panelParams);
+        safeContent.setOnApplyWindowInsetsListener((view, insets) -> {
+            // Match PadUi: the background can occupy the whole display, while
+            // interactive/readable content stays clear of cutouts and bars.
+            safeContent.setPadding(
+                    insets.getSystemWindowInsetLeft(),
+                    insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(),
+                    insets.getSystemWindowInsetBottom());
+            return insets;
+        });
+        safeContent.requestApplyInsets();
         launchMask.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
         this.mask = launchMask;
         this.maskMessage = title;
@@ -100,9 +117,8 @@ public abstract class r extends KR2Activity {
         this.mFrameLayout.addView(launchMask);
         NativeBridge.setKrkrGameReadyListener(this::revealGame);
         String path = getIntent().getStringExtra("path");
-        boolean maps = getIntent().getBooleanExtra("maps", false);
         if (path != null && path.length() != 0) {
-            requestGameLaunch(path, maps);
+            requestGameLaunch(path, false);
         } else {
             finish();
         }
@@ -248,6 +264,28 @@ public abstract class r extends KR2Activity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
+    private void configureLandscapeLoadingWindow(int backgroundColor) {
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(backgroundColor);
+        window.setNavigationBarColor(backgroundColor);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams attributes = window.getAttributes();
+            attributes.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            window.setAttributes(attributes);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.setStatusBarContrastEnforced(false);
+            window.setNavigationBarContrastEnforced(false);
+        }
+        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        if (!isLauncherDarkMode()) {
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        }
+        window.getDecorView().setSystemUiVisibility(flags);
+    }
+
     private int launcherPrimaryColor() {
         try {
             Object value = Class.forName("com.apps.LauncherActivity")
@@ -272,6 +310,18 @@ public abstract class r extends KR2Activity {
             if (value instanceof Context) return (Context) value;
         } catch (Throwable ignored) { }
         return this;
+    }
+
+    private boolean isLauncherDarkMode() {
+        try {
+            Object value = Class.forName("com.apps.LauncherActivity")
+                    .getMethod("isLauncherDarkMode", Context.class)
+                    .invoke(null, this);
+            if (value instanceof Boolean) return (Boolean) value;
+        } catch (Throwable ignored) { }
+        return (getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
     }
 
     private static String normalizeKrPath(String path) {

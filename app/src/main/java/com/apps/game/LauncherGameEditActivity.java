@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -50,6 +51,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private EditText etGameHubLocalGameId;
     private EditText etDescription;
     private TextView tvDir;
+    private TextView btnPickDirectory;
     private TextView tvCoverStatus;
     private TextView btnPickCover;
     private TextView btnImportGameHubShortcut;
@@ -58,6 +60,16 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private Game game;
     private Uri selectedCoverUri;
+    private Uri selectedGameDirectoryUri;
+
+    private final ActivityResultLauncher<Uri> directoryPicker = registerForActivityResult(
+            new ActivityResultContracts.OpenDocumentTree(), uri -> {
+                if (uri == null) return;
+                persistUriPermission(uri);
+                selectedGameDirectoryUri = uri;
+                tvDir.setText(displayDirectoryUri(uri));
+                tvDir.setTextColor(LauncherTheme.primary(this));
+            });
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
             (requestCode, grantResult) -> {
@@ -105,6 +117,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         etGameHubLocalGameId = findViewById(R.id.editGameHubLocalGameId);
         etDescription = findViewById(R.id.editDescription);
         tvDir = findViewById(R.id.editDir);
+        btnPickDirectory = findViewById(R.id.btnPickDirectory);
         tvCoverStatus = findViewById(R.id.editCoverStatus);
         btnPickCover = findViewById(R.id.btnPickCover);
         btnImportGameHubShortcut = findViewById(R.id.btnImportGameHubShortcut);
@@ -118,6 +131,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
+        btnPickDirectory.setOnClickListener(v -> directoryPicker.launch(selectedGameDirectoryUri));
         btnPickCover.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -143,7 +157,13 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 etLaunchTarget.setText(game.launchTarget);
                 etGameHubLocalGameId.setText(game.gamehubLocalGameId);
                 etDescription.setText(game.description);
-                tvDir.setText(game.rootUri);
+                if (game.rootUri != null && game.rootUri.startsWith("content://")) {
+                    selectedGameDirectoryUri = Uri.parse(game.rootUri);
+                    tvDir.setText(displayDirectoryUri(selectedGameDirectoryUri));
+                } else {
+                    tvDir.setText(game.rootUri == null || game.rootUri.trim().isEmpty()
+                            ? "尚未选择游戏目录" : game.rootUri);
+                }
                 if (game.coverUri != null && !game.coverUri.trim().isEmpty()) {
                     tvCoverStatus.setText("已有封面");
                     tvCoverStatus.setTextColor(LauncherTheme.primary(this));
@@ -167,6 +187,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         game.emulatorPackage = etEmulator.getText().toString().trim();
         game.launchTarget = etLaunchTarget.getText().toString().trim();
         if (game.launchTarget.isEmpty()) game.launchTarget = "[游戏目录]";
+        if (selectedGameDirectoryUri != null) game.rootUri = selectedGameDirectoryUri.toString();
         game.gamehubLocalGameId = etGameHubLocalGameId.getText().toString().trim();
         game.description = etDescription.getText().toString().trim();
 
@@ -197,6 +218,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
+        LauncherTheme.menuItem(btnPickDirectory);
         LauncherTheme.menuItem(btnPickCover);
         LauncherTheme.primaryButton(btnImportGameHubShortcut);
         btnImportGameHubShortcut.setTextSize(14);
@@ -204,6 +226,28 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         LauncherTheme.secondaryButton(btnCancel);
         LauncherTheme.primaryButton(btnSave);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
+    }
+
+    private void persistUriPermission(Uri uri) {
+        int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        try {
+            getContentResolver().takePersistableUriPermission(uri, flags);
+        } catch (Throwable first) {
+            try {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    private String displayDirectoryUri(Uri uri) {
+        if (uri == null) return "尚未选择游戏目录";
+        try {
+            String documentId = DocumentsContract.getTreeDocumentId(uri);
+            if (documentId != null && !documentId.trim().isEmpty()) return Uri.decode(documentId);
+        } catch (Throwable ignored) {
+        }
+        return uri.toString();
     }
 
     private void importGameHubShortcutFromShizuku() {

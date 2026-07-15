@@ -24,7 +24,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="资料源设置"
+                android:text="封面设置"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />

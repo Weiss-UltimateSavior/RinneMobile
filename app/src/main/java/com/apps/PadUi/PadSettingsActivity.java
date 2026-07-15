@@ -33,6 +33,7 @@ import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
 import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge;
 import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
 import com.yuki.yukihub.metadata.MetadataController;
+import com.yuki.yukihub.ons.OnsSettings;
 
 /** 横屏设置页，仅提供与 Pad 游戏模式一致的设置入口布局。 */
 public class PadSettingsActivity extends AppCompatActivity {
@@ -119,9 +120,10 @@ public class PadSettingsActivity extends AppCompatActivity {
         if (LauncherKrkrBridge.ENGINE_VERSION_139.equals(version)) selection = 1;
         else if (LauncherKrkrBridge.ENGINE_VERSION_134.equals(version)) selection = 2;
         binding.padEngineVersionSpinner.setSelection(selection);
-        binding.padCompatModeSwitch.setChecked(LauncherKrkrBridge.isCompatMode(this));
         binding.padKrScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         binding.padArtemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
+        binding.padOnsScopedSwitch.setChecked(OnsSettings.load(this).scopedSaveDir);
+        binding.padTyranoScopedSwitch.setChecked(LauncherKrkrBridge.isTyranoScopedSaveDir(this));
     }
 
     private void setupMetadataControls() {
@@ -174,12 +176,12 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padSettingsAccountActionList.setVisibility(showAccount ? View.VISIBLE : View.GONE);
         binding.padSettingsActionScroll.scrollTo(0, 0);
         binding.padSettingsPageTitle.setText(showTheme ? "主题设置"
-                : showMetadata ? "资料源设置" : showAccount ? "账号设置" : "KRKR 引擎");
+                : showMetadata ? "封面设置" : showAccount ? "账号设置" : "引擎设置");
         binding.padSettingsPageDescription.setText(showTheme
                 ? "选择 Launcher 的主题风格与动态背景"
                 : showMetadata ? "选择游戏信息与封面获取的资料源"
                 : showAccount ? "管理云端同步、资料显示与账户功能偏好"
-                : "KRKR、Artemis 与 ONS 固定使用应用独立存档目录，便于统一备份与恢复。");
+                : "Rinne 默认使用统一存档管理目录，便于统一管理；遇到兼容性问题可关闭并使用游戏原目录。");
         if (showAccount) {
             renderAllAccountChips();
             refreshEmailSubscription();
@@ -238,9 +240,10 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.secondaryButton(binding.padSettingsBackButton);
         LauncherTheme.textPrimary(binding.padSettingsPageTitle);
         LauncherTheme.styleSpinner(binding.padEngineVersionSpinner);
-        LauncherTheme.styleSwitch(binding.padCompatModeSwitch);
         LauncherTheme.styleSwitch(binding.padKrScopedSwitch);
         LauncherTheme.styleSwitch(binding.padArtemisScopedSwitch);
+        LauncherTheme.styleSwitch(binding.padOnsScopedSwitch);
+        LauncherTheme.styleSwitch(binding.padTyranoScopedSwitch);
         LauncherTheme.styleSpinner(binding.padMetadataSourceSpinner);
         LauncherTheme.secondaryButton(binding.padNativeKrkrButton);
         LauncherTheme.secondaryButton(binding.padKrkrCancelButton);
@@ -417,10 +420,13 @@ public class PadSettingsActivity extends AppCompatActivity {
         else if (position == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134;
 
         LauncherKrkrBridge.setEngineVersion(this, version);
-        LauncherKrkrBridge.setCompatMode(this, binding.padCompatModeSwitch.isChecked());
         LauncherKrkrBridge.setKrScopedSaveDir(this, binding.padKrScopedSwitch.isChecked());
         LauncherKrkrBridge.setArtemisScopedSaveDir(this, binding.padArtemisScopedSwitch.isChecked());
-        Toast.makeText(this, "KRKR 引擎设置已保存："
+        OnsSettings onsSettings = OnsSettings.load(this);
+        onsSettings.scopedSaveDir = binding.padOnsScopedSwitch.isChecked();
+        onsSettings.save(this);
+        LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.padTyranoScopedSwitch.isChecked());
+        Toast.makeText(this, "引擎设置已保存："
                 + LauncherKrkrBridge.engineVersionLabel(version), Toast.LENGTH_SHORT).show();
         finish();
     }

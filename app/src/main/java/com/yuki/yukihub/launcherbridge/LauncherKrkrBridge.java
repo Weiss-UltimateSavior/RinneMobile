@@ -10,9 +10,9 @@ import android.content.SharedPreferences;
 public final class LauncherKrkrBridge {
     private static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_KR_ENGINE_VERSION = "kr_engine_version";
-    private static final String KEY_KR_COMPAT_MODE = "kr_compat_mode";
     private static final String KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir";
     private static final String KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir";
+    private static final String KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir";
 
     public static final String ENGINE_VERSION_AUTO = "auto";
     public static final String ENGINE_VERSION_139 = "1.3.9";
@@ -37,16 +37,6 @@ public final class LauncherKrkrBridge {
                 .apply();
     }
 
-    public static boolean isCompatMode(Context context) {
-        if (context == null) return false;
-        return prefs(context).getBoolean(KEY_KR_COMPAT_MODE, false);
-    }
-
-    public static void setCompatMode(Context context, boolean enabled) {
-        if (context == null) return;
-        prefs(context).edit().putBoolean(KEY_KR_COMPAT_MODE, enabled).apply();
-    }
-
     public static boolean isKrScopedSaveDir(Context context) {
         if (context == null) return true;
         // Keep the new app-scoped mode as the default, while allowing a game
@@ -60,12 +50,25 @@ public final class LauncherKrkrBridge {
     }
 
     public static boolean isArtemisScopedSaveDir(Context context) {
-        return true;
+        if (context == null) return true;
+        // Keep the current safe default for new installs, but honour an
+        // explicit user choice to run Artemis against its original directory.
+        return prefs(context).getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, true);
     }
 
     public static void setArtemisScopedSaveDir(Context context, boolean enabled) {
         if (context == null) return;
-        prefs(context).edit().putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, true).apply();
+        prefs(context).edit().putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, enabled).apply();
+    }
+
+    public static boolean isTyranoScopedSaveDir(Context context) {
+        if (context == null) return true;
+        return prefs(context).getBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, true);
+    }
+
+    public static void setTyranoScopedSaveDir(Context context, boolean enabled) {
+        if (context == null) return;
+        prefs(context).edit().putBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, enabled).apply();
     }
 
     public static String normalizeEngineVersion(String value) {

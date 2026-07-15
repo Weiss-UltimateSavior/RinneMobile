@@ -65,9 +65,9 @@ public class LauncherUserData {
             "profile_avatar",
             "auth_saved_email",
             "kr_engine_version",
-            "kr_compat_mode",
             "kr_scoped_save_dir",
-            "artemis_scoped_save_dir"
+            "artemis_scoped_save_dir",
+            "tyrano_scoped_save_dir"
     };
 
     // ── launcher_profile_prefs 键 ──

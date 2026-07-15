@@ -16,7 +16,6 @@ import java.util.Locale;
 
 public final class LauncherGameLaunchBridge {
     private static final String APP_PREFS = "yukihub_prefs";
-    private static final String KEY_KR_COMPAT_MODE = "kr_compat_mode";
     private static final String KEY_KR_ENGINE_VERSION = "kr_engine_version";
 
     private LauncherGameLaunchBridge() {
@@ -100,9 +99,8 @@ public final class LauncherGameLaunchBridge {
         try {
             if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) {
                 SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
-                boolean compatMode = prefs.getBoolean(KEY_KR_COMPAT_MODE, false);
                 String krEngineVersion = prefs.getString(KEY_KR_ENGINE_VERSION, "auto");
-                return startActivitySafely(context, EmulatorLauncher.buildInternalKrkrIntent(context, game.rootUri, launchTarget, false, compatMode, krEngineVersion, false));
+                return startActivitySafely(context, EmulatorLauncher.buildInternalKrkrIntent(context, game.rootUri, launchTarget, false, krEngineVersion, false));
             }
             if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalTyranoIntent(context, game.rootUri, launchTarget));

@@ -193,10 +193,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/launcher_account_input"
-                android:padding="13dp"
+                android:ellipsize="middle"
+                android:maxLines="2"
+                android:text="尚未选择游戏目录"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/btnPickDirectory"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/launcher_filter_chip_unselected"
+                android:contentDescription="选择游戏目录"
+                android:gravity="center"
+                android:text="选择游戏目录"
+                android:textColor="@color/launcher_primary_color"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"

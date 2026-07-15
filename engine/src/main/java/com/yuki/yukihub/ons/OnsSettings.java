@@ -87,7 +87,10 @@ public final class OnsSettings {
     }
 
     public ArrayList<String> buildArgs(Context context, String gameDir) {
-        return buildArgs(context, gameDir, resolveScopedSaveDirectory(context, gameDir));
+        File saveDir = scopedSaveDir
+                ? resolveScopedSaveDirectory(context, gameDir)
+                : resolveGameSaveDirectory(gameDir);
+        return buildArgs(context, gameDir, saveDir);
     }
 
     /** Builds ONS arguments with the caller's already-resolved real save directory. */
@@ -101,9 +104,9 @@ public final class OnsSettings {
         args.add(stretchFull ? "--fullscreen2" : "--fullscreen");
         if (disableVideo) args.add("--no-video");
         args.add("--enc:" + normalizeEncoding(encoding));
-        // ONS saves always use the app-scoped directory so the launcher and save
-        // manager have one stable, writable location. Keep guessName() unchanged:
-        // it is the existing game identifier used by prior saves.
+        // The launcher resolves either the app-scoped directory or the game's
+        // explicit save/ child before building arguments. Never rely on ONS's
+        // implicit working-directory behaviour for either mode.
         if (saveDir != null && (saveDir.exists() || saveDir.mkdirs())) {
             args.add("--save-dir");
             args.add(saveDir.getAbsolutePath());
@@ -121,6 +124,25 @@ public final class OnsSettings {
         File base = context.getExternalFilesDir(null);
         if (base == null) return null;
         return new File(new File(base, "save"), guessName(gameDir));
+    }
+
+    /**
+     * Resolves the game-local save directory without creating it. ONS receives
+     * this path explicitly through --save-dir, so game-local saves never mix
+     * with the application-scoped save namespace.
+     */
+    public static File resolveGameSaveDirectory(String gameDir) {
+        if (gameDir == null || gameDir.trim().isEmpty()) return null;
+        try {
+            File root = new File(gameDir).getCanonicalFile();
+            if (!root.isAbsolute() || !root.isDirectory()) return null;
+            File save = new File(root, "save").getCanonicalFile();
+            String rootPath = root.getPath();
+            if (!save.getPath().startsWith(rootPath + File.separator)) return null;
+            return save;
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private String safeSharpness() {

@@ -49,10 +49,10 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
     private static final String KEY_ENGINE_LABEL_POSITION = "engine_label_position";
     private static final String KEY_SORT_MODE = "sort_mode";
     private static final String KEY_BACKGROUND_VIDEO_SOUND = "background_video_sound";
-    private static final String KEY_KR_COMPAT_MODE = "kr_compat_mode";
     private static final String KEY_KR_ENGINE_VERSION = "kr_engine_version";
     private static final String KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir";
     private static final String KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir";
+    private static final String KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir";
     private static final String KEY_UI_FONT_SCALE = "ui_font_scale";
     private static final String KEY_GAME_COLUMNS = "game_columns";
     private static final String KEY_UI_SCALE = "ui_scale";
@@ -274,10 +274,10 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
         settings.put("engine_label_position", appPrefs.getString(KEY_ENGINE_LABEL_POSITION, "title"));
         settings.put("sort_mode", appPrefs.getString(KEY_SORT_MODE, "recent"));
         settings.put("background_video_sound", appPrefs.getBoolean(KEY_BACKGROUND_VIDEO_SOUND, false));
-        settings.put("kr_compat_mode", appPrefs.getBoolean(KEY_KR_COMPAT_MODE, false));
         settings.put("kr_engine_version", appPrefs.getString(KEY_KR_ENGINE_VERSION, "auto"));
         settings.put("kr_scoped_save_dir", appPrefs.getBoolean(KEY_KR_SCOPED_SAVE_DIR, false));
         settings.put("artemis_scoped_save_dir", appPrefs.getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, false));
+        settings.put("tyrano_scoped_save_dir", appPrefs.getBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, true));
         settings.put("ui_font_scale", appPrefs.getFloat(KEY_UI_FONT_SCALE, 1.0f));
         // 不同步自定义背景文件引用：本地图片/视频路径跨设备通常无效，且视频背景不应进入同步逻辑。
         settings.put("background_dim_enabled", appPrefs.getBoolean(KEY_BACKGROUND_DIM_ENABLED, true));
@@ -343,13 +343,13 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
                 if ("name".equals(sort) || "newest".equals(sort) || "recent".equals(sort)) e.putString(KEY_SORT_MODE, sort);
             }
             if (settings.has("background_video_sound")) e.putBoolean(KEY_BACKGROUND_VIDEO_SOUND, settings.optBoolean("background_video_sound", false));
-            if (settings.has("kr_compat_mode")) e.putBoolean(KEY_KR_COMPAT_MODE, settings.optBoolean("kr_compat_mode", false));
             if (settings.has("kr_engine_version")) {
                 String krVersion = settings.optString("kr_engine_version", "auto");
                 if ("auto".equals(krVersion) || "1.3.9".equals(krVersion) || "1.3.4".equals(krVersion)) e.putString(KEY_KR_ENGINE_VERSION, krVersion);
             }
             if (settings.has("kr_scoped_save_dir")) e.putBoolean(KEY_KR_SCOPED_SAVE_DIR, settings.optBoolean("kr_scoped_save_dir", false));
             if (settings.has("artemis_scoped_save_dir")) e.putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, settings.optBoolean("artemis_scoped_save_dir", false));
+            if (settings.has("tyrano_scoped_save_dir")) e.putBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, settings.optBoolean("tyrano_scoped_save_dir", true));
             if (settings.has("ui_font_scale")) e.putFloat(KEY_UI_FONT_SCALE, (float) Math.max(0.85d, Math.min(1.30d, settings.optDouble("ui_font_scale", 1.0d))));
             // 不导入 custom_background/custom_background_type，避免旧备份里的本地图片/视频路径污染新设备。
             if (settings.has("background_dim_enabled")) e.putBoolean(KEY_BACKGROUND_DIM_ENABLED, settings.optBoolean("background_dim_enabled", true));

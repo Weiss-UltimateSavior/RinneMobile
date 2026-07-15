@@ -725,9 +725,22 @@ public class EmulatorLauncher {
     public static Intent buildInternalTyranoIntent(Context context, String gamePath, String launchTarget) {
         Intent i = new Intent(context, com.yuki.yukihub.tyrano.TyranoActivity.class);
         String resolvedPath = resolveInternalTyranoGameDirectory(gamePath, launchTarget);
-        Log.i("EmulatorLauncher", "internal Tyrano root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath);
+        String path = stripFileScheme(resolvedPath);
+        boolean scopedSaveDir = isTyranoScopedSaveDirEnabled(context);
+        ActualSaveLocation saveLocation = resolveTyranoSaveLocation(context, path, scopedSaveDir);
+        if (!saveLocation.available || saveLocation.directory == null) {
+            throw new IllegalStateException(saveLocation.description);
+        }
+        if (!saveLocation.directory.exists() && !saveLocation.directory.mkdirs()) {
+            throw new IllegalStateException("无法创建 Tyrano 存档目录：" + saveLocation.directory.getAbsolutePath());
+        }
+        if (!saveLocation.directory.isDirectory() || !saveLocation.directory.canWrite()) {
+            throw new IllegalStateException("Tyrano 存档目录不可写：" + saveLocation.directory.getAbsolutePath());
+        }
+        Log.i("EmulatorLauncher", "internal Tyrano root=" + gamePath + " target=" + launchTarget
+                + " resolved=" + resolvedPath + " scopedSave=" + scopedSaveDir
+                + " save=" + saveLocation.directory.getAbsolutePath());
         if (resolvedPath != null && !resolvedPath.isEmpty()) {
-            String path = stripFileScheme(resolvedPath);
             i.putExtra("path", path);
             i.putExtra("gamePath", path);
             i.putExtra("projectRoot", path);
@@ -738,6 +751,8 @@ public class EmulatorLauncher {
         i.putExtra("type", "Tyrano");
         i.putExtra("launchMode", "internal.tyrano");
         i.putExtra("orientation", 6);
+        i.putExtra("scopedSaveDir", scopedSaveDir);
+        i.putExtra("scopedSaveRoot", saveLocation.directory.getAbsolutePath());
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         return i;
     }
@@ -774,13 +789,21 @@ public class EmulatorLauncher {
             Log.e("EmulatorLauncher", "internal ONS rejected: " + archiveError + " root=" + rootPath);
             throw new IllegalStateException(archiveError);
         }
-        ActualSaveLocation saveLocation = resolveActualSaveLocation(context, EngineType.ONS, gamePath, launchTarget);
+        OnsSettings settings = OnsSettings.load(context);
+        ActualSaveLocation saveLocation = resolveOnsSaveLocation(context, rootPath, settings.scopedSaveDir);
         if (!saveLocation.available || saveLocation.directory == null) {
             throw new IllegalStateException(saveLocation.description);
         }
+        if (!saveLocation.directory.exists() && !saveLocation.directory.mkdirs()) {
+            throw new IllegalStateException("无法创建 ONS 存档目录：" + saveLocation.directory.getAbsolutePath());
+        }
+        if (!saveLocation.directory.isDirectory() || !saveLocation.directory.canWrite()) {
+            throw new IllegalStateException("ONS 存档目录不可写：" + saveLocation.directory.getAbsolutePath());
+        }
         Log.i("EmulatorLauncher", "internal ONS root=" + gamePath + " target=" + launchTarget
-                + " requested=" + requestedRootPath + " resolved=" + rootPath);
-        OnsSettings settings = OnsSettings.load(context);
+                + " requested=" + requestedRootPath + " resolved=" + rootPath
+                + " scopedSave=" + settings.scopedSaveDir
+                + " save=" + saveLocation.directory.getAbsolutePath());
         ArrayList<String> args = settings.buildArgs(context, rootPath, saveLocation.directory);
         i.putStringArrayListExtra(OnsSettings.EXTRA_GAME_ARGS, args);
         i.putExtra(OnsSettings.EXTRA_IGNORE_CUTOUT, settings.ignoreCutout);
@@ -900,11 +923,12 @@ public static Intent buildInternalArtemisIntent(Context context, String packageN
 String resolvedPath = resolveInternalArtemisPath(gamePath, launchTarget);
 String rootPath = stripFileScheme(resolvedPath);
 String path = rootPath;
-boolean scopedSaveDir = true;
+boolean scopedSaveDir = isArtemisScopedSaveDirEnabled(context);
+String saveName = safeSaveName(rootPath);
+if (scopedSaveDir) {
 ActualSaveLocation saveLocation = resolveActualSaveLocation(context, EngineType.ARTEMIS, gamePath, launchTarget);
 if (!saveLocation.available || saveLocation.directory == null) throw new IllegalStateException(saveLocation.description);
-String saveName = saveLocation.directory.getName();
-if (scopedSaveDir) {
+saveName = saveLocation.directory.getName();
 ArtemisMirror mirror = prepareArtemisScopedMirror(context, rootPath, saveName);
 if (mirror != null) {
 Log.i("EmulatorLauncher", "internal Artemis scoped mirror root=" + rootPath + " -> " + mirror.rootPath);
@@ -1140,26 +1164,24 @@ return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
                 }
                 case ARTEMIS: {
                     String rootPath = stripFileScheme(resolveInternalArtemisPath(rootUri, launchTarget));
+                    if (!isArtemisScopedSaveDirEnabled(context)) {
+                        // In original-directory mode Artemis receives the game root as
+                        // getExternalFilesDir(). Its save files cannot be separated
+                        // safely from game resources, so do not let bulk save
+                        // import/export operate on that whole directory.
+                        return ActualSaveLocation.unavailable("Artemis 已使用游戏原始目录，无法安全识别存档文件");
+                    }
                     return appScopedSaveLocation(context, rootPath, "Artemis 独立存档目录");
                 }
                 case ONS: {
-                    String rootPath = stripFileScheme(uriToFilePath(rootUri));
-                    File directory = OnsSettings.resolveScopedSaveDirectory(context, rootPath);
-                    return directory == null
-                            ? ActualSaveLocation.unavailable("应用独立存储目录不可用")
-                            : ActualSaveLocation.available(directory, "ONS 独立存档目录");
+                    String rootPath = resolveInternalOnsGameDirectory(
+                            stripFileScheme(uriToFilePath(rootUri)));
+                    return resolveOnsSaveLocation(context, rootPath, OnsSettings.load(context).scopedSaveDir);
                 }
                 case TYRANO: {
                     String gameDirectory = resolveInternalTyranoGameDirectory(rootUri, launchTarget);
-                    if (gameDirectory == null || gameDirectory.trim().isEmpty()
-                            || gameDirectory.startsWith("content://")) {
-                        return ActualSaveLocation.unavailable("无法解析 Tyrano 实际游戏目录");
-                    }
-                    File root = new File(stripFileScheme(gameDirectory));
-                    if (root.isFile()) root = root.getParentFile();
-                    return root == null
-                            ? ActualSaveLocation.unavailable("无法解析 Tyrano 实际游戏目录")
-                            : ActualSaveLocation.available(new File(root, "savedata"), "Tyrano 实际游戏目录存档");
+                    return resolveTyranoSaveLocation(context, stripFileScheme(gameDirectory),
+                            isTyranoScopedSaveDirEnabled(context));
                 }
                 default:
                     return ActualSaveLocation.unavailable("该内置引擎未提供可管理的存档目录");
@@ -1215,6 +1237,48 @@ return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
         return ActualSaveLocation.available(new File(new File(external, "save"), safeSaveName(rootPath)), description);
     }
 
+    private static ActualSaveLocation resolveOnsSaveLocation(Context context, String rootPath,
+                                                              boolean scopedSaveDir) {
+        File directory = scopedSaveDir
+                ? OnsSettings.resolveScopedSaveDirectory(context, rootPath)
+                : OnsSettings.resolveGameSaveDirectory(rootPath);
+        if (directory == null) {
+            return ActualSaveLocation.unavailable(scopedSaveDir
+                    ? "ONS 应用独立存储目录不可用"
+                    : "ONS 游戏目录不可用或不是可写的本地目录");
+        }
+        return ActualSaveLocation.available(directory,
+                scopedSaveDir ? "ONS 应用独立存档目录" : "ONS 游戏内存档目录");
+    }
+
+    private static ActualSaveLocation resolveTyranoSaveLocation(Context context, String gameDirectory,
+                                                                 boolean scopedSaveDir) {
+        if (gameDirectory == null || gameDirectory.trim().isEmpty()
+                || gameDirectory.startsWith("content://")) {
+            return ActualSaveLocation.unavailable("无法解析 Tyrano 实际游戏目录");
+        }
+        try {
+            File root = new File(stripFileScheme(gameDirectory)).getCanonicalFile();
+            if (!root.isDirectory()) {
+                return ActualSaveLocation.unavailable("Tyrano 游戏目录不可用");
+            }
+            if (scopedSaveDir) {
+                File external = context == null ? null : context.getExternalFilesDir(null);
+                if (external == null) return ActualSaveLocation.unavailable("Tyrano 应用独立存储目录不可用");
+                File directory = new File(new File(new File(external, "save"), "tyrano"),
+                        safeSaveName(root.getAbsolutePath()));
+                return ActualSaveLocation.available(directory, "Tyrano 应用独立存档目录");
+            }
+            File directory = new File(root, "savedata").getCanonicalFile();
+            if (!directory.getPath().startsWith(root.getPath() + File.separator)) {
+                return ActualSaveLocation.unavailable("Tyrano 游戏内存档目录无效");
+            }
+            return ActualSaveLocation.available(directory, "Tyrano 游戏内存档目录");
+        } catch (Throwable t) {
+            return ActualSaveLocation.unavailable("无法解析 Tyrano 实际游戏目录");
+        }
+    }
+
     /** KRKR keeps its original game root and redirects only savedata to this private directory. */
     private static ActualSaveLocation krkrScopedSaveLocation(Context context, String rootPath) {
         if (rootPath == null || rootPath.trim().isEmpty() || rootPath.startsWith("content://")) {
@@ -1229,6 +1293,16 @@ return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
     private static boolean isKrScopedSaveDirEnabled(Context context) {
         return context == null || context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getBoolean("kr_scoped_save_dir", true);
+    }
+
+    private static boolean isArtemisScopedSaveDirEnabled(Context context) {
+        return context == null || context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean("artemis_scoped_save_dir", true);
+    }
+
+    private static boolean isTyranoScopedSaveDirEnabled(Context context) {
+        return context == null || context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean("tyrano_scoped_save_dir", true);
     }
 
 private static String resolveInternalArtemisPath(String rootUri, String launchTarget) {
@@ -1251,22 +1325,14 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
     }
 
     public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget) {
-        return buildInternalKrkrIntent(context, gamePath, launchTarget, false, false);
+        return buildInternalKrkrIntent(context, gamePath, launchTarget, false, "auto", false);
     }
 
     public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode) {
-        return buildInternalKrkrIntent(context, gamePath, launchTarget, originMode, false);
+        return buildInternalKrkrIntent(context, gamePath, launchTarget, originMode, "auto", false);
     }
 
-    public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode, boolean compatMode) {
-        return buildInternalKrkrIntent(context, gamePath, launchTarget, originMode, compatMode, "auto");
-    }
-
-    public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode, boolean compatMode, String engineVersion) {
-        return buildInternalKrkrIntent(context, gamePath, launchTarget, originMode, compatMode, engineVersion, false);
-    }
-
-    public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode, boolean compatMode, String engineVersion, boolean safFileFallback) {
+    public static Intent buildInternalKrkrIntent(Context context, String gamePath, String launchTarget, boolean originMode, String engineVersion, boolean safFileFallback) {
         String resolvedPath = originMode ? null : resolveInternalKrkrPath(context, gamePath, launchTarget);
         String rawRootPath = stripFileScheme(uriToFilePath(gamePath));
         String path = resolvedPath == null ? null : stripFileScheme(resolvedPath);
@@ -1303,12 +1369,6 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
             // 普通模式也使用普通文件路径，让默认启动链更接近原生 KRKR / TY 的读取方式。
             i.putExtra("path", path);
             i.putExtra("gamePath", path);
-            if (compatMode) {
-                // 兼容模式再补齐更多历史/启动信息。
-                i.putExtra("game", path);
-                i.putExtra("startup", path);
-                i.putExtra("launchFile", launchTarget == null ? "" : launchTarget);
-            }
         }
         if (rootPath != null && !rootPath.isEmpty()) {
             i.putExtra("projectRoot", rootPath);
@@ -1318,8 +1378,6 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         i.putExtra("launchTarget", launchTarget);
         i.putExtra("originMode", originMode);
         i.putExtra("focus", "true");
-        if (!originMode && compatMode) i.putExtra("maps", true);
-        i.putExtra("compatMode", compatMode);
         i.putExtra("krEngineVersion", use134 ? "1.3.4" : "1.3.9");
         i.putExtra("orientation", 6);
         i.putExtra("launchMode", originMode ? "internal.krkr.origin" : "internal.krkr");
