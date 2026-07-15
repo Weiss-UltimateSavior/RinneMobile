@@ -1,7 +1,6 @@
 package com.yuki.yukihub.tyrano;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -19,6 +18,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
+import com.apps.theme.LauncherDialogFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.BufferedInputStream;
@@ -270,10 +271,12 @@ public class TyranoActivity extends Activity {
     }
 
     private void confirmReturnToTitle() {
-        new AlertDialog.Builder(this)
-                .setTitle("提示")
-                .setMessage("确定要返回到标题界面吗？（要注意保存游戏进度哦！）")
-                .setPositiveButton("确定", (d, w) -> {
+        LauncherDialogFactory.showConfirm(
+                this,
+                "返回标题",
+                "确定要返回到标题界面吗？（请注意保存游戏进度。）",
+                "确定",
+                () -> {
                     try {
                         if (webView != null) {
                             webView.post(() -> {
@@ -281,9 +284,7 @@ public class TyranoActivity extends Activity {
                             });
                         }
                     } catch (Throwable ignored) { }
-                })
-                .setNegativeButton("点错了", null)
-                .show();
+                });
     }
 
     @Override
@@ -310,12 +311,12 @@ public class TyranoActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        new AlertDialog.Builder(this)
-                .setTitle("提示")
-                .setMessage("就这样结束了？")
-                .setPositiveButton("是的", (d, w) -> finish())
-                .setNegativeButton("点错了", null)
-                .show();
+        LauncherDialogFactory.showConfirm(
+                this,
+                "结束游戏",
+                "确定要结束当前游戏吗？",
+                "结束游戏",
+                this::finish);
     }
 
     @Override
