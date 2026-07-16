@@ -213,6 +213,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private void bindActions() {
         tvEngine.setOnClickListener(v -> showEnginePicker());
         etEmulator.setOnClickListener(v -> LauncherAppPickerDialog.show(this, etEmulator::setText));
+        etLaunchTarget.setOnClickListener(v -> LauncherLaunchTargetPicker.show(
+                this, selectedGameDirectoryUri, selectedEngineOption().engine, etLaunchTarget::setText));
         btnPickDirectory.setOnClickListener(v -> directoryPicker.launch(selectedGameDirectoryUri));
         btnPickCover.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -274,7 +276,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         game.engine = opt != null ? opt.engine : EngineType.UNKNOWN;
         String emuPkg = etEmulator.getText().toString().trim();
         // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>。
-        if (emuPkg.isEmpty() && opt != null && opt.engine == EngineType.RPGMAKER
+        if (emuPkg.isEmpty() && opt != null
+                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY)
                 && opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()) {
             emuPkg = "internal." + opt.rpgMakerSubtype;
         }
