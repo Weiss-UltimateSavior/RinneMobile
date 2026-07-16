@@ -39,7 +39,7 @@
                 android:lineSpacingExtra="3dp"
                 android:text="导出与覆盖导入均使用 ZIP 压缩包。"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/saveGameLabel"

@@ -35,8 +35,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
+                android:lineSpacingExtra="3dp"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <TextView
                 android:layout_width="match_parent"

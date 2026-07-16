@@ -35,9 +35,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
+                android:lineSpacingExtra="3dp"
                 android:text="选择一个游戏管理其存档。"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <LinearLayout
                 android:id="@+id/saveGameList"

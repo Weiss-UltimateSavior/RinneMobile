@@ -3,8 +3,10 @@ package com.apps.profile;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -89,11 +91,28 @@ public class LauncherProfileFragment extends Fragment {
             startActivity(intent);
             LauncherMotion.applyActivityOpen(requireActivity());
         });
+        binding.moduleCompatibilityRow.setOnClickListener(v -> {
+            if (hasApplicationListPermission()) {
+                startActivity(new Intent(requireContext(), LauncherModuleCompatibilityActivity.class));
+                LauncherMotion.applyActivityOpen(requireActivity());
+                return;
+            }
+            LauncherDialogFactory.showConfirm(requireContext(), "模块功能权限",
+                    "模块功能需要获取应用列表权限。当前未获得权限，无法进入模块兼容页面。",
+                    "确定", () -> Toast.makeText(requireContext(), "未获得应用列表权限", Toast.LENGTH_SHORT).show());
+        });
         binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
         binding.profilePlaytimeRankCard.setOnClickListener(v -> showLeaderboardConfirmDialog());
         renderUserInfo();
         renderPlayTimeRankLoading();
+    }
+
+    private boolean hasApplicationListPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true;
+        return requireContext().getPackageManager().checkPermission(
+                "android.permission.QUERY_ALL_PACKAGES", requireContext().getPackageName())
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override

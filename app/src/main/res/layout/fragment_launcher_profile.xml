@@ -238,6 +238,24 @@
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
                         android:contentDescription="@null"
+                    android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/moduleCompatibilityRow"
+                    style="@style/LauncherManageItem">
+
+                    <TextView
+                        style="@style/LauncherManageIcon"
+                        android:text="M" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="模块兼容" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
                         android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 

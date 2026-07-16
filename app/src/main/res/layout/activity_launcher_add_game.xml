@@ -35,10 +35,11 @@
                 android:id="@+id/addGameHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="7dp"
+                android:layout_marginTop="13dp"
+                android:lineSpacingExtra="3dp"
                 android:text="填写信息后保存到游戏库"
                 android:textColor="@color/launcher_text_muted_color"
-                android:textSize="13sp" />
+                android:textSize="11sp" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
