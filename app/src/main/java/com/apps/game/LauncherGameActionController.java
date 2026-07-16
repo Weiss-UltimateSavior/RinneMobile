@@ -486,6 +486,7 @@ public final class LauncherGameActionController {
             case WINLATOR: return "Winlator";
             case GAMEHUB: return "GameHub";
             case PSP: return "PSP";
+            case NINTENDO_3DS: return "3DS";
             default: return "未知";
         }
     }

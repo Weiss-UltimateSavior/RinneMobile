@@ -146,6 +146,20 @@
                         android:text="LunaBox" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/toolAzahar"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="AzaharPlus"
+                        android:src="@drawable/launcher_tool_icon_azahar" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="AzaharPlus" />
+                </LinearLayout>
+
             </GridLayout>
         </LinearLayout>
     </ScrollView>

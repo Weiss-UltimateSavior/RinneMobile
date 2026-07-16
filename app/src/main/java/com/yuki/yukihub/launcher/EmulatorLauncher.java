@@ -79,6 +79,7 @@ public class EmulatorLauncher {
         addBuiltInStrategy(new InternalOnsStrategy());
         addBuiltInStrategy(new InternalArtemisStrategy());
         addBuiltInStrategy(new PspStrategy());
+        addBuiltInStrategy(new CitraStrategy());
         addBuiltInStrategy(new GameHubStrategy());
         addBuiltInStrategy(new WinlatorDesktopStrategy());
     }
@@ -247,6 +248,24 @@ public class EmulatorLauncher {
                 return false;
             }
             return start(context, buildInternalPspIntent(context, request.rootUri, request.launchTarget));
+        }
+    }
+
+    private static final class CitraStrategy extends BuiltInStrategy {
+        CitraStrategy() { super(EngineType.NINTENDO_3DS); }
+
+        @Override public boolean supports(LaunchRequest request) {
+            return equalsAnyIgnoreCase(request.packageName, "internal.citra",
+                    "io.github.azaharplus.android", "org.citra.citra_emu", "org.azahar_emu.azahar")
+                    || isCitraPackage(request.packageName);
+        }
+
+        @Override public boolean launch(Context context, LaunchRequest request) {
+            if (!isCitraInstalled(context)) {
+                Log.w("EmulatorLauncher", "Citra/Azahar is not installed, cannot launch Nintendo 3DS game");
+                return false;
+            }
+            return start(context, buildInternalCitraIntent(context, request.rootUri, request.launchTarget));
         }
     }
 
@@ -1741,6 +1760,80 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    /**
+     * 构建启动 Nintendo 3DS 游戏的 Intent
+     * 使用 Citra/Azahar/Lime3DS 的 EmulationActivity 来启动 3DS 游戏。
+     * 注意:AzaharPlus 的 Manifest 限定 mimeType 为 application/octet-stream,
+     * scheme 为 content,因此必须使用 content:// URI 和该 MIME 类型。
+     */
+    public static Intent buildInternalCitraIntent(Context context, String gameUri, String launchTarget) {
+        Uri gameUriParsed = Uri.parse(gameUri);
+        // 如果是文件路径(以/开头),转换为 file:// URI
+        if (gameUri.startsWith("/")) {
+            gameUriParsed = Uri.parse("file://" + gameUri);
+        }
+        // 创建 Intent,AzaharPlus 的 Intent Filter 限定 mimeType=application/octet-stream
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(gameUriParsed, "application/octet-stream");
+        // 显式指定 Citra/Azahar/Lime3DS 的 EmulationActivity
+        intent.setClassName("io.github.azaharplus.android",
+                "org.citra.citra_emu.activities.EmulationActivity");
+        // 添加必要的 flags(只需读权限,3DS 游戏以只读方式加载)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                       Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Log.i("EmulatorLauncher", "Built Citra intent uri=" + gameUriParsed);
+        return intent;
+    }
+
+    /**
+     * 检查是否是 Citra/Azahar/Lime3DS 包
+     */
+    private static boolean isCitraPackage(String pkg) {
+        if (pkg == null) return false;
+        String p = pkg.trim().toLowerCase(Locale.ROOT);
+        return p.contains("lime3ds") || p.contains("citra") || p.contains("azahar");
+    }
+
+    /**
+     * 启动 Nintendo 3DS 游戏
+     */
+    public static boolean launchCitraGame(Context context, String gameUri, String launchTarget) {
+        if (!isCitraInstalled(context)) {
+            Log.w("EmulatorLauncher", "Citra/Azahar is not installed");
+            return false;
+        }
+        try {
+            Intent intent = buildInternalCitraIntent(context, gameUri, launchTarget);
+            context.startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            Log.e("EmulatorLauncher", "Failed to launch Nintendo 3DS game", e);
+            return false;
+        }
+    }
+
+    /**
+     * 检查 Citra/Azahar/Lime3DS 是否已安装。
+     * 依次探测 release 包名和 debug 变体包名。
+     */
+    public static boolean isCitraInstalled(Context context) {
+        String[] candidates = new String[]{
+                "io.github.azaharplus.android",
+                "io.github.azaharplus.android.debug",
+                "org.citra.citra_emu",
+                "org.azahar_emu.azahar"
+        };
+        PackageManager pm = context.getPackageManager();
+        for (String pkg : candidates) {
+            try {
+                pm.getPackageInfo(pkg, PackageManager.GET_ACTIVITIES);
+                return true;
+            } catch (PackageManager.NameNotFoundException ignored) {
+            }
+        }
+        return false;
     }
     
     /**

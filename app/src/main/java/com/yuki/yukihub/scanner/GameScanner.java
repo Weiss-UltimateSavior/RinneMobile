@@ -124,9 +124,14 @@ public class GameScanner {
                     String name = safeName(child);
                     String lowerName = name.toLowerCase(Locale.ROOT);
                     // 情况1：单个PSP文件在根目录
-                    if (lowerName.endsWith(".iso") || lowerName.endsWith(".cso") || lowerName.endsWith(".chd") || 
+                    if (lowerName.endsWith(".iso") || lowerName.endsWith(".cso") || lowerName.endsWith(".chd") ||
                         lowerName.endsWith(".elf") || lowerName.endsWith(".pbp")) {
                         addPspFileResult(report, seenUris, child, name);
+                        continue;
+                    }
+                    // 情况1：单个 Nintendo 3DS 文件在根目录
+                    if (isN3dsFile(lowerName)) {
+                        addN3dsFileResult(report, seenUris, child, name);
                         continue;
                     }
                     if (lowerName.endsWith(".desktop")) {
@@ -139,12 +144,13 @@ public class GameScanner {
                 // 识别目录本身的 PSP / desktop 入口；是否继续遍历由扫描模式决定。
                 // 全层模式会继续扫描嵌套游戏，命中模式则在识别游戏目录后停止向下。
                 boolean pspDirectory = tryAddPspDirectory(child, report, seenUris);
+                boolean n3dsDirectory = tryAddN3dsDirectory(child, report, seenUris);
                 boolean desktopDirectory = tryAddDesktopDirectory(child, report, seenUris);
 
                 String childName = safeName(child).toLowerCase(Locale.ROOT);
                 boolean internalAssetDir = isInternalAssetDir(childName);
 
-                boolean gameDirectoryMatched = pspDirectory || desktopDirectory;
+                boolean gameDirectoryMatched = pspDirectory || n3dsDirectory || desktopDirectory;
                 if (!internalAssetDir && !gameDirectoryMatched) {
                     EngineDetector.Result detected = EngineDetector.detect(child, 2);
                     if (detected != null && detected.confidence > 0) {
@@ -296,6 +302,98 @@ public class GameScanner {
                 title == null || title.trim().isEmpty() ? "未命名PSP游戏" : title,
                 resultUri,
                 com.yuki.yukihub.model.EngineType.PSP,
+                95,
+                launchTarget,
+                coverUri
+        ));
+        return true;
+    }
+
+    private static boolean isN3dsFile(String lowerName) {
+        if (lowerName == null) return false;
+        return lowerName.endsWith(".3ds") || lowerName.endsWith(".cci") || lowerName.endsWith(".zcci") ||
+                lowerName.endsWith(".cxi") || lowerName.endsWith(".zcxi") || lowerName.endsWith(".cia") ||
+                lowerName.endsWith(".zcia") || lowerName.endsWith(".3dsx") || lowerName.endsWith(".z3dsx");
+    }
+
+    private static boolean addN3dsFileResult(ScanReport report, Set<String> seenUris, DocumentFile n3dsFile, String fileName) {
+        if (report == null || n3dsFile == null) return false;
+        String uri = n3dsFile.getUri().toString();
+        if (!markSeen(seenUris, uri)) return false;
+
+        // 从文件名中提取游戏标题（去掉扩展名）
+        String title = fileName;
+        int dotIndex = title.lastIndexOf('.');
+        if (dotIndex > 0) {
+            title = title.substring(0, dotIndex);
+        }
+
+        report.addResult(new ScanResult(
+                title == null || title.trim().isEmpty() ? "未命名3DS游戏" : title,
+                uri,
+                com.yuki.yukihub.model.EngineType.NINTENDO_3DS,
+                95,
+                fileName,
+                ""
+        ));
+        return true;
+    }
+
+    /**
+     * 尝试添加文件夹里的 Nintendo 3DS 游戏文件
+     * 情况2：文件夹里只有1个3DS文件，游戏名取文件夹名，但入口仍然是3DS文件本身
+     * 情况3：文件夹里有多个3DS文件，按多个单独条目识别
+     */
+    private static boolean tryAddN3dsDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris) {
+        if (dir == null || report == null) return false;
+        try {
+            DocumentFile[] files = dir.listFiles();
+            if (files == null || files.length == 0) return false;
+
+            List<DocumentFile> n3dsFiles = new ArrayList<>();
+            for (DocumentFile f : files) {
+                if (f == null || !f.isFile()) continue;
+                String name = safeName(f).toLowerCase(Locale.ROOT);
+                if (isN3dsFile(name)) {
+                    n3dsFiles.add(f);
+                }
+            }
+            if (n3dsFiles.isEmpty()) return false;
+
+            String coverUri = "";
+            DocumentFile folderCover = findBestImageInDir(dir);
+            if (folderCover != null) coverUri = folderCover.getUri().toString();
+
+            if (n3dsFiles.size() == 1) {
+                // 情况2：文件夹内只有一个 3DS 文件，标题取文件夹名，但入口仍然是 3DS 文件本身。
+                DocumentFile n3dsFile = n3dsFiles.get(0);
+                return addN3dsFileResultWithCover(report, seenUris, safeName(dir), n3dsFile.getUri().toString(), safeName(n3dsFile), coverUri);
+            }
+
+            // 情况3：文件夹里有多个 3DS 文件，按多个单独条目识别。
+            boolean added = false;
+            for (DocumentFile n3dsFile : n3dsFiles) {
+                String name = safeName(n3dsFile);
+                String title = name;
+                int dotIndex = title.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    title = title.substring(0, dotIndex);
+                }
+                added |= addN3dsFileResultWithCover(report, seenUris, title, n3dsFile.getUri().toString(), name, coverUri);
+            }
+            return added;
+        } catch (Throwable t) {
+            Log.w(TAG, "tryAddN3dsDirectory failed uri=" + safeUri(dir), t);
+            return false;
+        }
+    }
+
+    private static boolean addN3dsFileResultWithCover(ScanReport report, Set<String> seenUris, String title, String resultUri, String launchTarget, String coverUri) {
+        if (report == null || resultUri == null || !markSeen(seenUris, resultUri)) return false;
+        report.addResult(new ScanResult(
+                title == null || title.trim().isEmpty() ? "未命名3DS游戏" : title,
+                resultUri,
+                com.yuki.yukihub.model.EngineType.NINTENDO_3DS,
                 95,
                 launchTarget,
                 coverUri

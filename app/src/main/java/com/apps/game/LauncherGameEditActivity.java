@@ -125,7 +125,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         btnCancel = findViewById(R.id.btnCancel);
         btnSave = findViewById(R.id.btnSave);
 
-        String[] engineNames = {"AUTO", "KIRIKIRI", "ONS", "TYRANO", "ARTEMIS", "WINLATOR", "GAMEHUB", "PSP", "UNKNOWN"};
+        String[] engineNames = {"AUTO", "KIRIKIRI", "ONS", "TYRANO", "ARTEMIS", "WINLATOR", "GAMEHUB", "PSP", "NINTENDO_3DS", "UNKNOWN"};
         ArrayAdapter<String> adapter = LauncherTheme.spinnerAdapter(this, engineNames);
         spEngine.setAdapter(adapter);
         LauncherTheme.styleSpinner(spEngine);
@@ -331,7 +331,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             case WINLATOR: return 5;
             case GAMEHUB: return 6;
             case PSP: return 7;
-            default: return 8;
+            case NINTENDO_3DS: return 8;
+            default: return 9;
         }
     }
 
@@ -345,6 +346,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             case 5: return EngineType.WINLATOR;
             case 6: return EngineType.GAMEHUB;
             case 7: return EngineType.PSP;
+            case 8: return EngineType.NINTENDO_3DS;
             default: return EngineType.UNKNOWN;
         }
     }

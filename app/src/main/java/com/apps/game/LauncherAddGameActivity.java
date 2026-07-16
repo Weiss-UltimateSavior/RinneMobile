@@ -164,7 +164,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 new EngineOption(EngineType.ARTEMIS, "Artemis"),
                 new EngineOption(EngineType.WINLATOR, "Winlator"),
                 new EngineOption(EngineType.GAMEHUB, "GameHub"),
-                new EngineOption(EngineType.PSP, "PSP")
+                new EngineOption(EngineType.PSP, "PSP"),
+                new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS")
         };
         ArrayAdapter<EngineOption> adapter = LauncherTheme.spinnerAdapter(this, options);
         engineSpinner.setAdapter(adapter);
@@ -502,6 +503,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (engine == EngineType.TYRANO) return "internal.tyrano";
         if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
+        if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
         if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggamz";
         return "";
     }

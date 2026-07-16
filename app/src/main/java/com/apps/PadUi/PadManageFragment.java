@@ -552,6 +552,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) return "internal.tyrano";
         if (pkg.startsWith("internal.artemis")) return pkg;
         if (pkg.startsWith("internal.psp") || pkg.equals("org.ppsspp.ppsspp")) return "internal.psp";
+        if (pkg.startsWith("internal.citra") || pkg.equals("io.github.azaharplus.android")) return "internal.citra";
         return "external";
     }
 
@@ -1158,6 +1159,7 @@ mainQueue.post(() -> {
             case WINLATOR: return "Winlator";
             case GAMEHUB: return "GameHub";
             case PSP: return "PSP";
+            case NINTENDO_3DS: return "3DS";
             default: return "未知";
         }
     }

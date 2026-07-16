@@ -81,6 +81,8 @@ public class EngineDetector {
             score(r, EngineType.WINLATOR, 90, s.firstDesktop);
         } else if (s.firstPspFile != null) {
             score(r, EngineType.PSP, 95, s.firstPspFile);
+        } else if (s.firstN3dsFile != null) {
+            score(r, EngineType.NINTENDO_3DS, 95, s.firstN3dsFile);
         }
         return r;
     }
@@ -125,6 +127,7 @@ public class EngineDetector {
         boolean hasPackageJson = false;
         boolean hasElectronPak = false;
         String firstPspFile = null;
+        String firstN3dsFile = null;
     }
 
     private static void collectFeatures(DocumentFile dir, String prefix, int level, int maxLevel, FeatureState s) {
@@ -197,9 +200,16 @@ public class EngineDetector {
                 if (lower.equals("data.xp3") && s.dataXp3 == null) s.dataXp3 = xp3Path;
             }
             // PSP游戏文件检测
-            if (lower.endsWith(".iso") || lower.endsWith(".cso") || lower.endsWith(".chd") || 
+            if (lower.endsWith(".iso") || lower.endsWith(".cso") || lower.endsWith(".chd") ||
                 lower.endsWith(".elf") || lower.endsWith(".pbp")) {
                 if (s.firstPspFile == null) s.firstPspFile = original;
+            }
+            // Nintendo 3DS 游戏文件检测
+            // 注意:不包含 .elf(PSP 已占用)和 .app(过于通用),避免歧义
+            if (lower.endsWith(".3ds") || lower.endsWith(".cci") || lower.endsWith(".zcci") ||
+                lower.endsWith(".cxi") || lower.endsWith(".zcxi") || lower.endsWith(".cia") ||
+                lower.endsWith(".zcia") || lower.endsWith(".3dsx") || lower.endsWith(".z3dsx")) {
+                if (s.firstN3dsFile == null) s.firstN3dsFile = original;
             }
         }
     }

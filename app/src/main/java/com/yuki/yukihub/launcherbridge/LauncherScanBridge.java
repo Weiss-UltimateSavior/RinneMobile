@@ -280,6 +280,7 @@ public final class LauncherScanBridge {
         if (engine == EngineType.TYRANO) return "internal.tyrano";
         if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
+        if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
         return "";
     }
 
