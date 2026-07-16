@@ -11,6 +11,7 @@ import android.provider.DocumentsContract;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -37,6 +38,7 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import rikka.shizuku.Shizuku;
 
@@ -125,8 +127,29 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         btnCancel = findViewById(R.id.btnCancel);
         btnSave = findViewById(R.id.btnSave);
 
-        String[] engineNames = {"AUTO", "KIRIKIRI", "ONS", "TYRANO", "ARTEMIS", "WINLATOR", "GAMEHUB", "PSP", "NINTENDO_3DS", "UNKNOWN"};
-        ArrayAdapter<String> adapter = LauncherTheme.spinnerAdapter(this, engineNames);
+        // RPG Maker 拆成 4 个子引擎选项，与 LauncherAddGameActivity 保持一致。
+        // 插件加载的 .so 由 game.type + useRuby18 决定：
+        //   rpgmxp  + useRuby18=true → libmkxp18.so (Ruby 1.8) ← buildLaunchIntent 自动传
+        //   rpgmvx                  → libmkxp19.so (Ruby 1.9)
+        //   rpgmvxace               → libmkxp19.so (Ruby 1.9, RGSS3 兼容)
+        //   mkxp-z                  → libmkxp30.so (Ruby 3.x)
+        EngineOption[] options = new EngineOption[]{
+                new EngineOption(EngineType.AUTO, "自动识别", null),
+                new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
+                new EngineOption(EngineType.ONS, "ONScripter", null),
+                new EngineOption(EngineType.TYRANO, "Tyrano", null),
+                new EngineOption(EngineType.ARTEMIS, "Artemis", null),
+                new EngineOption(EngineType.WINLATOR, "Winlator", null),
+                new EngineOption(EngineType.GAMEHUB, "GameHub", null),
+                new EngineOption(EngineType.PSP, "PSP", null),
+                new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
+                new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
+                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
+                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
+                new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
+                new EngineOption(EngineType.UNKNOWN, "未知", null)
+        };
+        ArrayAdapter<EngineOption> adapter = LauncherTheme.spinnerAdapter(this, options);
         spEngine.setAdapter(adapter);
         LauncherTheme.styleSpinner(spEngine);
     }
@@ -153,7 +176,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 if (g == null) { Toast.makeText(this, "游戏不存在", Toast.LENGTH_SHORT).show(); finish(); return; }
                 game = g;
                 etTitle.setText(game.title);
-                spEngine.setSelection(engineIndex(game.engine));
+                spEngine.setSelection(findEngineOptionIndex(game.engine, game.emulatorPackage));
                 etEmulator.setText(game.emulatorPackage);
                 etLaunchTarget.setText(game.launchTarget);
                 etGameHubLocalGameId.setText(game.gamehubLocalGameId);
@@ -183,8 +206,15 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         btnSave.setText("保存中...");
 
         game.title = title;
-        game.engine = engineFromIndex(spEngine.getSelectedItemPosition());
-        game.emulatorPackage = etEmulator.getText().toString().trim();
+        EngineOption opt = selectedEngineOption();
+        game.engine = opt != null ? opt.engine : EngineType.UNKNOWN;
+        String emuPkg = etEmulator.getText().toString().trim();
+        // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>。
+        if (emuPkg.isEmpty() && opt != null && opt.engine == EngineType.RPGMAKER
+                && opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()) {
+            emuPkg = "internal." + opt.rpgMakerSubtype;
+        }
+        game.emulatorPackage = emuPkg;
         game.launchTarget = etLaunchTarget.getText().toString().trim();
         if (game.launchTarget.isEmpty()) game.launchTarget = "[游戏目录]";
         if (selectedGameDirectoryUri != null) game.rootUri = selectedGameDirectoryUri.toString();
@@ -251,7 +281,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void importGameHubShortcutFromShizuku() {
-        if (engineFromIndex(spEngine.getSelectedItemPosition()) != EngineType.GAMEHUB) {
+        EngineOption opt = selectedEngineOption();
+        if (opt == null || opt.engine != EngineType.GAMEHUB) {
             Toast.makeText(this, "请先将引擎设为 GameHub", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -320,34 +351,59 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 "请确认：\n1. Shizuku 正在运行且已授权；\n2. 盖世已创建桌面快捷方式；\n3. 已安装 com.xiaoji.egggamz 或 com.xiaoji.egggame。\n\n也可以手动填写 localGameId。");
     }
 
-    private int engineIndex(EngineType engine) {
+    /**
+     * 根据 EngineType 和 emulatorPackage 在 spinner 中找到匹配的 EngineOption 索引。
+     * RPGMAKER 时用 emulatorPackage（internal.rpgmxp 等）精确匹配子引擎；
+     * 其他引擎仅匹配 EngineType。
+     */
+    private int findEngineOptionIndex(EngineType engine, String emulatorPackage) {
         if (engine == null) return 0;
-        switch (engine) {
-            case AUTO: return 0;
-            case KIRIKIRI: return 1;
-            case ONS: return 2;
-            case TYRANO: return 3;
-            case ARTEMIS: return 4;
-            case WINLATOR: return 5;
-            case GAMEHUB: return 6;
-            case PSP: return 7;
-            case NINTENDO_3DS: return 8;
-            default: return 9;
+        String pkg = emulatorPackage == null ? "" : emulatorPackage.trim().toLowerCase(Locale.ROOT);
+        int fallback = -1;
+        for (int i = 0; i < spEngine.getCount(); i++) {
+            Object item = spEngine.getItemAtPosition(i);
+            if (!(item instanceof EngineOption)) continue;
+            EngineOption opt = (EngineOption) item;
+            if (opt.engine != engine) continue;
+            if (engine == EngineType.RPGMAKER) {
+                // RPGMAKER 需进一步匹配 subtype（emulatorPackage）。
+                if (opt.rpgMakerSubtype == null || opt.rpgMakerSubtype.isEmpty()) {
+                    if (fallback < 0) fallback = i;
+                    continue;
+                }
+                String alias = "internal." + opt.rpgMakerSubtype;
+                if (alias.equals(pkg) || ("internal." + opt.rpgMakerSubtype.replace("-", ""))
+                        .equals(pkg.replace("-", ""))) {
+                    return i;
+                }
+                if (fallback < 0) fallback = i;
+            } else {
+                return i;
+            }
         }
+        return fallback >= 0 ? fallback : 0;
     }
 
-    private EngineType engineFromIndex(int index) {
-        switch (index) {
-            case 0: return EngineType.AUTO;
-            case 1: return EngineType.KIRIKIRI;
-            case 2: return EngineType.ONS;
-            case 3: return EngineType.TYRANO;
-            case 4: return EngineType.ARTEMIS;
-            case 5: return EngineType.WINLATOR;
-            case 6: return EngineType.GAMEHUB;
-            case 7: return EngineType.PSP;
-            case 8: return EngineType.NINTENDO_3DS;
-            default: return EngineType.UNKNOWN;
+    private EngineOption selectedEngineOption() {
+        Object selected = spEngine == null ? null : spEngine.getSelectedItem();
+        return selected instanceof EngineOption ? (EngineOption) selected : null;
+    }
+
+    private static final class EngineOption {
+        final EngineType engine;
+        final String label;
+        /** 仅 RPGMAKER 用：rpgmxp / rpgmvx / rpgmvxace / mkxp-z；null 表示非 RPGMAKER。 */
+        final String rpgMakerSubtype;
+
+        EngineOption(EngineType engine, String label, String rpgMakerSubtype) {
+            this.engine = engine;
+            this.label = label;
+            this.rpgMakerSubtype = rpgMakerSubtype;
+        }
+
+        @Override
+        public String toString() {
+            return label;
         }
     }
 

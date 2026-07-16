@@ -47,6 +47,7 @@ public final class LauncherScanBridge {
             out.engine = source.engine == null ? EngineType.UNKNOWN : source.engine;
             out.confidence = source.confidence;
             out.launchTarget = source.launchTarget == null ? "" : source.launchTarget;
+            out.rpgMakerSubtype = source.rpgMakerSubtype == null ? "" : source.rpgMakerSubtype;
         } catch (Throwable ignored) {
         }
         return out;
@@ -57,6 +58,11 @@ public final class LauncherScanBridge {
         public EngineType engine = EngineType.UNKNOWN;
         public int confidence = 0;
         public String launchTarget = "";
+        /**
+         * 仅当 engine == RPGMAKER 时有意义。取值：
+         * "rpgmxp" / "rpgmvx" / "rpgmvxace" / "mkxp-z"。空串表示需用户自行决定。
+         */
+        public String rpgMakerSubtype = "";
     }
 
     public static ImportStats scanAndImport(Context context, List<String> roots, int depth) {
@@ -281,6 +287,10 @@ public final class LauncherScanBridge {
         if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
+        // RPG Maker 默认走 RPGXP（Ruby 1.8）：老 RGSS1 语法在 1.8 下才兼容，
+        // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
+        // 扫描批量导入时若需精确子类型，可在外部读取 ScanResult 后覆盖。
+        if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
         return "";
     }
 

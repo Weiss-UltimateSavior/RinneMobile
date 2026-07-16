@@ -10,6 +10,7 @@ public enum EngineType {
     GAMEHUB("GameHub"),
     PSP("PSP"),
     NINTENDO_3DS("Nintendo 3DS"),
+    RPGMAKER("RPG Maker"),
     UNKNOWN("Unknown");
 
     private final String displayName;

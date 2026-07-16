@@ -31,6 +31,11 @@ public class EngineDetector {
          * 当目录内没有 data.xp3 且存在多个 XP3 时，由调用方让用户选择的候选入口。
          */
         public List<String> xp3Candidates = new ArrayList<>();
+        /**
+         * 仅当 engine == RPGMAKER 时有意义。取值：
+         * "rpgmxp" / "rpgmvx" / "rpgmvxace" / "mkxp-z"。空串表示需用户自行决定。
+         */
+        public String rpgMakerSubtype = "";
     }
 
     public static Result detect(DocumentFile dir) {
@@ -84,7 +89,36 @@ public class EngineDetector {
         } else if (s.firstN3dsFile != null) {
             score(r, EngineType.NINTENDO_3DS, 95, s.firstN3dsFile);
         }
+        // RPG Maker (RGSS) 识别：归档形式优先于散文件形式。
+        // rgss3a → VX Ace(RGSS3)；rgss2a → VX(RGSS2)；rgssad → XP(RGSS1)。
+        if (s.firstRgss3a != null) {
+            scoreRpgMaker(r, "rpgmvxace", 96, s.firstRgss3a);
+        } else if (s.firstRgss2a != null) {
+            scoreRpgMaker(r, "rpgmvx", 96, s.firstRgss2a);
+        } else if (s.firstRgssad != null) {
+            scoreRpgMaker(r, "rpgmxp", 96, s.firstRgssad);
+        } else if (s.hasGameIni && s.hasRvdata2) {
+            scoreRpgMaker(r, "rpgmvxace", 92, "[游戏目录]");
+        } else if (s.hasGameIni && s.hasRvdata) {
+            scoreRpgMaker(r, "rpgmvx", 92, "[游戏目录]");
+        } else if (s.hasGameIni && s.hasRxdata) {
+            scoreRpgMaker(r, "rpgmxp", 92, "[游戏目录]");
+        }
         return r;
+    }
+
+    /**
+     * 与 {@link #score} 行为一致，但额外写入 {@link Result#rpgMakerSubtype}。
+     * 仅当 confidence 高于当前值时覆盖，避免被弱特征覆盖强特征。
+     */
+    private static void scoreRpgMaker(Result r, String subtype, int confidence, String launchTarget) {
+        if (r == null || subtype == null || subtype.isEmpty()) return;
+        if (confidence > r.confidence) {
+            r.engine = EngineType.RPGMAKER;
+            r.confidence = confidence;
+            r.launchTarget = launchTarget == null ? "" : launchTarget;
+            r.rpgMakerSubtype = subtype;
+        }
     }
 
     private static class FeatureState {
@@ -128,6 +162,14 @@ public class EngineDetector {
         boolean hasElectronPak = false;
         String firstPspFile = null;
         String firstN3dsFile = null;
+        // RPG Maker (RGSS) 检测字段。
+        String firstRgssad = null;
+        String firstRgss2a = null;
+        String firstRgss3a = null;
+        boolean hasGameIni = false;
+        boolean hasRxdata = false;
+        boolean hasRvdata = false;
+        boolean hasRvdata2 = false;
     }
 
     private static void collectFeatures(DocumentFile dir, String prefix, int level, int maxLevel, FeatureState s) {
@@ -211,6 +253,15 @@ public class EngineDetector {
                 lower.endsWith(".zcia") || lower.endsWith(".3dsx") || lower.endsWith(".z3dsx")) {
                 if (s.firstN3dsFile == null) s.firstN3dsFile = original;
             }
+            // RPG Maker (RGSS) 归档与数据文件检测。
+            if (lower.equals("game.ini")) s.hasGameIni = true;
+            if (lower.endsWith(".rgssad") && s.firstRgssad == null) s.firstRgssad = original;
+            if (lower.endsWith(".rgss2a") && s.firstRgss2a == null) s.firstRgss2a = original;
+            if (lower.endsWith(".rgss3a") && s.firstRgss3a == null) s.firstRgss3a = original;
+            // 散文件形式的 RPG Maker 数据文件（不在归档内）。
+            if (lower.endsWith(".rxdata")) s.hasRxdata = true;
+            if (lower.endsWith(".rvdata") && !lower.endsWith(".rvdata2")) s.hasRvdata = true;
+            if (lower.endsWith(".rvdata2")) s.hasRvdata2 = true;
         }
     }
 

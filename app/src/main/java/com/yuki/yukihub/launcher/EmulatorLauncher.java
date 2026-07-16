@@ -82,6 +82,8 @@ public class EmulatorLauncher {
         addBuiltInStrategy(new CitraStrategy());
         addBuiltInStrategy(new GameHubStrategy());
         addBuiltInStrategy(new WinlatorDesktopStrategy());
+        // RPG Maker：通过外部安装的 cyou.joiplay.runtime.rpgmaker 插件启动 RGSS 游戏。
+        addBuiltInStrategy(new ExternalRpgMakerPluginStrategy());
     }
 
     public static boolean launchGame(Context context, String packageName, String rootUri, String launchTarget) {

@@ -14,6 +14,7 @@
         <package android:name="com.xiaoji.egggamz" />
         <package android:name="com.akira.tyranoemu" />
         <package android:name="org.tvp.kirikiri2" />
+        <package android:name="cyou.joiplay.runtime.rpgmaker" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />

@@ -157,15 +157,25 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void setupEngineSpinner() {
         EngineOption[] options = new EngineOption[]{
-                new EngineOption(EngineType.AUTO, "自动识别"),
-                new EngineOption(EngineType.KIRIKIRI, "Kirikiri"),
-                new EngineOption(EngineType.ONS, "ONScripter"),
-                new EngineOption(EngineType.TYRANO, "Tyrano"),
-                new EngineOption(EngineType.ARTEMIS, "Artemis"),
-                new EngineOption(EngineType.WINLATOR, "Winlator"),
-                new EngineOption(EngineType.GAMEHUB, "GameHub"),
-                new EngineOption(EngineType.PSP, "PSP"),
-                new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS")
+                new EngineOption(EngineType.AUTO, "自动识别", null),
+                new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
+                new EngineOption(EngineType.ONS, "ONScripter", null),
+                new EngineOption(EngineType.TYRANO, "Tyrano", null),
+                new EngineOption(EngineType.ARTEMIS, "Artemis", null),
+                new EngineOption(EngineType.WINLATOR, "Winlator", null),
+                new EngineOption(EngineType.GAMEHUB, "GameHub", null),
+                new EngineOption(EngineType.PSP, "PSP", null),
+                new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
+                // RPG Maker 拆成 4 个子引擎选项，让用户直接指定 RGSS 版本。
+                // 插件加载的 .so 与 Ruby 版本对应关系（由 game.type + useRuby18 决定）：
+                //   rpgmxp  + useRuby18=true → libmkxp18.so (Ruby 1.8) ← buildLaunchIntent 自动传
+                //   rpgmvx                  → libmkxp19.so (Ruby 1.9)
+                //   rpgmvxace               → libmkxp19.so (Ruby 1.9, RGSS3 兼容)
+                //   mkxp-z                  → libmkxp30.so (Ruby 3.x)
+                new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
+                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
+                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
+                new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z")
         };
         ArrayAdapter<EngineOption> adapter = LauncherTheme.spinnerAdapter(this, options);
         engineSpinner.setAdapter(adapter);
@@ -173,8 +183,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         engineSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                EngineType engine = selectedEngine();
-                String nextDefault = defaultEmulatorPackage(engine);
+                Object item = parent.getItemAtPosition(position);
+                EngineOption opt = item instanceof EngineOption ? (EngineOption) item : null;
+                String nextDefault = defaultEmulatorPackageForOption(opt);
                 String current = textOf(emulatorText);
                 if (current.isEmpty() || current.equals(lastEngineDefaultPackage)) {
                     emulatorText.setText(nextDefault);
@@ -431,6 +442,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
         android.content.Context appContext = getApplicationContext();
         EngineType selectedEngine = selectedEngine();
+        // 在 UI 线程读取 spinner 的 RPGMAKER 子类型（rpgmxp/rpgmvx/rpgmvxace/mkxp-z），
+        // 用户显式选择时优先于此值，避免被扫描器误判的 detected.rpgMakerSubtype 覆盖。
+        String userRpgSubtype = selectedRpgMakerSubtype();
         String selectedLaunchTarget = launchTargetName;
         String selectedEmulator = textOf(emulatorText);
         String selectedGameHubId = textOf(gameHubIdInput);
@@ -439,7 +453,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         Uri selectedCover = coverUri;
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.DetectionResult detected = null;
-            if (selectedEngine == EngineType.AUTO) {
+            // AUTO 让扫描器决定引擎；RPGMAKER 也走一次扫描以拿到具体子类型（rpgmxp/rpgmvx/rpgmvxace/mkxp-z），
+            // 子类型用于选择对应的 mkxp native 库，但不会覆盖用户选择的 EngineType。
+            if (selectedEngine == EngineType.AUTO || selectedEngine == EngineType.RPGMAKER) {
                 try {
                     DocumentFile root = DocumentFile.fromTreeUri(appContext, selectedGameDir);
                     detected = LauncherScanBridge.detectEngine(root, 2);
@@ -447,7 +463,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 }
             }
             EngineType finalEngine = selectedEngine;
-            if (detected != null && detected.confidence > 0 && detected.engine != EngineType.UNKNOWN) {
+            if (selectedEngine == EngineType.AUTO
+                    && detected != null && detected.confidence > 0 && detected.engine != EngineType.UNKNOWN) {
                 finalEngine = detected.engine;
             }
 
@@ -465,7 +482,17 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                             ? detected.launchTarget
                             : "[游戏目录]"
             );
-            game.emulatorPackage = textOrDefault(selectedEmulator, defaultEmulatorPackage(finalEngine));
+            // emulatorPackage 优先级：用户手动填的 emulatorText > 用户在 spinner 显式选的 RPGMAKER 子类型
+            // > 扫描器检测到的子类型 > 引擎默认包名。
+            // 关键：用户显式选了 RPG Maker XP/VX/VX Ace/mkxp-z 时，必须用对应的 mkxp native 库
+            // （libmkxp18/19/30.so），否则会出现 Ruby 1.8 语法在 Ruby 3.x 下报 SyntaxError 等问题。
+            String emulatorFallback;
+            if (finalEngine == EngineType.RPGMAKER && !userRpgSubtype.isEmpty()) {
+                emulatorFallback = "internal." + userRpgSubtype;
+            } else {
+                emulatorFallback = defaultEmulatorPackageForDetected(finalEngine, detected);
+            }
+            game.emulatorPackage = textOrDefault(selectedEmulator, emulatorFallback);
             game.description = selectedDescription;
             game.gamehubLocalGameId = selectedGameHubId;
             if (game.engine == EngineType.GAMEHUB && selectedGameHubId.isEmpty()) {
@@ -505,7 +532,51 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
         if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggamz";
+        // RPG Maker 默认走 RPGXP（Ruby 1.8）：老 RGSS1 语法（如 ?(...) 三元运算符）在 1.8 下才兼容，
+        // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
+        // 检测到具体子类型时由 defaultEmulatorPackageForDetected 覆盖为更精确的别名。
+        if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
         return "";
+    }
+
+    /**
+     * 当扫描器给出 RPG Maker 子引擎（rpgmxp/rpgmvx/rpgmvxace/mkxp-z）时，
+     * 使用 {@code internal.<subtype>} 作为默认 packageName，覆盖通用默认。
+     * 这样无需用户手动调整 emulatorText 即可调用对应的 mkxp native 库。
+     */
+    private String defaultEmulatorPackageForDetected(EngineType engine, LauncherScanBridge.DetectionResult detected) {
+        String fallback = defaultEmulatorPackage(engine);
+        if (engine != EngineType.RPGMAKER || detected == null) return fallback;
+        String subtype = detected.rpgMakerSubtype;
+        if (subtype == null || subtype.trim().isEmpty()) return fallback;
+        return "internal." + subtype.trim();
+    }
+
+    /**
+     * 根据 spinner 当前选中的 EngineOption 推算默认 packageName。
+     * 用于 onItemSelected 回调：当用户选 RPG Maker 子引擎时，
+     * 返回 {@code internal.<subtype>}；其他引擎回退到 {@link #defaultEmulatorPackage}。
+     */
+    private String defaultEmulatorPackageForOption(EngineOption opt) {
+        if (opt == null) return "";
+        if (opt.engine == EngineType.RPGMAKER
+                && opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()) {
+            return "internal." + opt.rpgMakerSubtype;
+        }
+        return defaultEmulatorPackage(opt.engine);
+    }
+
+    /**
+     * 取当前 spinner 选中 EngineOption 的 RPG Maker 子引擎标识。
+     * 仅当选中的是 RPGMAKER 且 subtype 非空时返回，否则返回空串。
+     * 必须在 UI 线程调用（读取 spinner 状态）。
+     */
+    private String selectedRpgMakerSubtype() {
+        Object selected = engineSpinner == null ? null : engineSpinner.getSelectedItem();
+        if (!(selected instanceof EngineOption)) return "";
+        EngineOption opt = (EngineOption) selected;
+        if (opt.engine != EngineType.RPGMAKER) return "";
+        return opt.rpgMakerSubtype == null ? "" : opt.rpgMakerSubtype;
     }
 
     private String copyCoverToInternalStorage(Uri uri) {
@@ -796,10 +867,13 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private static final class EngineOption {
         final EngineType engine;
         final String label;
+        /** 仅 RPGMAKER 用：rpgmxp / rpgmvx / rpgmvxace / mkxp-z；null 表示非 RPGMAKER。 */
+        final String rpgMakerSubtype;
 
-        EngineOption(EngineType engine, String label) {
+        EngineOption(EngineType engine, String label, String rpgMakerSubtype) {
             this.engine = engine;
             this.label = label;
+            this.rpgMakerSubtype = rpgMakerSubtype;
         }
 
         @Override
