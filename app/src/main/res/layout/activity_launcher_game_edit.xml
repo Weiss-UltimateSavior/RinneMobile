@@ -55,11 +55,16 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <Spinner
-                android:id="@+id/editEngine"
-                style="@style/LauncherFormSpinner"
+            <TextView
+                android:id="@+id/editEngineText"
+                style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                />
+                android:ellipsize="middle"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:text="自动识别"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="14sp" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -70,12 +75,11 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <TextView
                 android:id="@+id/editEmulator"
-                style="@style/LauncherFormInput"
+                style="@style/LauncherSelectableField"
                 android:layout_marginTop="5dp"
-                android:hint="留空使用默认"
-                android:inputType="text" />
+                android:hint="点击选择模拟器应用" />
 
             <TextView
                 android:layout_width="match_parent"

@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -22,7 +21,11 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
+    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
+    private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private ActivityLauncherKrkrSettingsBinding binding;
+    private int selectedEngineVersionIndex;
+    private boolean restoreEngineVersionSelection;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,7 +39,13 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         applySystemBarInsets();
         bindActions();
         applyThemeTone();
-        loadConfig();
+        loadConfig(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_ENGINE_VERSION_INDEX, selectedEngineVersionIndex);
     }
 
     private void applySystemBarInsets() {
@@ -55,13 +64,10 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         binding.btnSave.setOnClickListener(v -> save());
         binding.btnCancel.setOnClickListener(v -> finish());
         binding.btnNativeKrkr.setOnClickListener(v -> enterNativeKrkr());
+        binding.engineVersionText.setOnClickListener(v -> showEngineVersionPicker());
     }
 
     private void applyThemeTone() {
-        ArrayAdapter<String> adapter = LauncherTheme.spinnerAdapter(this,
-                new String[]{"自动", "1.3.9", "1.3.4"});
-        binding.engineVersionSpinner.setAdapter(adapter);
-        LauncherTheme.styleSpinner(binding.engineVersionSpinner);
         LauncherTheme.styleSwitch(binding.krScopedSwitch);
         LauncherTheme.styleSwitch(binding.artemisScopedSwitch);
         LauncherTheme.styleSwitch(binding.onsScopedSwitch);
@@ -72,12 +78,15 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         LauncherTheme.longActionButton(binding.btnCancel);
     }
 
-    private void loadConfig() {
+    private void loadConfig(@Nullable Bundle savedInstanceState) {
         String version = LauncherKrkrBridge.getEngineVersion(this);
         int selection = 0;
         if (LauncherKrkrBridge.ENGINE_VERSION_139.equals(version)) selection = 1;
         else if (LauncherKrkrBridge.ENGINE_VERSION_134.equals(version)) selection = 2;
-        binding.engineVersionSpinner.setSelection(selection);
+        restoreEngineVersionSelection = savedInstanceState != null
+                && savedInstanceState.containsKey(STATE_ENGINE_VERSION_INDEX);
+        setEngineVersionSelection(restoreEngineVersionSelection
+                ? savedInstanceState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.krScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         binding.artemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
         binding.onsScopedSwitch.setChecked(OnsSettings.load(this).scopedSaveDir);
@@ -85,7 +94,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     }
 
     private void save() {
-        int pos = binding.engineVersionSpinner.getSelectedItemPosition();
+        int pos = selectedEngineVersionIndex;
         String version = LauncherKrkrBridge.ENGINE_VERSION_AUTO;
         if (pos == 1) version = LauncherKrkrBridge.ENGINE_VERSION_139;
         else if (pos == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134;
@@ -100,6 +109,16 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
 
         Toast.makeText(this, "引擎设置已保存：" + LauncherKrkrBridge.engineVersionLabel(version), Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    private void showEngineVersionPicker() {
+        com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "选择 KR 引擎版本",
+                ENGINE_VERSION_LABELS, selectedEngineVersionIndex, this::setEngineVersionSelection);
+    }
+
+    private void setEngineVersionSelection(int index) {
+        selectedEngineVersionIndex = index >= 0 && index < ENGINE_VERSION_LABELS.length ? index : 0;
+        binding.engineVersionText.setText(ENGINE_VERSION_LABELS[selectedEngineVersionIndex]);
     }
 
     private void enterNativeKrkr() {

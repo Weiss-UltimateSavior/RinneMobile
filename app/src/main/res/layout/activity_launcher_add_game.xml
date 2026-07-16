@@ -54,14 +54,10 @@
                 style="@style/LauncherAddGameLabel"
                 android:text="游戏引擎" />
 
-            <Spinner
-                android:id="@+id/addGameEngineSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:layout_marginTop="7dp"
-                android:background="@drawable/launcher_account_input"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp" />
+            <TextView
+                android:id="@+id/addGameEngineText"
+                style="@style/LauncherAddGameInputText"
+                android:text="自动识别" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"

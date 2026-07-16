@@ -134,11 +134,20 @@
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
-                <Spinner
-                    android:id="@+id/padEngineVersionSpinner"
+                <TextView
+                    android:id="@+id/padEngineVersionText"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
-                    android:layout_marginTop="5dp" />
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="11dp"
+                    android:paddingEnd="11dp"
+                    android:text="自动"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="13sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -586,11 +595,20 @@
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
-                <Spinner
-                    android:id="@+id/padMetadataSourceSpinner"
+                <TextView
+                    android:id="@+id/padMetadataSourceText"
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
-                    android:layout_marginTop="5dp" />
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="11dp"
+                    android:paddingEnd="11dp"
+                    android:text="VNDB（默认）"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="13sp" />
 
                 <TextView
                     android:layout_width="match_parent"

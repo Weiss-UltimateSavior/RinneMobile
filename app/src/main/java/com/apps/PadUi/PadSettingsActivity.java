@@ -44,12 +44,21 @@ public class PadSettingsActivity extends AppCompatActivity {
     private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
     private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
     private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
+    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
+    private static final String[] METADATA_SOURCE_LABELS = {
+            "VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"
+    };
+    private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
+    private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
 
     private ActivityPadSettingsBinding binding;
     private Section currentSection = Section.GENERAL;
     private String selectedTheme = THEME_DEFAULT_LABEL;
     private AlertDialog accountLoadingDialog;
     private boolean emailSubscriptionUpdating;
+    private int selectedEngineVersionIndex;
+    private int selectedMetadataSourceIndex;
+    private Bundle restoredState;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -63,6 +72,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         configureLandscapeWindow();
         binding = ActivityPadSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        restoredState = savedInstanceState;
         applySystemBarInsets();
         restoreSelectedTheme();
         setupKrkrControls();
@@ -71,6 +81,13 @@ public class PadSettingsActivity extends AppCompatActivity {
         bindActions();
         selectSection(Section.GENERAL);
         renderParticles();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_ENGINE_VERSION_INDEX, selectedEngineVersionIndex);
+        outState.putInt(STATE_METADATA_SOURCE_INDEX, selectedMetadataSourceIndex);
     }
 
     @Override
@@ -103,14 +120,14 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padMetadataSaveButton.setOnClickListener(view -> saveMetadataConfig());
         binding.padMetadataCancelButton.setOnClickListener(view -> finish());
         binding.padMetadataTokenLink.setOnClickListener(view -> openMetadataTokenUrl());
+        binding.padEngineVersionText.setOnClickListener(view -> showEngineVersionPicker());
+        binding.padMetadataSourceText.setOnClickListener(view -> showMetadataSourcePicker());
         binding.padRowSyncConfig.setOnClickListener(view -> onSyncConfigClick());
         binding.padRowRealtimePlaytime.setOnClickListener(view -> onRealtimePlaytimeClick());
         binding.padRowEmailSubscribe.setOnClickListener(view -> onEmailSubscriptionClick());
     }
 
     private void setupKrkrControls() {
-        binding.padEngineVersionSpinner.setAdapter(LauncherTheme.spinnerAdapter(this,
-                new String[]{"自动", "1.3.9", "1.3.4"}));
         loadKrkrConfig();
     }
 
@@ -119,7 +136,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         int selection = 0;
         if (LauncherKrkrBridge.ENGINE_VERSION_139.equals(version)) selection = 1;
         else if (LauncherKrkrBridge.ENGINE_VERSION_134.equals(version)) selection = 2;
-        binding.padEngineVersionSpinner.setSelection(selection);
+        setEngineVersionSelection(restoredState != null && restoredState.containsKey(STATE_ENGINE_VERSION_INDEX)
+                ? restoredState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.padKrScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         binding.padArtemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
         binding.padOnsScopedSwitch.setChecked(OnsSettings.load(this).scopedSaveDir);
@@ -127,8 +145,6 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void setupMetadataControls() {
-        binding.padMetadataSourceSpinner.setAdapter(LauncherTheme.spinnerAdapter(this,
-                new String[]{"VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"}));
         loadMetadataConfig();
     }
 
@@ -138,8 +154,29 @@ public class PadSettingsActivity extends AppCompatActivity {
         if (MetadataController.SOURCE_BANGUMI.equals(source)) selection = 1;
         else if (MetadataController.SOURCE_BANGUMI_MIRROR.equals(source)) selection = 2;
         else if (MetadataController.SOURCE_YMGAL.equals(source)) selection = 3;
-        binding.padMetadataSourceSpinner.setSelection(selection);
+        setMetadataSourceSelection(restoredState != null && restoredState.containsKey(STATE_METADATA_SOURCE_INDEX)
+                ? restoredState.getInt(STATE_METADATA_SOURCE_INDEX, 0) : selection);
         binding.padMetadataTokenInput.setText(LauncherMetadataBridge.getBangumiToken(this));
+    }
+
+    private void showEngineVersionPicker() {
+        PadDialogFactory.showSingleChoice(this, "选择 KR 引擎版本", ENGINE_VERSION_LABELS,
+                selectedEngineVersionIndex, this::setEngineVersionSelection);
+    }
+
+    private void setEngineVersionSelection(int index) {
+        selectedEngineVersionIndex = index >= 0 && index < ENGINE_VERSION_LABELS.length ? index : 0;
+        binding.padEngineVersionText.setText(ENGINE_VERSION_LABELS[selectedEngineVersionIndex]);
+    }
+
+    private void showMetadataSourcePicker() {
+        PadDialogFactory.showSingleChoice(this, "选择资料源", METADATA_SOURCE_LABELS,
+                selectedMetadataSourceIndex, this::setMetadataSourceSelection);
+    }
+
+    private void setMetadataSourceSelection(int index) {
+        selectedMetadataSourceIndex = index >= 0 && index < METADATA_SOURCE_LABELS.length ? index : 0;
+        binding.padMetadataSourceText.setText(METADATA_SOURCE_LABELS[selectedMetadataSourceIndex]);
     }
 
     private void restoreSelectedTheme() {
@@ -239,12 +276,10 @@ public class PadSettingsActivity extends AppCompatActivity {
         styleSidebarItem(binding.padSettingsSidebarAccount, currentSection == Section.ACCOUNT);
         LauncherTheme.secondaryButton(binding.padSettingsBackButton);
         LauncherTheme.textPrimary(binding.padSettingsPageTitle);
-        LauncherTheme.styleSpinner(binding.padEngineVersionSpinner);
         LauncherTheme.styleSwitch(binding.padKrScopedSwitch);
         LauncherTheme.styleSwitch(binding.padArtemisScopedSwitch);
         LauncherTheme.styleSwitch(binding.padOnsScopedSwitch);
         LauncherTheme.styleSwitch(binding.padTyranoScopedSwitch);
-        LauncherTheme.styleSpinner(binding.padMetadataSourceSpinner);
         PadDialogFactory.secondaryInlineAction(binding.padNativeKrkrButton);
         PadDialogFactory.secondaryInlineAction(binding.padKrkrCancelButton);
         PadDialogFactory.primaryInlineAction(binding.padKrkrSaveButton);
@@ -414,7 +449,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void saveKrkrConfig() {
-        int position = binding.padEngineVersionSpinner.getSelectedItemPosition();
+        int position = selectedEngineVersionIndex;
         String version = LauncherKrkrBridge.ENGINE_VERSION_AUTO;
         if (position == 1) version = LauncherKrkrBridge.ENGINE_VERSION_139;
         else if (position == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134;
@@ -440,7 +475,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void saveMetadataConfig() {
-        int position = binding.padMetadataSourceSpinner.getSelectedItemPosition();
+        int position = selectedMetadataSourceIndex;
         String source = MetadataController.SOURCE_VNDB;
         if (position == 1) source = MetadataController.SOURCE_BANGUMI;
         else if (position == 2) source = MetadataController.SOURCE_BANGUMI_MIRROR;

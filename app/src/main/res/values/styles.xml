@@ -126,15 +126,6 @@
 
     <style name="LauncherAddGameInputText" parent="LauncherSelectableField" />
 
-    <style name="LauncherFormSpinner">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">45dp</item>
-        <item name="android:layout_marginTop">7dp</item>
-        <item name="android:background">@drawable/launcher_account_input</item>
-        <item name="android:paddingStart">13dp</item>
-        <item name="android:paddingEnd">13dp</item>
-    </style>
-
     <style name="LauncherLongActionButton">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">41dp</item>

@@ -236,7 +236,7 @@ public final class LauncherDialogFactory {
         setContent(dialog, root, WIDTH_STANDARD_DP);
     }
 
-    /** Form-width single choice picker with an explicit selected state. */
+    /** Compact single-choice picker matching the add-game launch-target selector. */
     public static void showSingleChoice(Context context, String title, CharSequence[] choices,
                                         int checkedIndex, ChoiceListener listener) {
         AlertDialog dialog = open(context, WIDTH_COMPACT_DP);
@@ -249,11 +249,11 @@ public final class LauncherDialogFactory {
         int optionCount = choices == null ? 0 : choices.length;
         for (int i = 0; i < optionCount; i++) {
             final int index = i;
-            TextView option = button(context, choices[i], index == checkedIndex);
+            TextView option = compactChoice(context, choices[i], index == checkedIndex);
             option.setGravity(android.view.Gravity.CENTER);
             LinearLayout.LayoutParams optionParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 42));
-            if (i > 0) optionParams.setMargins(0, dp(context, 7), 0, 0);
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 38));
+            optionParams.setMargins(0, dp(context, 7), 0, 0);
             option.setOnClickListener(view -> {
                 dialog.dismiss();
                 if (listener != null) listener.onChoice(index);
@@ -261,9 +261,9 @@ public final class LauncherDialogFactory {
             list.addView(option, optionParams);
         }
         scroll.addView(list);
-        int listHeight = optionCount * 42 + Math.max(0, optionCount - 1) * 7;
-        LinearLayout.LayoutParams scrollParams = topMargin(context, 11);
-        scrollParams.height = Math.min(dp(context, 252), dp(context, listHeight));
+        int listHeight = optionCount * (38 + 7);
+        LinearLayout.LayoutParams scrollParams = topMargin(context, 7);
+        scrollParams.height = Math.min(dp(context, 280), dp(context, listHeight));
         root.addView(scroll, scrollParams);
 
         TextView cancel = cancelButton(context);
@@ -346,6 +346,18 @@ public final class LauncherDialogFactory {
         view.setTextSize(13);
         view.setTypeface(null, Typeface.BOLD);
         if (primary) LauncherTheme.primaryButton(view); else LauncherTheme.secondaryButton(view);
+        return view;
+    }
+
+    private static TextView compactChoice(Context context, CharSequence value, boolean selected) {
+        TextView view = new TextView(context);
+        view.setText(value);
+        view.setSingleLine(true);
+        view.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
+        view.setTextSize(13);
+        view.setTextColor(selected ? LauncherTheme.primary(context) : LauncherTheme.text(context));
+        view.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
+        view.setBackground(LauncherTheme.cancelChip(context));
         return view;
     }
 

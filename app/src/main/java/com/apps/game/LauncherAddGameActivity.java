@@ -20,13 +20,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +62,11 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherAddGameActivity extends AppCompatActivity {
+    private static final String STATE_ENGINE_OPTION_INDEX = "engine_option_index";
+    private static final String STATE_LAST_ENGINE_DEFAULT_PACKAGE = "last_engine_default_package";
+    private static final String STATE_GAME_DIRECTORY_URI = "game_directory_uri";
+    private static final String STATE_COVER_URI = "cover_uri";
+    private static final String STATE_LAUNCH_TARGET = "launch_target";
     private ScrollView scroll;
     private EditText nameInput;
     private TextView launchTargetText;
@@ -76,7 +78,23 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private TextView dirText;
     private TextView coverText;
     private TextView saveButton;
-    private Spinner engineSpinner;
+    private TextView engineText;
+    private EngineOption selectedEngineOption;
+    private final EngineOption[] engineOptions = new EngineOption[]{
+            new EngineOption(EngineType.AUTO, "自动识别", null),
+            new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
+            new EngineOption(EngineType.ONS, "ONScripter", null),
+            new EngineOption(EngineType.TYRANO, "Tyrano", null),
+            new EngineOption(EngineType.ARTEMIS, "Artemis", null),
+            new EngineOption(EngineType.WINLATOR, "Winlator", null),
+            new EngineOption(EngineType.GAMEHUB, "GameHub", null),
+            new EngineOption(EngineType.PSP, "PSP", null),
+            new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
+            new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
+            new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
+            new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
+            new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z")
+    };
     private Uri gameDirUri;
     private Uri coverUri;
     private String lastEngineDefaultPackage = "";
@@ -117,8 +135,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         LauncherTabletPortraitScaler.applyActivityContent(this);
 
         bindViews();
+        restoreTransientState(savedInstanceState);
         applySystemBarInsets();
-        setupEngineSpinner();
+        setupEnginePicker();
         bindActions();
         applyThemeTone();
         try { Shizuku.addRequestPermissionResultListener(shizukuPermissionListener); } catch (Throwable ignored) { }
@@ -135,7 +154,43 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         dirText = findViewById(R.id.addGameDirText);
         coverText = findViewById(R.id.addGameCoverText);
         saveButton = findViewById(R.id.addGameSave);
-        engineSpinner = findViewById(R.id.addGameEngineSpinner);
+        engineText = findViewById(R.id.addGameEngineText);
+        selectedEngineOption = engineOptions[0];
+        engineText.setText(selectedEngineOption.label);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_ENGINE_OPTION_INDEX, selectedEngineOptionIndex());
+        outState.putString(STATE_LAST_ENGINE_DEFAULT_PACKAGE, lastEngineDefaultPackage);
+        if (gameDirUri != null) outState.putString(STATE_GAME_DIRECTORY_URI, gameDirUri.toString());
+        if (coverUri != null) outState.putString(STATE_COVER_URI, coverUri.toString());
+        outState.putString(STATE_LAUNCH_TARGET, launchTargetName);
+    }
+
+    private void restoreTransientState(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState == null) return;
+        selectedEngineOption = engineOptions[boundedEngineOptionIndex(
+                savedInstanceState.getInt(STATE_ENGINE_OPTION_INDEX, 0))];
+        engineText.setText(selectedEngineOption.label);
+        lastEngineDefaultPackage = savedInstanceState.getString(STATE_LAST_ENGINE_DEFAULT_PACKAGE, "");
+        gameDirUri = uriFromState(savedInstanceState.getString(STATE_GAME_DIRECTORY_URI));
+        if (gameDirUri != null) dirText.setText(displayUri(gameDirUri));
+        coverUri = uriFromState(savedInstanceState.getString(STATE_COVER_URI));
+        if (coverUri != null) coverText.setText(displayUri(coverUri));
+        launchTargetName = savedInstanceState.getString(STATE_LAUNCH_TARGET, "");
+        if (!launchTargetName.isEmpty()) launchTargetText.setText(launchTargetName);
+    }
+
+    @Nullable
+    private Uri uriFromState(@Nullable String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        try {
+            return Uri.parse(value);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private void applySystemBarInsets() {
@@ -155,48 +210,41 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         scroll.requestApplyInsets();
     }
 
-    private void setupEngineSpinner() {
-        EngineOption[] options = new EngineOption[]{
-                new EngineOption(EngineType.AUTO, "自动识别", null),
-                new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
-                new EngineOption(EngineType.ONS, "ONScripter", null),
-                new EngineOption(EngineType.TYRANO, "Tyrano", null),
-                new EngineOption(EngineType.ARTEMIS, "Artemis", null),
-                new EngineOption(EngineType.WINLATOR, "Winlator", null),
-                new EngineOption(EngineType.GAMEHUB, "GameHub", null),
-                new EngineOption(EngineType.PSP, "PSP", null),
-                new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
-                // RPG Maker 拆成 4 个子引擎选项，让用户直接指定 RGSS 版本。
-                // 插件加载的 .so 与 Ruby 版本对应关系（由 game.type + useRuby18 决定）：
-                //   rpgmxp  + useRuby18=true → libmkxp18.so (Ruby 1.8) ← buildLaunchIntent 自动传
-                //   rpgmvx                  → libmkxp19.so (Ruby 1.9)
-                //   rpgmvxace               → libmkxp19.so (Ruby 1.9, RGSS3 兼容)
-                //   mkxp-z                  → libmkxp30.so (Ruby 3.x)
-                new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
-                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
-                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
-                new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z")
-        };
-        ArrayAdapter<EngineOption> adapter = LauncherTheme.spinnerAdapter(this, options);
-        engineSpinner.setAdapter(adapter);
-        LauncherTheme.styleSpinner(engineSpinner);
-        engineSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Object item = parent.getItemAtPosition(position);
-                EngineOption opt = item instanceof EngineOption ? (EngineOption) item : null;
-                String nextDefault = defaultEmulatorPackageForOption(opt);
-                String current = textOf(emulatorText);
-                if (current.isEmpty() || current.equals(lastEngineDefaultPackage)) {
-                    emulatorText.setText(nextDefault);
-                }
-                lastEngineDefaultPackage = nextDefault;
+    private void setupEnginePicker() {
+        engineText.setOnClickListener(v -> {
+            CharSequence[] labels = new CharSequence[engineOptions.length];
+            for (int i = 0; i < engineOptions.length; i++) labels[i] = engineOptions[i].label;
+            int checked = 0;
+            for (int i = 0; i < engineOptions.length; i++) {
+                if (engineOptions[i] == selectedEngineOption) { checked = i; break; }
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
+            com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "选择游戏引擎",
+                    labels, checked, index -> {
+                        applyEngineSelection(index);
+                    });
         });
+    }
+
+    private void applyEngineSelection(int index) {
+        selectedEngineOption = engineOptions[boundedEngineOptionIndex(index)];
+        engineText.setText(selectedEngineOption.label);
+        String nextDefault = defaultEmulatorPackageForOption(selectedEngineOption);
+        String current = textOf(emulatorText);
+        if (current.isEmpty() || current.equals(lastEngineDefaultPackage)) {
+            emulatorText.setText(nextDefault);
+        }
+        lastEngineDefaultPackage = nextDefault;
+    }
+
+    private int selectedEngineOptionIndex() {
+        for (int i = 0; i < engineOptions.length; i++) {
+            if (engineOptions[i] == selectedEngineOption) return i;
+        }
+        return 0;
+    }
+
+    private int boundedEngineOptionIndex(int index) {
+        return index >= 0 && index < engineOptions.length ? index : 0;
     }
 
     private void bindActions() {
@@ -442,7 +490,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
         android.content.Context appContext = getApplicationContext();
         EngineType selectedEngine = selectedEngine();
-        // 在 UI 线程读取 spinner 的 RPGMAKER 子类型（rpgmxp/rpgmvx/rpgmvxace/mkxp-z），
+        // 在 UI 线程读取选择器的 RPGMAKER 子类型（rpgmxp/rpgmvx/rpgmvxace/mkxp-z），
         // 用户显式选择时优先于此值，避免被扫描器误判的 detected.rpgMakerSubtype 覆盖。
         String userRpgSubtype = selectedRpgMakerSubtype();
         String selectedLaunchTarget = launchTargetName;
@@ -482,7 +530,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                             ? detected.launchTarget
                             : "[游戏目录]"
             );
-            // emulatorPackage 优先级：用户手动填的 emulatorText > 用户在 spinner 显式选的 RPGMAKER 子类型
+            // emulatorPackage 优先级：用户手动填的 emulatorText > 用户在选择器显式选的 RPGMAKER 子类型
             // > 扫描器检测到的子类型 > 引擎默认包名。
             // 关键：用户显式选了 RPG Maker XP/VX/VX Ace/mkxp-z 时，必须用对应的 mkxp native 库
             // （libmkxp18/19/30.so），否则会出现 Ruby 1.8 语法在 Ruby 3.x 下报 SyntaxError 等问题。
@@ -519,9 +567,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     private EngineType selectedEngine() {
-        Object selected = engineSpinner.getSelectedItem();
-        if (selected instanceof EngineOption) return ((EngineOption) selected).engine;
-        return EngineType.AUTO;
+        return selectedEngineOption != null ? selectedEngineOption.engine : EngineType.AUTO;
     }
 
     private String defaultEmulatorPackage(EngineType engine) {
@@ -553,8 +599,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     /**
-     * 根据 spinner 当前选中的 EngineOption 推算默认 packageName。
-     * 用于 onItemSelected 回调：当用户选 RPG Maker 子引擎时，
+     * 根据当前选择的 EngineOption 推算默认 packageName。
+     * 用于选择器回调：当用户选 RPG Maker 子引擎时，
      * 返回 {@code internal.<subtype>}；其他引擎回退到 {@link #defaultEmulatorPackage}。
      */
     private String defaultEmulatorPackageForOption(EngineOption opt) {
@@ -567,16 +613,13 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     /**
-     * 取当前 spinner 选中 EngineOption 的 RPG Maker 子引擎标识。
+     * 取当前选择的 EngineOption 的 RPG Maker 子引擎标识。
      * 仅当选中的是 RPGMAKER 且 subtype 非空时返回，否则返回空串。
-     * 必须在 UI 线程调用（读取 spinner 状态）。
+     * 必须在 UI 线程调用（读取选择状态）。
      */
     private String selectedRpgMakerSubtype() {
-        Object selected = engineSpinner == null ? null : engineSpinner.getSelectedItem();
-        if (!(selected instanceof EngineOption)) return "";
-        EngineOption opt = (EngineOption) selected;
-        if (opt.engine != EngineType.RPGMAKER) return "";
-        return opt.rpgMakerSubtype == null ? "" : opt.rpgMakerSubtype;
+        if (selectedEngineOption == null || selectedEngineOption.engine != EngineType.RPGMAKER) return "";
+        return selectedEngineOption.rpgMakerSubtype == null ? "" : selectedEngineOption.rpgMakerSubtype;
     }
 
     private String copyCoverToInternalStorage(Uri uri) {
@@ -664,186 +707,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     private void showAppPicker(TextView target) {
-        Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_launcher_app_picker);
-        LauncherTheme.applyPrimaryTone(dialog.findViewById(android.R.id.content));
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-            dialog.getWindow().setLayout(
-                    (int) (getResources().getDisplayMetrics().widthPixels * 0.74f),
-                    (int) (getResources().getDisplayMetrics().heightPixels * 0.82f));
-        }
-        RecyclerView rv = dialog.findViewById(R.id.recyclerLauncherAppPicker);
-        View loading = dialog.findViewById(R.id.layoutLauncherAppLoading);
-        TextView hint = dialog.findViewById(R.id.tvLauncherAppPickerHint);
-        EditText search = dialog.findViewById(R.id.etLauncherAppSearch);
-        TextView btnClose = dialog.findViewById(R.id.btnCloseLauncherAppPicker);
-        LauncherTheme.secondaryButton(btnClose);
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    (int) (getResources().getDisplayMetrics().widthPixels * 0.74f),
-                    (int) (getResources().getDisplayMetrics().heightPixels * 0.82f));
-        }
-
-        AppExecutors.runOnIo(() -> {
-            List<AppPickItem> items = loadLaunchableApps();
-            runOnUiThread(() -> {
-                if (!dialog.isShowing()) return;
-                loading.setVisibility(View.GONE);
-                rv.setVisibility(View.VISIBLE);
-                if (items.isEmpty()) {
-                    hint.setText("没有找到可启动的应用");
-                    return;
-                }
-                hint.setText("共 " + items.size() + " 个可启动应用，可搜索应用名或包名");
-                final AppPickerAdapter[] adapterRef = new AppPickerAdapter[1];
-                adapterRef[0] = new AppPickerAdapter(items, item -> {
-                    target.setText(item.packageName);
-                    dialog.dismiss();
-                });
-                rv.setAdapter(adapterRef[0]);
-                search.addTextChangedListener(new TextWatcher() {
-                    public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
-                    public void onTextChanged(CharSequence s, int st, int b, int c) {
-                        if (adapterRef[0] == null) return;
-                        adapterRef[0].filter(s == null ? "" : s.toString());
-                        hint.setText("共 " + items.size() + " 个应用，当前显示 " + adapterRef[0].getItemCount() + " 个");
-                    }
-                    public void afterTextChanged(Editable e) {}
-                });
-            });
-        });
-    }
-
-    private List<AppPickItem> loadLaunchableApps() {
-        LinkedHashMap<String, AppPickItem> map = new LinkedHashMap<>();
-        try {
-            PackageManager pm = getPackageManager();
-            Intent launcher = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
-            List<ResolveInfo> launchers = pm.queryIntentActivities(launcher, 0);
-            if (launchers != null) {
-                for (ResolveInfo ri : launchers) {
-                    if (ri == null || ri.activityInfo == null || ri.activityInfo.packageName == null) continue;
-                    addAppPickItem(map, pm, ri.activityInfo.applicationInfo);
-                }
-            }
-            List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-            if (apps != null) {
-                for (ApplicationInfo app : apps) {
-                    if (app == null || app.packageName == null) continue;
-                    if (pm.getLaunchIntentForPackage(app.packageName) != null) addAppPickItem(map, pm, app);
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        List<AppPickItem> items = new ArrayList<>(map.values());
-        items.sort((a, b) -> a.label.compareToIgnoreCase(b.label));
-        return items;
-    }
-
-    private void addAppPickItem(Map<String, AppPickItem> map, PackageManager pm, ApplicationInfo app) {
-        if (map == null || pm == null || app == null || app.packageName == null) return;
-        if (map.containsKey(app.packageName)) return;
-        try {
-            CharSequence labelSeq = pm.getApplicationLabel(app);
-            String label = labelSeq == null ? app.packageName : labelSeq.toString();
-            Drawable icon = pm.getApplicationIcon(app);
-            map.put(app.packageName, new AppPickItem(label, app.packageName, icon));
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private interface AppPickCallback {
-        void onPick(AppPickItem item);
-    }
-
-    private static final class AppPickItem {
-        final String label;
-        final String packageName;
-        final Drawable icon;
-
-        AppPickItem(String label, String packageName, Drawable icon) {
-            this.label = label == null ? "" : label;
-            this.packageName = packageName == null ? "" : packageName;
-            this.icon = icon;
-        }
-    }
-
-    private class AppPickerAdapter extends RecyclerView.Adapter<AppPickerAdapter.Holder> {
-        private final List<AppPickItem> allItems;
-        private final List<AppPickItem> items = new ArrayList<>();
-        private final AppPickCallback callback;
-
-        AppPickerAdapter(List<AppPickItem> items, AppPickCallback callback) {
-            this.allItems = items == null ? new ArrayList<>() : new ArrayList<>(items);
-            this.items.addAll(this.allItems);
-            this.callback = callback;
-        }
-
-        void filter(String query) {
-            String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
-            items.clear();
-            if (q.isEmpty()) {
-                items.addAll(allItems);
-            } else {
-                for (AppPickItem item : allItems) {
-                    String label = item.label == null ? "" : item.label.toLowerCase(Locale.ROOT);
-                    String pkg = item.packageName == null ? "" : item.packageName.toLowerCase(Locale.ROOT);
-                    if (label.contains(q) || pkg.contains(q)) items.add(item);
-                }
-            }
-            notifyDataSetChanged();
-        }
-
-        @Override
-        public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_launcher_app_picker, parent, false);
-            LauncherTabletPortraitScaler.apply(v);
-            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT,
-                    Math.round(dp(68) * LauncherTabletPortraitScaler.scaleFor(v)));
-            lp.setMargins(0, 0, 0, dp(7));
-            v.setLayoutParams(lp);
-            return new Holder(v);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull Holder h, int position) {
-            AppPickItem item = items.get(position);
-            h.label.setText(item.label.isEmpty() ? item.packageName : item.label);
-            h.pkg.setText(item.packageName);
-            if (item.icon != null) {
-                h.icon.setImageDrawable(item.icon);
-            } else {
-                h.icon.setImageResource(android.R.mipmap.sym_def_app_icon);
-            }
-            h.itemView.setOnClickListener(v -> {
-                if (callback != null) callback.onPick(item);
-            });
-        }
-
-        @Override
-        public int getItemCount() {
-            return items.size();
-        }
-
-        class Holder extends RecyclerView.ViewHolder {
-            ImageView icon;
-            TextView label, pkg;
-
-            Holder(View itemView) {
-                super(itemView);
-                icon = itemView.findViewById(R.id.ivLauncherAppIcon);
-                label = itemView.findViewById(R.id.tvLauncherAppLabel);
-                pkg = itemView.findViewById(R.id.tvLauncherAppPackage);
-            }
-        }
+        LauncherAppPickerDialog.show(this, target::setText);
     }
 
     private int dp(int value) {
