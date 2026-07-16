@@ -36,6 +36,8 @@ public class EngineDetector {
          * "rpgmxp" / "rpgmvx" / "rpgmvxace" / "mkxp-z"。空串表示需用户自行决定。
          */
         public String rpgMakerSubtype = "";
+        /** 仅当 engine == RENPY 时有意义。取值："renpy" 或 "renpy8"。 */
+        public String renpySubtype = "";
     }
 
     public static Result detect(DocumentFile dir) {
@@ -104,6 +106,16 @@ public class EngineDetector {
         } else if (s.hasGameIni && s.hasRxdata) {
             scoreRpgMaker(r, "rpgmxp", 92, "[游戏目录]");
         }
+        // Ren'Py 识别：.rpa 归档优先，其次 game/script.rpy + game/options.rpy
+        if (s.firstRpa != null) {
+            scoreRenpy(r, "renpy", 96, s.firstRpa);
+        } else if (s.hasGameScriptRpy || s.hasOptionsRpy) {
+            scoreRenpy(r, "renpy", 94, "[游戏目录]");
+        } else if (s.hasRenpyDir && (s.hasRpy || s.hasRpyc)) {
+            scoreRenpy(r, "renpy", 90, "[游戏目录]");
+        } else if (s.hasGameDir && s.hasRpy) {
+            scoreRenpy(r, "renpy", 85, "[游戏目录]");
+        }
         return r;
     }
 
@@ -118,6 +130,19 @@ public class EngineDetector {
             r.confidence = confidence;
             r.launchTarget = launchTarget == null ? "" : launchTarget;
             r.rpgMakerSubtype = subtype;
+        }
+    }
+
+    /**
+     * 与 {@link #score} 行为一致，但额外写入 {@link Result#renpySubtype}。
+     */
+    private static void scoreRenpy(Result r, String subtype, int confidence, String launchTarget) {
+        if (r == null || subtype == null || subtype.isEmpty()) return;
+        if (confidence > r.confidence) {
+            r.engine = EngineType.RENPY;
+            r.confidence = confidence;
+            r.launchTarget = launchTarget == null ? "" : launchTarget;
+            r.renpySubtype = subtype;
         }
     }
 
@@ -170,6 +195,14 @@ public class EngineDetector {
         boolean hasRxdata = false;
         boolean hasRvdata = false;
         boolean hasRvdata2 = false;
+        // Ren'Py 检测字段
+        String firstRpa = null;       // .rpa 归档文件
+        boolean hasRpy = false;       // .rpy 脚本文件
+        boolean hasRpyc = false;      // .rpyc 编译脚本
+        boolean hasRenpyDir = false;  // renpy/ 目录
+        boolean hasGameDir = false;   // game/ 目录（Ren'Py 标准结构）
+        boolean hasGameScriptRpy = false; // game/script.rpy
+        boolean hasOptionsRpy = false;    // game/options.rpy
     }
 
     private static void collectFeatures(DocumentFile dir, String prefix, int level, int maxLevel, FeatureState s) {
@@ -201,6 +234,8 @@ public class EngineDetector {
             if (directory) {
                 if (lower.equals("tyrano")) s.hasTyranoDir = true;
                 if (lower.equals("data")) s.hasDataDir = true;
+                if (lower.equals("game")) s.hasGameDir = true;  // 注意不要和 Tyrano 的 hasDataDir 冲突
+                if (lower.equals("renpy")) s.hasRenpyDir = true;
                 if (lower.equals("resources")) s.hasResourcesDir = true;
                 if (lower.equals("scenario")) s.hasScenarioDir = true;
                 if (lower.equals("system")) s.hasSystemDir = true;
@@ -262,12 +297,22 @@ public class EngineDetector {
             if (lower.endsWith(".rxdata")) s.hasRxdata = true;
             if (lower.endsWith(".rvdata") && !lower.endsWith(".rvdata2")) s.hasRvdata = true;
             if (lower.endsWith(".rvdata2")) s.hasRvdata2 = true;
+            // Ren'Py 检测
+            if (lower.endsWith(".rpa") && s.firstRpa == null) s.firstRpa = original;
+            if (lower.endsWith(".rpy")) {
+                s.hasRpy = true;
+                if (rel.equals("game/script.rpy") || rel.endsWith("/game/script.rpy")) s.hasGameScriptRpy = true;
+                if (rel.equals("game/options.rpy") || rel.endsWith("/game/options.rpy")) s.hasOptionsRpy = true;
+            }
+            if (lower.endsWith(".rpyc")) s.hasRpyc = true;
         }
     }
 
     private static boolean shouldDescendForFeature(String lowerName) {
         if (lowerName == null) return false;
-        return lowerName.equals("resources") || lowerName.equals("app") || lowerName.equals("tyrano") || lowerName.equals("data") || lowerName.equals("scenario") || lowerName.equals("system");
+        return lowerName.equals("resources") || lowerName.equals("app") || lowerName.equals("tyrano")
+            || lowerName.equals("data") || lowerName.equals("scenario") || lowerName.equals("system")
+            || lowerName.equals("game");  // 添加 game 目录
     }
 
     private static String safeName(DocumentFile file) {

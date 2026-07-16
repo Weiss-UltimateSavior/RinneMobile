@@ -48,6 +48,7 @@ public final class LauncherScanBridge {
             out.confidence = source.confidence;
             out.launchTarget = source.launchTarget == null ? "" : source.launchTarget;
             out.rpgMakerSubtype = source.rpgMakerSubtype == null ? "" : source.rpgMakerSubtype;
+            out.renpySubtype = source.renpySubtype == null ? "" : source.renpySubtype;
         } catch (Throwable ignored) {
         }
         return out;
@@ -63,6 +64,10 @@ public final class LauncherScanBridge {
          * "rpgmxp" / "rpgmvx" / "rpgmvxace" / "mkxp-z"。空串表示需用户自行决定。
          */
         public String rpgMakerSubtype = "";
+        /**
+         * 仅当 engine == RENPY 时有意义。取值："renpy"。空串表示需用户自行决定。
+         */
+        public String renpySubtype = "";
     }
 
     public static ImportStats scanAndImport(Context context, List<String> roots, int depth) {
@@ -291,6 +296,7 @@ public final class LauncherScanBridge {
         // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
         // 扫描批量导入时若需精确子类型，可在外部读取 ScanResult 后覆盖。
         if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
+        if (engine == EngineType.RENPY) return "internal.renpy";
         return "";
     }
 

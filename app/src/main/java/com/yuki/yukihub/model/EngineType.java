@@ -11,6 +11,7 @@ public enum EngineType {
     PSP("PSP"),
     NINTENDO_3DS("Nintendo 3DS"),
     RPGMAKER("RPG Maker"),
+    RENPY("Ren'Py"),
     UNKNOWN("Unknown");
 
     private final String displayName;

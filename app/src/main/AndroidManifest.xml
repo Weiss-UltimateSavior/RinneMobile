@@ -16,6 +16,7 @@
         <package android:name="com.akira.tyranoemu" />
         <package android:name="org.tvp.kirikiri2" />
         <package android:name="cyou.joiplay.runtime.rpgmaker" />
+        <package android:name="cyou.joiplay.runtime.renpy.v8d4d1" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />

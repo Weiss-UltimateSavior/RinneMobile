@@ -69,6 +69,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
             new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
+            new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
             new EngineOption(EngineType.UNKNOWN, "未知", null)
     };
     private TextView etEmulator;
@@ -420,7 +421,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         EngineOption fallback = null;
         for (EngineOption opt : engineOptions) {
             if (opt.engine != engine) continue;
-            if (engine == EngineType.RPGMAKER) {
+            if (engine == EngineType.RPGMAKER || engine == EngineType.RENPY) {
                 if (opt.rpgMakerSubtype == null || opt.rpgMakerSubtype.isEmpty()) {
                     if (fallback == null) fallback = opt;
                     continue;
@@ -468,7 +469,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private String defaultEmulatorPackageForOption(EngineOption option) {
         if (option == null) return "";
-        if (option.engine == EngineType.RPGMAKER && option.rpgMakerSubtype != null
+        if ((option.engine == EngineType.RPGMAKER || option.engine == EngineType.RENPY)
+                && option.rpgMakerSubtype != null
                 && !option.rpgMakerSubtype.isEmpty()) return "internal." + option.rpgMakerSubtype;
         if (option.engine == EngineType.KIRIKIRI) return "internal.krkr";
         if (option.engine == EngineType.ONS) return "internal.ons";

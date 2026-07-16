@@ -93,7 +93,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
-            new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z")
+            new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
+            new EngineOption(EngineType.RENPY, "Ren'Py", "renpy")
     };
     private Uri gameDirUri;
     private Uri coverUri;
@@ -530,12 +531,14 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                             ? detected.launchTarget
                             : "[游戏目录]"
             );
-            // emulatorPackage 优先级：用户手动填的 emulatorText > 用户在选择器显式选的 RPGMAKER 子类型
+            // emulatorPackage 优先级：用户手动填的 emulatorText > 用户在选择器显式选的子类型
+            // （RPGMAKER 的 rpgmxp/rpgmvx/rpgmvxace/mkxp-z 或 RENPY 的 renpy）
             // > 扫描器检测到的子类型 > 引擎默认包名。
             // 关键：用户显式选了 RPG Maker XP/VX/VX Ace/mkxp-z 时，必须用对应的 mkxp native 库
             // （libmkxp18/19/30.so），否则会出现 Ruby 1.8 语法在 Ruby 3.x 下报 SyntaxError 等问题。
             String emulatorFallback;
-            if (finalEngine == EngineType.RPGMAKER && !userRpgSubtype.isEmpty()) {
+            if ((finalEngine == EngineType.RPGMAKER || finalEngine == EngineType.RENPY)
+                    && !userRpgSubtype.isEmpty()) {
                 emulatorFallback = "internal." + userRpgSubtype;
             } else {
                 emulatorFallback = defaultEmulatorPackageForDetected(finalEngine, detected);
@@ -582,6 +585,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
         // 检测到具体子类型时由 defaultEmulatorPackageForDetected 覆盖为更精确的别名。
         if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
+        if (engine == EngineType.RENPY) return "internal.renpy";
         return "";
     }
 
@@ -592,33 +596,43 @@ public class LauncherAddGameActivity extends AppCompatActivity {
      */
     private String defaultEmulatorPackageForDetected(EngineType engine, LauncherScanBridge.DetectionResult detected) {
         String fallback = defaultEmulatorPackage(engine);
-        if (engine != EngineType.RPGMAKER || detected == null) return fallback;
-        String subtype = detected.rpgMakerSubtype;
-        if (subtype == null || subtype.trim().isEmpty()) return fallback;
-        return "internal." + subtype.trim();
+        if (detected == null) return fallback;
+        if (engine == EngineType.RPGMAKER) {
+            String subtype = detected.rpgMakerSubtype;
+            if (subtype == null || subtype.trim().isEmpty()) return fallback;
+            return "internal." + subtype.trim();
+        }
+        if (engine == EngineType.RENPY) {
+            String subtype = detected.renpySubtype;
+            if (subtype == null || subtype.trim().isEmpty()) return fallback;
+            return "internal." + subtype.trim();
+        }
+        return fallback;
     }
 
     /**
      * 根据当前选择的 EngineOption 推算默认 packageName。
-     * 用于选择器回调：当用户选 RPG Maker 子引擎时，
+     * 用于选择器回调：当用户选 RPG Maker 子引擎或 Ren'Py 时，
      * 返回 {@code internal.<subtype>}；其他引擎回退到 {@link #defaultEmulatorPackage}。
      */
     private String defaultEmulatorPackageForOption(EngineOption opt) {
         if (opt == null) return "";
-        if (opt.engine == EngineType.RPGMAKER
-                && opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()) {
+        if (opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()
+                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY)) {
             return "internal." + opt.rpgMakerSubtype;
         }
         return defaultEmulatorPackage(opt.engine);
     }
 
     /**
-     * 取当前选择的 EngineOption 的 RPG Maker 子引擎标识。
-     * 仅当选中的是 RPGMAKER 且 subtype 非空时返回，否则返回空串。
+     * 取当前选择的 EngineOption 的子引擎标识（RPG Maker 或 Ren'Py）。
+     * 仅当选中的引擎有 subtype 且非空时返回，否则返回空串。
      * 必须在 UI 线程调用（读取选择状态）。
      */
     private String selectedRpgMakerSubtype() {
-        if (selectedEngineOption == null || selectedEngineOption.engine != EngineType.RPGMAKER) return "";
+        if (selectedEngineOption == null) return "";
+        if (selectedEngineOption.engine != EngineType.RPGMAKER
+                && selectedEngineOption.engine != EngineType.RENPY) return "";
         return selectedEngineOption.rpgMakerSubtype == null ? "" : selectedEngineOption.rpgMakerSubtype;
     }
 
