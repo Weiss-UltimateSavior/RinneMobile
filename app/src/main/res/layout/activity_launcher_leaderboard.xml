@@ -53,5 +53,5 @@
 
     <TextView android:id="@+id/leaderboardState" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:gravity="center" android:text="加载中…" android:textColor="@color/launcher_text_muted_color" android:textSize="13sp" />
 
-    <androidx.recyclerview.widget.RecyclerView android:id="@+id/leaderboardList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="10dp" android:clipToPadding="false" android:paddingBottom="16dp" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/leaderboardList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="10dp" android:clipToPadding="false" android:scrollbars="none" android:paddingBottom="16dp" />
 </LinearLayout>

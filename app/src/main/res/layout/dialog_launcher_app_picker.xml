@@ -52,6 +52,7 @@
             android:layout_height="match_parent"
             android:visibility="gone"
             android:clipToPadding="false"
+            android:scrollbars="none"
             android:paddingBottom="4dp" />
 
         <LinearLayout

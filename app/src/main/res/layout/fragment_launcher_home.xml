@@ -11,6 +11,7 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
+        android:scrollbars="none"
         android:paddingBottom="@dimen/launcher_nav_overlay_scroll_bottom_padding">
 
         <LinearLayout

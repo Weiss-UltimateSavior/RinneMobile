@@ -112,6 +112,7 @@
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:paddingBottom="@dimen/launcher_library_recycler_bottom_padding"
+                android:scrollbars="none"
                 android:visibility="gone" />
 
             <TextView

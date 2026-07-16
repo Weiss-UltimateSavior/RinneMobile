@@ -112,7 +112,8 @@
                 android:layout_marginTop="18dp"
                 android:fillViewport="true"
                 android:layout_weight="1"
-                android:overScrollMode="ifContentScrolls">
+                android:overScrollMode="ifContentScrolls"
+                android:scrollbars="none">
 
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -73,7 +73,8 @@
             android:layout_height="0dp"
             android:layout_weight="5"
             android:layout_marginTop="13dp"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:scrollbars="none">
 
             <TextView
                 android:id="@+id/disclaimerBody"
