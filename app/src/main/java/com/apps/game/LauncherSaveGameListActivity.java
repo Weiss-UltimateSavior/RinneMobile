@@ -129,15 +129,23 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         itemView.setFocusable(true);
         itemView.setOnClickListener(v -> {
             if (hasSave) showSaveActionsDialog(game);
-            else showNoSaveDialog(game);
+            else showNoSaveImportDialog(game);
         });
         LauncherTheme.applyPrimaryTone(itemView);
         binding.saveGameList.addView(itemView);
     }
 
-    private void showNoSaveDialog(Game game) {
-        LauncherDialogFactory.showInfo(this, "暂无存档",
-                "“" + safeTitle(game) + "”当前没有可管理的存档文件。");
+    private void showNoSaveImportDialog(Game game) {
+        LauncherDialogFactory.showStandardConfirm(
+                this,
+                "暂无存档",
+                "“" + safeTitle(game) + "”当前没有可管理的存档文件。可从 ZIP 备份恢复存档。",
+                "导入 ZIP",
+                () -> {
+                    selectedSaveGame = game;
+                    overwriteZipPicker.launch(new String[]{"application/zip", "application/x-zip-compressed"});
+                }
+        );
     }
 
     private void showSaveActionsDialog(Game game) {
