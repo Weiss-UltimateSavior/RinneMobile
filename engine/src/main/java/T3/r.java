@@ -240,6 +240,11 @@ public abstract class r extends KR2Activity {
 
     private void revealGame() {
         if (destroyed || mask == null || maskRevealRequested) return;
+        // 弹窗未确认时不隐藏启动遮罩，防止引擎在用户确认前就显示游戏画面
+        if (KR2Activity.isDialogShowing()) {
+            mask.postDelayed(this::revealGame, 500);
+            return;
+        }
         maskRevealRequested = true;
         mask.post(() -> {
             if (!destroyed && mask != null) {

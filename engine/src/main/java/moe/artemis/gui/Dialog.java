@@ -1,21 +1,20 @@
 package moe.artemis.gui;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.util.Log;
-import android.widget.EditText;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tvp.kirikiri2.KrDialogStyle;
+
 /**
- * Java dialog bridge used by the Artemis native engine.
+ * Artemis 引擎的 Java 弹窗桥接。
  *
- * <p>Some Artemis games call into moe.artemis.gui.Dialog.Show(...) when scripts need a
- * platform confirmation/input dialog, for example save overwrite or exit confirmation.
- * Tyranor carries this bridge class. Without it the native side waits for a result that
- * never comes, which looks like the game is frozen at the confirmation point.</p>
+ * <p>某些 Artemis 游戏在脚本需要确认/输入对话框时调用 moe.artemis.gui.Dialog.Show(...)。
+ * 缺少此类会导致原生侧等待永远不会到来的结果，表现为游戏卡死在确认点。</p>
+ *
+ * <p>弹窗样式统一使用 KrDialogStyle，与 KRKR 弹窗视觉一致。</p>
  */
 public final class Dialog {
     private static final String TAG = "ArtemisDialog";
@@ -23,27 +22,19 @@ public final class Dialog {
     private static int seed;
 
     private final Activity activity;
-    private final AlertDialog.Builder dialog;
+    private final String title;
     private final String message;
+    private final boolean cancelable;
     private final boolean textField;
     private final long context;
-    private EditText editText;
 
     public Dialog(Activity activity, String title, String message, boolean cancelable, boolean textField, long context) {
         this.activity = activity;
+        this.title = title == null ? "" : title;
         this.message = message == null ? "" : message;
+        this.cancelable = cancelable;
         this.textField = textField;
         this.context = context;
-        this.dialog = new AlertDialog.Builder(activity);
-        this.dialog.setTitle(title == null ? "" : title);
-        if (!textField) {
-            this.dialog.setMessage(this.message);
-        }
-        this.dialog.setOnCancelListener(d -> close(0));
-        this.dialog.setPositiveButton("OK", (d, which) -> close(1));
-        if (cancelable) {
-            this.dialog.setNegativeButton("Cancel", (d, which) -> close(0));
-        }
         activity.runOnUiThread(this::showInternal);
     }
 
@@ -68,33 +59,22 @@ public final class Dialog {
     private void showInternal() {
         try {
             if (activity.isFinishing()) {
-                close(0);
+                close(0, "");
                 return;
             }
-            if (textField) {
-                editText = new EditText(activity);
-                editText.setSingleLine(true);
-                editText.setText(message);
-                editText.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
-                dialog.setView(editText);
-            }
-            AlertDialog shown = dialog.show();
-            shown.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                private boolean called;
-                @Override public void onDismiss(DialogInterface d) {
-                    if (!called) {
-                        called = true;
-                    }
-                }
-            });
+            String[] buttons = cancelable ? new String[]{"OK", "Cancel"} : new String[]{"OK"};
+            // textField 模式下显示输入框，初始文本为 message；非 textField 模式下 message 作为正文
+            String initialText = textField ? message : null;
+            String dialogMessage = textField ? null : message;
+            KrDialogStyle.showInputBox(activity, title, dialogMessage, initialText, buttons, cancelable,
+                    (which, text) -> close(which == 0 ? 1 : 0, text));
         } catch (Throwable t) {
             Log.e(TAG, "show Artemis dialog failed", t);
-            close(0);
+            close(0, "");
         }
     }
 
-    private void close(int result) {
-        String text = editText != null ? String.valueOf(editText.getText()) : "";
+    private void close(int result, String text) {
         try {
             OnClose(result, text, context);
         } catch (Throwable t) {

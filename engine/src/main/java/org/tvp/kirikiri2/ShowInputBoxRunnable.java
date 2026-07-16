@@ -1,23 +1,25 @@
 package org.tvp.kirikiri2;
 
-import android.app.AlertDialog;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import org.cocos2dx.lib.Cocos2dxActivity;
+import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 
 public final class ShowInputBoxRunnable implements Runnable {
     public final String inputText;
     public ShowInputBoxRunnable(String inputText) { this.inputText = inputText; }
     @Override public void run() {
-        KrDialogModel dialogModel = KR2Activity.mDialogMessage;
-        AlertDialog.Builder builder = dialogModel.createBuilder();
-        dialogModel.editText = new EditText(KR2Activity.sInstance);
-        dialogModel.editText.setLayoutParams(new LinearLayout.LayoutParams(-1, -1));
-        dialogModel.editText.setText(inputText);
-        builder.setView(dialogModel.editText);
-        builder.create().show();
-        dialogModel.editText.requestFocus();
-        ((InputMethodManager) Cocos2dxActivity.getContext().getSystemService("input_method")).showSoftInput(dialogModel.editText, 0);
+        // 暂停 GL 线程，防止引擎在弹窗未确认时继续渲染
+        Cocos2dxGLSurfaceView gl = KR2Activity.sInstance != null ? KR2Activity.sInstance.getGLSurfaceView() : null;
+        if (gl != null) {
+            try { gl.onPause(); } catch (Throwable ignored) {}
+        }
+        KrDialogModel dm = KR2Activity.mDialogMessage;
+        KR2Activity.mCurrentDialog = KrDialogStyle.showInputBox(KR2Activity.sInstance, dm.title, dm.message, inputText, dm.buttons,
+                (which, text) -> {
+                    KR2Activity.mCurrentDialog = null;
+                    // 恢复 GL 线程
+                    if (gl != null) {
+                        try { gl.onResume(); } catch (Throwable ignored) {}
+                    }
+                    KR2Activity.notifyDialogResult(which, text);
+                });
     }
 }

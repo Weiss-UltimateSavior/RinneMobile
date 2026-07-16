@@ -1,6 +1,7 @@
 package org.tvp.kirikiri2;
 
 import android.app.ActivityManager;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -25,6 +26,7 @@ public class KR2Activity extends Cocos2dxActivity {
     public static KR2Activity sInstance;
     static Handler msgHandler;
     static KrDialogModel mDialogMessage = new KrDialogModel();
+    static Dialog mCurrentDialog; // 防止 GC 回收导致弹窗被自动 dismiss
     protected static View mTextEdit;
     static ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
     static ActivityManager mAcitivityManager = null;
@@ -142,6 +144,20 @@ public class KR2Activity extends Cocos2dxActivity {
         if (msgHandler != null) msgHandler.post(new ShowInputBoxRunnable(text));
     }
 
+    /** 弹窗是否正在显示（供 r.revealGame 检查，防止未确认就隐藏启动遮罩） */
+    public static boolean isDialogShowing() {
+        return mCurrentDialog != null && mCurrentDialog.isShowing();
+    }
+
+    /** KrDialogStyle 回调 — 仅消息弹窗 */
+    static void notifyDialogResult(int which) {
+        onMessageBoxOK(which);
+    }
+    /** KrDialogStyle 回调 — 输入弹窗 */
+    static void notifyDialogResult(int which, String text) {
+        onMessageBoxText(text);
+        onMessageBoxOK(which);
+    }
 
     public static void showTextInput(int x, int y, int w, int h) {
         if (msgHandler == null) return;
@@ -377,7 +393,16 @@ public class KR2Activity extends Cocos2dxActivity {
         super.onDestroy();
     }
     @Override public void onLowMemory() { nativeOnLowMemory(); }
-    @Override public void onWindowFocusChanged(boolean hasFocus) { super.onWindowFocusChanged(hasFocus); if (hasFocus) doSetSystemUiVisibility(); }
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        // 弹窗显示期间，阻止 Cocos2dx 恢复 GL 线程（super 会调用 resumeIfHasFocus），
+        // 防止引擎在弹窗未确认时自动继续执行。
+        if (hasFocus && mCurrentDialog != null && mCurrentDialog.isShowing()) {
+            doSetSystemUiVisibility();
+            return;
+        }
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) doSetSystemUiVisibility();
+    }
     public String[] getStoragePath() {
         // The native engine uses this array for both its writable data root and
         // archive/plugin discovery. The game root stays on external storage;

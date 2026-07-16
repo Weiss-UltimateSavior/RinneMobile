@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.apps.theme.LauncherTheme;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.ons.OnsSettings;
 
@@ -33,6 +34,20 @@ public class EmulatorLauncher {
     private static final List<EngineLaunchStrategy> ENGINE_STRATEGIES = new CopyOnWriteArrayList<>();
     private static final String PREFS_NAME = "yukihub_prefs";
     private static final String KEY_ARTEMIS_ENGINE_PREFIX = "artemis_engine.";
+
+    /** 将 Launcher 主题色附加到 Intent extras，供引擎弹窗（KrDialogStyle）读取。 */
+    private static void appendThemeColors(Intent i, Context context) {
+        if (i == null || context == null) return;
+        try {
+            i.putExtra("themeColorPrimary", LauncherTheme.primary(context));
+            i.putExtra("themeColorOnPrimary", LauncherTheme.onPrimary(context));
+            i.putExtra("themeColorCard", LauncherTheme.card(context));
+            i.putExtra("themeColorText", LauncherTheme.text(context));
+            i.putExtra("themeColorTextMuted", LauncherTheme.textMuted(context));
+        } catch (Throwable t) {
+            Log.w("EmulatorLauncher", "appendThemeColors failed", t);
+        }
+    }
 
     /** Actual built-in-engine save directory shared by launch and save-management flows. */
     public static final class ActualSaveLocation {
@@ -754,6 +769,7 @@ public class EmulatorLauncher {
         i.putExtra("scopedSaveDir", scopedSaveDir);
         i.putExtra("scopedSaveRoot", saveLocation.directory.getAbsolutePath());
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+        appendThemeColors(i, context);
         return i;
     }
 
@@ -958,6 +974,7 @@ i.putExtra("scopedSaveName", saveName);
 i.putExtra("artemisAutoFallback", autoFallback);
 i.putExtra("artemisFallbackStage", artemisFallbackStage(effectivePackage));
 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+appendThemeColors(i, context);
 return i;
 }
 
@@ -1389,6 +1406,7 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         if (scopedSaveRoot != null) i.putExtra("scopedSaveRoot", scopedSaveRoot);
         i.putExtra("safFileFallback", safFileFallback);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+        appendThemeColors(i, context);
         return i;
     }
 
