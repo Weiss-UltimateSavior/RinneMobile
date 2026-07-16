@@ -161,6 +161,20 @@
                         android:text="AzaharPlus" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/toolRpgmPlugin"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="RPGMPlugin"
+                        android:src="@drawable/launcher_tool_icon_rpgmplugin" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="RPGMPlugin" />
+                </LinearLayout>
+
             </GridLayout>
         </LinearLayout>
     </ScrollView>
