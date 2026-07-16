@@ -538,8 +538,20 @@ public class LauncherProfileFragment extends Fragment {
             binding.actionChangeCover.clearColorFilter();
         }
         for (int i = 0; i < binding.profileActionList.getChildCount(); i++) {
-            View row = binding.profileActionList.getChildAt(i);
-            LauncherTheme.styleManageRow(row);
+            View actionContainer = binding.profileActionList.getChildAt(i);
+            if (!(actionContainer instanceof ViewGroup)) continue;
+            ViewGroup group = (ViewGroup) actionContainer;
+            if (group.getChildCount() > 0 && group.getChildAt(0) instanceof TextView) {
+                // Backward-compatible single-column action row.
+                LauncherTheme.styleManageRow(actionContainer);
+                continue;
+            }
+            // Profile actions are now arranged in two-column containers; the actual
+            // manage rows are the container's children rather than direct children
+            // of profileActionList.
+            for (int j = 0; j < group.getChildCount(); j++) {
+                LauncherTheme.styleManageRow(group.getChildAt(j));
+            }
         }
         binding.profilePlaytimeTotalIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(requireContext())));
         binding.profileWeeklyPlaytimeChart.invalidate();

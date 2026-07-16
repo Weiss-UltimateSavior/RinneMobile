@@ -100,7 +100,7 @@ public final class LauncherUpdateBridge {
     }
 
     private static String getCurrentVersionName(Context context) {
-        return "0.9.9.5";
+        return "0.9.9.6";
     }
 
     private static boolean isNewerVersion(String latest, String current) {

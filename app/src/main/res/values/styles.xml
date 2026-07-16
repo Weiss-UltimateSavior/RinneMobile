@@ -13,6 +13,13 @@
         <item name="android:paddingEnd">13dp</item>
     </style>
 
+    <!-- Profile-only compact variant. Keeps the manage-row visual language while
+         allowing two independent actions to share one horizontal row. -->
+    <style name="LauncherProfileActionGridItem" parent="LauncherManageItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
     <style name="LauncherManageIcon">
         <item name="android:layout_width">25dp</item>
         <item name="android:layout_height">25dp</item>
@@ -21,6 +28,13 @@
         <item name="android:textColor">@color/launcher_primary_color</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="LauncherProfileActionIcon">
+        <item name="android:layout_width">25dp</item>
+        <item name="android:layout_height">25dp</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="android:tint">@color/launcher_primary_color</item>
     </style>
 
     <style name="LauncherManageTitle">

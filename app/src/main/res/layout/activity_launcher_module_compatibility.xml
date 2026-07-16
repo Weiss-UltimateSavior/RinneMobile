@@ -76,8 +76,8 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="安装此模块应用，提供 RPGM 游戏所需环境"
-                        android:textColor="@color/launcher_text_muted_color"
+                        android:text="未安装 - 提供 RPGM 游戏所需环境"
+                        android:textColor="@color/launcher_danger_color"
                         android:textSize="11sp" />
                 </LinearLayout>
 
@@ -122,13 +122,14 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/moduleRenpyDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="安装此模块应用，提供 RenPy 游戏所需环境"
-                        android:textColor="@color/launcher_text_muted_color"
+                        android:text="未安装 - 提供 RenPy 游戏所需环境"
+                        android:textColor="@color/launcher_danger_color"
                         android:textSize="11sp" />
                 </LinearLayout>
 

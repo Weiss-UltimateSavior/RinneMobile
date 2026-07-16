@@ -404,6 +404,10 @@ public final class LauncherTheme {
             TextView icon = (TextView) group.getChildAt(0);
             icon.setBackground(circle(context));
             icon.setTextColor(onPrimary(context));
+        } else if (group.getChildCount() > 0 && group.getChildAt(0) instanceof ImageView) {
+            ImageView icon = (ImageView) group.getChildAt(0);
+            icon.setBackground(null);
+            icon.setImageTintList(ColorStateList.valueOf(primary(context)));
         }
         if (group.getChildCount() > 2 && group.getChildAt(2) instanceof ImageView) {
             ((ImageView) group.getChildAt(2)).setImageTintList(

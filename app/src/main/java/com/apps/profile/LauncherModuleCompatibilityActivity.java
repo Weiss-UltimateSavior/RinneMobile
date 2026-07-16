@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -72,8 +73,17 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
                         rpgmInstalled ? LauncherTheme.primary(this) : LauncherTheme.danger(this)));
                 binding.moduleRenpyIcon.setImageTintList(ColorStateList.valueOf(
                         renpyInstalled ? LauncherTheme.primary(this) : LauncherTheme.danger(this)));
+                updateModuleDescription(binding.moduleRpgmDescription, rpgmInstalled,
+                        "提供 RPGM 游戏所需环境");
+                updateModuleDescription(binding.moduleRenpyDescription, renpyInstalled,
+                        "提供 RenPy 游戏所需环境");
             });
         });
+    }
+
+    private void updateModuleDescription(TextView description, boolean installed, String detail) {
+        description.setText((installed ? "已安装 - " : "未安装 - ") + detail);
+        description.setTextColor(installed ? LauncherTheme.primary(this) : LauncherTheme.danger(this));
     }
 
     private void openRpgmModule() {
