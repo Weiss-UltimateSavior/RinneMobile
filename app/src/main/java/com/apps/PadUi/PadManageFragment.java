@@ -15,6 +15,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -428,6 +429,11 @@ private void loadNextPage(boolean forceFullRefresh) {
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
     }
 
+    /**
+     * 使用 OnPreDrawListener 等待 RecyclerView 完成布局后再检测是否填满容器。
+     * 若用 post() 检测，runnable 可能在 DiffUtil 触发的布局完成前运行，
+     * canScrollVertically() 基于旧布局返回 true（误判为已填满），导致下一页无法自动加载。
+     */
     private void scheduleLoadUntilViewportFilled() {
         if (binding == null || viewportFillCheckPending || loading || fullyLoaded
                 || visibleGames.size() >= filteredGames.size()) {
@@ -435,13 +441,25 @@ private void loadNextPage(boolean forceFullRefresh) {
         }
         viewportFillCheckPending = true;
         RecyclerView recyclerView = binding.libraryRecycler;
-        recyclerView.post(() -> {
-            viewportFillCheckPending = false;
-            if (binding == null || loading || fullyLoaded || visibleGames.size() >= filteredGames.size()) {
-                return;
+        ViewTreeObserver observer = recyclerView.getViewTreeObserver();
+        ViewTreeObserver.OnPreDrawListener listener = new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                ViewTreeObserver vto = recyclerView.getViewTreeObserver();
+                vto.removeOnPreDrawListener(this);
+                viewportFillCheckPending = false;
+                if (binding == null || loading || fullyLoaded
+                        || visibleGames.size() >= filteredGames.size()) {
+                    return true;
+                }
+                // 列表无法向下滚动时，说明内容未填满容器，加载下一页
+                if (!recyclerView.canScrollVertically(1)) {
+                    loadNextPage();
+                }
+                return true;
             }
-            if (!recyclerView.canScrollVertically(1)) loadNextPage();
-        });
+        };
+        observer.addOnPreDrawListener(listener);
     }
 
     private void setLoading(boolean value) {
