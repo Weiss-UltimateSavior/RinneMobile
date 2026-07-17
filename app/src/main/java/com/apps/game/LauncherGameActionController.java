@@ -77,7 +77,7 @@ public final class LauncherGameActionController {
             addAction(root, "编辑", dialog, () -> host.editGame(game));
         }
         addAction(root, "状态", dialog, () -> showPlayStatusDialog(game));
-        addAction(root, "修改时长", dialog, () -> showEditPlayTimeDialog(game));
+        addAction(root, game.favorite ? "取消收藏" : "添加收藏", dialog, () -> toggleFavorite(game));
         addAction(root, "更多选项", dialog, () -> showMoreOptionsDialog(game));
         root.addView(createDialogCancelButton(dialog));
         setDialogContent(dialog, root, 300);
@@ -102,7 +102,7 @@ public final class LauncherGameActionController {
     }
 
     private void showPlayStatusDialog(Game game) {
-        String[] labels = {"☆ 未玩", "🎮 在玩", "🏆 玩过"};
+        String[] labels = {"未玩", "在玩", "玩过"};
         String[] values = {"unplayed", "playing", "completed"};
         int checkedIndex = -1;
         for (int i = 0; i < values.length; i++) {
@@ -230,8 +230,7 @@ public final class LauncherGameActionController {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("更多选项"));
-        addMoreOption(root, dialog, game.favorite ? "取消收藏" : "添加收藏", false,
-                () -> toggleFavorite(game));
+        addMoreOption(root, dialog, "修改时长", false, () -> showEditPlayTimeDialog(game));
         addMoreOption(root, dialog, "重新匹配 VNDB 元数据", false,
                 () -> rematchMetadata(game));
         addMoreOption(root, dialog, "自定义搜索 VNDB", false,

@@ -161,7 +161,7 @@ public class PadGameFragment extends Fragment {
                                     intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, target.id);
                                     startActivity(intent);
                                 }
-                            }, false);
+                            });
                 }
             }
         });

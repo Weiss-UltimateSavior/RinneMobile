@@ -649,7 +649,7 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void showPlayStatusDialog(Game game) {
         if (game == null) return;
-        String[] labels = {"☆ 未玩", "🎮 在玩", "🏆 玩过"};
+        String[] labels = {"未玩", "在玩", "玩过"};
         String[] values = {"unplayed", "playing", "completed"};
         int checkedIndex = 0;
         for (int i = 0; i < values.length; i++) {
