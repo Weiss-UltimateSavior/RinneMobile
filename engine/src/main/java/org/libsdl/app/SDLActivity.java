@@ -1,5 +1,6 @@
 package org.libsdl.app;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.UiModeManager;
@@ -19,6 +20,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.PointerIcon;
@@ -146,7 +148,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
                 DummyEdit dummyEdit = SDLActivity.mTextEdit;
                 if (dummyEdit != null) {
                     dummyEdit.setLayoutParams(new RelativeLayout.LayoutParams(0, 0));
-                    ((InputMethodManager) context.getSystemService("input_method")).hideSoftInputFromWindow(SDLActivity.mTextEdit.getWindowToken(), 0);
+                    ((InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(SDLActivity.mTextEdit.getWindowToken(), 0);
                     SDLActivity.mScreenKeyboardShown = false;
                     SDLActivity.mSurface.requestFocus();
                     return;
@@ -212,9 +214,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             } else {
                 dummyEdit.setLayoutParams(layoutParams);
             }
-            SDLActivity.mTextEdit.setVisibility(0);
+            SDLActivity.mTextEdit.setVisibility(View.VISIBLE);
             SDLActivity.mTextEdit.requestFocus();
-            ((InputMethodManager) SDL.getContext().getSystemService("input_method")).showSoftInput(SDLActivity.mTextEdit, 0);
+            ((InputMethodManager) SDL.getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(SDLActivity.mTextEdit, 0);
             SDLActivity.mScreenKeyboardShown = true;
         }
     }
@@ -447,7 +449,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     public static boolean isAndroidTV() {
-        if (((UiModeManager) getContext().getSystemService("uimode")).getCurrentModeType() == 4) {
+        if (((UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE)).getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
             return true;
         }
         String str = Build.MANUFACTURER;
@@ -484,7 +486,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
     public static boolean isScreenKeyboardShown() {
         if (mTextEdit != null && mScreenKeyboardShown) {
-            return ((InputMethodManager) SDL.getContext().getSystemService("input_method")).isAcceptingText();
+            return ((InputMethodManager) SDL.getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).isAcceptingText();
         }
         return false;
     }
@@ -510,7 +512,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         }
         Intent intent = new Intent("android.intent.action.MAIN");
         intent.addCategory("android.intent.category.HOME");
-        intent.setFlags(268435456);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mSingleton.startActivity(intent);
     }
 
@@ -578,7 +580,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         try {
             Intent intent = new Intent("android.intent.action.VIEW");
             intent.setData(Uri.parse(str));
-            intent.addFlags(1208483840);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY
+                    | Intent.FLAG_ACTIVITY_MULTIPLE_TASK
+                    | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
             mSingleton.startActivity(intent);
             return 0;
         } catch (Exception unused) {
@@ -592,7 +596,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             return;
         }
         Activity activity = (Activity) getContext();
-        if (activity.checkSelfPermission(str) != 0) {
+        if (activity.checkSelfPermission(str) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             activity.requestPermissions(new String[]{str}, i8);
         } else {
             nativePermissionResult(i8, true);
@@ -803,7 +807,7 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
             }
         });
         TextView textView = new TextView(this);
-        textView.setGravity(17);
+        textView.setGravity(Gravity.CENTER);
         textView.setText(bundle.getString("message"));
         if (i9 != 0) {
             textView.setTextColor(i9);
@@ -813,8 +817,8 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
         String[] stringArray = bundle.getStringArray("buttonTexts");
         final SparseArray sparseArray = new SparseArray();
         LinearLayout linearLayout = new LinearLayout(this);
-        linearLayout.setOrientation(0);
-        linearLayout.setGravity(17);
+        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+        linearLayout.setGravity(Gravity.CENTER);
         for (int i13 = 0; i13 < stringArray.length; i13++) {
             Button button = new Button(this);
             final int i14 = intArray3[i13];
@@ -849,7 +853,7 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
             linearLayout.addView(button);
         }
         LinearLayout linearLayout2 = new LinearLayout(this);
-        linearLayout2.setOrientation(1);
+        linearLayout2.setOrientation(LinearLayout.VERTICAL);
         linearLayout2.addView(textView);
         linearLayout2.addView(linearLayout);
         if (i8 != 0) {
@@ -1171,7 +1175,7 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
         if (i8 == 2) {
             boolean z = false;
             if (obj instanceof Integer) {
-                Display defaultDisplay = ((WindowManager) getSystemService("window")).getDefaultDisplay();
+                Display defaultDisplay = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
                 DisplayMetrics displayMetrics = new DisplayMetrics();
                 defaultDisplay.getRealMetrics(displayMetrics);
                 if (displayMetrics.widthPixels == mSurface.getWidth() && displayMetrics.heightPixels == mSurface.getHeight()) {
@@ -1198,6 +1202,7 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
     /*
         Code decompiled incorrectly, please refer to instructions dump.
     */
+    @SuppressLint("WrongConstant") // Orientation is computed from SDL/native hints at runtime.
     public void setOrientationBis(int i8, int i9, boolean z, String str) {
         int i10 = (str.contains("LandscapeRight") && str.contains("LandscapeLeft")) ? 6 : str.contains("LandscapeRight") ? 0 : str.contains("LandscapeLeft") ? 8 : -1;
         int i11 = (str.contains("Portrait") && str.contains("PortraitUpsideDown")) ? 7 : str.contains("Portrait") ? 1 : str.contains("PortraitUpsideDown") ? 9 : -1;

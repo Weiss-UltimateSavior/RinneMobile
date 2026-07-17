@@ -173,12 +173,12 @@ public class KR2Activity extends Cocos2dxActivity {
         View view = mTextEdit;
         if (view != null) {
             view.setVisibility(View.GONE);
-            ((InputMethodManager) sInstance.getSystemService("input_method")).hideSoftInputFromWindow(view.getWindowToken(), 0);
+            ((InputMethodManager) sInstance.getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
     public static void updateMemoryInfo() {
-        if (mAcitivityManager == null) mAcitivityManager = (ActivityManager) sInstance.getSystemService("activity");
+        if (mAcitivityManager == null) mAcitivityManager = (ActivityManager) sInstance.getSystemService(ACTIVITY_SERVICE);
         mAcitivityManager.getMemoryInfo(memoryInfo);
         Debug.getMemoryInfo(mDbgMemoryInfo);
     }

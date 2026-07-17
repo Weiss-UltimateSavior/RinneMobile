@@ -51,6 +51,6 @@ public class Cocos2dxEditBoxHelper {
     public static void setInputFlag(int tag, int flag) { }
     public static void setInputMode(int tag, int mode) { }
     public static void setReturnType(int tag, int type) { }
-    public static void openKeyboard(final int tag) { if (mCocos2dxActivity != null) mCocos2dxActivity.runOnUiThread(() -> { Cocos2dxEditBox eb=mEditBoxArray.get(tag); if(eb!=null){ eb.requestFocus(); ((InputMethodManager) Cocos2dxActivity.getContext().getSystemService("input_method")).showSoftInput(eb,0);} }); }
-    public static void closeKeyboard(final int tag) { if (mCocos2dxActivity != null) mCocos2dxActivity.runOnUiThread(() -> { Cocos2dxEditBox eb=mEditBoxArray.get(tag); if(eb!=null)((InputMethodManager) Cocos2dxActivity.getContext().getSystemService("input_method")).hideSoftInputFromWindow(eb.getWindowToken(),0); }); }
+    public static void openKeyboard(final int tag) { if (mCocos2dxActivity != null) mCocos2dxActivity.runOnUiThread(() -> { Cocos2dxEditBox eb=mEditBoxArray.get(tag); if(eb!=null){ eb.requestFocus(); ((InputMethodManager) Cocos2dxActivity.getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE)).showSoftInput(eb,0);} }); }
+    public static void closeKeyboard(final int tag) { if (mCocos2dxActivity != null) mCocos2dxActivity.runOnUiThread(() -> { Cocos2dxEditBox eb=mEditBoxArray.get(tag); if(eb!=null)((InputMethodManager) Cocos2dxActivity.getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(eb.getWindowToken(),0); }); }
 }

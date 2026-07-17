@@ -1,5 +1,8 @@
 package org.libsdl.app;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Build;
@@ -68,7 +71,7 @@ public class SDLAudioManager {
         }
         int i8 = 0;
         while (i8 < fArr.length) {
-            int iWrite = mAudioTrack.write(fArr, i8, fArr.length - i8, 0);
+            int iWrite = mAudioTrack.write(fArr, i8, fArr.length - i8, AudioTrack.WRITE_BLOCKING);
             if (iWrite > 0) {
                 i8 += iWrite;
             } else {
@@ -121,15 +124,15 @@ public class SDLAudioManager {
     }
 
     public static int captureReadByteBuffer(byte[] bArr, boolean z) {
-        return Build.VERSION.SDK_INT < 23 ? mAudioRecord.read(bArr, 0, bArr.length) : mAudioRecord.read(bArr, 0, bArr.length, !z ? 1 : 0);
+        return Build.VERSION.SDK_INT < 23 ? mAudioRecord.read(bArr, 0, bArr.length) : mAudioRecord.read(bArr, 0, bArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
     }
 
     public static int captureReadFloatBuffer(float[] fArr, boolean z) {
-        return mAudioRecord.read(fArr, 0, fArr.length, !z ? 1 : 0);
+        return mAudioRecord.read(fArr, 0, fArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
     }
 
     public static int captureReadShortBuffer(short[] sArr, boolean z) {
-        return Build.VERSION.SDK_INT < 23 ? mAudioRecord.read(sArr, 0, sArr.length) : mAudioRecord.read(sArr, 0, sArr.length, !z ? 1 : 0);
+        return Build.VERSION.SDK_INT < 23 ? mAudioRecord.read(sArr, 0, sArr.length) : mAudioRecord.read(sArr, 0, sArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
     }
 
     public static String getAudioFormatString(int i8) {
@@ -149,6 +152,13 @@ public class SDLAudioManager {
         Code decompiled incorrectly, please refer to instructions dump.
     */
     public static int[] open(boolean z, int i8, int i9, int i10, int i11) {
+        if (z) {
+            Context context = SDL.getContext();
+            if (context == null || context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "Cannot open audio capture without RECORD_AUDIO permission");
+                return null;
+            }
+        }
         int i12 = i8;
         char c8;
         int i13;

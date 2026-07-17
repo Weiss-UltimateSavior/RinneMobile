@@ -40,7 +40,7 @@ class DummyEdit extends View implements View.OnKeyListener {
     @Override // android.view.View
     public boolean onKeyPreIme(int i8, KeyEvent keyEvent) {
         DummyEdit dummyEdit;
-        if (keyEvent.getAction() == 1 && i8 == 4 && (dummyEdit = SDLActivity.mTextEdit) != null && dummyEdit.getVisibility() == 0) {
+        if (keyEvent.getAction() == 1 && i8 == 4 && (dummyEdit = SDLActivity.mTextEdit) != null && dummyEdit.getVisibility() == View.VISIBLE) {
             SDLActivity.onNativeKeyboardFocusLost();
         }
         return super.onKeyPreIme(i8, keyEvent);

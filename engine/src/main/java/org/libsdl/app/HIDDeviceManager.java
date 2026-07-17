@@ -1,5 +1,7 @@
 package org.libsdl.app;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -22,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /* JADX INFO: loaded from: classes.dex */
+@SuppressLint("MissingPermission")
 public class HIDDeviceManager {
     private static final String ACTION_USB_PERMISSION = "org.libsdl.app.USB_PERMISSION";
     private static final String TAG = "hidapi";
@@ -188,15 +191,18 @@ public class HIDDeviceManager {
     private void initializeBluetooth() {
         BluetoothAdapter adapter;
         Log.d(TAG, "Initializing Bluetooth");
-        if (Build.VERSION.SDK_INT <= 30 && this.mContext.getPackageManager().checkPermission("android.permission.BLUETOOTH", this.mContext.getPackageName()) != 0) {
-            Log.d(TAG, "Couldn't initialize Bluetooth, missing android.permission.BLUETOOTH");
+        String requiredPermission = Build.VERSION.SDK_INT >= 31
+                ? Manifest.permission.BLUETOOTH_CONNECT
+                : Manifest.permission.BLUETOOTH;
+        if (this.mContext.checkSelfPermission(requiredPermission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Couldn't initialize Bluetooth, missing " + requiredPermission);
             return;
         }
         if (!this.mContext.getPackageManager().hasSystemFeature("android.hardware.bluetooth_le")) {
             Log.d(TAG, "Couldn't initialize Bluetooth, this version of Android does not support Bluetooth LE");
             return;
         }
-        BluetoothManager bluetoothManager = (BluetoothManager) this.mContext.getSystemService("bluetooth");
+        BluetoothManager bluetoothManager = (BluetoothManager) this.mContext.getSystemService(Context.BLUETOOTH_SERVICE);
         this.mBluetoothManager = bluetoothManager;
         if (bluetoothManager == null || (adapter = bluetoothManager.getAdapter()) == null) {
             return;
@@ -218,7 +224,7 @@ public class HIDDeviceManager {
     }
 
     private void initializeUSB() {
-        UsbManager usbManager = (UsbManager) this.mContext.getSystemService("usb");
+        UsbManager usbManager = (UsbManager) this.mContext.getSystemService(Context.USB_SERVICE);
         this.mUsbManager = usbManager;
         if (usbManager == null) {
             return;
@@ -457,7 +463,7 @@ public class HIDDeviceManager {
         }
         HIDDeviceOpenPending(i8);
         try {
-            this.mUsbManager.requestPermission(device2, PendingIntent.getBroadcast(this.mContext, 0, new Intent(ACTION_USB_PERMISSION), Build.VERSION.SDK_INT >= 31 ? 33554432 : 0));
+            this.mUsbManager.requestPermission(device2, PendingIntent.getBroadcast(this.mContext, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE));
         } catch (Exception unused) {
             Log.v(TAG, "Couldn't request permission for USB device " + device2);
             HIDDeviceOpenResult(i8, false);

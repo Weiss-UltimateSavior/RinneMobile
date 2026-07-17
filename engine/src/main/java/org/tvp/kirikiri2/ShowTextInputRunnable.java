@@ -27,6 +27,6 @@ public final class ShowTextInputRunnable implements Runnable {
         }
         KR2Activity.mTextEdit.setVisibility(View.VISIBLE);
         KR2Activity.mTextEdit.requestFocus();
-        ((InputMethodManager) Cocos2dxActivity.getContext().getSystemService("input_method")).showSoftInput(KR2Activity.mTextEdit, 0);
+        ((InputMethodManager) Cocos2dxActivity.getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE)).showSoftInput(KR2Activity.mTextEdit, 0);
     }
 }

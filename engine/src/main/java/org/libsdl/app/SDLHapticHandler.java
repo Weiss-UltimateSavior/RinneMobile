@@ -1,5 +1,6 @@
 package org.libsdl.app;
 
+import android.content.Context;
 import android.os.Vibrator;
 import android.view.InputDevice;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ class SDLHapticHandler {
                 }
             }
         }
-        Vibrator vibrator2 = (Vibrator) SDL.getContext().getSystemService("vibrator");
+        Vibrator vibrator2 = (Vibrator) SDL.getContext().getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator2 != null) {
             zHasVibrator = vibrator2.hasVibrator();
             if (zHasVibrator && getHaptic(999999) == null) {

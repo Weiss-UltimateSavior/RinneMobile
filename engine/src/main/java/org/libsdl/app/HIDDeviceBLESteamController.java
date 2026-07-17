@@ -1,5 +1,6 @@
 package org.libsdl.app;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -18,6 +19,8 @@ import java.util.LinkedList;
 import java.util.UUID;
 
 /* JADX INFO: loaded from: classes.dex */
+// Instances are only created by HIDDeviceManager after its Android 12+ permission gate.
+@SuppressLint("MissingPermission")
 class HIDDeviceBLESteamController extends BluetoothGattCallback implements HIDDevice {
     private static final int CHROMEBOOK_CONNECTION_CHECK_INTERVAL = 10000;
     private static final String TAG = "hidapi";
@@ -39,7 +42,7 @@ class HIDDeviceBLESteamController extends BluetoothGattCallback implements HIDDe
     GattOperation mCurrentOperation = null;
     private LinkedList<GattOperation> mOperations = new LinkedList<>();
     private Handler mHandler = new Handler(Looper.getMainLooper());
-    private BluetoothGatt mGatt = connectGatt();
+    private BluetoothGatt mGatt;
 
     public HIDDeviceBLESteamController(HIDDeviceManager hIDDeviceManager, BluetoothDevice bluetoothDevice) {
         this.mIsRegistered = false;
@@ -49,6 +52,7 @@ class HIDDeviceBLESteamController extends BluetoothGattCallback implements HIDDe
         this.mDeviceId = hIDDeviceManager.getDeviceIDForIdentifier(getIdentifier());
         this.mIsRegistered = false;
         this.mIsChromebook = this.mManager.getContext().getPackageManager().hasSystemFeature("org.chromium.arc.device_management");
+        this.mGatt = connectGatt();
     }
 
     private BluetoothGatt connectGatt(boolean z) {
@@ -211,7 +215,7 @@ class HIDDeviceBLESteamController extends BluetoothGattCallback implements HIDDe
     public int getConnectionState() {
         BluetoothManager bluetoothManager;
         Context context = this.mManager.getContext();
-        if (context == null || (bluetoothManager = (BluetoothManager) context.getSystemService("bluetooth")) == null) {
+        if (context == null || (bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE)) == null) {
             return 0;
         }
         return bluetoothManager.getConnectionState(this.mDevice, 7);

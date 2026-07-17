@@ -1,5 +1,6 @@
 package tv.danmaku.ijk.media.player;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodecInfo;
@@ -750,6 +751,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     public native void setVolume(float f8, float f9);
 
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
+    @SuppressLint("WrongConstant") // Wake-lock level is supplied by the native/media caller.
     public void setWakeMode(Context context, int i8) {
         boolean z;
         PowerManager.WakeLock wakeLock = this.mWakeLock;
@@ -764,7 +766,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         } else {
             z = false;
         }
-        PowerManager.WakeLock wakeLockNewWakeLock = ((PowerManager) context.getSystemService("power")).newWakeLock(i8 | 536870912, IjkMediaPlayer.class.getName());
+        PowerManager.WakeLock wakeLockNewWakeLock = ((PowerManager) context.getSystemService(Context.POWER_SERVICE)).newWakeLock(i8 | PowerManager.ACQUIRE_CAUSES_WAKEUP, IjkMediaPlayer.class.getName());
         this.mWakeLock = wakeLockNewWakeLock;
         wakeLockNewWakeLock.setReferenceCounted(false);
         if (z) {

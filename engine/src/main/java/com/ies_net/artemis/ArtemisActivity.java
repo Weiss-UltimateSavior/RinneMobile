@@ -29,7 +29,7 @@ public class ArtemisActivity extends NativeActivity {
 
     public void PlayVideo(String path, int offset, int length, int volume, int skip) {
         Intent intent = new Intent(getApplicationContext(), VideoViewActivity.class);
-        intent.addFlags(65536);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         intent.putExtra("PATH", path);
         intent.putExtra("OFFSET", offset);
         intent.putExtra("LENGTH", length);

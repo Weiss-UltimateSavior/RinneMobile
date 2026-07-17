@@ -2,13 +2,14 @@ package org.libsdl.app;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.Context;
 
 /* JADX INFO: loaded from: classes.dex */
 class SDLClipboardHandler implements ClipboardManager.OnPrimaryClipChangedListener {
     protected ClipboardManager mClipMgr;
 
     public SDLClipboardHandler() {
-        ClipboardManager clipboardManager = (ClipboardManager) SDL.getContext().getSystemService("clipboard");
+        ClipboardManager clipboardManager = (ClipboardManager) SDL.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
         this.mClipMgr = clipboardManager;
         clipboardManager.addPrimaryClipChangedListener(this);
     }

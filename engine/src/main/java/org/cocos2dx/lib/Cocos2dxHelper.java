@@ -72,7 +72,7 @@ public class Cocos2dxHelper {
         sAssetManager = activity.getAssets();
         nativeSetContext(activity, sAssetManager);
         Cocos2dxBitmap.setContext(activity);
-        sVibrateService = (Vibrator) activity.getSystemService("vibrator");
+        sVibrateService = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
         sInited = true;
     }
 

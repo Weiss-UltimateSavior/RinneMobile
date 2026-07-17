@@ -1,5 +1,6 @@
 package T3;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -394,6 +395,7 @@ public abstract class r extends KR2Activity {
     }
 
     @Override
+    @SuppressLint("MissingSuperCall")
     public void onDestroy() {
         try {
             destroyed = true;

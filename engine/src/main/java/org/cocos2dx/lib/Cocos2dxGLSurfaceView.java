@@ -98,12 +98,12 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                     Cocos2dxGLSurfaceView.this.mCocos2dxEditText.append(text);
                     Cocos2dxGLSurfaceView.sCocos2dxTextInputWraper.setOriginText(text);
                     Cocos2dxGLSurfaceView.this.mCocos2dxEditText.addTextChangedListener(Cocos2dxGLSurfaceView.sCocos2dxTextInputWraper);
-                    ((InputMethodManager) Cocos2dxGLSurfaceView.mCocos2dxGLSurfaceView.getContext().getSystemService("input_method"))
+                    ((InputMethodManager) Cocos2dxGLSurfaceView.mCocos2dxGLSurfaceView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
                             .showSoftInput(Cocos2dxGLSurfaceView.this.mCocos2dxEditText, 0);
                     Log.d("GLSurfaceView", "showSoftInput");
                 } else if (what == HANDLER_CLOSE_IME_KEYBOARD && Cocos2dxGLSurfaceView.this.mCocos2dxEditText != null) {
                     Cocos2dxGLSurfaceView.this.mCocos2dxEditText.removeTextChangedListener(Cocos2dxGLSurfaceView.sCocos2dxTextInputWraper);
-                    ((InputMethodManager) Cocos2dxGLSurfaceView.mCocos2dxGLSurfaceView.getContext().getSystemService("input_method"))
+                    ((InputMethodManager) Cocos2dxGLSurfaceView.mCocos2dxGLSurfaceView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
                             .hideSoftInputFromWindow(Cocos2dxGLSurfaceView.this.mCocos2dxEditText.getWindowToken(), 0);
                     Cocos2dxGLSurfaceView.this.requestFocus();
                     Log.d("GLSurfaceView", "HideSoftInput");
@@ -222,7 +222,7 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
         final float[] ys = new float[pointerCount];
         if (this.mSoftKeyboardShown) {
             try {
-                ((InputMethodManager) getContext().getSystemService("input_method"))
+                ((InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
                         .hideSoftInputFromWindow(((Activity) getContext()).getCurrentFocus().getWindowToken(), 0);
             } catch (Throwable ignored) { }
             requestFocus();
