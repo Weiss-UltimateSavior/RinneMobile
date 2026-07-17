@@ -1,6 +1,7 @@
 package com.apps.PadUi;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.app.Dialog;
 import android.content.Intent;
 import android.Manifest;
@@ -18,6 +19,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -1361,18 +1363,14 @@ mainQueue.post(() -> {
 
     private void renderToolbarButtonState() {
         if (binding == null) return;
-        applyToolbarChipState(binding.librarySearchButton, binding.librarySearchInput.getVisibility() == View.VISIBLE);
-        applyToolbarChipState(binding.libraryCollapseButton, !categoriesCollapsed);
+        applyToolbarIconTone(binding.librarySyncButton);
+        applyToolbarIconTone(binding.librarySearchButton);
+        applyToolbarIconTone(binding.libraryCollapseButton);
     }
 
-    private void applyToolbarChipState(TextView view, boolean selected) {
-        view.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-        if (selected) {
-            view.setTextColor(LauncherTheme.onPrimary(requireContext()));
-            view.setBackground(LauncherTheme.selectedChip(requireContext()));
-        } else {
-            LauncherTheme.menuItem(view);
-        }
+    private void applyToolbarIconTone(ImageView view) {
+        view.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(requireContext())));
+        view.setBackground(null);
     }
 
     private void sortGamesByTitle(List<Game> games) {

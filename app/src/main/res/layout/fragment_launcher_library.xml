@@ -30,39 +30,31 @@
                 android:textSize="@dimen/launcher_library_title_text_size"
                 android:textStyle="bold" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/librarySyncButton"
                 android:layout_width="@dimen/launcher_library_toolbar_button_width"
                 android:layout_height="@dimen/launcher_library_toolbar_button_height"
                 android:layout_marginEnd="@dimen/launcher_library_sync_button_margin_end"
-                android:background="@drawable/launcher_filter_chip_unselected"
-                android:gravity="center"
-                android:text="同步"
-                android:textColor="@color/launcher_primary_color"
-                android:textSize="@dimen/launcher_library_toolbar_button_text_size" />
+                android:contentDescription="同步"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_library_action_sync" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/libraryCollapseButton"
                 android:layout_width="@dimen/launcher_library_toolbar_button_width"
                 android:layout_height="@dimen/launcher_library_toolbar_button_height"
                 android:layout_marginEnd="@dimen/launcher_library_collapse_button_margin_end"
-                android:background="@drawable/launcher_filter_chip_unselected"
-                android:gravity="center"
-                android:text="分类"
-                android:textColor="@color/launcher_primary_color"
-                android:textSize="@dimen/launcher_library_toolbar_button_text_size"
-                android:textStyle="bold" />
+                android:contentDescription="分类"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_library_action_category" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/librarySearchButton"
                 android:layout_width="@dimen/launcher_library_toolbar_button_width"
                 android:layout_height="@dimen/launcher_library_toolbar_button_height"
-                android:background="@drawable/launcher_filter_chip_unselected"
-                android:gravity="center"
-                android:text="搜索"
-                android:textColor="@color/launcher_primary_color"
-                android:textSize="@dimen/launcher_library_toolbar_button_text_size"
-                android:textStyle="bold" />
+                android:contentDescription="搜索"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_library_action_search" />
         </LinearLayout>
 
         <EditText
