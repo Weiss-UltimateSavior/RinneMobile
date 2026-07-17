@@ -50,7 +50,7 @@ public class EngineDetector {
         int depth = Math.max(1, Math.min(4, featureDepth));
 
         FeatureState s = new FeatureState();
-        collectFeatures(dir, "", 1, depth, s);
+        collectFeatures(dir, "", "", 1, depth, s);
         if (s.empty) return r;
         Collections.sort(s.xp3Files, String.CASE_INSENSITIVE_ORDER);
         Collections.sort(s.gameNamedXp3Files, String.CASE_INSENSITIVE_ORDER);
@@ -205,7 +205,8 @@ public class EngineDetector {
         boolean hasOptionsRpy = false;    // game/options.rpy
     }
 
-    private static void collectFeatures(DocumentFile dir, String prefix, int level, int maxLevel, FeatureState s) {
+    private static void collectFeatures(DocumentFile dir, String lowerPrefix, String originalPrefix,
+                                        int level, int maxLevel, FeatureState s) {
         DocumentFile[] files;
         try {
             if (dir == null || !dir.isDirectory()) return;
@@ -221,7 +222,8 @@ public class EngineDetector {
             String lower = safeLowerName(f);
             String original = safeName(f);
             if (lower.length() == 0) continue;
-            String rel = prefix.length() == 0 ? lower : prefix + "/" + lower;
+            String rel = lowerPrefix.length() == 0 ? lower : lowerPrefix + "/" + lower;
+            String originalRel = originalPrefix.length() == 0 ? original : originalPrefix + "/" + original;
             s.empty = false;
             s.names.add(lower);
             s.relativeNames.add(rel);
@@ -249,7 +251,9 @@ public class EngineDetector {
                 if (lower.equals("movie")) s.hasMovieDir = true;
                 if (lower.equals("font")) s.hasFontDir = true;
                 if (lower.equals("others")) s.hasOthersDir = true;
-                if (level < maxLevel && shouldDescendForFeature(lower)) collectFeatures(f, rel, level + 1, maxLevel, s);
+                if (level < maxLevel && shouldDescendForFeature(lower)) {
+                    collectFeatures(f, rel, originalRel, level + 1, maxLevel, s);
+                }
                 continue;
             }
             if (!file) continue;
@@ -271,7 +275,9 @@ public class EngineDetector {
             if (lower.startsWith("chrome_") && lower.endsWith(".pak")) s.hasElectronPak = true;
             if (lower.endsWith(".desktop") && s.firstDesktop == null) s.firstDesktop = original;
             if (lower.endsWith(".xp3")) {
-                String xp3Path = rel.contains("/") ? rel : original;
+                // Keep the provider's exact spelling for launch resolution while all feature
+                // comparisons continue to use the lower-cased relative path above.
+                String xp3Path = originalRel;
                 s.xp3Files.add(xp3Path);
                 if (lower.contains("游戏")) s.gameNamedXp3Files.add(xp3Path);
                 if (lower.equals("data.xp3") && s.dataXp3 == null) s.dataXp3 = xp3Path;

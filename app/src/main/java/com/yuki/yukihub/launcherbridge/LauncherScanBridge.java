@@ -65,7 +65,7 @@ public final class LauncherScanBridge {
          */
         public String rpgMakerSubtype = "";
         /**
-         * 仅当 engine == RENPY 时有意义。取值："renpy"。空串表示需用户自行决定。
+         * 仅当 engine == RENPY 时有意义。取值："renpy" 或 "renpy8"。
          */
         public String renpySubtype = "";
     }
@@ -106,18 +106,29 @@ public final class LauncherScanBridge {
         if (context == null || roots == null || roots.isEmpty()) return batch;
         Context appContext = context.getApplicationContext();
         ScanRequest safeRequest = request == null ? ScanRequest.defaults(2) : request;
+        int initialVisitedNodes = safeRequest.getVisitedNodes();
         for (String root : roots) {
+            if (root == null || root.trim().isEmpty()) continue;
             if (safeRequest.isCancelled()) {
                 batch.stopReason = ScanReport.StopReason.CANCELLED;
                 break;
             }
-            if (root == null || root.trim().isEmpty()) continue;
+            if (safeRequest.isDeadlineReached()) {
+                batch.stopReason = ScanReport.StopReason.DEADLINE;
+                break;
+            }
+            if (safeRequest.isNodeLimitReached()) {
+                batch.stopReason = ScanReport.StopReason.NODE_LIMIT;
+                break;
+            }
             try {
                 ScanReport report = GameScanner.scan(appContext, Uri.parse(root), safeRequest);
                 batch.results.addAll(report.getResults());
                 batch.errors.addAll(report.getErrors());
-                batch.visitedNodes += report.getVisitedNodes();
-                if (report.getStopReason() != ScanReport.StopReason.COMPLETED) {
+                ScanReport.StopReason reason = report.getStopReason();
+                // A bad SAF root is local to that root. Keep scanning other configured roots;
+                // cancellation and shared resource limits stop the whole batch.
+                if (reason.stopsBatch()) {
                     batch.stopReason = report.getStopReason();
                     break;
                 }
@@ -127,6 +138,7 @@ public final class LauncherScanBridge {
                 batch.errors.add("扫描目录失败：" + simplifyUri(root));
             }
         }
+        batch.visitedNodes = Math.max(0, safeRequest.getVisitedNodes() - initialVisitedNodes);
         return batch;
     }
 
@@ -172,7 +184,7 @@ public final class LauncherScanBridge {
             game.launchTarget = result.launchTarget == null || result.launchTarget.trim().isEmpty()
                     ? defaultLaunchTargetForEngine(result.engine)
                     : result.launchTarget;
-            game.emulatorPackage = emulatorPackageForEngine(result.engine);
+            game.emulatorPackage = emulatorPackageForResult(result);
             Game restored = repository.findScannedMatch(game);
             if (restored != null) {
                 if (!rootKey.equals(GameRepository.normalizeRootUriKey(restored.rootUri))) {
@@ -292,12 +304,31 @@ public final class LauncherScanBridge {
         if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
-        // RPG Maker 默认走 RPGXP（Ruby 1.8）：老 RGSS1 语法在 1.8 下才兼容，
-        // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
-        // 扫描批量导入时若需精确子类型，可在外部读取 ScanResult 后覆盖。
+        // Legacy/future scanner results without a subtype retain the conservative RPG XP fallback.
         if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
         if (engine == EngineType.RENPY) return "internal.renpy";
         return "";
+    }
+
+    static String emulatorPackageForResult(ScanResult result) {
+        if (result == null) return "";
+        if (result.engine == EngineType.RPGMAKER) {
+            String subtype = normalizeSubtype(result.rpgMakerSubtype);
+            if (subtype.equals("rpgmxp") || subtype.equals("rpgmvx")
+                    || subtype.equals("rpgmvxace") || subtype.equals("mkxp-z")) {
+                return "internal." + subtype;
+            }
+        } else if (result.engine == EngineType.RENPY) {
+            String subtype = normalizeSubtype(result.renpySubtype);
+            if (subtype.equals("renpy") || subtype.equals("renpy8")) {
+                return "internal." + subtype;
+            }
+        }
+        return emulatorPackageForEngine(result.engine);
+    }
+
+    private static String normalizeSubtype(String subtype) {
+        return subtype == null ? "" : subtype.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     private static String defaultLaunchTargetForEngine(EngineType engine) {

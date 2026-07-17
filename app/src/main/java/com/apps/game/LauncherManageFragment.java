@@ -301,8 +301,14 @@ public class LauncherManageFragment extends Fragment {
             }
             return;
         }
-        if (!result.getErrors().isEmpty() && results.isEmpty()) {
-            showLauncherConfirmDialog("扫描完成", summary, "知道了", () -> {});
+        if (!result.getErrors().isEmpty()) {
+            if (results.isEmpty()) {
+                showLauncherConfirmDialog("扫描完成（有错误）", summary, "知道了", () -> {});
+            } else {
+                showLauncherConfirmDialog("扫描完成（有错误）",
+                        summary + "\n其余目录已扫描完成，是否继续导入已发现的结果？",
+                        "继续导入", () -> resolveXp3Candidates(results, 0));
+            }
             return;
         }
         resolveXp3Candidates(results, 0);

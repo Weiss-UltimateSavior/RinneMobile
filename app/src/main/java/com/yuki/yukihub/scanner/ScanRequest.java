@@ -1,10 +1,11 @@
 package com.yuki.yukihub.scanner;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Controls one directory scan. A request is deliberately independent from UI classes so the
- * same limits can be used by Launcher, background sync, and future batch importers.
+ * Controls one scan batch. A request may be shared across multiple roots so cancellation,
+ * deadline, and node limits remain global and consistent for every caller.
  */
 public final class ScanRequest {
     public static final int DEFAULT_MAX_NODES = 10_000;
@@ -18,6 +19,8 @@ public final class ScanRequest {
     private final int maxNodes;
     private final long deadlineAtElapsedMs;
     private final AtomicBoolean cancelled;
+    /** Shared by every root scanned with this request, so maxNodes is a batch-wide limit. */
+    private final AtomicInteger visitedNodes = new AtomicInteger();
     private final ProgressListener progressListener;
 
     private ScanRequest(Builder builder) {
@@ -40,7 +43,24 @@ public final class ScanRequest {
     public long getDeadlineAtElapsedMs() { return deadlineAtElapsedMs; }
     public boolean isCancelled() { return cancelled.get(); }
     public void cancel() { cancelled.set(true); }
+    public int getVisitedNodes() { return visitedNodes.get(); }
+    public boolean isDeadlineReached() {
+        return deadlineAtElapsedMs > 0
+                && android.os.SystemClock.elapsedRealtime() >= deadlineAtElapsedMs;
+    }
+    public boolean isNodeLimitReached() {
+        return maxNodes > 0 && visitedNodes.get() >= maxNodes;
+    }
     ProgressListener getProgressListener() { return progressListener; }
+
+    /** Returns the global visited count after acquiring a slot, or 0 when the limit is full. */
+    int tryAcquireNode() {
+        while (true) {
+            int current = visitedNodes.get();
+            if (maxNodes > 0 && current >= maxNodes) return 0;
+            if (visitedNodes.compareAndSet(current, current + 1)) return current + 1;
+        }
+    }
 
     public static final class Builder {
         private final int maxDepth;

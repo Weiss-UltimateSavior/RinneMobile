@@ -14,6 +14,10 @@ public class ScanResult {
     public String coverUri;
     /** Multiple non-data XP3 candidates which require a user choice before import. */
     public List<String> xp3Candidates;
+    /** RPG Maker runtime alias: rpgmxp / rpgmvx / rpgmvxace / mkxp-z. */
+    public String rpgMakerSubtype;
+    /** Ren'Py runtime alias: renpy / renpy8. */
+    public String renpySubtype;
 
     public ScanResult(String title, String uri, EngineType engine, int confidence) {
         this(title, uri, engine, confidence, "", "");
@@ -28,6 +32,12 @@ public class ScanResult {
     }
 
     public ScanResult(String title, String uri, EngineType engine, int confidence, String launchTarget, String coverUri, List<String> xp3Candidates) {
+        this(title, uri, engine, confidence, launchTarget, coverUri, xp3Candidates, "", "");
+    }
+
+    public ScanResult(String title, String uri, EngineType engine, int confidence, String launchTarget,
+                      String coverUri, List<String> xp3Candidates, String rpgMakerSubtype,
+                      String renpySubtype) {
         this.title = title;
         this.uri = uri;
         this.engine = engine;
@@ -35,5 +45,7 @@ public class ScanResult {
         this.launchTarget = launchTarget == null ? "" : launchTarget;
         this.coverUri = coverUri == null ? "" : coverUri;
         this.xp3Candidates = xp3Candidates == null ? new ArrayList<>() : new ArrayList<>(xp3Candidates);
+        this.rpgMakerSubtype = rpgMakerSubtype == null ? "" : rpgMakerSubtype;
+        this.renpySubtype = renpySubtype == null ? "" : renpySubtype;
     }
 }

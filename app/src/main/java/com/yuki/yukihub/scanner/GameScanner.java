@@ -38,9 +38,12 @@ public class GameScanner {
         }
         ScanRequest safeRequest = request == null ? ScanRequest.defaults(2) : request;
         int requestedDepth = safeRequest.getMaxDepth();
-        boolean scanAllLevels = requestedDepth == SCAN_ALL_LEVELS || requestedDepth == SCAN_UNTIL_GAME_MATCH;
-        boolean stopAtGameMatch = requestedDepth == SCAN_UNTIL_GAME_MATCH;
-        int depth = scanAllLevels ? Integer.MAX_VALUE : Math.max(1, Math.min(4, requestedDepth));
+        boolean unbounded = requestedDepth == SCAN_ALL_LEVELS || requestedDepth == SCAN_UNTIL_GAME_MATCH;
+        // Only the explicit all-levels mode traverses inside an already identified game.
+        // Fixed-depth scans are bounded searches, while match mode is their unbounded,
+        // prune-on-match counterpart.
+        boolean traverseMatchedGames = shouldTraverseMatchedGames(requestedDepth);
+        int depth = unbounded ? Integer.MAX_VALUE : Math.max(1, Math.min(4, requestedDepth));
 
         DocumentFile root;
         try {
@@ -69,11 +72,11 @@ public class GameScanner {
             return report;
         }
         // A user may select one game directory itself rather than its parent. Probe the
-        // root before traversing children so that Kirikiri/ONS/Tyrano/Artemis roots are
+        // root before traversing children so that directory-oriented engine roots are
         // not skipped merely because they have no game-directory child.
         boolean rootGameMatched = detectGameDirectory(root, report, seenUris, safeRequest);
-        if (!(stopAtGameMatch && rootGameMatched)) {
-            scanChildren(root, 1, depth, stopAtGameMatch, report, seenUris, safeRequest);
+        if (!rootGameMatched || traverseMatchedGames) {
+            scanChildren(root, 1, depth, traverseMatchedGames, report, seenUris, safeRequest);
         }
         return report;
     }
@@ -86,7 +89,8 @@ public class GameScanner {
             String uri = dir.getUri().toString();
             if (markSeen(seenUris, uri)) {
                 report.addResult(new ScanResult(safeName(dir), uri, detected.engine, detected.confidence,
-                        detected.launchTarget, "", detected.xp3Candidates));
+                        detected.launchTarget, "", detected.xp3Candidates,
+                        detected.rpgMakerSubtype, detected.renpySubtype));
             }
             return true;
         } catch (Throwable t) {
@@ -96,15 +100,23 @@ public class GameScanner {
         }
     }
 
-    /** PSP and Winlator roots are already emitted per entry file, not as a directory entry. */
+    /** File-oriented engines are emitted per entry file; directory-oriented engines may use the selected root. */
     private static boolean isRootDirectoryEngine(com.yuki.yukihub.model.EngineType engine) {
         return engine == com.yuki.yukihub.model.EngineType.KIRIKIRI
                 || engine == com.yuki.yukihub.model.EngineType.ONS
                 || engine == com.yuki.yukihub.model.EngineType.TYRANO
-                || engine == com.yuki.yukihub.model.EngineType.ARTEMIS;
+                || engine == com.yuki.yukihub.model.EngineType.ARTEMIS
+                || engine == com.yuki.yukihub.model.EngineType.RPGMAKER
+                || engine == com.yuki.yukihub.model.EngineType.RENPY;
     }
 
-    private static void scanChildren(DocumentFile dir, int level, int maxDepth, boolean stopAtGameMatch, ScanReport report, Set<String> seenUris, ScanRequest request) {
+    static boolean shouldTraverseMatchedGames(int requestedDepth) {
+        return requestedDepth == SCAN_ALL_LEVELS;
+    }
+
+    private static void scanChildren(DocumentFile dir, int level, int maxDepth,
+                                     boolean traverseMatchedGames, ScanReport report,
+                                     Set<String> seenUris, ScanRequest request) {
         if (dir == null || report == null || report.shouldStop(request)) return;
         DocumentFile[] children;
         try {
@@ -141,8 +153,8 @@ public class GameScanner {
                 }
                 if (!child.isDirectory()) continue;
 
-                // 识别目录本身的 PSP / desktop 入口；是否继续遍历由扫描模式决定。
-                // 全层模式会继续扫描嵌套游戏，命中模式则在识别游戏目录后停止向下。
+                // 识别目录本身的 PSP / 3DS / desktop 入口；是否继续遍历由扫描模式决定。
+                // 只有全层模式会穿透已命中的游戏目录；固定深度和命中模式都会在此剪枝。
                 boolean pspDirectory = tryAddPspDirectory(child, report, seenUris);
                 boolean n3dsDirectory = tryAddN3dsDirectory(child, report, seenUris);
                 boolean desktopDirectory = tryAddDesktopDirectory(child, report, seenUris);
@@ -157,14 +169,16 @@ public class GameScanner {
                         String uri = child.getUri().toString();
                         if (markSeen(seenUris, uri)) {
                             report.addResult(new ScanResult(safeName(child), uri, detected.engine, detected.confidence,
-                                    detected.launchTarget, "", detected.xp3Candidates));
+                                    detected.launchTarget, "", detected.xp3Candidates,
+                                    detected.rpgMakerSubtype, detected.renpySubtype));
                         }
                         gameDirectoryMatched = true;
                     }
                 }
 
-                if (level < maxDepth && !(stopAtGameMatch && gameDirectoryMatched)) {
-                    scanChildren(child, level + 1, maxDepth, stopAtGameMatch, report, seenUris, request);
+                if (level < maxDepth && (!gameDirectoryMatched || traverseMatchedGames)) {
+                    scanChildren(child, level + 1, maxDepth, traverseMatchedGames,
+                            report, seenUris, request);
                 }
             } catch (Throwable t) {
                 Log.w(TAG, "scan child failed uri=" + safeUri(child), t);
