@@ -27,11 +27,7 @@ public class SDLControllerManager {
             mJoystickHandler = new SDLJoystickHandler_API19();
         }
         if (mHapticHandler == null) {
-            if (Build.VERSION.SDK_INT >= 26) {
-                mHapticHandler = new SDLHapticHandler_API26();
-            } else {
-                mHapticHandler = new SDLHapticHandler();
-            }
+            mHapticHandler = new SDLHapticHandler_API26();
         }
     }
 

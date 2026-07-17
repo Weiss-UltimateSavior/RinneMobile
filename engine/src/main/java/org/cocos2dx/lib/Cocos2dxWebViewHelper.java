@@ -1,5 +1,6 @@
 package org.cocos2dx.lib;
 
+import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseArray;
@@ -7,6 +8,7 @@ import android.widget.FrameLayout;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
+@SuppressLint("StaticFieldLeak") // Static JNI entry points are cleared from Cocos2dxActivity.onDestroy().
 public class Cocos2dxWebViewHelper {
     private static Cocos2dxActivity sCocos2dxActivity;
     private static Handler sHandler;
@@ -18,6 +20,20 @@ public class Cocos2dxWebViewHelper {
         sCocos2dxActivity = (Cocos2dxActivity) Cocos2dxActivity.getContext();
         sLayout = layout;
         sHandler = new Handler(Looper.getMainLooper());
+    }
+
+    public static void destroy(Cocos2dxActivity activity) {
+        if (sCocos2dxActivity != activity) return;
+        if (sHandler != null) sHandler.removeCallbacksAndMessages(null);
+        for (int i = 0; i < webViews.size(); i++) {
+            Cocos2dxWebView webView = webViews.valueAt(i);
+            if (sLayout != null) sLayout.removeView(webView);
+            webView.destroy();
+        }
+        webViews.clear();
+        sHandler = null;
+        sLayout = null;
+        sCocos2dxActivity = null;
     }
 
     private static native void didFailLoading(int tag, String url);

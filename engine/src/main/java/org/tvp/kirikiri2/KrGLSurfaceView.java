@@ -99,6 +99,7 @@ public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
             KR2Activity.nativeTouchesBegin(motionEvent.getPointerId(0), xs[0], ys[0]);
         } else if (action == MotionEvent.ACTION_UP) {
             KR2Activity.nativeTouchesEnd(motionEvent.getPointerId(0), xs[0], ys[0]);
+            performClick();
         } else if (action == MotionEvent.ACTION_MOVE) {
             KR2Activity.nativeTouchesMove(ids, xs, ys);
         } else if (action == MotionEvent.ACTION_CANCEL) {
@@ -112,4 +113,6 @@ public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
         }
         return true;
     }
+
+    @Override public boolean performClick() { return super.performClick(); }
 }

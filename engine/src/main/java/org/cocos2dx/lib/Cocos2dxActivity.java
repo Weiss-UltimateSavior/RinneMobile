@@ -125,6 +125,12 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
 
     @Override
     public void onDestroy() {
+        if (sContext == this) {
+            Cocos2dxWebViewHelper.destroy(this);
+            Cocos2dxEditBoxHelper.destroy(this);
+            Cocos2dxHelper.destroy(this);
+            sContext = null;
+        }
         super.onDestroy();
     }
 

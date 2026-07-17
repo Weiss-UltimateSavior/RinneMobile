@@ -6,6 +6,7 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.util.Log;
 import java.util.Arrays;
+import java.util.Locale;
 
 /* JADX INFO: loaded from: classes.dex */
 class HIDDeviceUSB implements HIDDevice {
@@ -86,7 +87,7 @@ class HIDDeviceUSB implements HIDDevice {
     }
 
     public String getDeviceName() {
-        return getManufacturerName() + " " + getProductName() + "(0x" + String.format("%x", Integer.valueOf(getVendorId())) + "/0x" + String.format("%x", Integer.valueOf(getProductId())) + ")";
+        return getManufacturerName() + " " + getProductName() + "(0x" + String.format(Locale.ROOT, "%x", Integer.valueOf(getVendorId())) + "/0x" + String.format(Locale.ROOT, "%x", Integer.valueOf(getProductId())) + ")";
     }
 
     @Override // org.libsdl.app.HIDDevice
@@ -126,13 +127,13 @@ class HIDDeviceUSB implements HIDDevice {
     }
 
     public String getIdentifier() {
-        return String.format("%s/%x/%x/%d", this.mDevice.getDeviceName(), Integer.valueOf(this.mDevice.getVendorId()), Integer.valueOf(this.mDevice.getProductId()), Integer.valueOf(this.mInterfaceIndex));
+        return String.format(Locale.ROOT, "%s/%x/%x/%d", this.mDevice.getDeviceName(), Integer.valueOf(this.mDevice.getVendorId()), Integer.valueOf(this.mDevice.getProductId()), Integer.valueOf(this.mInterfaceIndex));
     }
 
     @Override // org.libsdl.app.HIDDevice
     public String getManufacturerName() {
         String manufacturerName = this.mDevice.getManufacturerName();
-        return manufacturerName == null ? String.format("%x", Integer.valueOf(getVendorId())) : manufacturerName;
+        return manufacturerName == null ? String.format(Locale.ROOT, "%x", Integer.valueOf(getVendorId())) : manufacturerName;
     }
 
     @Override // org.libsdl.app.HIDDevice
@@ -143,7 +144,7 @@ class HIDDeviceUSB implements HIDDevice {
     @Override // org.libsdl.app.HIDDevice
     public String getProductName() {
         String productName = this.mDevice.getProductName();
-        return productName == null ? String.format("%x", Integer.valueOf(getProductId())) : productName;
+        return productName == null ? String.format(Locale.ROOT, "%x", Integer.valueOf(getProductId())) : productName;
     }
 
     @Override // org.libsdl.app.HIDDevice

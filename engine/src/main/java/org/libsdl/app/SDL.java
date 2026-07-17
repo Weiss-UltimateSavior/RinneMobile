@@ -1,9 +1,11 @@
 package org.libsdl.app;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 /* JADX INFO: loaded from: classes.dex */
 public class SDL {
+    @SuppressLint("StaticFieldLeak") // SDL JNI needs the active Activity; SDLActivity clears it on destroy.
     protected static Context mContext;
 
     public static Context getContext() {

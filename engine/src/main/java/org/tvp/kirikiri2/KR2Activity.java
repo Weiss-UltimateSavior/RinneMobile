@@ -1,5 +1,6 @@
 package org.tvp.kirikiri2;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.Intent;
@@ -22,6 +23,7 @@ import java.util.Locale;
 import org.cocos2dx.lib.Cocos2dxActivity;
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 
+@SuppressLint("StaticFieldLeak") // JNI-compatible static handles are cleared in onDestroy().
 public class KR2Activity extends Cocos2dxActivity {
     public static KR2Activity sInstance;
     static Handler msgHandler;
@@ -126,7 +128,7 @@ public class KR2Activity extends Cocos2dxActivity {
         Locale locale = Locale.getDefault();
         String language = locale.getLanguage();
         String country = locale.getCountry();
-        return country.isEmpty() ? language : language + "_" + country.toLowerCase();
+        return country.isEmpty() ? language : language + "_" + country.toLowerCase(Locale.ROOT);
     }
 
     public static void ShowMessageBox(String title, String msg, String[] buttons) {
@@ -388,6 +390,9 @@ public class KR2Activity extends Cocos2dxActivity {
         try {
             android.util.Log.i("KR2Activity", "destroy KR2Activity");
             mTextEdit = null;
+            if (msgHandler != null) msgHandler.removeCallbacksAndMessages(null);
+            msgHandler = null;
+            mCurrentDialog = null;
             if (sInstance == this) sInstance = null;
         } catch (Throwable ignored) { }
         super.onDestroy();
@@ -448,6 +453,7 @@ public class KR2Activity extends Cocos2dxActivity {
         addKrStoragePath(out, intent.getStringExtra(key));
     }
 
+    @SuppressLint("SdCardPath") // The native KR engine still emits these aliases; SAF handles actual access.
     private static void addKrStoragePath(java.util.LinkedHashSet<String> out, String rawPath) {
         if (out == null || rawPath == null) return;
         String p = normalizeKrFilePath(rawPath);

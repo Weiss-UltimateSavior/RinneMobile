@@ -1,6 +1,8 @@
 package com.yuki.yukihub.ons;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.system.Os;
 import android.util.Log;
 
 import java.io.File;
@@ -20,6 +22,7 @@ public final class OnsLibLoader {
 
     private OnsLibLoader() { }
 
+    @SuppressLint("UnsafeDynamicallyLoadedCode") // Fixed assets are extracted into the app-private files directory.
     public static synchronized void load(Context context) {
         if (loaded) return;
         Context app = context.getApplicationContext();
@@ -45,7 +48,11 @@ public final class OnsLibLoader {
         String asset = "libs/" + VERSION_DIR + "/lib" + lib + ".so";
         File out = new File(outDir, "lib" + lib + ".so");
         copyAssetFile(context, asset, out);
-        out.setExecutable(true, false);
+        try {
+            Os.chmod(out.getAbsolutePath(), 0700);
+        } catch (Throwable t) {
+            throw new RuntimeException("secure library permissions failed: " + out, t);
+        }
         return out;
     }
 
@@ -65,9 +72,9 @@ public final class OnsLibLoader {
                     int n;
                     while ((n = in.read(buf)) > 0) fos.write(buf, 0, n);
                 }
-                out.setReadable(true, false);
-                out.setWritable(true, true);
             }
+            // Re-apply the private mode even for files created by an older build.
+            Os.chmod(out.getAbsolutePath(), 0600);
         } catch (Throwable t) {
             throw new RuntimeException("copy asset failed: " + asset, t);
         }

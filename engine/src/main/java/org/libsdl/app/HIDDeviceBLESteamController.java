@@ -56,9 +56,6 @@ class HIDDeviceBLESteamController extends BluetoothGattCallback implements HIDDe
     }
 
     private BluetoothGatt connectGatt(boolean z) {
-        if (Build.VERSION.SDK_INT < 23) {
-            return this.mDevice.connectGatt(this.mManager.getContext(), z, this);
-        }
         try {
             return this.mDevice.connectGatt(this.mManager.getContext(), z, this, 2);
         } catch (Exception unused) {

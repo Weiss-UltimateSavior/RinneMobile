@@ -1,5 +1,6 @@
 package bridge;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.UriPermission;
 import android.net.Uri;
@@ -14,9 +15,9 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.RandomAccessFile;
 import androidx.documentfile.provider.DocumentFile;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class NativeBridge {
     private static final List<RandomAccessFile> OPEN_FILES = new ArrayList<>();
@@ -80,7 +81,7 @@ public final class NativeBridge {
             if (!activity.getIntent().getBooleanExtra("scopedSaveDir", false)) return null;
             if (path == null || path.trim().isEmpty()) return null;
             String p = normalizeFilePath(path);
-            String lower = p.toLowerCase();
+            String lower = p.toLowerCase(Locale.ROOT);
             int idx = lower.indexOf("/savedata/");
             int folderLen = "/savedata/".length();
             if (idx < 0) {
@@ -250,6 +251,7 @@ public final class NativeBridge {
         }
     }
 
+    @SuppressLint("SdCardPath") // Maps legacy engine paths onto persisted SAF tree permissions.
     private static Uri storagePathToPersistedDocumentUri(String path, int mode) {
         if (path == null) return null;
         String p = normalizeFilePath(path);
@@ -346,7 +348,7 @@ public final class NativeBridge {
     }
 
     private static String guessMime(String name) {
-        String lower = name == null ? "" : name.toLowerCase();
+        String lower = name == null ? "" : name.toLowerCase(Locale.ROOT);
         if (lower.endsWith(".txt") || lower.endsWith(".tjs") || lower.endsWith(".ks") || lower.endsWith(".xml") || lower.endsWith(".json")) return "text/plain";
         return "application/octet-stream";
     }
@@ -432,9 +434,7 @@ public final class NativeBridge {
     }
 
     private static int getFd(RandomAccessFile raf) throws Exception {
-        FileDescriptor fd = raf.getFD();
-        Method method = FileDescriptor.class.getDeclaredMethod("getInt$");
-        method.setAccessible(true);
-        return (Integer) method.invoke(fd);
+        ParcelFileDescriptor duplicate = ParcelFileDescriptor.dup(raf.getFD());
+        return duplicate.detachFd();
     }
 }

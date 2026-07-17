@@ -1,5 +1,6 @@
 package org.cocos2dx.lib;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 
+@SuppressLint("StaticFieldLeak") // Native callbacks require a current Activity; destroy() clears every owner.
 public class Cocos2dxHelper {
     private static final String PREFS_NAME = "Cocos2dxPrefsFile";
 
@@ -163,6 +165,22 @@ public class Cocos2dxHelper {
     public static void setAccelerometerInterval(float interval) { }
 
     public static void end() { if (sCocos2dMusic != null) sCocos2dMusic.end(); if (sCocos2dSound != null) sCocos2dSound.end(); }
+
+    public static void destroy(Activity activity) {
+        if (sActivity != activity) return;
+        end();
+        sAccelerometerEnabled = false;
+        sActivityVisible = false;
+        sActivity = null;
+        sCocos2dxHelperListener = null;
+        sCocos2dMusic = null;
+        sCocos2dSound = null;
+        sVibrateService = null;
+        sAssetManager = null;
+        Cocos2dxBitmap.setContext(null);
+        onActivityResultListeners.clear();
+        sInited = false;
+    }
     public static void playBackgroundMusic(String path, boolean loop) { if (sCocos2dMusic != null) sCocos2dMusic.playBackgroundMusic(path, loop); }
     public static void preloadBackgroundMusic(String path) { if (sCocos2dMusic != null) sCocos2dMusic.preloadBackgroundMusic(path); }
     public static void pauseBackgroundMusic() { if (sCocos2dMusic != null) sCocos2dMusic.pauseBackgroundMusic(); }
@@ -186,17 +204,17 @@ public class Cocos2dxHelper {
     public static void setEffectsVolume(float volume) { if (sCocos2dSound != null) sCocos2dSound.setEffectsVolume(volume); }
 
     private static SharedPreferences prefs() { return sActivity.getSharedPreferences(PREFS_NAME, 0); }
-    public static void deleteValueForKey(String key) { prefs().edit().remove(key).commit(); }
+    public static void deleteValueForKey(String key) { prefs().edit().remove(key).apply(); }
     public static boolean getBoolForKey(String key, boolean def) { return prefs().getBoolean(key, def); }
     public static int getIntegerForKey(String key, int def) { return prefs().getInt(key, def); }
     public static float getFloatForKey(String key, float def) { return prefs().getFloat(key, def); }
     public static double getDoubleForKey(String key, double def) { return getFloatForKey(key, (float) def); }
     public static String getStringForKey(String key, String def) { return prefs().getString(key, def); }
-    public static void setBoolForKey(String key, boolean value) { prefs().edit().putBoolean(key, value).commit(); }
-    public static void setIntegerForKey(String key, int value) { prefs().edit().putInt(key, value).commit(); }
-    public static void setFloatForKey(String key, float value) { prefs().edit().putFloat(key, value).commit(); }
-    public static void setDoubleForKey(String key, double value) { prefs().edit().putFloat(key, (float) value).commit(); }
-    public static void setStringForKey(String key, String value) { prefs().edit().putString(key, value).commit(); }
+    public static void setBoolForKey(String key, boolean value) { prefs().edit().putBoolean(key, value).apply(); }
+    public static void setIntegerForKey(String key, int value) { prefs().edit().putInt(key, value).apply(); }
+    public static void setFloatForKey(String key, float value) { prefs().edit().putFloat(key, value).apply(); }
+    public static void setDoubleForKey(String key, double value) { prefs().edit().putFloat(key, (float) value).apply(); }
+    public static void setStringForKey(String key, String value) { prefs().edit().putString(key, value).apply(); }
 
     public static int fastLoading(int value) { return -1; }
     public static int getTemperature() { return -1; }

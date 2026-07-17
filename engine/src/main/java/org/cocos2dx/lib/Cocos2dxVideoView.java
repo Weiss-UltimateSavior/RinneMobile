@@ -2,6 +2,7 @@ package org.cocos2dx.lib;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.AttributeSet;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
@@ -10,6 +11,9 @@ public class Cocos2dxVideoView extends SurfaceView {
     public static final int EventPaused = 1;
     public static final int EventStopped = 2;
     public static final int EventCompleted = 3;
+    public Cocos2dxVideoView(Context context) { super(context); }
+    public Cocos2dxVideoView(Context context, AttributeSet attrs) { super(context, attrs); }
+    public Cocos2dxVideoView(Context context, AttributeSet attrs, int defStyleAttr) { super(context, attrs, defStyleAttr); }
     public Cocos2dxVideoView(Context context, int tag) { super(context); }
     public void setVideoURL(String url) { }
     public void setVideoURI(Uri uri) { }

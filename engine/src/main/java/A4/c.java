@@ -1,5 +1,6 @@
 package A4;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -15,6 +16,7 @@ import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 /* JADX INFO: loaded from: classes.dex */
+@SuppressLint("ViewConstructor") // Created programmatically with its owning VideoViewActivity.
 public final class c extends SurfaceView implements MediaController.MediaPlayerControl {
 
     /* JADX INFO: renamed from: a, reason: collision with root package name */
@@ -293,7 +295,13 @@ public final class c extends SurfaceView implements MediaController.MediaPlayerC
             return false;
         }
         e();
+        if (motionEvent.getAction() == MotionEvent.ACTION_UP) performClick();
         return false;
+    }
+
+    @Override
+    public boolean performClick() {
+        return super.performClick();
     }
 
     @Override // android.view.View

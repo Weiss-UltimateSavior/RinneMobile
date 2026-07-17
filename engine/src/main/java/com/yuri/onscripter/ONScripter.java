@@ -1,5 +1,6 @@
 package com.yuri.onscripter;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -31,6 +32,7 @@ import com.yuki.yukihub.ons.OnsSettings;
 import com.yuki.yukihub.ons.OnsVideoActivity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -139,6 +141,14 @@ public class ONScripter extends SDLActivity {
             int fd = pfd.detachFd();
             Log.i(TAG, "getFD fd=" + fd + " mode=" + mode + " file=" + file);
             return fd;
+        } catch (FileNotFoundException expectedMiss) {
+            // ONS probes many optional archive/script/image names during startup.
+            // A missing read target is normal and must not emit thousands of stack traces.
+            if (mode != 0 || (file != null && file.exists())) {
+                logGetFdFailure(pathbyte, mode, utf8Path, gbkPath, file);
+                Log.w(TAG, "getFD open failed: " + expectedMiss.getMessage());
+            }
+            return -1;
         } catch (Throwable t) {
             logGetFdFailure(pathbyte, mode, utf8Path, gbkPath, file);
             Log.w(TAG, "getFD failed", t);
@@ -272,8 +282,14 @@ public class ONScripter extends SDLActivity {
         tv.setTextColor(Color.WHITE);
     }
 
+    @SuppressLint("AppCompatCustomView") // SDLActivity is a platform Activity; its lightweight overlay intentionally uses platform widgets.
     private TextView makeActionButton(String label, int keyCode, boolean toggle) {
-        TextView tv = new TextView(this);
+        TextView tv = new TextView(this) {
+            @Override
+            public boolean performClick() {
+                return super.performClick();
+            }
+        };
         tv.setText(label);
         tv.setTextColor(Color.WHITE);
         tv.setTextSize(toggle ? 24 : 13);
@@ -287,6 +303,20 @@ public class ONScripter extends SDLActivity {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(toggle ? dp(48) : dp(60), toggle ? dp(48) : dp(60));
         tv.setLayoutParams(lp);
         tv.setPadding(dp(2), dp(5), dp(2), dp(5));
+        final boolean[] touchActivation = {false};
+        tv.setOnClickListener(v -> {
+            if (touchActivation[0]) return;
+            if (toggle) {
+                toggleVirtualControls();
+            } else {
+                SDLActivity.onNativeKeyDown(keyCode);
+                SDLActivity.onNativeKeyUp(keyCode);
+                if ("auto".equals(v.getTag())) {
+                    autoMode = !autoMode;
+                    updateAutoButtons();
+                }
+            }
+        });
         tv.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
                 v.setAlpha(0.65f);
@@ -303,6 +333,14 @@ public class ONScripter extends SDLActivity {
                     if ("auto".equals(v.getTag())) {
                         autoMode = !autoMode;
                         updateAutoButtons();
+                    }
+                }
+                if (e.getAction() == MotionEvent.ACTION_UP) {
+                    touchActivation[0] = true;
+                    try {
+                        v.performClick();
+                    } finally {
+                        touchActivation[0] = false;
                     }
                 }
                 return true;
@@ -377,8 +415,13 @@ public class ONScripter extends SDLActivity {
         return new File(parent == null ? new File(".") : parent, base + ext);
     }
 
-    @Override public void onDestroy() {
-        super.onDestroy();
+    @Override
+    @SuppressLint("MissingSuperCall")
+    public void onDestroy() {
+        // ONS runs in a dedicated process. SDL native teardown can destroy
+        // graphics mutexes while an OEM HWUI worker still references them.
+        Log.i(TAG, "terminate dedicated ONS process before SDL/HWUI teardown");
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     /**

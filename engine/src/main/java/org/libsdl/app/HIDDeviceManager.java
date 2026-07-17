@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -76,7 +77,7 @@ public class HIDDeviceManager {
         this.mNextDeviceId = 0;
         this.mSharedPreferences = null;
         this.mIsChromebook = false;
-        this.mContext = context;
+        this.mContext = context.getApplicationContext();
         HIDDeviceRegisterCallback();
         this.mSharedPreferences = this.mContext.getSharedPreferences(TAG, 0);
         this.mIsChromebook = this.mContext.getPackageManager().hasSystemFeature("org.chromium.arc.device_management");
@@ -233,7 +234,7 @@ public class HIDDeviceManager {
         intentFilter.addAction("android.hardware.usb.action.USB_DEVICE_ATTACHED");
         intentFilter.addAction("android.hardware.usb.action.USB_DEVICE_DETACHED");
         intentFilter.addAction(ACTION_USB_PERMISSION);
-        this.mContext.registerReceiver(this.mUsbBroadcast, intentFilter);
+        ContextCompat.registerReceiver(this.mContext, this.mUsbBroadcast, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
         Iterator<UsbDevice> it = this.mUsbManager.getDeviceList().values().iterator();
         while (it.hasNext()) {
             handleUsbDeviceAttached(it.next());
@@ -407,7 +408,7 @@ public class HIDDeviceManager {
             editorEdit.putInt("next_device_id", i9);
         }
         editorEdit.putInt(str, i8);
-        editorEdit.commit();
+        editorEdit.apply();
         return i8;
     }
 

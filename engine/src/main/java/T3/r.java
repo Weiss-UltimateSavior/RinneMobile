@@ -22,12 +22,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.Locale;
 import bridge.NativeBridge;
 import org.tvp.kirikiri2.KR2Activity;
 
 public abstract class r extends KR2Activity {
     private static final String TAG = "Kirikiroid2";
     private static final long SAFE_FALLBACK_REVEAL_MS = 20_000L;
+    @SuppressLint("StaticFieldLeak") // Dedicated process activity; cleared immediately before process termination.
     public static Context app;
     private FrameLayout mask;
     private TextView maskMessage;
@@ -302,6 +304,7 @@ public abstract class r extends KR2Activity {
         return launcherColor("launcher_primary_color", Color.rgb(24, 185, 120));
     }
 
+    @SuppressLint("DiscouragedApi") // Engine cannot compile against the app module's generated R class.
     private int launcherColor(String name, int fallback) {
         Context uiContext = launcherUiContext();
         int id = uiContext.getResources().getIdentifier(name, "color", getPackageName());
@@ -339,9 +342,10 @@ public abstract class r extends KR2Activity {
         return p;
     }
 
+    @SuppressLint("SdCardPath") // Normalizes legacy KR paths before redirecting them through scoped storage.
     private static String storagePrefix(String path) {
         String p = normalizeKrPath(path);
-        String lower = p.toLowerCase();
+        String lower = p.toLowerCase(Locale.ROOT);
         if (lower.startsWith("/storage/emulated/0/")) return "/storage/emulated/0";
         if (lower.startsWith("/sdcard/")) return "/sdcard";
         if (lower.startsWith("/storage/")) {

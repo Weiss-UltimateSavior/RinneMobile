@@ -124,7 +124,7 @@ public class SDLAudioManager {
     }
 
     public static int captureReadByteBuffer(byte[] bArr, boolean z) {
-        return Build.VERSION.SDK_INT < 23 ? mAudioRecord.read(bArr, 0, bArr.length) : mAudioRecord.read(bArr, 0, bArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
+        return mAudioRecord.read(bArr, 0, bArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
     }
 
     public static int captureReadFloatBuffer(float[] fArr, boolean z) {
@@ -132,7 +132,7 @@ public class SDLAudioManager {
     }
 
     public static int captureReadShortBuffer(short[] sArr, boolean z) {
-        return Build.VERSION.SDK_INT < 23 ? mAudioRecord.read(sArr, 0, sArr.length) : mAudioRecord.read(sArr, 0, sArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
+        return mAudioRecord.read(sArr, 0, sArr.length, z ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
     }
 
     public static String getAudioFormatString(int i8) {

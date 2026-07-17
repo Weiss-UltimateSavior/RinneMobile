@@ -398,6 +398,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     }
 
     /* JADX INFO: Access modifiers changed from: private */
+    @SuppressLint("WakelockTimeout") // Playback lifecycle releases the lock in pause/reset/release.
     public void stayAwake(boolean z) {
         PowerManager.WakeLock wakeLock = this.mWakeLock;
         if (wakeLock != null) {
@@ -751,7 +752,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     public native void setVolume(float f8, float f9);
 
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
-    @SuppressLint("WrongConstant") // Wake-lock level is supplied by the native/media caller.
+    @SuppressLint({"WrongConstant", "WakelockTimeout"}) // Restores a playback-scoped lock; release paths are explicit.
     public void setWakeMode(Context context, int i8) {
         boolean z;
         PowerManager.WakeLock wakeLock = this.mWakeLock;

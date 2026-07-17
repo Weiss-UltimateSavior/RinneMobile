@@ -40,6 +40,7 @@ import java.util.Hashtable;
 import java.util.Locale;
 
 /* JADX INFO: loaded from: classes.dex */
+@SuppressLint("StaticFieldLeak") // SDL's static JNI bridge is explicitly cleared in onDestroy().
 public class SDLActivity extends Activity implements View.OnSystemUiVisibilityChangeListener {
     static final int COMMAND_CHANGE_TITLE = 1;
     static final int COMMAND_CHANGE_WINDOW_STYLE = 2;
@@ -222,7 +223,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     static {
-        mHasMultiWindow = Build.VERSION.SDK_INT >= 24;
+        mHasMultiWindow = true;
         mBrokenLibraries = true;
     }
 
@@ -241,9 +242,6 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     public static int createCustomCursor(int[] iArr, int i8, int i9, int i10, int i11) {
         Bitmap bitmapCreateBitmap = Bitmap.createBitmap(iArr, i8, i9, Bitmap.Config.ARGB_8888);
         mLastCursorID++;
-        if (Build.VERSION.SDK_INT < 24) {
-            return 0;
-        }
         try {
             mCursors.put(Integer.valueOf(mLastCursorID), PointerIcon.create(bitmapCreateBitmap, i10, i11));
             return mLastCursorID;
@@ -253,11 +251,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     public static void destroyCustomCursor(int i8) {
-        if (Build.VERSION.SDK_INT >= 24) {
-            try {
-                mCursors.remove(Integer.valueOf(i8));
-            } catch (Exception unused) {
-            }
+        try {
+            mCursors.remove(Integer.valueOf(i8));
+        } catch (Exception unused) {
         }
     }
 
@@ -470,7 +466,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     public static boolean isDeXMode() {
-        if (Build.VERSION.SDK_INT < 24 || getContext() == null) {
+        if (getContext() == null) {
             return false;
         }
         try {
@@ -591,10 +587,6 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     public static void requestPermission(String str, int i8) {
-        if (Build.VERSION.SDK_INT < 23) {
-            nativePermissionResult(i8, true);
-            return;
-        }
         Activity activity = (Activity) getContext();
         if (activity.checkSelfPermission(str) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             activity.requestPermissions(new String[]{str}, i8);
@@ -616,9 +608,6 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     public static boolean setCustomCursor(int i8) {
-        if (Build.VERSION.SDK_INT < 24) {
-            return false;
-        }
         try {
             mSurface.setPointerIcon((PointerIcon) mCursors.get(Integer.valueOf(i8)));
             return true;
@@ -680,9 +669,6 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             default:
                 i9 = 0;
                 break;
-        }
-        if (Build.VERSION.SDK_INT < 24) {
-            return true;
         }
         try {
             mSurface.setPointerIcon(PointerIcon.getSystemIcon(SDL.getContext(), i9));
@@ -991,11 +977,7 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
         mCurrentOrientation = currentOrientation;
         onNativeOrientationChanged(currentOrientation);
         try {
-            if (Build.VERSION.SDK_INT < 24) {
-                mCurrentLocale = getContext().getResources().getConfiguration().locale;
-            } else {
-                mCurrentLocale = getContext().getResources().getConfiguration().getLocales().get(0);
-            }
+            mCurrentLocale = getContext().getResources().getConfiguration().getLocales().get(0);
         } catch (Exception unused) {
         }
         setContentView(mLayout);
@@ -1018,6 +1000,7 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
             mHIDDeviceManager = null;
         }
         if (mBrokenLibraries) {
+            clearActivityReferences();
             super.onDestroy();
             return;
         }
@@ -1030,7 +1013,18 @@ return getContext().getApplicationInfo().nativeLibraryDir + "/" + (libraries.len
             }
         }
         nativeQuit();
+        clearActivityReferences();
         super.onDestroy();
+    }
+
+    private void clearActivityReferences() {
+        if (mSingleton != this) return;
+        mSingleton = null;
+        mSurface = null;
+        mTextEdit = null;
+        mLayout = null;
+        mClipboardHandler = null;
+        SDL.setContext(null);
     }
 
     @Override // android.app.Activity, android.content.ComponentCallbacks

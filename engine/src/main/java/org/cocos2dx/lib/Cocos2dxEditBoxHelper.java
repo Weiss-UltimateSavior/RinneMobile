@@ -18,6 +18,13 @@ public class Cocos2dxEditBoxHelper {
         mCocos2dxActivity = (Cocos2dxActivity) Cocos2dxActivity.getContext();
     }
 
+    public static void destroy(Cocos2dxActivity activity) {
+        if (mCocos2dxActivity != activity) return;
+        mEditBoxArray.clear();
+        mFrameLayout = null;
+        mCocos2dxActivity = null;
+    }
+
     private static native void editBoxEditingChanged(int tag, String text);
     private static native void editBoxEditingDidBegin(int tag);
     private static native void editBoxEditingDidEnd(int tag, String text);
