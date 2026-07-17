@@ -22,9 +22,12 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
+    private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
+    private static final String STATE_ONS_ENCODING_INDEX = "ons_encoding_index";
     private ActivityLauncherKrkrSettingsBinding binding;
     private int selectedEngineVersionIndex;
+    private int selectedOnsEncodingIndex;
     private boolean restoreEngineVersionSelection;
 
     @Override
@@ -46,6 +49,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(STATE_ENGINE_VERSION_INDEX, selectedEngineVersionIndex);
+        outState.putInt(STATE_ONS_ENCODING_INDEX, selectedOnsEncodingIndex);
     }
 
     private void applySystemBarInsets() {
@@ -65,13 +69,19 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         binding.btnCancel.setOnClickListener(v -> finish());
         binding.btnNativeKrkr.setOnClickListener(v -> enterNativeKrkr());
         binding.engineVersionText.setOnClickListener(v -> showEngineVersionPicker());
+        binding.onsEncodingText.setOnClickListener(v -> showOnsEncodingPicker());
     }
 
     private void applyThemeTone() {
         LauncherTheme.styleSwitch(binding.krScopedSwitch);
         LauncherTheme.styleSwitch(binding.artemisScopedSwitch);
         LauncherTheme.styleSwitch(binding.onsScopedSwitch);
+        LauncherTheme.styleSwitch(binding.onsStretchSwitch);
+        LauncherTheme.styleSwitch(binding.onsCutoutSwitch);
+        LauncherTheme.styleSwitch(binding.onsDisableVideoSwitch);
+        LauncherTheme.styleSwitch(binding.onsSharpnessSwitch);
         LauncherTheme.styleSwitch(binding.tyranoScopedSwitch);
+        LauncherTheme.formInputs(binding.onsSharpnessValueInput);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.longActionButton(binding.btnNativeKrkr);
         LauncherTheme.longActionButton(binding.btnSave);
@@ -89,7 +99,18 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
                 ? savedInstanceState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.krScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         binding.artemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
-        binding.onsScopedSwitch.setChecked(OnsSettings.load(this).scopedSaveDir);
+        OnsSettings onsSettings = OnsSettings.load(this);
+        binding.onsScopedSwitch.setChecked(onsSettings.scopedSaveDir);
+        binding.onsStretchSwitch.setChecked(onsSettings.stretchFull);
+        binding.onsCutoutSwitch.setChecked(onsSettings.ignoreCutout);
+        binding.onsDisableVideoSwitch.setChecked(onsSettings.disableVideo);
+        binding.onsSharpnessSwitch.setChecked(onsSettings.sharpness);
+        binding.onsSharpnessValueInput.setText(onsSettings.sharpnessValue);
+        int onsEncodingIndex = onsEncodingIndex(onsSettings.encoding);
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_ONS_ENCODING_INDEX)) {
+            onsEncodingIndex = savedInstanceState.getInt(STATE_ONS_ENCODING_INDEX, onsEncodingIndex);
+        }
+        setOnsEncodingSelection(onsEncodingIndex);
         binding.tyranoScopedSwitch.setChecked(LauncherKrkrBridge.isTyranoScopedSaveDir(this));
     }
 
@@ -104,6 +125,12 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         LauncherKrkrBridge.setArtemisScopedSaveDir(this, binding.artemisScopedSwitch.isChecked());
         OnsSettings onsSettings = OnsSettings.load(this);
         onsSettings.scopedSaveDir = binding.onsScopedSwitch.isChecked();
+        onsSettings.stretchFull = binding.onsStretchSwitch.isChecked();
+        onsSettings.ignoreCutout = binding.onsCutoutSwitch.isChecked();
+        onsSettings.disableVideo = binding.onsDisableVideoSwitch.isChecked();
+        onsSettings.sharpness = binding.onsSharpnessSwitch.isChecked();
+        onsSettings.sharpnessValue = binding.onsSharpnessValueInput.getText().toString().trim();
+        onsSettings.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex];
         onsSettings.save(this);
         LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.tyranoScopedSwitch.isChecked());
 
@@ -119,6 +146,24 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     private void setEngineVersionSelection(int index) {
         selectedEngineVersionIndex = index >= 0 && index < ENGINE_VERSION_LABELS.length ? index : 0;
         binding.engineVersionText.setText(ENGINE_VERSION_LABELS[selectedEngineVersionIndex]);
+    }
+
+    private void showOnsEncodingPicker() {
+        com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "ONS 文本编码",
+                ONS_ENCODING_LABELS, selectedOnsEncodingIndex, this::setOnsEncodingSelection);
+    }
+
+    private void setOnsEncodingSelection(int index) {
+        selectedOnsEncodingIndex = index >= 0 && index < ONS_ENCODING_LABELS.length ? index : 0;
+        binding.onsEncodingText.setText(ONS_ENCODING_LABELS[selectedOnsEncodingIndex]);
+    }
+
+    private static int onsEncodingIndex(String encoding) {
+        String normalized = OnsSettings.normalizeEncoding(encoding);
+        for (int i = 0; i < ONS_ENCODING_LABELS.length; i++) {
+            if (ONS_ENCODING_LABELS[i].equals(normalized)) return i;
+        }
+        return 0;
     }
 
     private void enterNativeKrkr() {

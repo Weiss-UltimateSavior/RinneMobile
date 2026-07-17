@@ -45,11 +45,13 @@ public class PadSettingsActivity extends AppCompatActivity {
     private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
     private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
     private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
+    private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String[] METADATA_SOURCE_LABELS = {
             "VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"
     };
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
+    private static final String STATE_ONS_ENCODING_INDEX = "ons_encoding_index";
 
     private ActivityPadSettingsBinding binding;
     private Section currentSection = Section.GENERAL;
@@ -58,6 +60,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private boolean emailSubscriptionUpdating;
     private int selectedEngineVersionIndex;
     private int selectedMetadataSourceIndex;
+    private int selectedOnsEncodingIndex;
     private Bundle restoredState;
 
     @Override
@@ -88,6 +91,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putInt(STATE_ENGINE_VERSION_INDEX, selectedEngineVersionIndex);
         outState.putInt(STATE_METADATA_SOURCE_INDEX, selectedMetadataSourceIndex);
+        outState.putInt(STATE_ONS_ENCODING_INDEX, selectedOnsEncodingIndex);
     }
 
     @Override
@@ -121,6 +125,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padMetadataCancelButton.setOnClickListener(view -> finish());
         binding.padMetadataTokenLink.setOnClickListener(view -> openMetadataTokenUrl());
         binding.padEngineVersionText.setOnClickListener(view -> showEngineVersionPicker());
+        binding.padOnsEncodingText.setOnClickListener(view -> showOnsEncodingPicker());
         binding.padMetadataSourceText.setOnClickListener(view -> showMetadataSourcePicker());
         binding.padRowSyncConfig.setOnClickListener(view -> onSyncConfigClick());
         binding.padRowRealtimePlaytime.setOnClickListener(view -> onRealtimePlaytimeClick());
@@ -140,7 +145,18 @@ public class PadSettingsActivity extends AppCompatActivity {
                 ? restoredState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.padKrScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         binding.padArtemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
-        binding.padOnsScopedSwitch.setChecked(OnsSettings.load(this).scopedSaveDir);
+        OnsSettings onsSettings = OnsSettings.load(this);
+        binding.padOnsScopedSwitch.setChecked(onsSettings.scopedSaveDir);
+        binding.padOnsStretchSwitch.setChecked(onsSettings.stretchFull);
+        binding.padOnsCutoutSwitch.setChecked(onsSettings.ignoreCutout);
+        binding.padOnsDisableVideoSwitch.setChecked(onsSettings.disableVideo);
+        binding.padOnsSharpnessSwitch.setChecked(onsSettings.sharpness);
+        binding.padOnsSharpnessValueInput.setText(onsSettings.sharpnessValue);
+        int onsEncodingIndex = onsEncodingIndex(onsSettings.encoding);
+        if (restoredState != null && restoredState.containsKey(STATE_ONS_ENCODING_INDEX)) {
+            onsEncodingIndex = restoredState.getInt(STATE_ONS_ENCODING_INDEX, onsEncodingIndex);
+        }
+        setOnsEncodingSelection(onsEncodingIndex);
         binding.padTyranoScopedSwitch.setChecked(LauncherKrkrBridge.isTyranoScopedSaveDir(this));
     }
 
@@ -167,6 +183,24 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void setEngineVersionSelection(int index) {
         selectedEngineVersionIndex = index >= 0 && index < ENGINE_VERSION_LABELS.length ? index : 0;
         binding.padEngineVersionText.setText(ENGINE_VERSION_LABELS[selectedEngineVersionIndex]);
+    }
+
+    private void showOnsEncodingPicker() {
+        PadDialogFactory.showSingleChoice(this, "ONS 文本编码", ONS_ENCODING_LABELS,
+                selectedOnsEncodingIndex, this::setOnsEncodingSelection);
+    }
+
+    private void setOnsEncodingSelection(int index) {
+        selectedOnsEncodingIndex = index >= 0 && index < ONS_ENCODING_LABELS.length ? index : 0;
+        binding.padOnsEncodingText.setText(ONS_ENCODING_LABELS[selectedOnsEncodingIndex]);
+    }
+
+    private static int onsEncodingIndex(String encoding) {
+        String normalized = OnsSettings.normalizeEncoding(encoding);
+        for (int i = 0; i < ONS_ENCODING_LABELS.length; i++) {
+            if (ONS_ENCODING_LABELS[i].equals(normalized)) return i;
+        }
+        return 0;
     }
 
     private void showMetadataSourcePicker() {
@@ -279,7 +313,12 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleSwitch(binding.padKrScopedSwitch);
         LauncherTheme.styleSwitch(binding.padArtemisScopedSwitch);
         LauncherTheme.styleSwitch(binding.padOnsScopedSwitch);
+        LauncherTheme.styleSwitch(binding.padOnsStretchSwitch);
+        LauncherTheme.styleSwitch(binding.padOnsCutoutSwitch);
+        LauncherTheme.styleSwitch(binding.padOnsDisableVideoSwitch);
+        LauncherTheme.styleSwitch(binding.padOnsSharpnessSwitch);
         LauncherTheme.styleSwitch(binding.padTyranoScopedSwitch);
+        LauncherTheme.formInputs(binding.padOnsSharpnessValueInput);
         PadDialogFactory.secondaryInlineAction(binding.padNativeKrkrButton);
         PadDialogFactory.secondaryInlineAction(binding.padKrkrCancelButton);
         PadDialogFactory.primaryInlineAction(binding.padKrkrSaveButton);
@@ -459,6 +498,12 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherKrkrBridge.setArtemisScopedSaveDir(this, binding.padArtemisScopedSwitch.isChecked());
         OnsSettings onsSettings = OnsSettings.load(this);
         onsSettings.scopedSaveDir = binding.padOnsScopedSwitch.isChecked();
+        onsSettings.stretchFull = binding.padOnsStretchSwitch.isChecked();
+        onsSettings.ignoreCutout = binding.padOnsCutoutSwitch.isChecked();
+        onsSettings.disableVideo = binding.padOnsDisableVideoSwitch.isChecked();
+        onsSettings.sharpness = binding.padOnsSharpnessSwitch.isChecked();
+        onsSettings.sharpnessValue = binding.padOnsSharpnessValueInput.getText().toString().trim();
+        onsSettings.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex];
         onsSettings.save(this);
         LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.padTyranoScopedSwitch.isChecked());
         Toast.makeText(this, "引擎设置已保存："

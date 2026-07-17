@@ -36,9 +36,16 @@ public final class OnsSettings {
             SharedPreferences sp = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
             String json = sp.getString(EXTRA_GAME_ARGS, null);
             if (json != null && !json.trim().isEmpty()) settings.readJson(new JSONObject(json));
-            if (!sp.getBoolean(KEY_ENCODING_MIGRATED_GBK, false) && "sjis".equals(settings.encoding)) {
-                settings.encoding = "gbk";
-                sp.edit().putBoolean(KEY_ENCODING_MIGRATED_GBK, true).putString(EXTRA_GAME_ARGS, settings.toJson().toString()).apply();
+            // 一次性 migration：仅在从旧版本升级且当前为默认 sjis 时回退到 gbk。
+            // 全新安装（EXTRA_GAME_ARGS 缺失）不触发，避免覆盖用户主动选择的 sjis。
+            if (!sp.getBoolean(KEY_ENCODING_MIGRATED_GBK, false)) {
+                boolean isUpgradeFromLegacy = sp.contains(EXTRA_GAME_ARGS);
+                SharedPreferences.Editor editor = sp.edit().putBoolean(KEY_ENCODING_MIGRATED_GBK, true);
+                if (isUpgradeFromLegacy && "sjis".equals(settings.encoding)) {
+                    settings.encoding = "gbk";
+                    editor.putString(EXTRA_GAME_ARGS, settings.toJson().toString());
+                }
+                editor.apply();
             }
         } catch (Throwable t) {
             Log.w(TAG, "load failed", t);
@@ -146,8 +153,17 @@ public final class OnsSettings {
     }
 
     private String safeSharpness() {
-        String v = sharpnessValue == null ? "2" : sharpnessValue.trim();
-        return v.isEmpty() ? "2" : v;
+        String v = sharpnessValue == null ? "" : sharpnessValue.trim();
+        if (v.isEmpty()) return "2";
+        try {
+            double parsed = Double.parseDouble(v);
+            if (Double.isNaN(parsed) || Double.isInfinite(parsed)) return "2";
+            // 锐化值的有效范围：0.1 ~ 10.0，超出范围或格式非法时回退默认 "2"。
+            if (parsed < 0.1 || parsed > 10.0) return "2";
+            return v;
+        } catch (NumberFormatException e) {
+            return "2";
+        }
     }
 
     public static String normalizeEncoding(String value) {
