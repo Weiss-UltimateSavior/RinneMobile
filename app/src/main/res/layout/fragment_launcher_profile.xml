@@ -49,9 +49,9 @@
                     android:clickable="true"
                     android:contentDescription="更换封面"
                     android:focusable="true"
-                    android:padding="10dp"
+                    android:padding="5dp"
                     android:scaleType="centerInside"
-                    android:src="@drawable/launcher_icon_edit" />
+                    android:src="@drawable/launcher_profile_top_star" />
 
 
 
