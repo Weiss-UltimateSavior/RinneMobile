@@ -16,7 +16,7 @@
     <dimen name="launcher_home_state_title_margin_top">2dp</dimen>
     <dimen name="launcher_home_state_title_text_size">22sp</dimen>
     <dimen name="launcher_home_menu_size">40dp</dimen>
-    <dimen name="launcher_home_menu_padding">10dp</dimen>
+    <dimen name="launcher_home_menu_padding">7.5dp</dimen>
 
     <dimen name="launcher_home_stats_card_height">153dp</dimen>
     <dimen name="launcher_home_stats_card_margin_top">22dp</dimen>
@@ -33,7 +33,7 @@
     <dimen name="launcher_home_action_half_gap">4dp</dimen>
     <dimen name="launcher_home_action_row_gap">7dp</dimen>
     <dimen name="launcher_home_action_horizontal_padding">13dp</dimen>
-    <dimen name="launcher_home_action_icon_size">16dp</dimen>
+    <dimen name="launcher_home_action_icon_size">24dp</dimen>
     <dimen name="launcher_home_action_text_gap">7dp</dimen>
     <dimen name="launcher_home_action_text_size">13sp</dimen>
 

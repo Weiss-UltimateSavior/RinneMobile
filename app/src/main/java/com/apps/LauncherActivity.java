@@ -94,6 +94,10 @@ public class LauncherActivity extends AppCompatActivity {
         requestStoragePermissionIfNeeded();
         bindActions();
         observeState();
+        // onResume may already have run while the splash screen was visible. Load the
+        // complete state here so a process/activity recreation cannot leave the home
+        // stats card displaying LauncherState's default zero values until pull-to-refresh.
+        viewModel.refresh();
         scheduleAutoUpdateCheck();
         openAccountLoginIfRequested(getIntent());
     }
