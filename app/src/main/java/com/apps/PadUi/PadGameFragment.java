@@ -161,6 +161,21 @@ public class PadGameFragment extends Fragment {
                                     intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, target.id);
                                     startActivity(intent);
                                 }
+
+                                @Override
+                                public void updateGame(Game updated) {
+                                    updateGameInPlace(updated);
+                                }
+
+                                @Override
+                                public void removeGame(long gameId) {
+                                    removeGameInPlace(gameId);
+                                }
+
+                                @Override
+                                public void reloadGame(long gameId) {
+                                    reloadGameInPlace(gameId);
+                                }
                             });
                 }
             }
@@ -406,6 +421,64 @@ public class PadGameFragment extends Fragment {
                 dataLoaded = true;
                 binding.padGameLoading.setVisibility(View.GONE);
                 applySearch();
+            });
+        });
+    }
+
+    /**
+     * Updates a single game in-place across allGames/filteredGames without resetting currentPage.
+     * Used by long-press dialog actions (status, play time, favorite, cover sync, metadata rematch).
+     * renderPage() walks DiffUtil so only the changed card is rebound; horizontal page index is preserved.
+     */
+    private void updateGameInPlace(Game updated) {
+        if (updated == null || binding == null) return;
+        for (int i = 0; i < allGames.size(); i++) {
+            Game g = allGames.get(i);
+            if (g != null && g.id == updated.id) {
+                allGames.set(i, updated);
+                break;
+            }
+        }
+        for (int i = 0; i < filteredGames.size(); i++) {
+            Game g = filteredGames.get(i);
+            if (g != null && g.id == updated.id) {
+                filteredGames.set(i, updated);
+                break;
+            }
+        }
+        renderPage();
+    }
+
+    /** Removes a single game by id without resetting currentPage. */
+    private void removeGameInPlace(long gameId) {
+        if (binding == null) return;
+        for (int i = 0; i < allGames.size(); i++) {
+            Game g = allGames.get(i);
+            if (g != null && g.id == gameId) {
+                allGames.remove(i);
+                break;
+            }
+        }
+        for (int i = 0; i < filteredGames.size(); i++) {
+            Game g = filteredGames.get(i);
+            if (g != null && g.id == gameId) {
+                filteredGames.remove(i);
+                break;
+            }
+        }
+        renderPage();
+    }
+
+    /** Re-fetches a single game from DB and updates it in-place, for async metadata operations. */
+    private void reloadGameInPlace(long gameId) {
+        AppExecutors.io().execute(() -> {
+            Game updated = null;
+            try {
+                updated = LauncherRepositoryBridge.findGameById(requireContext(), gameId);
+            } catch (Throwable ignored) {}
+            final Game result = updated;
+            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+                if (result != null) updateGameInPlace(result);
             });
         });
     }

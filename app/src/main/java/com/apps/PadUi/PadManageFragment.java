@@ -397,6 +397,60 @@ private void applyFilters(boolean forceFullRefresh) {
     renderState();
 }
 
+/**
+ * Updates a single game in-place without reloading the entire list, preserving scroll position.
+ * Used by long-press dialog actions (status, play time, favorite, cover sync, metadata rematch).
+ * DiffUtil detects only the changed card and dispatches a single notifyItemChanged.
+ */
+private void updateSingleGame(Game updated) {
+    if (updated == null || binding == null) return;
+    for (int i = 0; i < allGames.size(); i++) {
+        Game g = allGames.get(i);
+        if (g != null && g.id == updated.id) {
+            allGames.set(i, updated);
+            break;
+        }
+    }
+    libraryState.updateGame(updated, (game, query, category) -> {
+        String normalized = query.trim().toLowerCase(Locale.ROOT);
+        return (normalized.isEmpty() || safeTitle(game).toLowerCase(Locale.ROOT).contains(normalized))
+                && (category.trim().isEmpty() || matchesCategory(game, category));
+    });
+    syncLibraryLists();
+    if (adapter != null) adapter.submit(new ArrayList<>(visibleGames));
+    renderState();
+}
+
+/** Removes a single game by id without reloading the entire list, preserving scroll position. */
+private void removeSingleGame(long gameId) {
+    if (binding == null) return;
+    for (int i = 0; i < allGames.size(); i++) {
+        Game g = allGames.get(i);
+        if (g != null && g.id == gameId) {
+            allGames.remove(i);
+            break;
+        }
+    }
+    libraryState.removeGame(gameId);
+    syncLibraryLists();
+    if (adapter != null) adapter.submit(new ArrayList<>(visibleGames));
+    renderState();
+}
+
+/** Re-fetches a single game from DB and updates it in-place, for async metadata operations. */
+private void reloadSingleGame(long gameId) {
+    AppExecutors.io().execute(() -> {
+        Game updated = null;
+        try {
+            updated = LauncherRepositoryBridge.findGameById(requireContext(), gameId);
+        } catch (Throwable ignored) {}
+        final Game result = updated;
+        if (getActivity() != null) getActivity().runOnUiThread(() -> {
+            if (result != null) updateSingleGame(result);
+        });
+    });
+}
+
 private void loadNextPage() {
     loadNextPage(false);
 }
@@ -683,16 +737,18 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void updateGameStatus(Game game, String status) {
         AppExecutors.io().execute(() -> {
+            Game updated = null;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
                 if (latest != null) {
                     latest.playStatus = status;
                     LauncherRepositoryBridge.updateGame(requireContext(), latest);
+                    updated = latest;
                 }
             } catch (Throwable ignored) {}
+            final Game result = updated;
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                needsRefresh = true;
-                loadGames();
+                if (result != null) updateSingleGame(result);
             });
         });
     }
@@ -848,17 +904,22 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void updatePlayTime(Game game, Long totalMinutes, Long addMinutes) {
         AppExecutors.io().execute(() -> {
+            Game updated = null;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
-                if (latest == null) return;
-                long finalDuration = latest.totalPlayTime;
-                if (totalMinutes != null) finalDuration = totalMinutes * 60_000L;
-                if (addMinutes != null) finalDuration += addMinutes * 60_000L;
-                LauncherRepositoryBridge.setManualPlayTimeForGame(requireContext(), latest.id, Math.max(0, finalDuration));
+                if (latest != null) {
+                    long finalDuration = latest.totalPlayTime;
+                    if (totalMinutes != null) finalDuration = totalMinutes * 60_000L;
+                    if (addMinutes != null) finalDuration += addMinutes * 60_000L;
+                    long clamped = Math.max(0, finalDuration);
+                    LauncherRepositoryBridge.setManualPlayTimeForGame(requireContext(), latest.id, clamped);
+                    latest.totalPlayTime = clamped;
+                    updated = latest;
+                }
             } catch (Throwable ignored) {}
+            final Game result = updated;
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                needsRefresh = true;
-                loadGames();
+                if (result != null) updateSingleGame(result);
             });
         });
     }
@@ -901,7 +962,7 @@ private void loadNextPage(boolean forceFullRefresh) {
             switch (index) {
                 case 0: toggleFavorite(game); break;
                 case 1: rematchMetadata(game); break;
-                case 2: LauncherCustomVndbSearchDialog.show(this, game, this::loadGames); break;
+                case 2: LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id)); break;
                 case 3: syncMetadataToCard(game); break;
                 case 4: confirmDeleteGame(game); break;
             }
@@ -910,16 +971,18 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void toggleFavorite(Game game) {
         AppExecutors.io().execute(() -> {
+            Game updated = null;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
                 if (latest != null) {
                     latest.favorite = !latest.favorite;
                     LauncherRepositoryBridge.updateGame(requireContext(), latest);
+                    updated = latest;
                 }
             } catch (Throwable ignored) {}
+            final Game result = updated;
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                needsRefresh = true;
-                loadGames();
+                if (result != null) updateSingleGame(result);
             });
         });
     }
@@ -936,7 +999,7 @@ private void loadNextPage(boolean forceFullRefresh) {
                 LauncherRepositoryBridge.deleteGame(requireContext(), game.id);
             } catch (Throwable ignored) {}
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                loadGames();
+                removeSingleGame(game.id);
                 Toast.makeText(requireContext(), "已删除", Toast.LENGTH_SHORT).show();
             });
         });
@@ -1145,7 +1208,7 @@ mainQueue.post(() -> {
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
                 Toast.makeText(requireContext(), success ? "元数据已更新" : "未找到匹配的元数据", Toast.LENGTH_SHORT).show();
-                if (success) loadGames();
+                if (success) reloadSingleGame(game.id);
             });
         });
     }
@@ -1156,7 +1219,7 @@ mainQueue.post(() -> {
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
                 Toast.makeText(requireContext(), success ? "封面已同步" : "无可用封面", Toast.LENGTH_SHORT).show();
-                if (success) loadGames();
+                if (success) reloadSingleGame(game.id);
             });
         });
     }

@@ -43,6 +43,13 @@ public final class LauncherGameActionController {
     public interface Host {
         void refreshGames();
         void editGame(Game game);
+
+        /** Update a single game in-place without resetting list position. Default falls back to full refresh. */
+        default void updateGame(Game updated) { refreshGames(); }
+        /** Remove a single game by id without resetting list position. Default falls back to full refresh. */
+        default void removeGame(long gameId) { refreshGames(); }
+        /** Re-fetch a single game from DB and update in-place. Default falls back to full refresh. */
+        default void reloadGame(long gameId) { refreshGames(); }
     }
 
     private final Fragment fragment;
@@ -194,16 +201,27 @@ public final class LauncherGameActionController {
     private void updatePlayTime(Game game, Long totalMinutes, Long addMinutes) {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
+            Game updated = null;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(app, game.id);
                 if (latest != null) {
                     long duration = latest.totalPlayTime;
                     if (totalMinutes != null) duration = totalMinutes * 60_000L;
                     if (addMinutes != null) duration += addMinutes * 60_000L;
-                    LauncherRepositoryBridge.setManualPlayTimeForGame(app, latest.id, Math.max(0L, duration));
+                    long clamped = Math.max(0L, duration);
+                    LauncherRepositoryBridge.setManualPlayTimeForGame(app, latest.id, clamped);
+                    latest.totalPlayTime = clamped;
+                    updated = latest;
                 }
             } catch (Throwable ignored) { }
-            postRefresh(null);
+            final Game result = updated;
+            Activity activity = fragment.getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!fragment.isAdded()) return;
+                if (result != null) host.updateGame(result);
+                else host.refreshGames();
+            });
         });
     }
 
@@ -234,7 +252,7 @@ public final class LauncherGameActionController {
         addMoreOption(root, dialog, "重新匹配 VNDB 元数据", false,
                 () -> rematchMetadata(game));
         addMoreOption(root, dialog, "自定义搜索 VNDB", false,
-                () -> LauncherCustomVndbSearchDialog.show(fragment, game, host::refreshGames));
+                () -> LauncherCustomVndbSearchDialog.show(fragment, game, () -> host.reloadGame(game.id)));
         addMoreOption(root, dialog, "同步元数据封面到卡片", false,
                 () -> syncMetadataToCard(game));
         addMoreOption(root, dialog, "删除游戏", true, () -> confirmDeleteGame(game));
@@ -266,14 +284,28 @@ public final class LauncherGameActionController {
 
     private void rematchMetadata(Game game) {
         Toast.makeText(context(), "正在搜索 VNDB...", Toast.LENGTH_SHORT).show();
-        LauncherMetadataBridge.fetchAndSaveMetadataAsync(context(), game, success ->
-                postRefresh(success ? "元数据已更新" : "未找到匹配的元数据", success));
+        LauncherMetadataBridge.fetchAndSaveMetadataAsync(context(), game, success -> {
+            Activity activity = fragment.getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!fragment.isAdded()) return;
+                Toast.makeText(context(), success ? "元数据已更新" : "未找到匹配的元数据", Toast.LENGTH_SHORT).show();
+                if (success) host.reloadGame(game.id);
+            });
+        });
     }
 
     private void syncMetadataToCard(Game game) {
         Toast.makeText(context(), "正在同步封面...", Toast.LENGTH_SHORT).show();
-        LauncherMetadataBridge.syncCoverToGameAsync(context(), game, success ->
-                postRefresh(success ? "封面已同步" : "无可用封面", success));
+        LauncherMetadataBridge.syncCoverToGameAsync(context(), game, success -> {
+            Activity activity = fragment.getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!fragment.isAdded()) return;
+                Toast.makeText(context(), success ? "封面已同步" : "无可用封面", Toast.LENGTH_SHORT).show();
+                if (success) host.reloadGame(game.id);
+            });
+        });
     }
 
     private void confirmDeleteGame(Game game) {
@@ -311,7 +343,13 @@ public final class LauncherGameActionController {
             try {
                 LauncherRepositoryBridge.deleteGame(app, game.id);
             } catch (Throwable ignored) { }
-            postRefresh("已删除");
+            Activity activity = fragment.getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!fragment.isAdded()) return;
+                Toast.makeText(context(), "已删除", Toast.LENGTH_SHORT).show();
+                host.removeGame(game.id);
+            });
         });
     }
 
@@ -322,28 +360,24 @@ public final class LauncherGameActionController {
     private void runGameUpdate(Game game, GameMutation mutation, String message) {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
+            Game updated = null;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(app, game.id);
                 if (latest != null) {
                     mutation.apply(latest);
                     LauncherRepositoryBridge.updateGame(app, latest);
+                    updated = latest;
                 }
             } catch (Throwable ignored) { }
-            postRefresh(message);
-        });
-    }
-
-    private void postRefresh(String message) {
-        postRefresh(message, true);
-    }
-
-    private void postRefresh(String message, boolean refresh) {
-        Activity activity = fragment.getActivity();
-        if (activity == null) return;
-        activity.runOnUiThread(() -> {
-            if (!fragment.isAdded()) return;
-            if (message != null) Toast.makeText(context(), message, Toast.LENGTH_SHORT).show();
-            if (refresh) host.refreshGames();
+            final Game result = updated;
+            Activity activity = fragment.getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!fragment.isAdded()) return;
+                if (message != null) Toast.makeText(context(), message, Toast.LENGTH_SHORT).show();
+                if (result != null) host.updateGame(result);
+                else host.refreshGames();
+            });
         });
     }
 
