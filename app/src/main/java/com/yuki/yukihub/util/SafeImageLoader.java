@@ -23,11 +23,13 @@ public final class SafeImageLoader {
         imageView.setImageDrawable(null);
         if (uriText == null || uriText.trim().isEmpty()) return false;
         final android.content.Context context = imageView.getContext().getApplicationContext();
+        final int requestedWidth = imageView.getWidth();
+        final int requestedHeight = imageView.getHeight();
         final Uri uri;
         try { uri = Uri.parse(uriText.trim()); }
         catch (Throwable ignored) { return false; }
         AppExecutors.runOnIo(() -> {
-            Bitmap bitmap = decodeSampled(context, uri, imageView.getWidth(), imageView.getHeight());
+            Bitmap bitmap = decodeSampled(context, uri, requestedWidth, requestedHeight);
             RxMainScheduler.post(() -> {
                 boolean current;
                 synchronized (ACTIVE_REQUESTS) {

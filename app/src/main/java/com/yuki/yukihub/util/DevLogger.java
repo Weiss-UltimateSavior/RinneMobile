@@ -33,18 +33,21 @@ public final class DevLogger {
 
     public static boolean isEnabled() { return enabled; }
 
-    public static synchronized void setEnabled(Context ctx, boolean on) {
+    public static void setEnabled(Context ctx, boolean on) {
         if (ctx == null) return;
         enabled = on;
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, on).apply();
         if (on) startCapture(); else stopCapture();
     }
 
-    private static synchronized void startCapture() {
-        stopCaptureLocked();
-        if (!enabled || logcatFile == null) return;
-        final long generation = ++captureGeneration;
-        captureThread = new Thread(() -> {
+    private static void startCapture() {
+        final Thread previous;
+        final Thread next;
+        synchronized (DevLogger.class) {
+            previous = stopCaptureLocked();
+            if (!enabled || logcatFile == null) return;
+            final long generation = ++captureGeneration;
+            next = new Thread(() -> {
             Process localProcess = null;
             BufferedReader reader = null;
             FileWriter writer = null;
@@ -89,17 +92,28 @@ public final class DevLogger {
                     if (captureThread == Thread.currentThread()) captureThread = null;
                 }
             }
-        }, "LogcatCapture");
-        captureThread.start();
+            }, "LogcatCapture");
+            captureThread = next;
+        }
+        awaitCaptureStop(previous);
+        synchronized (DevLogger.class) {
+            if (captureThread != next || !enabled) return;
+            next.start();
+        }
         Log.i(TAG, "Logcat capture started");
     }
 
-    private static synchronized void stopCapture() {
-        stopCaptureLocked();
+    private static void stopCapture() {
+        Thread previous;
+        synchronized (DevLogger.class) {
+            previous = stopCaptureLocked();
+        }
+        awaitCaptureStop(previous);
     }
 
-    private static void stopCaptureLocked() {
+    private static Thread stopCaptureLocked() {
         captureGeneration++;
+        Thread previous = captureThread;
         if (process != null) {
             process.destroy();
             process = null;
@@ -107,6 +121,16 @@ public final class DevLogger {
         if (captureThread != null) {
             captureThread.interrupt();
             captureThread = null;
+        }
+        return previous;
+    }
+
+    private static void awaitCaptureStop(Thread thread) {
+        if (thread == null || thread == Thread.currentThread()) return;
+        try {
+            thread.join(1500L);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
         }
     }
 

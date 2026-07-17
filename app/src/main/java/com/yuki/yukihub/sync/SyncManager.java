@@ -331,8 +331,10 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
         MetadataRepository metaRepo = new MetadataRepository(context);
         YukiDatabaseHelper helper = new YukiDatabaseHelper(context);
         SQLiteDatabase db = helper.getWritableDatabase();
-        db.beginTransaction();
+        boolean transactionStarted = false;
         try {
+            db.beginTransaction();
+            transactionStarted = true;
             for (JSONObject root : roots) {
                 applySnapshotPreferences(root, prefsEditor);
                 gameRepo.importGamesJson(db, root.optJSONArray("games"));
@@ -341,8 +343,11 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
             }
             db.setTransactionSuccessful();
         } finally {
-            db.endTransaction();
-            helper.close();
+            try {
+                if (transactionStarted) db.endTransaction();
+            } finally {
+                helper.close();
+            }
         }
         // 偏好设置在数据库完整提交后一次性落盘，失败的数据库导入不会污染配置。
         if (!prefsEditor.commit()) throw new Exception("同步设置保存失败");

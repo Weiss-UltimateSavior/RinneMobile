@@ -66,7 +66,7 @@ public class AsarArchive implements Closeable {
         }
         this.raf = opened;
         this.dataOffset = parsedDataOffset;
-        Log.i(TAG, "asar loaded file=" + this.archiveFile + " entries=" + entries.size() + " dataOffset=" + dataOffset);
+        logInfo("asar loaded file=" + this.archiveFile + " entries=" + entries.size() + " dataOffset=" + dataOffset);
     }
 
     public boolean has(String path) {
@@ -117,6 +117,10 @@ public class AsarArchive implements Closeable {
 
     public String getArchiveName() {
         return archiveFile == null ? "" : archiveFile.getName();
+    }
+
+    private static void logInfo(String message) {
+        try { Log.i(TAG, message); } catch (RuntimeException ignored) { }
     }
 
     private void parseNode(String prefix, JSONObject node) throws Exception {
