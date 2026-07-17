@@ -6,13 +6,15 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -40,6 +42,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TyranoActivity extends Activity {
     @Override
@@ -57,6 +63,8 @@ public class TyranoActivity extends Activity {
     private AsarArchive asarArchive;
     private boolean firstResume = true;
     private LocalHttpServer localServer;
+    private final AtomicBoolean processExitScheduled = new AtomicBoolean(false);
+    private static final long MAX_SAVE_BYTES = 8L * 1024L * 1024L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,38 +163,86 @@ public class TyranoActivity extends Activity {
         w.setHorizontalScrollBarEnabled(false);
         w.setVerticalScrollBarEnabled(false);
         try { w.clearCache(true); } catch (Throwable ignored) { }
-        try { w.setLayerType(2, null); } catch (Throwable ignored) { }
+        try { w.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null); } catch (Throwable ignored) { }
         w.setBackgroundColor(Color.BLACK);
         w.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return handleSpecialScheme(view, request == null ? null : request.getUrl() == null ? null : request.getUrl().toString());
+                String url = request == null || request.getUrl() == null ? null : request.getUrl().toString();
+                return handleNavigation(url, request == null || request.isForMainFrame());
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return handleSpecialScheme(view, url);
+                return handleNavigation(url, true);
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri uri = request == null ? null : request.getUrl();
+                return uri == null || isAllowedGameResource(uri) ? null : blockedResponse();
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+                Uri uri = url == null ? null : Uri.parse(url);
+                return uri == null || isAllowedGameResource(uri) ? null : blockedResponse();
             }
         });
         w.setWebChromeClient(new WebChromeClient());
         WebSettings s = w.getSettings();
         s.setUserAgentString(s.getUserAgentString() + ";tyranoplayer-android-1.0;yukihub-internal-tyrano");
         s.setJavaScriptEnabled(true);
-        s.setAllowContentAccess(true);
-        s.setAllowFileAccess(true);
-        s.setAllowFileAccessFromFileURLs(true);
-        s.setAllowUniversalAccessFromFileURLs(true);
+        s.setAllowContentAccess(false);
+        s.setAllowFileAccess(false);
+        s.setAllowFileAccessFromFileURLs(false);
+        s.setAllowUniversalAccessFromFileURLs(false);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        try { s.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN); } catch (Throwable ignored) { }
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(true);
-        s.setJavaScriptCanOpenWindowsAutomatically(true);
+        s.setJavaScriptCanOpenWindowsAutomatically(false);
         s.setLoadsImagesAutomatically(true);
         s.setBlockNetworkImage(false);
         s.setMediaPlaybackRequiresUserGesture(false);
-        if (Build.VERSION.SDK_INT >= 21) s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        try { s.setRenderPriority(WebSettings.RenderPriority.HIGH); } catch (Throwable ignored) { }
+        if (Build.VERSION.SDK_INT >= 21) s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+    }
+
+    private boolean handleNavigation(String url, boolean mainFrame) {
+        if (url == null) return true;
+        if (handleSpecialScheme(webView, url)) return true;
+        Uri uri;
+        try { uri = Uri.parse(url); } catch (Throwable ignored) { return true; }
+        if (isLocalGameUri(uri)) return false;
+        if (mainFrame) openExternalHttpUrl(uri);
+        return true;
+    }
+
+    private boolean isLocalGameUri(Uri uri) {
+        if (uri == null || localServer == null || !"http".equalsIgnoreCase(uri.getScheme())) return false;
+        String host = uri.getHost();
+        return ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host))
+                && uri.getPort() == localServer.getPort();
+    }
+
+    private boolean isAllowedGameResource(Uri uri) {
+        if (isLocalGameUri(uri)) return true;
+        String scheme = uri == null ? null : uri.getScheme();
+        return "data".equalsIgnoreCase(scheme) || "blob".equalsIgnoreCase(scheme)
+                || "about".equalsIgnoreCase(scheme);
+    }
+
+    private WebResourceResponse blockedResponse() {
+        return new WebResourceResponse("text/plain", "UTF-8",
+                new java.io.ByteArrayInputStream(new byte[0]));
+    }
+
+    private void openExternalHttpUrl(Uri uri) {
+        if (uri == null) return;
+        String scheme = uri.getScheme();
+        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) return;
+        try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
+        catch (Throwable error) { Log.w(TAG, "open external URL failed: " + uri, error); }
     }
 
     private String resolveGameDir(Intent intent) {
@@ -243,7 +299,7 @@ public class TyranoActivity extends Activity {
                 if (target == null || target.trim().isEmpty()) target = url.substring("tyranoplayer-web://".length());
                 target = Uri.decode(target);
                 if (target != null && !target.trim().isEmpty()) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(target.trim())));
+                    openExternalHttpUrl(Uri.parse(target.trim()));
                 }
                 return true;
             }
@@ -261,10 +317,11 @@ public class TyranoActivity extends Activity {
         try {
             String key = queryParam(url, "key");
             String data = queryParam(url, "data");
-            if (key == null || key.trim().isEmpty()) return;
-            FileOutputStream out = new FileOutputStream(new File(saveDirectory, key + ".sav"));
-            if (data != null) out.write(data.getBytes(StandardCharsets.UTF_8));
-            out.close();
+            File target = resolveStorageFile(saveDirectory, key);
+            if (target == null) return;
+            byte[] bytes = data == null ? new byte[0] : data.getBytes(StandardCharsets.UTF_8);
+            if (bytes.length > MAX_SAVE_BYTES) throw new IllegalArgumentException("save data too large");
+            try (FileOutputStream out = new FileOutputStream(target)) { out.write(bytes); }
         } catch (Throwable t) {
             Log.w(TAG, "persistTyranoPlayerSave failed url=" + url, t);
         }
@@ -290,7 +347,11 @@ public class TyranoActivity extends Activity {
     @Override
     public void finish() {
         super.finish();
-        try { android.os.Process.killProcess(android.os.Process.myPid()); } catch (Throwable ignored) { }
+        if (processExitScheduled.compareAndSet(false, true)) {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                try { android.os.Process.killProcess(android.os.Process.myPid()); } catch (Throwable ignored) { }
+            }, 500L);
+        }
     }
 
     private String queryParam(String url, String key) {
@@ -350,13 +411,9 @@ public class TyranoActivity extends Activity {
         webView = null;
         try { if (localServer != null) localServer.stop(); } catch (Throwable ignored) { }
         localServer = null;
+        try { if (asarArchive != null) asarArchive.close(); } catch (Throwable ignored) { }
+        asarArchive = null;
         super.onDestroy();
-    }
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        if (event != null && isSystemVolumeKey(event.getKeyCode())) return super.dispatchKeyEvent(event);
-        return super.dispatchKeyEvent(event);
     }
 
     @Override
@@ -365,15 +422,14 @@ public class TyranoActivity extends Activity {
         if (hasFocus) enterFullscreen();
     }
 
-    private boolean isSystemVolumeKey(int keyCode) {
-        return keyCode == KeyEvent.KEYCODE_VOLUME_UP
-                || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-                || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE
-                || keyCode == KeyEvent.KEYCODE_MUTE;
-    }
-
     private void enterFullscreen() {
-        try { getWindow().getDecorView().setSystemUiVisibility(5894); } catch (Throwable ignored) { }
+        int flags = android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        try { getWindow().getDecorView().setSystemUiVisibility(flags); } catch (Throwable ignored) { }
     }
 
     private File resolveSaveDirectory(Intent intent, File gameRoot) {
@@ -418,15 +474,21 @@ public class TyranoActivity extends Activity {
 
         @JavascriptInterface
         public String getStorage(String key) {
-            if (key == null) return "";
             try {
-                File file = new File(saveDirectory, key + ".sav");
+                File file = resolveStorageFile(saveDirectory, key);
+                if (file == null) return "";
                 if (!file.isFile()) return "";
-                FileInputStream in = new FileInputStream(file);
-                byte[] data = new byte[(int) file.length()];
-                int read = in.read(data);
-                in.close();
-                return read <= 0 ? "" : new String(data, 0, read, StandardCharsets.UTF_8);
+                if (file.length() < 0L || file.length() > MAX_SAVE_BYTES) return "";
+                try (FileInputStream in = new FileInputStream(file);
+                     ByteArrayOutputStream out = new ByteArrayOutputStream((int) file.length())) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        if (out.size() + read > MAX_SAVE_BYTES) return "";
+                        out.write(buffer, 0, read);
+                    }
+                    return new String(out.toByteArray(), StandardCharsets.UTF_8);
+                }
             } catch (Throwable t) {
                 Log.w(TAG, "getStorage failed key=" + key, t);
                 return "";
@@ -435,11 +497,12 @@ public class TyranoActivity extends Activity {
 
         @JavascriptInterface
         public void setStorage(String key, String value) {
-            if (key == null) return;
             try {
-                FileOutputStream out = new FileOutputStream(new File(saveDirectory, key + ".sav"));
-                if (value != null) out.write(value.getBytes(StandardCharsets.UTF_8));
-                out.close();
+                File file = resolveStorageFile(saveDirectory, key);
+                if (file == null) return;
+                byte[] bytes = value == null ? new byte[0] : value.getBytes(StandardCharsets.UTF_8);
+                if (bytes.length > MAX_SAVE_BYTES) return;
+                try (FileOutputStream out = new FileOutputStream(file)) { out.write(bytes); }
             } catch (Throwable t) {
                 Log.w(TAG, "setStorage failed key=" + key, t);
             }
@@ -447,11 +510,26 @@ public class TyranoActivity extends Activity {
 
         @JavascriptInterface
         public void openUrl(String url) {
-            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Throwable ignored) { }
+            runOnUiThread(() -> {
+                try { openExternalHttpUrl(Uri.parse(url)); }
+                catch (Throwable error) { Log.w(TAG, "invalid external URL", error); }
+            });
         }
 
         @JavascriptInterface public void stopMovie() { }
         @JavascriptInterface public void audio(String value) { }
+    }
+
+    static File resolveStorageFile(File directory, String key) throws Exception {
+        if (directory == null || key == null) return null;
+        String clean = key.trim();
+        if (clean.isEmpty() || clean.length() > 128 || clean.contains("..")
+                || clean.indexOf('/') >= 0 || clean.indexOf('\\') >= 0
+                || !clean.matches("[A-Za-z0-9._-]+")) return null;
+        File root = directory.getCanonicalFile();
+        File target = new File(root, clean + ".sav").getCanonicalFile();
+        String rootPrefix = root.getPath() + File.separator;
+        return target.getPath().startsWith(rootPrefix) ? target : null;
     }
 
     private static class LocalHttpServer implements Runnable {
@@ -461,6 +539,12 @@ public class TyranoActivity extends Activity {
         private final ServerSocket serverSocket;
         private volatile boolean running = true;
         private final Thread thread;
+        private final ThreadPoolExecutor clients = new ThreadPoolExecutor(
+                2, 8, 30L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(64), runnable -> {
+                    Thread client = new Thread(runnable, "YukiTyranoHttpClient");
+                    client.setDaemon(true);
+                    return client;
+                }, new ThreadPoolExecutor.AbortPolicy());
 
         private static final class ResolvedFile {
             final File file;
@@ -489,6 +573,7 @@ public class TyranoActivity extends Activity {
         void stop() {
             running = false;
             try { serverSocket.close(); } catch (Throwable ignored) { }
+            clients.shutdownNow();
         }
 
         @Override
@@ -497,7 +582,8 @@ public class TyranoActivity extends Activity {
             while (running) {
                 try {
                     Socket socket = serverSocket.accept();
-                    new Thread(() -> handle(socket), "YukiTyranoHttpClient").start();
+                    try { clients.execute(() -> handle(socket)); }
+                    catch (java.util.concurrent.RejectedExecutionException rejected) { close(socket); }
                 } catch (Throwable t) {
                     if (running) Log.w(TAG, "server accept failed", t);
                 }
@@ -593,7 +679,7 @@ public class TyranoActivity extends Activity {
         private File canonicalIfValid(String uri) throws Exception {
             if (uri == null || uri.contains("\u0000")) return null;
             File target = new File(root, uri).getCanonicalFile();
-            if (!target.getPath().startsWith(root.getPath()) || !target.isFile()) return null;
+            if (!isInsideRoot(target) || !target.isFile()) return null;
             return target;
         }
 
@@ -626,9 +712,16 @@ public class TyranoActivity extends Activity {
                 current = matched;
             }
             File target = current.getCanonicalFile();
-            if (!target.getPath().startsWith(root.getPath()) || !target.isFile()) return null;
+            if (!isInsideRoot(target) || !target.isFile()) return null;
             Log.i(TAG, "resource fallback case-insensitive " + uri + " -> " + target.getPath());
             return target;
+        }
+
+        private boolean isInsideRoot(File target) {
+            if (target == null) return false;
+            String rootPath = root.getPath();
+            String targetPath = target.getPath();
+            return targetPath.equals(rootPath) || targetPath.startsWith(rootPath + File.separator);
         }
 
         private boolean isIndexHtml(String uri, File target) {

@@ -129,8 +129,8 @@ public class GameScanner {
         if (children == null) return;
 
         for (DocumentFile child : children) {
-            if (!report.tryVisit(request, safeUri(child))) return;
             if (child == null) continue;
+            if (!report.tryVisit(request, safeUri(child))) return;
             try {
                 if (child.isFile()) {
                     String name = safeName(child);
@@ -155,16 +155,18 @@ public class GameScanner {
 
                 // 识别目录本身的 PSP / 3DS / desktop 入口；是否继续遍历由扫描模式决定。
                 // 只有全层模式会穿透已命中的游戏目录；固定深度和命中模式都会在此剪枝。
-                boolean pspDirectory = tryAddPspDirectory(child, report, seenUris);
-                boolean n3dsDirectory = tryAddN3dsDirectory(child, report, seenUris);
-                boolean desktopDirectory = tryAddDesktopDirectory(child, report, seenUris);
+                DocumentFile[] childFiles = child.listFiles();
+                if (childFiles == null) childFiles = new DocumentFile[0];
+                boolean pspDirectory = tryAddPspDirectory(child, childFiles, report, seenUris);
+                boolean n3dsDirectory = tryAddN3dsDirectory(child, childFiles, report, seenUris);
+                boolean desktopDirectory = tryAddDesktopDirectory(child, childFiles, report, seenUris);
 
                 String childName = safeName(child).toLowerCase(Locale.ROOT);
                 boolean internalAssetDir = isInternalAssetDir(childName);
 
                 boolean gameDirectoryMatched = pspDirectory || n3dsDirectory || desktopDirectory;
                 if (!internalAssetDir && !gameDirectoryMatched) {
-                    EngineDetector.Result detected = EngineDetector.detect(child, 2);
+                    EngineDetector.Result detected = EngineDetector.detect(child, 2, childFiles);
                     if (detected != null && detected.confidence > 0) {
                         String uri = child.getUri().toString();
                         if (markSeen(seenUris, uri)) {
@@ -187,10 +189,9 @@ public class GameScanner {
         }
     }
 
-    private static boolean tryAddDesktopDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris) {
+    private static boolean tryAddDesktopDirectory(DocumentFile dir, DocumentFile[] files, ScanReport report, Set<String> seenUris) {
         if (dir == null || report == null) return false;
         try {
-            DocumentFile[] files = dir.listFiles();
             if (files == null || files.length == 0) return false;
 
             List<DocumentFile> desktops = new ArrayList<>();
@@ -202,7 +203,7 @@ public class GameScanner {
             if (desktops.isEmpty()) return false;
 
             String coverUri = "";
-            DocumentFile folderCover = findBestImageInDir(dir);
+            DocumentFile folderCover = findBestImage(files);
             if (folderCover != null) coverUri = folderCover.getUri().toString();
 
             if (desktops.size() == 1) {
@@ -265,10 +266,9 @@ public class GameScanner {
      * 情况2：文件夹里只有1个PSP文件，游戏名取文件夹名，但入口仍然是PSP文件本身
      * 情况3：文件夹里有多个PSP文件，按多个单独条目识别
      */
-    private static boolean tryAddPspDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris) {
+    private static boolean tryAddPspDirectory(DocumentFile dir, DocumentFile[] files, ScanReport report, Set<String> seenUris) {
         if (dir == null || report == null) return false;
         try {
-            DocumentFile[] files = dir.listFiles();
             if (files == null || files.length == 0) return false;
 
             List<DocumentFile> pspFiles = new ArrayList<>();
@@ -283,7 +283,7 @@ public class GameScanner {
             if (pspFiles.isEmpty()) return false;
 
             String coverUri = "";
-            DocumentFile folderCover = findBestImageInDir(dir);
+            DocumentFile folderCover = findBestImage(files);
             if (folderCover != null) coverUri = folderCover.getUri().toString();
 
             if (pspFiles.size() == 1) {
@@ -358,10 +358,9 @@ public class GameScanner {
      * 情况2：文件夹里只有1个3DS文件，游戏名取文件夹名，但入口仍然是3DS文件本身
      * 情况3：文件夹里有多个3DS文件，按多个单独条目识别
      */
-    private static boolean tryAddN3dsDirectory(DocumentFile dir, ScanReport report, Set<String> seenUris) {
+    private static boolean tryAddN3dsDirectory(DocumentFile dir, DocumentFile[] files, ScanReport report, Set<String> seenUris) {
         if (dir == null || report == null) return false;
         try {
-            DocumentFile[] files = dir.listFiles();
             if (files == null || files.length == 0) return false;
 
             List<DocumentFile> n3dsFiles = new ArrayList<>();
@@ -375,7 +374,7 @@ public class GameScanner {
             if (n3dsFiles.isEmpty()) return false;
 
             String coverUri = "";
-            DocumentFile folderCover = findBestImageInDir(dir);
+            DocumentFile folderCover = findBestImage(files);
             if (folderCover != null) coverUri = folderCover.getUri().toString();
 
             if (n3dsFiles.size() == 1) {
@@ -418,7 +417,14 @@ public class GameScanner {
     private static DocumentFile findBestImageInDir(DocumentFile dir) {
         if (dir == null || !dir.isDirectory()) return null;
         try {
-            DocumentFile[] files = dir.listFiles();
+            return findBestImage(dir.listFiles());
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static DocumentFile findBestImage(DocumentFile[] files) {
+        try {
             if (files == null) return null;
             DocumentFile best = null;
             int bestScore = Integer.MIN_VALUE;

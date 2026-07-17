@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import rikka.shizuku.Shizuku;
 
@@ -107,13 +111,19 @@ public final class LauncherGameHubShortcutBridge {
         Method method = Shizuku.class.getDeclaredMethod("newProcess", String[].class, String[].class, String.class);
         method.setAccessible(true);
         Process process = (Process) method.invoke(null, new Object[]{new String[]{"/system/bin/sh", "-c", command}, null, null});
-        String output = readProcessStream(process.getInputStream()) + "\n" + readProcessStream(process.getErrorStream());
+        ExecutorService readers = Executors.newFixedThreadPool(2);
         try {
-            process.waitFor();
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
+            Future<String> stdout = readers.submit(() -> readProcessStream(process.getInputStream()));
+            Future<String> stderr = readers.submit(() -> readProcessStream(process.getErrorStream()));
+            if (!process.waitFor(10, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                throw new java.io.IOException("Shizuku command timed out");
+            }
+            return stdout.get(2, TimeUnit.SECONDS) + "\n" + stderr.get(2, TimeUnit.SECONDS);
+        } finally {
+            readers.shutdownNow();
+            process.destroy();
         }
-        return output;
     }
 
     private static String readProcessStream(InputStream input) {
@@ -121,7 +131,10 @@ public final class LauncherGameHubShortcutBridge {
         try (InputStream stream = input; ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[4096];
             int count;
-            while ((count = stream.read(buffer)) >= 0) output.write(buffer, 0, count);
+            while ((count = stream.read(buffer)) >= 0) {
+                if (output.size() + count > 1024 * 1024) throw new java.io.IOException("command output too large");
+                output.write(buffer, 0, count);
+            }
             return output.toString("UTF-8");
         } catch (Throwable ignored) {
             return "";

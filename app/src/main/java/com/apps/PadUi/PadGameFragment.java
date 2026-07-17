@@ -413,13 +413,11 @@ public class PadGameFragment extends Fragment {
     private void confirmLaunchGame(Game game) {
         PadDialogFactory.showConfirm(requireContext(), "启动游戏",
                 "确定启动「" + safeTitle(game) + "」吗？", "确定", () -> {
-            LauncherGameLaunchBridge.LaunchResult result =
-                    LauncherGameLaunchBridge.launch(requireContext(), game);
-            if (result.success) {
-                runningSessionId = result.sessionId;
-            } else {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
-            }
+            LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
+                if (!isAdded()) return;
+                if (result.success) runningSessionId = result.sessionId;
+                else Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
+            });
         });
     }
 
@@ -467,14 +465,18 @@ public class PadGameFragment extends Fragment {
         }
         try {
             binding.padAvatarImage.setClipToOutline(true);
-            if (!SafeImageLoader.loadUri(binding.padAvatarImage, avatar)) {
+            if (!SafeImageLoader.loadUri(binding.padAvatarImage, avatar, success -> {
+                if (binding == null) return;
+                binding.padAvatarImage.setVisibility(success ? View.VISIBLE : View.GONE);
+                binding.padAvatarInitial.setVisibility(success ? View.GONE : View.VISIBLE);
+            })) {
                 binding.padAvatarImage.setImageDrawable(null);
                 binding.padAvatarImage.setVisibility(View.GONE);
                 binding.padAvatarInitial.setVisibility(View.VISIBLE);
                 return;
             }
-            binding.padAvatarImage.setVisibility(View.VISIBLE);
-            binding.padAvatarInitial.setVisibility(View.GONE);
+            binding.padAvatarImage.setVisibility(View.GONE);
+            binding.padAvatarInitial.setVisibility(View.VISIBLE);
         } catch (Throwable throwable) {
             binding.padAvatarImage.setImageDrawable(null);
             binding.padAvatarImage.setVisibility(View.GONE);

@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -30,7 +32,7 @@ import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.ons.OnsSettings;
 
 public class EmulatorLauncher {
-    private static final List<FileObserver> ARTEMIS_SAVE_OBSERVERS = new ArrayList<>();
+    private static final Map<String, FileObserver> ARTEMIS_SAVE_OBSERVERS = new HashMap<>();
     private static final List<EngineLaunchStrategy> ENGINE_STRATEGIES = new CopyOnWriteArrayList<>();
     private static final String PREFS_NAME = "yukihub_prefs";
     private static final String KEY_ARTEMIS_ENGINE_PREFIX = "artemis_engine.";
@@ -569,16 +571,16 @@ public class EmulatorLauncher {
         try {
             File f = new File(desktopPath);
             if (!f.isFile()) return null;
-            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(f)));
-            String line;
             String exec = null;
             String path = null;
-            while ((line = br.readLine()) != null) {
-                String t = line.trim();
-                if (t.startsWith("Exec=")) exec = t.substring(5).trim();
-                else if (t.startsWith("Path=")) path = t.substring(5).trim();
+            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(f)))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String t = line.trim();
+                    if (t.startsWith("Exec=")) exec = t.substring(5).trim();
+                    else if (t.startsWith("Path=")) path = t.substring(5).trim();
+                }
             }
-            try { br.close(); } catch (Throwable ignored) { }
             if (exec == null || exec.isEmpty()) return null;
             String exe = extractExeFromDesktopExec(exec);
             if (exe == null || exe.isEmpty()) return null;
@@ -1081,6 +1083,15 @@ if (mirrorRoot == null || saveRoot == null) return;
 try {
 final String mirrorPath = mirrorRoot.getAbsolutePath();
 final String savePath = saveRoot.getAbsolutePath();
+FileObserver previous;
+synchronized (ARTEMIS_SAVE_OBSERVERS) {
+previous = ARTEMIS_SAVE_OBSERVERS.remove(mirrorPath);
+for (FileObserver stale : ARTEMIS_SAVE_OBSERVERS.values()) {
+try { stale.stopWatching(); } catch (Throwable ignored) { }
+}
+ARTEMIS_SAVE_OBSERVERS.clear();
+}
+if (previous != null) previous.stopWatching();
 FileObserver observer = new FileObserver(mirrorPath, FileObserver.CLOSE_WRITE | FileObserver.MOVED_TO | FileObserver.CREATE) {
 @Override
 public void onEvent(int event, String path) {
@@ -1092,7 +1103,9 @@ Log.w("EmulatorLauncher", "Artemis realtime save export failed", t);
 }
 };
 observer.startWatching();
-ARTEMIS_SAVE_OBSERVERS.add(observer);
+synchronized (ARTEMIS_SAVE_OBSERVERS) {
+ARTEMIS_SAVE_OBSERVERS.put(mirrorPath, observer);
+}
 Log.i("EmulatorLauncher", "Artemis save observer started mirror=" + mirrorPath + " save=" + savePath);
 } catch (Throwable t) {
 Log.w("EmulatorLauncher", "Artemis save observer start failed mirror=" + mirrorRoot + " save=" + saveRoot, t);
@@ -1699,6 +1712,9 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
      * 使用PPSSPP的PpssppActivity来启动PSP游戏
      */
     public static Intent buildInternalPspIntent(Context context, String gameUri, String launchTarget) {
+        if (context == null || gameUri == null || gameUri.trim().isEmpty()) {
+            throw new IllegalArgumentException("PSP game URI is empty");
+        }
         // 直接使用gameUri，它可能是file://或content://格式
         Uri gameUriParsed = Uri.parse(gameUri);
         
@@ -1773,6 +1789,9 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
      * scheme 为 content,因此必须使用 content:// URI 和该 MIME 类型。
      */
     public static Intent buildInternalCitraIntent(Context context, String gameUri, String launchTarget) {
+        if (context == null || gameUri == null || gameUri.trim().isEmpty()) {
+            throw new IllegalArgumentException("3DS game URI is empty");
+        }
         Uri gameUriParsed = Uri.parse(gameUri);
         // 如果是文件路径(以/开头),转换为 file:// URI
         if (gameUri.startsWith("/")) {

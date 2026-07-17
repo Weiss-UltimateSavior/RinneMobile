@@ -11,6 +11,8 @@ import com.yuki.yukihub.data.GameRepository;
 import com.yuki.yukihub.launcher.EmulatorLauncher;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
+import com.yuki.yukihub.util.AppExecutors;
+import com.yuki.yukihub.util.RxMainScheduler;
 
 import java.util.Locale;
 
@@ -19,6 +21,18 @@ public final class LauncherGameLaunchBridge {
     private static final String KEY_KR_ENGINE_VERSION = "kr_engine_version";
 
     private LauncherGameLaunchBridge() {
+    }
+
+    public interface LaunchCallback { void onResult(LaunchResult result); }
+
+    /** Performs database, SAF and file preparation away from the UI thread. */
+    public static void launchAsync(Context context, Game game, LaunchCallback callback) {
+        if (callback == null) return;
+        Context app = context == null ? null : context.getApplicationContext();
+        AppExecutors.runOnIo(() -> {
+            LaunchResult result = launch(app, game);
+            RxMainScheduler.post(() -> callback.onResult(result));
+        });
     }
 
     public static LaunchResult launch(Context context, Game game) {

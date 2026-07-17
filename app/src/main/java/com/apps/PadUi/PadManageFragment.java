@@ -450,18 +450,19 @@ private void loadNextPage(boolean forceFullRefresh) {
 
     private void launchGameDirectly(Game game) {
         if (game == null) return;
-        LauncherGameLaunchBridge.LaunchResult result = LauncherGameLaunchBridge.launch(requireContext(), game);
-        if (result.success) {
-            runningSessionId = result.sessionId;
-            // 记录会话元信息；线上实际游玩时长由服务端 session 结算。
-            runningGameId = game.id;
-            runningGameTitle = safeTitle(game);
-            runningSessionStart = System.currentTimeMillis();
-            runningLaunchType = resolveLaunchTypeForRecord(game);
-            startServerPlaySession(game, result.sessionId);
-        } else if (result.message != null && !result.message.trim().isEmpty()) {
-            Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
-        }
+        LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
+            if (!isAdded()) return;
+            if (result.success) {
+                runningSessionId = result.sessionId;
+                runningGameId = game.id;
+                runningGameTitle = safeTitle(game);
+                runningSessionStart = System.currentTimeMillis();
+                runningLaunchType = resolveLaunchTypeForRecord(game);
+                startServerPlaySession(game, result.sessionId);
+            } else if (result.message != null && !result.message.trim().isEmpty()) {
+                Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void finishDirectPlaySessionIfNeeded() {

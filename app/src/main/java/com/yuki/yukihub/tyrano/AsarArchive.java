@@ -5,6 +5,8 @@ import android.util.Log;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -21,8 +23,10 @@ import java.util.Map;
  * - header json
  * - file data area
  */
-public class AsarArchive {
+public class AsarArchive implements Closeable {
     private static final String TAG = "YukiAsar";
+    private static final long MAX_HEADER_BYTES = 16L * 1024L * 1024L;
+    private static final long MAX_ENTRY_BYTES = 256L * 1024L * 1024L;
 
     private final File archiveFile;
     private final RandomAccessFile raf;
@@ -34,22 +38,34 @@ public class AsarArchive {
         if (this.archiveFile == null || !this.archiveFile.isFile()) {
             throw new IllegalArgumentException("asar file missing");
         }
-        this.raf = new RandomAccessFile(this.archiveFile, "r");
-        int magic = readIntLE(raf);
-        if (magic != 4) {
-            throw new IllegalStateException("not asar file");
+        RandomAccessFile opened = new RandomAccessFile(this.archiveFile, "r");
+        long parsedDataOffset;
+        try {
+            int magic = readIntLE(opened);
+            if (magic != 4) throw new IllegalStateException("not asar file");
+            long headerSize = readUInt32LE(opened);
+            if (headerSize < 8L || headerSize > MAX_HEADER_BYTES || 8L + headerSize > opened.length()) {
+                throw new IOException("invalid asar header size: " + headerSize);
+            }
+            parsedDataOffset = 8L + headerSize;
+            opened.skipBytes(4);
+            long jsonLen = readUInt32LE(opened);
+            if (jsonLen <= 0L || jsonLen > MAX_HEADER_BYTES || opened.getFilePointer() + jsonLen > parsedDataOffset) {
+                throw new IOException("invalid asar json size: " + jsonLen);
+            }
+            byte[] jsonBytes = new byte[(int) jsonLen];
+            opened.readFully(jsonBytes);
+            parseNode("", new JSONObject(new String(jsonBytes, StandardCharsets.UTF_8)));
+            validateEntries(opened.length(), parsedDataOffset);
+        } catch (Exception error) {
+            try { opened.close(); } catch (Throwable ignored) { }
+            throw error;
+        } catch (Error error) {
+            try { opened.close(); } catch (Throwable ignored) { }
+            throw error;
         }
-        long headerSize = readUInt32LE(raf);
-        // Keep the same layout as Tyranor's F0.e:
-        // read magic(4), read headerSize(4), dataOffset = 8 + headerSize,
-        // skip one 4-byte field, then read the actual JSON byte length.
-        this.dataOffset = 8L + headerSize;
-        raf.skipBytes(4);
-        long jsonLen = readUInt32LE(raf);
-        byte[] jsonBytes = new byte[(int) jsonLen];
-        raf.readFully(jsonBytes);
-        String json = new String(jsonBytes, StandardCharsets.UTF_8);
-        parseNode("", new JSONObject(json));
+        this.raf = opened;
+        this.dataOffset = parsedDataOffset;
         Log.i(TAG, "asar loaded file=" + this.archiveFile + " entries=" + entries.size() + " dataOffset=" + dataOffset);
     }
 
@@ -75,6 +91,27 @@ public class AsarArchive {
         } catch (Throwable t) {
             Log.w(TAG, "read failed path=" + path, t);
             return null;
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        synchronized (raf) {
+            raf.close();
+        }
+    }
+
+    private void validateEntries(long archiveLength, long parsedDataOffset) throws IOException {
+        for (Map.Entry<String, Entry> item : entries.entrySet()) {
+            Entry entry = item.getValue();
+            if (entry == null || entry.directory) continue;
+            if (entry.size < 0L || entry.size > MAX_ENTRY_BYTES || entry.size > Integer.MAX_VALUE) {
+                throw new IOException("invalid asar entry size: " + item.getKey());
+            }
+            if (entry.offset < 0L || entry.offset > archiveLength - parsedDataOffset
+                    || entry.size > archiveLength - parsedDataOffset - entry.offset) {
+                throw new IOException("invalid asar entry range: " + item.getKey());
+            }
         }
     }
 

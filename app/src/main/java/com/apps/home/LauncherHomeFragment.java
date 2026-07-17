@@ -465,12 +465,20 @@ public class LauncherHomeFragment extends Fragment {
         }
         try {
             binding.launcherAvatarImage.setClipToOutline(true);
-            if (!SafeImageLoader.loadUri(binding.launcherAvatarImage, avatar)) {
+            if (!SafeImageLoader.loadUri(binding.launcherAvatarImage, avatar, success -> {
+                if (binding == null) return;
+                if (success) {
+                    binding.launcherAvatarImage.setVisibility(View.VISIBLE);
+                    binding.launcherAvatarInitial.setVisibility(View.GONE);
+                } else {
+                    showDefaultAvatar();
+                }
+            })) {
                 showDefaultAvatar();
                 return;
             }
-            binding.launcherAvatarImage.setVisibility(View.VISIBLE);
-            binding.launcherAvatarInitial.setVisibility(View.GONE);
+            binding.launcherAvatarImage.setVisibility(View.GONE);
+            binding.launcherAvatarInitial.setVisibility(View.VISIBLE);
         } catch (Throwable throwable) {
             showDefaultAvatar();
         }

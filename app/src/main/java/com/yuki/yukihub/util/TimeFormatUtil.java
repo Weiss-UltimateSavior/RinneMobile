@@ -6,8 +6,6 @@ import java.util.Date;
 import java.util.Locale;
 
 public class TimeFormatUtil {
-    private static final DecimalFormat HOURS_FORMAT = new DecimalFormat("0.0");
-
     public static String playTime(long millis) {
         if (millis <= 0) return "0s";
         if (millis < 60000L) {
@@ -19,7 +17,7 @@ public class TimeFormatUtil {
             long minutes = Math.max(1L, Math.round(millis / 60000.0));
             return minutes + "m";
         }
-        return HOURS_FORMAT.format(hours) + "h";
+        return new DecimalFormat("0.0").format(hours) + "h";
     }
 
     public static String date(long time) {

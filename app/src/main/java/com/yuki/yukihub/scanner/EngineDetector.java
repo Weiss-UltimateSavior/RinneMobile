@@ -45,12 +45,16 @@ public class EngineDetector {
     }
 
     public static Result detect(DocumentFile dir, int featureDepth) {
+        return detect(dir, featureDepth, null);
+    }
+
+    public static Result detect(DocumentFile dir, int featureDepth, DocumentFile[] rootFiles) {
         Result r = new Result();
         if (dir == null) return r;
         int depth = Math.max(1, Math.min(4, featureDepth));
 
         FeatureState s = new FeatureState();
-        collectFeatures(dir, "", "", 1, depth, s);
+        collectFeatures(dir, "", "", 1, depth, s, rootFiles);
         if (s.empty) return r;
         Collections.sort(s.xp3Files, String.CASE_INSENSITIVE_ORDER);
         Collections.sort(s.gameNamedXp3Files, String.CASE_INSENSITIVE_ORDER);
@@ -206,11 +210,11 @@ public class EngineDetector {
     }
 
     private static void collectFeatures(DocumentFile dir, String lowerPrefix, String originalPrefix,
-                                        int level, int maxLevel, FeatureState s) {
+                                        int level, int maxLevel, FeatureState s, DocumentFile[] knownFiles) {
         DocumentFile[] files;
         try {
             if (dir == null || !dir.isDirectory()) return;
-            files = dir.listFiles();
+            files = knownFiles == null ? dir.listFiles() : knownFiles;
         } catch (Throwable t) {
             Log.w(TAG, "detect list failed uri=" + safeUri(dir), t);
             return;
@@ -252,7 +256,7 @@ public class EngineDetector {
                 if (lower.equals("font")) s.hasFontDir = true;
                 if (lower.equals("others")) s.hasOthersDir = true;
                 if (level < maxLevel && shouldDescendForFeature(lower)) {
-                    collectFeatures(f, rel, originalRel, level + 1, maxLevel, s);
+                    collectFeatures(f, rel, originalRel, level + 1, maxLevel, s, null);
                 }
                 continue;
             }
@@ -273,7 +277,7 @@ public class EngineDetector {
             if (lower.equals("app.asar") || rel.endsWith("/app.asar")) s.hasAppAsar = true;
             if (lower.equals("package.json") || rel.endsWith("/package.json")) s.hasPackageJson = true;
             if (lower.startsWith("chrome_") && lower.endsWith(".pak")) s.hasElectronPak = true;
-            if (lower.endsWith(".desktop") && s.firstDesktop == null) s.firstDesktop = original;
+            if (lower.endsWith(".desktop") && s.firstDesktop == null) s.firstDesktop = originalRel;
             if (lower.endsWith(".xp3")) {
                 // Keep the provider's exact spelling for launch resolution while all feature
                 // comparisons continue to use the lower-cased relative path above.
@@ -285,26 +289,26 @@ public class EngineDetector {
             // PSP游戏文件检测
             if (lower.endsWith(".iso") || lower.endsWith(".cso") || lower.endsWith(".chd") ||
                 lower.endsWith(".elf") || lower.endsWith(".pbp")) {
-                if (s.firstPspFile == null) s.firstPspFile = original;
+                if (s.firstPspFile == null) s.firstPspFile = originalRel;
             }
             // Nintendo 3DS 游戏文件检测
             // 注意:不包含 .elf(PSP 已占用)和 .app(过于通用),避免歧义
             if (lower.endsWith(".3ds") || lower.endsWith(".cci") || lower.endsWith(".zcci") ||
                 lower.endsWith(".cxi") || lower.endsWith(".zcxi") || lower.endsWith(".cia") ||
                 lower.endsWith(".zcia") || lower.endsWith(".3dsx") || lower.endsWith(".z3dsx")) {
-                if (s.firstN3dsFile == null) s.firstN3dsFile = original;
+                if (s.firstN3dsFile == null) s.firstN3dsFile = originalRel;
             }
             // RPG Maker (RGSS) 归档与数据文件检测。
             if (lower.equals("game.ini")) s.hasGameIni = true;
-            if (lower.endsWith(".rgssad") && s.firstRgssad == null) s.firstRgssad = original;
-            if (lower.endsWith(".rgss2a") && s.firstRgss2a == null) s.firstRgss2a = original;
-            if (lower.endsWith(".rgss3a") && s.firstRgss3a == null) s.firstRgss3a = original;
+            if (lower.endsWith(".rgssad") && s.firstRgssad == null) s.firstRgssad = originalRel;
+            if (lower.endsWith(".rgss2a") && s.firstRgss2a == null) s.firstRgss2a = originalRel;
+            if (lower.endsWith(".rgss3a") && s.firstRgss3a == null) s.firstRgss3a = originalRel;
             // 散文件形式的 RPG Maker 数据文件（不在归档内）。
             if (lower.endsWith(".rxdata")) s.hasRxdata = true;
             if (lower.endsWith(".rvdata") && !lower.endsWith(".rvdata2")) s.hasRvdata = true;
             if (lower.endsWith(".rvdata2")) s.hasRvdata2 = true;
             // Ren'Py 检测
-            if (lower.endsWith(".rpa") && s.firstRpa == null) s.firstRpa = original;
+            if (lower.endsWith(".rpa") && s.firstRpa == null) s.firstRpa = originalRel;
             if (lower.endsWith(".rpy")) {
                 s.hasRpy = true;
                 if (rel.equals("game/script.rpy") || rel.endsWith("/game/script.rpy")) s.hasGameScriptRpy = true;

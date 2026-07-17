@@ -141,30 +141,39 @@ public final class LauncherPublicChatBridge {
     private static String postJson(String path, JSONObject body, String token) throws Exception { return request(path, "POST", body, token); }
     private static String request(String path, String method, JSONObject body, String token) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(API_BASE + path).openConnection();
-        connection.setRequestMethod(method);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(15000);
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + token);
-        if (body != null) {
-            byte[] bytes = body.toString().getBytes("UTF-8");
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setFixedLengthStreamingMode(bytes.length);
-            connection.getOutputStream().write(bytes);
+        try {
+            connection.setRequestMethod(method);
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(15000);
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + token);
+            if (body != null) {
+                byte[] bytes = body.toString().getBytes("UTF-8");
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setFixedLengthStreamingMode(bytes.length);
+                try (java.io.OutputStream output = connection.getOutputStream()) { output.write(bytes); }
+            }
+            int code = connection.getResponseCode();
+            String text = read(code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream());
+            if (code < 200 || code >= 300) throw new RuntimeException("HTTP " + code + ": " + detail(text));
+            return text;
+        } finally {
+            connection.disconnect();
         }
-        int code = connection.getResponseCode();
-        String text = read(code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream());
-        if (code < 200 || code >= 300) throw new RuntimeException("HTTP " + code + ": " + detail(text));
-        return text;
     }
 
     private static String read(InputStream input) throws Exception {
         if (input == null) return "";
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        byte[] buffer = new byte[4096]; int count;
-        while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
-        return output.toString("UTF-8");
+        try (InputStream stream = input) {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096]; int count;
+            while ((count = stream.read(buffer)) != -1) {
+                if (output.size() + count > 1024 * 1024) throw new java.io.IOException("response too large");
+                output.write(buffer, 0, count);
+            }
+            return output.toString("UTF-8");
+        }
     }
     private static String detail(String response) { try { return new JSONObject(response).optString("detail", response); } catch (Throwable ignored) { return response; } }
     private static String errorMessage(Context context, Throwable error, String fallback) {

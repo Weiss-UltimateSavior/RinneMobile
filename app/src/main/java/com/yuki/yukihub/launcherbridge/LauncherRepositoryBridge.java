@@ -144,26 +144,26 @@ public final class LauncherRepositoryBridge {
 
         try {
             sb.append("-- games\n");
-            Cursor gc = db.query("games", null, null, null, null, null, "id ASC");
-            sb.append(tableToInsertSql(gc, "games"));
-            gc.close();
+            try (Cursor gc = db.query("games", null, null, null, null, null, "id ASC")) {
+                sb.append(tableToInsertSql(gc, "games"));
+            }
 
             sb.append("\n-- play_sessions\n");
-            Cursor pc = db.query("play_sessions", null, null, null, null, null, "id ASC");
-            sb.append(tableToInsertSql(pc, "play_sessions"));
-            pc.close();
+            try (Cursor pc = db.query("play_sessions", null, null, null, null, null, "id ASC")) {
+                sb.append(tableToInsertSql(pc, "play_sessions"));
+            }
 
             sb.append("\n-- metadata_cache\n");
-            Cursor mc = db.query("metadata_cache", null, null, null, null, null, "game_id ASC, source ASC");
-            sb.append(tableToInsertSql(mc, "metadata_cache"));
-            mc.close();
+            try (Cursor mc = db.query("metadata_cache", null, null, null, null, null, "game_id ASC, source ASC")) {
+                sb.append(tableToInsertSql(mc, "metadata_cache"));
+            }
 
             sb.append("\n-- settings\n");
-            Cursor sc = db.query("settings", null, null, null, null, null, "\"key\" ASC");
-            sb.append(tableToInsertSql(sc, "settings"));
-            sc.close();
+            try (Cursor sc = db.query("settings", null, null, null, null, null, "\"key\" ASC")) {
+                sb.append(tableToInsertSql(sc, "settings"));
+            }
         } finally {
-            db.close();
+            helper.close();
         }
 
         return sb.toString();
@@ -180,6 +180,7 @@ public final class LauncherRepositoryBridge {
 
         YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
         SQLiteDatabase db = helper.getWritableDatabase();
+        boolean transactionStarted = false;
 
         try {
             List<String> statements = splitSqlStatements(sql);
@@ -193,6 +194,7 @@ public final class LauncherRepositoryBridge {
             if (validated.isEmpty()) return false;
 
             db.beginTransaction();
+            transactionStarted = true;
             db.delete("play_sessions", null, null);
             db.delete("metadata_cache", null, null);
             db.delete("settings", null, null);
@@ -205,10 +207,10 @@ public final class LauncherRepositoryBridge {
             return false;
         } finally {
             try {
-                db.endTransaction();
+                if (transactionStarted) db.endTransaction();
             } catch (Exception ignored) {
             }
-            db.close();
+            helper.close();
         }
     }
 

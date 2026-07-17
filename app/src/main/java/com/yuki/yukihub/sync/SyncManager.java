@@ -89,7 +89,7 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
                 syncPrefs.getBoolean(KEY_AUTO_SYNC, false));
     }
 
-    public void saveConfig(String serverUrl, String username, String password, boolean autoSync) {
+    public synchronized void saveConfig(String serverUrl, String username, String password, boolean autoSync) {
         syncPrefs.edit()
                 .putString(KEY_SERVER_URL, serverUrl == null ? "" : serverUrl.trim())
                 .putString(KEY_USERNAME, username == null ? "" : username.trim())
@@ -99,7 +99,7 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
         client = null;
     }
 
-    public WebDavClient getClient() {
+    public synchronized WebDavClient getClient() {
         if (client == null && isConfigured()) {
             SyncConfig c = getConfig();
             client = new WebDavClient(c.serverUrl, c.username, c.password);
@@ -216,7 +216,6 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
                 } else {
                     JSONObject merged = mergeSnapshots(local, remote);
                     String mergedText = snapshotToText(merged, MAX_REMOTE_SNAPSHOT_BYTES, "合并后的同步快照");
-                    importSnapshot(new JSONObject(mergedText));
                     c.writeText(REMOTE_FILE, mergedText);
                     markSynced(sha256(mergedText));
                     result.merged = true;
@@ -317,9 +316,39 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
     }
 
     private void importSnapshot(JSONObject root) throws Exception {
-        if (root == null) return;
-        if (!"YukiHub".equals(root.optString("app", ""))) throw new Exception("不是有效的 YukiHub 同步文件");
+        importSnapshotsAtomically(root);
+    }
+
+    private void importSnapshotsAtomically(JSONObject... roots) throws Exception {
+        if (roots == null || roots.length == 0) return;
+        for (JSONObject root : roots) {
+            if (root == null || !"YukiHub".equals(root.optString("app", ""))) {
+                throw new Exception("不是有效的 YukiHub 同步文件");
+            }
+        }
         SharedPreferences.Editor prefsEditor = appPrefs.edit();
+        GameRepository gameRepo = new GameRepository(context);
+        MetadataRepository metaRepo = new MetadataRepository(context);
+        YukiDatabaseHelper helper = new YukiDatabaseHelper(context);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (JSONObject root : roots) {
+                applySnapshotPreferences(root, prefsEditor);
+                gameRepo.importGamesJson(db, root.optJSONArray("games"));
+                gameRepo.importPlaySessionsJson(db, root.optJSONArray("play_sessions"));
+                if (root.has("metadata_cache")) metaRepo.importMetadataJson(db, root.optJSONArray("metadata_cache"));
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            helper.close();
+        }
+        // 偏好设置在数据库完整提交后一次性落盘，失败的数据库导入不会污染配置。
+        if (!prefsEditor.commit()) throw new Exception("同步设置保存失败");
+    }
+
+    private void applySnapshotPreferences(JSONObject root, SharedPreferences.Editor prefsEditor) {
         JSONObject profile = root.optJSONObject("profile");
         if (profile != null) {
             String incomingAvatar = profile.optString("avatar_uri", "");
@@ -357,27 +386,10 @@ private static final String KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled
             if (settings.has("game_columns")) e.putInt(KEY_GAME_COLUMNS, Math.max(2, Math.min(10, settings.optInt("game_columns", 5))));
             if (settings.has("ui_scale")) e.putFloat(KEY_UI_SCALE, (float) Math.max(0.70d, Math.min(1.50d, settings.optDouble("ui_scale", 1.0d))));
         }
-        GameRepository gameRepo = new GameRepository(context);
-        MetadataRepository metaRepo = new MetadataRepository(context);
-        YukiDatabaseHelper helper = new YukiDatabaseHelper(context);
-        SQLiteDatabase db = helper.getWritableDatabase();
-        db.beginTransaction();
-        try {
-            gameRepo.importGamesJson(db, root.optJSONArray("games"));
-            gameRepo.importPlaySessionsJson(db, root.optJSONArray("play_sessions"));
-            if (root.has("metadata_cache")) metaRepo.importMetadataJson(db, root.optJSONArray("metadata_cache"));
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
-            db.close();
-        }
-        // 偏好设置在数据库完整提交后一次性落盘，失败的数据库导入不会污染配置。
-        if (!prefsEditor.commit()) throw new Exception("同步设置保存失败");
     }
 
     private JSONObject mergeSnapshots(JSONObject local, JSONObject remote) throws Exception {
-        importSnapshot(remote);
-        importSnapshot(local);
+        importSnapshotsAtomically(remote, local);
         return buildLocalSnapshot();
     }
 

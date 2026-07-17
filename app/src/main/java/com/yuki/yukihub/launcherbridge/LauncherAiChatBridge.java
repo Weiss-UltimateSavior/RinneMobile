@@ -95,38 +95,43 @@ public final class LauncherAiChatBridge {
         String token = LauncherAuthBridge.getToken(context);
         if (token == null || token.trim().isEmpty()) throw new RuntimeException("未登录");
         HttpURLConnection connection = (HttpURLConnection) new URL(API_BASE + path).openConnection();
-        connection.setRequestMethod(method);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(30000);
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + token);
-        if (body != null) {
-            byte[] bytes = body.toString().getBytes("UTF-8");
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setFixedLengthStreamingMode(bytes.length);
-            connection.getOutputStream().write(bytes);
-            connection.getOutputStream().flush();
+        try {
+            connection.setRequestMethod(method);
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(30000);
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + token);
+            if (body != null) {
+                byte[] bytes = body.toString().getBytes("UTF-8");
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setFixedLengthStreamingMode(bytes.length);
+                try (java.io.OutputStream request = connection.getOutputStream()) { request.write(bytes); }
+            }
+            int code = connection.getResponseCode();
+            java.io.InputStream raw = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
+            java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+            if (raw != null) try (java.io.InputStream stream = raw) {
+                byte[] buffer = new byte[4096];
+                int length;
+                while ((length = stream.read(buffer)) != -1) {
+                    if (output.size() + length > 1024 * 1024) throw new java.io.IOException("response too large");
+                    output.write(buffer, 0, length);
+                }
+            }
+            String response = output.toString("UTF-8");
+            if (code < 200 || code >= 300) {
+                String detail = response;
+                try {
+                    Object value = new JSONObject(response).opt("detail");
+                    if (value instanceof JSONObject) detail = ((JSONObject) value).optString("message", response);
+                } catch (Throwable ignored) { }
+                throw new RuntimeException("HTTP " + code + ": " + detail);
+            }
+            return response;
+        } finally {
+            connection.disconnect();
         }
-        int code = connection.getResponseCode();
-        java.io.InputStream stream = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
-        java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
-        if (stream != null) {
-            byte[] buffer = new byte[4096];
-            int length;
-            while ((length = stream.read(buffer)) != -1) output.write(buffer, 0, length);
-            stream.close();
-        }
-        String response = output.toString("UTF-8");
-        if (code < 200 || code >= 300) {
-            String detail = response;
-            try {
-                Object value = new JSONObject(response).opt("detail");
-                if (value instanceof JSONObject) detail = ((JSONObject) value).optString("message", response);
-            } catch (Throwable ignored) { }
-            throw new RuntimeException("HTTP " + code + ": " + detail);
-        }
-        return response;
     }
 
     private static String encode(String value) throws Exception {

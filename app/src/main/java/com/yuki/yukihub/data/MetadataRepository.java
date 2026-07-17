@@ -147,12 +147,10 @@ public class MetadataRepository {
     private long findGameIdByRootUri(SQLiteDatabase db, String rootUri) {
         if (rootUri == null || rootUri.trim().isEmpty()) return -1;
         String key = GameRepository.normalizeRootUriKey(rootUri);
-        Cursor c = db.rawQuery("SELECT id,root_uri FROM games WHERE root_uri IS NOT NULL AND root_uri != ''", null);
+        if (key.isEmpty()) return -1;
+        Cursor c = db.rawQuery("SELECT id FROM games WHERE root_uri_key=? LIMIT 1", new String[]{key});
         try {
-            while (c.moveToNext()) {
-                if (key.equals(GameRepository.normalizeRootUriKey(c.getString(1)))) return c.getLong(0);
-            }
-            return -1;
+            return c.moveToFirst() ? c.getLong(0) : -1;
         } finally {
             c.close();
         }

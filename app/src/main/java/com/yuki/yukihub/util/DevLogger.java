@@ -19,6 +19,8 @@ public final class DevLogger {
     private static volatile boolean enabled = false;
     private static File logcatFile;
     private static Process process;
+    private static Thread captureThread;
+    private static long captureGeneration;
 
     public static void init(Context ctx) {
         if (ctx == null) return;
@@ -31,49 +33,80 @@ public final class DevLogger {
 
     public static boolean isEnabled() { return enabled; }
 
-    public static void setEnabled(Context ctx, boolean on) {
+    public static synchronized void setEnabled(Context ctx, boolean on) {
+        if (ctx == null) return;
         enabled = on;
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, on).apply();
         if (on) startCapture(); else stopCapture();
     }
 
-    private static void startCapture() {
-        stopCapture();
-        new Thread(() -> {
+    private static synchronized void startCapture() {
+        stopCaptureLocked();
+        if (!enabled || logcatFile == null) return;
+        final long generation = ++captureGeneration;
+        captureThread = new Thread(() -> {
+            Process localProcess = null;
+            BufferedReader reader = null;
+            FileWriter writer = null;
             try {
-                // 清除旧日志
-                Runtime.getRuntime().exec("logcat -c").waitFor();
-                // 启动logcat捕获
-                process = Runtime.getRuntime().exec("logcat -v threadtime");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                FileWriter writer = new FileWriter(logcatFile, true);
+                Process clear = Runtime.getRuntime().exec("logcat -c");
+                if (!clear.waitFor(3, java.util.concurrent.TimeUnit.SECONDS)) clear.destroyForcibly();
+                localProcess = Runtime.getRuntime().exec("logcat -v threadtime");
+                synchronized (DevLogger.class) {
+                    if (!enabled || generation != captureGeneration) {
+                        localProcess.destroy();
+                        return;
+                    }
+                    process = localProcess;
+                }
+                reader = new BufferedReader(new InputStreamReader(localProcess.getInputStream()));
+                writer = new FileWriter(logcatFile, true);
                 writer.write("\n=== Logcat capture started ===\n");
                 writer.flush();
                 String line;
-                while (enabled && (line = reader.readLine()) != null) {
+                while (enabled && generation == captureGeneration && (line = reader.readLine()) != null) {
                     writer.write(line);
                     writer.write("\n");
                     writer.flush();
                     // 超过10MB轮转
                     if (logcatFile.length() > 10 * 1024 * 1024) {
                         writer.close();
+                        writer = null;
                         File bak = new File(logcatFile.getParent(), "logcat_old.txt");
                         if (bak.exists()) bak.delete();
                         logcatFile.renameTo(bak);
                         writer = new FileWriter(logcatFile);
                     }
                 }
-                reader.close();
-                writer.close();
-            } catch (Exception e) { Log.e(TAG, "Capture failed", e); }
-        }, "LogcatCapture").start();
+            } catch (Exception e) {
+                if (enabled && generation == captureGeneration) Log.e(TAG, "Capture failed", e);
+            } finally {
+                if (reader != null) try { reader.close(); } catch (Exception ignored) { }
+                if (writer != null) try { writer.close(); } catch (Exception ignored) { }
+                if (localProcess != null) localProcess.destroy();
+                synchronized (DevLogger.class) {
+                    if (process == localProcess) process = null;
+                    if (captureThread == Thread.currentThread()) captureThread = null;
+                }
+            }
+        }, "LogcatCapture");
+        captureThread.start();
         Log.i(TAG, "Logcat capture started");
     }
 
-    private static void stopCapture() {
+    private static synchronized void stopCapture() {
+        stopCaptureLocked();
+    }
+
+    private static void stopCaptureLocked() {
+        captureGeneration++;
         if (process != null) {
             process.destroy();
             process = null;
+        }
+        if (captureThread != null) {
+            captureThread.interrupt();
+            captureThread = null;
         }
     }
 
@@ -92,7 +125,7 @@ public final class DevLogger {
 
     public static String formatSize(long b) {
         if (b < 1024) return b + " B";
-        if (b < 1048576) return String.format("%.1f KB", b / 1024.0);
-        return String.format("%.2f MB", b / 1048576.0);
+        if (b < 1048576) return String.format(java.util.Locale.getDefault(), "%.1f KB", b / 1024.0);
+        return String.format(java.util.Locale.getDefault(), "%.2f MB", b / 1048576.0);
     }
 }

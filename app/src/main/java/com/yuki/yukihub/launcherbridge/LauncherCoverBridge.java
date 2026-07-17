@@ -51,18 +51,25 @@ public final class LauncherCoverBridge {
     }
 
     private static String downloadAndSaveCover(Context context, String imageUrl, String prefix) {
+        return downloadAndSaveCover(context, imageUrl, prefix, 0);
+    }
+
+    private static String downloadAndSaveCover(Context context, String imageUrl, String prefix, int redirects) {
         if (imageUrl == null || imageUrl.trim().isEmpty()) return null;
+        if (redirects > 5) return null;
         InputStream is = null;
+        HttpURLConnection conn = null;
+        File cacheFile = null;
         try {
             File dir = new File(context.getFilesDir(), "covers_remote");
             if (!dir.exists()) dir.mkdirs();
             String name = prefix + "_" + Math.abs(imageUrl.hashCode()) + ".jpg";
-            File cacheFile = new File(dir, name);
+            cacheFile = new File(dir, name);
             if (cacheFile.exists() && cacheFile.length() > 0) {
                 return Uri.fromFile(cacheFile).toString();
             }
             URL url = new URL(imageUrl.trim());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(15000);
             conn.setReadTimeout(20000);
             conn.setRequestProperty("Referer", "https://vndb.org/");
@@ -71,16 +78,22 @@ public final class LauncherCoverBridge {
             int code = conn.getResponseCode();
             if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_SEE_OTHER) {
                 String next = conn.getHeaderField("Location");
-                conn.disconnect();
-                if (next != null && !next.isEmpty()) return downloadAndSaveCover(context, next, prefix);
+                if (next != null && !next.isEmpty()) return downloadAndSaveCover(context, next, prefix, redirects + 1);
                 return null;
             }
+            if (code < 200 || code >= 300) return null;
+            long declaredLength = conn.getContentLengthLong();
+            if (declaredLength > 20L * 1024L * 1024L) return null;
             is = conn.getInputStream();
             byte[] buffer = new byte[8192];
-            int len;
-            FileOutputStream fos = new FileOutputStream(cacheFile);
-            while ((len = is.read(buffer)) != -1) fos.write(buffer, 0, len);
-            fos.close();
+            int len, total = 0;
+            try (FileOutputStream fos = new FileOutputStream(cacheFile)) {
+                while ((len = is.read(buffer)) != -1) {
+                    total += len;
+                    if (total > 20 * 1024 * 1024) throw new java.io.IOException("cover download too large");
+                    fos.write(buffer, 0, len);
+                }
+            }
             is.close();
             is = null;
             BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -102,16 +115,18 @@ public final class LauncherCoverBridge {
                 Bitmap scaled = Bitmap.createScaledBitmap(bitmap, nw, nh, true);
                 bitmap.recycle();
                 bitmap = scaled;
-                FileOutputStream fos2 = new FileOutputStream(cacheFile);
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 88, fos2);
-                fos2.close();
+                try (FileOutputStream fos2 = new FileOutputStream(cacheFile)) {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 88, fos2);
+                }
             }
             bitmap.recycle();
             return Uri.fromFile(cacheFile).toString();
         } catch (Throwable t) {
+            if (cacheFile != null) try { cacheFile.delete(); } catch (Throwable ignored) { }
             return null;
         } finally {
             if (is != null) try { is.close(); } catch (Throwable ignored) {}
+            if (conn != null) conn.disconnect();
         }
     }
 

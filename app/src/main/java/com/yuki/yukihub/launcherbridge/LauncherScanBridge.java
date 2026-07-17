@@ -285,9 +285,9 @@ public final class LauncherScanBridge {
             File dir = new File(context.getFilesDir(), "covers");
             if (!dir.exists()) dir.mkdirs();
             File out = new File(dir, "cover_" + System.currentTimeMillis() + ".jpg");
-            FileOutputStream fos = new FileOutputStream(out);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 88, fos);
-            fos.close();
+            try (FileOutputStream fos = new FileOutputStream(out)) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 88, fos);
+            }
             bitmap.recycle();
             return Uri.fromFile(out).toString();
         } catch (Throwable t) {

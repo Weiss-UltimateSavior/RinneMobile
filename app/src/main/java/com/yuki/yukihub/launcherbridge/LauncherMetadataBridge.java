@@ -88,7 +88,8 @@ public final class LauncherMetadataBridge {
     }
 
     public static void fetchAndSaveMetadataAsync(Context context, Game game, Callback callback) {
-        if (game == null || game.title == null || game.title.trim().isEmpty()) {
+        if (callback == null) return;
+        if (context == null || game == null || game.title == null || game.title.trim().isEmpty()) {
             callback.onResult(false);
             return;
         }
@@ -238,7 +239,8 @@ public final class LauncherMetadataBridge {
     }
 
     public static void syncCoverToGameAsync(Context context, Game game, Callback callback) {
-        if (game == null) {
+        if (callback == null) return;
+        if (context == null || game == null) {
             callback.onResult(false);
             return;
         }
