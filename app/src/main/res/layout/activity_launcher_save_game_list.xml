@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/launcher_bg">
 
-    <ScrollView
+    <com.apps.widget.LauncherClickableRowScrollView
         android:id="@+id/saveGameListScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -47,5 +47,5 @@
                 android:layout_marginTop="18dp"
                 android:orientation="vertical" />
         </LinearLayout>
-    </ScrollView>
+    </com.apps.widget.LauncherClickableRowScrollView>
 </FrameLayout>

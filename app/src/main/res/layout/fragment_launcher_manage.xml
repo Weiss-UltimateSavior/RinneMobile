@@ -41,9 +41,10 @@
                     android:id="@+id/actionAddDirectory"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="D" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_add_directory" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
@@ -59,9 +60,10 @@
                     android:id="@+id/actionScanGame"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="S" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_scan_game" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
@@ -77,9 +79,10 @@
                     android:id="@+id/actionAddGame"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="+" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_add_game" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
@@ -95,9 +98,10 @@
                     android:id="@+id/actionCloudSync"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="C" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_cloud_sync" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
@@ -113,9 +117,10 @@
                     android:id="@+id/actionDiagnostics"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="L" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_diagnostics" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
@@ -131,9 +136,10 @@
                     android:id="@+id/actionMetadataSource"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="S" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_metadata_source" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
@@ -149,9 +155,10 @@
                     android:id="@+id/actionKrkrSettings"
                     style="@style/LauncherManageItem">
 
-                    <TextView
-                        style="@style/LauncherManageIcon"
-                        android:text="K" />
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_engine_settings" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
