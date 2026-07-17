@@ -121,7 +121,7 @@
                     android:textStyle="bold"
                     android:visibility="gone" />
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/inputName"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
@@ -145,7 +145,7 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/inputEmail"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
@@ -169,7 +169,7 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/inputPassword"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
@@ -195,7 +195,7 @@
                     android:textStyle="bold"
                     android:visibility="gone" />
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/inputConfirmPassword"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"

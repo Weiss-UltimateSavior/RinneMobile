@@ -5,7 +5,9 @@ import android.animation.ValueAnimator;
 import android.graphics.Color;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.animation.LinearInterpolator;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,6 +59,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     private int messageListBaseBottomPadding;
     private Integer nextBeforeId;
     private boolean loadingOlder;
+    private boolean sending;
     private boolean readonly;
     private boolean muted;
     private String muteReason = "";
@@ -96,6 +99,11 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             }
         });
         sendView.setOnClickListener(view -> sendMessage());
+        inputView.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { updateSendState(); }
+            @Override public void afterTextChanged(Editable s) { }
+        });
         LauncherTheme.applyPrimaryTone(findViewById(R.id.publicChatRoot));
         titleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
         ((TextView) findViewById(R.id.publicChatTitle)).setTextColor(LauncherTheme.onPrimary(this));
@@ -147,17 +155,20 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         String content = inputView.getText().toString().trim();
         if (content.isEmpty()) return;
         if (readonly || muted) { renderStatus(); return; }
+        sending = true;
         inputView.setText("");
-        sendView.setEnabled(false);
+        updateSendState();
         startSendAnimation();
         LauncherPublicChatBridge.send(this, content, new LauncherPublicChatBridge.MessageCallback() {
             @Override public void onSuccess(LauncherPublicChatBridge.Message message) {
-                stopSendAnimation(); sendView.setEnabled(true); upsert(message, true);
+                sending = false;
+                stopSendAnimation(); updateSendState(); upsert(message, true);
             }
             @Override public void onError(String message) {
+                sending = false;
                 stopSendAnimation();
                 inputView.setText(content);
-                sendView.setEnabled(true);
+                updateSendState();
                 showError(message);
             }
         });
@@ -210,8 +221,10 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             if (text.length() > 0) text.append("\n\n");
             text.append(item.title).append("\n").append(item.content);
         }
-        noticeView.setText(text.length() == 0 ? "暂无公告" : text);
-        announcementBar.setVisibility(View.VISIBLE);
+        boolean hasAnnouncement = text.length() > 0;
+        announcementBar.setVisibility(hasAnnouncement ? View.VISIBLE : View.GONE);
+        if (hasAnnouncement) noticeView.setText(text);
+        updateMessageListOverlayPadding();
     }
 
     private void renderStatus() {
@@ -219,9 +232,18 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         if (readonly) text = "只读";
         else if (muted) text = TextUtils.isEmpty(muteReason) ? "已禁言" : "已禁言：" + muteReason;
         boolean canSend = !readonly && !muted;
-        inputView.setEnabled(canSend); sendView.setEnabled(canSend);
+        inputView.setEnabled(canSend);
         inputView.setHint(canSend ? "输入消息…" : text);
+        updateSendState();
         renderConnectionStatus(text);
+    }
+
+    private void updateSendState() {
+        if (inputView == null || sendView == null) return;
+        boolean hasContent = inputView.getText() != null && inputView.getText().toString().trim().length() > 0;
+        boolean enabled = !sending && !readonly && !muted && hasContent;
+        sendView.setEnabled(enabled);
+        sendView.setAlpha(enabled ? 1f : .45f);
     }
 
     private void renderConnectionStatus(String channelState) {

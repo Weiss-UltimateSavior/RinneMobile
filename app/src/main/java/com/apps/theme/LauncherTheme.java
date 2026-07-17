@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
@@ -118,9 +119,9 @@ public final class LauncherTheme {
         return drawable;
     }
 
-    /** Shared chat bubble treatment: both directions retain the active Launcher tone. */
+    /** Outgoing messages use the active tone; incoming messages use the neutral card surface. */
     public static GradientDrawable chatBubble(Context context, boolean outgoing) {
-        return primaryButton(context, 18f);
+        return outgoing ? primaryButton(context, 18f) : secondaryButton(context, 18f);
     }
 
     public static GradientDrawable selectedChip(Context context) {
@@ -309,10 +310,26 @@ public final class LauncherTheme {
 
     /** Applies the active Launcher tone to a text input's insertion cursor. */
     public static void styleTextInput(EditText input) {
-        if (input == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
+        if (input == null) return;
+        int primary = primary(input.getContext());
+        input.setHighlightColor(ColorUtils.setAlphaComponent(primary, 82));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
         GradientDrawable cursor = new GradientDrawable();
-        cursor.setColor(primary(input.getContext()));
+        cursor.setColor(primary);
+        cursor.setSize(dp(input.getContext(), 2f), -1);
         input.setTextCursorDrawable(cursor);
+        input.setTextSelectHandle(selectionHandle(input.getContext(), primary));
+        input.setTextSelectHandleLeft(selectionHandle(input.getContext(), primary));
+        input.setTextSelectHandleRight(selectionHandle(input.getContext(), primary));
+    }
+
+    private static GradientDrawable selectionHandle(Context context, int color) {
+        GradientDrawable handle = new GradientDrawable();
+        handle.setShape(GradientDrawable.OVAL);
+        handle.setColor(color);
+        int size = dp(context, 18f);
+        handle.setSize(size, size);
+        return handle;
     }
 
     private static int blend(int color1, int color2, float ratio) {

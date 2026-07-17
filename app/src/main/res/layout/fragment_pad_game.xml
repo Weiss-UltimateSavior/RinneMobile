@@ -85,7 +85,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/padSearchInput"
                 style="@style/LauncherAddGameInput"
                 android:layout_width="250dp"

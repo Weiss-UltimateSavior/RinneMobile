@@ -46,7 +46,7 @@
                 android:layout_marginTop="22dp"
                 android:text="游戏名称" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/addGameNameInput"
                 style="@style/LauncherAddGameInput"
                 android:hint="输入游戏名称" />
@@ -97,7 +97,7 @@
                 android:layout_marginTop="7dp"
                 android:orientation="horizontal">
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/addGameGameHubIdInput"
                     android:layout_width="0dp"
                     android:layout_height="45dp"
@@ -136,7 +136,7 @@
                 style="@style/LauncherAddGameLabel"
                 android:text="备注" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/addGameDescriptionInput"
                 android:layout_width="match_parent"
                 android:layout_height="86dp"

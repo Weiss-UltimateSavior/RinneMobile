@@ -39,7 +39,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/editTitle"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
@@ -90,7 +90,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/editLaunchTarget"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
@@ -112,7 +112,7 @@
                 android:layout_marginTop="5dp"
                 android:orientation="horizontal">
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/editGameHubLocalGameId"
                     style="@style/LauncherFormInput"
                     android:layout_width="0dp"
@@ -142,7 +142,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/editDescription"
                 style="@style/LauncherFormMultilineInput"
                 android:layout_marginTop="5dp"

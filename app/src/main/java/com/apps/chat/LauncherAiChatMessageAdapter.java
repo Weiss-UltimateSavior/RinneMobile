@@ -46,9 +46,10 @@ final class LauncherAiChatMessageAdapter extends RecyclerView.Adapter<LauncherAi
         holder.author.setText(user ? "我" : ("tool".equals(message.role) ? "工具 · " + message.name : assistantName));
         holder.time.setVisibility(View.GONE);
         holder.pinned.setVisibility(View.GONE);
-        int textColor = LauncherTheme.onPrimary(holder.bubble.getContext());
-        holder.author.setTextColor(textColor);
-        holder.content.setTextColor(textColor);
+        int contentColor = user ? LauncherTheme.onPrimary(holder.bubble.getContext())
+                : LauncherTheme.text(holder.bubble.getContext());
+        holder.author.setTextColor(contentColor);
+        holder.content.setTextColor(contentColor);
     }
 
     @Override public int getItemCount() { return messages.size(); }
@@ -63,6 +64,10 @@ final class LauncherAiChatMessageAdapter extends RecyclerView.Adapter<LauncherAi
             time = root.findViewById(R.id.chatMessageTime);
             pinned = root.findViewById(R.id.chatMessagePinned);
             content = root.findViewById(R.id.chatMessageContent);
+            root.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                int maxContentWidth = Math.max(0, (right - left) * 76 / 100 - LauncherTheme.dp(view.getContext(), 24f));
+                content.setMaxWidth(maxContentWidth);
+            });
         }
     }
 

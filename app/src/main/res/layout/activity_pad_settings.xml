@@ -619,7 +619,7 @@
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/padMetadataTokenInput"
                     android:layout_width="match_parent"
                     android:layout_height="40dp"

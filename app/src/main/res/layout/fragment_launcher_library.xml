@@ -57,7 +57,7 @@
                 android:src="@drawable/launcher_library_action_search" />
         </LinearLayout>
 
-        <EditText
+        <com.apps.widget.LauncherEditText
             android:id="@+id/librarySearchInput"
             android:layout_width="match_parent"
             android:layout_height="@dimen/launcher_library_search_height"

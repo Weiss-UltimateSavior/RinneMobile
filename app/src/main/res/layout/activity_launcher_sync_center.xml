@@ -48,7 +48,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/syncServerInput"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
@@ -64,7 +64,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/syncUserInput"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
@@ -80,7 +80,7 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/syncPasswordInput"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"

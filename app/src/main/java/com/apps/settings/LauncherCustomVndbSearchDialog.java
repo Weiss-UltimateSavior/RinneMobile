@@ -82,7 +82,7 @@ public final class LauncherCustomVndbSearchDialog {
         labelParams.setMargins(0, dp(fragment, 13), 0, 0);
         root.addView(label, labelParams);
 
-        EditText input = new EditText(fragment.requireContext());
+        EditText input = new com.apps.widget.LauncherEditText(fragment.requireContext());
         input.setSingleLine(true);
         input.setText(safe(game.title));
         input.setSelectAllOnFocus(true);

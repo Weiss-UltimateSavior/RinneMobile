@@ -44,6 +44,15 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/aiChatMore"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="更多聊天设置"
+                android:gravity="center"
+                android:text="⋯"
+                android:textSize="26sp" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -90,39 +99,6 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="6dp">
-
-            <TextView
-                android:id="@+id/aiChatClear"
-                android:layout_width="wrap_content"
-                android:layout_height="31dp"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="清空记录"
-                android:textColor="@color/launcher_text_muted_color"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/aiChatCustomModel"
-                android:layout_width="wrap_content"
-                android:layout_height="31dp"
-                android:layout_marginStart="7dp"
-                android:gravity="center"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="自定义模型"
-                android:textColor="@color/launcher_text_muted_color"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <LinearLayout
             android:id="@+id/aiChatInputThemeBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -143,26 +119,28 @@
                 android:paddingEnd="8dp"
                 android:paddingBottom="3dp">
 
-                <EditText
+                <com.apps.widget.LauncherEditText
                     android:id="@+id/aiChatInput"
                     style="@style/LauncherAddGameInput"
                     android:layout_width="0dp"
-                    android:layout_height="33dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="0dp"
                     android:layout_weight="1"
                     android:background="@null"
                     android:hint="说点什么…"
                     android:includeFontPadding="false"
                     android:inputType="textMultiLine|textCapSentences"
+                    android:maxHeight="116dp"
                     android:maxLines="4"
-                    android:minHeight="0dp"
+                    android:minHeight="42dp"
                     android:paddingTop="0dp"
-                    android:paddingBottom="0dp" />
+                    android:paddingBottom="0dp"
+                    android:singleLine="false" />
 
                 <ImageView
                     android:id="@+id/aiChatSend"
-                    android:layout_width="56dp"
-                    android:layout_height="43dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_marginStart="4dp"
                     android:contentDescription="发送消息"
                     android:padding="6dp"

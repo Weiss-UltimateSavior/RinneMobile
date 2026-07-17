@@ -49,7 +49,7 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/inputNewUsername"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
@@ -83,7 +83,7 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/inputOldPassword"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
@@ -107,7 +107,7 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/inputNewPassword"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
@@ -131,7 +131,7 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <EditText
+            <com.apps.widget.LauncherEditText
                 android:id="@+id/inputConfirmNewPassword"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"

@@ -416,7 +416,7 @@ public final class LauncherGameActionController {
     }
 
     private EditText durationInput(String hint) {
-        EditText input = new EditText(context());
+        EditText input = new com.apps.widget.LauncherEditText(context());
         input.setHint(hint);
         input.setSingleLine(true);
         input.setTextColor(ContextCompat.getColor(context(), R.color.launcher_text_color));

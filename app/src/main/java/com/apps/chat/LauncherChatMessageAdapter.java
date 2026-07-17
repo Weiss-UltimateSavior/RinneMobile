@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yuki.yukihub.R;
@@ -48,11 +49,16 @@ final class LauncherChatMessageAdapter extends RecyclerView.Adapter<LauncherChat
         holder.time.setText(DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(message.createdAt)));
         holder.pinned.setVisibility(message.pinned ? View.VISIBLE : View.GONE);
         holder.content.setText(message.content);
-        int contentColor = LauncherTheme.onPrimary(holder.bubble.getContext());
+        int contentColor = outgoing ? LauncherTheme.onPrimary(holder.bubble.getContext())
+                : LauncherTheme.text(holder.bubble.getContext());
         holder.author.setTextColor(contentColor);
         holder.content.setTextColor(contentColor);
-        holder.time.setTextColor(contentColor);
-        holder.pinned.setTextColor(contentColor);
+        holder.time.setTextColor(outgoing
+                ? ColorUtils.setAlphaComponent(contentColor, 190)
+                : LauncherTheme.textMuted(holder.bubble.getContext()));
+        holder.pinned.setTextColor(outgoing
+                ? ColorUtils.setAlphaComponent(contentColor, 220)
+                : LauncherTheme.primary(holder.bubble.getContext()));
     }
 
     @Override public int getItemCount() { return messages.size(); }
@@ -67,6 +73,10 @@ final class LauncherChatMessageAdapter extends RecyclerView.Adapter<LauncherChat
             time = view.findViewById(R.id.chatMessageTime);
             pinned = view.findViewById(R.id.chatMessagePinned);
             content = view.findViewById(R.id.chatMessageContent);
+            view.addOnLayoutChangeListener((root, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                int maxContentWidth = Math.max(0, (right - left) * 76 / 100 - LauncherTheme.dp(root.getContext(), 24f));
+                content.setMaxWidth(maxContentWidth);
+            });
         }
     }
 }

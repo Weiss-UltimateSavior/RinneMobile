@@ -1064,7 +1064,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         tlLp.setMargins(0, dp(13), 0, 0);
         root.addView(totalLabel, tlLp);
 
-        android.widget.EditText totalInput = new android.widget.EditText(requireContext());
+        android.widget.EditText totalInput = new com.apps.widget.LauncherEditText(requireContext());
         totalInput.setHint("例如 3h 20m / 200m / 7200s / 2.5h");
         totalInput.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         totalInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_input_hint_color));
@@ -1085,7 +1085,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         alLp.setMargins(0, dp(11), 0, 0);
         root.addView(addLabel, alLp);
 
-        android.widget.EditText addInput = new android.widget.EditText(requireContext());
+        android.widget.EditText addInput = new com.apps.widget.LauncherEditText(requireContext());
         addInput.setHint("例如 30m / 1h30m / 0.5h");
         addInput.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         addInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_input_hint_color));

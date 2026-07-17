@@ -3,6 +3,7 @@ package com.apps.chat;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,6 +14,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -98,15 +100,13 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(findViewById(R.id.aiChatRoot));
         titleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
         ((TextView) findViewById(R.id.aiChatTitle)).setTextColor(LauncherTheme.onPrimary(this));
+        ((TextView) findViewById(R.id.aiChatMore)).setTextColor(LauncherTheme.onPrimary(this));
         findViewById(R.id.aiChatInputThemeBar).setBackground(LauncherTheme.primaryButton(this, 0f));
         input.setTextColor(LauncherTheme.text(this));
         input.setHintTextColor(LauncherTheme.textMuted(this));
-        LauncherTheme.primaryButton((TextView) findViewById(R.id.aiChatClear));
-        LauncherTheme.primaryButton((TextView) findViewById(R.id.aiChatCustomModel));
         findViewById(R.id.aiChatCharacterIcon).setBackground(LauncherTheme.circle(this));
         send.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
-        findViewById(R.id.aiChatClear).setOnClickListener(view -> showClearConfirmDialog());
-        findViewById(R.id.aiChatCustomModel).setOnClickListener(view -> showCustomLlmDialog());
+        findViewById(R.id.aiChatMore).setOnClickListener(this::showMoreMenu);
         send.setOnClickListener(view -> sendMessage());
         input.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
@@ -116,6 +116,43 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         renderInputState();
         loadHistory();
         LauncherMotion.applyActivityOpen(this);
+    }
+
+    private void showMoreMenu(View anchor) {
+        if (anchor == null) return;
+        LinearLayout menu = new LinearLayout(this);
+        menu.setOrientation(LinearLayout.VERTICAL);
+        menu.setBackgroundResource(R.drawable.launcher_white_card);
+        menu.setPadding(dp(7), dp(7), dp(7), dp(7));
+
+        PopupWindow popupWindow = new PopupWindow(menu, dp(119), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setAnimationStyle(R.style.LauncherDialogAnimation);
+
+        addMoreMenuItem(menu, "自定义模型", popupWindow, this::showCustomLlmDialog);
+        addMoreMenuItem(menu, "清空记录", popupWindow, this::showClearConfirmDialog);
+        popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(119), dp(5), android.view.Gravity.NO_GRAVITY);
+    }
+
+    private void addMoreMenuItem(LinearLayout menu, String label, PopupWindow popupWindow, Runnable action) {
+        TextView item = new TextView(this);
+        item.setText(label);
+        item.setTextSize(13);
+        item.setTypeface(null, android.graphics.Typeface.BOLD);
+        item.setGravity(android.view.Gravity.CENTER);
+        item.setSingleLine(true);
+        item.setPadding(dp(13), 0, dp(13), 0);
+        item.setTextColor(LauncherTheme.primary(this));
+        item.setBackgroundColor(Color.TRANSPARENT);
+        item.setOnClickListener(view -> {
+            popupWindow.dismiss();
+            action.run();
+        });
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(34));
+        params.setMargins(0, 0, 0, dp(5));
+        menu.addView(item, params);
     }
 
     private void loadHistory() {
@@ -272,7 +309,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         labelLp.setMargins(0, dp(10), 0, 0);
         root.addView(labelView, labelLp);
-        EditText field = new EditText(this);
+        EditText field = new com.apps.widget.LauncherEditText(this);
         field.setSingleLine(true);
         field.setTextSize(12);
         field.setInputType(inputType);
