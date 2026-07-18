@@ -79,15 +79,22 @@ public final class AgentToolRegistry {
         tools.put(tool("restore_game_snapshot", "在用户确认后恢复一个智能体修改快照；若文件随后又变化会拒绝覆盖。",
                 objectSchema(new JSONObject().put("snapshot_id", stringSchema("快照 ID", 36)),
                         new JSONArray().put("snapshot_id"))));
-        tools.put(tool("run_game_workspace_command", "执行受限游戏工作区命令。它不是系统 Shell，仅支持 find/grep/cat/sha256，无管道、重定向或任意程序。",
+        tools.put(tool("run_game_workspace_command", "执行只读、受限的游戏工作区命令。文件检查：stat；tree 用 depth/limit；head/tail 用 limit；diff 用 secondary_path/limit。配置解析：json_get 用 pointer；json_validate；ini_get 用 section/key；xml_validate。游戏诊断：archive_list 只检查 ZIP/APK/JAR 且用 limit；encoding_detect；text_count 可用 query 统计出现次数。文本命令可传 encoding。它不是系统 Shell，不支持管道、重定向、写入或运行程序。",
                 objectSchema(new JSONObject().put("game_id", integerSchema(1, Integer.MAX_VALUE))
-                                .put("command", enumSchema("find", "grep", "cat", "sha256"))
-                                .put("relative_path", stringSchema("游戏目录内相对路径；find/grep 可用空字符串", 512))
-                                .put("query", stringSchema("grep 查询文本；其他命令传空字符串", 200))
+                                .put("command", enumSchema("find", "grep", "cat", "sha256",
+                                        "stat", "tree", "head", "tail", "diff",
+                                        "json_get", "json_validate", "ini_get", "xml_validate",
+                                        "archive_list", "encoding_detect", "text_count"))
+                                .put("relative_path", stringSchema("游戏目录内相对路径；find/tree/grep 可用空字符串", 512))
+                                .put("secondary_path", stringSchema("diff 使用的第二个文件相对路径", 512))
+                                .put("query", stringSchema("grep 查询文本；text_count 可用它统计指定文本出现次数", 200))
                                 .put("encoding", enumSchema("auto", "utf-8", "gb18030", "shift_jis", "utf-16le", "utf-16be"))
-                                .put("limit", integerSchema(1, 100)),
-                        new JSONArray().put("game_id").put("command").put("relative_path")
-                                .put("query").put("encoding").put("limit"))));
+                                .put("limit", integerSchema(1, 200))
+                                .put("depth", integerSchema(0, 8))
+                                .put("pointer", stringSchema("json_get 使用的 RFC 6901 JSON Pointer；空字符串表示根节点", 512))
+                                .put("section", stringSchema("ini_get 的节名；全局键使用空字符串", 120))
+                                .put("key", stringSchema("ini_get 的键名", 120)),
+                        new JSONArray().put("game_id").put("command").put("relative_path"))));
         tools.put(tool("list_mcp_servers", "列出已由用户确认添加的远程 MCP 服务器。",
                 objectSchema(new JSONObject(), new JSONArray())));
         tools.put(tool("add_mcp_server", "根据用户明确提供的名称和地址，提出添加一个 Streamable HTTP MCP 服务器。必须先由用户在本机确认；不要接收或请求 Token、Cookie、Authorization Header。",
@@ -163,14 +170,36 @@ public final class AgentToolRegistry {
             String command = arguments.optString("command");
             long gameId = arguments.optLong("game_id");
             String path = arguments.optString("relative_path");
+            String encoding = arguments.optString("encoding", "auto");
+            int limit = arguments.optInt("limit", 50);
             if ("find".equals(command)) return bounded(GameWorkspaceGateway.list(context, gameId, path, 4,
-                    arguments.optInt("limit"), cancellation));
+                    limit, cancellation));
             if ("grep".equals(command)) return bounded(GameWorkspaceGateway.search(context, gameId, path,
-                    arguments.optString("query"), arguments.optString("encoding"), arguments.optInt("limit"),
-                    arguments.optInt("limit"), cancellation));
+                    arguments.optString("query"), encoding, limit, limit, cancellation));
             if ("cat".equals(command)) return bounded(GameWorkspaceGateway.readText(context, gameId, path,
-                    arguments.optString("encoding"), cancellation));
+                    encoding, cancellation));
             if ("sha256".equals(command)) return bounded(GameWorkspaceGateway.fileHash(context, gameId, path, cancellation));
+            if ("stat".equals(command)) return bounded(GameWorkspaceGateway.stat(context, gameId, path, cancellation));
+            if ("tree".equals(command)) return bounded(GameWorkspaceGateway.list(context, gameId, path,
+                    arguments.optInt("depth", 4), limit, cancellation));
+            if ("head".equals(command) || "tail".equals(command)) return bounded(GameWorkspaceGateway.textSlice(
+                    context, gameId, path, encoding, limit, "tail".equals(command), cancellation));
+            if ("diff".equals(command)) return bounded(GameWorkspaceGateway.diff(context, gameId, path,
+                    arguments.optString("secondary_path"), encoding, limit, cancellation));
+            if ("json_get".equals(command)) return bounded(GameWorkspaceGateway.jsonGet(context, gameId, path,
+                    encoding, arguments.optString("pointer", ""), cancellation));
+            if ("json_validate".equals(command)) return bounded(GameWorkspaceGateway.jsonValidate(
+                    context, gameId, path, encoding, cancellation));
+            if ("ini_get".equals(command)) return bounded(GameWorkspaceGateway.iniGet(context, gameId, path,
+                    encoding, arguments.optString("section", ""), arguments.optString("key"), cancellation));
+            if ("xml_validate".equals(command)) return bounded(GameWorkspaceGateway.xmlValidate(
+                    context, gameId, path, cancellation));
+            if ("archive_list".equals(command)) return bounded(GameWorkspaceGateway.archiveList(
+                    context, gameId, path, limit, cancellation));
+            if ("encoding_detect".equals(command)) return bounded(GameWorkspaceGateway.detectEncoding(
+                    context, gameId, path, cancellation));
+            if ("text_count".equals(command)) return bounded(GameWorkspaceGateway.textCount(context, gameId, path,
+                    encoding, arguments.optString("query", ""), cancellation));
         }
         return error("UNKNOWN_TOOL", "未知或未授权的工具：" + safeText(name, 80));
     }
@@ -256,21 +285,39 @@ public final class AgentToolRegistry {
             return;
         }
         if ("run_game_workspace_command".equals(name)) {
-            rejectUnknown(args, "game_id", "command", "relative_path", "query", "encoding", "limit");
+            rejectUnknown(args, "game_id", "command", "relative_path", "secondary_path", "query", "encoding",
+                    "limit", "depth", "pointer", "section", "key");
             requiredInteger(args, "game_id", 1, Integer.MAX_VALUE);
-            requiredEnum(args, "command", "find", "grep", "cat", "sha256");
+            requiredEnum(args, "command", "find", "grep", "cat", "sha256",
+                    "stat", "tree", "head", "tail", "diff",
+                    "json_get", "json_validate", "ini_get", "xml_validate",
+                    "archive_list", "encoding_detect", "text_count");
             requiredString(args, "relative_path", 512, true);
-            requiredString(args, "query", 200, true);
-            requiredEnum(args, "encoding", "auto", "utf-8", "gb18030", "shift_jis", "utf-16le", "utf-16be");
-            requiredInteger(args, "limit", 1, 100);
+            optionalString(args, "secondary_path", 512);
+            optionalString(args, "query", 200);
+            optionalEnum(args, "encoding", "auto", "utf-8", "gb18030", "shift_jis", "utf-16le", "utf-16be");
+            optionalInteger(args, "limit", 1, 200);
+            optionalInteger(args, "depth", 0, 8);
+            optionalString(args, "pointer", 512);
+            optionalString(args, "section", 120);
+            optionalString(args, "key", 120);
             AgentRelativePath.normalize(args.optString("relative_path"), true);
             String command = args.optString("command");
-            if (("cat".equals(command) || "sha256".equals(command)) && args.optString("relative_path").isEmpty()) {
+            if (!("find".equals(command) || "tree".equals(command) || "grep".equals(command) || "stat".equals(command))
+                    && args.optString("relative_path").isEmpty()) {
                 throw new IllegalArgumentException("该命令需要文件路径");
             }
             if ("grep".equals(command) && args.optString("query").trim().isEmpty()) {
                 throw new IllegalArgumentException("grep 需要 query");
             }
+            if ("diff".equals(command)) {
+                requiredString(args, "secondary_path", 512, false);
+                AgentRelativePath.normalize(args.optString("secondary_path"), false);
+            }
+            if ("json_get".equals(command) && !args.has("pointer")) {
+                throw new IllegalArgumentException("json_get 需要 pointer");
+            }
+            if ("ini_get".equals(command)) requiredString(args, "key", 120, false);
             return;
         }
         if ("list_mcp_servers".equals(name)) { rejectUnknown(args); return; }

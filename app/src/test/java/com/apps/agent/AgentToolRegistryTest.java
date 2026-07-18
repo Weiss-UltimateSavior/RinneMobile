@@ -58,4 +58,44 @@ public class AgentToolRegistryTest {
         AgentToolRegistry.validateArguments("run_game_workspace_command",
                 new JSONObject(base.toString()).put("command", "grep"));
     }
+
+    @Test public void acceptsAllExpandedReadOnlyWorkspaceCommands() throws Exception {
+        String[] simpleFileCommands = {"stat", "head", "tail", "json_validate", "xml_validate",
+                "archive_list", "encoding_detect", "text_count"};
+        for (String command : simpleFileCommands) {
+            AgentToolRegistry.validateArguments("run_game_workspace_command", new JSONObject()
+                    .put("game_id", 1).put("command", command).put("relative_path", "config/settings.json")
+                    .put("encoding", "auto").put("limit", 30));
+        }
+        AgentToolRegistry.validateArguments("run_game_workspace_command", new JSONObject()
+                .put("game_id", 1).put("command", "tree").put("relative_path", "")
+                .put("depth", 6).put("limit", 100));
+        AgentToolRegistry.validateArguments("run_game_workspace_command", new JSONObject()
+                .put("game_id", 1).put("command", "diff").put("relative_path", "config/a.ini")
+                .put("secondary_path", "config/b.ini"));
+        AgentToolRegistry.validateArguments("run_game_workspace_command", new JSONObject()
+                .put("game_id", 1).put("command", "json_get").put("relative_path", "config/settings.json")
+                .put("pointer", "/graphics/fps"));
+        AgentToolRegistry.validateArguments("run_game_workspace_command", new JSONObject()
+                .put("game_id", 1).put("command", "ini_get").put("relative_path", "config/settings.ini")
+                .put("section", "graphics").put("key", "fullscreen"));
+    }
+
+    @Test public void expandedCommandsRejectMissingOrUnsafeOperands() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "run_game_workspace_command", new JSONObject().put("game_id", 1).put("command", "diff")
+                        .put("relative_path", "config/a.ini")));
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "run_game_workspace_command", new JSONObject().put("game_id", 1).put("command", "diff")
+                        .put("relative_path", "config/a.ini").put("secondary_path", "../b.ini")));
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "run_game_workspace_command", new JSONObject().put("game_id", 1).put("command", "json_get")
+                        .put("relative_path", "config/settings.json")));
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "run_game_workspace_command", new JSONObject().put("game_id", 1).put("command", "ini_get")
+                        .put("relative_path", "config/settings.ini")));
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "run_game_workspace_command", new JSONObject().put("game_id", 1).put("command", "tree")
+                        .put("relative_path", "").put("depth", 9)));
+    }
 }
