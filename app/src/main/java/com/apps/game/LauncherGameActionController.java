@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -239,7 +240,7 @@ public final class LauncherGameActionController {
                 ? new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                 .format(new Date(game.lastPlayedAt)) : "未游玩");
         if (!TextUtils.isEmpty(game.emulatorPackage)) text.append("\n模拟器：").append(game.emulatorPackage);
-        text.append("\n\n路径：").append(game.rootUri);
+        text.append("\n\n路径：").append(game.rootUri == null ? "" : Uri.decode(game.rootUri));
         TextView info = bodyText(text.toString(), false);
         addWithTopMargin(root, info, 13);
         root.addView(createDialogCancelButton(dialog));

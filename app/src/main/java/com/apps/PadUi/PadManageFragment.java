@@ -946,7 +946,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         sb.append("\n最近游玩：").append(game.lastPlayedAt > 0 ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new java.util.Date(game.lastPlayedAt)) : "未游玩");
         if (game.emulatorPackage != null && !game.emulatorPackage.trim().isEmpty())
             sb.append("\n模拟器：").append(game.emulatorPackage);
-        sb.append("\n\n路径：").append(game.rootUri);
+        sb.append("\n\n路径：").append(game.rootUri == null ? "" : Uri.decode(game.rootUri));
         info.setText(sb.toString());
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         info.setTextSize(12);
