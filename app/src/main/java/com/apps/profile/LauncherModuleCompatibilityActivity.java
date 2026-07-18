@@ -20,11 +20,10 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherModuleCompatibilityBinding;
-import com.yuki.yukihub.launcher.ExternalRenPyPluginStrategy;
-import com.yuki.yukihub.launcher.ExternalRpgMakerPluginStrategy;
+import com.yuki.yukihub.launcherbridge.LauncherModuleBridge;
 import com.yuki.yukihub.util.AppExecutors;
 
-/** Static placeholder surface for future module compatibility entries. */
+/** 模块兼容页面：展示并管理 Rinne 所兼容的第三方 JoiPlay 插件（RPGM / RenPy）。 */
 public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     /** Temporary routable placeholder; replace with the published RPGM module URL when available. */
     private static final String RPGM_INSTALL_URL = "https://example.com/";
@@ -34,6 +33,8 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     private ActivityLauncherModuleCompatibilityBinding binding;
     private boolean rpgmModuleInstalled;
     private boolean renpyModuleInstalled;
+    private boolean rpgmModuleEnabled = true;
+    private boolean renpyModuleEnabled = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -48,6 +49,12 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.moduleRpgmRow.setOnClickListener(view -> openRpgmModule());
         binding.moduleRenpyRow.setOnClickListener(view -> openRenpyModule());
+        // 长按列表项：弹窗提醒跳转浏览器下载。
+        binding.moduleRpgmRow.setOnLongClickListener(view -> { promptDownload("RPGM", this::openRpgmInstallPage); return true; });
+        binding.moduleRenpyRow.setOnLongClickListener(view -> { promptDownload("RenPy", this::openRenpyInstallPage); return true; });
+        // 右侧图标：已安装时点击切换启用/禁用；未安装时点击等价于行点击（前往安装）。
+        binding.moduleRpgmIcon.setOnClickListener(view -> handleRpgmIconClick());
+        binding.moduleRenpyIcon.setOnClickListener(view -> handleRenpyIconClick());
         refreshInstalledModules();
     }
 
@@ -59,40 +66,97 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         binding.moduleRpgmIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
         binding.moduleRenpyIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
         AppExecutors.runOnIo(() -> {
-            boolean rpgmInstalled = ExternalRpgMakerPluginStrategy.isRpgMakerPluginInstalled(this);
-            boolean renpyInstalled = ExternalRenPyPluginStrategy.isRenPyPluginInstalled(this);
+            boolean rpgmInstalled = LauncherModuleBridge.isRpgMakerModuleInstalled(this);
+            boolean renpyInstalled = LauncherModuleBridge.isRenPyModuleInstalled(this);
+            boolean rpgmEnabled = LauncherModuleBridge.isRpgMakerModuleEnabled(this);
+            boolean renpyEnabled = LauncherModuleBridge.isRenPyModuleEnabled(this);
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 rpgmModuleInstalled = rpgmInstalled;
                 renpyModuleInstalled = renpyInstalled;
+                rpgmModuleEnabled = rpgmEnabled;
+                renpyModuleEnabled = renpyEnabled;
                 binding.moduleRpgmRow.setEnabled(true);
                 binding.moduleRenpyRow.setEnabled(true);
                 binding.moduleRpgmRow.setAlpha(1f);
                 binding.moduleRenpyRow.setAlpha(1f);
-                binding.moduleRpgmIcon.setImageTintList(ColorStateList.valueOf(
-                        rpgmInstalled ? LauncherTheme.primary(this) : LauncherTheme.danger(this)));
-                binding.moduleRenpyIcon.setImageTintList(ColorStateList.valueOf(
-                        renpyInstalled ? LauncherTheme.primary(this) : LauncherTheme.danger(this)));
-                updateModuleDescription(binding.moduleRpgmDescription, rpgmInstalled,
+                applyModuleIconTint(binding.moduleRpgmIcon, rpgmInstalled, rpgmEnabled);
+                applyModuleIconTint(binding.moduleRenpyIcon, renpyInstalled, renpyEnabled);
+                updateModuleDescription(binding.moduleRpgmDescription, rpgmInstalled, rpgmEnabled,
                         "提供 RPGM 游戏所需环境");
-                updateModuleDescription(binding.moduleRenpyDescription, renpyInstalled,
+                updateModuleDescription(binding.moduleRenpyDescription, renpyInstalled, renpyEnabled,
                         "提供 RenPy 游戏所需环境");
             });
         });
     }
 
-    private void updateModuleDescription(TextView description, boolean installed, String detail) {
-        description.setText((installed ? "已安装 - " : "未安装 - ") + detail);
-        description.setTextColor(installed ? LauncherTheme.primary(this) : LauncherTheme.danger(this));
+    /**
+     * 图标着色规则：
+     * <ul>
+     *   <li>未安装 → danger 红</li>
+     *   <li>已安装 + 已启用 → primary 主题色</li>
+     *   <li>已安装 + 未启用 → textMuted 灰，表示「关闭」状态</li>
+     * </ul>
+     */
+    private void applyModuleIconTint(android.widget.ImageView icon, boolean installed, boolean enabled) {
+        int color;
+        if (!installed) {
+            color = LauncherTheme.danger(this);
+        } else if (enabled) {
+            color = LauncherTheme.primary(this);
+        } else {
+            color = LauncherTheme.textMuted(this);
+        }
+        icon.setImageTintList(ColorStateList.valueOf(color));
     }
+
+    /**
+     * 左侧状态描述格式：
+     * <ul>
+     *   <li>未安装：{@code 未安装 - <detail>}（danger 红）</li>
+     *   <li>已安装 · 已启用：{@code 已安装 · 已启用 - <detail>}（primary 主题色）</li>
+     *   <li>已安装 · 未启用：{@code 已安装 · 未启用 - <detail>}（textMuted 灰）</li>
+     * </ul>
+     */
+    private void updateModuleDescription(TextView description, boolean installed, boolean enabled, String detail) {
+        String text;
+        int color;
+        if (!installed) {
+            text = "未安装 - " + detail;
+            color = LauncherTheme.danger(this);
+        } else if (enabled) {
+            text = "已安装 · 已启用 - " + detail;
+            color = LauncherTheme.primary(this);
+        } else {
+            text = "已安装 · 未启用 - " + detail;
+            color = LauncherTheme.textMuted(this);
+        }
+        description.setText(text);
+        description.setTextColor(color);
+    }
+
+    // ----- 长按：跳转浏览器下载 -----
+
+    private void promptDownload(String moduleName, Runnable openInstallPage) {
+        LauncherDialogFactory.showStandardConfirm(
+                this,
+                "下载 " + moduleName + " 模块",
+                "是否前往浏览器下载该模块？",
+                "前往下载",
+                openInstallPage);
+    }
+
+    // ----- 行点击 -----
 
     private void openRpgmModule() {
         if (rpgmModuleInstalled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
                     "RPGM 模块",
-                    "该模块已安装。",
-                    "确定",
+                    rpgmModuleEnabled
+                            ? "该模块已安装并启用。点击右侧图标可禁用。"
+                            : "该模块已安装但未启用。点击右侧图标可启用。",
+                    "知道了",
                     null);
             return;
         }
@@ -109,8 +173,10 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
             LauncherDialogFactory.showStandardConfirm(
                     this,
                     "RenPy 模块",
-                    "该模块已安装。",
-                    "确定",
+                    renpyModuleEnabled
+                            ? "该模块已安装并启用。点击右侧图标可禁用。"
+                            : "该模块已安装但未启用。点击右侧图标可启用。",
+                    "知道了",
                     null);
             return;
         }
@@ -121,6 +187,78 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
                 "前往安装",
                 this::openRenpyInstallPage);
     }
+
+    // ----- 图标点击：启停切换 -----
+
+    private void handleRpgmIconClick() {
+        if (!rpgmModuleInstalled) {
+            openRpgmModule();
+            return;
+        }
+        if (rpgmModuleEnabled) {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "禁用 RPGM 模块",
+                    "禁用后该模块将无法用于启动 RPGM 游戏。是否禁用？",
+                    "禁用",
+                    () -> {
+                        LauncherModuleBridge.setRpgMakerModuleEnabled(this, false);
+                        rpgmModuleEnabled = false;
+                        applyModuleIconTint(binding.moduleRpgmIcon, rpgmModuleInstalled, rpgmModuleEnabled);
+                        updateModuleDescription(binding.moduleRpgmDescription, rpgmModuleInstalled, rpgmModuleEnabled,
+                                "提供 RPGM 游戏所需环境");
+                    });
+        } else {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "启用 RPGM 模块",
+                    "启用后该模块可用于启动 RPGM 游戏。是否启用？",
+                    "启用",
+                    () -> {
+                        LauncherModuleBridge.setRpgMakerModuleEnabled(this, true);
+                        rpgmModuleEnabled = true;
+                        applyModuleIconTint(binding.moduleRpgmIcon, rpgmModuleInstalled, rpgmModuleEnabled);
+                        updateModuleDescription(binding.moduleRpgmDescription, rpgmModuleInstalled, rpgmModuleEnabled,
+                                "提供 RPGM 游戏所需环境");
+                    });
+        }
+    }
+
+    private void handleRenpyIconClick() {
+        if (!renpyModuleInstalled) {
+            openRenpyModule();
+            return;
+        }
+        if (renpyModuleEnabled) {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "禁用 RenPy 模块",
+                    "禁用后该模块将无法用于启动 RenPy 游戏。是否禁用？",
+                    "禁用",
+                    () -> {
+                        LauncherModuleBridge.setRenPyModuleEnabled(this, false);
+                        renpyModuleEnabled = false;
+                        applyModuleIconTint(binding.moduleRenpyIcon, renpyModuleInstalled, renpyModuleEnabled);
+                        updateModuleDescription(binding.moduleRenpyDescription, renpyModuleInstalled, renpyModuleEnabled,
+                                "提供 RenPy 游戏所需环境");
+                    });
+        } else {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "启用 RenPy 模块",
+                    "启用后该模块可用于启动 RenPy 游戏。是否启用？",
+                    "启用",
+                    () -> {
+                        LauncherModuleBridge.setRenPyModuleEnabled(this, true);
+                        renpyModuleEnabled = true;
+                        applyModuleIconTint(binding.moduleRenpyIcon, renpyModuleInstalled, renpyModuleEnabled);
+                        updateModuleDescription(binding.moduleRenpyDescription, renpyModuleInstalled, renpyModuleEnabled,
+                                "提供 RenPy 游戏所需环境");
+                    });
+        }
+    }
+
+    // ----- 安装页跳转 -----
 
     private void openRpgmInstallPage() {
         openInstallPage(RPGM_INSTALL_URL);
@@ -139,6 +277,8 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
             LauncherDialogFactory.showInfo(this, "无法打开浏览器", "请稍后重试。");
         }
     }
+
+    // ----- 窗口 / 主题 -----
 
     private void applySystemBarInsets() {
         int left = binding.moduleCompatibilityScroll.getPaddingLeft();

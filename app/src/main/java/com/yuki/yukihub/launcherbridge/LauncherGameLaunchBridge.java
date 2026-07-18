@@ -89,6 +89,17 @@ public final class LauncherGameLaunchBridge {
                 && !EmulatorLauncher.isPPSSPPInstalled(context)) {
             return "启动 PSP 游戏需要安装 PPSSPP 模拟器。";
         }
+        // 外部插件启用状态拦截：模块被禁用时拒绝启动，引导用户去模块兼容页启用。
+        if (LauncherModuleBridge.isRpgMakerPluginPackage(emulatorPackage)
+                && LauncherModuleBridge.isRpgMakerModuleInstalled(context)
+                && !LauncherModuleBridge.isRpgMakerModuleEnabled(context)) {
+            return "RPGM 模块未启用，请在「模块兼容」页面启用后再试。";
+        }
+        if (LauncherModuleBridge.isRenPyPluginPackage(emulatorPackage)
+                && LauncherModuleBridge.isRenPyModuleInstalled(context)
+                && !LauncherModuleBridge.isRenPyModuleEnabled(context)) {
+            return "RenPy 模块未启用，请在「模块兼容」页面启用后再试。";
+        }
         return null;
     }
 

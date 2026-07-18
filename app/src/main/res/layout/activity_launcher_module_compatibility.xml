@@ -86,7 +86,10 @@
                     android:layout_width="38dp"
                     android:layout_height="38dp"
                     android:layout_marginStart="10dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
                     android:contentDescription="RPGM 模块"
+                    android:focusable="true"
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_module_rpgm" />
             </LinearLayout>
@@ -138,7 +141,10 @@
                     android:layout_width="38dp"
                     android:layout_height="38dp"
                     android:layout_marginStart="10dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
                     android:contentDescription="RenPy 模块"
+                    android:focusable="true"
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_module_rpgm" />
             </LinearLayout>
