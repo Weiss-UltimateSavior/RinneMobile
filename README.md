@@ -102,8 +102,6 @@
   </table>
 </p>
 
-
-
 <p align="center">
   <table>
     <tr>
@@ -117,7 +115,6 @@
     </tr>
   </table>
 </p>
-
 
 ***
 
@@ -202,15 +199,18 @@
 
 目录扫描会先探测所选根目录本身，再扫描其子目录和入口文件；可直接选择单个游戏目录，也可选择包含多个游戏的上级目录。
 
-| 类型 | 自动扫描特征 | 扫描导入后的状态 |
-| --- | --- | --- |
-| Kirikiri | `.xp3`、`startup.tjs`、`config.tjs` | 使用内置 KRKR 启动。多个 XP3 候选会要求选择入口。 |
-| ONScripter | `0.txt`、`nscript.dat`、`onscript.nt*`、`.nsa`、`.sar` | 使用内置 ONScripter 启动。 |
-| Tyrano | `index.html` 与 Tyrano / Electron 目录特征 | 使用内置 Tyrano 启动。 |
-| Artemis | `system.ini`、`system/first.iet`、`.pfs` | 使用内置 Artemis 启动。 |
-| Winlator | `.desktop` 快捷方式 | 可识别；需选择已安装且支持外部直启的 Winlator 包名。`.exe` 入口目前请通过“添加游戏”手动添加。 |
-| PSP | `.iso`、`.cso`、`.chd`、`.elf`、`.pbp` | 以实际文件 URI 导入，启动需要安装 PPSSPP。标题和封面当前主要取文件名与目录图片，尚未解析 `PARAM.SFO` / `ICON0.PNG`。 |
-| GameHub（盖世） | 不通过目录扫描 | 通过 Shizuku 读取盖世桌面快捷方式并导入 `localGameId`。 |
+| 类型           | 自动扫描特征                                                                                        | 扫描导入后的状态                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Kirikiri     | `.xp3`、`startup.tjs`、`config.tjs`                                                             | 使用内置 KRKR 启动。多个 XP3 候选会要求选择入口。                                                |
+| ONScripter   | `0.txt`、`nscript.dat`、`onscript.nt*`、`.nsa`、`.sar`                                            | 使用内置 ONScripter 启动。                                                           |
+| Tyrano       | `index.html` 与 Tyrano / Electron 目录特征                                                         | 使用内置 Tyrano 启动。                                                               |
+| Artemis      | `system.ini`、`system/first.iet`、`.pfs`                                                        | 使用内置 Artemis 启动。                                                              |
+| Winlator     | `.desktop` 快捷方式                                                                               | 可识别；需选择已安装且支持外部直启的 Winlator 包名。`.exe` 入口目前请通过“添加游戏”手动添加。                      |
+| Nintendo 3DS | `.3ds`、`.cci`、`.zcci`、`.cxi`、`.zcxi`、`.cia`、`.zcia`、`.3dsx`、`.z3dsx`                          | 以实际文件 URI 导入，启动需要安装 Azahar 模拟器。标题和封面当前主要取文件名与目录图片。                            |
+| RPG Maker    | `.rgssad`（XP）、`.rgss2a`（VX）、`.rgss3a`（VX Ace）、`game.ini` + `.rxdata` / `.rvdata` / `.rvdata2` | 通过外部 RPG Maker 插件启动。自动识别 XP / VX / VX Ace / mkxp-z 子引擎并选择对应运行时。               |
+| Ren'Py       | `.rpa`、`game/script.rpy`、`game/options.rpy`、`renpy/` 目录 + `.rpy` / `.rpyc`                    | 通过外部 Ren'Py 插件启动。                                                             |
+| PSP          | `.iso`、`.cso`、`.chd`、`.elf`、`.pbp`                                                            | 以实际文件 URI 导入，启动需要安装 PPSSPP。标题和封面当前主要取文件名与目录图片，尚未解析 `PARAM.SFO` / `ICON0.PNG`。 |
+| GameHub（盖世）  | 不通过目录扫描                                                                                       | 通过 Shizuku 读取盖世桌面快捷方式并导入 `localGameId`。                                       |
 
 安卓应用、外部包名启动项和自定义快捷方式同样属于可管理条目，但当前不在目录自动扫描范围内，应通过手动添加或对应的快捷方式导入入口创建。项目当前没有 RMMZ 的 `EngineType`、自动识别或启动策略，不将其列为已支持的扫描类型。
 
@@ -284,7 +284,7 @@
 ### 已解决的兼容性与已发现问题说明
 
 - KRKR游戏中涉及文字输入弹窗功能，不可用。测试发现会导致游戏闪避
-反编译hook发现为原生动态库驱动中的win32dialog.dll缺少游戏所需的 Header、allBitmaps、finalize 函数。
+  反编译hook发现为原生动态库驱动中的win32dialog.dll缺少游戏所需的 Header、allBitmaps、finalize 函数。
 - TF 卡中的 KRKR 游戏现可通过镜像目录启动，存档位置与独立存档模式保持一致。
 - 华为等设备的存储访问兼容性已改善：可尝试启用“外部私有存档”或轻量级 SAF。若仍有问题，欢迎反馈设备与复现信息。
 
