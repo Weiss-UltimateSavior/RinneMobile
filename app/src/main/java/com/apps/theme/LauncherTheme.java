@@ -78,6 +78,11 @@ public final class LauncherTheme {
         if (LauncherActivity.isXinhaitianTheme(context)) {
             return xinhaitianGradient(context, radiusDp, false);
         }
+        return solidPrimary(context, radiusDp);
+    }
+
+    /** Primary tone without theme-specific gradients. */
+    public static GradientDrawable solidPrimary(Context context, float radiusDp) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(primary(context));
         drawable.setCornerRadius(dp(context, radiusDp));

@@ -84,4 +84,6 @@ dependencies {
     implementation libs.rxjava
     implementation libs.rxandroid
     testImplementation libs.junit
+    // JVM unit tests exercise the same org.json parsing used on Android.
+    testImplementation 'org.json:json:20240303'
 }

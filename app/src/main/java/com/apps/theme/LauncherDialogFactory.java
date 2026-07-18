@@ -94,9 +94,16 @@ public final class LauncherDialogFactory {
     }
 
     /** Scrollable long-message confirmation for content that cannot safely fit the compact shell. */
-    public static void showLongMessageConfirm(Context context, String title, String message,
-                                              String confirmText, Runnable onConfirm) {
+    public static AlertDialog showLongMessageConfirm(Context context, String title, String message,
+                                                     String confirmText, Runnable onConfirm) {
+        return showLongMessageConfirm(context, title, message, confirmText, onConfirm, null);
+    }
+
+    public static AlertDialog showLongMessageConfirm(Context context, String title, String message,
+                                                     String confirmText, Runnable onConfirm,
+                                                     Runnable onCancel) {
         AlertDialog dialog = open(context, WIDTH_FORM_DP);
+        final boolean[] resolved = {false};
         LinearLayout root = root(context, false);
         root.addView(standardTitle(context, title));
 
@@ -109,15 +116,25 @@ public final class LauncherDialogFactory {
 
         TextView confirm = button(context, confirmText, true);
         confirm.setOnClickListener(view -> {
+            resolved[0] = true;
             dialog.dismiss();
             if (onConfirm != null) onConfirm.run();
         });
         root.addView(confirm, fixedHeightTopMargin(context, 11, 36));
 
         TextView cancel = cancelButton(context);
-        cancel.setOnClickListener(view -> dialog.dismiss());
+        cancel.setOnClickListener(view -> {
+            resolved[0] = true;
+            dialog.dismiss();
+            if (onCancel != null) onCancel.run();
+        });
+        dialog.setOnCancelListener(value -> {
+            if (!resolved[0] && onCancel != null) onCancel.run();
+            resolved[0] = true;
+        });
         root.addView(cancel, fixedHeightTopMargin(context, 9, 36));
         setContent(dialog, root, WIDTH_FORM_DP);
+        return dialog;
     }
 
     /** Standard-width destructive confirmation with a horizontal action row. */

@@ -33,7 +33,7 @@ import com.yuki.yukihub.util.SafeImageLoader;
 
 import java.util.List;
 import com.apps.LauncherActivity;
-import com.apps.LauncherPendingActivity;
+import com.apps.agent.LocalAgentActivity;
 import com.apps.account.LauncherDisclaimerActivity;
 import com.apps.chat.LauncherChatSelectActivity;
 import com.apps.data.LauncherRepository;
@@ -137,7 +137,7 @@ public class LauncherHomeFragment extends Fragment {
         binding.actionToolbox.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
         binding.actionAgent.setOnClickListener(view ->
-                startLauncherActivity(new Intent(requireContext(), LauncherPendingActivity.class)));
+                startLauncherActivity(new Intent(requireContext(), LocalAgentActivity.class)));
         binding.recentRefresh.setOnRefreshListener(() -> {
             viewModel.refreshStats();
             viewModel.refreshRecentItems(true);

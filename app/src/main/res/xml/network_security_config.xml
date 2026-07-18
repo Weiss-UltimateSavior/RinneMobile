@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- 允许 localhost 明文流量（用于本地 HTTP 游戏资源服务器） -->
+    <base-config cleartextTrafficPermitted="false" />
+    <!-- Local model/MCP endpoints and the embedded game resource server may use loopback HTTP. -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>

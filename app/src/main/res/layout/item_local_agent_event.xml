@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:id="@+id/agentEventCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="0dp">
+
+        <LinearLayout
+            android:id="@+id/agentEventHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/agentEventIcon"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/agentEventTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/agentEventMeta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/agentEventStep"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/agentEventContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/launcher_text_color"
+            android:textIsSelectable="true"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:id="@+id/agentReasoningContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="思考过程"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/agentReasoningState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="思考中"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <com.apps.agent.AgentReasoningScrollView
+                android:id="@+id/agentReasoningScroll"
+                android:layout_width="match_parent"
+                android:layout_height="168dp"
+                android:layout_marginTop="8dp"
+                android:fadeScrollbars="false"
+                android:overScrollMode="ifContentScrolls"
+                android:scrollbars="vertical">
+
+                <TextView
+                    android:id="@+id/agentReasoningContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="12sp" />
+            </com.apps.agent.AgentReasoningScrollView>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
