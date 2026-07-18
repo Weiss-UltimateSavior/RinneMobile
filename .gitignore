@@ -37,18 +37,7 @@ captures/
 
 # IntelliJ
 *.iml
-.idea/workspace.xml
-.idea/deploymentTargetSelector.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/libraries
-# Android Studio 3 in .gitignore file.
-.idea/caches
-.idea/modules.xml
-# Comment next line if keeping position of elements in Navigation Editor is relevant for you
-.idea/navEditor.xml
+.idea/
 
 # Keystore files
 *.jks
@@ -64,6 +53,8 @@ keystore.properties
 # IDE / system files
 .DS_Store
 Thumbs.db
+.trae/
+.vscode/
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
