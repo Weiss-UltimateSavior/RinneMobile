@@ -57,7 +57,8 @@ public class PadGameFragment extends Fragment {
     private int currentPage;
     private boolean dataLoaded;
     private boolean loading;
-    private boolean needsRefresh;
+    // 编辑卡片后回退时，仅就地刷新被编辑的那张卡片，避免 loadGames() 重置 currentPage。
+    private long pendingEditGameId = -1L;
     private boolean swipeConsumed;
     private boolean pageAnimating;
     private int gridRows = PHONE_GRID_ROWS;
@@ -107,9 +108,11 @@ public class PadGameFragment extends Fragment {
                     requireContext(), runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
             runningSessionId = -1L;
             loadGames();
-        } else if (needsRefresh) {
-            needsRefresh = false;
-            loadGames();
+        } else if (pendingEditGameId > 0L) {
+            // 编辑页返回时仅就地刷新该卡片，保留当前分页位置。
+            long id = pendingEditGameId;
+            pendingEditGameId = -1L;
+            reloadGameInPlace(id);
         } else if (!dataLoaded) {
             loadGames();
         }
@@ -155,7 +158,7 @@ public class PadGameFragment extends Fragment {
 
                                 @Override
                                 public void editGame(Game target) {
-                                    needsRefresh = true;
+                                    pendingEditGameId = target.id;
                                     android.content.Intent intent = new android.content.Intent(
                                             requireContext(), LauncherGameEditActivity.class);
                                     intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, target.id);

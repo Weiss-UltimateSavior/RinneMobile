@@ -93,7 +93,8 @@ public class LauncherLibraryFragment extends Fragment {
     private boolean viewportFillCheckPending;
     private boolean categoriesCollapsed = true;
     private boolean dataLoaded;
-    private boolean needsRefresh;
+    // 编辑卡片后回退时，仅就地刷新被编辑的那张卡片，避免 loadGames() 重置分页与滑动位置。
+    private long pendingEditGameId = -1L;
     private long runningSessionId = -1L;
     // 实际游玩时间监控：本地仍维护 play_sessions，线上排行榜使用服务端会话结算。
     private long runningGameId = -1L;
@@ -169,7 +170,12 @@ public class LauncherLibraryFragment extends Fragment {
         checkStoragePermission();
         if (runningSessionId > 0L) {
             finishDirectPlaySessionIfNeeded();
-        } else if (!dataLoaded || needsRefresh) {
+        } else if (pendingEditGameId > 0L) {
+            // 编辑页返回时仅就地刷新该卡片，保留当前滑动位置与已加载分页。
+            long id = pendingEditGameId;
+            pendingEditGameId = -1L;
+            reloadSingleGame(id);
+        } else if (!dataLoaded) {
             loadGames();
         }
     }
@@ -537,7 +543,6 @@ public class LauncherLibraryFragment extends Fragment {
 
     private void loadGames() {
         setLoading(true);
-        needsRefresh = false;
         Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             List<Game> games;
@@ -1733,7 +1738,7 @@ mainQueue.post(() -> {
     }
 
     private void startEditGameActivity(Game game) {
-        needsRefresh = true;
+        pendingEditGameId = game.id;
         android.content.Intent intent = new android.content.Intent(requireContext(), LauncherGameEditActivity.class);
         intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, game.id);
         startActivity(intent);
