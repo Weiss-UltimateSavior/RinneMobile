@@ -74,6 +74,21 @@ public class MetadataRepository {
         }
     }
 
+    /** Returns the source whose cached metadata was most recently bound or refreshed. */
+    public String getMostRecentlyUpdatedSource(long gameId) {
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT source FROM metadata_cache WHERE game_id=? " +
+                        "AND source IN ('vndb','bangumi','ymgal') " +
+                        "ORDER BY updated_at DESC LIMIT 1",
+                new String[]{String.valueOf(gameId)});
+        try {
+            return c.moveToFirst() ? c.getString(0) : "";
+        } finally {
+            c.close();
+        }
+    }
+
     public void saveYmgal(long gameId, VnMetadata data) {
         if (gameId <= 0 || data == null) return;
         SQLiteDatabase db = helper.getWritableDatabase();

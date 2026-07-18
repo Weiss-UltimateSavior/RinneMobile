@@ -102,6 +102,7 @@ public final class LauncherMetadataBridge {
                     VnMetadata meta = candidates.get(0);
                     MetadataRepository metaRepo = new MetadataRepository(app);
                     metaRepo.saveVndb(game.id, meta);
+                    setPreferredMetadataSource(app, game.id, MetadataController.SOURCE_VNDB);
                     if (meta.coverUrl != null && !meta.coverUrl.trim().isEmpty()) {
                         String cover = LauncherCoverBridge.downloadCover(app, meta.coverUrl, "meta_cover_" + game.id);
                         if (cover != null) {
@@ -160,6 +161,7 @@ public final class LauncherMetadataBridge {
             boolean success = false;
             try {
                 new MetadataRepository(app).saveVndb(game.id, metadata);
+                setPreferredMetadataSource(app, game.id, MetadataController.SOURCE_VNDB);
                 success = true;
             } catch (Throwable ignored) {
             }
@@ -211,6 +213,7 @@ public final class LauncherMetadataBridge {
             boolean success = false;
             try {
                 new MetadataRepository(app).saveBangumi(game.id, metadata);
+                setPreferredMetadataSource(app, game.id, MetadataController.SOURCE_BANGUMI);
                 success = true;
             } catch (Throwable ignored) {
             }
@@ -249,7 +252,13 @@ public final class LauncherMetadataBridge {
             boolean ok = false;
             try {
                 MetadataRepository metaRepo = new MetadataRepository(app);
-                VnMetadata meta = metaRepo.getVndb(game.id);
+                // 用户明确绑定的来源优先；旧数据没有偏好记录时，以最近更新的缓存为首选。
+                // 首选来源没有封面才回退到其他来源，避免旧 VNDB 缓存覆盖新绑定的 Bangumi 封面。
+                String preferredSource = getPreferredMetadataSource(app, game.id);
+                if (preferredSource.isEmpty()) {
+                    preferredSource = metaRepo.getMostRecentlyUpdatedSource(game.id);
+                }
+                VnMetadata meta = findCoverMetadata(metaRepo, game.id, preferredSource);
                 if (meta != null && meta.coverUrl != null && !meta.coverUrl.trim().isEmpty()) {
                     String cover = LauncherCoverBridge.downloadCover(app, meta.coverUrl, "sync_cover_" + game.id);
                     if (cover != null) {
@@ -272,5 +281,61 @@ public final class LauncherMetadataBridge {
             final boolean success = ok;
             RxMainScheduler.post(() -> callback.onResult(success));
         });
+    }
+
+    private static void setPreferredMetadataSource(Context context, long gameId, String source) {
+        context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(MetadataController.KEY_VISIBLE_METADATA_SOURCE_PREFIX + gameId, source)
+                .apply();
+    }
+
+    private static String getPreferredMetadataSource(Context context, long gameId) {
+        String source = context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+                .getString(MetadataController.KEY_VISIBLE_METADATA_SOURCE_PREFIX + gameId, "");
+        return normalizeMetadataSource(source);
+    }
+
+    private static VnMetadata findCoverMetadata(MetadataRepository repository, long gameId,
+                                                 String preferredSource) {
+        String[] sources = {
+                normalizeMetadataSource(preferredSource),
+                MetadataController.SOURCE_VNDB,
+                MetadataController.SOURCE_BANGUMI,
+                MetadataController.SOURCE_YMGAL
+        };
+        for (int i = 0; i < sources.length; i++) {
+            String source = sources[i];
+            if (source.isEmpty() || appearedEarlier(sources, i, source)) continue;
+            VnMetadata metadata = getMetadata(repository, gameId, source);
+            if (metadata != null && metadata.coverUrl != null && !metadata.coverUrl.trim().isEmpty()) {
+                return metadata;
+            }
+        }
+        return null;
+    }
+
+    private static boolean appearedEarlier(String[] sources, int end, String source) {
+        for (int i = 0; i < end; i++) {
+            if (source.equals(sources[i])) return true;
+        }
+        return false;
+    }
+
+    private static VnMetadata getMetadata(MetadataRepository repository, long gameId, String source) {
+        if (MetadataController.SOURCE_BANGUMI.equals(source)) return repository.getBangumi(gameId);
+        if (MetadataController.SOURCE_YMGAL.equals(source)) return repository.getYmgal(gameId);
+        if (MetadataController.SOURCE_VNDB.equals(source)) return repository.getVndb(gameId);
+        return null;
+    }
+
+    private static String normalizeMetadataSource(String source) {
+        if (MetadataController.SOURCE_BANGUMI.equals(source)
+                || MetadataController.SOURCE_BANGUMI_MIRROR.equals(source)) {
+            return MetadataController.SOURCE_BANGUMI;
+        }
+        if (MetadataController.SOURCE_YMGAL.equals(source)) return MetadataController.SOURCE_YMGAL;
+        if (MetadataController.SOURCE_VNDB.equals(source)) return MetadataController.SOURCE_VNDB;
+        return "";
     }
 }

@@ -547,13 +547,20 @@ private void loadNextPage(boolean forceFullRefresh) {
         Context app = context.getApplicationContext();
         // 2) 线上实际游玩时长只结束服务端 session，不提交本地 duration。
         finishServerPlaySession(app, runningSessionId);
+        // 捕获刚结束会话的游戏 id，用于就地刷新单张卡片；
+        // 不能调用 loadGames()，否则会重置分页并丢失滑动位置。
+        long finishedGameId = runningGameId;
         runningSessionId = -1L;
         runningGameId = -1L;
         runningGameTitle = "";
         runningSessionStart = 0L;
         runningServerSessionId = "";
         runningLaunchType = "external";
-        loadGames();
+        if (finishedGameId > 0L) {
+            reloadSingleGame(finishedGameId);
+        } else {
+            loadGames();
+        }
     }
 
     private void startServerPlaySession(Game game, long localSessionId) {
