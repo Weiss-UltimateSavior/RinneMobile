@@ -308,7 +308,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (item == null) return;
         gameHubIdInput.setText(item.localGameId);
         if (textOf(nameInput).isEmpty()) nameInput.setText(item.localAppName);
-        if (textOf(emulatorText).isEmpty()) emulatorText.setText("com.xiaoji.egggamz");
+        if (textOf(emulatorText).isEmpty()) emulatorText.setText("com.xiaoji.egggame");
     }
 
     /** 扫描游戏目录下的相关游戏文件，弹出列表供用户选择启动入口。 */
@@ -424,7 +424,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
-        if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggamz";
+        if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
         // RPG Maker 默认走 RPGXP（Ruby 1.8）：老 RGSS1 语法（如 ?(...) 三元运算符）在 1.8 下才兼容，
         // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
         // 检测到具体子类型时由 defaultEmulatorPackageForDetected 覆盖为更精确的别名。

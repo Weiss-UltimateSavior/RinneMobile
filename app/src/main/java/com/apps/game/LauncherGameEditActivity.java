@@ -409,7 +409,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             etTitle.setText(item.localAppName);
         }
         if (etEmulator.getText() == null || etEmulator.getText().toString().trim().isEmpty()) {
-            etEmulator.setText("com.xiaoji.egggamz");
+            etEmulator.setText("com.xiaoji.egggame");
         }
     }
 
@@ -481,7 +481,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         if (option.engine == EngineType.ARTEMIS) return "internal.artemis";
         if (option.engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (option.engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
-        if (option.engine == EngineType.GAMEHUB) return "com.xiaoji.egggamz";
+        if (option.engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
         return "";
     }
 
