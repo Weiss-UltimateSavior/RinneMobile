@@ -1,5 +1,18 @@
 package com.bytedance.shadowhook;
 
+/**
+ * Stub façade for the ShadowHook inline interceptor.
+ *
+ * ARCHITECTURE NOTE:
+ * All methods in this class are no-op stubs. ShadowHook is the alternative inline
+ * hook backend considered for krkr_bridge.cpp but is NOT currently used at runtime
+ * (krkr_bytehook.h explicitly avoids calling ShadowHook's initializer on Android 16
+ * due to incompatibilities). This Java class exists only to satisfy compile-time
+ * references from third-party code that expects the ShadowHook Java API to be
+ * present on the classpath.
+ *
+ * DO NOT call these methods expecting runtime behavior.
+ */
 public final class ShadowHook {
     public static final int MODE_UNIQUE = 0;
     public static final int MODE_SHARED = 1;

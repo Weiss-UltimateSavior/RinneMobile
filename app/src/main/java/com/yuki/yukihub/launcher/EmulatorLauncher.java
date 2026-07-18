@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.ons.OnsSettings;
@@ -41,7 +42,10 @@ public class EmulatorLauncher {
     private static void appendThemeColors(Intent i, Context context) {
         if (i == null || context == null) return;
         try {
-            i.putExtra("themeColorPrimary", LauncherTheme.primary(context));
+            int primaryColor = LauncherTheme.primary(context);
+            i.putExtra("primaryColor", primaryColor);
+            i.putExtra("darkMode", LauncherActivity.isLauncherDarkMode(context));
+            i.putExtra("themeColorPrimary", primaryColor);
             i.putExtra("themeColorOnPrimary", LauncherTheme.onPrimary(context));
             i.putExtra("themeColorCard", LauncherTheme.card(context));
             i.putExtra("themeColorText", LauncherTheme.text(context));

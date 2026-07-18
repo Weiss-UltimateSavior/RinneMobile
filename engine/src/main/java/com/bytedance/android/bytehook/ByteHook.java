@@ -1,5 +1,19 @@
 package com.bytedance.android.bytehook;
 
+/**
+ * Stub façade for the ByteHook PLT interceptor.
+ *
+ * ARCHITECTURE NOTE:
+ * All methods in this class are no-op stubs. The actual ByteHook runtime is loaded
+ * directly via dlopen("libbytehook.so") in engine/src/main/cpp/krkr_bytehook.h, and
+ * its C API is invoked from native code (krkr_bridge.cpp). This Java class exists
+ * only to satisfy compile-time references from third-party code that expects the
+ * ByteHook Java API to be present on the classpath.
+ *
+ * DO NOT call these methods expecting runtime behavior. To enable ByteHook hooks,
+ * ensure libbytehook.so is packaged (see engine/src/main/jniLibs/) and that
+ * KrkrByteHook::load() is called from native code.
+ */
 public final class ByteHook {
     public static final int MODE_AUTOMATIC = 0;
     public static final int MODE_MANUAL = 1;

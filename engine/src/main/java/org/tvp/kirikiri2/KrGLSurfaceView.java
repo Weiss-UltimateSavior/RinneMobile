@@ -3,6 +3,7 @@ package org.tvp.kirikiri2;
 import android.content.Context;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import bridge.KrPathUtils;
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 
 public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
@@ -10,8 +11,7 @@ public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
 
     private boolean usesCocosTouchPipeline() {
         try {
-            KR2Activity activity = KR2Activity.getInstance();
-            if (activity == null) activity = KR2Activity.GetInstance();
+            KR2Activity activity = KrPathUtils.currentActivity();
             if (activity == null) return false;
             String version = activity.getIntent() == null ? null
                     : activity.getIntent().getStringExtra("krEngineVersion");

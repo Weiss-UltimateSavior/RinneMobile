@@ -26,11 +26,21 @@ constexpr size_t kUiFormContainerOffset = 0x348;
 constexpr size_t kUiFormCountVtableOffset = 0x238;
 
 using GetScene = void* (*)();
+
+// Forward declaration so LegacyCowString's constructor can increment the
+// leak counter; the definition lives with the other globals below.
+extern std::atomic<int> gLeakedCowStringCount;
+
 // libgame was built against the old GNU libstdc++ copy-on-write string ABI.
 // Its startupFrom symbol receives a one-word string object that points to the
 // character data; the three words immediately before that data are length,
 // capacity and reference count. Passing std::__ndk1::string here corrupts the
 // engine, despite the same mangled "Ss" spelling in the game symbol.
+//
+// OWNERSHIP: startupFrom retains this legacy string object after returning.
+// The KRKR process is short-lived (one launch per process invocation),
+// so the one allocation per launch is intentionally leaked. A debug counter
+// is tracked below for diagnostic visibility.
 struct LegacyCowString {
     char* data = nullptr;
 
@@ -46,6 +56,7 @@ struct LegacyCowString {
         data = reinterpret_cast<char*>(header + kHeaderSize);
         std::memcpy(data, value.data(), size);
         data[size] = '\0';
+        gLeakedCowStringCount.fetch_add(1, std::memory_order_relaxed);
     }
 
     // startupFrom retains this legacy string object after returning. The old
@@ -77,8 +88,9 @@ std::string gPathPrefix;
 KrkrByteHook gByteHook;
 void* gOpenStub = nullptr;
 void* gOpen64Stub = nullptr;
-Update gOriginalSceneUpdate = nullptr;
+std::atomic<Update> gOriginalSceneUpdate{nullptr};
 void** gSceneUpdateSlot = nullptr;
+std::atomic<int> gLeakedCowStringCount{0};
 std::atomic<bool> gGameReadyReported{false};
 std::atomic<int> gLastLaunchReadiness{-1};
 int64_t gFirstSceneUpdateNs = 0;
@@ -176,7 +188,7 @@ void notifyGameReady() {
 }
 
 void hookedSceneUpdate(void* scene, float dt) {
-    Update original = gOriginalSceneUpdate;
+    Update original = gOriginalSceneUpdate.load();
     if (original != nullptr) original(scene, dt);
     if (gGameReadyReported.load()) return;
 
@@ -199,7 +211,10 @@ void hookedSceneUpdate(void* scene, float dt) {
             // steady-state per-frame cost.
             setWritablePointer(gSceneUpdateSlot, reinterpret_cast<void*>(original));
         }
-        __android_log_print(ANDROID_LOG_INFO, kTag, "TVPMainScene startup completed; menu shrink finished");
+        const int leakedCount = gLeakedCowStringCount.load(std::memory_order_relaxed);
+        __android_log_print(ANDROID_LOG_INFO, kTag,
+                            "TVPMainScene startup completed; menu shrink finished; leakedCowStrings=%d",
+                            leakedCount);
         notifyGameReady();
     }
 }
@@ -211,9 +226,9 @@ bool installGameReadySignal(void* scene) {
     if (vtable == nullptr) return false;
     for (size_t index = 0; index < 256; ++index) {
         if (vtable[index] != reinterpret_cast<void*>(gGame.update)) continue;
-        gOriginalSceneUpdate = gGame.update;
+        gOriginalSceneUpdate.store(gGame.update);
         if (!setWritablePointer(&vtable[index], reinterpret_cast<void*>(hookedSceneUpdate))) {
-            gOriginalSceneUpdate = nullptr;
+            gOriginalSceneUpdate.store(nullptr);
             __android_log_print(ANDROID_LOG_ERROR, kTag, "TVPMainScene update vtable patch failed index=%zu", index);
             return false;
         }
@@ -418,6 +433,12 @@ Java_bridge_NativeBridge_write(JNIEnv* env, jclass, jstring path, jbyteArray byt
     return (written == static_cast<size_t>(length) && closeResult == 0) ? JNI_TRUE : JNI_FALSE;
 }
 
+// JNI_OnLoad is invoked when libkrkr_bridge.so is loaded via System.loadLibrary("krkr_bridge")
+// in Kirikiroid134/139 (KirikiroidLauncherBaseActivity.onLoadNativeLibraries). This must only
+// happen in the :kirikiri2 process, where the engine module's classes are visible to the
+// application class loader. Loading this library from a non-application context (e.g. an
+// isolated native process) will cause FindClass("bridge/NativeBridge") to fail and JNI_OnLoad
+// to return JNI_ERR.
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     gVm = vm;
     // NativeBridge is also exported by the legacy inline-hook library. Bind
@@ -430,7 +451,10 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
     jclass bridge = env->FindClass("bridge/NativeBridge");
     if (bridge == nullptr) {
         env->ExceptionClear();
-        __android_log_print(ANDROID_LOG_ERROR, kTag, "NativeBridge class unavailable for RegisterNatives");
+        __android_log_print(ANDROID_LOG_ERROR, kTag,
+                            "NativeBridge class unavailable for RegisterNatives; "
+                            "ensure libkrkr_bridge.so is only loaded by the :kirikiri2 process "
+                            "where the engine module's ClassLoader can resolve bridge/NativeBridge");
         return JNI_ERR;
     }
     JNINativeMethod methods[] = {

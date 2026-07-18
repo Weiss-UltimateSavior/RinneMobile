@@ -1,8 +1,6 @@
 package com.akira.tyranoemu.remote;
 
-import T3.r;
-
-public final class Kirikiroid134 extends r {
+public final class Kirikiroid134 extends KirikiroidLauncherBaseActivity {
     @Override
     public void onLoadNativeLibraries() {
         System.loadLibrary("ffmpeg");

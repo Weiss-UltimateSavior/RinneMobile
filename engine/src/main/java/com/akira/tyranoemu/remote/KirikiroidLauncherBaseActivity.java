@@ -1,4 +1,4 @@
-package T3;
+package com.akira.tyranoemu.remote;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -26,7 +26,22 @@ import java.util.Locale;
 import bridge.NativeBridge;
 import org.tvp.kirikiri2.KR2Activity;
 
-public abstract class r extends KR2Activity {
+/**
+ * Base activity for Kirikiroid134/139 KRKR engine launches.
+ *
+ * ARCHITECTURE NOTE:
+ * This class historically used reflection to call com.apps.LauncherActivity for theme
+ * colors (primary color, dark mode). This creates a reverse dependency from the engine
+ * library module to the app application module, which violates Gradle module dependency
+ * direction. We are migrating to passing these values via Intent extras:
+ *   - "primaryColor" (int): theme primary color
+ *   - "darkMode" (boolean): whether dark mode is active
+ *
+ * The reflection calls are retained as deprecated fallbacks for backward compatibility
+ * with com.apps callers that have not yet been updated to pass these extras. Once all
+ * callers are migrated, the reflection paths will be removed.
+ */
+public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private static final String TAG = "Kirikiroid2";
     private static final long SAFE_FALLBACK_REVEAL_MS = 20_000L;
     @SuppressLint("StaticFieldLeak") // Dedicated process activity; cleared immediately before process termination.
@@ -295,6 +310,12 @@ public abstract class r extends KR2Activity {
     }
 
     private int launcherPrimaryColor() {
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("primaryColor")) {
+            return intent.getIntExtra("primaryColor", Color.rgb(24, 185, 120));
+        }
+        // Deprecated reflection fallback: com.apps should pass "primaryColor" via Intent extra.
+        // TODO: remove reflection once com.apps migration is complete.
         try {
             Object value = Class.forName("com.apps.LauncherActivity")
                     .getMethod("launcherPrimaryColor", Context.class)
@@ -312,6 +333,12 @@ public abstract class r extends KR2Activity {
     }
 
     private Context launcherUiContext() {
+        // Deprecated reflection fallback: com.apps should pass "darkMode" via Intent extra.
+        // Note: this Context does NOT automatically resolve values-night resources based on
+        // the "darkMode" Intent extra; wrapLauncherUiMode in com.apps wraps the Context with
+        // a UiModeManager override to force day/night resource resolution. When the reflection
+        // fallback is removed, callers passing "darkMode" extra must also apply the night mode
+        // override via AppCompatDelegate.setDefaultNightMode() or similar before retrieving colors.
         try {
             Object value = Class.forName("com.apps.LauncherActivity")
                     .getMethod("wrapLauncherUiMode", Context.class)
@@ -322,6 +349,11 @@ public abstract class r extends KR2Activity {
     }
 
     private boolean isLauncherDarkMode() {
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("darkMode")) {
+            return intent.getBooleanExtra("darkMode", false);
+        }
+        // Deprecated reflection fallback: com.apps should pass "darkMode" via Intent extra.
         try {
             Object value = Class.forName("com.apps.LauncherActivity")
                     .getMethod("isLauncherDarkMode", Context.class)

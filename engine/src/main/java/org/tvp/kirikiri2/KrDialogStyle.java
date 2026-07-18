@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import bridge.KrPathUtils;
 
 /**
  * 统一弹窗样式 — KRKR / Artemis 共用。
@@ -194,8 +195,7 @@ public final class KrDialogStyle {
             }
             // 同进程回退：从 KR2Activity singleton 读取
             if (!hasThemeExtras(intent)) {
-                KR2Activity kr = KR2Activity.getInstance();
-                if (kr == null) kr = KR2Activity.GetInstance();
+                KR2Activity kr = KrPathUtils.currentActivity();
                 if (kr != null) intent = kr.getIntent();
             }
             if (hasThemeExtras(intent)) {

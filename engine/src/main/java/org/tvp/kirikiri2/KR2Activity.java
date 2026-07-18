@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import bridge.NativeBridge;
+import bridge.KrPathUtils;
 import java.util.Locale;
 import org.cocos2dx.lib.Cocos2dxActivity;
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
@@ -45,7 +46,8 @@ public class KR2Activity extends Cocos2dxActivity {
 
     public static boolean CreateFolders(String path) {
         try {
-            File f = new File(canonicalizeKrStoragePath(redirectScopedSavePath(path)));
+            String redirected = KrPathUtils.redirectScopedSavePath(path);
+            File f = new File(KrPathUtils.canonicalizeKrStoragePath(redirected != null ? redirected : path));
             boolean ok = f.exists() || f.mkdirs();
             if (!ok && isSafFallbackEnabled()) ok = NativeBridge.createDirectoryViaSafIfPossible(path);
             android.util.Log.i("KR2Activity", "CreateFolders " + path + " -> " + f.getAbsolutePath() + " ok=" + ok);
@@ -57,8 +59,9 @@ public class KR2Activity extends Cocos2dxActivity {
 
     public static boolean DeleteFile(String path) {
         try {
-            File mapped = new File(canonicalizeKrStoragePath(redirectScopedSavePath(path)));
-            File original = new File(canonicalizeKrStoragePath(path));
+            String redirected = KrPathUtils.redirectScopedSavePath(path);
+            File mapped = new File(KrPathUtils.canonicalizeKrStoragePath(redirected != null ? redirected : path));
+            File original = new File(KrPathUtils.canonicalizeKrStoragePath(path));
             boolean existed = mapped.exists() || original.exists();
             boolean ok = true;
             if (mapped.exists()) ok = mapped.delete();
@@ -72,9 +75,11 @@ public class KR2Activity extends Cocos2dxActivity {
 
     public static boolean RenameFile(String from, String to) {
         try {
-            File mappedSrc = new File(canonicalizeKrStoragePath(redirectScopedSavePath(from)));
-            File originalSrc = new File(canonicalizeKrStoragePath(from));
-            File dst = new File(canonicalizeKrStoragePath(redirectScopedSavePath(to)));
+            String redirectedFrom = KrPathUtils.redirectScopedSavePath(from);
+            String redirectedTo = KrPathUtils.redirectScopedSavePath(to);
+            File mappedSrc = new File(KrPathUtils.canonicalizeKrStoragePath(redirectedFrom != null ? redirectedFrom : from));
+            File originalSrc = new File(KrPathUtils.canonicalizeKrStoragePath(from));
+            File dst = new File(KrPathUtils.canonicalizeKrStoragePath(redirectedTo != null ? redirectedTo : to));
             File parent = dst.getParentFile();
             if (parent != null && !parent.exists()) parent.mkdirs();
             File src = mappedSrc.exists() ? mappedSrc : originalSrc;
@@ -98,7 +103,8 @@ public class KR2Activity extends Cocos2dxActivity {
 
     public static boolean WriteFile(String path, byte[] data) {
         try {
-            String mapped = canonicalizeKrStoragePath(redirectScopedSavePath(path));
+            String redirected = KrPathUtils.redirectScopedSavePath(path);
+            String mapped = KrPathUtils.canonicalizeKrStoragePath(redirected != null ? redirected : path);
             File f = new File(mapped);
             File parent = f.getParentFile();
             if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
@@ -224,52 +230,6 @@ public class KR2Activity extends Cocos2dxActivity {
         }
     }
 
-    private static String normalizeKrFilePath(String path) {
-        if (path == null) return "";
-        String p = path.trim();
-        if (p.startsWith("file://")) p = p.substring("file://".length());
-        while (p.startsWith("./")) p = p.substring(2);
-        if (p.startsWith("storage/")) p = "/" + p;
-        while (p.contains("//")) p = p.replace("//", "/");
-        return p;
-    }
-
-    private static String canonicalizeKrStoragePath(String path) {
-        String p = normalizeKrFilePath(path);
-        try {
-            if (sInstance == null || p == null || !p.startsWith("/")) return p;
-            File appExternal = sInstance.getExternalFilesDir(null);
-            if (appExternal != null) p = replacePrefixIgnoreCase(p, appExternal.getAbsolutePath());
-            Intent intent = sInstance.getIntent();
-            if (intent != null) {
-                p = replacePrefixIgnoreCase(p, normalizeKrFilePath(intent.getStringExtra("projectRoot")));
-                p = replacePrefixIgnoreCase(p, normalizeKrFilePath(intent.getStringExtra("gamedir")));
-                p = replacePrefixIgnoreCase(p, normalizeKrFilePath(intent.getStringExtra("rootUri")));
-                String gamePath = normalizeKrFilePath(intent.getStringExtra("gamePath"));
-                if (gamePath != null && !gamePath.isEmpty()) {
-                    File game = new File(gamePath);
-                    File root = game.isFile() ? game.getParentFile() : game;
-                    if (root != null) p = replacePrefixIgnoreCase(p, root.getAbsolutePath());
-                }
-            }
-        } catch (Throwable ignored) { }
-        return p;
-    }
-
-    private static String replacePrefixIgnoreCase(String path, String prefix) {
-        if (path == null || prefix == null) return path;
-        String clean = normalizeKrFilePath(prefix);
-        if (clean == null || clean.length() <= 1 || !clean.startsWith("/")) return path;
-        while (clean.endsWith("/") && clean.length() > 1) clean = clean.substring(0, clean.length() - 1);
-        if (path.length() == clean.length() && path.regionMatches(true, 0, clean, 0, clean.length())) return clean;
-        if (path.length() > clean.length()
-                && path.regionMatches(true, 0, clean, 0, clean.length())
-                && path.charAt(clean.length()) == '/') {
-            return clean + path.substring(clean.length());
-        }
-        return path;
-    }
-
     private static boolean isSafFallbackEnabled() {
         try {
             Intent intent = sInstance != null ? sInstance.getIntent() : null;
@@ -279,45 +239,14 @@ public class KR2Activity extends Cocos2dxActivity {
         }
     }
 
-    private static String redirectScopedSavePath(String path) {
-        try {
-            if (path == null || path.trim().isEmpty()) return path;
-            Intent intent = sInstance != null ? sInstance.getIntent() : null;
-            if (intent == null || !intent.getBooleanExtra("scopedSaveDir", false)) return path;
-            String p = normalizeKrFilePath(path);
-            String lower = p.toLowerCase(Locale.ROOT);
-            int idx = lower.indexOf("/savedata/");
-            int folderLen = "/savedata/".length();
-            if (idx < 0) {
-                if (lower.endsWith("/savedata")) {
-                    idx = lower.length() - "/savedata".length();
-                    folderLen = "/savedata".length();
-                } else {
-                    return path;
-                }
-            }
-            String rel = p.length() > idx + folderLen ? p.substring(idx + folderLen) : "";
-            File dir = scopedSaveDirectory(intent);
-            if (dir == null) return path;
-            File out = rel.isEmpty() ? dir : new File(dir, rel);
-            File parent = out.isDirectory() ? out : out.getParentFile();
-            if (parent != null && !parent.exists()) parent.mkdirs();
-            android.util.Log.i("KR2Activity", "redirectScopedSavePath " + p + " -> " + out.getAbsolutePath());
-            return out.getAbsolutePath();
-        } catch (Throwable t) {
-            android.util.Log.w("KR2Activity", "redirectScopedSavePath failed path=" + path, t);
-            return path;
-        }
-    }
-
     private static File scopedSaveDirectory(Intent intent) {
         if (sInstance == null || intent == null) return null;
-        String explicit = normalizeKrFilePath(intent.getStringExtra("scopedSaveRoot"));
+        String explicit = KrPathUtils.normalizeFilePath(intent.getStringExtra("scopedSaveRoot"));
         if (explicit != null && !explicit.trim().isEmpty() && explicit.startsWith("/")) {
             return new File(explicit);
         }
-        String root = normalizeKrFilePath(intent.getStringExtra("projectRoot"));
-        if (root == null || root.trim().isEmpty()) root = normalizeKrFilePath(intent.getStringExtra("gamedir"));
+        String root = KrPathUtils.normalizeFilePath(intent.getStringExtra("projectRoot"));
+        if (root == null || root.trim().isEmpty()) root = KrPathUtils.normalizeFilePath(intent.getStringExtra("gamedir"));
         if (root == null || root.trim().isEmpty() || !root.startsWith("/")) return null;
         return new File(root, "savedata");
     }
@@ -456,10 +385,10 @@ public class KR2Activity extends Cocos2dxActivity {
     @SuppressLint("SdCardPath") // The native KR engine still emits these aliases; SAF handles actual access.
     private static void addKrStoragePath(java.util.LinkedHashSet<String> out, String rawPath) {
         if (out == null || rawPath == null) return;
-        String p = normalizeKrFilePath(rawPath);
+        String p = KrPathUtils.normalizeFilePath(rawPath);
         if (p == null || p.trim().isEmpty()) return;
         if (p.startsWith("content://")) p = contentUriToRawPath(p);
-        p = normalizeKrFilePath(p);
+        p = KrPathUtils.normalizeFilePath(p);
         if (p == null || !p.startsWith("/")) return;
         while (p.endsWith("/") && p.length() > 1) p = p.substring(0, p.length() - 1);
         String lower = p.toLowerCase(Locale.ROOT);

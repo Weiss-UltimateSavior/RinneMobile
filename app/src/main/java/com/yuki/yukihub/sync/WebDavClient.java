@@ -7,6 +7,7 @@ import com.yuki.yukihub.net.HttpClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,11 @@ public class WebDavClient {
 
     public WebDavClient(String serverUrl, String username, String password) {
         this.serverUrl = normalizeServerUrl(serverUrl);
+        if (isInsecureHttp(this.serverUrl)) {
+            throw new IllegalArgumentException(
+                    "WebDAV 不支持远程明文 HTTP 连接。"
+                            + "Android 9+ 禁止非 HTTPS 明文流量，请使用具有系统信任证书的 HTTPS 地址或反向代理。");
+        }
         this.username = username;
         this.password = password;
 
@@ -53,6 +59,23 @@ public class WebDavClient {
                     return chain.proceed(request);
                 })
                 .build();
+    }
+
+    /**
+     * 判断 URL 是否为不安全的明文 HTTP（非 localhost/127.0.0.1）。
+     * 这两个回环主机在 network_security_config 中已精确放行。
+     */
+    static boolean isInsecureHttp(String url) {
+        if (url == null) return false;
+        try {
+            URI parsed = URI.create(url);
+            if (!"http".equalsIgnoreCase(parsed.getScheme())) return false;
+            String host = parsed.getHost();
+            return !("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host));
+        } catch (IllegalArgumentException ignored) {
+            // Malformed values beginning with HTTP must not bypass validation.
+            return url.regionMatches(true, 0, "http://", 0, "http://".length());
+        }
     }
 
     /**

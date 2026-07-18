@@ -4,7 +4,6 @@
 -keep class org.libsdl.app.** { *; }
 -keep class org.cocos2dx.lib.** { *; }
 -keep class bridge.NativeBridge { *; }
--keep class T3.** { *; }
 -keep class com.akira.tyranoemu.remote.** { *; }
 -keepclasseswithmembernames class * {
     native <methods>;

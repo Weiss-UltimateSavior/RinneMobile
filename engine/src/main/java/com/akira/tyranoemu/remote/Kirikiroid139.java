@@ -1,8 +1,6 @@
 package com.akira.tyranoemu.remote;
 
-import T3.r;
-
-public final class Kirikiroid139 extends r {
+public final class Kirikiroid139 extends KirikiroidLauncherBaseActivity {
     @Override
     public void onLoadNativeLibraries() {
         System.loadLibrary("SDL2");
