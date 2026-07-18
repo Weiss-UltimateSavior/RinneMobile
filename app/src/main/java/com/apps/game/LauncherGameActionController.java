@@ -3,6 +3,7 @@ package com.apps.game;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -34,6 +35,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
+import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -255,9 +257,26 @@ public final class LauncherGameActionController {
                 () -> LauncherCustomVndbSearchDialog.show(fragment, game, () -> host.reloadGame(game.id)));
         addMoreOption(root, dialog, "同步元数据封面到卡片", false,
                 () -> syncMetadataToCard(game));
+        // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
+        if (game.engine == EngineType.ONS) {
+            addMoreOption(root, dialog, "ONS 引擎设置", false, () -> openOnsGameSettings(game));
+        }
         addMoreOption(root, dialog, "删除游戏", true, () -> confirmDeleteGame(game));
         root.addView(createDialogCancelButton(dialog));
         setDialogContent(dialog, root, 320);
+    }
+
+    private void openOnsGameSettings(Game game) {
+        try {
+            Intent intent = new Intent(context(), LauncherKrkrSettingsActivity.class);
+            intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id);
+            if (!(context() instanceof Activity)) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+            context().startActivity(intent);
+        } catch (Throwable ignored) {
+            Toast.makeText(context(), "无法打开 ONS 引擎设置", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addMoreOption(LinearLayout root, AlertDialog dialog, String text,

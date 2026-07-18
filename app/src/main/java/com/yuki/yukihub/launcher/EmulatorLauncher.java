@@ -29,6 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
+import com.yuki.yukihub.launcherbridge.LauncherOnsGameSettingsBridge;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.ons.OnsSettings;
 
@@ -821,6 +822,14 @@ public class EmulatorLauncher {
     }
 
     public static Intent buildInternalOnsIntent(Context context, String gamePath, String launchTarget) {
+        return buildInternalOnsIntent(context, gamePath, launchTarget, 0L);
+    }
+
+    /**
+     * 构建 ONS 启动 Intent。gameId > 0 时加载该游戏的覆盖设置（编码、拉伸、
+     * 刘海、视频、锐化、独立存档目录等），否则回退到全局 OnsSettings。
+     */
+    public static Intent buildInternalOnsIntent(Context context, String gamePath, String launchTarget, long gameId) {
         Intent i = new Intent(context, com.yuri.onscripter.ONScripter.class);
         String requestedRootPath = stripFileScheme(uriToFilePath(gamePath));
         String rootPath = resolveInternalOnsGameDirectory(requestedRootPath);
@@ -834,7 +843,7 @@ public class EmulatorLauncher {
             Log.e("EmulatorLauncher", "internal ONS rejected: " + archiveError + " root=" + rootPath);
             throw new IllegalStateException(archiveError);
         }
-        OnsSettings settings = OnsSettings.load(context);
+        OnsSettings settings = LauncherOnsGameSettingsBridge.load(context, gameId);
         ActualSaveLocation saveLocation = resolveOnsSaveLocation(context, rootPath, settings.scopedSaveDir);
         if (!saveLocation.available || saveLocation.directory == null) {
             throw new IllegalStateException(saveLocation.description);
@@ -1203,6 +1212,16 @@ return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
      */
     public static ActualSaveLocation resolveActualSaveLocation(Context context, EngineType engine,
                                                                  String rootUri, String launchTarget) {
+        return resolveActualSaveLocation(context, engine, rootUri, launchTarget, 0L);
+    }
+
+    /**
+     * 解析内置引擎实际存档目录。gameId > 0 时 ONS 引擎会读取该游戏的覆盖
+     * scopedSaveDir 设置，与启动路径保持一致，避免存档导入/导出指向错误目录。
+     */
+    public static ActualSaveLocation resolveActualSaveLocation(Context context, EngineType engine,
+                                                                 String rootUri, String launchTarget,
+                                                                 long gameId) {
         if (context == null) return ActualSaveLocation.unavailable("应用上下文不可用");
         if (engine == null) return ActualSaveLocation.unavailable("游戏引擎信息不可用");
         try {
@@ -1233,7 +1252,8 @@ return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
                 case ONS: {
                     String rootPath = resolveInternalOnsGameDirectory(
                             stripFileScheme(uriToFilePath(rootUri)));
-                    return resolveOnsSaveLocation(context, rootPath, OnsSettings.load(context).scopedSaveDir);
+                    return resolveOnsSaveLocation(context, rootPath,
+                            LauncherOnsGameSettingsBridge.load(context, gameId).scopedSaveDir);
                 }
                 case TYRANO: {
                     String gameDirectory = resolveInternalTyranoGameDirectory(rootUri, launchTarget);
@@ -1257,8 +1277,14 @@ return com.akira.tyranoemu.remote.ArtemisActivityV1.class;
      */
     public static List<File> resolveActualSaveDirectories(Context context, EngineType engine,
                                                            String rootUri, String launchTarget) {
+        return resolveActualSaveDirectories(context, engine, rootUri, launchTarget, 0L);
+    }
+
+    public static List<File> resolveActualSaveDirectories(Context context, EngineType engine,
+                                                           String rootUri, String launchTarget,
+                                                           long gameId) {
         java.util.LinkedHashMap<String, File> directories = new java.util.LinkedHashMap<>();
-        ActualSaveLocation primary = resolveActualSaveLocation(context, engine, rootUri, launchTarget);
+        ActualSaveLocation primary = resolveActualSaveLocation(context, engine, rootUri, launchTarget, gameId);
         addActualSaveDirectory(directories, primary == null ? null : primary.directory);
         if (engine == EngineType.KIRIKIRI && isKrScopedSaveDirEnabled(context)) {
             try {

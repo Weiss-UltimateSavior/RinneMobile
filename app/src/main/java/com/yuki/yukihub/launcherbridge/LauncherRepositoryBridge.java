@@ -51,7 +51,10 @@ public final class LauncherRepositoryBridge {
     /** Deletes a game by id. Returns deleted row count. */
     public static int deleteGame(Context context, long id) {
         if (context == null || id <= 0) return 0;
-        return new GameRepository(context.getApplicationContext()).delete(id);
+        Context app = context.getApplicationContext();
+        int deleted = new GameRepository(app).delete(id);
+        if (deleted > 0) LauncherOnsGameSettingsBridge.clearOverride(app, id);
+        return deleted;
     }
 
     /**
@@ -181,6 +184,7 @@ public final class LauncherRepositoryBridge {
         YukiDatabaseHelper helper = new YukiDatabaseHelper(context.getApplicationContext());
         SQLiteDatabase db = helper.getWritableDatabase();
         boolean transactionStarted = false;
+        boolean imported = false;
 
         try {
             List<String> statements = splitSqlStatements(sql);
@@ -201,17 +205,22 @@ public final class LauncherRepositoryBridge {
             db.delete("games", null, null);
             for (String stmt : validated) db.execSQL(stmt);
             db.setTransactionSuccessful();
-            return true;
+            imported = true;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         } finally {
             try {
                 if (transactionStarted) db.endTransaction();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                imported = false;
             }
             helper.close();
         }
+        if (imported) {
+            // SQL 快照携带本地主键，但不携带独立 prefs；旧覆盖不能安全映射到新 games 表。
+            LauncherOnsGameSettingsBridge.clearAllOverrides(context.getApplicationContext());
+        }
+        return imported;
     }
 
     private static String tableToInsertSql(Cursor cursor, String tableName) {

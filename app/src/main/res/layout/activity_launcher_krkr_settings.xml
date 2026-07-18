@@ -23,6 +23,7 @@
             android:paddingBottom="25dp">
 
             <TextView
+                android:id="@+id/krkrSectionTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="引擎设置"
@@ -31,6 +32,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/krkrSectionDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
@@ -39,30 +41,38 @@
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/krVersionSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="KR 引擎版本"
-                android:textColor="@color/launcher_text_color"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/engineVersionText"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_marginTop="5dp"
-                android:background="@drawable/launcher_account_input"
-                android:ellipsize="end"
-                android:gravity="center_vertical"
-                android:maxLines="1"
-                android:padding="9dp"
-                android:text="自动"
-                android:textColor="@color/launcher_text_muted_color"
-                android:textSize="14sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="KR 引擎版本"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/engineVersionText"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:padding="9dp"
+                    android:text="自动"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/krScopedSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
@@ -86,6 +96,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/artemisScopedSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
@@ -272,6 +283,7 @@
                 android:singleLine="true" />
 
             <LinearLayout
+                android:id="@+id/tyranoScopedSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"

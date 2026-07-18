@@ -60,7 +60,7 @@ public final class GameSaveFileManager {
         if (!isBuiltInPackage(game)) return SaveLocation.unavailable("该游戏使用外置模拟器，不纳入存档管理");
 
         EmulatorLauncher.ActualSaveLocation location = EmulatorLauncher.resolveActualSaveLocation(
-                context, game.engine, game.rootUri, game.launchTarget);
+                context, game.engine, game.rootUri, game.launchTarget, game.id);
         return location.available && location.directory != null
                 ? SaveLocation.available(location.directory, location.description)
                 : SaveLocation.unavailable(location.description);
@@ -297,7 +297,7 @@ public final class GameSaveFileManager {
 
     private List<File> resolveInternalSaveDirectories(Game game, SaveLocation primary) {
         List<File> directories = EmulatorLauncher.resolveActualSaveDirectories(
-                context, game.engine, game.rootUri, game.launchTarget);
+                context, game.engine, game.rootUri, game.launchTarget, game.id);
         if (directories == null || directories.isEmpty()) {
             return primary == null || primary.directory == null
                     ? Collections.emptyList() : Collections.singletonList(primary.directory);

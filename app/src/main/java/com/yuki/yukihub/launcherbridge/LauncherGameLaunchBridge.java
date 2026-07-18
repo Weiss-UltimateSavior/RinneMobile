@@ -131,7 +131,7 @@ public final class LauncherGameLaunchBridge {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalTyranoIntent(context, game.rootUri, launchTarget));
             }
             if (pkg.startsWith("internal.ons") || pkg.equals("com.yuki.yukihub.ons")) {
-                return startActivitySafely(context, EmulatorLauncher.buildInternalOnsIntent(context, game.rootUri, launchTarget));
+                return startActivitySafely(context, EmulatorLauncher.buildInternalOnsIntent(context, game.rootUri, launchTarget, game.id));
             }
             if (pkg.startsWith("internal.artemis")) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalArtemisIntent(context, pkg, game.rootUri, launchTarget));

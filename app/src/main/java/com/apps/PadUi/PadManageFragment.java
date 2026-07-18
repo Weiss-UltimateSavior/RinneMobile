@@ -47,6 +47,7 @@ import com.yuki.yukihub.util.RxMainQueue;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
+import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.game.GameLibraryState;
 import com.apps.UserData.LauncherUserData;
 
@@ -956,17 +957,41 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void showMoreOptionsDialog(Game game) {
         if (game == null) return;
         String favoriteLabel = game.favorite ? "取消收藏" : "添加收藏";
-        PadDialogFactory.showActionChoices(requireContext(), "更多选项", new String[]{
-                favoriteLabel, "重新匹配 VNDB 元数据", "自定义搜索 VNDB", "同步元数据封面到卡片", "删除游戏"
-        }, 4, index -> {
-            switch (index) {
-                case 0: toggleFavorite(game); break;
-                case 1: rematchMetadata(game); break;
-                case 2: LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id)); break;
-                case 3: syncMetadataToCard(game); break;
-                case 4: confirmDeleteGame(game); break;
-            }
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        labels.add(favoriteLabel);
+        labels.add("重新匹配 VNDB 元数据");
+        labels.add("自定义搜索 VNDB");
+        labels.add("同步元数据封面到卡片");
+        // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
+        final boolean isOns = game.engine == EngineType.ONS;
+        final int onsIndex;
+        if (isOns) {
+            onsIndex = labels.size();
+            labels.add("ONS 引擎设置");
+        } else {
+            onsIndex = -1;
+        }
+        labels.add("删除游戏");
+        int deleteIndex = labels.size() - 1;
+        PadDialogFactory.showActionChoices(requireContext(), "更多选项",
+                labels.toArray(new String[0]), deleteIndex, index -> {
+            if (index == 0) toggleFavorite(game);
+            else if (index == 1) rematchMetadata(game);
+            else if (index == 2) LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id));
+            else if (index == 3) syncMetadataToCard(game);
+            else if (isOns && index == onsIndex) openOnsGameSettings(game);
+            else if (index == deleteIndex) confirmDeleteGame(game);
         });
+    }
+
+    private void openOnsGameSettings(Game game) {
+        try {
+            Intent intent = new Intent(requireContext(), LauncherKrkrSettingsActivity.class);
+            intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id);
+            startActivity(intent);
+        } catch (Throwable ignored) {
+            Toast.makeText(requireContext(), "无法打开 ONS 引擎设置", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void toggleFavorite(Game game) {

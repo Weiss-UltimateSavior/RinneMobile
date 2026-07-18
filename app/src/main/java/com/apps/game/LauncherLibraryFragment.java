@@ -61,6 +61,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
+import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -1318,13 +1319,16 @@ private void loadNextPage(boolean forceFullRefresh) {
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("更多选项"));
 
-        String[][] options = {
-            {"修改时长", "edit_play_time"},
-            {"重新匹配 VNDB 元数据", "rematch"},
-            {"自定义搜索 VNDB", "custom_vndb"},
-            {"同步元数据封面到卡片", "sync"},
-            {"删除游戏", "delete"}
-        };
+        java.util.List<String[]> options = new java.util.ArrayList<>();
+        options.add(new String[]{"修改时长", "edit_play_time"});
+        options.add(new String[]{"重新匹配 VNDB 元数据", "rematch"});
+        options.add(new String[]{"自定义搜索 VNDB", "custom_vndb"});
+        options.add(new String[]{"同步元数据封面到卡片", "sync"});
+        // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
+        if (game.engine == EngineType.ONS) {
+            options.add(new String[]{"ONS 引擎设置", "ons_settings"});
+        }
+        options.add(new String[]{"删除游戏", "delete"});
         for (String[] opt : options) {
             TextView option = new TextView(requireContext());
             option.setText(opt[0]);
@@ -1344,6 +1348,7 @@ private void loadNextPage(boolean forceFullRefresh) {
                     case "rematch": rematchMetadata(game); break;
                     case "custom_vndb": LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id)); break;
                     case "sync": syncMetadataToCard(game); break;
+                    case "ons_settings": openOnsGameSettings(game); break;
                     case "delete": confirmDeleteGame(game); break;
                 }
             });
@@ -1354,6 +1359,16 @@ private void loadNextPage(boolean forceFullRefresh) {
         root.addView(createDialogCancelButton(dialog));
         dialog.getWindow().setContentView(root);
         dialog.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+    }
+
+    private void openOnsGameSettings(Game game) {
+        try {
+            Intent intent = new Intent(requireContext(), LauncherKrkrSettingsActivity.class);
+            intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id);
+            startActivity(intent);
+        } catch (Throwable ignored) {
+            Toast.makeText(requireContext(), "无法打开 ONS 引擎设置", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void toggleFavorite(Game game) {

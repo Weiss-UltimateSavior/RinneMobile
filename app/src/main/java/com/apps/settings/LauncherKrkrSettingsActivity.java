@@ -15,12 +15,17 @@ import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherKrkrSettingsBinding;
 import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
 import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge;
+import com.yuki.yukihub.launcherbridge.LauncherOnsGameSettingsBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
+import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.ons.OnsSettings;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
+    public static final String EXTRA_GAME_ID = "extra_game_id";
+
     private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
@@ -29,6 +34,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     private int selectedEngineVersionIndex;
     private int selectedOnsEncodingIndex;
     private boolean restoreEngineVersionSelection;
+    private long gameId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,13 +42,45 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
 
+        gameId = getIntent().getLongExtra(EXTRA_GAME_ID, 0L);
+
         binding = ActivityLauncherKrkrSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         bindActions();
         applyThemeTone();
+        if (isPerGameMode()) {
+            applyPerGameLayout();
+        }
         loadConfig(savedInstanceState);
+    }
+
+    private boolean isPerGameMode() {
+        return gameId > 0L;
+    }
+
+    /** Per-game 模式下隐藏与 ONS 无关的全局区段，仅保留 ONS 配置。 */
+    private void applyPerGameLayout() {
+        binding.krVersionSection.setVisibility(View.GONE);
+        binding.krScopedSection.setVisibility(View.GONE);
+        binding.artemisScopedSection.setVisibility(View.GONE);
+        binding.tyranoScopedSection.setVisibility(View.GONE);
+        binding.btnNativeKrkr.setText("恢复全局默认");
+        binding.btnNativeKrkr.setOnClickListener(v -> clearPerGameSettings());
+
+        Game game = LauncherRepositoryBridge.findGameById(this, gameId);
+        String title = (game != null && game.title != null && !game.title.trim().isEmpty())
+                ? game.title.trim() : "ONS 引擎设置";
+        binding.krkrSectionTitle.setText(title);
+        binding.krkrSectionDescription.setText(
+                "以下设置将完整覆盖该 ONS 游戏的全局默认；可使用“恢复全局默认”取消覆盖。下次启动该游戏时生效。");
+    }
+
+    private void clearPerGameSettings() {
+        LauncherOnsGameSettingsBridge.clearOverride(this, gameId);
+        Toast.makeText(this, "已恢复全局 ONS 设置", Toast.LENGTH_SHORT).show();
+        finish();
     }
 
     @Override
@@ -99,7 +137,9 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
                 ? savedInstanceState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.krScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         binding.artemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
-        OnsSettings onsSettings = OnsSettings.load(this);
+        OnsSettings onsSettings = isPerGameMode()
+                ? LauncherOnsGameSettingsBridge.load(this, gameId)
+                : OnsSettings.load(this);
         binding.onsScopedSwitch.setChecked(onsSettings.scopedSaveDir);
         binding.onsStretchSwitch.setChecked(onsSettings.stretchFull);
         binding.onsCutoutSwitch.setChecked(onsSettings.ignoreCutout);
@@ -119,6 +159,22 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         String version = LauncherKrkrBridge.ENGINE_VERSION_AUTO;
         if (pos == 1) version = LauncherKrkrBridge.ENGINE_VERSION_139;
         else if (pos == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134;
+
+        if (isPerGameMode()) {
+            // Per-game 模式：仅写入该游戏的 ONS 覆盖；KR/Tyrano/Artemis 等全局项保持原值。
+            OnsSettings perGame = LauncherOnsGameSettingsBridge.load(this, gameId);
+            perGame.scopedSaveDir = binding.onsScopedSwitch.isChecked();
+            perGame.stretchFull = binding.onsStretchSwitch.isChecked();
+            perGame.ignoreCutout = binding.onsCutoutSwitch.isChecked();
+            perGame.disableVideo = binding.onsDisableVideoSwitch.isChecked();
+            perGame.sharpness = binding.onsSharpnessSwitch.isChecked();
+            perGame.sharpnessValue = binding.onsSharpnessValueInput.getText().toString().trim();
+            perGame.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex];
+            LauncherOnsGameSettingsBridge.save(this, gameId, perGame);
+            Toast.makeText(this, "已保存该游戏的 ONS 设置", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         LauncherKrkrBridge.setEngineVersion(this, version);
         LauncherKrkrBridge.setKrScopedSaveDir(this, binding.krScopedSwitch.isChecked());
