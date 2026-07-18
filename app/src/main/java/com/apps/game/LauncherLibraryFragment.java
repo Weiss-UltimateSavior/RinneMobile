@@ -1579,6 +1579,9 @@ mainQueue.post(() -> {
     if (binding != null) {
         allGames.clear();
         allGames.addAll(loadedGames);
+        // 关键：必须同步更新 libraryState 内部的 all 列表，否则后续 applyFilters()
+        // 调用的 libraryState.rebuild() 仍会遍历旧 Game 对象，导致新封面无法刷新到卡片。
+        libraryState.replaceAll(loadedGames);
 
         gameDevelopers.clear();
         gameDevelopers.putAll(loadedCategoryResult.developers);
@@ -1593,12 +1596,8 @@ mainQueue.post(() -> {
         renderCategories();
         dataLoaded = true;
 
-        // 关键：批量同步完成后，强制刷新当前页面所有卡片
+        // libraryState 已持有最新数据，applyFilters(true) 会强制全量刷新卡片
         applyFilters(true);
-
-        binding.libraryRecycler.post(() -> {
-            if (adapter != null) adapter.notifyDataSetChanged();
-        });
     }
 
     dismissSyncLoadingDialog();
