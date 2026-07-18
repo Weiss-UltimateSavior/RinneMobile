@@ -8,6 +8,7 @@ import java.util.List;
 
 /** Deterministic local context compaction; no extra model request or secret leaves the device. */
 final class AgentContextCompressor {
+    private static final int MIN_ADAPTIVE_BUDGET = 4 * 1024;
     private static final int MAX_SYSTEM_CHARS = 32 * 1024;
     private static final int MAX_TAIL_MESSAGE_CHARS = 12 * 1024;
     private static final int MAX_SUMMARY_CHARS = 10 * 1024;
@@ -17,7 +18,7 @@ final class AgentContextCompressor {
 
     static List<OpenAiCompatibleAgentClient.ModelMessage> compact(
             List<OpenAiCompatibleAgentClient.ModelMessage> input, int maxChars) {
-        int budget = Math.max(16 * 1024, maxChars);
+        int budget = Math.max(MIN_ADAPTIVE_BUDGET, maxChars);
         List<OpenAiCompatibleAgentClient.ModelMessage> source = input == null
                 ? new ArrayList<>() : input;
         if (estimatedChars(source) <= budget) return new ArrayList<>(source);
@@ -91,6 +92,23 @@ final class AgentContextCompressor {
             if (message.toolCalls != null) total += message.toolCalls.toString().length();
         }
         return total;
+    }
+
+    static int reducedBudget(int currentBudget, int estimatedMessageChars,
+                             int actualMaxTokens, int fixedRequestChars) {
+        int current = Math.max(MIN_ADAPTIVE_BUDGET, currentBudget);
+        int estimate = Math.max(MIN_ADAPTIVE_BUDGET, estimatedMessageChars);
+        int byRetry = Math.max(MIN_ADAPTIVE_BUDGET, (current * 2) / 3);
+        int target = byRetry;
+        if (actualMaxTokens > 0) {
+            // One character per token is conservative for English/code/JSON but optimistic for Chinese;
+            // it is only used to estimate the message-character budget available from the provider.
+            int available = Math.max(MIN_ADAPTIVE_BUDGET,
+                    actualMaxTokens - Math.max(0, fixedRequestChars) - 2048);
+            target = Math.min(target, available);
+        }
+        target = Math.min(target, Math.max(MIN_ADAPTIVE_BUDGET, (estimate * 3) / 4));
+        return target;
     }
 
     private static String summarize(List<OpenAiCompatibleAgentClient.ModelMessage> values,

@@ -106,6 +106,57 @@ public class OpenAiCompatibleAgentClientTest {
         assertFalse(error.getMessage().contains("缺少 choices"));
     }
 
+    @Test public void recognizesContextWindowErrorsAndExtractsReportedLimit() {
+        OpenAiCompatibleAgentClient.ContextWindowException error =
+                OpenAiCompatibleAgentClient.contextWindowError(
+                        "context_length_exceeded: This model's maximum context length is 32,768 tokens",
+                        "模型上下文不足");
+
+        assertEquals(32768, error.actualMaxTokens);
+        assertEquals("模型上下文不足", error.getMessage());
+        assertEquals(null, OpenAiCompatibleAgentClient.contextWindowError(
+                "invalid_api_key: authentication failed", "认证失败"));
+    }
+
+    @Test public void streamingContextErrorUsesDedicatedException() {
+        String stream = "data: {\"error\":{\"message\":\"maximum context length is 8192 tokens\","
+                + "\"type\":\"invalid_request_error\",\"code\":\"context_length_exceeded\"}}\n";
+        OpenAiCompatibleAgentClient.ContextWindowException error = assertThrows(
+                OpenAiCompatibleAgentClient.ContextWindowException.class,
+                () -> new OpenAiCompatibleAgentClient().parseStream(
+                        new ByteArrayInputStream(stream.getBytes(StandardCharsets.UTF_8)), null));
+        assertEquals(8192, error.actualMaxTokens);
+    }
+
+    @Test public void recognizesChineseContextWindowErrorWithoutInventingALimit() {
+        OpenAiCompatibleAgentClient.ContextWindowException error =
+                OpenAiCompatibleAgentClient.contextWindowError(
+                        "输入令牌过多，模型上下文窗口不足，请缩短消息", "模型窗口不足");
+
+        assertEquals(0, error.actualMaxTokens);
+        assertEquals("模型窗口不足", error.getMessage());
+    }
+
+    @Test public void completeContextErrorUsesDedicatedException() throws Exception {
+        org.json.JSONObject response = new org.json.JSONObject().put("error", new org.json.JSONObject()
+                .put("message", "request input is too large")
+                .put("type", "invalid_request_error")
+                .put("code", "context_length_exceeded"));
+
+        OpenAiCompatibleAgentClient.ContextWindowException error = assertThrows(
+                OpenAiCompatibleAgentClient.ContextWindowException.class,
+                () -> new OpenAiCompatibleAgentClient().parseComplete(response, null));
+        assertTrue(error.getMessage().contains("context_length_exceeded"));
+    }
+
+    @Test public void doesNotTreatInputTokenCountAsReportedMaximum() {
+        OpenAiCompatibleAgentClient.ContextWindowException error =
+                OpenAiCompatibleAgentClient.contextWindowError(
+                        "context window exceeded: input contained 120000 tokens", "模型窗口不足");
+
+        assertEquals(0, error.actualMaxTokens);
+    }
+
     @Test public void separatesReasoningFromFinalContentDuringStream() throws Exception {
         String stream =
                 "data: {\"choices\":[{\"delta\":{\"content\":null,\"reasoning_content\":\"thinking\"}}]}\n" +

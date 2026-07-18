@@ -23,11 +23,13 @@ public final class AgentConfigStore {
     private static final String KEY_TEMPERATURE = "temperature";
     private static final String KEY_SECRET = "api_key_encrypted";
     private static final String KEY_TOOL_CALL_LIMIT = "tool_call_limit";
+    private static final String KEY_CONTEXT_BUDGET_KB = "context_budget_kb";
     private static final String KEY_PLAN_ENABLED = "task_plan_enabled";
     private static final String KEY_PERMISSION_MODE = "permission_mode";
     private static final String KEYSTORE_ALIAS = "rinne_agent_api_key_v1";
     static final String PERMISSION_RESTRICTED = "restricted";
     static final String PERMISSION_FULL = "full";
+    static final int DEFAULT_CONTEXT_BUDGET_KB = 72;
 
     private AgentConfigStore() { }
 
@@ -37,16 +39,18 @@ public final class AgentConfigStore {
         public final float temperature;
         public final boolean hasApiKey;
         public final int toolCallLimit;
+        public final int contextBudgetKb;
         public final boolean taskPlanEnabled;
         public final String permissionMode;
 
         Config(String baseUrl, String model, float temperature, boolean hasApiKey,
-               int toolCallLimit, boolean taskPlanEnabled, String permissionMode) {
+               int toolCallLimit, int contextBudgetKb, boolean taskPlanEnabled, String permissionMode) {
             this.baseUrl = baseUrl;
             this.model = model;
             this.temperature = temperature;
             this.hasApiKey = hasApiKey;
             this.toolCallLimit = clampToolCalls(toolCallLimit);
+            this.contextBudgetKb = clampContextBudgetKb(contextBudgetKb);
             this.taskPlanEnabled = taskPlanEnabled;
             this.permissionMode = normalizePermissionMode(permissionMode);
         }
@@ -56,6 +60,7 @@ public final class AgentConfigStore {
         }
 
         public boolean isFullPermission() { return PERMISSION_FULL.equals(permissionMode); }
+        public int contextBudgetChars() { return contextBudgetKb * 1024; }
     }
 
     public static Config get(Context context) {
@@ -66,6 +71,7 @@ public final class AgentConfigStore {
                 clampTemperature(prefs.getFloat(KEY_TEMPERATURE, 0.2f)),
                 !prefs.getString(KEY_SECRET, "").isEmpty(),
                 prefs.getInt(KEY_TOOL_CALL_LIMIT, 5),
+                prefs.getInt(KEY_CONTEXT_BUDGET_KB, DEFAULT_CONTEXT_BUDGET_KB),
                 prefs.getBoolean(KEY_PLAN_ENABLED, true),
                 prefs.getString(KEY_PERMISSION_MODE, PERMISSION_RESTRICTED)
         );
@@ -128,6 +134,13 @@ public final class AgentConfigStore {
 
     private static int clampToolCalls(int value) { return Math.max(1, Math.min(50, value)); }
 
+    static int validateContextBudgetKb(int value) {
+        if (value < 16 || value > 1024) throw new IllegalArgumentException("上下文大小应为 16-1024K 字符");
+        return value;
+    }
+
+    private static int clampContextBudgetKb(int value) { return Math.max(16, Math.min(1024, value)); }
+
     static String validatePermissionMode(String value) {
         String normalized = normalizePermissionMode(value);
         if (!PERMISSION_RESTRICTED.equals(normalized) && !PERMISSION_FULL.equals(normalized)) {
@@ -144,10 +157,11 @@ public final class AgentConfigStore {
         prefs(context).edit().remove(KEY_SECRET).apply();
     }
 
-    public static void saveExecutionSettings(Context context, int toolCallLimit,
+    public static void saveExecutionSettings(Context context, int toolCallLimit, int contextBudgetKb,
                                              boolean taskPlanEnabled, boolean fullPermission) {
         prefs(context).edit()
                 .putInt(KEY_TOOL_CALL_LIMIT, validateToolCalls(toolCallLimit))
+                .putInt(KEY_CONTEXT_BUDGET_KB, validateContextBudgetKb(contextBudgetKb))
                 .putBoolean(KEY_PLAN_ENABLED, taskPlanEnabled)
                 .putString(KEY_PERMISSION_MODE, fullPermission ? PERMISSION_FULL : PERMISSION_RESTRICTED)
                 .apply();

@@ -176,7 +176,7 @@ public class LocalAgentActivity extends AppCompatActivity {
             @Override public void onApprovalRequired(LocalAgentRuntime.ApprovalRequest request,
                                                      LocalAgentRuntime.ApprovalResponder responder) {
                 if (unavailable()) { responder.resolve(false); return; }
-                setWorkbenchStatus("等待人工确认", "检查完整差异后再决定是否写入", "05");
+                setWorkbenchStatus("等待人工确认", "确认后才能继续当前任务", "05");
                 activeApprovalDialog = LauncherDialogFactory.showLongMessageConfirm(
                         LocalAgentActivity.this, request.title, request.preview, request.confirmText,
                         () -> { activeApprovalDialog = null; responder.resolve(true); },
@@ -362,6 +362,12 @@ public class LocalAgentActivity extends AppCompatActivity {
 
         EditText toolCallLimit = input(root, "最大工具调用次数", "1 - 50", InputType.TYPE_CLASS_NUMBER);
         toolCallLimit.setText(String.valueOf(config.toolCallLimit));
+        EditText contextBudget = input(root, "上下文大小（K 字符）", "16 - 1024", InputType.TYPE_CLASS_NUMBER);
+        contextBudget.setText(String.valueOf(config.contextBudgetKb));
+        TextView contextNote = text("默认 72K。超过预算或模型服务报告窗口不足时，必须确认压缩后才能继续。", 10, false);
+        contextNote.setTextColor(LauncherTheme.textMuted(this));
+        LinearLayout.LayoutParams contextNoteLp = wrap(); contextNoteLp.setMargins(0, dp(5), 0, 0);
+        root.addView(contextNote, contextNoteLp);
 
         SwitchCompat taskPlan = settingSwitch("生成任务计划与检查清单", config.taskPlanEnabled);
         LinearLayout.LayoutParams planLp = wrap(); planLp.setMargins(0, dp(10), 0, 0); root.addView(taskPlan, planLp);
@@ -380,7 +386,9 @@ public class LocalAgentActivity extends AppCompatActivity {
         save.setOnClickListener(view -> {
             try {
                 int calls = Integer.parseInt(valueOf(toolCallLimit));
-                AgentConfigStore.saveExecutionSettings(this, calls, taskPlan.isChecked(), fullPermission.isChecked());
+                int contextKb = Integer.parseInt(valueOf(contextBudget));
+                AgentConfigStore.saveExecutionSettings(this, calls, contextKb,
+                        taskPlan.isChecked(), fullPermission.isChecked());
                 dialog.dismiss();
                 renderConfigState();
                 Toast.makeText(this, "智能体执行设置已保存", Toast.LENGTH_SHORT).show();

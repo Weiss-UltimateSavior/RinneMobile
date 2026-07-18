@@ -38,6 +38,11 @@ public class AgentConfigStoreTest {
         assertEquals(50, AgentConfigStore.validateToolCalls(50));
         assertThrows(IllegalArgumentException.class, () -> AgentConfigStore.validateToolCalls(0));
         assertThrows(IllegalArgumentException.class, () -> AgentConfigStore.validateToolCalls(51));
+        assertEquals(16, AgentConfigStore.validateContextBudgetKb(16));
+        assertEquals(72, AgentConfigStore.validateContextBudgetKb(72));
+        assertEquals(1024, AgentConfigStore.validateContextBudgetKb(1024));
+        assertThrows(IllegalArgumentException.class, () -> AgentConfigStore.validateContextBudgetKb(15));
+        assertThrows(IllegalArgumentException.class, () -> AgentConfigStore.validateContextBudgetKb(1025));
         assertEquals(AgentConfigStore.PERMISSION_FULL,
                 AgentConfigStore.validatePermissionMode("full"));
         assertThrows(IllegalArgumentException.class,

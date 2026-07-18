@@ -21,7 +21,6 @@ import java.util.Set;
 /** Local orchestration loop: the network model may request only tools registered on this device. */
 public final class LocalAgentRuntime {
     private static final int MAX_MODEL_TOOL_ROUNDS = 20;
-    private static final int MODEL_MESSAGE_CONTEXT_BUDGET = 72 * 1024;
     private static final int MAX_REASONING_TRACE_CHARS = 128 * 1024;
     private static final String SYSTEM_PROMPT =
             "你是 Rinne 游戏维护智能体。你运行在用户的 Android 游戏管理器中。" +
@@ -122,14 +121,33 @@ public final class LocalAgentRuntime {
             if (!config.isReady()) throw new IllegalStateException("请先在右上角配置智能体模型 API");
             pendingRows.add(repository.add("user", input, ""));
             List<OpenAiCompatibleAgentClient.ModelMessage> messages = buildContext(config);
+            org.json.JSONArray toolDefinitions = AgentToolRegistry.definitions();
             String finalText = "";
             int maxRounds = Math.min(MAX_MODEL_TOOL_ROUNDS, config.toolCallLimit);
+            int activeContextBudget = config.contextBudgetChars();
+            boolean localCompressionApproved = false;
+            boolean modelCompressionApproved = false;
             for (int round = 0; round <= maxRounds; round++) {
                 ensureActive(token);
-                messages = AgentContextCompressor.compact(messages, MODEL_MESSAGE_CONTEXT_BUDGET);
-                OpenAiCompatibleAgentClient.Result result = client.execute(
-                        appContext, config, messages, AgentToolRegistry.definitions(),
-                        new OpenAiCompatibleAgentClient.DeltaCallback() {
+                int estimated = AgentContextCompressor.estimatedChars(messages);
+                if (estimated > activeContextBudget) {
+                    if (!localCompressionApproved) {
+                        localCompressionApproved = awaitApproval(callback, token,
+                                "上下文需要压缩",
+                                "当前对话上下文约 " + contextKb(estimated) + "K 字符，超过设置的 "
+                                        + config.contextBudgetKb + "K 字符。\n\n继续前需要在本机压缩较早消息：保留最近对话和工具调用关系，较早内容会替换为摘要。不会修改游戏文件。"
+                                        + "\n\n如果不确认，本轮对话将停止。",
+                                "压缩并继续");
+                    }
+                    if (!localCompressionApproved) throw new IllegalStateException("未确认上下文压缩，本轮对话已停止");
+                    messages = requireCompaction(messages, activeContextBudget);
+                }
+                OpenAiCompatibleAgentClient.Result result;
+                int contextRetries = 0;
+                while (true) {
+                    try {
+                        result = client.execute(appContext, config, messages, toolDefinitions,
+                                new OpenAiCompatibleAgentClient.DeltaCallback() {
                             @Override public void onDelta(String delta) {
                                 if (token.isActive()) post(() -> callback.onTextDelta(delta));
                             }
@@ -139,6 +157,33 @@ public final class LocalAgentRuntime {
                                 if (token.isActive()) post(() -> callback.onReasoningDelta(delta));
                             }
                         });
+                        break;
+                    } catch (OpenAiCompatibleAgentClient.ContextWindowException error) {
+                        if (!modelCompressionApproved) {
+                            String actual = error.actualMaxTokens > 0
+                                    ? "\n服务端报告的最大窗口：" + error.actualMaxTokens + " tokens。" : "";
+                            modelCompressionApproved = awaitApproval(callback, token,
+                                    "模型上下文窗口不足",
+                                    "模型服务拒绝了当前请求，说明实际上下文窗口不足以容纳当前消息与工具定义。兼容接口通常不能提前查询窗口大小，因此会在服务端报告不足时提示。"
+                                            + actual + "\n用户设置：" + config.contextBudgetKb + "K 字符；系统默认："
+                                            + AgentConfigStore.DEFAULT_CONTEXT_BUDGET_KB + "K 字符。"
+                                            + "\n\n继续前必须进一步压缩较早消息；如果不确认，本轮对话将停止。",
+                                    "进一步压缩并重试");
+                        }
+                        if (!modelCompressionApproved) throw new IllegalStateException("未确认进一步压缩，本轮对话已停止");
+                        if (contextRetries++ >= 3) throw new IllegalStateException("模型上下文窗口仍不足，请降低上下文设置或更换模型", error);
+                        int before = AgentContextCompressor.estimatedChars(messages);
+                        int reduced = AgentContextCompressor.reducedBudget(activeContextBudget, before,
+                                error.actualMaxTokens, toolDefinitions.toString().length());
+                        List<OpenAiCompatibleAgentClient.ModelMessage> compacted =
+                                AgentContextCompressor.compact(messages, reduced);
+                        int after = AgentContextCompressor.estimatedChars(compacted);
+                        if (after >= before) throw new IllegalStateException("当前必要上下文无法继续压缩，请更换更大上下文模型", error);
+                        if (after > reduced) throw new IllegalStateException("当前必要上下文无法继续压缩，请更换更大上下文模型", error);
+                        messages = compacted;
+                        activeContextBudget = reduced;
+                    }
+                }
                 ensureActive(token);
                 messages.add(result.assistantMessage());
                 boolean toolRound = !result.toolCalls.isEmpty();
@@ -365,7 +410,20 @@ public final class LocalAgentRuntime {
             AgentConversationRepository.Message item = history.get(i);
             values.add(1, new OpenAiCompatibleAgentClient.ModelMessage(item.role, item.content));
         }
-        return AgentContextCompressor.compact(values, MODEL_MESSAGE_CONTEXT_BUDGET);
+        return values;
+    }
+
+    private static List<OpenAiCompatibleAgentClient.ModelMessage> requireCompaction(
+            List<OpenAiCompatibleAgentClient.ModelMessage> messages, int budget) {
+        List<OpenAiCompatibleAgentClient.ModelMessage> compacted = AgentContextCompressor.compact(messages, budget);
+        if (AgentContextCompressor.estimatedChars(compacted) > budget) {
+            throw new IllegalStateException("必要上下文超过设置上限，请提高上下文大小或清理会话");
+        }
+        return compacted;
+    }
+
+    private static int contextKb(int chars) {
+        return Math.max(1, (Math.max(0, chars) + 1023) / 1024);
     }
 
     private static void ensureActive(RunToken token) throws InterruptedException {

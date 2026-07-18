@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.MediaType;
@@ -38,6 +40,11 @@ final class OpenAiCompatibleAgentClient {
             .followSslRedirects(false)
             .build();
     private volatile Call activeCall;
+    private static final Pattern[] CONTEXT_LIMIT_PATTERNS = new Pattern[]{
+            Pattern.compile("(?i)maximum context length is\\s*([0-9][0-9,]*)\\s+tokens?"),
+            Pattern.compile("(?i)context (?:length|window)\\s+(?:is|of)\\s*([0-9][0-9,]*)\\s+tokens?"),
+            Pattern.compile("(?i)maximum number of tokens allowed\\s*\\(?\\s*([0-9][0-9,]*)\\s*\\)?")
+    };
 
     interface DeltaCallback {
         void onDelta(String text);
@@ -114,6 +121,13 @@ final class OpenAiCompatibleAgentClient {
         }
     }
 
+    static final class ContextWindowException extends IOException {
+        final int actualMaxTokens;
+        ContextWindowException(String message, int actualMaxTokens) {
+            super(message); this.actualMaxTokens = Math.max(0, actualMaxTokens);
+        }
+    }
+
     Result execute(android.content.Context context, AgentConfigStore.Config config,
                    List<ModelMessage> messages, JSONArray tools, DeltaCallback callback) throws Exception {
         JSONObject body = new JSONObject()
@@ -140,7 +154,10 @@ final class OpenAiCompatibleAgentClient {
             ResponseBody responseBody = response.body();
             if (!response.isSuccessful()) {
                 String detail = responseBody == null ? "" : readTruncated(responseBody.byteStream(), MAX_ERROR_CHARS);
-                throw new IOException("模型接口返回 HTTP " + response.code() + sanitizeError(detail, apiKey));
+                String display = "模型接口返回 HTTP " + response.code() + sanitizeError(detail, apiKey);
+                ContextWindowException contextError = contextWindowError(detail, display);
+                if (contextError != null) throw contextError;
+                throw new IOException(display);
             }
             if (responseBody == null) throw new IOException("模型接口返回空响应");
             if (responseBody.contentLength() > MAX_RESPONSE_BYTES) throw new IOException("模型响应过大");
@@ -174,7 +191,12 @@ final class OpenAiCompatibleAgentClient {
             if (data.isEmpty()) continue;
             if ("[DONE]".equals(data)) break;
             JSONObject event = new JSONObject(data);
-            if (event.has("error")) throw new IOException(providerError(event, "模型流式接口返回错误"));
+            if (event.has("error")) {
+                String detail = providerError(event, "模型流式接口返回错误");
+                ContextWindowException contextError = contextWindowError(detail, detail);
+                if (contextError != null) throw contextError;
+                throw new IOException(detail);
+            }
             JSONArray choices = event.optJSONArray("choices");
             if (choices == null || choices.length() == 0) continue;
             JSONObject choice = choices.optJSONObject(0);
@@ -223,7 +245,12 @@ final class OpenAiCompatibleAgentClient {
     }
 
     Result parseComplete(JSONObject response, DeltaCallback callback) throws Exception {
-        if (response.has("error")) throw new IOException(providerError(response, "模型接口返回错误"));
+        if (response.has("error")) {
+            String detail = providerError(response, "模型接口返回错误");
+            ContextWindowException contextError = contextWindowError(detail, detail);
+            if (contextError != null) throw contextError;
+            throw new IOException(detail);
+        }
         JSONArray choices = response.optJSONArray("choices");
         if (choices == null || choices.length() == 0) throw new IOException("模型响应缺少 choices");
         JSONObject choice = choices.optJSONObject(0);
@@ -271,6 +298,30 @@ final class OpenAiCompatibleAgentClient {
         if (!type.isEmpty()) value.append(" [type=").append(type).append(']');
         if (!code.isEmpty()) value.append(" [code=").append(code).append(']');
         return value.length() <= 1000 ? value.toString() : value.substring(0, 1000) + "…";
+    }
+
+    static ContextWindowException contextWindowError(String raw, String displayMessage) {
+        String value = raw == null ? "" : raw;
+        String lower = value.toLowerCase(java.util.Locale.ROOT);
+        boolean exceeded = lower.contains("context_length_exceeded")
+                || lower.contains("maximum context length")
+                || lower.contains("context window")
+                || lower.contains("context length exceeded")
+                || lower.contains("too many tokens")
+                || lower.contains("input token count exceeds")
+                || value.contains("上下文长度") || value.contains("上下文窗口") || value.contains("输入令牌过多");
+        if (!exceeded) return null;
+        int actualMaxTokens = 0;
+        for (Pattern pattern : CONTEXT_LIMIT_PATTERNS) {
+            Matcher matcher = pattern.matcher(value);
+            if (!matcher.find()) continue;
+            try { actualMaxTokens = Integer.parseInt(matcher.group(1).replace(",", "")); }
+            catch (Throwable ignored) { actualMaxTokens = 0; }
+            break;
+        }
+        String message = displayMessage == null || displayMessage.trim().isEmpty()
+                ? "模型实际上下文窗口不足" : displayMessage;
+        return new ContextWindowException(message, actualMaxTokens);
     }
 
     /** org.json optString turns JSONObject.NULL into the literal "null" on some runtimes. */

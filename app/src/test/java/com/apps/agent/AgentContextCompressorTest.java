@@ -41,4 +41,14 @@ public class AgentContextCompressorTest {
         assertEquals("tool", compact.get(compact.size() - 1).role);
         assertEquals("call_1", compact.get(compact.size() - 1).toolCallId);
     }
+
+    @Test public void adaptiveRetryAlwaysLowersTheCurrentBudget() {
+        int unknownModel = AgentContextCompressor.reducedBudget(72 * 1024, 70 * 1024, 0, 12 * 1024);
+        int reportedSmallModel = AgentContextCompressor.reducedBudget(72 * 1024, 70 * 1024,
+                32 * 1024, 12 * 1024);
+
+        assertTrue(unknownModel < 72 * 1024);
+        assertTrue(reportedSmallModel < unknownModel);
+        assertTrue(reportedSmallModel >= 4 * 1024);
+    }
 }
