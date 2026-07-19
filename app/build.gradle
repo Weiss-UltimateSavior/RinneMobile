@@ -86,8 +86,7 @@ dependencies {
     implementation libs.okhttp
     implementation libs.retrofit
     implementation libs.palette
-    implementation libs.rxjava
-    implementation libs.rxandroid
+    implementation libs.coroutines.android
     implementation libs.kotlin.stdlib
     testImplementation libs.junit
     // JVM unit tests exercise the same org.json parsing used on Android.

@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 import okhttp3.WebSocket;
-import io.reactivex.disposables.Disposable;
+import com.yuki.yukihub.util.Disposable;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;

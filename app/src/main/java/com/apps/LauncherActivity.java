@@ -25,7 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import io.reactivex.disposables.Disposable;
+import com.yuki.yukihub.util.Disposable;
 
 import com.apps.PadUi.PadGameModeActivity;
 import com.yuki.yukihub.R;
