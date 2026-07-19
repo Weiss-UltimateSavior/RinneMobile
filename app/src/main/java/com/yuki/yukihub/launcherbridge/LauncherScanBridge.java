@@ -49,6 +49,7 @@ public final class LauncherScanBridge {
             out.launchTarget = source.launchTarget == null ? "" : source.launchTarget;
             out.rpgMakerSubtype = source.rpgMakerSubtype == null ? "" : source.rpgMakerSubtype;
             out.renpySubtype = source.renpySubtype == null ? "" : source.renpySubtype;
+            out.godotSubtype = source.godotSubtype == null ? "" : source.godotSubtype;
         } catch (Throwable ignored) {
         }
         return out;
@@ -68,6 +69,10 @@ public final class LauncherScanBridge {
          * 仅当 engine == RENPY 时有意义。取值："renpy" 或 "renpy8"。
          */
         public String renpySubtype = "";
+        /**
+         * 仅当 engine == GODOT 时有意义。取值："godot4"。
+         */
+        public String godotSubtype = "";
     }
 
     public static ImportStats scanAndImport(Context context, List<String> roots, int depth) {
@@ -307,6 +312,7 @@ public final class LauncherScanBridge {
         // Legacy/future scanner results without a subtype retain the conservative RPG XP fallback.
         if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
         if (engine == EngineType.RENPY) return "internal.renpy";
+        if (engine == EngineType.GODOT) return "internal.godot";
         return "";
     }
 
@@ -321,6 +327,11 @@ public final class LauncherScanBridge {
         } else if (result.engine == EngineType.RENPY) {
             String subtype = normalizeSubtype(result.renpySubtype);
             if (subtype.equals("renpy") || subtype.equals("renpy8")) {
+                return "internal." + subtype;
+            }
+        } else if (result.engine == EngineType.GODOT) {
+            String subtype = normalizeSubtype(result.godotSubtype);
+            if (subtype.equals("godot") || subtype.equals("godot4")) {
                 return "internal." + subtype;
             }
         }

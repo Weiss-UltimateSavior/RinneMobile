@@ -94,7 +94,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
             new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
-            new EngineOption(EngineType.RENPY, "Ren'Py", "renpy")
+            new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
+            new EngineOption(EngineType.GODOT, "Godot (自动检测 3/4)", "godot4")
     };
     private Uri gameDirUri;
     private Uri coverUri;
@@ -430,6 +431,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         // 检测到具体子类型时由 defaultEmulatorPackageForDetected 覆盖为更精确的别名。
         if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
         if (engine == EngineType.RENPY) return "internal.renpy";
+        if (engine == EngineType.GODOT) return "internal.godot";
         return "";
     }
 
@@ -451,6 +453,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             if (subtype == null || subtype.trim().isEmpty()) return fallback;
             return "internal." + subtype.trim();
         }
+        if (engine == EngineType.GODOT) {
+            String subtype = detected.godotSubtype;
+            if (subtype == null || subtype.trim().isEmpty()) return fallback;
+            return "internal." + subtype.trim();
+        }
         return fallback;
     }
 
@@ -462,7 +469,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private String defaultEmulatorPackageForOption(EngineOption opt) {
         if (opt == null) return "";
         if (opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()
-                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY)) {
+                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY
+                    || opt.engine == EngineType.GODOT)) {
             return "internal." + opt.rpgMakerSubtype;
         }
         return defaultEmulatorPackage(opt.engine);
@@ -476,7 +484,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private String selectedRpgMakerSubtype() {
         if (selectedEngineOption == null) return "";
         if (selectedEngineOption.engine != EngineType.RPGMAKER
-                && selectedEngineOption.engine != EngineType.RENPY) return "";
+                && selectedEngineOption.engine != EngineType.RENPY
+                && selectedEngineOption.engine != EngineType.GODOT) return "";
         return selectedEngineOption.rpgMakerSubtype == null ? "" : selectedEngineOption.rpgMakerSubtype;
     }
 

@@ -36,8 +36,14 @@ public class EngineDetector {
          * "rpgmxp" / "rpgmvx" / "rpgmvxace" / "mkxp-z"。空串表示需用户自行决定。
          */
         public String rpgMakerSubtype = "";
-        /** 仅当 engine == RENPY 时有意义。取值："renpy" 或 "renpy8"。 */
+        /**
+         * 仅当 engine == RENPY 时有意义。取值："renpy" 或 "renpy8"。
+         */
         public String renpySubtype = "";
+        /**
+         * 仅当 engine == GODOT 时有意义。取值："godot4"。空串表示需用户自行决定。
+         */
+        public String godotSubtype = "";
     }
 
     public static Result detect(DocumentFile dir) {
@@ -120,6 +126,13 @@ public class EngineDetector {
         } else if (s.hasGameDir && s.hasRpy) {
             scoreRenpy(r, "renpy", 85, "[游戏目录]");
         }
+        // Godot 识别：.pck 归档优先，其次 project.godot 文件。
+        // 标准 Godot 项目根目录会有 project.godot 文本配置，或打包为 .pck。
+        if (s.firstPck != null) {
+            scoreGodot(r, "godot4", 96, s.firstPck);
+        } else if (s.hasProjectGodot) {
+            scoreGodot(r, "godot4", 94, "[游戏目录]");
+        }
         return r;
     }
 
@@ -147,6 +160,19 @@ public class EngineDetector {
             r.confidence = confidence;
             r.launchTarget = launchTarget == null ? "" : launchTarget;
             r.renpySubtype = subtype;
+        }
+    }
+
+    /**
+     * 与 {@link #score} 行为一致，但额外写入 {@link Result#godotSubtype}。
+     */
+    private static void scoreGodot(Result r, String subtype, int confidence, String launchTarget) {
+        if (r == null || subtype == null || subtype.isEmpty()) return;
+        if (confidence > r.confidence) {
+            r.engine = EngineType.GODOT;
+            r.confidence = confidence;
+            r.launchTarget = launchTarget == null ? "" : launchTarget;
+            r.godotSubtype = subtype;
         }
     }
 
@@ -207,6 +233,9 @@ public class EngineDetector {
         boolean hasGameDir = false;   // game/ 目录（Ren'Py 标准结构）
         boolean hasGameScriptRpy = false; // game/script.rpy
         boolean hasOptionsRpy = false;    // game/options.rpy
+        // Godot 检测字段
+        String firstPck = null;         // .pck 打包文件
+        boolean hasProjectGodot = false; // project.godot 项目配置文件
     }
 
     private static void collectFeatures(DocumentFile dir, String lowerPrefix, String originalPrefix,
@@ -315,6 +344,9 @@ public class EngineDetector {
                 if (rel.equals("game/options.rpy") || rel.endsWith("/game/options.rpy")) s.hasOptionsRpy = true;
             }
             if (lower.endsWith(".rpyc")) s.hasRpyc = true;
+            // Godot 项目文件检测
+            if (lower.equals("project.godot")) s.hasProjectGodot = true;
+            if (lower.endsWith(".pck") && s.firstPck == null) s.firstPck = originalRel;
         }
     }
 

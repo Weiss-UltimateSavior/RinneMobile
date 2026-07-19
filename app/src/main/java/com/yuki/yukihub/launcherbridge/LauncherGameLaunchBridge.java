@@ -100,6 +100,11 @@ public final class LauncherGameLaunchBridge {
                 && !LauncherModuleBridge.isRenPyModuleEnabled(context)) {
             return "RenPy 模块未启用，请在「模块兼容」页面启用后再试。";
         }
+        if (LauncherModuleBridge.isGodotPluginPackage(emulatorPackage)
+                && LauncherModuleBridge.isGodotModuleInstalled(context)
+                && !LauncherModuleBridge.isGodotModuleEnabled(context)) {
+            return "Godot 模块未启用，请在「模块兼容」页面启用后再试。";
+        }
         return null;
     }
 

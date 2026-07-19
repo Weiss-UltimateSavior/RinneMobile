@@ -23,18 +23,22 @@ import com.yuki.yukihub.databinding.ActivityLauncherModuleCompatibilityBinding;
 import com.yuki.yukihub.launcherbridge.LauncherModuleBridge;
 import com.yuki.yukihub.util.AppExecutors;
 
-/** 模块兼容页面：展示并管理 Rinne 所兼容的第三方 JoiPlay 插件（RPGM / RenPy）。 */
+/** 模块兼容页面：展示并管理 Rinne 所兼容的第三方 JoiPlay 插件（RPGM / RenPy / Godot）。 */
 public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     /** Temporary routable placeholder; replace with the published RPGM module URL when available. */
     private static final String RPGM_INSTALL_URL = "https://example.com/";
     /** Temporary routable placeholder; replace with the published RenPy module URL when available. */
     private static final String RENPY_INSTALL_URL = "https://example.com/";
+    /** Temporary routable placeholder; replace with the published Godot module URL when available. */
+    private static final String GODOT_INSTALL_URL = "https://example.com/";
 
     private ActivityLauncherModuleCompatibilityBinding binding;
     private boolean rpgmModuleInstalled;
     private boolean renpyModuleInstalled;
+    private boolean godotModuleInstalled;
     private boolean rpgmModuleEnabled = true;
     private boolean renpyModuleEnabled = true;
+    private boolean godotModuleEnabled = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,43 +53,58 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.moduleRpgmRow.setOnClickListener(view -> openRpgmModule());
         binding.moduleRenpyRow.setOnClickListener(view -> openRenpyModule());
+        binding.moduleGodotRow.setOnClickListener(view -> openGodotModule());
         // 长按列表项：弹窗提醒跳转浏览器下载。
         binding.moduleRpgmRow.setOnLongClickListener(view -> { promptDownload("RPGM", this::openRpgmInstallPage); return true; });
         binding.moduleRenpyRow.setOnLongClickListener(view -> { promptDownload("RenPy", this::openRenpyInstallPage); return true; });
+        binding.moduleGodotRow.setOnLongClickListener(view -> { promptDownload("Godot", this::openGodotInstallPage); return true; });
         // 右侧图标：已安装时点击切换启用/禁用；未安装时点击等价于行点击（前往安装）。
         binding.moduleRpgmIcon.setOnClickListener(view -> handleRpgmIconClick());
         binding.moduleRenpyIcon.setOnClickListener(view -> handleRenpyIconClick());
+        binding.moduleGodotIcon.setOnClickListener(view -> handleGodotIconClick());
         refreshInstalledModules();
     }
 
     private void refreshInstalledModules() {
         binding.moduleRpgmRow.setEnabled(false);
         binding.moduleRenpyRow.setEnabled(false);
+        binding.moduleGodotRow.setEnabled(false);
         binding.moduleRpgmRow.setAlpha(1f);
         binding.moduleRenpyRow.setAlpha(1f);
+        binding.moduleGodotRow.setAlpha(1f);
         binding.moduleRpgmIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
         binding.moduleRenpyIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
+        binding.moduleGodotIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
         AppExecutors.runOnIo(() -> {
             boolean rpgmInstalled = LauncherModuleBridge.isRpgMakerModuleInstalled(this);
             boolean renpyInstalled = LauncherModuleBridge.isRenPyModuleInstalled(this);
+            boolean godotInstalled = LauncherModuleBridge.isGodotModuleInstalled(this);
             boolean rpgmEnabled = LauncherModuleBridge.isRpgMakerModuleEnabled(this);
             boolean renpyEnabled = LauncherModuleBridge.isRenPyModuleEnabled(this);
+            boolean godotEnabled = LauncherModuleBridge.isGodotModuleEnabled(this);
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 rpgmModuleInstalled = rpgmInstalled;
                 renpyModuleInstalled = renpyInstalled;
+                godotModuleInstalled = godotInstalled;
                 rpgmModuleEnabled = rpgmEnabled;
                 renpyModuleEnabled = renpyEnabled;
+                godotModuleEnabled = godotEnabled;
                 binding.moduleRpgmRow.setEnabled(true);
                 binding.moduleRenpyRow.setEnabled(true);
+                binding.moduleGodotRow.setEnabled(true);
                 binding.moduleRpgmRow.setAlpha(1f);
                 binding.moduleRenpyRow.setAlpha(1f);
+                binding.moduleGodotRow.setAlpha(1f);
                 applyModuleIconTint(binding.moduleRpgmIcon, rpgmInstalled, rpgmEnabled);
                 applyModuleIconTint(binding.moduleRenpyIcon, renpyInstalled, renpyEnabled);
+                applyModuleIconTint(binding.moduleGodotIcon, godotInstalled, godotEnabled);
                 updateModuleDescription(binding.moduleRpgmDescription, rpgmInstalled, rpgmEnabled,
                         "提供 RPGM 游戏所需环境");
                 updateModuleDescription(binding.moduleRenpyDescription, renpyInstalled, renpyEnabled,
                         "提供 RenPy 游戏所需环境");
+                updateModuleDescription(binding.moduleGodotDescription, godotInstalled, godotEnabled,
+                        "提供 Godot 游戏所需环境");
             });
         });
     }
@@ -188,6 +207,26 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
                 this::openRenpyInstallPage);
     }
 
+    private void openGodotModule() {
+        if (godotModuleInstalled) {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "Godot 模块",
+                    godotModuleEnabled
+                            ? "该模块已安装并启用。点击右侧图标可禁用。"
+                            : "该模块已安装但未启用。点击右侧图标可启用。",
+                    "知道了",
+                    null);
+            return;
+        }
+        LauncherDialogFactory.showStandardConfirm(
+                this,
+                "安装 Godot 模块",
+                "是否安装该模块？",
+                "前往安装",
+                this::openGodotInstallPage);
+    }
+
     // ----- 图标点击：启停切换 -----
 
     private void handleRpgmIconClick() {
@@ -258,6 +297,40 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         }
     }
 
+    private void handleGodotIconClick() {
+        if (!godotModuleInstalled) {
+            openGodotModule();
+            return;
+        }
+        if (godotModuleEnabled) {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "禁用 Godot 模块",
+                    "禁用后该模块将无法用于启动 Godot 游戏。是否禁用？",
+                    "禁用",
+                    () -> {
+                        LauncherModuleBridge.setGodotModuleEnabled(this, false);
+                        godotModuleEnabled = false;
+                        applyModuleIconTint(binding.moduleGodotIcon, godotModuleInstalled, godotModuleEnabled);
+                        updateModuleDescription(binding.moduleGodotDescription, godotModuleInstalled, godotModuleEnabled,
+                                "提供 Godot 游戏所需环境");
+                    });
+        } else {
+            LauncherDialogFactory.showStandardConfirm(
+                    this,
+                    "启用 Godot 模块",
+                    "启用后该模块可用于启动 Godot 游戏。是否启用？",
+                    "启用",
+                    () -> {
+                        LauncherModuleBridge.setGodotModuleEnabled(this, true);
+                        godotModuleEnabled = true;
+                        applyModuleIconTint(binding.moduleGodotIcon, godotModuleInstalled, godotModuleEnabled);
+                        updateModuleDescription(binding.moduleGodotDescription, godotModuleInstalled, godotModuleEnabled,
+                                "提供 Godot 游戏所需环境");
+                    });
+        }
+    }
+
     // ----- 安装页跳转 -----
 
     private void openRpgmInstallPage() {
@@ -266,6 +339,10 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
 
     private void openRenpyInstallPage() {
         openInstallPage(RENPY_INSTALL_URL);
+    }
+
+    private void openGodotInstallPage() {
+        openInstallPage(GODOT_INSTALL_URL);
     }
 
     private void openInstallPage(String installUrl) {

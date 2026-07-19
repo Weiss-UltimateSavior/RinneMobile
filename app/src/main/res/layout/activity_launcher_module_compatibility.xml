@@ -148,6 +148,61 @@
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_module_rpgm" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/moduleGodotRow"
+                android:layout_width="match_parent"
+                android:layout_height="68dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/launcher_chat_option_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Godot 模块"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/moduleGodotDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="未安装 - 提供 Godot 游戏所需环境"
+                        android:textColor="@color/launcher_danger_color"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/moduleGodotIcon"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="10dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="Godot 模块"
+                    android:focusable="true"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/launcher_module_rpgm" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

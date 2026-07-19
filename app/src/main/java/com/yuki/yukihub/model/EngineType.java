@@ -12,6 +12,7 @@ public enum EngineType {
     NINTENDO_3DS("Nintendo 3DS"),
     RPGMAKER("RPG Maker"),
     RENPY("Ren'Py"),
+    GODOT("Godot"),
     UNKNOWN("Unknown");
 
     private final String displayName;

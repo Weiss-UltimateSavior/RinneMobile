@@ -70,6 +70,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
             new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
             new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
+            new EngineOption(EngineType.GODOT, "Godot (自动检测 3/4)", "godot4"),
             new EngineOption(EngineType.UNKNOWN, "未知", null)
     };
     private TextView etEmulator;
@@ -277,7 +278,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         String emuPkg = etEmulator.getText().toString().trim();
         // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>。
         if (emuPkg.isEmpty() && opt != null
-                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY)
+                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY
+                    || opt.engine == EngineType.GODOT)
                 && opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()) {
             emuPkg = "internal." + opt.rpgMakerSubtype;
         }
@@ -424,7 +426,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         EngineOption fallback = null;
         for (EngineOption opt : engineOptions) {
             if (opt.engine != engine) continue;
-            if (engine == EngineType.RPGMAKER || engine == EngineType.RENPY) {
+            if (engine == EngineType.RPGMAKER || engine == EngineType.RENPY
+                    || engine == EngineType.GODOT) {
                 if (opt.rpgMakerSubtype == null || opt.rpgMakerSubtype.isEmpty()) {
                     if (fallback == null) fallback = opt;
                     continue;
@@ -472,7 +475,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private String defaultEmulatorPackageForOption(EngineOption option) {
         if (option == null) return "";
-        if ((option.engine == EngineType.RPGMAKER || option.engine == EngineType.RENPY)
+        if ((option.engine == EngineType.RPGMAKER || option.engine == EngineType.RENPY
+                    || option.engine == EngineType.GODOT)
                 && option.rpgMakerSubtype != null
                 && !option.rpgMakerSubtype.isEmpty()) return "internal." + option.rpgMakerSubtype;
         if (option.engine == EngineType.KIRIKIRI) return "internal.krkr";

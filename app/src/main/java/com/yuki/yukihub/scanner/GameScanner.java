@@ -90,7 +90,7 @@ public class GameScanner {
             if (markSeen(seenUris, uri)) {
                 report.addResult(new ScanResult(safeName(dir), uri, detected.engine, detected.confidence,
                         detected.launchTarget, "", detected.xp3Candidates,
-                        detected.rpgMakerSubtype, detected.renpySubtype));
+                        detected.rpgMakerSubtype, detected.renpySubtype, detected.godotSubtype));
             }
             return true;
         } catch (Throwable t) {
@@ -107,7 +107,8 @@ public class GameScanner {
                 || engine == com.yuki.yukihub.model.EngineType.TYRANO
                 || engine == com.yuki.yukihub.model.EngineType.ARTEMIS
                 || engine == com.yuki.yukihub.model.EngineType.RPGMAKER
-                || engine == com.yuki.yukihub.model.EngineType.RENPY;
+                || engine == com.yuki.yukihub.model.EngineType.RENPY
+                || engine == com.yuki.yukihub.model.EngineType.GODOT;
     }
 
     static boolean shouldTraverseMatchedGames(int requestedDepth) {
@@ -172,7 +173,7 @@ public class GameScanner {
                         if (markSeen(seenUris, uri)) {
                             report.addResult(new ScanResult(safeName(child), uri, detected.engine, detected.confidence,
                                     detected.launchTarget, "", detected.xp3Candidates,
-                                    detected.rpgMakerSubtype, detected.renpySubtype));
+                                    detected.rpgMakerSubtype, detected.renpySubtype, detected.godotSubtype));
                         }
                         gameDirectoryMatched = true;
                     }

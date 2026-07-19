@@ -18,6 +18,8 @@ public class ScanResult {
     public String rpgMakerSubtype;
     /** Ren'Py runtime alias: renpy / renpy8. */
     public String renpySubtype;
+    /** Godot runtime alias: godot4. */
+    public String godotSubtype;
 
     public ScanResult(String title, String uri, EngineType engine, int confidence) {
         this(title, uri, engine, confidence, "", "");
@@ -32,12 +34,19 @@ public class ScanResult {
     }
 
     public ScanResult(String title, String uri, EngineType engine, int confidence, String launchTarget, String coverUri, List<String> xp3Candidates) {
-        this(title, uri, engine, confidence, launchTarget, coverUri, xp3Candidates, "", "");
+        this(title, uri, engine, confidence, launchTarget, coverUri, xp3Candidates, "", "", "");
     }
 
     public ScanResult(String title, String uri, EngineType engine, int confidence, String launchTarget,
                       String coverUri, List<String> xp3Candidates, String rpgMakerSubtype,
                       String renpySubtype) {
+        this(title, uri, engine, confidence, launchTarget, coverUri, xp3Candidates,
+                rpgMakerSubtype, renpySubtype, "");
+    }
+
+    public ScanResult(String title, String uri, EngineType engine, int confidence, String launchTarget,
+                      String coverUri, List<String> xp3Candidates, String rpgMakerSubtype,
+                      String renpySubtype, String godotSubtype) {
         this.title = title;
         this.uri = uri;
         this.engine = engine;
@@ -47,5 +56,6 @@ public class ScanResult {
         this.xp3Candidates = xp3Candidates == null ? new ArrayList<>() : new ArrayList<>(xp3Candidates);
         this.rpgMakerSubtype = rpgMakerSubtype == null ? "" : rpgMakerSubtype;
         this.renpySubtype = renpySubtype == null ? "" : renpySubtype;
+        this.godotSubtype = godotSubtype == null ? "" : godotSubtype;
     }
 }

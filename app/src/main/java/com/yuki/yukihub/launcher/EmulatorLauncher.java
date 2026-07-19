@@ -93,6 +93,7 @@ public class EmulatorLauncher {
         addBuiltInStrategy(new ExternalRpgMakerPluginStrategy());
         // Ren'Py：通过外部安装的 cyou.joiplay.runtime.renpy 插件启动。
         addBuiltInStrategy(new ExternalRenPyPluginStrategy());
+        addBuiltInStrategy(new ExternalGodotPluginStrategy());
     }
 
     public static boolean launchGame(Context context, String packageName, String rootUri, String launchTarget) {
