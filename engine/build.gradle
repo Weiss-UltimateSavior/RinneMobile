@@ -35,7 +35,7 @@ android {
         }
     }
 
-    packagingOptions {
+    packaging {
         pickFirst 'lib/arm64-v8a/libSDL2.so'
         jniLibs {
             useLegacyPackaging true
