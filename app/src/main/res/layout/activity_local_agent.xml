@@ -165,6 +165,7 @@
                 android:padding="0dp"
                 android:singleLine="false"
                 android:textColor="@color/launcher_text_color"
+                android:textColorHint="@color/launcher_on_primary_color"
                 android:textSize="15sp" />
 
             <ImageView

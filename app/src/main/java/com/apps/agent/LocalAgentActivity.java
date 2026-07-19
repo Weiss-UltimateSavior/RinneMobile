@@ -97,8 +97,11 @@ public class LocalAgentActivity extends AppCompatActivity {
         int onPrimary = LauncherTheme.onPrimary(this);
         binding.agentInput.setTextColor(onPrimary);
         binding.agentInput.setHintTextColor(onPrimary);
-        binding.agentInput.setCursorColor(onPrimary);
         LauncherTheme.styleTextInput(binding.agentInput);
+        // LauncherEditText always draws its own compat cursor, so setCursorColor
+        // directly controls the cursor color. Apply after styleTextInput so the
+        // cursor matches the hint (onPrimary) instead of the primary tone.
+        binding.agentInput.setCursorColor(onPrimary);
         binding.agentSend.setBackground(null);
         binding.agentSend.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
     }

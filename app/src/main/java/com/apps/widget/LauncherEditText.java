@@ -3,7 +3,6 @@ package com.apps.widget;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.os.Build;
 import android.os.SystemClock;
 import android.text.Layout;
 import android.util.AttributeSet;
@@ -14,8 +13,13 @@ import androidx.appcompat.widget.AppCompatEditText;
 import com.apps.theme.LauncherTheme;
 
 /**
- * Consistent text cursor for Launcher fields on Android 8 and 9, where the
- * platform does not expose a public cursor-drawable API.
+ * Consistent text cursor for Launcher fields on all API levels. The platform
+ * cursor drawable cannot be reliably recolored: {@code setTextCursorTintList}
+ * is a hidden API blocked by non-SDK enforcement on Q+, and replacing the
+ * drawable via {@code setTextCursorDrawable} conflicts with the drawable
+ * installed by {@code LauncherTheme.styleTextInput}. Instead we always hide
+ * the system cursor and draw a compat cursor in {@link #onDraw(Canvas)} so
+ * {@link #setCursorColor(int)} fully controls the color.
  */
 public class LauncherEditText extends AppCompatEditText {
     private final Paint compatCursorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -29,12 +33,12 @@ public class LauncherEditText extends AppCompatEditText {
     private void init() {
         compatCursorPaint.setStrokeWidth(LauncherTheme.dp(getContext(), 2f));
         compatCursorPaint.setColor(LauncherTheme.primary(getContext()));
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) super.setCursorVisible(false);
+        super.setCursorVisible(false);
     }
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || !shouldDrawCompatCursor()) return;
+        if (!shouldDrawCompatCursor()) return;
 
         Layout layout = getLayout();
         if (layout == null) return;
@@ -65,10 +69,6 @@ public class LauncherEditText extends AppCompatEditText {
     }
 
     @Override public void setCursorVisible(boolean visible) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            super.setCursorVisible(visible);
-            return;
-        }
         compatCursorVisible = visible;
         super.setCursorVisible(false);
         invalidate();
@@ -77,14 +77,6 @@ public class LauncherEditText extends AppCompatEditText {
     /** Override the cursor color; 0 resets to the default primary tone. */
     public void setCursorColor(int color) {
         overrideCursorColor = color;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                java.lang.reflect.Method method = android.widget.TextView.class
-                        .getMethod("setTextCursorTintList", android.content.res.ColorStateList.class);
-                method.setAccessible(true);
-                method.invoke(this, color != 0 ? android.content.res.ColorStateList.valueOf(color) : null);
-            } catch (Throwable ignored) { }
-        }
         invalidate();
     }
 }
