@@ -21,6 +21,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -29,8 +30,13 @@ import androidx.lifecycle.ViewModelProvider;
 import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
+import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.SafeImageLoader;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import com.apps.LauncherActivity;
 import com.apps.agent.LocalAgentActivity;
@@ -52,12 +58,12 @@ public class LauncherHomeFragment extends Fragment {
 
     private FragmentLauncherHomeBinding binding;
     private LauncherViewModel viewModel;
-    private ActivityResultLauncher<String[]> avatarPickerLauncher;
+    private ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher;
 
     public LauncherHomeFragment() {
-        avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+        avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
             if (uri == null) return;
-            persistAvatarUri(uri);
+            copyAvatarToInternal(uri);
         });
     }
 
@@ -418,29 +424,42 @@ public class LauncherHomeFragment extends Fragment {
                 "修改头像",
                 "是否从图库选择新头像？",
                 "确定",
-                () -> avatarPickerLauncher.launch(new String[]{"image/*"})
+                () -> avatarPickerLauncher.launch(
+                        new PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                                .build())
         );
     }
 
-    private void persistAvatarUri(Uri uri) {
-        String oldAvatar = prefs().getString(KEY_PROFILE_AVATAR, "");
-        try {
-            requireContext().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } catch (SecurityException ignored) {
-            // Some providers return a readable Uri without persistable grants.
-        }
-        if (oldAvatar != null && !oldAvatar.trim().isEmpty() && !oldAvatar.equals(uri.toString())) {
-            try {
-                requireContext().getContentResolver().releasePersistableUriPermission(Uri.parse(oldAvatar), Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    private void copyAvatarToInternal(Uri sourceUri) {
+        AppExecutors.runOnIo(() -> {
+            File outFile = new File(requireContext().getFilesDir(), "launcher_avatar.jpg");
+            boolean ok = false;
+            try (InputStream in = requireContext().getContentResolver().openInputStream(sourceUri);
+                 OutputStream out = new FileOutputStream(outFile)) {
+                byte[] buffer = new byte[8192];
+                int n;
+                while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
+                ok = true;
             } catch (Throwable ignored) {
             }
-        }
-        prefs().edit().putString(KEY_PROFILE_AVATAR, uri.toString()).apply();
-        // 同步头像到个人页
-        requireContext().getSharedPreferences("launcher_profile_prefs", 0)
-                .edit().putString("custom_avatar_uri", uri.toString()).apply();
-        renderAvatar();
-        Toast.makeText(requireContext(), "头像已更新", Toast.LENGTH_SHORT).show();
+            final boolean success = ok;
+            final String savedUri = Uri.fromFile(outFile).toString();
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (!isAdded()) return;
+                if (!success) {
+                    Toast.makeText(requireContext(), "头像保存失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                prefs().edit().putString(KEY_PROFILE_AVATAR, savedUri).apply();
+                // 同步头像到个人页
+                requireContext().getSharedPreferences("launcher_profile_prefs", 0)
+                        .edit().putString("custom_avatar_uri", savedUri).apply();
+                renderAvatar();
+                Toast.makeText(requireContext(), "头像已更新", Toast.LENGTH_SHORT).show();
+            });
+        });
     }
 
     private void renderAvatar() {

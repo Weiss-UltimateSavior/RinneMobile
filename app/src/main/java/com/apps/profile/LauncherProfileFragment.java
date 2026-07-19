@@ -1,6 +1,5 @@
 package com.apps.profile;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
@@ -17,6 +16,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -32,6 +34,10 @@ import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.util.TimeFormatUtil;
 import com.yuki.yukihub.util.AppExecutors;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -48,14 +54,23 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherProfileFragment extends Fragment {
-    private static final int REQUEST_PICK_COVER = 10021;
-    private static final int REQUEST_PICK_AVATAR = 10022;
     private static final String PREFS_NAME = "launcher_profile_prefs";
     private static final String KEY_CUSTOM_COVER = "custom_cover_uri";
     private static final String KEY_CUSTOM_AVATAR = "custom_avatar_uri";
 
     private FragmentLauncherProfileBinding binding;
     private AlertDialog loadingDialog;
+
+    private final ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri == null) return;
+                copyImageToInternal(uri, "launcher_avatar.jpg", KEY_CUSTOM_AVATAR, this::applyAvatarImage, true);
+            });
+    private final ActivityResultLauncher<PickVisualMediaRequest> coverPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri == null) return;
+                copyImageToInternal(uri, "launcher_cover.jpg", KEY_CUSTOM_COVER, this::applyProfileBgImage, false);
+            });
 
     @Nullable
     @Override
@@ -419,12 +434,10 @@ public class LauncherProfileFragment extends Fragment {
                 "更换背景",
                 "是否从图库选择新的背景图片？",
                 "确定",
-                () -> {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType("image/*");
-                    startActivityForResult(intent, REQUEST_PICK_COVER);
-                }
+                () -> coverPickerLauncher.launch(
+                        new PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                                .build())
         );
     }
 
@@ -434,54 +447,43 @@ public class LauncherProfileFragment extends Fragment {
                 "修改头像",
                 "是否从图库选择新头像？",
                 "确定",
-                () -> {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType("image/*");
-                    startActivityForResult(intent, REQUEST_PICK_AVATAR);
-                }
+                () -> avatarPickerLauncher.launch(
+                        new PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                                .build())
         );
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (resultCode != Activity.RESULT_OK || data == null) {
-            super.onActivityResult(requestCode, resultCode, data);
-            return;
-        }
-        Uri uri = data.getData();
-        if (uri == null) {
-            super.onActivityResult(requestCode, resultCode, data);
-            return;
-        }
-
-        if (requestCode == REQUEST_PICK_COVER) {
-            try {
-                requireContext().getContentResolver().takePersistableUriPermission(
-                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (SecurityException ignored) {
+    private void copyImageToInternal(Uri sourceUri, String fileName, String prefsKey, Runnable onDone, boolean syncToHome) {
+        AppExecutors.runOnIo(() -> {
+            File outFile = new File(requireContext().getFilesDir(), fileName);
+            boolean ok = false;
+            try (InputStream in = requireContext().getContentResolver().openInputStream(sourceUri);
+                 OutputStream out = new FileOutputStream(outFile)) {
+                byte[] buffer = new byte[8192];
+                int n;
+                while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
+                ok = true;
+            } catch (Throwable ignored) {
             }
-            requireContext().getSharedPreferences(PREFS_NAME, 0)
-                    .edit().putString(KEY_CUSTOM_COVER, uri.toString()).apply();
-            if (binding != null) {
-                binding.profileBgImage.setImageURI(uri);
-            }
-        } else if (requestCode == REQUEST_PICK_AVATAR) {
-            try {
-                requireContext().getContentResolver().takePersistableUriPermission(
-                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (SecurityException ignored) {
-            }
-            requireContext().getSharedPreferences(PREFS_NAME, 0)
-                    .edit().putString(KEY_CUSTOM_AVATAR, uri.toString()).apply();
-            if (binding != null) {
-                binding.profileAvatar.setImageURI(uri);
-            }
-            // 同步头像到主页
-            syncAvatarToHome(uri.toString());
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
+            final boolean success = ok;
+            final String savedUri = Uri.fromFile(outFile).toString();
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (!isAdded()) return;
+                if (!success) {
+                    Toast.makeText(requireContext(), "图片保存失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                requireContext().getSharedPreferences(PREFS_NAME, 0)
+                        .edit().putString(prefsKey, savedUri).apply();
+                if (syncToHome) {
+                    syncAvatarToHome(savedUri);
+                }
+                onDone.run();
+                Toast.makeText(requireContext(), "图片已更新", Toast.LENGTH_SHORT).show();
+            });
+        });
     }
 
     @Override
