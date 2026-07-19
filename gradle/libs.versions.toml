@@ -1,5 +1,6 @@
 [versions]
 agp = "8.13.2"
+kotlin = "2.2.21"
 material = "1.9.0"
 appcompat = "1.6.1"
 activity = "1.7.2"
@@ -36,7 +37,9 @@ palette = { group = "androidx.palette", name = "palette", version.ref = "palette
 rxjava = { group = "io.reactivex.rxjava2", name = "rxjava", version.ref = "rxjava" }
 rxandroid = { group = "io.reactivex.rxjava2", name = "rxandroid", version.ref = "rxandroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
