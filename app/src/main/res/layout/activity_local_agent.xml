@@ -30,6 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="创建一个游戏维护任务"
+            android:gravity="center"
             android:textColor="@color/launcher_text_color"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -40,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="2dp"
-            android:text="描述游戏配置修改需求。智能体会先制定步骤，目录读取或文件写入时再确认。"
+            android:text="本地 AI 智能体，运行在设备端，模型负责推理、本地工具负责执行。支持查询与筛选游戏库、浏览游戏文件、多编码读取与搜索文本、精确替换文件内容（需逐次确认）、修改快照恢复。可通过工作区命令检查文件、解析 JSON/INI/XML、诊断编码。支持整理扫描目录（移动/重命名/创建文件夹）、私有工作空间自由读写，以及通过 MCP 协议连接远程工具服务器扩展能力。所有写入与远程调用均需本机确认。"
             android:textColor="@color/launcher_text_muted_color"
             android:textSize="13sp" />
     </LinearLayout>
@@ -139,99 +140,41 @@
         <LinearLayout
             android:id="@+id/agentInputThemeBar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="65dp"
             android:background="@drawable/launcher_white_card"
             android:elevation="0dp"
-            android:minHeight="106dp"
-            android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="0dp">
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="4dp">
 
             <com.apps.widget.LauncherEditText
                 android:id="@+id/agentInput"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@null"
-                android:gravity="top|start"
+                android:gravity="center_vertical|start"
                 android:hint="请输入你的指令"
                 android:inputType="textMultiLine|textCapSentences"
-                android:maxHeight="128dp"
-                android:maxLines="5"
-                android:minHeight="40dp"
+                android:maxHeight="28dp"
+                android:maxLines="2"
+                android:minHeight="14dp"
                 android:padding="0dp"
                 android:singleLine="false"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="15sp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <HorizontalScrollView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:clipToPadding="false"
-                    android:fillViewport="false"
-                    android:scrollbars="none">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/agentQuickInspect"
-                            android:layout_width="wrap_content"
-                            android:layout_height="27dp"
-                            android:gravity="center"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="10dp"
-                            android:text="API 配置"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/agentQuickLocate"
-                            android:layout_width="wrap_content"
-                            android:layout_height="27dp"
-                            android:layout_marginStart="6dp"
-                            android:gravity="center"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="10dp"
-                            android:text="修改记录"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/agentQuickHistory"
-                            android:layout_width="wrap_content"
-                            android:layout_height="27dp"
-                            android:layout_marginStart="6dp"
-                            android:gravity="center"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="10dp"
-                            android:text="清空会话"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-                <ImageView
-                    android:id="@+id/agentSend"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_marginStart="10dp"
-                    android:contentDescription="执行或停止任务"
-                    android:padding="16dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/launcher_ic_send" />
-            </LinearLayout>
+            <ImageView
+                android:id="@+id/agentSend"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:contentDescription="执行或停止任务"
+                android:padding="16dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/launcher_ic_send" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

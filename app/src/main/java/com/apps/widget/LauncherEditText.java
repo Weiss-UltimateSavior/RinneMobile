@@ -20,6 +20,7 @@ import com.apps.theme.LauncherTheme;
 public class LauncherEditText extends AppCompatEditText {
     private final Paint compatCursorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private boolean compatCursorVisible = true;
+    private int overrideCursorColor;
 
     public LauncherEditText(Context context) { super(context); init(); }
     public LauncherEditText(Context context, @Nullable AttributeSet attrs) { super(context, attrs); init(); }
@@ -42,7 +43,7 @@ public class LauncherEditText extends AppCompatEditText {
         float x = getCompoundPaddingLeft() + layout.getPrimaryHorizontal(offset) - getScrollX();
         float top = getExtendedPaddingTop() + layout.getLineTop(line) - getScrollY();
         float bottom = getExtendedPaddingTop() + layout.getLineBottom(line) - getScrollY();
-        compatCursorPaint.setColor(LauncherTheme.primary(getContext()));
+        compatCursorPaint.setColor(overrideCursorColor != 0 ? overrideCursorColor : LauncherTheme.primary(getContext()));
         canvas.drawLine(x, top, x, bottom, compatCursorPaint);
         postInvalidateDelayed(500L);
     }
@@ -70,6 +71,20 @@ public class LauncherEditText extends AppCompatEditText {
         }
         compatCursorVisible = visible;
         super.setCursorVisible(false);
+        invalidate();
+    }
+
+    /** Override the cursor color; 0 resets to the default primary tone. */
+    public void setCursorColor(int color) {
+        overrideCursorColor = color;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                java.lang.reflect.Method method = android.widget.TextView.class
+                        .getMethod("setTextCursorTintList", android.content.res.ColorStateList.class);
+                method.setAccessible(true);
+                method.invoke(this, color != 0 ? android.content.res.ColorStateList.valueOf(color) : null);
+            } catch (Throwable ignored) { }
+        }
         invalidate();
     }
 }

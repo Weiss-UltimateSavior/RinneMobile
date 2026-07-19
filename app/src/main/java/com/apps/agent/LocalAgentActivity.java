@@ -90,33 +90,24 @@ public class LocalAgentActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.agentTitleBar.setBackground(LauncherTheme.solidPrimary(this, 0f));
         binding.agentInfoBar.setBackground(LauncherTheme.secondaryButton(this, 18f));
-        binding.agentInputThemeBar.setBackground(LauncherTheme.secondaryButton(this, 22f));
+        binding.agentInputThemeBar.setBackground(LauncherTheme.solidPrimary(this, 22f));
         binding.agentEmptyState.setBackground(null);
         binding.agentStateIcon.setBackground(LauncherTheme.solidPrimary(this, 999f));
         binding.agentStateIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
-        applySolidPrimaryChip(binding.agentQuickInspect);
-        applySolidPrimaryChip(binding.agentQuickLocate);
-        applySolidPrimaryChip(binding.agentQuickHistory);
-        binding.agentInput.setTextColor(LauncherTheme.text(this));
-        binding.agentInput.setHintTextColor(LauncherTheme.textMuted(this));
+        int onPrimary = LauncherTheme.onPrimary(this);
+        binding.agentInput.setTextColor(onPrimary);
+        binding.agentInput.setHintTextColor(onPrimary);
+        binding.agentInput.setCursorColor(onPrimary);
         LauncherTheme.styleTextInput(binding.agentInput);
         binding.agentSend.setBackground(null);
-        binding.agentSend.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
-    }
-
-    private void applySolidPrimaryChip(TextView view) {
-        view.setTextColor(LauncherTheme.onPrimary(this));
-        view.setBackground(LauncherTheme.solidPrimary(this, 999f));
+        binding.agentSend.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
     }
 
     private void bindActions() {
         binding.agentSend.setOnClickListener(view -> {
             if (runtime.isRunning()) runtime.cancel(); else send();
         });
-        binding.agentQuickInspect.setOnClickListener(view -> showConfigDialog());
-        binding.agentStateIcon.setOnClickListener(view -> showAgentSettingsDialog());
-        binding.agentQuickLocate.setOnClickListener(view -> showSnapshotHistory());
-        binding.agentQuickHistory.setOnClickListener(view -> confirmClearHistory());
+        binding.agentStateIcon.setOnClickListener(view -> showFeatureMenu());
         binding.agentTopOverlay.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateListPadding());
         binding.agentComposerOverlay.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateListPadding());
     }
@@ -340,6 +331,16 @@ public class LocalAgentActivity extends AppCompatActivity {
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
         window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
+    }
+
+    private void showFeatureMenu() {
+        String[] items = {"API 配置", "修改记录", "清空会话", "执行设置"};
+        LauncherDialogFactory.showStandardActionChoices(this, "智能体功能", items, index -> {
+            if (index == 0) showConfigDialog();
+            else if (index == 1) showSnapshotHistory();
+            else if (index == 2) confirmClearHistory();
+            else if (index == 3) showAgentSettingsDialog();
+        });
     }
 
     private void showAgentSettingsDialog() {
