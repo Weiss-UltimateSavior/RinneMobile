@@ -120,6 +120,30 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/tyranoScopedSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Tyrano 统一存档目录"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/tyranoScopedSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
@@ -281,30 +305,6 @@
                 android:hint="默认 2"
                 android:inputType="numberDecimal"
                 android:singleLine="true" />
-
-            <LinearLayout
-                android:id="@+id/tyranoScopedSection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="13dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:lineSpacingExtra="2dp"
-                    android:text="Tyrano 统一存档目录"
-                    android:textColor="@color/launcher_text_color"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/tyranoScopedSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
 
             <TextView
                 android:id="@+id/btnNativeKrkr"
