@@ -927,12 +927,13 @@ private void loadNextPage(boolean forceFullRefresh) {
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
             window.setLayout(
-                    (int) (252 * getResources().getDisplayMetrics().density),
+                    dp(252),
                     android.view.WindowManager.LayoutParams.WRAP_CONTENT
             );
             android.view.View dialogView = android.view.LayoutInflater.from(requireContext())
@@ -960,11 +961,12 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (game == null) return;
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         android.view.Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -1027,6 +1029,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     private AlertDialog createLauncherDialog() {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
         android.view.Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -1370,7 +1373,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         }
         root.addView(createDialogCancelButton(dialog));
         dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(270), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void openOnsGameSettings(Game game) {
@@ -1433,7 +1436,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -1615,7 +1618,7 @@ mainQueue.post(() -> {
         Window window = dialog.getWindow();
         if (window == null) return dialog;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -1678,7 +1681,7 @@ mainQueue.post(() -> {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);

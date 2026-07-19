@@ -196,7 +196,7 @@ public class LauncherManageFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -460,7 +460,7 @@ public class LauncherManageFragment extends Fragment {
         Window window = dialog.getWindow();
         if (window == null) return dialog;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -611,11 +611,12 @@ public class LauncherManageFragment extends Fragment {
     private void showSyncOptions() {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
@@ -697,11 +698,12 @@ public class LauncherManageFragment extends Fragment {
     private void showDiagnosticsOptions() {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
 
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
