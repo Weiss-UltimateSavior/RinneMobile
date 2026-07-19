@@ -12,10 +12,23 @@ final class AgentOutcomeGuard {
         String value = text == null ? "" : text.trim();
         Set<String> successes = successfulMutationTools == null
                 ? Collections.emptySet() : successfulMutationTools;
+        boolean workspaceClaim = claimsPrivateWorkspaceSuccess(value);
+        boolean scanRootClaim = claimsScanRootSuccess(value);
         boolean unverifiedRestore = claimsRestoreSuccess(value)
                 && !successes.contains("restore_game_snapshot");
         boolean unverifiedReplace = claimsReplaceSuccess(value)
+                && !workspaceClaim && !scanRootClaim
                 && !successes.contains("replace_game_text");
+        boolean unverifiedWorkspace = workspaceClaim && !successes.contains("run_agent_workspace_command");
+        boolean unverifiedScanRoot = scanRootClaim && !successes.contains("organize_scan_root");
+        if (unverifiedWorkspace) {
+            return "本轮没有获得 run_agent_workspace_command 的本地成功结果，因此不能确认智能体工作目录已经变化。"
+                    + "请以工具返回的 success、路径和校验值为准。";
+        }
+        if (unverifiedScanRoot) {
+            return "本轮没有获得 organize_scan_root 的本地成功结果，因此不能确认游戏扫描目录已经整理完成。"
+                    + "请以本机确认后的工具结果为准。";
+        }
         if (!unverifiedRestore && !unverifiedReplace) return value;
         if (unverifiedRestore && unverifiedReplace) {
             return "本轮没有获得本地文件修改或快照恢复工具的成功结果，因此不能确认文件已经变化。"
@@ -91,6 +104,37 @@ final class AgentOutcomeGuard {
                 || (lower.contains("replace_game_text")
                 && (lower.contains("调用成功") || lower.contains("success=true")
                 || lower.contains("success: true") || lower.contains("success` | ✅")));
+    }
+
+    private static boolean claimsPrivateWorkspaceSuccess(String value) {
+        String lower = value.toLowerCase(Locale.ROOT);
+        boolean scope = value.contains("工作目录") || value.contains("私有工作区")
+                || lower.contains("rinne_private") || lower.contains("run_agent_workspace_command");
+        if (!scope) return false;
+        if (isNegated(value, "已写入") || isNegated(value, "已创建")
+                || isNegated(value, "已删除") || isNegated(value, "已移动") || isNegated(value, "已复制")
+                || isNegated(value, "写入成功") || isNegated(value, "创建成功") || isNegated(value, "删除成功")
+                || isNegated(value, "移动成功") || isNegated(value, "复制成功")) {
+            return false;
+        }
+        return value.contains("已写入") || value.contains("已创建")
+                || value.contains("已删除") || value.contains("已移动") || value.contains("已复制")
+                || value.contains("写入成功") || value.contains("创建成功") || value.contains("删除成功")
+                || value.contains("移动成功") || value.contains("复制成功");
+    }
+
+    private static boolean claimsScanRootSuccess(String value) {
+        String lower = value.toLowerCase(Locale.ROOT);
+        boolean scope = value.contains("扫描目录") || lower.contains("organize_scan_root");
+        if (!scope) return false;
+        if (isNegated(value, "整理完成") || isNegated(value, "整理成功") || isNegated(value, "移动成功")
+                || isNegated(value, "重命名成功") || isNegated(value, "创建目录成功") || isNegated(value, "整理已完成")
+                || isNegated(value, "已移动") || isNegated(value, "已重命名") || isNegated(value, "已创建")) {
+            return false;
+        }
+        return value.contains("整理完成") || value.contains("整理成功") || value.contains("移动成功")
+                || value.contains("重命名成功") || value.contains("创建目录成功") || value.contains("整理已完成")
+                || value.contains("已移动") || value.contains("已重命名") || value.contains("已创建");
     }
 
     private static boolean isNegated(String value, String claim) {

@@ -95,6 +95,26 @@ public final class AgentToolRegistry {
                                 .put("section", stringSchema("ini_get 的节名；全局键使用空字符串", 120))
                                 .put("key", stringSchema("ini_get 的键名", 120)),
                         new JSONArray().put("game_id").put("command").put("relative_path"))));
+        tools.put(tool("list_scan_roots", "列出用户在游戏管理页添加的扫描目录。返回的 enabled=false 表示用户已禁用该目录，list_scan_root_files 和 organize_scan_root 会拒绝访问，需要请用户在管理页重新启用。首次访问需要本次页面会话授权；只返回本地生成的 root_id 和目录标签，不返回原始 URI。",
+                objectSchema(new JSONObject(), new JSONArray())));
+        tools.put(tool("list_scan_root_files", "列出某个已添加扫描目录中的文件和子目录，用于了解游戏文件夹结构。只允许普通相对路径，敏感账号、密钥和存档路径会被阻止。",
+                objectSchema(new JSONObject().put("root_id", stringSchema("list_scan_roots 返回的 root_id", 16))
+                                .put("relative_path", stringSchema("扫描目录内相对目录；根目录使用空字符串", 512))
+                                .put("depth", integerSchema(0, 6)).put("limit", integerSchema(1, 200)),
+                        new JSONArray().put("root_id").put("relative_path").put("depth").put("limit"))));
+        tools.put(tool("organize_scan_root", "整理用户扫描目录。mkdir 创建目录；rename 用 destination_path 指定同级新路径；move 用 destination_path 指定已存在的目标目录并保留原名称。不支持永久删除。受限模式逐次确认，移动或重命名会同步已登记游戏路径。",
+                objectSchema(new JSONObject().put("root_id", stringSchema("list_scan_roots 返回的 root_id", 16))
+                                .put("operation", enumSchema("mkdir", "rename", "move"))
+                                .put("relative_path", stringSchema("要创建或整理的相对路径", 512))
+                                .put("destination_path", stringSchema("rename 的同级目标路径，或 move 的目标目录；根目录用空字符串", 512)),
+                        new JSONArray().put("root_id").put("operation").put("relative_path"))));
+        tools.put(tool("run_agent_workspace_command", "操作 Rinne 自己的应用私有工作目录。支持 list/read/stat/write/append/mkdir/copy/move/delete；可自由增删改查，无需用户确认。它不是系统 Shell，不能访问扫描目录、游戏目录或应用私有目录之外的位置。",
+                objectSchema(new JSONObject().put("command", enumSchema("list", "read", "stat", "write", "append", "mkdir", "copy", "move", "delete"))
+                                .put("relative_path", stringSchema("Rinne 工作目录内的普通相对路径；list 根目录可用空字符串", 512))
+                                .put("secondary_path", stringSchema("copy/move 的目标相对路径", 512))
+                                .put("content", stringSchema("write/append 写入的 UTF-8 文本", 128 * 1024))
+                                .put("depth", integerSchema(0, 4)).put("limit", integerSchema(1, 200)),
+                        new JSONArray().put("command").put("relative_path"))));
         tools.put(tool("list_mcp_servers", "列出已由用户确认添加的远程 MCP 服务器。",
                 objectSchema(new JSONObject(), new JSONArray())));
         tools.put(tool("add_mcp_server", "根据用户明确提供的名称和地址，提出添加一个 Streamable HTTP MCP 服务器。必须先由用户在本机确认；不要接收或请求 Token、Cookie、Authorization Header。",
@@ -140,6 +160,11 @@ public final class AgentToolRegistry {
         if ("search_game_text".equals(name)) return bounded(GameWorkspaceGateway.search(context,
                 arguments.optLong("game_id"), arguments.optString("relative_path"), arguments.optString("query"),
                 arguments.optString("encoding"), arguments.optInt("max_files"), arguments.optInt("max_matches"), cancellation));
+        if ("list_scan_roots".equals(name)) return bounded(AgentScanRootGateway.listRoots(context));
+        if ("list_scan_root_files".equals(name)) return bounded(AgentScanRootGateway.listFiles(context,
+                arguments.optString("root_id"), arguments.optString("relative_path"),
+                arguments.optInt("depth"), arguments.optInt("limit"), cancellation));
+        if ("run_agent_workspace_command".equals(name)) return bounded(AgentPrivateWorkspace.execute(context, arguments));
         if ("list_game_snapshots".equals(name)) return bounded(AgentSnapshotStore.list(context,
                 arguments.optLong("game_id"), arguments.optInt("limit")));
         if ("list_mcp_servers".equals(name)) return bounded(McpServerStore.list(context));
@@ -320,6 +345,51 @@ public final class AgentToolRegistry {
             if ("ini_get".equals(command)) requiredString(args, "key", 120, false);
             return;
         }
+        if ("list_scan_roots".equals(name)) { rejectUnknown(args); return; }
+        if ("list_scan_root_files".equals(name)) {
+            rejectUnknown(args, "root_id", "relative_path", "depth", "limit");
+            requiredString(args, "root_id", 16, false);
+            if (!args.optString("root_id").matches("[0-9a-f]{16}")) throw new IllegalArgumentException("root_id 格式错误");
+            requiredString(args, "relative_path", 512, true);
+            requiredInteger(args, "depth", 0, 6);
+            requiredInteger(args, "limit", 1, 200);
+            AgentRelativePath.normalize(args.optString("relative_path"), true);
+            return;
+        }
+        if ("organize_scan_root".equals(name)) {
+            rejectUnknown(args, "root_id", "operation", "relative_path", "destination_path");
+            requiredString(args, "root_id", 16, false);
+            if (!args.optString("root_id").matches("[0-9a-f]{16}")) throw new IllegalArgumentException("root_id 格式错误");
+            requiredEnum(args, "operation", "mkdir", "rename", "move");
+            requiredString(args, "relative_path", 512, false);
+            AgentRelativePath.normalize(args.optString("relative_path"), false);
+            String operation = args.optString("operation");
+            if ("rename".equals(operation)) {
+                requiredString(args, "destination_path", 512, false);
+                AgentRelativePath.normalize(args.optString("destination_path"), false);
+            } else if ("move".equals(operation)) {
+                requiredString(args, "destination_path", 512, true);
+                AgentRelativePath.normalize(args.optString("destination_path"), true);
+            } else optionalString(args, "destination_path", 512);
+            return;
+        }
+        if ("run_agent_workspace_command".equals(name)) {
+            rejectUnknown(args, "command", "relative_path", "secondary_path", "content", "depth", "limit");
+            requiredEnum(args, "command", "list", "read", "stat", "write", "append", "mkdir", "copy", "move", "delete");
+            requiredString(args, "relative_path", 512, true);
+            optionalString(args, "secondary_path", 512);
+            optionalString(args, "content", 128 * 1024);
+            optionalInteger(args, "depth", 0, 4);
+            optionalInteger(args, "limit", 1, 200);
+            String command = args.optString("command");
+            AgentRelativePath.normalize(args.optString("relative_path"), "list".equals(command));
+            if (("copy".equals(command) || "move".equals(command))) {
+                requiredString(args, "secondary_path", 512, false);
+                AgentRelativePath.normalize(args.optString("secondary_path"), false);
+            }
+            if ("write".equals(command) || "append".equals(command)) requiredString(args, "content", 128 * 1024, true);
+            return;
+        }
         if ("list_mcp_servers".equals(name)) { rejectUnknown(args); return; }
         if ("add_mcp_server".equals(name)) {
             rejectUnknown(args, "name", "endpoint");
@@ -354,6 +424,28 @@ public final class AgentToolRegistry {
 
     static boolean requiresMcpApproval(String name) {
         return "add_mcp_server".equals(name) || "remove_mcp_server".equals(name) || "mcp_call_tool".equals(name);
+    }
+
+    static boolean isScanRootTool(String name) {
+        return "list_scan_roots".equals(name) || "list_scan_root_files".equals(name)
+                || "organize_scan_root".equals(name);
+    }
+
+    static boolean isScanRootMutation(String name) { return "organize_scan_root".equals(name); }
+
+    static boolean isAgentWorkspaceMutation(String name, JSONObject args) {
+        return "run_agent_workspace_command".equals(name)
+                && AgentPrivateWorkspace.isMutation(args == null ? "" : args.optString("command"));
+    }
+
+    static AgentScanRootGateway.PendingOperation prepareScanRootOperation(Context context, JSONObject args) throws Exception {
+        validateArguments("organize_scan_root", args);
+        return AgentScanRootGateway.prepare(context, args);
+    }
+
+    static String executeApprovedScanRootOperation(Context context, AgentScanRootGateway.PendingOperation pending,
+                                                   GameWorkspaceGateway.CancellationProbe cancellation) throws Exception {
+        return bounded(AgentScanRootGateway.commit(context, pending, cancellation));
     }
 
     static McpApproval prepareMcpApproval(Context context, String name, JSONObject args) throws Exception {

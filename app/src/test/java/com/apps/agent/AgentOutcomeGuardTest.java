@@ -59,4 +59,28 @@ public class AgentOutcomeGuardTest {
         String expected = "目录读取成功，共找到两个文件。";
         assertEquals(expected, AgentOutcomeGuard.enforce(expected, Collections.emptySet()));
     }
+
+    @Test public void privateWorkspaceSuccessRequiresRealToolResult() {
+        String blocked = AgentOutcomeGuard.enforce("Rinne 工作目录文件已写入成功。", Collections.emptySet());
+        assertTrue(blocked.contains("run_agent_workspace_command"));
+
+        Set<String> successes = new HashSet<>();
+        successes.add("run_agent_workspace_command");
+        assertEquals("Rinne 工作目录文件已写入成功。",
+                AgentOutcomeGuard.enforce("Rinne 工作目录文件已写入成功。", successes));
+    }
+
+    @Test public void scanRootSuccessRequiresRealToolResult() {
+        String blocked = AgentOutcomeGuard.enforce("游戏扫描目录整理完成。", Collections.emptySet());
+        assertTrue(blocked.contains("organize_scan_root"));
+        assertTrue(AgentOutcomeGuard.enforce("扫描目录已重命名。", Collections.emptySet())
+                .contains("organize_scan_root"));
+    }
+
+    @Test public void allowsScanRootSuccessClaimAfterSuccessfulOrganizeTool() {
+        Set<String> successes = new HashSet<>();
+        successes.add("organize_scan_root");
+        String expected = "游戏扫描目录整理完成。";
+        assertEquals(expected, AgentOutcomeGuard.enforce(expected, successes));
+    }
 }

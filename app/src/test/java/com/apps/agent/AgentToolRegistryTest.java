@@ -98,4 +98,25 @@ public class AgentToolRegistryTest {
                 "run_game_workspace_command", new JSONObject().put("game_id", 1).put("command", "tree")
                         .put("relative_path", "").put("depth", 9)));
     }
+
+    @Test public void validatesScanRootAndPrivateWorkspaceTools() throws Exception {
+        AgentToolRegistry.validateArguments("list_scan_roots", new JSONObject());
+        AgentToolRegistry.validateArguments("list_scan_root_files", new JSONObject()
+                .put("root_id", "0123456789abcdef").put("relative_path", "")
+                .put("depth", 2).put("limit", 100));
+        AgentToolRegistry.validateArguments("organize_scan_root", new JSONObject()
+                .put("root_id", "0123456789abcdef").put("operation", "rename")
+                .put("relative_path", "Old Game").put("destination_path", "New Game"));
+        AgentToolRegistry.validateArguments("run_agent_workspace_command", new JSONObject()
+                .put("command", "write").put("relative_path", "plans/task.md").put("content", "plan"));
+
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "organize_scan_root", new JSONObject().put("root_id", "bad")
+                        .put("operation", "move").put("relative_path", "Game").put("destination_path", "")));
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "organize_scan_root", new JSONObject().put("root_id", "0123456789abcdef")
+                        .put("operation", "delete").put("relative_path", "Game")));
+        assertThrows(IllegalArgumentException.class, () -> AgentToolRegistry.validateArguments(
+                "run_agent_workspace_command", new JSONObject().put("command", "delete").put("relative_path", "")));
+    }
 }
