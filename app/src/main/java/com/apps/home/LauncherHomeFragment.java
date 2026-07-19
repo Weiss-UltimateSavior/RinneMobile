@@ -35,8 +35,8 @@ import java.util.List;
 import com.apps.LauncherActivity;
 import com.apps.agent.LocalAgentActivity;
 import com.apps.account.LauncherDisclaimerActivity;
-import com.apps.chat.LauncherChatSelectActivity;
 import com.apps.data.LauncherRepository;
+import com.apps.game.LauncherSaveCategoryActivity;
 import com.apps.data.LauncherViewModel;
 import com.apps.settings.LauncherToolboxActivity;
 import com.apps.settings.ResourceStationActivity;
@@ -131,8 +131,8 @@ public class LauncherHomeFragment extends Fragment {
     private void bindActions() {
         binding.launcherAvatarContainer.setOnClickListener(view -> showChangeAvatarDialog());
         binding.actionProfileMenu.setOnClickListener(this::showPlaceholderMenu);
-        binding.actionChatRoom.setOnClickListener(view ->
-                startLauncherActivity(new Intent(requireContext(), LauncherChatSelectActivity.class)));
+        binding.actionSaveSlot.setOnClickListener(view ->
+                startLauncherActivity(new Intent(requireContext(), LauncherSaveCategoryActivity.class)));
         binding.actionResourceStation.setOnClickListener(view -> showResourceStationDialog());
         binding.actionToolbox.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
@@ -152,7 +152,7 @@ public class LauncherHomeFragment extends Fragment {
         boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
         int white = android.graphics.Color.WHITE;
         applyIconTint(binding.actionProfileMenu, darkMode, white);
-        applyIconTint(binding.actionChatRoomIcon, darkMode, white);
+        applyIconTint(binding.actionSaveSlotIcon, darkMode, white);
         applyIconTint(binding.actionResourceStationIcon, darkMode, white);
         applyIconTint(binding.actionToolboxIcon, darkMode, white);
         applyIconTint(binding.actionAgentIcon, darkMode, white);

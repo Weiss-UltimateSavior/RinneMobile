@@ -40,7 +40,7 @@ import com.apps.LauncherActivity;
 import com.apps.account.LauncherAccountFragment;
 import com.apps.account.LauncherAccountSettingsActivity;
 import com.apps.data.LauncherViewModel;
-import com.apps.game.LauncherSaveCategoryActivity;
+import com.apps.chat.LauncherChatSelectActivity;
 import com.apps.leaderboard.LauncherLeaderboardActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
@@ -86,8 +86,8 @@ public class LauncherProfileFragment extends Fragment {
             startActivity(intent);
             LauncherMotion.applyActivityOpen(requireActivity());
         });
-        binding.saveManagerRow.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), LauncherSaveCategoryActivity.class);
+        binding.chatRoomRow.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LauncherChatSelectActivity.class);
             startActivity(intent);
             LauncherMotion.applyActivityOpen(requireActivity());
         });

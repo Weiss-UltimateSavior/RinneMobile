@@ -229,18 +229,18 @@
                     android:orientation="horizontal">
 
                 <LinearLayout
-                    android:id="@+id/saveManagerRow"
+                    android:id="@+id/chatRoomRow"
                     style="@style/LauncherProfileActionGridItem"
                     android:layout_marginEnd="5dp">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
                         android:contentDescription="@null"
-                        android:src="@drawable/launcher_profile_action_save" />
+                        android:src="@drawable/launcher_action_chatroom" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="存档管理" />
+                        android:text="社交聊天" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"

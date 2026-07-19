@@ -228,7 +228,7 @@
                 android:useDefaultMargins="false">
 
                 <LinearLayout
-                    android:id="@+id/actionChatRoom"
+                    android:id="@+id/actionSaveSlot"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/launcher_home_action_height"
                     android:layout_columnWeight="1"
@@ -242,17 +242,17 @@
                     android:paddingHorizontal="@dimen/launcher_home_action_horizontal_padding">
 
                     <ImageView
-                        android:id="@+id/actionChatRoomIcon"
+                        android:id="@+id/actionSaveSlotIcon"
                         android:layout_width="@dimen/launcher_home_action_icon_size"
                         android:layout_height="@dimen/launcher_home_action_icon_size"
-                        android:contentDescription="@string/launcher_action_chatroom"
-                        android:src="@drawable/launcher_action_chatroom" />
+                        android:contentDescription="@string/launcher_action_save_slot"
+                        android:src="@drawable/launcher_profile_action_save" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/launcher_home_action_text_gap"
-                        android:text="@string/launcher_action_chatroom"
+                        android:text="@string/launcher_action_save_slot"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="@dimen/launcher_home_action_text_size"
                         android:textStyle="bold" />
