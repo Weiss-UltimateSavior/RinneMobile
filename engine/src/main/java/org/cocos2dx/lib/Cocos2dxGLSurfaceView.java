@@ -99,10 +99,13 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
     private static void dumpMotionEvent(MotionEvent event) {
         StringBuilder sb = new StringBuilder("event ACTION_");
         int action = event.getAction();
-        int actionCode = action & 255;
+        int actionCode = action & MotionEvent.ACTION_MASK;
+        // ACTION_DOWN/UP/MOVE/CANCEL/OUTSIDE/POINTER_DOWN/POINTER_UP; 7=HOVER_MOVE, 8=SCROLL, 9=HOVER_ENTER
         String[] names = new String[]{"DOWN", "UP", "MOVE", "CANCEL", "OUTSIDE", "POINTER_DOWN", "POINTER_UP", "7?", "8?", "9?"};
         sb.append(actionCode < names.length ? names[actionCode] : actionCode);
-        if (actionCode == 5 || actionCode == 6) sb.append("(pid ").append(action >> 8).append(")");
+        if (actionCode == MotionEvent.ACTION_POINTER_DOWN || actionCode == MotionEvent.ACTION_POINTER_UP) {
+            sb.append("(pid ").append(action >> MotionEvent.ACTION_POINTER_INDEX_SHIFT).append(")");
+        }
         sb.append("[");
         for (int i = 0; i < event.getPointerCount(); i++) {
             sb.append("#").append(i).append("(pid ").append(event.getPointerId(i)).append(")=")
@@ -164,15 +167,14 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
 
     @Override
     public boolean onKeyDown(final int keyCode, KeyEvent keyEvent) {
-        if (keyCode == 4) {
-            if (Cocos2dxVideoHelper.mVideoHandler != null) Cocos2dxVideoHelper.mVideoHandler.sendEmptyMessage(1000);
-        } else if (keyCode != 66 && keyCode != 82 && keyCode != 85) {
+        if (keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_ENTER
+                && keyCode != KeyEvent.KEYCODE_MENU && keyCode != KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
             switch (keyCode) {
-                case 19:
-                case 20:
-                case 21:
-                case 22:
-                case 23:
+                case KeyEvent.KEYCODE_DPAD_UP:
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                case KeyEvent.KEYCODE_DPAD_CENTER:
                     break;
                 default:
                     return super.onKeyDown(keyCode, keyEvent);
@@ -186,13 +188,14 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
 
     @Override
     public boolean onKeyUp(final int keyCode, KeyEvent keyEvent) {
-        if (keyCode != 4 && keyCode != 66 && keyCode != 82 && keyCode != 85) {
+        if (keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_ENTER
+                && keyCode != KeyEvent.KEYCODE_MENU && keyCode != KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
             switch (keyCode) {
-                case 19:
-                case 20:
-                case 21:
-                case 22:
-                case 23:
+                case KeyEvent.KEYCODE_DPAD_UP:
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                case KeyEvent.KEYCODE_DPAD_CENTER:
                     break;
                 default:
                     return super.onKeyUp(keyCode, keyEvent);
@@ -209,13 +212,13 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
         queueEvent(new Runnable() {
             @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleOnPause(); }
         });
-        setRenderMode(0);
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        setRenderMode(1);
+        setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         queueEvent(new Runnable() {
             @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleOnResume(); }
         });
@@ -246,30 +249,30 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
             xs[i] = event.getX(i);
             ys[i] = event.getY(i);
         }
-        int action = event.getAction() & 255;
-        if (action == 0) {
+        int action = event.getAction() & MotionEvent.ACTION_MASK;
+        if (action == MotionEvent.ACTION_DOWN) {
             final int id = event.getPointerId(0);
             final float x = xs[0];
             final float y = ys[0];
             queueEvent(new Runnable() { @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleActionDown(id, x, y); } });
-        } else if (action == 1) {
+        } else if (action == MotionEvent.ACTION_UP) {
             final int id = event.getPointerId(0);
             final float x = xs[0];
             final float y = ys[0];
             queueEvent(new Runnable() { @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleActionUp(id, x, y); } });
             performClick();
-        } else if (action == 2) {
+        } else if (action == MotionEvent.ACTION_MOVE) {
             queueEvent(new Runnable() { @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleActionMove(ids, xs, ys); } });
-        } else if (action == 3) {
+        } else if (action == MotionEvent.ACTION_CANCEL) {
             queueEvent(new Runnable() { @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleActionCancel(ids, xs, ys); } });
-        } else if (action == 5) {
-            int index = event.getAction() >> 8;
+        } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
+            int index = event.getAction() >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
             final int id = event.getPointerId(index);
             final float x = event.getX(index);
             final float y = event.getY(index);
             queueEvent(new Runnable() { @Override public void run() { if (mCocos2dxRenderer != null) mCocos2dxRenderer.handleActionDown(id, x, y); } });
-        } else if (action == 6) {
-            int index = event.getAction() >> 8;
+        } else if (action == MotionEvent.ACTION_POINTER_UP) {
+            int index = event.getAction() >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
             final int id = event.getPointerId(index);
             final float x = event.getX(index);
             final float y = event.getY(index);

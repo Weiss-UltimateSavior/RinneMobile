@@ -94,7 +94,7 @@ public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
             xs[i] = motionEvent.getX(i);
             ys[i] = motionEvent.getY(i);
         }
-        int action = motionEvent.getAction() & 255;
+        int action = motionEvent.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
             KR2Activity.nativeTouchesBegin(motionEvent.getPointerId(0), xs[0], ys[0]);
         } else if (action == MotionEvent.ACTION_UP) {
@@ -105,10 +105,10 @@ public final class KrGLSurfaceView extends Cocos2dxGLSurfaceView {
         } else if (action == MotionEvent.ACTION_CANCEL) {
             KR2Activity.nativeTouchesCancel(ids, xs, ys);
         } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
-            int actionIndex = motionEvent.getAction() >> 8;
+            int actionIndex = motionEvent.getAction() >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
             KR2Activity.nativeTouchesBegin(motionEvent.getPointerId(actionIndex), motionEvent.getX(actionIndex), motionEvent.getY(actionIndex));
         } else if (action == MotionEvent.ACTION_POINTER_UP) {
-            int actionIndex = motionEvent.getAction() >> 8;
+            int actionIndex = motionEvent.getAction() >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
             KR2Activity.nativeTouchesEnd(motionEvent.getPointerId(actionIndex), motionEvent.getX(actionIndex), motionEvent.getY(actionIndex));
         }
         return true;

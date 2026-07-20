@@ -3,6 +3,8 @@ package org.cocos2dx.lib;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,6 +12,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import java.util.Arrays;
 import java.util.Iterator;
 import javax.microedition.khronos.egl.EGL10;
@@ -23,9 +26,6 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
     private Cocos2dxGLSurfaceView mGLSurfaceView = null;
     public int[] mGLContextAttrs = null;
     private Cocos2dxHandler mHandler = null;
-    private Cocos2dxVideoHelper mVideoHelper = null;
-    private Cocos2dxWebViewHelper mWebViewHelper = null;
-    private Cocos2dxEditBoxHelper mEditBoxHelper = null;
     private boolean hasFocus = false;
     public ResizeLayout mFrameLayout = null;
 
@@ -57,12 +57,14 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
     }
 
     public void init() {
-        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(-1, -1);
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         ResizeLayout resizeLayout = new ResizeLayout(this);
         this.mFrameLayout = resizeLayout;
         resizeLayout.setLayoutParams(layoutParams);
 
-        ViewGroup.LayoutParams editParams = new ViewGroup.LayoutParams(-1, -2);
+        ViewGroup.LayoutParams editParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         Cocos2dxEditBox editBox = new Cocos2dxEditBox(this);
         editBox.setLayoutParams(editParams);
         this.mFrameLayout.addView(editBox);
@@ -106,16 +108,13 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         Cocos2dxHelper.init(this);
         this.mGLContextAttrs = getGLContextAttrs();
         init();
-        if (this.mVideoHelper == null) this.mVideoHelper = new Cocos2dxVideoHelper(this, this.mFrameLayout);
-        if (this.mWebViewHelper == null) this.mWebViewHelper = new Cocos2dxWebViewHelper(this.mFrameLayout);
-        if (this.mEditBoxHelper == null) this.mEditBoxHelper = new Cocos2dxEditBoxHelper(this.mFrameLayout);
-        getWindow().setSoftInputMode(32);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
     }
 
     public Cocos2dxGLSurfaceView onCreateView() {
         Cocos2dxGLSurfaceView glSurfaceView = new Cocos2dxGLSurfaceView(this);
         if (this.mGLContextAttrs != null && this.mGLContextAttrs.length > 3 && this.mGLContextAttrs[3] > 0) {
-            glSurfaceView.getHolder().setFormat(-3);
+            glSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
         }
         if (this.mGLContextAttrs != null) {
             glSurfaceView.setEGLConfigChooser(new Cocos2dxEGLConfigChooser(this, this.mGLContextAttrs));
@@ -126,8 +125,6 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
     @Override
     public void onDestroy() {
         if (sContext == this) {
-            Cocos2dxWebViewHelper.destroy(this);
-            Cocos2dxEditBoxHelper.destroy(this);
             Cocos2dxHelper.destroy(this);
             sContext = null;
         }
@@ -136,7 +133,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
 
     public void onLoadNativeLibraries() {
         try {
-            System.loadLibrary(getPackageManager().getApplicationInfo(getPackageName(), 128).metaData.getString("android.app.lib_name"));
+            System.loadLibrary(getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA).metaData.getString("android.app.lib_name"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -196,6 +193,9 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
     }
 
     public class Cocos2dxEGLConfigChooser implements GLSurfaceView.EGLConfigChooser {
+        /** EGL_OPENGL_ES2_BIT (0x0004) — not exposed by javax.microedition EGL10, defined in EGL14. */
+        private static final int EGL_OPENGL_ES2_BIT = 0x0004;
+
         protected int[] configAttribs;
 
         public class ConfigValue implements Comparable<ConfigValue> {
@@ -214,12 +214,12 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
                 this.value = 0;
                 this.config = config;
                 this.configAttribs = new int[6];
-                this.configAttribs[0] = findConfigAttrib(egl, display, config, 12324, 0);
-                this.configAttribs[1] = findConfigAttrib(egl, display, config, 12323, 0);
-                this.configAttribs[2] = findConfigAttrib(egl, display, config, 12322, 0);
-                this.configAttribs[3] = findConfigAttrib(egl, display, config, 12321, 0);
-                this.configAttribs[4] = findConfigAttrib(egl, display, config, 12325, 0);
-                this.configAttribs[5] = findConfigAttrib(egl, display, config, 12326, 0);
+                this.configAttribs[0] = findConfigAttrib(egl, display, config, EGL10.EGL_RED_SIZE, 0);
+                this.configAttribs[1] = findConfigAttrib(egl, display, config, EGL10.EGL_GREEN_SIZE, 0);
+                this.configAttribs[2] = findConfigAttrib(egl, display, config, EGL10.EGL_BLUE_SIZE, 0);
+                this.configAttribs[3] = findConfigAttrib(egl, display, config, EGL10.EGL_ALPHA_SIZE, 0);
+                this.configAttribs[4] = findConfigAttrib(egl, display, config, EGL10.EGL_DEPTH_SIZE, 0);
+                this.configAttribs[5] = findConfigAttrib(egl, display, config, EGL10.EGL_STENCIL_SIZE, 0);
                 calcValue();
             }
 
@@ -274,11 +274,16 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
             EGLConfig[] configs = new EGLConfig[1];
             int[] num = new int[1];
             if (attrs != null && attrs.length >= 6
-                    && egl.eglChooseConfig(display, new int[]{12324, attrs[0], 12323, attrs[1], 12322, attrs[2], 12321, attrs[3], 12325, attrs[4], 12326, attrs[5], 12352, 4, 12344}, configs, 1, num)
+                    && egl.eglChooseConfig(display, new int[]{
+                            EGL10.EGL_RED_SIZE, attrs[0], EGL10.EGL_GREEN_SIZE, attrs[1],
+                            EGL10.EGL_BLUE_SIZE, attrs[2], EGL10.EGL_ALPHA_SIZE, attrs[3],
+                            EGL10.EGL_DEPTH_SIZE, attrs[4], EGL10.EGL_STENCIL_SIZE, attrs[5],
+                            EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL10.EGL_NONE},
+                            configs, 1, num)
                     && num[0] > 0) {
                 return configs[0];
             }
-            int[] es2 = {12352, 4, 12344};
+            int[] es2 = {EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL10.EGL_NONE};
             if (!egl.eglChooseConfig(display, es2, null, 0, num) || num[0] <= 0) {
                 Log.e("device_policy", "Can not select an EGLConfig for rendering.");
                 return null;
