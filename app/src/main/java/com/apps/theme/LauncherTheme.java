@@ -158,6 +158,11 @@ public final class LauncherTheme {
         return drawable;
     }
 
+    /** Circle with card background color, matching the white-card style of manage rows. */
+    public static GradientDrawable cardCircle(Context context) {
+        return circle(context, card(context));
+    }
+
     public static GradientDrawable xinhaitianCircle(Context context) {
         return xinhaitianGradient(context, 0f, true);
     }

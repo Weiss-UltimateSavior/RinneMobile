@@ -533,6 +533,7 @@ public class LauncherProfileFragment extends Fragment {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyProfileBgImage();
         applyAvatarImage();
+        binding.actionChangeCover.setBackground(LauncherTheme.cardCircle(requireContext()));
         boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
         if (darkMode) {
             binding.actionChangeCover.setColorFilter(android.graphics.Color.WHITE);
