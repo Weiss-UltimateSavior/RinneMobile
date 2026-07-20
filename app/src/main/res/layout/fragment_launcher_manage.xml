@@ -114,6 +114,25 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/actionCrossSync"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_action_cross_sync" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="跨端同步" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/actionDiagnostics"
                     style="@style/LauncherManageItem">
 

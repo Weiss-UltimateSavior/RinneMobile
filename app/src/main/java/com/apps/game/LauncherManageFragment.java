@@ -27,6 +27,13 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.yuki.yukihub.databinding.FragmentLauncherManageBinding;
+import com.yuki.yukihub.importer.ImportGameData;
+import com.yuki.yukihub.importer.ImportResult;
+import com.yuki.yukihub.importer.ImporterService;
+import com.yuki.yukihub.importer.LunaBoxImporter;
+import com.yuki.yukihub.importer.PlayniteImporter;
+import com.yuki.yukihub.importer.PotatoVnImporter;
+import com.yuki.yukihub.importer.VniteImporter;
 import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
 import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
 import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
@@ -43,6 +50,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONObject;
+import android.widget.CheckBox;
+import android.widget.ScrollView;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.settings.LauncherMetadataSourceActivity;
 import com.apps.sync.LauncherSyncCenterActivity;
@@ -81,6 +90,39 @@ public class LauncherManageFragment extends Fragment {
                 exportLocalBackup(uri);
             });
 
+    // 三方平台导入：Playnite / PotatoVN / LunaBox 走文件选择，Vnite 走目录选择
+    private final ActivityResultLauncher<String[]> playniteImportLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) return;
+                doImportFromPlaynite(uri);
+            });
+
+    private final ActivityResultLauncher<String[]> potatovnImportLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) return;
+                doImportFromPotatoVn(uri);
+            });
+
+    private final ActivityResultLauncher<String[]> lunaboxImportLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) return;
+                doImportFromLunaBox(uri);
+            });
+
+    private final ActivityResultLauncher<Uri> vniteImportLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
+                if (uri == null) return;
+                doImportFromVnite(uri);
+            });
+
+    private AlertDialog importLoadingDialog;
+
+    /**
+     * 跨端同步防重复触发标志：modal dialog 链提供隐式保护，
+     * 此处显式标志作为兜底，避免极端时序下用户连续点击触发并发导入。
+     */
+    private boolean importInProgress;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -102,6 +144,11 @@ public class LauncherManageFragment extends Fragment {
     public void onDestroyView() {
         if (activeScanRequest != null) activeScanRequest.cancel();
         activeScanRequest = null;
+        // M4: importLoadingDialog 设为 setCancelable(false)，Fragment 销毁后
+        // mainQueue.post 回调因 !isAdded() 提前 return，dismissImportLoading 永不执行 → Window 泄漏。
+        // 此处兜底 dismiss。
+        dismissImportLoading();
+        importInProgress = false;
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
         }
@@ -134,6 +181,7 @@ public class LauncherManageFragment extends Fragment {
         binding.actionAddGame.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherAddGameActivity.class)));
         binding.actionCloudSync.setOnClickListener(view -> showSyncOptions());
+        binding.actionCrossSync.setOnClickListener(view -> showExternalImportDialog());
         binding.actionDiagnostics.setOnClickListener(view -> showDiagnosticsPrivacyDialog());
         binding.actionMetadataSource.setOnClickListener(view ->
                 startActivity(new Intent(requireContext(), LauncherMetadataSourceActivity.class)));
@@ -995,5 +1043,377 @@ public class LauncherManageFragment extends Fragment {
             while ((len = in.read(buf)) != -1) bos.write(buf, 0, len);
             return bos.toString("UTF-8");
         }
+    }
+
+    // ==================== 跨端同步 ====================
+
+    /**
+     * 跨端同步入口：选择数据来源平台。
+     * 各平台仅导入元数据与游玩记录，不导入 Windows 路径（Android 上无法直接使用）。
+     */
+    private void showExternalImportDialog() {
+        // m7: 防重复触发兜底，避免并发导入造成数据混乱
+        if (importInProgress) return;
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(20), dp(22), dp(16));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        root.addView(dialogTitle("跨端同步"),
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView info = new TextView(requireContext());
+        info.setText("选择数据来源平台，导入后仅保留元数据与游玩记录");
+        info.setGravity(android.view.Gravity.CENTER);
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        setResponsiveTextSize(info, 12);
+        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        infoLp.setMargins(0, dp(11), 0, 0);
+        root.addView(info, infoLp);
+
+        addFeedbackOption(root, "Playnite（JSON）", dialog, () ->
+                playniteImportLauncher.launch(new String[]{"application/json", "text/*", "*/*"}));
+        addFeedbackOption(root, "PotatoVN（ZIP）", dialog, () ->
+                potatovnImportLauncher.launch(new String[]{"application/zip", "application/*zip*", "*/*"}));
+        addFeedbackOption(root, "Vnite（目录）", dialog, () ->
+                vniteImportLauncher.launch(null));
+        addFeedbackOption(root, "LunaBox（ZIP）", dialog, () ->
+                lunaboxImportLauncher.launch(new String[]{"application/zip", "application/*zip*", "*/*"}));
+
+        TextView cancel = dialogCancelButton(dialog);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        cancelLp.setMargins(0, dp(9), 0, 0);
+        root.addView(cancel, cancelLp);
+
+        window.setContentView(root);
+    }
+
+    /**
+     * C2 修复：appContext 在主线程提前求值，避免 lambda 在后台线程执行时
+     * 调用 requireContext() 抛 IllegalStateException（Fragment detach 后）。
+     */
+    private void doImportFromPlaynite(Uri uri) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        parseAndPreview(appContext, () -> PlayniteImporter.parse(appContext, uri));
+    }
+
+    private void doImportFromPotatoVn(Uri uri) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        parseAndPreview(appContext, () -> PotatoVnImporter.parse(appContext, uri));
+    }
+
+    private void doImportFromVnite(Uri uri) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        parseAndPreview(appContext, () -> VniteImporter.parse(appContext, uri));
+    }
+
+    private void doImportFromLunaBox(Uri uri) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        parseAndPreview(appContext, () -> LunaBoxImporter.parse(appContext, uri));
+    }
+
+    /**
+     * 解析 + 标记已存在 + 弹出预览对话框。
+     * 解析在后台线程进行，预览在主线程弹出。
+     * appContext 由调用方在主线程提前求值，避免后台线程求值 requireContext()。
+     */
+    private void parseAndPreview(android.content.Context appContext, ParseTask task) {
+        importInProgress = true;
+        showImportLoading("正在解析数据...");
+        AppExecutors.runOnSingle(() -> {
+            try {
+                List<ImportGameData> games = task.parse();
+                new ImporterService(appContext).markExisting(games);
+                mainQueue.post(() -> {
+                    if (!isAdded()) return;
+                    dismissImportLoading();
+                    showImportPreviewDialog(games);
+                });
+            } catch (Throwable t) {
+                Log.e("LauncherManage", "external import parse failed", t);
+                mainQueue.post(() -> {
+                    if (!isAdded()) return;
+                    dismissImportLoading();
+                    importInProgress = false;
+                    showLauncherConfirmDialog("解析失败",
+                            t.getMessage() != null ? t.getMessage() : "未知错误",
+                            "知道了", () -> {});
+                });
+            }
+        });
+    }
+
+    /** 解析任务抽象，便于复用 parseAndPreview 流程。 */
+    @FunctionalInterface
+    private interface ParseTask {
+        List<ImportGameData> parse() throws Exception;
+    }
+
+    private void showImportLoading(String hint) {
+        dismissImportLoading();
+        importLoadingDialog = showScanLoadingDialog("正在导入...", hint);
+        importLoadingDialog.setCancelable(false);
+        importLoadingDialog.setCanceledOnTouchOutside(false);
+    }
+
+    private void dismissImportLoading() {
+        if (importLoadingDialog != null && importLoadingDialog.isShowing()) {
+            importLoadingDialog.dismiss();
+        }
+        importLoadingDialog = null;
+    }
+
+    /**
+     * 预览对话框：展示候选游戏列表，用户勾选后再写库。
+     * 已存在的条目默认不勾选且不可勾选（避免重复导入）。
+     */
+    private void showImportPreviewDialog(List<ImportGameData> games) {
+        if (games == null || games.isEmpty()) {
+            importInProgress = false;
+            showLauncherConfirmDialog("无可导入项", "未在所选数据中找到可导入的游戏", "知道了", () -> {});
+            return;
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+
+        Window window = dialog.getWindow();
+        if (window == null) {
+            // N3: 兜底分支必须重置 importInProgress，否则后续导入被永久阻塞
+            // 同时 dismiss 半显示状态的 dialog，避免 Window 泄漏
+            importInProgress = false;
+            ImporterService.cancelImport();
+            if (dialog.isShowing()) dialog.dismiss();
+            return;
+        }
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(18), dp(22), dp(15));
+        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+
+        root.addView(dialogTitle("导入预览"),
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        int totalCount = games.size();
+        long existCount = games.stream().filter(g -> g.exists).count();
+        TextView info = new TextView(requireContext());
+        info.setText("共 " + totalCount + " 个，已存在 " + existCount + " 个");
+        info.setGravity(android.view.Gravity.CENTER);
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        setResponsiveTextSize(info, 12);
+        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        infoLp.setMargins(0, dp(10), 0, 0);
+        root.addView(info, infoLp);
+
+        // 列表区域
+        LinearLayout listContainer = new LinearLayout(requireContext());
+        listContainer.setOrientation(LinearLayout.VERTICAL);
+
+        List<CheckBox> checkBoxes = new ArrayList<>();
+        for (ImportGameData g : games) {
+            listContainer.addView(createImportPreviewRow(g, checkBoxes));
+        }
+
+        ScrollView scroll = new ScrollView(requireContext());
+        scroll.addView(listContainer);
+        int scrollHeight = Math.min(dp(280), dp(8) + totalCount * dp(54));
+        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, scrollHeight);
+        scrollLp.setMargins(0, dp(4), 0, 0);
+        root.addView(scroll, scrollLp);
+
+        // 全选/全不选 + 导入 + 取消
+        LinearLayout buttons = new LinearLayout(requireContext());
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        buttons.setWeightSum(3);
+        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
+        buttonsLp.setMargins(0, dp(12), 0, 0);
+
+        TextView toggleAll = new TextView(requireContext());
+        toggleAll.setText("全选");
+        toggleAll.setGravity(android.view.Gravity.CENTER);
+        setResponsiveTextSize(toggleAll, 13);
+        toggleAll.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(toggleAll);
+        toggleAll.setOnClickListener(v -> {
+            boolean anyUnchecked = false;
+            for (int i = 0; i < games.size(); i++) {
+                if (!games.get(i).exists && !checkBoxes.get(i).isChecked()) {
+                    anyUnchecked = true;
+                    break;
+                }
+            }
+            for (int i = 0; i < games.size(); i++) {
+                if (!games.get(i).exists) checkBoxes.get(i).setChecked(anyUnchecked);
+            }
+        });
+        buttons.addView(toggleAll, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+
+        TextView importBtn = new TextView(requireContext());
+        importBtn.setText("导入");
+        importBtn.setGravity(android.view.Gravity.CENTER);
+        setResponsiveTextSize(importBtn, 13);
+        importBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.primaryButton(importBtn);
+        LinearLayout.LayoutParams importLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        importLp.setMargins(dp(6), 0, 0, 0);
+        importBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            for (int i = 0; i < games.size(); i++) {
+                games.get(i).selected = checkBoxes.get(i).isChecked() && !games.get(i).exists;
+            }
+            executeExternalImport(games);
+        });
+        buttons.addView(importBtn, importLp);
+
+        TextView cancel = new TextView(requireContext());
+        cancel.setText("取消");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        setResponsiveTextSize(cancel, 13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(cancel);
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        cancelLp.setMargins(dp(6), 0, 0, 0);
+        cancel.setOnClickListener(v -> {
+            dialog.dismiss();
+            importInProgress = false;
+            // N2: 用户取消预览时也清理临时目录，避免反复"解析→取消"累积封面文件
+            ImporterService.cancelImport();
+        });
+        buttons.addView(cancel, cancelLp);
+
+        root.addView(buttons, buttonsLp);
+        window.setContentView(root);
+    }
+
+    private View createImportPreviewRow(ImportGameData g, List<CheckBox> outCheckBoxes) {
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(2), dp(7), dp(2), dp(7));
+
+        CheckBox cb = new CheckBox(requireContext());
+        cb.setChecked(g.selected);
+        cb.setEnabled(!g.exists);
+        cb.setClickable(!g.exists);
+        LinearLayout.LayoutParams cbLp = new LinearLayout.LayoutParams(dp(28), dp(28));
+        row.addView(cb, cbLp);
+        outCheckBoxes.add(cb);
+
+        LinearLayout textCol = new LinearLayout(requireContext());
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textColLp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        textColLp.setMargins(dp(6), 0, 0, 0);
+        textCol.setLayoutParams(textColLp);
+
+        TextView name = new TextView(requireContext());
+        name.setText(g.name);
+        name.setSingleLine(true);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        name.setTextColor(ContextCompat.getColor(requireContext(),
+                g.exists ? com.yuki.yukihub.R.color.launcher_text_muted_color
+                        : com.yuki.yukihub.R.color.launcher_text_color));
+        setResponsiveTextSize(name, 13);
+        textCol.addView(name, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView status = new TextView(requireContext());
+        StringBuilder statusText = new StringBuilder();
+        if (g.exists) {
+            statusText.append("已存在 - 跳过");
+        } else {
+            statusText.append("新游戏");
+            if (g.totalPlayTime > 0) statusText.append(" · 时长 ").append(formatSeconds(g.totalPlayTime));
+            if (g.lunaBoxSessions != null && !g.lunaBoxSessions.isEmpty()) {
+                statusText.append(" · 记录 ").append(g.lunaBoxSessions.size());
+            } else if (g.vniteTimers != null && !g.vniteTimers.isEmpty()) {
+                statusText.append(" · 记录 ").append(g.vniteTimers.size());
+            } else if (g.playedTimeMap != null && !g.playedTimeMap.isEmpty()) {
+                statusText.append(" · 记录 ").append(g.playedTimeMap.size());
+            }
+        }
+        status.setText(statusText.toString());
+        status.setSingleLine(true);
+        status.setEllipsize(TextUtils.TruncateAt.END);
+        status.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        setResponsiveTextSize(status, 10);
+        LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        statusLp.setMargins(0, dp(2), 0, 0);
+        textCol.addView(status, statusLp);
+
+        row.addView(textCol);
+        return row;
+    }
+
+    private static String formatSeconds(long seconds) {
+        if (seconds <= 0) return "0分钟";
+        long minutes = seconds / 60;
+        if (minutes < 60) return minutes + "分钟";
+        long hours = minutes / 60;
+        long remainMinutes = minutes % 60;
+        return hours + "小时" + (remainMinutes > 0 ? remainMinutes + "分" : "");
+    }
+
+    /**
+     * 执行写库：仅导入用户勾选且不存在的条目。
+     * 在后台线程进行，主线程展示结果。
+     */
+    private void executeExternalImport(List<ImportGameData> games) {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        showImportLoading("正在写入游戏库...");
+        AppExecutors.runOnSingle(() -> {
+            try {
+                ImportResult result = new ImporterService(appContext).importSelected(games);
+                mainQueue.post(() -> {
+                    if (!isAdded()) return;
+                    dismissImportLoading();
+                    importInProgress = false;
+                    afterExternalImport(result);
+                });
+            } catch (Throwable t) {
+                Log.e("LauncherManage", "external import write failed", t);
+                mainQueue.post(() -> {
+                    if (!isAdded()) return;
+                    dismissImportLoading();
+                    importInProgress = false;
+                    showLauncherConfirmDialog("导入失败",
+                            t.getMessage() != null ? t.getMessage() : "未知错误",
+                            "知道了", () -> {});
+                });
+            }
+        });
+    }
+
+    private void afterExternalImport(ImportResult result) {
+        if (result == null) {
+            showLauncherConfirmDialog("导入完成", "未执行导入", "知道了", () -> {});
+            return;
+        }
+        StringBuilder msg = new StringBuilder(result.summary());
+        if (!result.skippedNames.isEmpty()) {
+            msg.append("\n\n跳过项：");
+            for (String n : result.skippedNames) msg.append("\n• ").append(n);
+        }
+        if (!result.failedNames.isEmpty()) {
+            msg.append("\n\n失败项：");
+            for (String n : result.failedNames) msg.append("\n• ").append(n);
+        }
+        showLauncherConfirmDialog("导入完成", msg.toString(), "知道了", () -> {});
     }
 }

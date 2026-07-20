@@ -57,6 +57,16 @@ public class GameRepository {
     public long insert(Game game) {
         if (game == null) throw new IllegalArgumentException("game must not be null");
         SQLiteDatabase db = helper.getWritableDatabase();
+        return insert(game, db);
+    }
+
+    /**
+     * 使用外部传入的 SQLiteDatabase 写入，确保调用方的事务边界生效。
+     * 用于跨服务事务场景（如 ImporterService.importSelected 包裹的事务），
+     * 避免新 Helper 实例拿到独立连接导致 rollback 时行残留。
+     */
+    public long insert(Game game, SQLiteDatabase db) {
+        if (game == null) throw new IllegalArgumentException("game must not be null");
         long now = System.currentTimeMillis();
         game.createdAt = game.createdAt == 0 ? now : game.createdAt;
         game.updatedAt = now;
