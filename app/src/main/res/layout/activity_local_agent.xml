@@ -3,7 +3,9 @@
     android:id="@+id/agentRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/launcher_bg">
+    android:background="@drawable/launcher_bg"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/agentMessages"

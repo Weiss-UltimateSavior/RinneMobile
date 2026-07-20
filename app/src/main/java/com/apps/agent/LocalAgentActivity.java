@@ -58,6 +58,7 @@ public class LocalAgentActivity extends AppCompatActivity {
     private int baseBottomPadding;
     private boolean historyLoaded;
     private boolean clearingHistory;
+    private boolean userTouchedInput;
     private AlertDialog activeApprovalDialog;
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,6 +67,9 @@ public class LocalAgentActivity extends AppCompatActivity {
         configureEdgeToEdgeWindow();
         binding = ActivityLocalAgentBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        // 防止 EditText 自动获焦弹起键盘：根布局已设 focusable+focusableInTouchMode 抢占焦点。
+        // loadHistory 异步回调会让 EditText 从 disabled 切到 enabled，那才是真正触发自动获焦
+        // 的时机，由 renderRunning() 中的 clearFocus + hideSoftInput 兜底处理。
         LauncherTabletPortraitScaler.applyActivityContent(this);
         repository = new AgentConversationRepository(this);
         runtime = new LocalAgentRuntime(this);
@@ -113,6 +117,12 @@ public class LocalAgentActivity extends AppCompatActivity {
         binding.agentStateIcon.setOnClickListener(view -> showFeatureMenu());
         binding.agentTopOverlay.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateListPadding());
         binding.agentComposerOverlay.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateListPadding());
+        // 用户主动触摸 EditText 时设置标志位，renderRunning 中的 clearFocus + hideSoftInput
+        // 逻辑据此跳过，避免与用户已主动唤起的输入状态冲突。
+        binding.agentInput.setOnTouchListener((v, event) -> {
+            userTouchedInput = true;
+            return false;
+        });
     }
 
     private void send() {
@@ -212,11 +222,25 @@ public class LocalAgentActivity extends AppCompatActivity {
     }
 
     private void renderRunning(boolean running) {
-        binding.agentInput.setEnabled(historyLoaded && !running && !clearingHistory);
+        boolean inputEnabled = historyLoaded && !running && !clearingHistory;
+        binding.agentInput.setEnabled(inputEnabled);
         binding.agentSend.setEnabled(historyLoaded && !clearingHistory);
         binding.agentSend.setAlpha(1f);
         binding.agentSend.setRotation(running ? 45f : 0f);
         binding.agentSend.setContentDescription(running ? "停止任务" : "执行任务");
+        // loadHistory 异步回调中 setEnabled(true) 会触发 EditText 自动获焦并弹起 IME。
+        // 用 userTouchedInput 区分"用户主动点击"与"系统自动获焦"——只有用户未主动操作时
+        // 才清除焦点并隐藏 IME，避免影响用户已主动唤起的输入状态。
+        if (inputEnabled && !userTouchedInput) {
+            binding.agentInput.clearFocus();
+            View rootView = binding.getRoot();
+            if (rootView != null) rootView.requestFocus();
+            android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null && imm.isAcceptingText()) {
+                imm.hideSoftInputFromWindow(binding.agentInput.getWindowToken(), 0);
+            }
+        }
     }
 
     private void loadHistory() {
