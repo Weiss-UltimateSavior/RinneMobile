@@ -42,7 +42,13 @@ import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
 
 public class LauncherActivity extends AppCompatActivity {
-    private static final long SPLASH_DELAY_MS = 1500L;
+    /**
+     * Splash 首帧绘制完成后再保留的最低展示时长，用于品牌曝光与状态栏图标色阶过渡。
+     * 原先的 1500ms 固定延时自 onCreate 起算，包含了 view inflation 与首帧排版时间，
+     * 实际曝光远超 1.5s；改由 {@link android.view.ViewTreeObserver.OnPreDrawListener}
+     * 触发后再计时，避免冷启动期间的强制空等。
+     */
+    private static final long SPLASH_MIN_DISPLAY_MS = 400L;
     public static final String EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login";
     static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked";
@@ -78,8 +84,27 @@ public class LauncherActivity extends AppCompatActivity {
         // Android 12+ replaces a legacy window background with the system icon splash.
         // Draw the wallpaper as real Activity content so it is also visible on Honor/MagicOS.
         setContentView(R.layout.activity_launcher_splash);
-        splashDelay = com.yuki.yukihub.util.RxMainScheduler.postDelayed(
-                this::showLauncherContent, SPLASH_DELAY_MS);
+        scheduleLauncherContent();
+    }
+
+    /**
+     * 在 splash 首帧绘制完成后再启动 {@link #SPLASH_MIN_DISPLAY_MS} 倒计时，
+     * 取代原先自 onCreate 起算的固定 1500ms 延时。
+     * <p>触发顺序：{@code setContentView} → 首次 measure/layout → OnPreDrawListener 回调 →
+     * 短暂品牌曝光 → {@link #showLauncherContent()}。</p>
+     */
+    private void scheduleLauncherContent() {
+        final View content = findViewById(android.R.id.content);
+        final android.view.ViewTreeObserver vto = content.getViewTreeObserver();
+        vto.addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                content.getViewTreeObserver().removeOnPreDrawListener(this);
+                splashDelay = com.yuki.yukihub.util.RxMainScheduler.postDelayed(
+                        LauncherActivity.this::showLauncherContent, SPLASH_MIN_DISPLAY_MS);
+                return true;
+            }
+        });
     }
 
     private void showLauncherContent() {
@@ -441,6 +466,11 @@ public class LauncherActivity extends AppCompatActivity {
                 .edit()
                 .putBoolean(KEY_LAUNCHER_DARK_MODE, darkMode)
                 .apply();
+        // 同步更新进程级 night mode 默认值，确保后续未被 recreate 的 AppCompat 组件
+        // （如残留的 Dialog / Fragment）也能立刻命中新色调，而非等到下次冷启动。
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(darkMode
+                ? androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+                : androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
     }
 
     public static boolean isLauncherDarkMode(android.content.Context context) {
