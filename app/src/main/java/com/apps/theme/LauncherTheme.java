@@ -163,6 +163,20 @@ public final class LauncherTheme {
         return circle(context, card(context));
     }
 
+    /**
+     * 统一应用右上角圆形按钮样式：cardCircle 背景 + 深色模式白色 tint / 浅色模式原色。
+     * 供 LauncherHomeFragment.actionProfileMenu 和 LauncherProfileFragment.actionChangeCover 复用。
+     */
+    public static void applyCardCircleIcon(ImageView view, Context context) {
+        if (view == null) return;
+        view.setBackground(cardCircle(context));
+        if (LauncherActivity.isLauncherDarkMode(context)) {
+            view.setColorFilter(Color.WHITE);
+        } else {
+            view.clearColorFilter();
+        }
+    }
+
     public static GradientDrawable xinhaitianCircle(Context context) {
         return xinhaitianGradient(context, 0f, true);
     }

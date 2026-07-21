@@ -157,7 +157,7 @@ public class LauncherHomeFragment extends Fragment {
     private void applyIconTone() {
         boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
         int white = android.graphics.Color.WHITE;
-        applyIconTint(binding.actionProfileMenu, darkMode, white);
+        LauncherTheme.applyCardCircleIcon(binding.actionProfileMenu, requireContext());
         applyIconTint(binding.actionSaveSlotIcon, darkMode, white);
         applyIconTint(binding.actionResourceStationIcon, darkMode, white);
         applyIconTint(binding.actionToolboxIcon, darkMode, white);

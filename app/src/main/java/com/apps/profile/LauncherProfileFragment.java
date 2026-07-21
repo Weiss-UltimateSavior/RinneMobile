@@ -533,13 +533,7 @@ public class LauncherProfileFragment extends Fragment {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyProfileBgImage();
         applyAvatarImage();
-        binding.actionChangeCover.setBackground(LauncherTheme.cardCircle(requireContext()));
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(requireContext());
-        if (darkMode) {
-            binding.actionChangeCover.setColorFilter(android.graphics.Color.WHITE);
-        } else {
-            binding.actionChangeCover.clearColorFilter();
-        }
+        LauncherTheme.applyCardCircleIcon(binding.actionChangeCover, requireContext());
         for (int i = 0; i < binding.profileActionList.getChildCount(); i++) {
             View actionContainer = binding.profileActionList.getChildAt(i);
             if (!(actionContainer instanceof ViewGroup)) continue;
