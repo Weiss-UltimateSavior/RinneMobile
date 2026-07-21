@@ -71,7 +71,7 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
-        LauncherTheme.formInputs(binding.tokenInput);
+        LauncherTheme.styleTextInput(binding.tokenInput);
         LauncherTheme.longActionButton(binding.btnSave);
         LauncherTheme.longActionButton(binding.btnCancel);
     }
