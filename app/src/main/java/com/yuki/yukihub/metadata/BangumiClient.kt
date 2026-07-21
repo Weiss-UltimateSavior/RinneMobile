@@ -15,7 +15,7 @@ object BangumiClient {
     private const val MAX_RETRIES = 2
     private const val RETRY_DELAY_MS = 1500L
 
-    private val JSON_TYPE = "application/json; charset=UTF-8".toMediaType()
+    private val JSON_TYPE = "application/json; charset=utf-8".toMediaType()
 
     @Volatile
     private var bgmService: ApiService? = null
