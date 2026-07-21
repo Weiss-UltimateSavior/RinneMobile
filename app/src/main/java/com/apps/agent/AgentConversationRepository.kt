@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper
 class AgentConversationRepository(context: Context) {
     private val helper = Helper(context.applicationContext)
 
-    class Message @JvmOverloads constructor(
+    class Message constructor(
         id: Long,
         role: String?,
         content: String?,

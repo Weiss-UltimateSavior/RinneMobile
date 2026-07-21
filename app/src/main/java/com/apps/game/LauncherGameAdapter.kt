@@ -47,7 +47,7 @@ class LauncherGameAdapter : BaseGameCardAdapter(
             return try {
                 view.resources.getDimensionPixelSize(resId)
             } catch (_: Resources.NotFoundException) {
-                Math.round(fallbackDp * view.resources.displayMetrics.density)
+                BaseGameCardAdapter.dp(view, fallbackDp)
             }
         }
     }

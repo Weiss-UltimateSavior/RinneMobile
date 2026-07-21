@@ -9,12 +9,12 @@ internal object AgentMutationTransaction {
     @Throws(Exception::class)
     fun replace(io: DocumentIo, expectedBefore: ByteArray, after: ByteArray,
                 cancellation: Cancellation, commit: Commit?) {
-        if (!cancellation.isActive) throw InterruptedException("cancelled")
+        if (!cancellation.isActive()) throw InterruptedException("cancelled")
         if (!Arrays.equals(expectedBefore, io.read())) throw IOException("写入前文件再次变化，已取消写入")
         try {
             io.write(after)
             if (!Arrays.equals(after, io.read())) throw IOException("写入后校验失败")
-            if (!cancellation.isActive) throw InterruptedException("cancelled")
+            if (!cancellation.isActive()) throw InterruptedException("cancelled")
             commit?.run()
         } catch (error: Throwable) {
             var restored = false
@@ -35,11 +35,11 @@ internal object AgentMutationTransaction {
         fun write(value: ByteArray)
     }
 
-    interface Cancellation {
-        val isActive: Boolean
+    fun interface Cancellation {
+        fun isActive(): Boolean
     }
 
-    interface Commit {
+    fun interface Commit {
         @Throws(Exception::class)
         fun run()
     }
