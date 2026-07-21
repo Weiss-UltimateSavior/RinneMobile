@@ -20,7 +20,7 @@ object LauncherRepositoryBridge {
     @JvmStatic
     fun getAllGames(context: Context?): List<Game> {
         if (context == null) return emptyList()
-        return GameRepository(context.applicationContext).all
+        return GameRepository(context.applicationContext).getAll()
     }
 
     /** 按主键查找游戏，未找到返回 null。 */
@@ -89,8 +89,8 @@ object LauncherRepositoryBridge {
         return source.mapNotNull { a ->
             if (a == null) null
             else RecentActivity(
-                a.sessionId, a.sessionUuid, a.gameId, a.gameTitle,
-                a.startTime, a.endTime, a.duration, a.launchType, a.playStatus
+                a.sessionId, a.sessionUuid ?: "", a.gameId, a.gameTitle ?: "",
+                a.startTime, a.endTime, a.duration, a.launchType ?: "", a.playStatus ?: ""
             )
         }
     }

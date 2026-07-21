@@ -173,7 +173,7 @@ object LauncherScanBridge {
     private fun importScannedGames(context: Context, repository: GameRepository?, results: List<ScanResult>?, stats: ImportStats) {
         stats.scanned = results?.size ?: 0
         if (repository == null || results.isNullOrEmpty()) return
-        val existing = repository.rootUriKeySet
+        val existing = repository.getRootUriKeySet().toMutableSet()
         for (result in results) {
             if (result.uri.isNullOrBlank()) {
                 stats.failed++
