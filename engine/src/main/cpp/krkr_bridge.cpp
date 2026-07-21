@@ -98,13 +98,16 @@ constexpr int64_t kMenuShrinkWaitNs = 1200LL * 1000LL * 1000LL;
 
 bool supportedGameLibrary(const char* library) {
     return library != nullptr
-            && (std::strcmp(library, "libgame.so") == 0 || std::strcmp(library, "libgame134.so") == 0);
+            && (std::strcmp(library, "libgame.so") == 0
+                    || std::strcmp(library, "libgame134.so") == 0
+                    || std::strcmp(library, "libgame126.so") == 0);
 }
 
 bool isKrkrGameCaller(const char* callerPathName, void*) {
     return callerPathName != nullptr
             && (std::strstr(callerPathName, "libgame.so") != nullptr
-                    || std::strstr(callerPathName, "libgame134.so") != nullptr);
+                    || std::strstr(callerPathName, "libgame134.so") != nullptr
+                    || std::strstr(callerPathName, "libgame126.so") != nullptr);
 }
 
 std::string takeString(JNIEnv* env, jstring value) {

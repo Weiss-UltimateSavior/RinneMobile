@@ -18,6 +18,7 @@ object LauncherKrkrBridge {
     const val ENGINE_VERSION_AUTO = "auto"
     const val ENGINE_VERSION_139 = "1.3.9"
     const val ENGINE_VERSION_134 = "1.3.4"
+    const val ENGINE_VERSION_126 = "1.2.6"
 
     private fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
@@ -83,6 +84,7 @@ object LauncherKrkrBridge {
         return when (v) {
             ENGINE_VERSION_139 -> ENGINE_VERSION_139
             ENGINE_VERSION_134 -> ENGINE_VERSION_134
+            ENGINE_VERSION_126 -> ENGINE_VERSION_126
             else -> ENGINE_VERSION_AUTO
         }
     }
@@ -92,6 +94,7 @@ object LauncherKrkrBridge {
         return when (normalizeEngineVersion(value)) {
             ENGINE_VERSION_139 -> "1.3.9"
             ENGINE_VERSION_134 -> "1.3.4"
+            ENGINE_VERSION_126 -> "1.2.6"
             else -> "自动"
         }
     }

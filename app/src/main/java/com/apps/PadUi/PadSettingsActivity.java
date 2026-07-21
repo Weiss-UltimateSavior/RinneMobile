@@ -44,7 +44,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
     private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
     private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
-    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
+    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4", "1.2.6"};
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String[] METADATA_SOURCE_LABELS = {
             "VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"
@@ -141,6 +141,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         int selection = 0;
         if (LauncherKrkrBridge.ENGINE_VERSION_139.equals(version)) selection = 1;
         else if (LauncherKrkrBridge.ENGINE_VERSION_134.equals(version)) selection = 2;
+        else if (LauncherKrkrBridge.ENGINE_VERSION_126.equals(version)) selection = 3;
         setEngineVersionSelection(restoredState != null && restoredState.containsKey(STATE_ENGINE_VERSION_INDEX)
                 ? restoredState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.padKrScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
@@ -492,6 +493,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         String version = LauncherKrkrBridge.ENGINE_VERSION_AUTO;
         if (position == 1) version = LauncherKrkrBridge.ENGINE_VERSION_139;
         else if (position == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134;
+        else if (position == 3) version = LauncherKrkrBridge.ENGINE_VERSION_126;
 
         LauncherKrkrBridge.setEngineVersion(this, version);
         LauncherKrkrBridge.setKrScopedSaveDir(this, binding.padKrScopedSwitch.isChecked());

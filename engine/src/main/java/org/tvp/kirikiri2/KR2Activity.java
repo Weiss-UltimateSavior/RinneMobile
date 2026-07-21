@@ -294,7 +294,13 @@ public class KR2Activity extends Cocos2dxActivity {
         msgHandler = new Handler(Looper.getMainLooper()) { @Override public void handleMessage(Message msg) { KR2Activity.this.handleMessage(msg); } };
         Sp = PreferenceManager.getDefaultSharedPreferences(this);
         super.onCreate(savedInstanceState);
-        initDump(getFilesDir().getAbsolutePath() + "/dump");
+        // 1.2.6 libgame126.so 缺失 initDump/nativeOnLowMemory 的 JNI 实现，
+        // 此处用 try-catch 兜底以兼容该版本；1.3.4/1.3.9 的 .so 都有这两个方法，不会进入 catch。
+        try {
+            initDump(getFilesDir().getAbsolutePath() + "/dump");
+        } catch (UnsatisfiedLinkError e) {
+            android.util.Log.w("KR2Activity", "initDump unavailable in this engine version: " + e.getMessage());
+        }
         android.util.Log.i("KR2Activity", "scoped save sync disabled; writes must be redirected at source");
     }
 
@@ -326,7 +332,10 @@ public class KR2Activity extends Cocos2dxActivity {
         } catch (Throwable ignored) { }
         super.onDestroy();
     }
-    @Override public void onLowMemory() { nativeOnLowMemory(); }
+    @Override public void onLowMemory() {
+        // 1.2.6 libgame126.so 缺失 nativeOnLowMemory JNI 实现，try-catch 兜底。
+        try { nativeOnLowMemory(); } catch (UnsatisfiedLinkError ignored) { }
+    }
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         // 弹窗显示期间，阻止 Cocos2dx 恢复 GL 线程（super 会调用 resumeIfHasFocus），
         // 防止引擎在弹窗未确认时自动继续执行。

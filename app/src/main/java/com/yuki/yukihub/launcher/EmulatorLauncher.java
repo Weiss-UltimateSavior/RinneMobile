@@ -1446,9 +1446,16 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
                     + " path=" + path + " save=" + scopedSaveRoot
                     + " globalScoped=" + globalScopedSaveDir);
         }
-        boolean use134 = !originMode && shouldUseKrkr134(rootPath, engineVersion);
-        Intent i = new Intent(context, originMode ? org.tvp.kirikiri2.KR2Activity.class : (use134 ? com.akira.tyranoemu.remote.Kirikiroid134.class : com.akira.tyranoemu.remote.Kirikiroid139.class));
-        Log.i("EmulatorLauncher", "internal KRKR originMode=" + originMode + " engineVersion=" + normalizeKrkrEngineVersion(engineVersion) + " use134=" + use134 + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath + " rootPath=" + rootPath + " globalScoped=" + globalScopedSaveDir + " scoped=" + scopedSaveDir + " autoSdMirror=" + autoSdCardMirror);
+        String resolvedEngineVersion = originMode ? "auto" : normalizeKrkrEngineVersion(engineVersion);
+        boolean use134 = !originMode && "1.3.4".equals(resolvedEngineVersion);
+        boolean use126 = !originMode && "1.2.6".equals(resolvedEngineVersion);
+        Class<?> activityClass = originMode
+                ? org.tvp.kirikiri2.KR2Activity.class
+                : (use126 ? com.akira.tyranoemu.remote.Kirikiroid126.class
+                        : (use134 ? com.akira.tyranoemu.remote.Kirikiroid134.class
+                                : com.akira.tyranoemu.remote.Kirikiroid139.class));
+        Intent i = new Intent(context, activityClass);
+        Log.i("EmulatorLauncher", "internal KRKR originMode=" + originMode + " engineVersion=" + resolvedEngineVersion + " use126=" + use126 + " use134=" + use134 + " root=" + gamePath + " target=" + launchTarget + " resolved=" + resolvedPath + " rootPath=" + rootPath + " globalScoped=" + globalScopedSaveDir + " scoped=" + scopedSaveDir + " autoSdMirror=" + autoSdCardMirror);
         if (path != null && !path.isEmpty()) {
             // 普通模式也使用普通文件路径，让默认启动链更接近原生 KRKR / TY 的读取方式。
             i.putExtra("path", path);
@@ -1462,7 +1469,7 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
         i.putExtra("launchTarget", launchTarget);
         i.putExtra("originMode", originMode);
         i.putExtra("focus", "true");
-        i.putExtra("krEngineVersion", use134 ? "1.3.4" : "1.3.9");
+        i.putExtra("krEngineVersion", use126 ? "1.2.6" : (use134 ? "1.3.4" : "1.3.9"));
         i.putExtra("orientation", 6);
         i.putExtra("launchMode", originMode ? "internal.krkr.origin" : "internal.krkr");
         i.putExtra("scopedSaveDir", scopedSaveDir);
@@ -1552,6 +1559,7 @@ private static String resolveInternalArtemisPath(String rootUri, String launchTa
     private static String normalizeKrkrEngineVersion(String engineVersion) {
         String mode = engineVersion == null ? "auto" : engineVersion.trim().toLowerCase(Locale.ROOT);
         if (mode.equals("134") || mode.equals("1.3.4") || mode.equals("kr134") || mode.equals("kirikiroid134")) return "1.3.4";
+        if (mode.equals("126") || mode.equals("1.2.6") || mode.equals("kr126") || mode.equals("kirikiroid126")) return "1.2.6";
         if (mode.equals("139") || mode.equals("1.3.9") || mode.equals("kr139") || mode.equals("kirikiroid139")) return "1.3.9";
         return "auto";
     }

@@ -26,7 +26,7 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     public static final String EXTRA_GAME_ID = "extra_game_id";
 
-    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4"};
+    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4", "1.2.6"};
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_ONS_ENCODING_INDEX = "ons_encoding_index";
@@ -131,6 +131,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         int selection = 0;
         if (LauncherKrkrBridge.ENGINE_VERSION_139.equals(version)) selection = 1;
         else if (LauncherKrkrBridge.ENGINE_VERSION_134.equals(version)) selection = 2;
+        else if (LauncherKrkrBridge.ENGINE_VERSION_126.equals(version)) selection = 3;
         restoreEngineVersionSelection = savedInstanceState != null
                 && savedInstanceState.containsKey(STATE_ENGINE_VERSION_INDEX);
         setEngineVersionSelection(restoreEngineVersionSelection
@@ -159,6 +160,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         String version = LauncherKrkrBridge.ENGINE_VERSION_AUTO;
         if (pos == 1) version = LauncherKrkrBridge.ENGINE_VERSION_139;
         else if (pos == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134;
+        else if (pos == 3) version = LauncherKrkrBridge.ENGINE_VERSION_126;
 
         if (isPerGameMode()) {
             // Per-game 模式：仅写入该游戏的 ONS 覆盖；KR/Tyrano/Artemis 等全局项保持原值。
