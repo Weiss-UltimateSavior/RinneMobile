@@ -94,20 +94,16 @@ public class LocalAgentActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.agentTitleBar.setBackground(LauncherTheme.solidPrimary(this, 0f));
         binding.agentInfoBar.setBackground(LauncherTheme.secondaryButton(this, 18f));
-        binding.agentInputThemeBar.setBackground(LauncherTheme.solidPrimary(this, 22f));
+        binding.agentInputThemeBar.setBackground(LauncherTheme.secondaryButton(this, 22f));
         binding.agentEmptyState.setBackground(null);
         binding.agentStateIcon.setBackground(LauncherTheme.solidPrimary(this, 999f));
         binding.agentStateIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
-        int onPrimary = LauncherTheme.onPrimary(this);
-        binding.agentInput.setTextColor(onPrimary);
-        binding.agentInput.setHintTextColor(onPrimary);
+        int primary = LauncherTheme.primary(this);
+        binding.agentInput.setTextColor(primary);
+        binding.agentInput.setHintTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_muted_color));
         LauncherTheme.styleTextInput(binding.agentInput);
-        // LauncherEditText always draws its own compat cursor, so setCursorColor
-        // directly controls the cursor color. Apply after styleTextInput so the
-        // cursor matches the hint (onPrimary) instead of the primary tone.
-        binding.agentInput.setCursorColor(onPrimary);
         binding.agentSend.setBackground(null);
-        binding.agentSend.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
+        binding.agentSend.setImageTintList(ColorStateList.valueOf(primary));
     }
 
     private void bindActions() {
