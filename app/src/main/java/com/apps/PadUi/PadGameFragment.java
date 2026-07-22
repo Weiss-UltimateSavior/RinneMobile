@@ -149,6 +149,7 @@ public class PadGameFragment extends Fragment {
                     return;
                 }
                 if (game != null) {
+                    // Pad 游戏库不提供卡片编辑入口；其余长按操作保持一致。
                     LauncherGameActionController.show(PadGameFragment.this, game,
                             new LauncherGameActionController.Host() {
                                 @Override
@@ -179,7 +180,7 @@ public class PadGameFragment extends Fragment {
                                 public void reloadGame(long gameId) {
                                     reloadGameInPlace(gameId);
                                 }
-                            });
+                            }, false);
                 }
             }
         });
