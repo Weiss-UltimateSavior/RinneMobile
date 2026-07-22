@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -367,14 +368,15 @@ public class LauncherActivity extends AppCompatActivity {
         moveNavIndicator(navItem);
     }
 
-    private void setNavSelected(LinearLayout container, TextView icon, TextView label, boolean selected) {
+    private void setNavSelected(LinearLayout container, ImageView icon, TextView label, boolean selected) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected);
+        // 选中项始终使用当前主题主色；未选中项在浅色、深色模式下统一使用灰色。
         int color = selected
                 ? launcherPrimaryColor(this)
-                : LauncherTheme.textMuted(this);
-        icon.setTextColor(color);
+                : Color.GRAY;
+        icon.setColorFilter(color);
         label.setTextColor(color);
-        label.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
     }
 
     private void moveNavIndicator(LauncherViewModel.NavItem navItem) {

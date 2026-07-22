@@ -64,14 +64,13 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/navHomeIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="H"
-                android:textColor="@color/launcher_primary_color"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:layout_width="23dp"
+                android:layout_height="23dp"
+                android:contentDescription="首页"
+                android:scaleType="fitCenter"
+                android:src="@drawable/launcher_nav_home" />
 
             <TextView
                 android:id="@+id/navHomeLabel"
@@ -95,14 +94,13 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/navSavingsIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="G"
-                android:textColor="@color/launcher_nav_muted_color"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:layout_width="23dp"
+                android:layout_height="23dp"
+                android:contentDescription="游戏"
+                android:scaleType="fitCenter"
+                android:src="@drawable/launcher_nav_game" />
 
             <TextView
                 android:id="@+id/navSavingsLabel"
@@ -163,14 +161,13 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/navCardsIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="S"
-                android:textColor="@color/launcher_nav_muted_color"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:layout_width="23dp"
+                android:layout_height="23dp"
+                android:contentDescription="管理"
+                android:scaleType="fitCenter"
+                android:src="@drawable/launcher_nav_manage" />
 
             <TextView
                 android:id="@+id/navCardsLabel"
@@ -193,14 +190,13 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/navAccountIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="M"
-                android:textColor="@color/launcher_nav_muted_color"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:layout_width="23dp"
+                android:layout_height="23dp"
+                android:contentDescription="账户"
+                android:scaleType="fitCenter"
+                android:src="@drawable/launcher_nav_account" />
 
             <TextView
                 android:id="@+id/navAccountLabel"
