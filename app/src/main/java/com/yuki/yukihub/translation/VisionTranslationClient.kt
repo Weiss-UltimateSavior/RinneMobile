@@ -69,7 +69,7 @@ object VisionTranslationClient {
         val base64Image = Base64.encodeToString(jpegBytes, Base64.NO_WRAP)
         val requestBody = buildRequestBody(config.model, prompt, base64Image)
 
-        Log.i(TAG, "translate: url=$baseUrl model=${config.model} jpegBytes=${jpegBytes.size} base64Len=${base64Image.length} requestLen=${requestBody.length}")
+        Log.i(TAG, "translate: model=${config.model} jpegBytes=${jpegBytes.size} requestLen=${requestBody.length}")
 
         val client = buildHttpClient()
         val request = Request.Builder()
@@ -84,9 +84,11 @@ object VisionTranslationClient {
         var lastError: String = "未知错误"
         for (attempt in 1..maxRetries) {
             try {
+                val requestStartedAt = System.nanoTime()
                 client.newCall(request).execute().use { response ->
                     val body = response.body?.string() ?: ""
-                    Log.i(TAG, "response: attempt=$attempt code=${response.code} bodyLen=${body.length} body=${truncate(body, 500)}")
+                    val elapsedMs = (System.nanoTime() - requestStartedAt) / 1_000_000L
+                    Log.i(TAG, "response: attempt=$attempt code=${response.code} bodyLen=${body.length} elapsedMs=$elapsedMs")
                     if (!response.isSuccessful) {
                         lastError = formatHttpError(response.code, body)
                         if (response.code in 500..599 && attempt < maxRetries) {
@@ -246,7 +248,7 @@ object VisionTranslationClient {
             base64Image
         )
 
-        Log.i(TAG, "testVision: url=$fullUrl model=$effectiveModel testImageBytes=${testImage.size}")
+        Log.i(TAG, "testVision: model=$effectiveModel testImageBytes=${testImage.size}")
 
         val client = buildHttpClient()
         val request = Request.Builder()
@@ -257,9 +259,11 @@ object VisionTranslationClient {
             .build()
 
         return try {
+            val requestStartedAt = System.nanoTime()
             client.newCall(request).execute().use { response ->
                 val body = response.body?.string() ?: ""
-                Log.i(TAG, "testVision response: code=${response.code} bodyLen=${body.length} body=${truncate(body, 500)}")
+                val elapsedMs = (System.nanoTime() - requestStartedAt) / 1_000_000L
+                Log.i(TAG, "testVision response: code=${response.code} bodyLen=${body.length} elapsedMs=$elapsedMs")
                 if (!response.isSuccessful) {
                     return Result.failure(formatHttpError(response.code, body))
                 }

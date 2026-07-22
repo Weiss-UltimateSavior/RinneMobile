@@ -94,7 +94,7 @@ class OverlayTranslationService : Service() {
             projectionReady = false
             mediaProjection = null
             teardownCapture()
-            // 延迟自动重建，避免在系统资源紧张时立即重试
+            // 延迟自动重建，避免在系统资源紧张时立即重试。
             handler.postDelayed({ ensureMediaProjection() }, 1000)
         }
     }
@@ -111,7 +111,7 @@ class OverlayTranslationService : Service() {
         captureHandler = Handler(captureThread!!.looper)
         startForegroundCompat()
         showFloatingButton()
-        // 延迟创建 MediaProjection，等待前台 Service 完全就绪
+        // 延迟创建 MediaProjection，等待前台 Service 完全就绪。
         handler.postDelayed({ ensureMediaProjection() }, PROJECTION_INIT_DELAY_MS)
         Toast.makeText(this, "悬浮翻译已开启", Toast.LENGTH_SHORT).show()
     }
@@ -165,9 +165,7 @@ class OverlayTranslationService : Service() {
     /**
      * 创建或重建 MediaProjection 实例，并建立持续录屏的 VirtualDisplay。
      *
-     * 采用持续录屏策略：projection 创建后立即创建 VirtualDisplay + ImageReader，
-     * 让系统持续推送帧。点击悬浮按钮时直接取 [latestImage] 最新帧，
-     * 无需每次截图都 createVirtualDisplay（这会触发华为"后台截屏"判定并停止 projection）。
+     * 采用持续录屏策略，避免部分设备在每次点击时重建捕获链路并再次弹出截图授权。
      */
     @Synchronized
     private fun ensureMediaProjection() {
@@ -194,7 +192,7 @@ class OverlayTranslationService : Service() {
             projectionReady = true
             Log.i(TAG, "MediaProjection ready, starting continuous capture")
 
-            // 立即建立持续录屏，避免后续每次截图都触发 createVirtualDisplay
+            // 创建持续捕获链路，复用同一次用户授权。
             startContinuousCapture(projection)
         } catch (e: Exception) {
             Log.e(TAG, "getMediaProjection failed", e)
@@ -471,7 +469,11 @@ class OverlayTranslationService : Service() {
                 return
             }
             // 刚重建 projection，等待系统推送第一帧
-            handler.postDelayed({ triggerTranslation() }, 800)
+            handler.postDelayed({
+                // 本次等待并非实际翻译；先解除占用状态，再进入正常截图与请求流程。
+                isTranslating = false
+                triggerTranslation()
+            }, 800)
             showLoadingCard()
             isTranslating = true
             return
