@@ -339,6 +339,8 @@ class OverlayTranslationService : Service() {
                 com.yuki.yukihub.R.drawable.launcher_theme_anri_def
             com.apps.LauncherActivity.isXinhaitianTheme(this) ->
                 com.yuki.yukihub.R.drawable.launcher_theme_xinhaitian_def
+            com.apps.LauncherActivity.isNatsumeTheme(this) ->
+                com.yuki.yukihub.R.drawable.launcher_theme_natsume_def
             else ->
                 com.yuki.yukihub.R.drawable.launcher_game_center_default
         }
