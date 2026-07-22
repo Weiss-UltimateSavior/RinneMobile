@@ -91,7 +91,7 @@ public class LauncherRepository {
         String time = formatRecentTime(activity.endTime) + " · " + TimeFormatUtil.playTime(activity.duration);
         String status = launchTypeLabel(activity.launchType);
         if (status.isEmpty()) status = "已游玩";
-        return new RecentItem(title, time, status, firstTitleChar(fullTitle));
+        return new RecentItem(title, time, status, firstTitleChar(fullTitle), activity.gameId, activity.sessionId);
     }
 
     private String displayName() {
@@ -221,12 +221,16 @@ public class LauncherRepository {
         public final String timeAndDuration;
         public final String status;
         public final String iconText;
+        public final long gameId;
+        public final long sessionId;
 
-        RecentItem(String title, String timeAndDuration, String status, String iconText) {
+        RecentItem(String title, String timeAndDuration, String status, String iconText, long gameId, long sessionId) {
             this.title = title;
             this.timeAndDuration = timeAndDuration;
             this.status = status;
             this.iconText = iconText;
+            this.gameId = gameId;
+            this.sessionId = sessionId;
         }
     }
 }

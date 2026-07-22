@@ -96,6 +96,18 @@ object LauncherRepositoryBridge {
     }
 
     /**
+     * 软删除指定的游玩会话记录（标记 deleted=1）。
+     * 供主页动态列表长按删除使用。
+     *
+     * @return 受影响行数；0 表示会话不存在或已删除。
+     */
+    @JvmStatic
+    fun deletePlaySession(context: Context?, sessionId: Long): Int {
+        if (context == null || sessionId <= 0) return 0
+        return GameRepository(context.applicationContext).deletePlaySession(sessionId)
+    }
+
+    /**
      * 等价于 GameRepository.PlayActivity 的值类，
      * 使 com.apps 无需导入核心数据层。
      */

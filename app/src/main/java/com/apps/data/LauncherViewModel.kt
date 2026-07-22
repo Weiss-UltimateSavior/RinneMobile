@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge
 import com.yuki.yukihub.util.AppExecutors
 import com.yuki.yukihub.util.RxMainScheduler
 import java.util.Collections
@@ -150,6 +151,32 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         RxMainScheduler.post {
             val current = currentState()
             launcherState.value = current.copy(isRecentRefreshing = refreshing)
+        }
+    }
+
+    /**
+     * 软删除一条游玩动态并从当前列表中移除。
+     *
+     * 删除在 IO 线程执行；成功后在主线程更新 [launcherState]，
+     * 从 recentItems 中过滤掉对应 sessionId 的条目并刷新统计数据。
+     */
+    fun deleteRecentItem(sessionId: Long) {
+        if (sessionId <= 0) return
+        AppExecutors.runOnSingle {
+            val affected = LauncherRepositoryBridge.deletePlaySession(getApplication(), sessionId)
+            if (affected > 0) {
+                val snapshot = repository.loadStatsSnapshot()
+                val recentItems = repository.loadRecentItems()
+                RxMainScheduler.post {
+                    val current = currentState()
+                    launcherState.value = current.copy(
+                        recentItems = ArrayList(recentItems),
+                        gameCount = snapshot.gameCount,
+                        totalPlayTime = snapshot.totalPlayTime,
+                        todayPlayTime = snapshot.todayPlayTime
+                    )
+                }
+            }
         }
     }
 

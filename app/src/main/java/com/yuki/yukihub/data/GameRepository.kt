@@ -190,6 +190,21 @@ class GameRepository(context: Context) {
         db.delete("play_sessions", "id=? AND (end_time IS NULL OR duration=0)", arrayOf(sessionId.toString()))
     }
 
+    /**
+     * 软删除指定的游玩会话记录。仅标记 deleted=1，不实际删除行，
+     * 保证已同步到服务端的记录在后续导出/同步时仍可识别。
+     *
+     * @return 受影响行数；0 表示会话不存在或已删除。
+     */
+    fun deletePlaySession(sessionId: Long): Int {
+        if (sessionId <= 0) return 0
+        val db = helper.writableDatabase
+        val values = ContentValues()
+        values.put("deleted", 1)
+        values.put("updated_at", System.currentTimeMillis())
+        return db.update("play_sessions", values, "id=?", arrayOf(sessionId.toString()))
+    }
+
     fun finishPlaySession(sessionId: Long, end: Long, minDuration: Long, maxDuration: Long) {
         if (sessionId <= 0) return
         val db = helper.writableDatabase

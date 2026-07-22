@@ -1,5 +1,6 @@
 package com.apps.home;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
@@ -29,7 +30,10 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
+import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
+import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.SafeImageLoader;
 
@@ -55,10 +59,14 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 public class LauncherHomeFragment extends Fragment {
     private static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_PROFILE_AVATAR = "profile_avatar";
+    private static final long MIN_PLAY_SESSION_MS = 0L;
+    private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
 
     private FragmentLauncherHomeBinding binding;
     private LauncherViewModel viewModel;
     private ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher;
+    private long runningSessionId = -1L;
+    private long runningGameId = -1L;
 
     public LauncherHomeFragment() {
         avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
@@ -98,7 +106,11 @@ public class LauncherHomeFragment extends Fragment {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyIconTone();
         renderAvatar();
-        viewModel.refreshRecentItems();
+        if (runningSessionId > 0L) {
+            finishRecentPlaySessionIfNeeded();
+        } else {
+            viewModel.refreshRecentItems();
+        }
     }
 
     @Override
@@ -414,8 +426,77 @@ public class LauncherHomeFragment extends Fragment {
             meta.setText(item.timeAndDuration);
             status.setText(item.status);
             LauncherTheme.applyPrimaryTone(itemView);
+            itemView.setOnClickListener(v -> confirmLaunchRecentGame(item));
+            itemView.setOnLongClickListener(v -> {
+                confirmDeleteRecentItem(item);
+                return true;
+            });
             binding.recentList.addView(itemView);
         }
+    }
+
+    private void confirmLaunchRecentGame(LauncherRepository.RecentItem item) {
+        if (!isAdded() || binding == null) return;
+        String displayTitle = item.title == null || item.title.trim().isEmpty() ? "该游戏" : item.title;
+        LauncherDialogFactory.showConfirm(
+                requireContext(),
+                "打开游戏",
+                "是否打开《" + displayTitle + "》？",
+                "打开",
+                () -> launchRecentGame(item.gameId)
+        );
+    }
+
+    private void launchRecentGame(long gameId) {
+        if (gameId <= 0) {
+            Toast.makeText(requireContext(), "无法打开：游戏信息缺失", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Context app = requireContext().getApplicationContext();
+        AppExecutors.runOnIo(() -> {
+            Game game = LauncherRepositoryBridge.findGameById(app, gameId);
+            if (game == null) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (!isAdded()) return;
+                        Toast.makeText(requireContext(), "游戏已被删除或不存在", Toast.LENGTH_SHORT).show();
+                    });
+                }
+                return;
+            }
+            LauncherGameLaunchBridge.launchAsync(app, game, result -> {
+                if (!isAdded()) return;
+                if (result.success) {
+                    runningSessionId = result.sessionId;
+                    runningGameId = gameId;
+                } else if (result.message != null && !result.message.trim().isEmpty()) {
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+    }
+
+    private void confirmDeleteRecentItem(LauncherRepository.RecentItem item) {
+        if (!isAdded() || binding == null) return;
+        String displayTitle = item.title == null || item.title.trim().isEmpty() ? "该动态" : item.title;
+        LauncherDialogFactory.showConfirm(
+                requireContext(),
+                "删除动态",
+                "是否删除《" + displayTitle + "》的游玩动态？",
+                "删除",
+                () -> viewModel.deleteRecentItem(item.sessionId)
+        );
+    }
+
+    private void finishRecentPlaySessionIfNeeded() {
+        if (runningSessionId <= 0L) return;
+        Context context = getContext();
+        if (context == null) return;
+        LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
+        runningSessionId = -1L;
+        runningGameId = -1L;
+        viewModel.refreshStats();
+        viewModel.refreshRecentItems();
     }
 
     private void showChangeAvatarDialog() {
