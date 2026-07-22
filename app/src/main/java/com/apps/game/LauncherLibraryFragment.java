@@ -86,6 +86,7 @@ public class LauncherLibraryFragment extends Fragment {
     private final List<CategoryOption> categories = new ArrayList<>();
     private final Map<Long, List<String>> gameDevelopers = new HashMap<>();
     private LauncherGameAdapter adapter;
+    private GridLayoutManager gridLayoutManager;
     private String selectedCategory = "";
     private String searchQuery = "";
     private boolean loading;
@@ -115,6 +116,9 @@ public class LauncherLibraryFragment extends Fragment {
     private float loadMoreDragStartY;
     private boolean loadMoreDragCandidate;
     private int currentPage;
+    private boolean posterGridStyle;
+    private static final String LIBRARY_PREFS = "launcher_library_preferences";
+    private static final String KEY_POSTER_GRID_STYLE = "poster_grid_style";
 
     /**
      * Configuration hooks used by the landscape game repository. Keeping the shared library
@@ -122,6 +126,11 @@ public class LauncherLibraryFragment extends Fragment {
      */
     protected int getGridColumns() {
         return LauncherTabletPortraitScaler.libraryGridColumns(getResources());
+    }
+
+    private int getActiveGridColumns() {
+        // 参考样式以三列海报为核心；原横向卡片继续沿用设备自适应列数。
+        return posterGridStyle ? 3 : Math.max(1, getGridColumns());
     }
 
     protected int getPageSize() {
@@ -158,6 +167,9 @@ public class LauncherLibraryFragment extends Fragment {
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         binding.libraryTitle.setText(getLibraryTitle());
+        posterGridStyle = requireContext().getApplicationContext()
+                .getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_POSTER_GRID_STYLE, false);
         setupSearchAndCategories();
         setupRecycler();
         loadGames();
@@ -253,6 +265,7 @@ public class LauncherLibraryFragment extends Fragment {
 
     private void setupRecycler() {
         adapter = new LauncherGameAdapter();
+        adapter.setPosterStyle(posterGridStyle);
         adapter.setOnGameCardListener(new LauncherGameAdapter.OnGameCardListener() {
             @Override
             public void onGameClick(Game game) {
@@ -276,9 +289,8 @@ public class LauncherLibraryFragment extends Fragment {
             }
         });
 
-        final int gridColumns = Math.max(1, getGridColumns());
-        GridLayoutManager layoutManager = new GridLayoutManager(requireContext(), gridColumns);
-        binding.libraryRecycler.setLayoutManager(layoutManager);
+        gridLayoutManager = new GridLayoutManager(requireContext(), getActiveGridColumns());
+        binding.libraryRecycler.setLayoutManager(gridLayoutManager);
         binding.libraryRecycler.setAdapter(adapter);
         binding.libraryRecycler.setHasFixedSize(true);
         int bottomPadding = getResources().getDimensionPixelSize(R.dimen.launcher_library_recycler_bottom_padding);
@@ -322,8 +334,8 @@ public class LauncherLibraryFragment extends Fragment {
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (usesHorizontalPaging() || dy <= 0 || loading || fullyLoaded) return;
-                int lastVisible = layoutManager.findLastVisibleItemPosition();
-                if (lastVisible >= Math.max(0, visibleGames.size() - gridColumns)) {
+                int lastVisible = gridLayoutManager.findLastVisibleItemPosition();
+                if (lastVisible >= Math.max(0, visibleGames.size() - getActiveGridColumns())) {
                     loadNextPage();
                 }
             }
@@ -349,7 +361,7 @@ public class LauncherLibraryFragment extends Fragment {
     }
 
     private void updateFixedGridCardHeight() {
-        if (binding == null || adapter == null) return;
+        if (posterGridStyle || binding == null || adapter == null) return;
         int rows = getFixedGridRows();
         int height = binding.libraryRecycler.getHeight();
         if (rows <= 0 || height <= 0) return;
@@ -365,7 +377,7 @@ public class LauncherLibraryFragment extends Fragment {
      * item_launcher_game_card 每张卡片左右各有约 5dp margin。
      */
     private void updateTabletPortraitCardHeight() {
-        if (binding == null || adapter == null || !usesTabletPortraitCardSizing()) return;
+        if (posterGridStyle || binding == null || adapter == null || !usesTabletPortraitCardSizing()) return;
 
         RecyclerView recyclerView = binding.libraryRecycler;
         int recyclerWidth = recyclerView.getWidth();
@@ -522,7 +534,7 @@ public class LauncherLibraryFragment extends Fragment {
             }
             renderToolbarButtonState();
         });
-        binding.librarySyncButton.setOnClickListener(view -> showSyncDataConfirmDialog());
+        binding.librarySyncButton.setOnClickListener(view -> showLibrarySettingsMenu());
         binding.libraryCollapseButton.setOnClickListener(view -> {
             categoriesCollapsed = !categoriesCollapsed;
             binding.libraryCategoryScroll.setVisibility(categoriesCollapsed ? View.GONE : View.VISIBLE);
@@ -539,6 +551,37 @@ public class LauncherLibraryFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) { }
         });
         renderToolbarButtonState();
+    }
+
+    private void showLibrarySettingsMenu() {
+        String styleLabel = posterGridStyle ? "横向卡片" : "海报网格";
+        LauncherDialogFactory.showStandardActionChoices(requireContext(), "游戏库设置",
+                new CharSequence[]{"一键同步", styleLabel}, index -> {
+                    if (index == 0) {
+                        showSyncDataConfirmDialog();
+                    } else {
+                        togglePosterGridStyle();
+                    }
+                });
+    }
+
+    private void togglePosterGridStyle() {
+        posterGridStyle = !posterGridStyle;
+        requireContext().getApplicationContext().getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_POSTER_GRID_STYLE, posterGridStyle).apply();
+        if (adapter != null) adapter.setPosterStyle(posterGridStyle);
+        if (gridLayoutManager != null) gridLayoutManager.setSpanCount(getActiveGridColumns());
+        if (binding != null) {
+            binding.libraryRecycler.scrollToPosition(0);
+            binding.libraryRecycler.post(() -> {
+                if (posterGridStyle) {
+                    binding.libraryRecycler.invalidateItemDecorations();
+                } else if (usesTabletPortraitCardSizing()) {
+                    updateTabletPortraitCardHeight();
+                }
+            });
+        }
+        Toast.makeText(requireContext(), posterGridStyle ? "已切换为海报网格" : "已切换为横向卡片", Toast.LENGTH_SHORT).show();
     }
 
     private void loadGames() {

@@ -38,6 +38,7 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
     private long selectedGameId = -1L;
     private int fixedCardHeight;
     private RecyclerView attachedRecyclerView;
+    private boolean posterStyle;
 
     protected BaseGameCardAdapter(CardLayoutSpec layoutSpec, boolean updateAttachedHeightsOnly) {
         this.layoutSpec = layoutSpec;
@@ -46,6 +47,14 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
     }
 
     public void setOnGameCardListener(OnGameCardListener listener) { this.listener = listener; }
+    /** Uses a portrait-cover grid with text below the cover, rather than the compact overlay card. */
+    public void setPosterStyle(boolean enabled) {
+        if (posterStyle == enabled) return;
+        posterStyle = enabled;
+        fixedCardHeight = 0;
+        notifyDataSetChanged();
+    }
+    public boolean isPosterStyle() { return posterStyle; }
     public void setFixedCardHeight(int heightPx) {
         int next = Math.max(0, heightPx);
         if (next == fixedCardHeight) return;
@@ -100,15 +109,59 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
         void bind(Game game, boolean selected) {
             if (game == null) return;
             applyLayout(binding);
-            binding.getRoot().setBackgroundResource(selected ? R.drawable.launcher_game_card_selected : R.drawable.launcher_game_card);
-            binding.launcherGameTitle.setText(title(game));
-            binding.launcherGamePlayStatus.setText(game.totalPlayTime <= 0L ? "未游玩" : TimeFormatUtil.playTime(game.totalPlayTime));
+            String gameTitle = title(game);
+            String playStatus = game.totalPlayTime <= 0L ? "未游玩" : TimeFormatUtil.playTime(game.totalPlayTime);
+            binding.getRoot().setBackgroundResource(posterStyle ? android.R.color.transparent
+                    : (selected ? R.drawable.launcher_game_card_selected : R.drawable.launcher_game_card));
+            binding.launcherGameTitle.setText(gameTitle);
+            binding.launcherGamePlayStatus.setText(playStatus);
+            binding.launcherGamePosterTitle.setText(posterTitle(gameTitle));
+            binding.launcherGamePosterStatus.setText(playStatus);
+            applyCardPresentation();
             binding.launcherGameInitial.setText(initial(game.title));
             applyFavoriteAppearance(game.favorite);
             binding.launcherGameInitial.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
             bindCover(game);
             binding.getRoot().setOnClickListener(v -> { setSelectedGameId(game.id); if (listener != null) listener.onGameClick(game); });
             binding.getRoot().setOnLongClickListener(v -> { setSelectedGameId(game.id); if (listener != null) listener.onGameLongClick(game); return true; });
+        }
+        private void applyCardPresentation() {
+            binding.launcherGameTextOverlay.setVisibility(posterStyle ? View.GONE : View.VISIBLE);
+            binding.launcherGamePosterInfo.setVisibility(posterStyle ? View.VISIBLE : View.GONE);
+            if (!posterStyle) {
+                ViewGroup.LayoutParams cover = binding.launcherGameCoverFrame.getLayoutParams();
+                if (cover.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+                    cover.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                    binding.launcherGameCoverFrame.setLayoutParams(cover);
+                }
+                ViewGroup.LayoutParams root = binding.getRoot().getLayoutParams();
+                int normalHeight = fixedCardHeight > 0 ? fixedCardHeight : dp(binding.getRoot(), 144);
+                if (root.height != normalHeight) {
+                    root.height = normalHeight;
+                    binding.getRoot().setLayoutParams(root);
+                }
+                return;
+            }
+            binding.getRoot().post(() -> {
+                if (!posterStyle) return;
+                int width = binding.getRoot().getWidth();
+                if (width <= 0) return;
+                int coverHeight = Math.round(width * 1.42f);
+                // 标题（15sp）和游玩时间（12sp）实际只需约 35dp；保留 40dp，
+                // 避免此前 64dp 的空白被视觉上误认为卡片之间的巨大间距。
+                int infoHeight = dp(binding.getRoot(), 40);
+                ViewGroup.LayoutParams cover = binding.launcherGameCoverFrame.getLayoutParams();
+                if (cover.height != coverHeight) {
+                    cover.height = coverHeight;
+                    binding.launcherGameCoverFrame.setLayoutParams(cover);
+                }
+                ViewGroup.LayoutParams root = binding.getRoot().getLayoutParams();
+                int rootHeight = coverHeight + infoHeight;
+                if (root.height != rootHeight) {
+                    root.height = rootHeight;
+                    binding.getRoot().setLayoutParams(root);
+                }
+            });
         }
         private void applyFavoriteAppearance(boolean favorite) {
             if (favorite) {
@@ -122,6 +175,10 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
                 int text = LauncherTheme.text(binding.getRoot().getContext());
                 binding.launcherGameTitle.setTextColor(text);
                 binding.launcherGamePlayStatus.setTextColor(text);
+            }
+            if (posterStyle) {
+                binding.launcherGamePosterTitle.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
+                binding.launcherGamePosterStatus.setTextColor(LauncherTheme.textMuted(binding.getRoot().getContext()));
             }
         }
         void recycle() { LauncherCoverLoader.clear(binding.launcherGameCover); }
@@ -155,6 +212,13 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
     }
     private static boolean eq(String a, String b) { return a == null ? b == null : a.equals(b); }
     private static String title(Game game) { return game.title == null || game.title.trim().isEmpty() ? "未命名游戏" : game.title.trim(); }
+    private static String posterTitle(String value) {
+        final int maxCharacters = 10;
+        if (value == null || value.isEmpty()) return value;
+        int count = value.codePointCount(0, value.length());
+        if (count <= maxCharacters) return value;
+        return value.substring(0, value.offsetByCodePoints(0, maxCharacters)) + "...";
+    }
     private static String initial(String title) { if (title == null || title.trim().isEmpty()) return "游"; String value = title.trim(); return value.substring(0, value.offsetByCodePoints(0, 1)); }
     protected static int dp(View view, int value) { return Math.round(value * view.getResources().getDisplayMetrics().density); }
     protected static void compactText(ItemLauncherGameCardBinding binding) {
