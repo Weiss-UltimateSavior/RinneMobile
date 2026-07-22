@@ -286,6 +286,69 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/natsumeThemeRow"
+                android:layout_width="match_parent"
+                android:layout_height="68dp"
+                android:layout_marginTop="11dp"
+                android:background="@drawable/launcher_chat_option_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp">
+
+                <ImageView
+                    android:id="@+id/natsumeThemeLogo"
+                    android:layout_width="41dp"
+                    android:layout_height="41dp"
+                    android:clipToOutline="true"
+                    android:contentDescription="@null"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/launcher_theme_natsume_logo" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="13dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="四季夏目（风格）"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="四季流转，夏日常驻"
+                        android:textColor="@color/launcher_text_muted_color"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/natsumeThemeCheck"
+                    android:layout_width="22dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="✓"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/particleToggleRow"
                 android:layout_width="match_parent"
                 android:layout_height="68dp"

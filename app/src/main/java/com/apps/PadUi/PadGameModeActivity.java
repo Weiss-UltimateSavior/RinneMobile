@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -142,11 +143,10 @@ public class PadGameModeActivity extends AppCompatActivity {
 
     private void renderSelectedNav(Page page) {
         int primary = LauncherActivity.launcherPrimaryColor(this);
-        int muted = ContextCompat.getColor(this, R.color.launcher_nav_muted_color);
         setNavSelected(binding.navGame, binding.navGameIcon, binding.navGameLabel,
-                page == Page.GAME, primary, muted);
+                page == Page.GAME, primary);
         setNavSelected(binding.navManage, binding.navManageIcon, binding.navManageLabel,
-                page == Page.MANAGE, primary, muted);
+                page == Page.MANAGE, primary);
 
         applyLauncherThemeTone();
         moveNavIndicator(page == Page.GAME ? binding.navGame : binding.navManage);
@@ -160,7 +160,8 @@ public class PadGameModeActivity extends AppCompatActivity {
         boolean rinneTheme = LauncherActivity.THEME_STYLE_RINNE.equals(style);
         boolean anriTheme = LauncherActivity.THEME_STYLE_ANRI.equals(style);
         boolean xinhaitianTheme = LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style);
-        boolean themedIcon = rinneTheme || anriTheme || xinhaitianTheme;
+        boolean natsumeTheme = LauncherActivity.THEME_STYLE_NATSUME.equals(style);
+        boolean themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme;
         binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
         binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);
         if (rinneTheme) {
@@ -175,20 +176,22 @@ public class PadGameModeActivity extends AppCompatActivity {
             binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_xinhaitian_def);
             binding.navLaunchCenterImage.clearColorFilter();
             binding.navLaunchCenterText.setColorFilter(Color.WHITE);
+        } else if (natsumeTheme) {
+            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_natsume_def);
+            binding.navLaunchCenterImage.clearColorFilter();
+            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
         } else {
             binding.navLaunchCenterImage.setColorFilter(Color.WHITE);
         }
     }
 
-    private void setNavSelected(LinearLayout container, TextView icon, TextView label,
-                                boolean selected, int primary, int muted) {
+    private void setNavSelected(LinearLayout container, ImageView icon, TextView label,
+                                boolean selected, int primary) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected);
-        int color = selected ? primary : muted;
-        icon.setTextColor(color);
+        int color = selected ? primary : Color.GRAY;
+        icon.setColorFilter(color);
         label.setTextColor(color);
-        label.setTypeface(null, selected
-                ? android.graphics.Typeface.BOLD
-                : android.graphics.Typeface.NORMAL);
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
     }
 
     private void moveNavIndicator(View target) {

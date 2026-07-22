@@ -196,6 +196,9 @@ public class LauncherHomeFragment extends Fragment {
         } else if (LauncherActivity.isXinhaitianTheme(requireContext())) {
             binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_xinhaitian_bg);
             binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
+        } else if (LauncherActivity.isNatsumeTheme(requireContext())) {
+            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_natsume_bg);
+            binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
         } else {
             binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_bg);
             binding.homeStatsScrim.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_home_stats_scrim);
