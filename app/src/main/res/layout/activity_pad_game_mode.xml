@@ -30,6 +30,8 @@
         android:layout_height="64dp"
         android:background="@drawable/pad_bottom_bar"
         android:layout_marginBottom="2dp"
+        android:clickable="true"
+        android:focusable="true"
         android:paddingStart="11dp"
         android:paddingEnd="11dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -48,6 +50,8 @@
             android:id="@+id/bottomNavItems"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
             android:orientation="horizontal">
 
