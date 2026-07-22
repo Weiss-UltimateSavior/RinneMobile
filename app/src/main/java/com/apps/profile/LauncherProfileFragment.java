@@ -52,6 +52,7 @@ import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
+import com.yuki.yukihub.translation.TranslationSettingActivity;
 
 public class LauncherProfileFragment extends Fragment {
     private static final String PREFS_NAME = "launcher_profile_prefs";
@@ -118,6 +119,11 @@ public class LauncherProfileFragment extends Fragment {
         });
         binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
+        binding.translationRow.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), TranslationSettingActivity.class);
+            startActivity(intent);
+            LauncherMotion.applyActivityOpen(requireActivity());
+        });
         binding.profilePlaytimeRankCard.setOnClickListener(v -> showLeaderboardConfirmDialog());
         renderUserInfo();
         renderPlayTimeRankLoading();

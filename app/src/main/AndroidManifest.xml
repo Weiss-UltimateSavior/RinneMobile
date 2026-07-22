@@ -11,6 +11,11 @@
     <!-- Required by LauncherAppPickerDialog's installed-application fallback. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <!-- 智能翻译：悬浮窗 + 截屏前台 Service -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Winlator 直启使用导出 Activity，不再依赖 Shizuku 权限。 -->
 
     <queries>
@@ -370,6 +375,18 @@
 
         <receiver
             android:name="com.apps.sync.LauncherSyncReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name="com.yuki.yukihub.translation.TranslationSettingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <service
+            android:name="com.yuki.yukihub.translation.OverlayTranslationService"
+            android:foregroundServiceType="mediaProjection"
             android:exported="false" />
 
     </application>

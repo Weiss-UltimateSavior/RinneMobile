@@ -360,6 +360,54 @@
                         android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/translationRow"
+                    style="@style/LauncherProfileActionGridItem"
+                    android:layout_marginEnd="5dp">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_translation" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="智能翻译" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/mysteryRow"
+                    style="@style/LauncherProfileActionGridItem"
+                    android:layout_marginStart="5dp"
+                    android:clickable="false"
+                    android:focusable="false">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_translation" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="神秘功能" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
