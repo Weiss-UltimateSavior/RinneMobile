@@ -44,8 +44,6 @@ import com.yuki.yukihub.util.AppExecutors;
 import com.yuki.yukihub.util.RxMainQueue;
 import com.yuki.yukihub.util.DevLogger;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +83,7 @@ public class LauncherManageFragment extends Fragment {
             });
 
     private final ActivityResultLauncher<String> backupCreateLauncher =
-            registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), uri -> {
+            registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
                 if (uri == null) return;
                 exportLocalBackup(uri);
             });
@@ -965,35 +963,34 @@ public class LauncherManageFragment extends Fragment {
     }
 
     private void confirmImportLocalBackup() {
-        showLauncherConfirmDialog("本地导入", "将从备份 JSON 导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？", "选择文件", () ->
-                backupOpenLauncher.launch(new String[]{"application/json", "text/*", "*/*"}));
+        showLauncherConfirmDialog("本地导入", "将从备份文件（.ykbak 或 .json）导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？", "选择文件", () ->
+                backupOpenLauncher.launch(new String[]{"application/octet-stream", "application/json", "text/*", "*/*"}));
     }
 
     private void importLocalBackup(Uri uri) {
+        // P9: 与同文件其他导入路径一致，加 importInProgress 标志防止重复触发并发导入
+        if (importInProgress) return;
+        importInProgress = true;
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             try {
-                String text = readTextFromUri(uri);
-                JSONObject root = new JSONObject(text);
-                if (!"YukiHub".equals(root.optString("app", ""))) {
-                    mainQueue.post(() -> {
-                        if (!isAdded()) return;
-                        showLauncherConfirmDialog("导入失败", "不是有效的 YukiHub 备份", "知道了", () -> {});
-                    });
-                    return;
-                }
-                LauncherSyncBridge.importLocalBackup(appContext, root);
+                // P1+P6+P8: 复用桥接层 readBytesFromUri（带 32MB 双重检查）和 importLocalBackupFromBytes
+                // （自动 gzip 解压 + schema 校验 + 导入），避免 Fragment 绕过桥接层直调 SyncManager
+                byte[] rawBytes = LauncherSyncBridge.readBytesFromUri(appContext, uri);
+                JSONObject root = LauncherSyncBridge.importLocalBackupFromBytes(appContext, rawBytes);
                 int gameCount = root.optJSONArray("games") == null ? 0 : root.optJSONArray("games").length();
                 int sessionCount = root.optJSONArray("play_sessions") == null ? 0 : root.optJSONArray("play_sessions").length();
                 int metaCount = root.optJSONArray("metadata_cache") == null ? 0 : root.optJSONArray("metadata_cache").length();
                 mainQueue.post(() -> {
                     if (!isAdded()) return;
+                    importInProgress = false;
                     showLauncherConfirmDialog("导入成功", "游戏 " + gameCount + "，记录 " + sessionCount + "，元数据 " + metaCount, "知道了", () -> {});
                 });
             } catch (Throwable t) {
                 Log.e("LauncherManage", "import backup failed", t);
                 mainQueue.post(() -> {
                     if (!isAdded()) return;
+                    importInProgress = false;
                     showLauncherConfirmDialog("导入失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
                 });
             }
@@ -1002,7 +999,7 @@ public class LauncherManageFragment extends Fragment {
 
     private void exportLocalBackupToFile() {
         try {
-            backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".json");
+            backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".ykbak");
         } catch (Throwable t) {
             showLauncherConfirmDialog("导出失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
         }
@@ -1012,17 +1009,17 @@ public class LauncherManageFragment extends Fragment {
         android.content.Context appContext = requireContext().getApplicationContext();
         AppExecutors.runOnSingle(() -> {
             try {
-                JSONObject root = LauncherSyncBridge.exportLocalBackup(appContext);
-                byte[] bytes = root.toString(2).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                LauncherSyncBridge.GzipBackup backup = LauncherSyncBridge.exportLocalBackupAsGzip(appContext);
                 try (java.io.OutputStream out = appContext.getContentResolver().openOutputStream(uri)) {
                     if (out == null) throw new Exception("openOutputStream failed");
-                    out.write(bytes);
+                    out.write(backup.bytes);
                     out.flush();
                 }
-                int sizeKb = bytes.length / 1024;
+                int compressedKb = backup.bytes.length / 1024;
+                int originalKb = backup.originalSize / 1024;
                 mainQueue.post(() -> {
                     if (!isAdded()) return;
-                    showLauncherConfirmDialog("导出成功", "备份大小：" + sizeKb + "KB", "知道了", () -> {});
+                    showLauncherConfirmDialog("导出成功", "备份大小：" + compressedKb + "KB（压缩后，原始 " + originalKb + "KB）", "知道了", () -> {});
                 });
             } catch (Throwable t) {
                 Log.e("LauncherManage", "export backup failed", t);
@@ -1032,17 +1029,6 @@ public class LauncherManageFragment extends Fragment {
                 });
             }
         });
-    }
-
-    private String readTextFromUri(Uri uri) throws Exception {
-        try (InputStream in = requireContext().getContentResolver().openInputStream(uri);
-             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            if (in == null) throw new Exception("openInputStream failed");
-            byte[] buf = new byte[8192];
-            int len;
-            while ((len = in.read(buf)) != -1) bos.write(buf, 0, len);
-            return bos.toString("UTF-8");
-        }
     }
 
     // ==================== 跨端同步 ====================

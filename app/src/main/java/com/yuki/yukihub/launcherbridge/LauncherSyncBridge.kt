@@ -48,14 +48,13 @@ object LauncherSyncBridge {
         SyncManager(context.applicationContext).saveConfig(serverUrl, username, password, autoSync)
     }
 
-    @JvmStatic
     @Throws(Exception::class)
-    fun exportLocalBackup(context: Context?): JSONObject {
+    private fun exportLocalBackup(context: Context?): JSONObject {
         if (context == null) throw Exception("上下文不可用")
         val root = SyncManager(context.applicationContext).exportSnapshotForLocalBackup()
         root.put("created_at", System.currentTimeMillis())
         root.put("backup_type", "local_full")
-        root.put("note", "Local backup uses the same schema as WebDAV sync, but keeps full play session history.")
+        root.put("note", "Local backup keeps the latest 30 play sessions. Uses gzip compression.")
         return root
     }
 
@@ -70,14 +69,60 @@ object LauncherSyncBridge {
         SyncManager(context.applicationContext).importSnapshotFromLocalBackup(snapshot)
     }
 
+    /**
+     * 导出本地备份为 gzip 压缩字节数组（.ykbak 格式）。
+     * 压缩率高，比纯 JSON 省约 6 倍存储空间。
+     *
+     * @return [GzipBackup] 包含压缩后字节和原始 JSON 字节大小
+     */
     @JvmStatic
     @Throws(Exception::class)
-    fun importLocalBackupFromUri(context: Context?, uri: Uri?) {
+    fun exportLocalBackupAsGzip(context: Context?): GzipBackup {
         if (context == null) throw Exception("上下文不可用")
-        if (uri == null) throw Exception("备份文件不可用")
-        val text = readTextFromUri(context, uri)
+        val root = exportLocalBackup(context)
+        val jsonText = root.toString(2)
+        val jsonBytes = jsonText.toByteArray(Charsets.UTF_8)
+        val compressed = SyncManager.compressGzip(jsonText)
+        return GzipBackup(compressed, jsonBytes.size)
+    }
+
+    /**
+     * 从原始字节数组导入本地备份，自动检测 gzip 格式（兼容老的纯 JSON 备份）。
+     *
+     * @param bytes 备份文件的原始字节（gzip 压缩或纯 JSON）
+     * @return 解析后的根 JSON 对象，供调用方展示导入统计
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun importLocalBackupFromBytes(context: Context?, bytes: ByteArray?): JSONObject {
+        if (context == null) throw Exception("上下文不可用")
+        if (bytes == null || bytes.isEmpty()) throw Exception("备份内容为空")
+        // 本地备份解压上限与导出端 MAX_LOCAL_BACKUP_BYTES 一致（32MB），避免 16-32MB 备份无法导入
+        val text = SyncManager.decompressIfGzip(bytes, SyncManager.MAX_LOCAL_BACKUP_BYTES)
         val root = JSONObject(text)
         importLocalBackup(context, root)
+        return root
+    }
+
+    /** gzip 压缩备份结果。 */
+    class GzipBackup(
+        @JvmField val bytes: ByteArray,
+        @JvmField val originalSize: Int
+    )
+
+    /**
+     * 从 Uri 导入本地备份：读取字节后委托给 [importLocalBackupFromBytes]，
+     * 避免重复解压/校验/导入逻辑。
+     *
+     * @return 解析后的根 JSON 对象，供调用方展示导入统计
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun importLocalBackupFromUri(context: Context?, uri: Uri?): JSONObject {
+        if (context == null) throw Exception("上下文不可用")
+        if (uri == null) throw Exception("备份文件不可用")
+        val bytes = readBytesFromUri(context, uri)
+        return importLocalBackupFromBytes(context, bytes)
     }
 
     /**
@@ -115,8 +160,13 @@ object LauncherSyncBridge {
         }
     }
 
+    /**
+     * 读取 Uri 对应文件为字节数组，带双重大小限制（文件描述符声明长度 + 流式累计长度），
+     * 防止异常大文件撑爆内存。
+     */
+    @JvmStatic
     @Throws(Exception::class)
-    private fun readTextFromUri(context: Context, uri: Uri): String {
+    fun readBytesFromUri(context: Context, uri: Uri): ByteArray {
         var declaredLength = -1L
         try {
             val descriptor: AssetFileDescriptor? =
@@ -142,7 +192,7 @@ object LauncherSyncBridge {
                 }
                 bos.write(buf, 0, len)
             }
-            return bos.toString("UTF-8")
+            return bos.toByteArray()
         }
     }
 

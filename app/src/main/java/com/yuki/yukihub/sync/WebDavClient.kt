@@ -143,14 +143,6 @@ class WebDavClient(serverUrl: String, username: String, password: String) {
     }
 
     /**
-     * 读取文件内容
-     */
-    @Throws(IOException::class)
-    fun readFile(path: String): ByteArray {
-        return readFileLimited(path, DEFAULT_MAX_DOWNLOAD_BYTES)
-    }
-
-    /**
      * 读取文件内容，可选限制最大字节数。调用同步/导入路径时必须传入上限，
      * 防止异常 WebDAV 服务端用未知长度的响应耗尽应用内存。
      */
@@ -174,29 +166,11 @@ class WebDavClient(serverUrl: String, username: String, password: String) {
     }
 
     /**
-     * 读取文件内容（字符串）
-     */
-    @Throws(IOException::class)
-    fun readText(path: String): String {
-        return String(readFile(path), StandardCharsets.UTF_8)
-    }
-
-    /**
-     * 读取文本文件并限制最大字节数，避免云端异常大文件撑爆内存。
-     * 流式读取，超过限制立即停止。
-     */
-    @Throws(IOException::class)
-    fun readTextLimited(path: String, maxBytes: Int): String {
-        if (maxBytes <= 0) throw IllegalArgumentException("maxBytes must be positive")
-        return String(readFileLimited(path, maxBytes.toLong()), StandardCharsets.UTF_8)
-    }
-
-    /**
-     * 写入文件
+     * 写入文件（二进制，用于 gzip 压缩数据）
      */
     @Throws(IOException::class)
     fun writeFile(path: String, data: ByteArray) {
-        val body = data.toRequestBody(MEDIA_TYPE_JSON)
+        val body = data.toRequestBody(MEDIA_TYPE_OCTET_STREAM)
         val request = Request.Builder()
             .url(resolveUrl(path))
             .put(body)
@@ -347,9 +321,8 @@ class WebDavClient(serverUrl: String, username: String, password: String) {
 
     companion object {
         private const val TAG = "WebDavClient"
-        private const val DEFAULT_MAX_DOWNLOAD_BYTES = 16L * 1024L * 1024L
 
-        private val MEDIA_TYPE_JSON = "application/json; charset=utf-8".toMediaType()
+        private val MEDIA_TYPE_OCTET_STREAM = "application/octet-stream".toMediaType()
         private val MEDIA_TYPE_XML = "application/xml".toMediaType()
 
         /**

@@ -9,7 +9,11 @@ import com.yuki.yukihub.data.YukiDatabaseHelper
 import com.yuki.yukihub.util.AppExecutors
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.Locale
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 class SyncManager(context: Context) {
     private val context: Context = context.applicationContext
@@ -89,7 +93,8 @@ class SyncManager(context: Context) {
                 var remoteHash = ""
                 val remoteExists = c.exists(REMOTE_FILE)
                 if (remoteExists) {
-                    remoteText = c.readTextLimited(REMOTE_FILE, MAX_REMOTE_SNAPSHOT_BYTES)
+                    val remoteBytes = c.readFileLimited(REMOTE_FILE, MAX_REMOTE_SNAPSHOT_BYTES.toLong())
+                    remoteText = decompressIfGzip(remoteBytes, MAX_REMOTE_SNAPSHOT_BYTES)
                     remote = JSONObject(remoteText)
                     if ("YukiHub" != remote.optString("app", "")) throw Exception("云端文件不是有效的 YukiHub 同步文件")
                     remoteHash = sha256(remoteText)
@@ -100,7 +105,7 @@ class SyncManager(context: Context) {
                 result.remoteBytes = if (remoteText == null) 0 else remoteText.toByteArray(Charsets.UTF_8).size
 
                 if (!remoteExists) {
-                    c.writeText(REMOTE_FILE, localText)
+                    c.writeFile(REMOTE_FILE, compressGzip(localText))
                     markSynced(localHash)
                     result.uploaded = true
                     listener?.onProgress("首次上传", true)
@@ -129,7 +134,7 @@ class SyncManager(context: Context) {
                     return@runOnSingle
                 }
                 if (localChanged && !remoteChanged) {
-                    c.writeText(REMOTE_FILE, localText)
+                    c.writeFile(REMOTE_FILE, compressGzip(localText))
                     markSynced(localHash)
                     result.uploaded = true
                     listener?.onProgress("上传本地修改", true)
@@ -157,13 +162,13 @@ class SyncManager(context: Context) {
                     markSynced(remoteHash)
                     result.downloaded = true
                 } else if (decision == RESOLVE_USE_LOCAL) {
-                    c.writeText(REMOTE_FILE, localText)
+                    c.writeFile(REMOTE_FILE, compressGzip(localText))
                     markSynced(localHash)
                     result.uploaded = true
                 } else {
                     val merged = mergeSnapshots(local, remote!!)
                     val mergedText = snapshotToText(merged, MAX_REMOTE_SNAPSHOT_BYTES, "合并后的同步快照")
-                    c.writeText(REMOTE_FILE, mergedText)
+                    c.writeFile(REMOTE_FILE, compressGzip(mergedText))
                     markSynced(sha256(mergedText))
                     result.merged = true
                 }
@@ -177,7 +182,8 @@ class SyncManager(context: Context) {
 
     @Throws(Exception::class)
     fun exportSnapshotForLocalBackup(): JSONObject {
-        val snapshot = buildLocalSnapshot(-1)
+        // 本地备份同样限制游玩记录数量，避免备份文件过大
+        val snapshot = buildLocalSnapshot(MAX_PLAY_SESSIONS)
         snapshotToText(snapshot, MAX_LOCAL_BACKUP_BYTES, "本地完整备份")
         return snapshot
     }
@@ -406,7 +412,12 @@ class SyncManager(context: Context) {
         private const val KEY_UI_SCALE = "ui_scale"
 
         // 游戏库/游戏卡片信息必须完整同步；只限制动态类数据（游玩记录）数量。
-        private const val MAX_PLAY_SESSIONS = 200
+        // WebDAV 同步和本地备份统一限制，保持一致。
+        //
+        // 迁移风险：从旧版本（MAX_PLAY_SESSIONS=200）升级后，首次同步会用本地 30 条覆写云端
+        // 最多 200 条历史记录，导致最多 170 条旧记录丢失。这是有意调整：控制文件大小并聚焦近期记录。
+        // 如需保留完整历史，用户应在升级前手动导出本地备份。
+        private const val MAX_PLAY_SESSIONS = 30
 
         @Throws(Exception::class)
         private fun snapshotToText(root: JSONObject?, maxBytes: Int, label: String): String {
@@ -416,6 +427,52 @@ class SyncManager(context: Context) {
                 throw Exception("${label}过大（${bytes} 字节，最大允许 ${maxBytes} 字节）")
             }
             return text
+        }
+
+        /**
+         * 将 JSON 文本 gzip 压缩为 byte[]，用于 WebDAV 上传和本地备份写入。
+         */
+        @Throws(Exception::class)
+        internal fun compressGzip(text: String?): ByteArray {
+            val raw = (text ?: "").toByteArray(Charsets.UTF_8)
+            val bos = ByteArrayOutputStream(maxOf(256, raw.size / 4))
+            GZIPOutputStream(bos).use { gzip ->
+                gzip.write(raw)
+                gzip.finish()
+            }
+            return bos.toByteArray()
+        }
+
+        /**
+         * 读取 WebDAV / 本地备份的 byte[] 数据，自动检测 gzip 格式并解压。
+         * 兼容老的纯 JSON 云端文件：如果不是 gzip 格式（没有 0x1f 0x8b 魔数），直接当 UTF-8 文本返回。
+         *
+         * @param data 原始字节数据
+         * @param maxBytes 解压输出最大字节数，防止压缩放大攻击。
+         *                 WebDAV 远程快照用 [MAX_REMOTE_SNAPSHOT_BYTES]（16MB），
+         *                 本地备份用 [MAX_LOCAL_BACKUP_BYTES]（32MB），须与导出端限制一致。
+         */
+        @Throws(Exception::class)
+        internal fun decompressIfGzip(data: ByteArray?, maxBytes: Int): String {
+            if (data == null || data.isEmpty()) return ""
+            // gzip 文件头: 0x1f 0x8b
+            if (data.size >= 2 && (data[0].toInt() and 0xff) == 0x1f && (data[1].toInt() and 0xff) == 0x8b) {
+                GZIPInputStream(ByteArrayInputStream(data)).use { gzip ->
+                    val bos = ByteArrayOutputStream()
+                    val buf = ByteArray(8192)
+                    var len: Int
+                    while (gzip.read(buf).also { len = it } != -1) {
+                        // 写入前校验，避免越过限制最多 buf.length-1 字节才抛出
+                        if (bos.size() + len > maxBytes) {
+                            throw Exception("解压数据超过大小限制（${maxBytes} 字节）")
+                        }
+                        bos.write(buf, 0, len)
+                    }
+                    return bos.toString("UTF-8")
+                }
+            }
+            // 不是 gzip，按纯 JSON 文本处理（兼容老格式）
+            return String(data, Charsets.UTF_8)
         }
     }
 

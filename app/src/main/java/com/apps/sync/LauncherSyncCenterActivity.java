@@ -26,10 +26,7 @@ import com.yuki.yukihub.databinding.ActivityLauncherSyncCenterBinding;
 import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
 import com.yuki.yukihub.util.AppExecutors;
 
-import org.json.JSONObject;
-
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
@@ -40,6 +37,12 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> backupCreateLauncher;
     private ActivityResultLauncher<String[]> backupOpenLauncher;
     private ActivityLauncherSyncCenterBinding binding;
+
+    /**
+     * 导入防重复触发标志：与 LauncherManageFragment 保持一致，
+     * 避免极端时序下用户连续点击触发并发导入。
+     */
+    private boolean importInProgress;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,7 +61,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     }
 
     private void registerBackupLaunchers() {
-        backupCreateLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), uri -> {
+        backupCreateLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
             if (uri != null) exportLocalBackup(uri);
         });
         backupOpenLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
@@ -82,7 +85,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         binding.btnSave.setOnClickListener(v -> saveConfig());
         binding.btnTest.setOnClickListener(v -> testConnection());
         binding.btnSyncNow.setOnClickListener(v -> syncNow());
-        binding.btnExport.setOnClickListener(v -> backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".json"));
+        binding.btnExport.setOnClickListener(v -> backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".ykbak"));
         binding.btnImport.setOnClickListener(v -> showImportConfirmDialog());
     }
 
@@ -186,9 +189,9 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         LauncherDialogFactory.showLongMessageConfirm(
                 this,
                 "本地导入",
-                "将从备份 JSON 导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？",
+                "将从备份文件（.ykbak 或 .json）导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？",
                 "选择文件",
-                () -> backupOpenLauncher.launch(new String[]{"application/json", "text/*", "*/*"})
+                () -> backupOpenLauncher.launch(new String[]{"application/octet-stream", "application/json", "text/*", "*/*"})
         );
     }
 
@@ -196,14 +199,13 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         Toast.makeText(this, "正在导出备份...", Toast.LENGTH_SHORT).show();
         AppExecutors.runOnSingle(() -> {
             try {
-                JSONObject root = LauncherSyncBridge.exportLocalBackup(this);
-                byte[] bytes = root.toString(2).getBytes(StandardCharsets.UTF_8);
+                LauncherSyncBridge.GzipBackup backup = LauncherSyncBridge.exportLocalBackupAsGzip(this);
                 try (OutputStream out = getContentResolver().openOutputStream(uri)) {
                     if (out == null) throw new Exception("openOutputStream failed");
-                    out.write(bytes);
+                    out.write(backup.bytes);
                     out.flush();
                 }
-                runOnUiThread(() -> Toast.makeText(this, "备份完成：" + (bytes.length / 1024) + "KB", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this, "备份完成：" + (backup.bytes.length / 1024) + "KB（压缩后，原始 " + (backup.originalSize / 1024) + "KB）", Toast.LENGTH_LONG).show());
             } catch (Throwable t) {
                 Log.e("YukiHub", "export backup failed", t);
                 runOnUiThread(() -> Toast.makeText(this, "备份失败：" + t.getMessage(), Toast.LENGTH_LONG).show());
@@ -212,14 +214,22 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     }
 
     private void importLocalBackup(Uri uri) {
+        if (importInProgress) return;
+        importInProgress = true;
         Toast.makeText(this, "正在导入备份...", Toast.LENGTH_SHORT).show();
         AppExecutors.runOnSingle(() -> {
             try {
                 LauncherSyncBridge.importLocalBackupFromUri(this, uri);
-                runOnUiThread(() -> Toast.makeText(this, "导入完成", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    importInProgress = false;
+                    Toast.makeText(this, "导入完成", Toast.LENGTH_LONG).show();
+                });
             } catch (Throwable t) {
                 Log.e("YukiHub", "import backup failed", t);
-                runOnUiThread(() -> Toast.makeText(this, "导入失败：" + t.getMessage(), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    importInProgress = false;
+                    Toast.makeText(this, "导入失败：" + t.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
