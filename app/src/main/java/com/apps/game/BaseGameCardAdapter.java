@@ -177,8 +177,12 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
                 binding.launcherGamePlayStatus.setTextColor(text);
             }
             if (posterStyle) {
-                binding.launcherGamePosterTitle.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
-                binding.launcherGamePosterStatus.setTextColor(LauncherTheme.textMuted(binding.getRoot().getContext()));
+                binding.launcherGamePosterTitle.setTextColor(favorite
+                        ? LauncherTheme.primary(binding.getRoot().getContext())
+                        : LauncherTheme.text(binding.getRoot().getContext()));
+                binding.launcherGamePosterStatus.setTextColor(favorite
+                        ? LauncherTheme.primary(binding.getRoot().getContext())
+                        : LauncherTheme.textMuted(binding.getRoot().getContext()));
             }
         }
         void recycle() { LauncherCoverLoader.clear(binding.launcherGameCover); }
