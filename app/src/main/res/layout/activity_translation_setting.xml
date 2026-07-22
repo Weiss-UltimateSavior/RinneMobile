@@ -116,28 +116,10 @@
                 android:layout_marginTop="9dp"
                 android:text="保存配置" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:text="权限状态"
-                android:textColor="@color/launcher_text_color"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:lineSpacingExtra="2dp"
-                android:text="悬浮翻译需要悬浮窗权限和截屏权限才能正常工作。"
-                android:textColor="@color/launcher_text_muted_color"
-                android:textSize="11sp" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="13dp"
+                android:layout_marginTop="22dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -161,12 +143,13 @@
 
                 <TextView
                     android:id="@+id/translationOverlayButton"
-                    style="@style/LauncherShortSecondaryActionButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="31dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
+                    android:background="@null"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
                     android:text="授权" />
             </LinearLayout>
 

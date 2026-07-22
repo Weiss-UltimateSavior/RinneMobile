@@ -6,10 +6,12 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
 import android.media.Image
 import android.media.projection.MediaProjection
@@ -20,14 +22,18 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.Gravity
+import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.appcompat.app.AlertDialog
+import com.apps.theme.LauncherDialogFactory
 import com.yuki.yukihub.util.AppExecutors
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -66,6 +72,7 @@ class OverlayTranslationService : Service() {
     private lateinit var captureHandler: Handler
     private var captureThread: android.os.HandlerThread? = null
     private var floatingButton: View? = null
+    private var floatingButtonParams: WindowManager.LayoutParams? = null
     private var resultCard: View? = null
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: android.hardware.display.VirtualDisplay? = null
@@ -73,6 +80,13 @@ class OverlayTranslationService : Service() {
     @Volatile private var latestImage: Image? = null
     private var isTranslating = false
     private var projectionReady = false
+    private var closeConfirmDialog: AlertDialog? = null
+    private lateinit var themePreferences: SharedPreferences
+    private val themePreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "launcher_theme_style") {
+            handler.post { refreshFloatingButtonTheme() }
+        }
+    }
 
     private val projectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
@@ -91,6 +105,8 @@ class OverlayTranslationService : Service() {
         super.onCreate()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         handler = Handler(Looper.getMainLooper())
+        themePreferences = getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE)
+        themePreferences.registerOnSharedPreferenceChangeListener(themePreferenceListener)
         captureThread = android.os.HandlerThread("TranslationCapture").also { it.start() }
         captureHandler = Handler(captureThread!!.looper)
         startForegroundCompat()
@@ -102,6 +118,9 @@ class OverlayTranslationService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (::themePreferences.isInitialized) {
+            themePreferences.unregisterOnSharedPreferenceChangeListener(themePreferenceListener)
+        }
         removeFloatingButton()
         removeResultCard()
         teardownCapture()
@@ -256,18 +275,34 @@ class OverlayTranslationService : Service() {
      */
     private fun showFloatingButton() {
         val button = createFloatingButton()
-        val params = createOverlayParams().apply {
+        val params = floatingButtonParams ?: createOverlayParams().apply {
             gravity = Gravity.TOP or Gravity.START
-            x = resources.displayMetrics.widthPixels - dp(82)
+            x = resources.displayMetrics.widthPixels - dp(51)
             y = dp(80)
         }
+        // WindowManager 会用自身的 LayoutParams 覆盖 View 的初始 LayoutParams；
+        // 显式固定窗口尺寸，避免圆形按钮随内部图标缩小而一起缩小。
+        params.width = dp(35)
+        params.height = dp(35)
         setupButtonTouchListener(button, params)
         windowManager.addView(button, params)
         floatingButton = button
+        floatingButtonParams = params
+    }
+
+    /** Rebuilds the overlay so its color and logo track the newly selected Launcher theme. */
+    private fun refreshFloatingButtonTheme() {
+        if (floatingButton == null) return
+        removeFloatingButton()
+        try {
+            showFloatingButton()
+        } catch (error: Exception) {
+            Log.e(TAG, "refreshFloatingButtonTheme failed", error)
+        }
     }
 
     private fun createFloatingButton(): View {
-        val size = dp(66)
+        val size = dp(35)
         // 跟随主题色调：取主题 primary 色，叠加 80% 不透明度（与原 #CC18B978 视觉一致）
         val primaryColor = com.apps.theme.LauncherTheme.primary(this)
         val buttonColor = (0xCC shl 24) or (primaryColor and 0x00FFFFFF)
@@ -285,7 +320,7 @@ class OverlayTranslationService : Service() {
         val icon = android.widget.ImageView(this).apply {
             scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
             adjustViewBounds = true
-            layoutParams = LinearLayout.LayoutParams(dp(29), dp(29))
+            layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
             setImageResource(currentThemeLogoRes())
             setColorFilter(Color.WHITE)
         }
@@ -310,11 +345,7 @@ class OverlayTranslationService : Service() {
     }
 
     private fun createOverlayParams(): WindowManager.LayoutParams {
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        else
-            @Suppress("DEPRECATION")
-            WindowManager.LayoutParams.TYPE_PHONE
+        val type = overlayWindowType()
         return WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -326,8 +357,8 @@ class OverlayTranslationService : Service() {
     }
 
     /**
-     * 按钮触摸处理：区分拖动与点击。
-     * 拖动更新悬浮位置；松手时若位移很小则视为点击，触发截图翻译。
+     * 按钮触摸处理：区分拖动、点击与长按。
+     * 拖动更新悬浮位置；点击触发截图翻译；长按打开关闭确认。
      */
     private fun setupButtonTouchListener(button: View, params: WindowManager.LayoutParams) {
         var initialX = 0
@@ -335,6 +366,14 @@ class OverlayTranslationService : Service() {
         var initialTouchX = 0f
         var initialTouchY = 0f
         var hasMoved = false
+        var longPressHandled = false
+        val longPress = Runnable {
+            if (!hasMoved) {
+                longPressHandled = true
+                button.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                showDisableTranslationConfirm()
+            }
+        }
         button.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -343,12 +382,17 @@ class OverlayTranslationService : Service() {
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                     hasMoved = false
+                    longPressHandled = false
+                    handler.postDelayed(longPress, ViewConfiguration.getLongPressTimeout().toLong())
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val dx = event.rawX - initialTouchX
                     val dy = event.rawY - initialTouchY
-                    if (Math.abs(dx) > dp(8) || Math.abs(dy) > dp(8)) hasMoved = true
+                    if (Math.abs(dx) > dp(8) || Math.abs(dy) > dp(8)) {
+                        hasMoved = true
+                        handler.removeCallbacks(longPress)
+                    }
                     params.x = initialX + dx.toInt()
                     params.y = initialY + dy.toInt()
                     try {
@@ -358,12 +402,43 @@ class OverlayTranslationService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!hasMoved) triggerTranslation()
+                    handler.removeCallbacks(longPress)
+                    if (!hasMoved && !longPressHandled) triggerTranslation()
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(longPress)
                     true
                 }
                 else -> false
             }
         }
+    }
+
+    private fun showDisableTranslationConfirm() {
+        if (closeConfirmDialog?.isShowing == true) return
+        // Service 上下文不继承 Activity 的 AppCompat 主题；统一 Launcher 弹窗需要显式包装主题。
+        val dialogContext = ContextThemeWrapper(this, com.yuki.yukihub.R.style.Theme_YukiHub_Launcher)
+        val dialog = LauncherDialogFactory.showOverlayConfirm(
+            dialogContext,
+            "关闭悬浮翻译",
+            "确定关闭悬浮翻译吗？",
+            "关闭",
+            {
+                TranslationConfigStore.setEnabled(this, false)
+                stopSelf()
+            },
+            overlayWindowType()
+        )
+        dialog.setOnDismissListener { closeConfirmDialog = null }
+        closeConfirmDialog = dialog
+    }
+
+    private fun overlayWindowType(): Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+    } else {
+        @Suppress("DEPRECATION")
+        WindowManager.LayoutParams.TYPE_PHONE
     }
 
     private fun removeFloatingButton() {
@@ -527,6 +602,10 @@ class OverlayTranslationService : Service() {
         }
         val progress = ProgressBar(this).apply {
             layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
+            indeterminateDrawable?.setColorFilter(
+                com.apps.theme.LauncherTheme.primary(this@OverlayTranslationService),
+                PorterDuff.Mode.SRC_IN
+            )
         }
         val text = TextView(this).apply {
             text = "正在翻译..."

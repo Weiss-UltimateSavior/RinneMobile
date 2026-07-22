@@ -49,6 +49,7 @@ class TranslationSettingActivity : AppCompatActivity() {
     private lateinit var overlayStatus: TextView
     private lateinit var overlayButton: TextView
     private lateinit var projectionStatus: TextView
+    private var awaitingOverlayPermissionResult = false
 
     private val projectionLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -111,6 +112,8 @@ class TranslationSettingActivity : AppCompatActivity() {
         // 显式应用主题色按钮样式（applyPrimaryTone 按 id 白名单匹配，自定义 id 不会被处理）
         LauncherTheme.primaryButton(saveButton)
         LauncherTheme.secondaryButton(testButton)
+        overlayButton.background = null
+        overlayButton.setTextColor(LauncherTheme.primary(this))
     }
 
     private fun renderConfig() {
@@ -257,6 +260,7 @@ class TranslationSettingActivity : AppCompatActivity() {
 
     private fun requestOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            awaitingOverlayPermissionResult = true
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
@@ -282,7 +286,8 @@ class TranslationSettingActivity : AppCompatActivity() {
         if (!hasOverlayPermission()) {
             Toast.makeText(this, "请先授权悬浮窗权限", Toast.LENGTH_SHORT).show()
             requestOverlayPermission()
-            return false
+            // 系统授权页返回后会接着申请截屏权限，开关在这段流程中应保持开启。
+            return true
         }
         if (OverlayTranslationService.projectionData == null) {
             requestProjectionPermission()
@@ -310,6 +315,15 @@ class TranslationSettingActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshPermissionStatus()
+        if (awaitingOverlayPermissionResult) {
+            awaitingOverlayPermissionResult = false
+            if (hasOverlayPermission() && OverlayTranslationService.projectionData == null) {
+                // 悬浮窗授权成功后，顺序申请截屏权限；点“授权”文字和开启开关都适用。
+                requestProjectionPermission()
+            } else if (!hasOverlayPermission() && enabledSwitch.isChecked) {
+                setEnabledSwitchChecked(false)
+            }
+        }
     }
 
     /**

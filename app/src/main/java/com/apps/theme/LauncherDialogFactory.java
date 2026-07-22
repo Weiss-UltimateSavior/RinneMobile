@@ -72,6 +72,29 @@ public final class LauncherDialogFactory {
         setContent(dialog, root, WIDTH_COMPACT_DP);
     }
 
+    /** Compact confirmation rendered with the standard Launcher shell in an overlay window. */
+    public static AlertDialog showOverlayConfirm(Context context, String title, String message,
+                                                 String confirmText, Runnable onConfirm,
+                                                 int windowType) {
+        AlertDialog dialog = open(context, WIDTH_COMPACT_DP, true, windowType);
+        View root = LayoutInflater.from(context).inflate(R.layout.dialog_launcher_confirm, null);
+        TextView titleView = root.findViewById(R.id.dialogTitle);
+        TextView messageView = root.findViewById(R.id.dialogMessage);
+        TextView cancel = root.findViewById(R.id.dialogBtnCancel);
+        TextView confirm = root.findViewById(R.id.dialogBtnConfirm);
+        titleView.setText(title);
+        messageView.setText(message);
+        confirm.setText(confirmText);
+        LauncherTheme.dialogButtons(cancel, confirm);
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        confirm.setOnClickListener(view -> {
+            dialog.dismiss();
+            if (onConfirm != null) onConfirm.run();
+        });
+        setContent(dialog, root, WIDTH_COMPACT_DP);
+        return dialog;
+    }
+
     /** Standard-width confirmation used by settings and account flows. */
     public static void showStandardConfirm(Context context, String title, String message,
                                            String confirmText, Runnable onConfirm) {
@@ -294,9 +317,17 @@ public final class LauncherDialogFactory {
     }
 
     private static AlertDialog open(Context context, int widthDp, boolean cancelable) {
+        return open(context, widthDp, cancelable, null);
+    }
+
+    private static AlertDialog open(Context context, int widthDp, boolean cancelable,
+                                    Integer windowType) {
         AlertDialog dialog = new AlertDialog.Builder(context).create();
         dialog.setCancelable(cancelable);
         dialog.setCanceledOnTouchOutside(cancelable);
+        if (windowType != null && dialog.getWindow() != null) {
+            dialog.getWindow().setType(windowType);
+        }
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
         Window window = dialog.getWindow();
