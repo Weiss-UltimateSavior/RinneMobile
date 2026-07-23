@@ -350,7 +350,6 @@ public class LauncherHomeFragment extends Fragment {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         addFeedbackOption(root, "GitHub 仓库", dialog, () -> openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile"));
-        addFeedbackOption(root, "YukiHub 官网", dialog, () -> openExternalUrl("https://yukihub.kesug.com/"));
         addFeedbackOption(root, "QQ 交流群", dialog, () -> openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info"));
 
         TextView cancel = new TextView(requireContext());
