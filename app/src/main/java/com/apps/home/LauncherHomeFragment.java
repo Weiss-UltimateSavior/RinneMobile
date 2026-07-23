@@ -168,11 +168,7 @@ public class LauncherHomeFragment extends Fragment {
         binding.actionToolbox.setOnClickListener(view ->
                 startLauncherActivity(new Intent(requireContext(), LauncherToolboxActivity.class)));
         binding.actionAgent.setOnClickListener(view ->
-                LauncherDialogFactory.showStandardConfirm(requireContext(),
-                        "本地智能体",
-                        "功能目前处于初期测试状态，可能会有不可预料的问题",
-                        "继续",
-                        () -> startLauncherActivity(new Intent(requireContext(), LocalAgentActivity.class))));
+                startLauncherActivity(new Intent(requireContext(), LocalAgentActivity.class)));
         binding.recentRefresh.setOnRefreshListener(() -> {
             viewModel.refreshStats();
             viewModel.refreshRecentItems(true);
