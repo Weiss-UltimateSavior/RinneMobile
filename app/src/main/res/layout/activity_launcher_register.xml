@@ -68,6 +68,31 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:text="输入邀请码"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <com.apps.widget.LauncherEditText
+                android:id="@+id/registerKey"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="7dp"
+                android:background="@drawable/launcher_account_input"
+                android:hint="输入你的邀请码"
+                android:inputType="text"
+                android:maxLength="7"
+                android:maxLines="1"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:textColor="@color/launcher_text_color"
+                android:textColorHint="@color/launcher_input_hint_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="输入邮箱"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
@@ -176,36 +201,12 @@
                 android:textColorHint="@color/launcher_input_hint_color"
                 android:textSize="13sp" />
 
-                <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="输入邀请码"
-                android:textColor="@color/launcher_text_muted_color"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-                <com.apps.widget.LauncherEditText
-                android:id="@+id/registerKey"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="7dp"
-                android:background="@drawable/launcher_account_input"
-                android:hint="输入你的邀请码"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:textColor="@color/launcher_text_color"
-                android:textColorHint="@color/launcher_input_hint_color"
-                android:textSize="13sp" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="9dp"
                 android:gravity="center"
-                android:text="密码至少 6 位；验证码有效期为 5 分钟"
+                android:text="邀请码验证通过后发送验证码；验证码有效期为 5 分钟"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp" />
 

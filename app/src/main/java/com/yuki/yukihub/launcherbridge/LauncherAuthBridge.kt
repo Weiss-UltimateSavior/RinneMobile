@@ -175,8 +175,24 @@ object LauncherAuthBridge {
 
     /** 发送注册邮箱验证码。 */
     @JvmStatic
-    fun sendRegistrationVerificationCode(context: Context, email: String, callback: SimpleCallback) {
-        sendEmailCode(context, "/auth/verify-code", email, "验证码发送失败", callback)
+    fun sendRegistrationVerificationCode(context: Context, email: String, inviteCode: String,
+                                         callback: SimpleCallback) {
+        AppExecutors.runOnIo {
+            try {
+                val body = JSONObject()
+                body.put("email", email)
+                body.put("deviceId", LauncherUserData.getRealtimePlaytimeDeviceId(context))
+                body.put("invite_code", inviteCode)
+                post("/auth/verify-code", body, null)
+                postMain { callback.onSuccess() }
+            } catch (t: Throwable) {
+                var message = normalizeEmailCodeError(parseErrorMessage(t, "验证码发送失败"))
+                if (message.contains("邀请码无效") || message.contains("已过期")) {
+                    message = "邀请码无效或已过期"
+                }
+                postMain { callback.onError(message) }
+            }
+        }
     }
 
     /** 发送密码重置验证码；该验证码与注册验证码在服务端独立存储。 */

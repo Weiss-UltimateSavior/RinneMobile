@@ -137,13 +137,18 @@ public class LauncherRegisterActivity extends AppCompatActivity {
 
     private void sendVerificationCode() {
         String email = binding.registerEmail.getText() == null ? "" : binding.registerEmail.getText().toString().trim();
+        String inviteCode = binding.registerKey.getText() == null ? "" : binding.registerKey.getText().toString().trim();
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             binding.registerEmail.setError("请输入正确的邮箱");
             return;
         }
+        if (!inviteCode.matches("[A-Za-z0-9]{7}")) {
+            binding.registerKey.setError("请输入 7 位邀请码");
+            return;
+        }
         binding.registerSendCode.setEnabled(false);
         binding.registerSendCode.setText("发送中...");
-        LauncherAuthBridge.sendRegistrationVerificationCode(this, email, new LauncherAuthBridge.SimpleCallback() {
+        LauncherAuthBridge.sendRegistrationVerificationCode(this, email, inviteCode, new LauncherAuthBridge.SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;
@@ -206,8 +211,8 @@ public class LauncherRegisterActivity extends AppCompatActivity {
             binding.registerPassword.setError("请输入密码");
             return;
         }
-        if (password.length() < 6) {
-            binding.registerPassword.setError("密码至少 6 位");
+        if (password.length() < 6 || password.length() > 128) {
+            binding.registerPassword.setError("密码需为 6-128 位");
             return;
         }
         if (!password.equals(confirmPassword)) {
