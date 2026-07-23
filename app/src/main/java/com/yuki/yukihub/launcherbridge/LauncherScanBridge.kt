@@ -194,7 +194,7 @@ object LauncherScanBridge {
                 defaultLaunchTargetForEngine(result.engine)
             else
                 result.launchTarget
-            game.emulatorPackage = emulatorPackageForResult(result)
+            game.emulatorPackage = emulatorPackageForResult(context, result)
             val restored = repository.findScannedMatch(game)
             if (restored != null) {
                 if (rootKey != GameRepository.normalizeRootUriKey(restored.rootUri)) {
@@ -308,7 +308,7 @@ object LauncherScanBridge {
         }
     }
 
-    private fun emulatorPackageForEngine(engine: EngineType?): String = when (engine) {
+    private fun emulatorPackageForEngine(engine: EngineType?, context: Context?): String = when (engine) {
         EngineType.KIRIKIRI -> "internal.krkr"
         EngineType.ONS -> "internal.ons"
         EngineType.TYRANO -> "internal.tyrano"
@@ -319,11 +319,55 @@ object LauncherScanBridge {
         EngineType.RPGMAKER -> "internal.rpgmxp"
         EngineType.RENPY -> "internal.renpy"
         EngineType.GODOT -> "internal.godot"
+        // Winlator 包名因改版众多（com.winlator / com.winlator.cmod / glibc / proot 等），
+        // 扫描阶段无法静态确定，需要探测设备上已安装的可启动 Winlator 系应用。
+        EngineType.WINLATOR -> guessInstalledWinlatorPackage(context)
         else -> ""
     }
 
+    /**
+     * 探测设备上已安装的 Winlator 系应用包名。
+     *
+     * 匹配规则与主分支 MainActivity.guessInstalledWinlatorPackage 一致，
+     * 关键词集合与 [com.yuki.yukihub.launcher.ExternalGameLaunchers] 的 isWinlatorPackage 同源：
+     * 包名或应用名包含 winlator / glibc / proot / mobox / winalator，且存在 Launcher Intent。
+     * 优先返回包名含 "cmod" 的改版；其次返回首个命中项；未命中返回空串。
+     */
+    private fun guessInstalledWinlatorPackage(context: Context?): String {
+        if (context == null) return ""
+        return try {
+            val pm = context.packageManager
+            // 仅需 packageName/label/LaunchIntent，不需要 meta-data，避免全量反序列化 Bundle 的开销。
+            val apps = pm.getInstalledApplications(0)
+            var fallback = ""
+            for (app in apps) {
+                if (app == null || app.packageName == null) continue
+                val pkg = app.packageName.lowercase(Locale.ROOT)
+                val label = try {
+                    pm.getApplicationLabel(app).toString().lowercase(Locale.ROOT)
+                } catch (_: Throwable) {
+                    ""
+                }
+                val hit = pkg.contains("winlator") || label.contains("winlator")
+                    || pkg.contains("glibc") || pkg.contains("proot")
+                    || pkg.contains("mobox") || pkg.contains("winalator")
+                if (!hit) continue
+                if (pm.getLaunchIntentForPackage(app.packageName) == null) continue
+                if (pkg.contains("cmod")) return app.packageName
+                if (fallback.isEmpty()) fallback = app.packageName
+            }
+            fallback
+        } catch (_: Throwable) {
+            ""
+        }
+    }
+
     @JvmStatic
-    fun emulatorPackageForResult(result: ScanResult?): String {
+    fun emulatorPackageForResult(result: ScanResult?): String =
+        emulatorPackageForResult(null, result)
+
+    @JvmStatic
+    fun emulatorPackageForResult(context: Context?, result: ScanResult?): String {
         if (result == null) return ""
         if (result.engine == EngineType.RPGMAKER) {
             val subtype = normalizeSubtype(result.rpgMakerSubtype)
@@ -343,7 +387,7 @@ object LauncherScanBridge {
                 return "internal.$subtype"
             }
         }
-        return emulatorPackageForEngine(result.engine)
+        return emulatorPackageForEngine(result.engine, context)
     }
 
     private fun normalizeSubtype(subtype: String?): String =

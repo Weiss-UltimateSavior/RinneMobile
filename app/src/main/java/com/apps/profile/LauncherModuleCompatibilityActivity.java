@@ -36,9 +36,9 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     private boolean rpgmModuleInstalled;
     private boolean renpyModuleInstalled;
     private boolean godotModuleInstalled;
-    private boolean rpgmModuleEnabled = true;
-    private boolean renpyModuleEnabled = true;
-    private boolean godotModuleEnabled = true;
+    private boolean rpgmModuleEnabled = false;
+    private boolean renpyModuleEnabled = false;
+    private boolean godotModuleEnabled = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

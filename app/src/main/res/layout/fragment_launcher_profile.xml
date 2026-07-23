@@ -341,18 +341,20 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/logoutRow"
+                    android:id="@+id/mysteryRow"
                     style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginStart="5dp">
+                    android:layout_marginStart="5dp"
+                    android:clickable="false"
+                    android:focusable="false">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
                         android:contentDescription="@null"
-                        android:src="@drawable/launcher_profile_action_logout" />
+                        android:src="@drawable/launcher_profile_action_translation" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="退出登录" />
+                        android:text="神秘功能" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -387,20 +389,18 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/mysteryRow"
+                    android:id="@+id/logoutRow"
                     style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginStart="5dp"
-                    android:clickable="false"
-                    android:focusable="false">
+                    android:layout_marginStart="5dp">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
                         android:contentDescription="@null"
-                        android:src="@drawable/launcher_profile_action_translation" />
+                        android:src="@drawable/launcher_profile_action_logout" />
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="神秘功能" />
+                        android:text="退出登录" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"

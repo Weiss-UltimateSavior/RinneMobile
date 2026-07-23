@@ -14,7 +14,7 @@ import java.util.Locale
  * - 安装探测：委托给 [ExternalRpgMakerPluginStrategy] /
  *   [ExternalRenPyPluginStrategy] / [ExternalGodotPluginStrategy]
  *   的 PackageManager 检查。
- * - 启用状态：保存在 `yukihub_prefs` 中，默认启用。
+ * - 启用状态：保存在 `yukihub_prefs` 中，默认不启用（用户需在「模块兼容」页面手动开启）。
  *   com.apps 通过本桥读写；[LauncherGameLaunchBridge] 在 validate 阶段拦截。
  *
  * com.apps 不得直接 import core.launcher 包，所有调用都走本桥。
@@ -43,18 +43,19 @@ object LauncherModuleBridge {
                 || ExternalGodotPluginStrategy.isPluginInstalled(context, ExternalGodotPluginStrategy.PLUGIN_PACKAGE_GODOT4)
 
     // ----- 启用状态 -----
+    // 默认不启用：用户需在「模块兼容」页面手动开启，才能使用外置 JoiPlay 插件启动游戏。
 
     @JvmStatic
     fun isRpgMakerModuleEnabled(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_RPGM_ENABLED, true)
+        getPrefs(context).getBoolean(KEY_RPGM_ENABLED, false)
 
     @JvmStatic
     fun isRenPyModuleEnabled(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_RENPY_ENABLED, true)
+        getPrefs(context).getBoolean(KEY_RENPY_ENABLED, false)
 
     @JvmStatic
     fun isGodotModuleEnabled(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_GODOT_ENABLED, true)
+        getPrefs(context).getBoolean(KEY_GODOT_ENABLED, false)
 
     @JvmStatic
     fun setRpgMakerModuleEnabled(context: Context, enabled: Boolean) {
