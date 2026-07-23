@@ -8,7 +8,6 @@ import android.os.CountDownTimer;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +22,7 @@ import com.yuki.yukihub.R;
 import com.yuki.yukihub.databinding.ActivityLauncherRegisterBinding;
 import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -55,8 +55,11 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         LauncherTheme.formInputs(binding.registerName, binding.registerEmail,
                 binding.registerVerificationCode, binding.registerPassword,
                 binding.registerConfirmPassword, binding.registerKey);
-        LauncherTheme.shortActionButton(binding.registerSendCode);
+        // 获取验证码为内联文字操作：去掉按钮背景，只留跟随主题色的文字。
+        binding.registerSendCode.setBackground(null);
+        binding.registerSendCode.setTextColor(LauncherTheme.primary(this));
         LauncherTheme.longActionButton(binding.registerCreate);
+        LauncherMotion.applyActivityOpen(this);
     }
 
     private void applySystemBarInsets() {
@@ -136,8 +139,8 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     }
 
     private void sendVerificationCode() {
-        String email = binding.registerEmail.getText() == null ? "" : binding.registerEmail.getText().toString().trim();
-        String inviteCode = binding.registerKey.getText() == null ? "" : binding.registerKey.getText().toString().trim();
+        String email = textOf(binding.registerEmail);
+        String inviteCode = textOf(binding.registerKey);
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             binding.registerEmail.setError("请输入正确的邮箱");
             return;
@@ -184,12 +187,12 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     }
 
     private void performRegister() {
-        String username = binding.registerName.getText() == null ? "" : binding.registerName.getText().toString().trim();
-        String email = binding.registerEmail.getText() == null ? "" : binding.registerEmail.getText().toString().trim();
-        String password = binding.registerPassword.getText() == null ? "" : binding.registerPassword.getText().toString().trim();
-        String confirmPassword = binding.registerConfirmPassword.getText() == null ? "" : binding.registerConfirmPassword.getText().toString().trim();
-        String inviteCode = binding.registerKey.getText() == null ? "" : binding.registerKey.getText().toString().trim();
-        String verificationCode = binding.registerVerificationCode.getText() == null ? "" : binding.registerVerificationCode.getText().toString().trim();
+        String username = textOf(binding.registerName);
+        String email = textOf(binding.registerEmail);
+        String password = textOf(binding.registerPassword);
+        String confirmPassword = textOf(binding.registerConfirmPassword);
+        String inviteCode = textOf(binding.registerKey);
+        String verificationCode = textOf(binding.registerVerificationCode);
 
         if (username.isEmpty()) {
             binding.registerName.setError("请输入用户名");
@@ -241,7 +244,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
                 Toast.makeText(LauncherRegisterActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
                 // 注册成功后返回，LauncherAccountFragment.onResume 会检测已登录状态并跳转到个人信息页
                 setResult(RESULT_OK);
-                finish();
+                LauncherMotion.finish(LauncherRegisterActivity.this);
             }
 
             @Override
@@ -262,47 +265,16 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     }
 
     private void showAuthResultDialog(String title, String message) {
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
+        LauncherDialogFactory.showInfo(this, title, message);
+    }
 
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
+    private String textOf(TextView view) {
+        return view.getText() == null ? "" : view.getText().toString().trim();
+    }
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(this);
-        titleView.setText(title);
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(this);
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(this);
-        okBtn.setText("知道了");
-        okBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
+    @Override
+    public void onBackPressed() {
+        LauncherMotion.finish(this);
     }
 
     private void configureEdgeToEdgeWindow() {

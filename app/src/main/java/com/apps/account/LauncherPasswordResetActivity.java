@@ -39,7 +39,9 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.formInputs(binding.resetEmail, binding.resetVerificationCode,
                 binding.resetPassword, binding.resetConfirmPassword);
-        LauncherTheme.shortActionButton(binding.resetSendCode);
+        // 获取验证码为内联文字操作：去掉按钮背景，只留跟随主题色的文字。
+        binding.resetSendCode.setBackground(null);
+        binding.resetSendCode.setTextColor(LauncherTheme.primary(this));
         LauncherTheme.longActionButton(binding.resetSubmit);
         binding.resetSendCode.setOnClickListener(view -> sendVerificationCode());
         binding.resetSubmit.setOnClickListener(view -> resetPassword());
