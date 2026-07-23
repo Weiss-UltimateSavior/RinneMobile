@@ -51,6 +51,7 @@ import com.apps.leaderboard.LauncherLeaderboardActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
+import com.apps.widget.AvatarCropActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.yuki.yukihub.translation.TranslationSettingActivity;
 
@@ -65,12 +66,21 @@ public class LauncherProfileFragment extends Fragment {
     private final ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) return;
-                copyImageToInternal(uri, "launcher_avatar.jpg", KEY_CUSTOM_AVATAR, this::applyAvatarImage, true);
+                startCrop(uri);
             });
     private final ActivityResultLauncher<PickVisualMediaRequest> coverPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) return;
                 copyImageToInternal(uri, "launcher_cover.jpg", KEY_CUSTOM_COVER, this::applyProfileBgImage, false);
+            });
+    private final ActivityResultLauncher<Intent> cropLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    String outputUri = result.getData().getStringExtra(AvatarCropActivity.EXTRA_OUTPUT_URI);
+                    if (outputUri != null && !outputUri.isEmpty()) {
+                        copyImageToInternal(Uri.parse(outputUri), "launcher_avatar.jpg", KEY_CUSTOM_AVATAR, this::applyAvatarImage, true);
+                    }
+                }
             });
 
     @Nullable
@@ -458,6 +468,12 @@ public class LauncherProfileFragment extends Fragment {
                                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                                 .build())
         );
+    }
+
+    private void startCrop(Uri sourceUri) {
+        Intent intent = new Intent(requireContext(), AvatarCropActivity.class);
+        intent.putExtra(AvatarCropActivity.EXTRA_INPUT_URI, sourceUri.toString());
+        cropLauncher.launch(intent);
     }
 
     private void copyImageToInternal(Uri sourceUri, String fileName, String prefsKey, Runnable onDone, boolean syncToHome) {

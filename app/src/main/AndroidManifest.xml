@@ -265,6 +265,13 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
+            android:name="com.apps.widget.AvatarCropActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
             android:name="org.tvp.kirikiri2.KR2Activity"
             android:exported="false"
             android:process=":kirikiri2"

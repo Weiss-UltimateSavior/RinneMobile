@@ -54,6 +54,7 @@ import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
 import com.apps.theme.LauncherThemeMenuActivity;
+import com.apps.widget.AvatarCropActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherHomeFragment extends Fragment {
@@ -64,15 +65,27 @@ public class LauncherHomeFragment extends Fragment {
 
     private FragmentLauncherHomeBinding binding;
     private LauncherViewModel viewModel;
-    private ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher;
+    private final ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri == null) return;
+                startCrop(uri);
+            });
+    private final ActivityResultLauncher<Intent> cropLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    String outputUri = result.getData().getStringExtra(AvatarCropActivity.EXTRA_OUTPUT_URI);
+                    if (outputUri != null && !outputUri.isEmpty()) {
+                        copyAvatarToInternal(Uri.parse(outputUri));
+                    }
+                }
+            });
     private long runningSessionId = -1L;
     private long runningGameId = -1L;
 
-    public LauncherHomeFragment() {
-        avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-            if (uri == null) return;
-            copyAvatarToInternal(uri);
-        });
+    private void startCrop(Uri sourceUri) {
+        Intent intent = new Intent(requireContext(), AvatarCropActivity.class);
+        intent.putExtra(AvatarCropActivity.EXTRA_INPUT_URI, sourceUri.toString());
+        cropLauncher.launch(intent);
     }
 
     @Nullable
