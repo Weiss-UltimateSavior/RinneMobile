@@ -328,6 +328,9 @@ public class LauncherActivity extends AppCompatActivity {
             return;
         }
 
+        // 根据底部导航顺序判断左右方向：切到右侧 tab 时新页从右进、旧页往左出；反之亦然。
+        int fromIndex = currentNavItem != null ? currentNavItem.ordinal() : 0;
+        boolean toRight = navItem.ordinal() >= fromIndex;
         currentNavItem = navItem;
         Fragment fragment;
         if (navItem == LauncherViewModel.NavItem.HOME) {
@@ -342,14 +345,11 @@ public class LauncherActivity extends AppCompatActivity {
             fragment = LauncherPlaceholderFragment.newInstance(placeholderTitle(navItem));
         }
 
+        int enterAnim = toRight ? R.anim.launcher_fragment_enter : R.anim.launcher_fragment_enter_back;
+        int exitAnim = toRight ? R.anim.launcher_fragment_exit : R.anim.launcher_fragment_exit_back;
         getSupportFragmentManager()
                 .beginTransaction()
-                .setCustomAnimations(
-                        R.anim.launcher_fragment_enter,
-                        R.anim.launcher_fragment_exit,
-                        R.anim.launcher_fragment_enter,
-                        R.anim.launcher_fragment_exit
-                )
+                .setCustomAnimations(enterAnim, exitAnim, enterAnim, exitAnim)
                 .replace(R.id.launcherFragmentContainer, fragment, "launcher_" + navItem.name())
                 .commit();
     }

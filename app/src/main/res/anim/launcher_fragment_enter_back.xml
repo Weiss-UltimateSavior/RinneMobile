@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 向右切换时新页进入：从右侧 100% 平移到 0% -->
+<!-- 向左切换时新页进入：从左侧 -100% 平移到 0% -->
 <set xmlns:android="http://schemas.android.com/apk/res/android"
     android:interpolator="@android:interpolator/decelerate_quad">
     <translate
         android:duration="280"
-        android:fromXDelta="100%"
+        android:fromXDelta="-100%"
         android:toXDelta="0%" />
 </set>

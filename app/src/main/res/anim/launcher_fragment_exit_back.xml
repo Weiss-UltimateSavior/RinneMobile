@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 向右切换时旧页退出：从 0% 平移到左侧 -100% -->
+<!-- 向左切换时旧页退出：从 0% 平移到右侧 100% -->
 <set xmlns:android="http://schemas.android.com/apk/res/android"
     android:interpolator="@android:interpolator/accelerate_quad">
     <translate
         android:duration="280"
         android:fromXDelta="0%"
-        android:toXDelta="-100%" />
+        android:toXDelta="100%" />
 </set>
