@@ -113,7 +113,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         boolean configured = LauncherSyncBridge.isConfigured(this);
         long last = LauncherSyncBridge.lastSyncTime(this);
         StringBuilder sb = new StringBuilder();
-        sb.append("状态：").append(configured ? "已配置" : "未配置");
+        sb.append("游戏状态：").append(configured ? "已配置" : "未配置");
         if (configured) {
             sb.append("\n上次同步：");
             sb.append(last > 0 ? DateFormat.format("yyyy-MM-dd HH:mm", last) : "尚未同步");

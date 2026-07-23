@@ -649,7 +649,7 @@ private void loadNextPage(boolean forceFullRefresh) {
     private void showGameActionMenu(Game game) {
         if (game == null) return;
         PadDialogFactory.showActionChoices(requireContext(), safeTitle(game),
-                new String[]{"详情", "状态", "修改时长", "更多选项"}, -1, index -> {
+                new String[]{"游戏详情", "游戏状态", "修改时长", "更多选项"}, -1, index -> {
                     switch (index) {
                         case 0: showGameDetailDialog(game); break;
                         case 1: showPlayStatusDialog(game); break;

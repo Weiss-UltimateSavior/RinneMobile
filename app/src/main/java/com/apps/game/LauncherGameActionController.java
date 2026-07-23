@@ -82,11 +82,11 @@ public final class LauncherGameActionController {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle(safeTitle(game)));
-        addAction(root, "详情", dialog, () -> showGameDetailDialog(game));
+        addAction(root, "游戏详情", dialog, () -> showGameDetailDialog(game));
         if (includeEditAction) {
-            addAction(root, "编辑", dialog, () -> host.editGame(game));
+            addAction(root, "编辑游戏", dialog, () -> host.editGame(game));
         }
-        addAction(root, "状态", dialog, () -> showPlayStatusDialog(game));
+        addAction(root, "游戏状态", dialog, () -> showPlayStatusDialog(game));
         addAction(root, game.favorite ? "取消收藏" : "添加收藏", dialog, () -> toggleFavorite(game));
         addAction(root, "更多选项", dialog, () -> showMoreOptionsDialog(game));
         root.addView(createDialogCancelButton(dialog));
