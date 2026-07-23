@@ -144,7 +144,11 @@ public final class PadDialogFactory {
         int choiceCount = choices == null ? 0 : choices.length;
         int listHeight = choiceCount * 36 + Math.max(0, choiceCount - 1) * 11;
         LinearLayout.LayoutParams scrollParams = topMargin(context, 11);
-        scrollParams.height = Math.min(dp(context, 252), dp(context, listHeight));
+        int maxScrollHeight = Math.min(dp(context, 252), dp(context, listHeight));
+        int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
+        int reservedHeight = dp(context, 160);
+        int availableHeight = Math.max(0, screenHeight - reservedHeight);
+        scrollParams.height = Math.min(maxScrollHeight, availableHeight);
         root.addView(scroll, scrollParams);
 
         TextView cancel = cancelButton(context);
@@ -178,7 +182,11 @@ public final class PadDialogFactory {
         scroll.addView(list);
         int listHeight = optionCount * (38 + 7);
         LinearLayout.LayoutParams scrollParams = topMargin(context, 7);
-        scrollParams.height = Math.min(dp(context, 280), dp(context, listHeight));
+        int maxScrollHeight = Math.min(dp(context, 280), dp(context, listHeight));
+        int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
+        int reservedHeight = dp(context, 160);
+        int availableHeight = Math.max(0, screenHeight - reservedHeight);
+        scrollParams.height = Math.min(maxScrollHeight, availableHeight);
         root.addView(scroll, scrollParams);
         TextView cancel = cancelButton(context);
         cancel.setOnClickListener(view -> dialog.dismiss());
@@ -326,7 +334,7 @@ public final class PadDialogFactory {
         return params;
     }
 
-    private static int dialogWidthPx(Context context, int widthDp) {
+    public static int dialogWidthPx(Context context, int widthDp) {
         int densityWidth = dp(context, widthDp);
         int horizontalMargin = dp(context, 48);
         int availableWidth = context.getResources().getDisplayMetrics().widthPixels - horizontalMargin;

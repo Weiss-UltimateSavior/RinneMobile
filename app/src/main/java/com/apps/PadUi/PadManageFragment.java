@@ -189,7 +189,7 @@ public class PadManageFragment extends Fragment {
                 android.view.Window window = dialog.getWindow();
                 if (window != null) {
                     window.setContentView(root);
-                    window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+                    window.setLayout(PadDialogFactory.dialogWidthPx(requireContext(), PadDialogFactory.WIDTH_CONFIRM_DP), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
                 }
             }
         } else if (Build.VERSION.SDK_INT >= 23) {
@@ -879,7 +879,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
         if (window != null) {
-            window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setLayout(PadDialogFactory.dialogWidthPx(requireContext(), PadDialogFactory.WIDTH_CONFIRM_DP), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
 
         totalInput.requestFocus();
@@ -951,14 +951,18 @@ private void loadNextPage(boolean forceFullRefresh) {
         info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
         info.setTextSize(12);
         info.setLineSpacing(dp(4), 1f);
+        info.setMaxLines(14);
+        info.setVerticalScrollBarEnabled(true);
+        info.setMovementMethod(android.text.method.ScrollingMovementMethod.getInstance());
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(13), 0, 0);
         root.addView(info, infoLp);
 
 
         root.addView(createDialogCancelButton(dialog));
-        dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        android.view.Window window = dialog.getWindow();
+        window.setContentView(root);
+        window.setLayout(PadDialogFactory.dialogWidthPx(requireContext(), PadDialogFactory.WIDTH_CONFIRM_DP), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void showMoreOptionsDialog(Game game) {
@@ -1174,7 +1178,7 @@ mainQueue.post(() -> {
         Window window = dialog.getWindow();
         if (window == null) return dialog;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(PadDialogFactory.dialogWidthPx(requireContext(), PadDialogFactory.WIDTH_COMPACT_DP), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);

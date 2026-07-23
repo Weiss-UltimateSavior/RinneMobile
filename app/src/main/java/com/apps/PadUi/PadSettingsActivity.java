@@ -6,14 +6,10 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -418,71 +414,41 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void showParticleStyleDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackground(LauncherTheme.secondaryButton(this, 20f));
-
-        TextView title = dialogButton("动态粒子样式", false);
-        title.setTextSize(16);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setBackground(null);
-        root.addView(title, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(32)));
-
+        String[] styles = {
+                LauncherActivity.PARTICLE_STYLE_FLOATING,
+                LauncherActivity.PARTICLE_STYLE_RAIN,
+                LauncherActivity.PARTICLE_STYLE_STAR,
+                LauncherActivity.PARTICLE_STYLE_SAKURA,
+                LauncherActivity.PARTICLE_STYLE_FIREFLIES,
+                LauncherActivity.PARTICLE_STYLE_CONSTELLATION,
+                LauncherActivity.PARTICLE_STYLE_RIPPLES
+        };
+        String[] labels = {"漂浮光点", "斜向雨滴", "星星粒子", "按键瀑布", "萤火虫", "星座连线", "涟漪扩散", "关闭动态粒子"};
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
         String selectedStyle = LauncherActivity.getLauncherParticleStyle(this);
-        addParticleStyleOption(root, dialog, "漂浮光点",
-                LauncherActivity.PARTICLE_STYLE_FLOATING, enabled, selectedStyle);
-        addParticleStyleOption(root, dialog, "斜向雨滴",
-                LauncherActivity.PARTICLE_STYLE_RAIN, enabled, selectedStyle);
-        addParticleStyleOption(root, dialog, "星星粒子",
-                LauncherActivity.PARTICLE_STYLE_STAR, enabled, selectedStyle);
-        addParticleStyleOption(root, dialog, "按键瀑布",
-                LauncherActivity.PARTICLE_STYLE_SAKURA, enabled, selectedStyle);
-        addParticleStyleOption(root, dialog, "萤火虫",
-                LauncherActivity.PARTICLE_STYLE_FIREFLIES, enabled, selectedStyle);
-        addParticleStyleOption(root, dialog, "星座连线",
-                LauncherActivity.PARTICLE_STYLE_CONSTELLATION, enabled, selectedStyle);
-        addParticleStyleOption(root, dialog, "涟漪扩散",
-                LauncherActivity.PARTICLE_STYLE_RIPPLES, enabled, selectedStyle);
-
-        TextView disable = dialogButton("关闭动态粒子", false);
-        disable.setOnClickListener(view -> {
-            LauncherActivity.setLauncherParticlesEnabled(this, false);
-            renderParticles();
-            renderParticleToggle();
-            dialog.dismiss();
-            Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
-        });
-        addWithMargin(root, disable, 10);
-
-        TextView cancel = dialogButton("取消", false);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        addWithMargin(root, cancel, 8);
-        window.setContentView(root);
-    }
-
-    private void addParticleStyleOption(LinearLayout root, AlertDialog dialog, String title,
-                                        String style, boolean enabled, String selectedStyle) {
-        TextView option = dialogButton(title, enabled && style.equals(selectedStyle));
-        option.setOnClickListener(view -> {
-            LauncherActivity.setLauncherParticleStyle(this, style);
+        int checkedIndex = styles.length; // 关闭位置 = 7
+        if (enabled) {
+            for (int i = 0; i < styles.length; i++) {
+                if (styles[i].equals(selectedStyle)) {
+                    checkedIndex = i;
+                    break;
+                }
+            }
+        }
+        PadDialogFactory.showSingleChoice(this, "动态粒子样式", labels, checkedIndex, index -> {
+            if (index >= styles.length) {
+                LauncherActivity.setLauncherParticlesEnabled(this, false);
+                renderParticles();
+                renderParticleToggle();
+                Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            LauncherActivity.setLauncherParticleStyle(this, styles[index]);
             LauncherActivity.setLauncherParticlesEnabled(this, true);
             renderParticles();
             renderParticleToggle();
-            dialog.dismiss();
-            Toast.makeText(this, "已应用" + title + "效果", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "已应用" + labels[index] + "效果", Toast.LENGTH_SHORT).show();
         });
-        addWithMargin(root, option, 11);
     }
 
     private void applySelectedTheme() {
@@ -744,55 +710,6 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void showAccountResult(String title, String message) {
         PadDialogFactory.showInfo(this, title, message);
-    }
-
-    private LinearLayout dialogRoot() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackground(LauncherTheme.secondaryButton(this, 20f));
-        return root;
-    }
-
-    private TextView dialogTitle(String text) {
-        TextView view = new TextView(this);
-        view.setText(text);
-        view.setGravity(Gravity.CENTER);
-        view.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        view.setTextSize(16);
-        view.setTypeface(null, android.graphics.Typeface.BOLD);
-        return view;
-    }
-
-    private TextView dialogMessage(String text) {
-        TextView view = new TextView(this);
-        view.setText(text);
-        view.setGravity(Gravity.CENTER);
-        view.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        view.setTextSize(12);
-        return view;
-    }
-
-    private TextView dialogButton(String text, boolean primary) {
-        TextView view = new TextView(this);
-        view.setText(text);
-        view.setGravity(Gravity.CENTER);
-        view.setMinHeight(dp(36));
-        view.setTextSize(13);
-        view.setTypeface(null, android.graphics.Typeface.BOLD);
-        if (primary) LauncherTheme.primaryButton(view); else LauncherTheme.secondaryButton(view);
-        return view;
-    }
-
-    private void addWithMargin(LinearLayout root, View child, int topMarginDp) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dp(topMarginDp), 0, 0);
-        root.addView(child, params);
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void renderParticles() {

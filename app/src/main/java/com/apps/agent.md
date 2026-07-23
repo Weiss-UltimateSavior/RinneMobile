@@ -158,8 +158,16 @@
 - 修改游玩时长：使用 `Dialog`、保留 `SOFT_INPUT_STATE_VISIBLE`、焦点和 IME 唤起。
 - 同步进度：非取消、保留 `sync_progress` tag 与后台更新链。
 - 文件访问权限：保留 Android 版本分支和系统设置跳转。
-- 游戏详情：保留 288dp 详情容器；长 URI/包名改动前先确认滚动与截断策略。
-- 粒子样式选择：保留当前已选状态、关闭粒子操作和 Toast 反馈；迁移前必须等价表达这些状态。
+- 游戏详情：保留 288dp 详情容器；长 URI/包名通过 `TextView` 的 `maxLines` + `ScrollingMovementMethod` 实现内部滚动，内容短时正常显示、超长可垂直滚动查看。
+
+### 弹窗实现纪律
+
+- `PadManageFragment` 的 `createLauncherDialog`/`createDialogRoot`/`createDialogTitle`/`createDialogButton`/`createDialogCancelButton` 等 helper 仅服务于上述 4 个保留专用实现；新增同类弹窗必须直接用 `PadDialogFactory` 的对应 `show*()` API，不要扩展这些 helper 或手写 root/title/button。
+- 专用实现的弹窗宽度必须通过 `PadDialogFactory.dialogWidthPx(context, widthDp)` 做屏幕宽度兜底（`min(densityWidth, screen-48dp)`），不要直接传 `dp(288)`/`dp(270)`，避免极窄屏溢出。
+- `showConfirm`（双按钮确认，288dp）使用 inflate 的 `dialog_launcher_confirm` 布局实现水平并排按钮；`showStandardConfirm`（普通确认，270dp）使用程序化构建的垂直按钮。两者是不同弹窗类型，水平/垂直差异是有意设计，不是实现不一致；不要为统一而合并。
+- 同步确认、账户确认归类为"普通确认"，使用 `showStandardConfirm`（270dp）；只有需要水平双按钮的启动确认才用 `showConfirm`（288dp）。
+- 粒子样式选择使用 `PadDialogFactory.showSingleChoice`（可滑动单选列表），通过 `checkedIndex` 表达已选状态、末项"关闭动态粒子"表达关闭操作、回调内 `Toast` 反馈；不要再手写选项行。
+- `PadManageFragment` 跨包调用 `com.apps.settings.LauncherCustomVndbSearchDialog` 属于复杂搜索专用界面，超出 PadUi 弹窗规范范围，保留跨包调用。
 
 ## 6. 修改与验证清单
 
