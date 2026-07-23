@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
 import com.yuki.yukihub.util.DevLogger
+import com.yuki.yukihub.diagnostics.GameDiagnostics
 import java.io.File
 
 /**
@@ -46,18 +47,17 @@ object LauncherDiagnosticsBridge {
     @JvmStatic
     fun exportLog(context: Context?): Boolean {
         if (context == null) return false
-        val logFile = logFile() ?: return false
-        if (!logFile.exists()) return false
+        val diagnosticPackage = GameDiagnostics.exportPackage(context) ?: return false
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
+            type = "application/zip"
             putExtra(
                 Intent.EXTRA_STREAM,
-                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", logFile)
+                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", diagnosticPackage)
             )
-            putExtra(Intent.EXTRA_SUBJECT, "YukiHub Logcat")
+            putExtra(Intent.EXTRA_SUBJECT, "Rinne 诊断包")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        val chooser = Intent.createChooser(shareIntent, "导出日志")
+        val chooser = Intent.createChooser(shareIntent, "导出 Rinne 诊断包")
         if (context !is Activity) {
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }

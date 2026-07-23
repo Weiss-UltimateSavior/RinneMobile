@@ -21,6 +21,7 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.data.GameSaveFileManager;
+import com.yuki.yukihub.diagnostics.GameDiagnostics;
 import com.yuki.yukihub.databinding.ActivityLauncherSaveManagerBinding;
 import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
 import com.yuki.yukihub.model.Game;
@@ -96,6 +97,8 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
                 int count = saveManager.exportInternalSaveToZip(game, destinationUri);
                 runOnUiThread(() -> Toast.makeText(this, "已导出 ZIP（" + count + " 个文件）", Toast.LENGTH_LONG).show());
             } catch (Exception e) {
+                GameDiagnostics.record(this, "save_exception", game,
+                        "导出存档失败：" + (e.getMessage() == null ? "未知错误" : e.getMessage()));
                 showError("导出失败", e);
             }
         });
@@ -117,6 +120,8 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
                     Toast.makeText(this, "已覆盖导入 " + count + " 个文件", Toast.LENGTH_LONG).show();
                 });
             } catch (Exception e) {
+                GameDiagnostics.record(this, "save_exception", game,
+                        "导入存档失败：" + (e.getMessage() == null ? "未知错误" : e.getMessage()));
                 showError("覆盖导入失败", e);
             }
         });

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.documentfile.provider.DocumentFile
+import com.yuki.yukihub.diagnostics.GameDiagnostics
 import com.yuki.yukihub.data.GameRepository
 import com.yuki.yukihub.launcher.EmulatorLauncher
 import com.yuki.yukihub.model.EngineType
@@ -45,14 +46,20 @@ object LauncherGameLaunchBridge {
         val emulatorPackage = resolveEmulatorPackage(game)
         val launchTarget = resolveLaunchTarget(game)
         val validationError = validate(context, game, emulatorPackage)
-        if (validationError != null) return LaunchResult.failure(validationError)
+        if (validationError != null) {
+            GameDiagnostics.recordLaunch(appContext, game, false, validationError)
+            return LaunchResult.failure(validationError)
+        }
 
         val sessionId = repository.startPlaySession(game.id, System.currentTimeMillis(), resolveLaunchType(emulatorPackage))
         if (startGameActivity(context, game, emulatorPackage, launchTarget)) {
+            GameDiagnostics.recordLaunch(appContext, game, true, "启动请求已发送")
             return LaunchResult.success(sessionId)
         }
         repository.cancelPlaySession(sessionId)
-        return LaunchResult.failure("启动失败：未找到该模拟器，或该模拟器不接受当前启动目标")
+        val message = "启动失败：未找到该模拟器，或该模拟器不接受当前启动目标"
+        GameDiagnostics.recordLaunch(appContext, game, false, message)
+        return LaunchResult.failure(message)
     }
 
     @JvmStatic
@@ -79,6 +86,15 @@ object LauncherGameLaunchBridge {
     }
 
     private fun validate(context: Context, game: Game, emulatorPackage: String): String? {
+        val root = game.rootUri?.trim()
+        if (!root.isNullOrEmpty() && root.startsWith("content://")) {
+            val readable = try { DocumentFile.fromTreeUri(context, android.net.Uri.parse(root))?.canRead() == true } catch (_: Throwable) { false }
+            if (!readable) {
+                val message = "游戏目录访问失败：SAF 权限可能已失效，请重新绑定目录。"
+                GameDiagnostics.recordSafPermissionInvalid(context, game, message)
+                return message
+            }
+        }
         if (game.engine == EngineType.GAMEHUB) {
             val ghMode = game.gamehubLaunchMode?.trim()?.lowercase(Locale.ROOT) ?: "game"
             if (ghMode != "program" && ghMode != "normal"

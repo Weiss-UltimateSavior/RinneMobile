@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat;
 
 import com.yuki.yukihub.R;
 import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
+import com.yuki.yukihub.diagnostics.GameDiagnostics;
 import com.yuki.yukihub.model.EngineType;
 import com.yuki.yukihub.model.Game;
 import com.yuki.yukihub.util.AppExecutors;
@@ -88,6 +89,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private Game game;
     private Uri selectedCoverUri;
     private Uri selectedGameDirectoryUri;
+    private boolean directoryRebound;
     private String lastEngineDefaultPackage = "";
     private boolean restoreEngineSelection;
     private boolean restoreDirectorySelection;
@@ -99,6 +101,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 if (uri == null) return;
                 persistUriPermission(uri);
                 selectedGameDirectoryUri = uri;
+                directoryRebound = game != null && game.rootUri != null
+                        && !game.rootUri.equals(uri.toString());
                 tvDir.setText(displayDirectoryUri(uri));
                 tvDir.setTextColor(LauncherTheme.primary(this));
             });
@@ -301,6 +305,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                     }
                 }
                 LauncherRepositoryBridge.updateGame(this, game);
+                if (directoryRebound) GameDiagnostics.recordDirectoryRebound(this, game);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);

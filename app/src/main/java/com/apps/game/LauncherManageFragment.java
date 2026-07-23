@@ -771,7 +771,7 @@ public class LauncherManageFragment extends Fragment {
 
         addFeedbackOption(root, LauncherDiagnosticsBridge.isLogEnabled() ? "关闭日志" : "开启日志", dialog, this::toggleDiagnosticLog);
         addFeedbackOption(root, "清空日志", dialog, this::confirmClearDiagnosticLog);
-        addFeedbackOption(root, "导出日志", dialog, this::exportDiagnosticLog);
+        addFeedbackOption(root, "导出 Rinne 诊断包", dialog, this::exportDiagnosticLog);
 
         TextView cancel = dialogCancelButton(dialog);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
