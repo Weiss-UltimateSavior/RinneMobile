@@ -1027,6 +1027,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         addGameActionOption(root, "详情", dialog, game, () -> showGameDetailDialog(game));
+        addGameActionOption(root, "添加到桌面", dialog, game,
+                () -> PinnedGameShortcut.requestPinShortcut(requireContext(), game));
         addGameActionOption(root, "编辑", dialog, game, () -> startEditGameActivity(game));
         addGameActionOption(root, "状态", dialog, game, () -> showPlayStatusDialog(game));
         addGameActionOption(root, game.favorite ? "取消收藏" : "添加收藏", dialog, game, () -> toggleFavorite(game));

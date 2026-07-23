@@ -35,6 +35,7 @@ import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
 import com.apps.account.LauncherAccountFragment;
 import com.apps.data.LauncherViewModel;
 import com.apps.game.LauncherLibraryFragment;
+import com.apps.game.PinnedGameShortcut;
 import com.apps.game.LauncherManageFragment;
 import com.apps.home.LauncherHomeFragment;
 import com.apps.home.LauncherPlaceholderFragment;
@@ -51,6 +52,8 @@ public class LauncherActivity extends AppCompatActivity {
      */
     private static final long SPLASH_MIN_DISPLAY_MS = 400L;
     public static final String EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login";
+    public static final String EXTRA_PINNED_GAME_ID = "pinned_game_id";
+    public static final String ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME";
     static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked";
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
@@ -128,6 +131,7 @@ public class LauncherActivity extends AppCompatActivity {
         viewModel.refresh();
         scheduleAutoUpdateCheck();
         openAccountLoginIfRequested(getIntent());
+        launchPinnedGameIfRequested(getIntent());
     }
 
     @Override
@@ -151,12 +155,25 @@ public class LauncherActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         openAccountLoginIfRequested(intent);
+        launchPinnedGameIfRequested(intent);
     }
 
     private void openAccountLoginIfRequested(Intent intent) {
         if (intent == null || !intent.getBooleanExtra(EXTRA_OPEN_ACCOUNT_LOGIN, false) || viewModel == null) return;
         intent.removeExtra(EXTRA_OPEN_ACCOUNT_LOGIN);
         viewModel.selectNavItem(LauncherViewModel.NavItem.ACCOUNT);
+    }
+
+    private void launchPinnedGameIfRequested(Intent intent) {
+        if (intent == null || !ACTION_LAUNCH_PINNED_GAME.equals(intent.getAction())) return;
+        long gameId = intent.getLongExtra(EXTRA_PINNED_GAME_ID, -1L);
+        intent.removeExtra(EXTRA_PINNED_GAME_ID);
+        intent.setAction(null);
+        PinnedGameShortcut.launchPinnedGame(this, gameId, (success, message) -> {
+            if (!success && message != null && !message.trim().isEmpty()) {
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void configureEdgeToEdgeWindow() {
