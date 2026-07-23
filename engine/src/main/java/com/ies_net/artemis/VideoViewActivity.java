@@ -1,6 +1,6 @@
 package com.ies_net.artemis;
 
-import A4.c;
+import tv.danmaku.ijk.media.player.widget.IjkVideoView;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -25,7 +25,7 @@ public class VideoViewActivity extends Activity implements IMediaPlayer.OnComple
  private RandomAccessFile randomAccessFile = null;
  private boolean pausedBySystem = false;
  private int skip = 0;
- private c videoView = null;
+ private IjkVideoView videoView = null;
 
  @Override
  public boolean dispatchKeyEvent(KeyEvent event) {
@@ -83,7 +83,7 @@ public class VideoViewActivity extends Activity implements IMediaPlayer.OnComple
  root.setBackgroundColor(Color.rgb(0, 0, 0));
  root.setGravity(17);
  setContentView(root, new WindowManager.LayoutParams(-1, -1));
- videoView = new c(this);
+ videoView = new IjkVideoView(this);
  videoView.setZOrderOnTop(true);
  videoView.requestFocus();
  videoView.setOnCompletionListener(this);
@@ -107,13 +107,13 @@ public class VideoViewActivity extends Activity implements IMediaPlayer.OnComple
  randomAccessFile = new RandomAccessFile(file, "r");
  FileDescriptor fd = randomAccessFile.getFD();
  Log.i(TAG, "IJK open file exists=" + file.exists() + " size=" + file.length() + " offset=" + offset + " length=" + length);
- videoView.d(fd, volume);
+ videoView.setDataSource(fd, volume);
  } catch (Throwable fileError) {
  Log.w(TAG, "IJK open as file failed, try assets: " + path, fileError);
  closeSources();
  assetFileDescriptor = getAssets().openFd(path);
  FileDescriptor fd = assetFileDescriptor.getFileDescriptor();
- videoView.d(fd, volume);
+ videoView.setDataSource(fd, volume);
  }
  }
 

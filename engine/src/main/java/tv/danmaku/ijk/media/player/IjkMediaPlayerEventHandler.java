@@ -8,19 +8,18 @@ import java.lang.ref.WeakReference;
 import tv.danmaku.ijk.media.player.pragma.DebugLog;
 
 /* JADX INFO: loaded from: classes.dex */
-public final class d extends Handler {
+public final class IjkMediaPlayerEventHandler extends Handler {
 
-    /* JADX INFO: renamed from: a, reason: collision with root package name */
-    public final WeakReference f20726a;
+    public final WeakReference mWeakPlayer;
 
-    public d(IjkMediaPlayer ijkMediaPlayer, Looper looper) {
+    public IjkMediaPlayerEventHandler(IjkMediaPlayer ijkMediaPlayer, Looper looper) {
         super(looper);
-        this.f20726a = new WeakReference(ijkMediaPlayer);
+        this.mWeakPlayer = new WeakReference(ijkMediaPlayer);
     }
 
     @Override // android.os.Handler
     public final void handleMessage(Message message) {
-        IjkMediaPlayer ijkMediaPlayer = (IjkMediaPlayer) this.f20726a.get();
+        IjkMediaPlayer ijkMediaPlayer = (IjkMediaPlayer) this.mWeakPlayer.get();
         if (ijkMediaPlayer != null) {
             if (ijkMediaPlayer.mNativeMediaPlayer != 0) {
                 int i8 = message.what;

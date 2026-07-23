@@ -1,24 +1,22 @@
-package E7;
+package tv.danmaku.ijk.media.player.misc;
 
 import android.text.TextUtils;
 import java.util.Locale;
 import tv.danmaku.ijk.media.player.IjkMediaMeta;
-import tv.danmaku.ijk.media.player.misc.IjkMediaFormat;
 
 /* JADX INFO: loaded from: classes.dex */
-public final class c extends d {
+public final class CompositeMediaFormatter extends IjkStringFormatter {
 
-    /* JADX INFO: renamed from: a, reason: collision with root package name */
-    public final /* synthetic */ int f1684a;
+    public final /* synthetic */ int mFormatType;
 
-    public /* synthetic */ c(int i8) {
-        this.f1684a = i8;
+    public CompositeMediaFormatter(int formatType) {
+        this.mFormatType = formatType;
     }
 
-    @Override // E7.d
-    public final String a(IjkMediaFormat ijkMediaFormat) {
+    @Override // IjkStringFormatter
+    public final String format(IjkMediaFormat ijkMediaFormat) {
         String str;
-        switch (this.f1684a) {
+        switch (this.mFormatType) {
             case 0:
                 int integer = ijkMediaFormat.getInteger(IjkMediaMeta.IJKM_KEY_BITRATE);
                 if (integer <= 0) {

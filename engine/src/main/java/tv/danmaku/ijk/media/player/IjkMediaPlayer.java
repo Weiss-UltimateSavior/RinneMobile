@@ -97,7 +97,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         @Override public void loadLibrary(String str) { System.loadLibrary(str); }
     };
     private String mDataSource;
-    private d mEventHandler;
+    private IjkMediaPlayerEventHandler mEventHandler;
     private int mListenerContext;
     private long mNativeAndroidIO;
     private long mNativeMediaDataSource;
@@ -298,11 +298,11 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         initNativeOnce();
         Looper looperMyLooper = Looper.myLooper();
         if (looperMyLooper != null) {
-            this.mEventHandler = new d(this, looperMyLooper);
+            this.mEventHandler = new IjkMediaPlayerEventHandler(this, looperMyLooper);
         } else {
             Looper mainLooper = Looper.getMainLooper();
             if (mainLooper != null) {
-                this.mEventHandler = new d(this, mainLooper);
+                this.mEventHandler = new IjkMediaPlayerEventHandler(this, mainLooper);
             } else {
                 this.mEventHandler = null;
             }
@@ -391,9 +391,9 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         if (i8 == 200 && i9 == 2) {
             ijkMediaPlayer.start();
         }
-        d dVar = ijkMediaPlayer.mEventHandler;
-        if (dVar != null) {
-            ijkMediaPlayer.mEventHandler.sendMessage(dVar.obtainMessage(i8, i9, i10, obj2));
+        IjkMediaPlayerEventHandler eventHandler = ijkMediaPlayer.mEventHandler;
+        if (eventHandler != null) {
+            ijkMediaPlayer.mEventHandler.sendMessage(eventHandler.obtainMessage(i8, i9, i10, obj2));
         }
     }
 

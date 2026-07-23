@@ -1,9 +1,5 @@
 package tv.danmaku.ijk.media.player.misc;
 
-import E7.a;
-import E7.b;
-import E7.c;
-import E7.d;
 import android.text.TextUtils;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,20 +17,20 @@ public class IjkMediaFormat implements IMediaFormat {
     public static final String KEY_IJK_FRAME_RATE_UI = "ijk-frame-rate-ui";
     public static final String KEY_IJK_RESOLUTION_UI = "ijk-resolution-ui";
     public static final String KEY_IJK_SAMPLE_RATE_UI = "ijk-sample-rate-ui";
-    private static final Map<String, d> sFormatterMap = new HashMap();
+    private static final Map<String, IjkStringFormatter> sFormatterMap = new HashMap();
     public final IjkMediaMeta.IjkStreamMeta mMediaFormat;
 
     public IjkMediaFormat(IjkMediaMeta.IjkStreamMeta ijkStreamMeta) {
-        Map<String, d> map = sFormatterMap;
-        map.put(KEY_IJK_CODEC_LONG_NAME_UI, new a(this));
-        map.put(KEY_IJK_CODEC_NAME_UI, new b(this));
-        map.put(KEY_IJK_BIT_RATE_UI, new c(0));
-        map.put(KEY_IJK_CODEC_PROFILE_LEVEL_UI, new c(1));
-        map.put(KEY_IJK_CODEC_PIXEL_FORMAT_UI, new c(2));
-        map.put(KEY_IJK_RESOLUTION_UI, new c(3));
-        map.put(KEY_IJK_FRAME_RATE_UI, new c(4));
-        map.put(KEY_IJK_SAMPLE_RATE_UI, new c(5));
-        map.put(KEY_IJK_CHANNEL_UI, new c(6));
+        Map<String, IjkStringFormatter> map = sFormatterMap;
+        map.put(KEY_IJK_CODEC_LONG_NAME_UI, new CodecLongNameFormatter(this));
+        map.put(KEY_IJK_CODEC_NAME_UI, new CodecNameFormatter(this));
+        map.put(KEY_IJK_BIT_RATE_UI, new CompositeMediaFormatter(0));
+        map.put(KEY_IJK_CODEC_PROFILE_LEVEL_UI, new CompositeMediaFormatter(1));
+        map.put(KEY_IJK_CODEC_PIXEL_FORMAT_UI, new CompositeMediaFormatter(2));
+        map.put(KEY_IJK_RESOLUTION_UI, new CompositeMediaFormatter(3));
+        map.put(KEY_IJK_FRAME_RATE_UI, new CompositeMediaFormatter(4));
+        map.put(KEY_IJK_SAMPLE_RATE_UI, new CompositeMediaFormatter(5));
+        map.put(KEY_IJK_CHANNEL_UI, new CompositeMediaFormatter(6));
         this.mMediaFormat = ijkStreamMeta;
     }
 
@@ -52,11 +48,11 @@ public class IjkMediaFormat implements IMediaFormat {
         if (this.mMediaFormat == null) {
             return null;
         }
-        Map<String, d> map = sFormatterMap;
+        Map<String, IjkStringFormatter> map = sFormatterMap;
         if (!map.containsKey(str)) {
             return this.mMediaFormat.getString(str);
         }
-        String strA = map.get(str).a(this);
+        String strA = map.get(str).format(this);
         return TextUtils.isEmpty(strA) ? "N/A" : strA;
     }
 }

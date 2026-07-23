@@ -145,7 +145,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnBufferingUpdateListener(IMediaPlayer.OnBufferingUpdateListener onBufferingUpdateListener) {
         if (onBufferingUpdateListener != null) {
-            this.mBackEndMediaPlayer.setOnBufferingUpdateListener(new g(this, onBufferingUpdateListener));
+            this.mBackEndMediaPlayer.setOnBufferingUpdateListener(new BufferingUpdateListenerProxy(this, onBufferingUpdateListener));
         } else {
             this.mBackEndMediaPlayer.setOnBufferingUpdateListener(null);
         }
@@ -154,7 +154,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnCompletionListener(IMediaPlayer.OnCompletionListener onCompletionListener) {
         if (onCompletionListener != null) {
-            this.mBackEndMediaPlayer.setOnCompletionListener(new f(this, onCompletionListener));
+            this.mBackEndMediaPlayer.setOnCompletionListener(new CompletionListenerProxy(this, onCompletionListener));
         } else {
             this.mBackEndMediaPlayer.setOnCompletionListener(null);
         }
@@ -163,7 +163,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnErrorListener(IMediaPlayer.OnErrorListener onErrorListener) {
         if (onErrorListener != null) {
-            this.mBackEndMediaPlayer.setOnErrorListener(new j(this, onErrorListener));
+            this.mBackEndMediaPlayer.setOnErrorListener(new ErrorListenerProxy(this, onErrorListener));
         } else {
             this.mBackEndMediaPlayer.setOnErrorListener(null);
         }
@@ -172,7 +172,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnInfoListener(IMediaPlayer.OnInfoListener onInfoListener) {
         if (onInfoListener != null) {
-            this.mBackEndMediaPlayer.setOnInfoListener(new k(this, onInfoListener));
+            this.mBackEndMediaPlayer.setOnInfoListener(new InfoListenerProxy(this, onInfoListener));
         } else {
             this.mBackEndMediaPlayer.setOnInfoListener(null);
         }
@@ -181,7 +181,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnPreparedListener(IMediaPlayer.OnPreparedListener onPreparedListener) {
         if (onPreparedListener != null) {
-            this.mBackEndMediaPlayer.setOnPreparedListener(new e(this, onPreparedListener));
+            this.mBackEndMediaPlayer.setOnPreparedListener(new PreparedListenerProxy(this, onPreparedListener));
         } else {
             this.mBackEndMediaPlayer.setOnPreparedListener(null);
         }
@@ -190,7 +190,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnSeekCompleteListener(IMediaPlayer.OnSeekCompleteListener onSeekCompleteListener) {
         if (onSeekCompleteListener != null) {
-            this.mBackEndMediaPlayer.setOnSeekCompleteListener(new h(this, onSeekCompleteListener));
+            this.mBackEndMediaPlayer.setOnSeekCompleteListener(new SeekCompleteListenerProxy(this, onSeekCompleteListener));
         } else {
             this.mBackEndMediaPlayer.setOnSeekCompleteListener(null);
         }
@@ -199,7 +199,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnTimedTextListener(IMediaPlayer.OnTimedTextListener onTimedTextListener) {
         if (onTimedTextListener != null) {
-            this.mBackEndMediaPlayer.setOnTimedTextListener(new l(this, onTimedTextListener));
+            this.mBackEndMediaPlayer.setOnTimedTextListener(new TimedTextListenerProxy(this, onTimedTextListener));
         } else {
             this.mBackEndMediaPlayer.setOnTimedTextListener(null);
         }
@@ -208,7 +208,7 @@ public class MediaPlayerProxy implements IMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.IMediaPlayer
     public void setOnVideoSizeChangedListener(IMediaPlayer.OnVideoSizeChangedListener onVideoSizeChangedListener) {
         if (onVideoSizeChangedListener != null) {
-            this.mBackEndMediaPlayer.setOnVideoSizeChangedListener(new i(this, onVideoSizeChangedListener));
+            this.mBackEndMediaPlayer.setOnVideoSizeChangedListener(new VideoSizeChangedListenerProxy(this, onVideoSizeChangedListener));
         } else {
             this.mBackEndMediaPlayer.setOnVideoSizeChangedListener(null);
         }

@@ -20,7 +20,7 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer {
     private static MediaInfo sMediaInfo;
     private String mDataSource;
     private final Object mInitLock;
-    private final b mInternalListenerAdapter;
+    private final AndroidMediaPlayerListenerAdapter mInternalListenerAdapter;
     private final MediaPlayer mInternalMediaPlayer;
     private boolean mIsReleased;
     private MediaDataSource mMediaDataSource;
@@ -34,7 +34,7 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer {
             this.mInternalMediaPlayer = mediaPlayer;
         }
         mediaPlayer.setAudioStreamType(3);
-        this.mInternalListenerAdapter = new b(this, this);
+        this.mInternalListenerAdapter = new AndroidMediaPlayerListenerAdapter(this, this);
         attachInternalListeners();
     }
 
@@ -280,8 +280,8 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer {
     @Override // tv.danmaku.ijk.media.player.AbstractMediaPlayer, tv.danmaku.ijk.media.player.IMediaPlayer
     public void setDataSource(IMediaDataSource iMediaDataSource) {
         releaseMediaDataSource();
-        c cVar = new c(iMediaDataSource);
-        this.mMediaDataSource = cVar;
-        this.mInternalMediaPlayer.setDataSource(cVar);
+        AndroidMediaDataSourceProxy proxy = new AndroidMediaDataSourceProxy(iMediaDataSource);
+        this.mMediaDataSource = proxy;
+        this.mInternalMediaPlayer.setDataSource(proxy);
     }
 }

@@ -178,36 +178,32 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     public static class ShowTextInputTask implements Runnable {
         static final int HEIGHT_PADDING = 15;
 
-        /* JADX INFO: renamed from: h, reason: collision with root package name */
-        public int f19621h;
+        public int mHeight;
 
-        /* JADX INFO: renamed from: w, reason: collision with root package name */
-        public int f19622w;
+        public int mWidth;
 
-        /* JADX INFO: renamed from: x, reason: collision with root package name */
-        public int f19623x;
+        public int mX;
 
-        /* JADX INFO: renamed from: y, reason: collision with root package name */
-        public int f19624y;
+        public int mY;
 
         public ShowTextInputTask(int i8, int i9, int i10, int i11) {
-            this.f19623x = i8;
-            this.f19624y = i9;
-            this.f19622w = i10;
-            this.f19621h = i11;
+            this.mX = i8;
+            this.mY = i9;
+            this.mWidth = i10;
+            this.mHeight = i11;
             if (i10 <= 0) {
-                this.f19622w = 1;
+                this.mWidth = 1;
             }
             if (i11 + 15 <= 0) {
-                this.f19621h = -14;
+                this.mHeight = -14;
             }
         }
 
         @Override // java.lang.Runnable
         public void run() {
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(this.f19622w, this.f19621h + 15);
-            layoutParams.leftMargin = this.f19623x;
-            layoutParams.topMargin = this.f19624y;
+            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(this.mWidth, this.mHeight + 15);
+            layoutParams.leftMargin = this.mX;
+            layoutParams.topMargin = this.mY;
             DummyEdit dummyEdit = SDLActivity.mTextEdit;
             if (dummyEdit == null) {
                 SDLActivity.mTextEdit = new DummyEdit(SDL.getContext());
