@@ -170,9 +170,14 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         String[] styles = {
                 LauncherActivity.PARTICLE_STYLE_FLOATING,
                 LauncherActivity.PARTICLE_STYLE_RAIN,
-                LauncherActivity.PARTICLE_STYLE_STAR
+                LauncherActivity.PARTICLE_STYLE_STAR,
+                LauncherActivity.PARTICLE_STYLE_SAKURA,
+                LauncherActivity.PARTICLE_STYLE_FIREFLIES,
+                LauncherActivity.PARTICLE_STYLE_CONSTELLATION,
+                LauncherActivity.PARTICLE_STYLE_RIPPLES
         };
-        int checkedIndex = 3;
+        String[] labels = {"漂浮光点", "斜向雨滴", "星星粒子", "按键瀑布", "萤火虫", "星座连线", "涟漪扩散", "关闭动态粒子"};
+        int checkedIndex = styles.length; // 关闭位置 = 7
         if (enabled) {
             for (int i = 0; i < styles.length; i++) {
                 if (styles[i].equals(selectedStyle)) {
@@ -184,10 +189,10 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         LauncherDialogFactory.showSingleChoice(
                 this,
                 "动态粒子样式",
-                new String[]{"漂浮光点", "斜向雨滴", "星星粒子", "关闭动态粒子"},
+                labels,
                 checkedIndex,
                 index -> {
-                    if (index == 3) {
+                    if (index == styles.length) {
                         LauncherActivity.setLauncherParticlesEnabled(this, false);
                         renderParticleToggle();
                         Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
@@ -196,7 +201,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
                     LauncherActivity.setLauncherParticleStyle(this, styles[index]);
                     LauncherActivity.setLauncherParticlesEnabled(this, true);
                     renderParticleToggle();
-                    Toast.makeText(this, "已应用" + (index == 0 ? "漂浮光点" : index == 1 ? "斜向雨滴" : "星星粒子") + "效果", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "已应用" + labels[index] + "效果", Toast.LENGTH_SHORT).show();
                 }
         );
     }

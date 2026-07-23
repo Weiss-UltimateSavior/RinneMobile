@@ -63,6 +63,10 @@ public class LauncherActivity extends AppCompatActivity {
     public static final String PARTICLE_STYLE_FLOATING = "floating";
     public static final String PARTICLE_STYLE_RAIN = "rain";
     public static final String PARTICLE_STYLE_STAR = "star";
+    public static final String PARTICLE_STYLE_SAKURA = "sakura";
+    public static final String PARTICLE_STYLE_FIREFLIES = "fireflies";
+    public static final String PARTICLE_STYLE_CONSTELLATION = "constellation";
+    public static final String PARTICLE_STYLE_RIPPLES = "ripples";
     public static final String THEME_STYLE_DEFAULT = "default";
     public static final String THEME_STYLE_RINNE = "rinne";
     public static final String THEME_STYLE_ANRI = "anri";
@@ -559,9 +563,13 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     public static void setLauncherParticleStyle(android.content.Context context, String style) {
-        String safeStyle = PARTICLE_STYLE_RAIN.equals(style)
-                ? PARTICLE_STYLE_RAIN
-                : PARTICLE_STYLE_STAR.equals(style) ? PARTICLE_STYLE_STAR : PARTICLE_STYLE_FLOATING;
+        String safeStyle = PARTICLE_STYLE_RAIN.equals(style) ? PARTICLE_STYLE_RAIN
+                : PARTICLE_STYLE_STAR.equals(style) ? PARTICLE_STYLE_STAR
+                : PARTICLE_STYLE_SAKURA.equals(style) ? PARTICLE_STYLE_SAKURA
+                : PARTICLE_STYLE_FIREFLIES.equals(style) ? PARTICLE_STYLE_FIREFLIES
+                : PARTICLE_STYLE_CONSTELLATION.equals(style) ? PARTICLE_STYLE_CONSTELLATION
+                : PARTICLE_STYLE_RIPPLES.equals(style) ? PARTICLE_STYLE_RIPPLES
+                : PARTICLE_STYLE_FLOATING;
         context.getApplicationContext()
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .edit()
@@ -575,6 +583,10 @@ public class LauncherActivity extends AppCompatActivity {
                 .getString(KEY_LAUNCHER_PARTICLE_STYLE, PARTICLE_STYLE_FLOATING);
         if (PARTICLE_STYLE_RAIN.equals(style)) return PARTICLE_STYLE_RAIN;
         if (PARTICLE_STYLE_STAR.equals(style)) return PARTICLE_STYLE_STAR;
+        if (PARTICLE_STYLE_SAKURA.equals(style)) return PARTICLE_STYLE_SAKURA;
+        if (PARTICLE_STYLE_FIREFLIES.equals(style)) return PARTICLE_STYLE_FIREFLIES;
+        if (PARTICLE_STYLE_CONSTELLATION.equals(style)) return PARTICLE_STYLE_CONSTELLATION;
+        if (PARTICLE_STYLE_RIPPLES.equals(style)) return PARTICLE_STYLE_RIPPLES;
         return PARTICLE_STYLE_FLOATING;
     }
 

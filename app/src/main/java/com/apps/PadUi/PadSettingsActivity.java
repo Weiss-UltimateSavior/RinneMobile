@@ -446,6 +446,14 @@ public class PadSettingsActivity extends AppCompatActivity {
                 LauncherActivity.PARTICLE_STYLE_RAIN, enabled, selectedStyle);
         addParticleStyleOption(root, dialog, "星星粒子",
                 LauncherActivity.PARTICLE_STYLE_STAR, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "按键瀑布",
+                LauncherActivity.PARTICLE_STYLE_SAKURA, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "萤火虫",
+                LauncherActivity.PARTICLE_STYLE_FIREFLIES, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "星座连线",
+                LauncherActivity.PARTICLE_STYLE_CONSTELLATION, enabled, selectedStyle);
+        addParticleStyleOption(root, dialog, "涟漪扩散",
+                LauncherActivity.PARTICLE_STYLE_RIPPLES, enabled, selectedStyle);
 
         TextView disable = dialogButton("关闭动态粒子", false);
         disable.setOnClickListener(view -> {

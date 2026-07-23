@@ -62,12 +62,33 @@
 ### 动态粒子与主题色
 
 - 首页和 Pad 横屏背景统一使用 `LauncherParticleView`；它是装饰性背景层，必须置于内容之后、不可获取焦点、不可拦截触摸，也不能放进引擎、存档或账户等业务 Activity。
-- 粒子总开关与样式只通过 `LauncherActivity` 的 `launcher_particles_enabled`、`launcher_particle_style` 读写；样式限定为 `floating`、`rain`、`star`。设置页变更后调用所在页面的 `renderParticles()`，不要临时复制一套粒子状态。
+- 粒子总开关与样式只通过 `LauncherActivity` 的 `launcher_particles_enabled`、`launcher_particle_style` 读写；样式限定为 `floating`、`rain`、`star`、`sakura`、`fireflies`、`constellation`、`ripples`。设置页变更后调用所在页面的 `renderParticles()`，不要临时复制一套粒子状态。
 - `LauncherParticleView` 在绘制时检查 `LauncherActivity.getLauncherThemeStyle()`；主题风格变化后会按粒子原有色位重新着色，不需要重建页面或重新创建动画线程。
 - 默认主题保持现有的柔和彩色粒子调色板；凛弥、杏璃、心海天主题以各自 primary color 为基色，生成同色相、低饱和/分层亮度的粒子变体。粒子不得使用与当前主题无关的固定高饱和色。
 - 新增主题风格时，必须同步扩展 `LauncherParticleView.particleColor()` 的取色分支，并以该主题的 primary tone 为基色生成变体；只改按钮主色、不改粒子取色视为主题未完成。
 - 心海天按钮可使用主/强调色渐变，但粒子以其 primary color 为基色做亮度层次，避免背景出现大面积高对比粉色而抢占游戏卡片和文字可读性。
 - 颜色变化只能更新已有粒子颜色；保留既有 56 个粒子、16ms 帧节奏、可见性/附着状态停止渲染的生命周期约束，禁止在主题切换时叠加新的 Runnable 或动画实例。
+
+### 粒子样式清单
+
+共 7 种粒子样式，均通过 `LauncherActivity.PARTICLE_STYLE_*` 常量标识，在 `LauncherParticleView` 内以 `isXxxStyle()` 分支选择更新与绘制逻辑：
+
+| 样式 | 常量 | 说明 |
+|---|---|---|
+| 漂浮光点 | `floating` | 默认样式，向上漂移的彩色圆点 |
+| 斜向雨滴 | `rain` | 斜向短线段，模拟雨滴下落 |
+| 星星粒子 | `star` | 十字短线，脉动透明度不位移 |
+| 按键瀑布 | `sakura` | 方块/三角/圆/十字四种游戏按键图形向下流动，左右边缘回弹；仅前 `SAKURA_ACTIVE_COUNT`(20) 个粒子为活跃源，大小固定 |
+| 萤火虫 | `fireflies` | 径向渐变光晕，随机游走并脉动明暗 |
+| 星座连线 | `constellation` | 漂移的圆点，邻近粒子之间绘制连线 |
+| 涟漪扩散 | `ripples` | 同心圆环扩散，进度满后随机重生；仅前 `RIPPLES_ACTIVE_COUNT`(8) 个粒子为活跃涟漪源 |
+
+- 每种样式在 `createParticle(index, width, height)` 中按需初始化专属字段；`createParticle` 接收 index 参数以支持 ripples 等依赖位置索引限制活跃数量的样式。
+- 每个绘制分支必须显式设置 `paint` 的 `style`、`strokeWidth`、`shader`（用完置 null），复用同一 `paint` 实例，不新建 Paint。
+- 萤火虫样式的 `RadialGradient` shader 按 `colorIndex` 缓存到 `fireflyShaders[]`，主题切换时由 `syncThemeColors()` 清空缓存重建，避免持有旧主题颜色。
+- 涟漪样式通过 `maxRadius <= 0` 标记休眠粒子（index >= `RIPPLES_ACTIVE_COUNT`），`updateRipples` 与 `drawRipples` 需在开头跳过休眠粒子。
+- 按键瀑布样式通过 `radius <= 0` 标记休眠粒子（index >= `SAKURA_ACTIVE_COUNT`），`updateSakura` 与 `drawSakura` 需在开头跳过休眠粒子；活跃粒子大小固定不随机。
+- 新增粒子样式时，必须同步扩展 `LauncherActivity.setLauncherParticleStyle()`/`getLauncherParticleStyle()` 的 `safeStyle` 校验、`LauncherParticleView.setParticleStyle()` 与 `isXxxStyle()` 分支，以及 `PadSettingsActivity` 与 `LauncherThemeMenuActivity` 的样式选择弹窗。
 
 ## 3. 竖屏 Launcher 组件
 
