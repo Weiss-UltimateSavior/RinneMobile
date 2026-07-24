@@ -118,17 +118,14 @@ public class LocalAgentActivity extends AppCompatActivity {
         // 同时主动 requestFocus 并通过 WindowInsetsController 唤起 IME —— edge-to-edge 模式
         // 下 setSoftInputMode 已失效（Android 11+ 弃用），系统自动唤起在某些机型/系统版本
         // 上不可靠（典型复现：Lenovo TB323FU / Android 16）。
+        // 不使用 OnFocusChangeListener 主动唤起，避免 IME inset 派发引起焦点抖动。
         binding.agentInput.setOnTouchListener((v, event) -> {
             userTouchedInput = true;
             if (!v.hasFocus()) {
                 v.requestFocus();
-                showImeExplicit(v);
             }
+            showImeExplicit(v);
             return false;
-        });
-        // EditText 获焦时主动唤起 IME。覆盖 setEnabled(true) 自动获焦、点击获焦等所有路径。
-        binding.agentInput.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) showImeExplicit(v);
         });
     }
 
