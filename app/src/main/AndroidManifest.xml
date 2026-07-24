@@ -331,7 +331,8 @@
             android:launchMode="singleInstance"
             android:taskAffinity="com.yuki.yukihub.Artemis"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="keyboardHidden|screenSize">
+            android:configChanges="keyboardHidden|screenSize"
+            android:windowSoftInputMode="adjustPan">
             <meta-data android:name="android.app.lib_name" android:value="artemis" />
         </activity>
 
@@ -342,7 +343,8 @@
             android:launchMode="singleInstance"
             android:taskAffinity="com.yuki.yukihub.Artemis"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="keyboardHidden|screenSize">
+            android:configChanges="keyboardHidden|screenSize"
+            android:windowSoftInputMode="adjustPan">
             <meta-data android:name="android.app.lib_name" android:value="artemis-compatible" />
         </activity>
 
@@ -353,7 +355,8 @@
             android:launchMode="singleInstance"
             android:taskAffinity="com.yuki.yukihub.Artemis"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="keyboardHidden|screenSize">
+            android:configChanges="keyboardHidden|screenSize"
+            android:windowSoftInputMode="adjustPan">
             <meta-data android:name="android.app.lib_name" android:value="artemis-compatible-v2" />
         </activity>
 
