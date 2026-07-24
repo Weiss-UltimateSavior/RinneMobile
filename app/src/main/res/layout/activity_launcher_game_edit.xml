@@ -75,11 +75,32 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/editEmulator"
-                style="@style/LauncherSelectableField"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:hint="点击选择模拟器应用" />
+                android:orientation="horizontal">
+
+                <com.apps.widget.LauncherEditText
+                    android:id="@+id/editEmulator"
+                    style="@style/LauncherFormInput"
+                    android:layout_width="0dp"
+                    android:layout_marginTop="0dp"
+                    android:layout_weight="1"
+                    android:hint="手动输入或点击右侧选择模拟器"
+                    android:inputType="text" />
+
+                <ImageView
+                    android:id="@+id/btnPickEmulatorApp"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="7dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="从应用列表选择模拟器"
+                    android:padding="6dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/launcher_import_gamehub_shortcut" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"

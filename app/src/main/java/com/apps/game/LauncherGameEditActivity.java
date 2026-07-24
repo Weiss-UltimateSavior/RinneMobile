@@ -13,6 +13,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import com.apps.widget.LauncherEditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,7 +75,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             new EngineOption(EngineType.GODOT, "Godot (自动检测 3/4)", "godot4"),
             new EngineOption(EngineType.UNKNOWN, "未知", null)
     };
-    private TextView etEmulator;
+    private LauncherEditText etEmulator;
+    private ImageView btnPickEmulatorApp;
     private EditText etLaunchTarget;
     private EditText etGameHubLocalGameId;
     private EditText etDescription;
@@ -151,6 +153,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         currentEngineOption = engineOptions[0];
         tvEngine.setText(currentEngineOption.label);
         etEmulator = findViewById(R.id.editEmulator);
+        btnPickEmulatorApp = findViewById(R.id.btnPickEmulatorApp);
         etLaunchTarget = findViewById(R.id.editLaunchTarget);
         etGameHubLocalGameId = findViewById(R.id.editGameHubLocalGameId);
         etDescription = findViewById(R.id.editDescription);
@@ -217,7 +220,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private void bindActions() {
         tvEngine.setOnClickListener(v -> showEnginePicker());
-        etEmulator.setOnClickListener(v -> LauncherAppPickerDialog.show(this, etEmulator::setText));
+        // 模拟器包名支持手动输入；右侧图标点击从应用列表选择。
+        btnPickEmulatorApp.setOnClickListener(v -> LauncherAppPickerDialog.show(this, etEmulator::setText));
         etLaunchTarget.setOnClickListener(v -> LauncherLaunchTargetPicker.show(
                 this, selectedGameDirectoryUri, selectedEngineOption().engine, etLaunchTarget::setText));
         btnPickDirectory.setOnClickListener(v -> directoryPicker.launch(selectedGameDirectoryUri));
@@ -323,9 +327,11 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
-        LauncherTheme.formInputs(etTitle, etLaunchTarget, etGameHubLocalGameId, etDescription);
+        LauncherTheme.formInputs(etTitle, etEmulator, etLaunchTarget, etGameHubLocalGameId, etDescription);
         LauncherTheme.longActionButton(btnPickDirectory);
         LauncherTheme.longActionButton(btnPickCover);
+        btnPickEmulatorApp.setImageTintList(
+                ColorStateList.valueOf(LauncherTheme.primary(this)));
         btnImportGameHubShortcut.setImageTintList(
                 ColorStateList.valueOf(LauncherTheme.primary(this)));
         LauncherTheme.longActionButton(btnSave);
@@ -470,11 +476,9 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private void applyEngineSelection(int index) {
         currentEngineOption = engineOptions[boundedEngineOptionIndex(index)];
         tvEngine.setText(currentEngineOption.label);
+        // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
         String nextDefault = defaultEmulatorPackageForOption(currentEngineOption);
-        String current = etEmulator.getText().toString().trim();
-        if (current.isEmpty() || current.equals(lastEngineDefaultPackage)) {
-            etEmulator.setText(nextDefault);
-        }
+        etEmulator.setText(nextDefault);
         lastEngineDefaultPackage = nextDefault;
     }
 

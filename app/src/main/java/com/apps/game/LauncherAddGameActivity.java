@@ -22,6 +22,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import com.apps.widget.LauncherEditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -71,7 +72,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private EditText nameInput;
     private TextView launchTargetText;
     private String launchTargetName = "";
-    private TextView emulatorText;
+    private LauncherEditText emulatorText;
+    private ImageView btnPickEmulatorApp;
     private EditText gameHubIdInput;
     private ImageView importGameHubShortcutButton;
     private EditText descriptionInput;
@@ -150,6 +152,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         nameInput = findViewById(R.id.addGameNameInput);
         launchTargetText = findViewById(R.id.addGameLaunchTargetInput);
         emulatorText = findViewById(R.id.addGameEmulatorInput);
+        btnPickEmulatorApp = findViewById(R.id.addGamePickEmulatorApp);
         gameHubIdInput = findViewById(R.id.addGameGameHubIdInput);
         importGameHubShortcutButton = findViewById(R.id.addGameImportGameHubShortcut);
         descriptionInput = findViewById(R.id.addGameDescriptionInput);
@@ -230,11 +233,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private void applyEngineSelection(int index) {
         selectedEngineOption = engineOptions[boundedEngineOptionIndex(index)];
         engineText.setText(selectedEngineOption.label);
+        // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
         String nextDefault = defaultEmulatorPackageForOption(selectedEngineOption);
-        String current = textOf(emulatorText);
-        if (current.isEmpty() || current.equals(lastEngineDefaultPackage)) {
-            emulatorText.setText(nextDefault);
-        }
+        emulatorText.setText(nextDefault);
         lastEngineDefaultPackage = nextDefault;
     }
 
@@ -252,7 +253,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private void bindActions() {
         dirText.setOnClickListener(view -> directoryPicker.launch(null));
         launchTargetText.setOnClickListener(view -> showLaunchTargetPicker());
-        emulatorText.setOnClickListener(view -> showAppPicker(emulatorText));
+        // 模拟器包名支持手动输入；右侧图标点击从应用列表选择。
+        btnPickEmulatorApp.setOnClickListener(view -> showAppPicker(emulatorText));
         importGameHubShortcutButton.setOnClickListener(view -> importGameHubShortcutFromShizuku());
         coverText.setOnClickListener(view -> coverPicker.launch(new String[]{"image/*"}));
         saveButton.setOnClickListener(view -> saveGame());
@@ -261,7 +263,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private void applyThemeTone() {
         LauncherTheme.longActionButton(saveButton);
         LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
-        LauncherTheme.formInputs(nameInput, gameHubIdInput, descriptionInput);
+        LauncherTheme.formInputs(nameInput, emulatorText, gameHubIdInput, descriptionInput);
+        btnPickEmulatorApp.setImageTintList(
+                ColorStateList.valueOf(LauncherTheme.primary(this)));
         importGameHubShortcutButton.setImageTintList(
                 ColorStateList.valueOf(LauncherTheme.primary(this)));
     }
