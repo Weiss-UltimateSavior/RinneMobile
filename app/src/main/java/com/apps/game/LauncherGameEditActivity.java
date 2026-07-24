@@ -53,6 +53,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private static final String STATE_LAUNCH_TARGET = "launch_target";
     private static final String STATE_GAMEHUB_LOCAL_GAME_ID = "gamehub_local_game_id";
     private static final String STATE_DESCRIPTION = "description";
+    private static final String STATE_DIRECTORY_REBOUND = "directory_rebound";
+    private static final String STATE_ENGINE_CHANGED = "engine_changed";
 
     private EditText etTitle;
     private TextView tvEngine;
@@ -92,6 +94,9 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private Uri selectedCoverUri;
     private Uri selectedGameDirectoryUri;
     private boolean directoryRebound;
+    /** True only after the user explicitly selected a different engine in this edit session. */
+    private boolean engineChanged;
+    private EngineType originalEngine;
     private String lastEngineDefaultPackage = "";
     private boolean restoreEngineSelection;
     private boolean restoreDirectorySelection;
@@ -178,11 +183,15 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         outState.putString(STATE_LAUNCH_TARGET, etLaunchTarget.getText().toString());
         outState.putString(STATE_GAMEHUB_LOCAL_GAME_ID, etGameHubLocalGameId.getText().toString());
         outState.putString(STATE_DESCRIPTION, etDescription.getText().toString());
+        outState.putBoolean(STATE_DIRECTORY_REBOUND, directoryRebound);
+        outState.putBoolean(STATE_ENGINE_CHANGED, engineChanged);
     }
 
     private void restoreTransientState(@Nullable Bundle savedInstanceState) {
         if (savedInstanceState == null) return;
         restoreFormState = savedInstanceState.containsKey(STATE_TITLE);
+        directoryRebound = savedInstanceState.getBoolean(STATE_DIRECTORY_REBOUND, false);
+        engineChanged = savedInstanceState.getBoolean(STATE_ENGINE_CHANGED, false);
         if (restoreFormState) {
             etTitle.setText(savedInstanceState.getString(STATE_TITLE, ""));
             etEmulator.setText(savedInstanceState.getString(STATE_EMULATOR_PACKAGE, ""));
@@ -244,6 +253,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 if (g == null) { Toast.makeText(this, "游戏不存在", Toast.LENGTH_SHORT).show(); finish(); return; }
                 game = g;
+                originalEngine = game.engine;
                 if (!restoreFormState) {
                     etTitle.setText(game.title);
                     etEmulator.setText(game.emulatorPackage);
@@ -282,7 +292,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
         game.title = title;
         EngineOption opt = selectedEngineOption();
-        game.engine = opt != null ? opt.engine : EngineType.UNKNOWN;
+        // Rebinding a directory is independent of engine selection.  In particular, do not
+        // downgrade an existing detected engine to AUTO after an Activity recreation unless
+        // the user deliberately chose another engine.
+        game.engine = directoryRebound && !engineChanged && originalEngine != null
+                ? originalEngine
+                : (opt != null ? opt.engine : EngineType.UNKNOWN);
         String emuPkg = etEmulator.getText().toString().trim();
         // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>。
         if (emuPkg.isEmpty() && opt != null
@@ -475,6 +490,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private void applyEngineSelection(int index) {
         currentEngineOption = engineOptions[boundedEngineOptionIndex(index)];
+        engineChanged = true;
         tvEngine.setText(currentEngineOption.label);
         // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
         String nextDefault = defaultEmulatorPackageForOption(currentEngineOption);

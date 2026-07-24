@@ -2,6 +2,7 @@ package com.yuki.yukihub.diagnostics
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import com.yuki.yukihub.data.GameRepository
 import com.yuki.yukihub.model.Game
 import com.yuki.yukihub.util.DevLogger
@@ -20,8 +21,20 @@ object GameDiagnostics {
     private const val MAX_EVENTS_BYTES = 512L * 1024L
 
     @JvmStatic
-    fun recordLaunch(context: Context?, game: Game?, success: Boolean, message: String) {
-        record(context, if (success) "launch_success" else "launch_failure", game, message)
+    fun recordLaunch(
+        context: Context?,
+        game: Game?,
+        success: Boolean,
+        message: String,
+        resolvedTarget: String? = null,
+        errorCategory: String? = null,
+        error: Throwable? = null,
+    ) {
+        record(context, if (success) "launch_success" else "launch_failure", game, message) { event ->
+            event.put("resolved_target", resolvedTarget ?: "")
+            if (!errorCategory.isNullOrBlank()) event.put("error_category", errorCategory)
+            if (error != null) event.put("error_stack", Log.getStackTraceString(error).take(8_000))
+        }
     }
 
     @JvmStatic
@@ -35,8 +48,15 @@ object GameDiagnostics {
     }
 
     @JvmStatic
+    @JvmOverloads
     @Synchronized
-    fun record(context: Context?, type: String, game: Game?, message: String) {
+    fun record(
+        context: Context?,
+        type: String,
+        game: Game?,
+        message: String,
+        additionalFields: ((JSONObject) -> Unit)? = null,
+    ) {
         if (context == null) return
         try {
             val file = eventsFile(context)
@@ -49,6 +69,7 @@ object GameDiagnostics {
                 put("type", type)
                 put("message", message.take(1000))
                 put("game", gameJson(game))
+                additionalFields?.invoke(this)
             }
             FileWriter(file, true).use { it.append(event.toString()).append('\n') }
         } catch (_: Throwable) {

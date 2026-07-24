@@ -40,22 +40,23 @@ object LauncherGameLaunchBridge {
         if (game == null) return LaunchResult.failure("游戏不存在")
         val appContext = context.applicationContext
         val repository = GameRepository(appContext)
-        val emulatorPackage = resolveEmulatorPackage(game)
+        val emulatorPackage = resolveEmulatorPackage(context, game)
         val launchTarget = resolveLaunchTarget(game)
         val validationError = validate(context, game, emulatorPackage)
         if (validationError != null) {
-            GameDiagnostics.recordLaunch(appContext, game, false, validationError)
+            GameDiagnostics.recordLaunch(appContext, game, false, validationError, launchTarget, "validation_failed")
             return LaunchResult.failure(validationError)
         }
 
         val sessionId = repository.startPlaySession(game.id, System.currentTimeMillis(), resolveLaunchType(emulatorPackage))
-        if (startGameActivity(context, game, emulatorPackage, launchTarget)) {
-            GameDiagnostics.recordLaunch(appContext, game, true, "启动请求已发送")
+        val attempt = startGameActivity(context, game, emulatorPackage, launchTarget)
+        if (attempt.success) {
+            GameDiagnostics.recordLaunch(appContext, game, true, "启动请求已发送", launchTarget)
             return LaunchResult.success(sessionId)
         }
         repository.cancelPlaySession(sessionId)
         val message = "启动失败：未找到该模拟器，或该模拟器不接受当前启动目标"
-        GameDiagnostics.recordLaunch(appContext, game, false, message)
+        GameDiagnostics.recordLaunch(appContext, game, false, message, launchTarget, attempt.errorCategory, attempt.error)
         return LaunchResult.failure(message)
     }
 
@@ -130,8 +131,23 @@ object LauncherGameLaunchBridge {
         return null
     }
 
-    private fun resolveEmulatorPackage(game: Game): String {
+    private fun resolveEmulatorPackage(context: Context, game: Game): String {
         val emulatorPackage = game.emulatorPackage?.trim() ?: ""
+        if (emulatorPackage.isNotEmpty()) return emulatorPackage
+        if (game.engine == EngineType.AUTO) {
+            val detected = try {
+                LauncherScanBridge.detectEngine(
+                    DocumentFile.fromTreeUri(context, android.net.Uri.parse(game.rootUri)), 2
+                )
+            } catch (_: Throwable) {
+                null
+            }
+            if (detected != null && detected.confidence > 0) {
+                return defaultPackageForDetectedEngine(detected.engine, detected.rpgMakerSubtype, detected.renpySubtype, detected.godotSubtype)
+            }
+            // A root.pfs is an unambiguous Artemis launch target even when SAF enumeration fails.
+            if (game.launchTarget?.trim()?.endsWith(".pfs", ignoreCase = true) == true) return "internal.artemis"
+        }
         if (emulatorPackage.isEmpty() && game.engine == EngineType.KIRIKIRI) return "internal.krkr"
         if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return "internal.ons"
         if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return "internal.tyrano"
@@ -140,13 +156,33 @@ object LauncherGameLaunchBridge {
         return emulatorPackage
     }
 
+    private fun defaultPackageForDetectedEngine(
+        engine: EngineType,
+        rpgMakerSubtype: String,
+        renpySubtype: String,
+        godotSubtype: String,
+    ): String = when (engine) {
+        EngineType.KIRIKIRI -> "internal.krkr"
+        EngineType.ONS -> "internal.ons"
+        EngineType.TYRANO -> "internal.tyrano"
+        EngineType.ARTEMIS -> "internal.artemis"
+        EngineType.PSP -> "org.ppsspp.ppsspp"
+        EngineType.RPGMAKER -> "internal." + rpgMakerSubtype.ifBlank { "rpgmxp" }
+        EngineType.RENPY -> "internal." + renpySubtype.ifBlank { "renpy" }
+        EngineType.GODOT -> "internal." + godotSubtype.ifBlank { "godot4" }
+        else -> ""
+    }
+
     private fun resolveLaunchTarget(game: Game): String? {
-        if (game.engine == EngineType.ARTEMIS || game.engine == EngineType.TYRANO) return "[游戏目录]"
+        // Preserve an explicit target such as root.pfs.  Artemis/Tyrano still default to the
+        // directory when the field is absent, but must not silently discard a user selection.
+        if ((game.engine == EngineType.ARTEMIS || game.engine == EngineType.TYRANO)
+            && game.launchTarget.isNullOrBlank()) return "[游戏目录]"
         if (game.engine == EngineType.GAMEHUB) return safeTitle(game)
         return game.launchTarget
     }
 
-    private fun startGameActivity(context: Context, game: Game, emulatorPackage: String, launchTarget: String?): Boolean {
+    private fun startGameActivity(context: Context, game: Game, emulatorPackage: String, launchTarget: String?): StartAttempt {
         val pkg = emulatorPackage.trim()
         try {
             if (pkg.startsWith("internal.krkr") || pkg == "org.tvp.kirikiri2.internal") {
@@ -165,14 +201,18 @@ object LauncherGameLaunchBridge {
             }
             if (pkg.startsWith("internal.psp") || pkg == "org.ppsspp.ppsspp") {
                 if (!EmulatorLauncher.isPPSSPPInstalled(context)) {
-                    return false
+                    return StartAttempt.failure("emulator_missing")
                 }
                 return startActivitySafely(context, EmulatorLauncher.buildInternalPspIntent(
                     context, resolvePspLaunchUri(context, game.rootUri, launchTarget), launchTarget))
             }
-            return EmulatorLauncher.launchGame(context, pkg, game.rootUri, launchTarget, game.winlatorLaunchMode, game.gamehubLaunchMode, game.gamehubLocalGameId)
-        } catch (_: Throwable) {
-            return false
+            return if (EmulatorLauncher.launchGame(context, pkg, game.rootUri, launchTarget, game.winlatorLaunchMode, game.gamehubLaunchMode, game.gamehubLocalGameId)) {
+                StartAttempt.success()
+            } else {
+                StartAttempt.failure("activity_unavailable_or_rejected")
+            }
+        } catch (error: Throwable) {
+            return StartAttempt.failure("activity_exception", error)
         }
     }
 
@@ -191,16 +231,27 @@ object LauncherGameLaunchBridge {
         return rootUri
     }
 
-    private fun startActivitySafely(context: Context?, intent: Intent?): Boolean {
-        if (context == null || intent == null) return false
+    private fun startActivitySafely(context: Context?, intent: Intent?): StartAttempt {
+        if (context == null || intent == null) return StartAttempt.failure("invalid_intent")
         return try {
             if (context !is Activity) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
-            true
-        } catch (_: Throwable) {
-            false
+            StartAttempt.success()
+        } catch (error: Throwable) {
+            StartAttempt.failure("activity_exception", error)
+        }
+    }
+
+    private data class StartAttempt(
+        val success: Boolean,
+        val errorCategory: String? = null,
+        val error: Throwable? = null,
+    ) {
+        companion object {
+            fun success() = StartAttempt(true)
+            fun failure(category: String, error: Throwable? = null) = StartAttempt(false, category, error)
         }
     }
 
