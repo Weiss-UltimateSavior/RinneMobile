@@ -2,7 +2,6 @@ package com.yuki.yukihub.launcherbridge
 
 import android.content.Context
 import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -10,10 +9,6 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 
 /**
@@ -33,9 +28,9 @@ object LauncherPublicChatBridge {
                 val response = JSONObject(get("/chat/public/messages?limit=50", token))
                 val messages = parseMessages(response.optJSONArray("messages"))
                 val cursor: Int? = if (response.isNull("next_before_id")) null else response.optInt("next_before_id")
-                post { callback.onSuccess(messages, cursor) }
+                postToMain { callback.onSuccess(messages, cursor) }
             } catch (error: Throwable) {
-                post { callback.onError(errorMessage(context, error, "加载消息失败")) }
+                postToMain { callback.onError(errorMessage(context, error, "加载消息失败")) }
             }
         }
     }
@@ -48,9 +43,9 @@ object LauncherPublicChatBridge {
                 val response = JSONObject(get("/chat/public/messages?limit=50&before_id=$beforeId", token))
                 val messages = parseMessages(response.optJSONArray("messages"))
                 val cursor: Int? = if (response.isNull("next_before_id")) null else response.optInt("next_before_id")
-                post { callback.onSuccess(messages, cursor) }
+                postToMain { callback.onSuccess(messages, cursor) }
             } catch (error: Throwable) {
-                post { callback.onError(errorMessage(context, error, "加载历史消息失败")) }
+                postToMain { callback.onError(errorMessage(context, error, "加载历史消息失败")) }
             }
         }
     }
@@ -62,9 +57,9 @@ object LauncherPublicChatBridge {
                 val token = requireToken(context)
                 val body = JSONObject().put("content", content)
                 val message = parseMessage(JSONObject(postJson("/chat/public/messages", body, token)))
-                post { callback.onSuccess(message) }
+                postToMain { callback.onSuccess(message) }
             } catch (error: Throwable) {
-                post { callback.onError(errorMessage(context, error, "发送失败")) }
+                postToMain { callback.onError(errorMessage(context, error, "发送失败")) }
             }
         }
     }
@@ -74,7 +69,7 @@ object LauncherPublicChatBridge {
         AppExecutors.runOnIo {
             try {
                 val json = JSONObject(get("/chat/public/status", requireToken(context)))
-                post {
+                postToMain {
                     callback.onSuccess(Status(
                         json.optBoolean("readonly"),
                         json.optBoolean("muted"),
@@ -83,7 +78,7 @@ object LauncherPublicChatBridge {
                     ))
                 }
             } catch (error: Throwable) {
-                post { callback.onError(errorMessage(context, error, "获取频道状态失败")) }
+                postToMain { callback.onError(errorMessage(context, error, "获取频道状态失败")) }
             }
         }
     }
@@ -95,9 +90,9 @@ object LauncherPublicChatBridge {
                 val array = JSONArray(get("/chat/public/announcements", requireToken(context)))
                 val announcements = ArrayList<Announcement>()
                 for (i in 0 until array.length()) announcements.add(parseAnnouncement(array.getJSONObject(i)))
-                post { callback.onSuccess(announcements) }
+                postToMain { callback.onSuccess(announcements) }
             } catch (error: Throwable) {
-                post { callback.onError(errorMessage(context, error, "获取公告失败")) }
+                postToMain { callback.onError(errorMessage(context, error, "获取公告失败")) }
             }
         }
     }
@@ -106,7 +101,7 @@ object LauncherPublicChatBridge {
     fun connect(context: Context, listener: RealtimeListener): WebSocket? {
         val token = LauncherAuthBridge.getToken(context)
         if (token.isNullOrBlank()) {
-            post { listener.onError("请先登录后再进入公共聊天室") }
+            postToMain { listener.onError("请先登录后再进入公共聊天室") }
             return null
         }
         try {
@@ -114,7 +109,7 @@ object LauncherPublicChatBridge {
             val url = "$wsBase/chat/public/ws?token=${URLEncoder.encode(token, "UTF-8")}"
             return WEB_SOCKET_CLIENT.newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
-                    post { listener.onConnected() }
+                    postToMain { listener.onConnected() }
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
@@ -138,11 +133,11 @@ object LauncherPublicChatBridge {
                 override fun onFailure(webSocket: WebSocket, error: Throwable, response: Response?) {
                     val expired = response != null && response.code == 401
                     if (expired) LauncherAuthBridge.expireSession(context)
-                    post { listener.onError(if (expired) "登录已过期，请重新登录" else "实时连接已断开") }
+                    postToMain { listener.onError(if (expired) "登录已过期，请重新登录" else "实时连接已断开") }
                 }
             })
         } catch (_: Throwable) {
-            post { listener.onError("无法建立实时连接") }
+            postToMain { listener.onError("无法建立实时连接") }
             return null
         }
     }
@@ -161,48 +156,10 @@ object LauncherPublicChatBridge {
 
     @Throws(Exception::class)
     private fun request(path: String, method: String, body: JSONObject?, token: String): String {
-        val connection = URL(API_BASE + path).openConnection() as HttpURLConnection
-        try {
-            connection.requestMethod = method
-            connection.connectTimeout = 10000
-            connection.readTimeout = 15000
-            connection.setRequestProperty("Accept", "application/json")
-            connection.setRequestProperty("Authorization", "Bearer $token")
-            if (body != null) {
-                val bytes = body.toString().toByteArray(Charsets.UTF_8)
-                connection.doOutput = true
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.setFixedLengthStreamingMode(bytes.size)
-                connection.outputStream.use { it.write(bytes) }
-            }
-            val code = connection.responseCode
-            val text = read(if (code in 200..299) connection.inputStream else connection.errorStream)
-            if (code !in 200..299) throw RuntimeException("HTTP $code: ${detail(text)}")
-            return text
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    @Throws(Exception::class)
-    private fun read(input: InputStream?): String {
-        if (input == null) return ""
-        input.use { stream ->
-            val output = ByteArrayOutputStream()
-            val buffer = ByteArray(4096)
-            var count: Int
-            while (stream.read(buffer).also { count = it } != -1) {
-                if (output.size() + count > MAX_RESPONSE_BYTES) throw java.io.IOException("response too large")
-                output.write(buffer, 0, count)
-            }
-            return output.toString("UTF-8")
-        }
-    }
-
-    private fun detail(response: String): String = try {
-        JSONObject(response).optString("detail", response)
-    } catch (_: Throwable) {
-        response
+        return LauncherBridgeHttp.request(
+            url = API_BASE + path, method = method, body = body?.toString(), bearerToken = token,
+            maxResponseBytes = MAX_RESPONSE_BYTES
+        )
     }
 
     private fun errorMessage(context: Context, error: Throwable?, fallback: String): String {
@@ -212,10 +169,6 @@ object LauncherPublicChatBridge {
             return "登录已过期，请重新登录"
         }
         return if (message.isNullOrBlank()) fallback else message
-    }
-
-    private fun post(runnable: Runnable) {
-        RxMainScheduler.post(runnable)
     }
 
     @Throws(Exception::class)

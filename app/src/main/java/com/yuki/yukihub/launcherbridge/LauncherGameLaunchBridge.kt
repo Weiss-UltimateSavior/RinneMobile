@@ -3,7 +3,6 @@ package com.yuki.yukihub.launcherbridge
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import androidx.documentfile.provider.DocumentFile
 import com.yuki.yukihub.diagnostics.GameDiagnostics
 import com.yuki.yukihub.data.GameRepository
@@ -11,7 +10,6 @@ import com.yuki.yukihub.launcher.EmulatorLauncher
 import com.yuki.yukihub.model.EngineType
 import com.yuki.yukihub.model.Game
 import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
 import java.util.Locale
 
 /**
@@ -19,7 +17,6 @@ import java.util.Locale
  */
 object LauncherGameLaunchBridge {
 
-    private const val APP_PREFS = "yukihub_prefs"
     private const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
 
     interface LaunchCallback {
@@ -33,7 +30,7 @@ object LauncherGameLaunchBridge {
         val app = context?.applicationContext
         AppExecutors.runOnIo {
             val result = launch(app, game)
-            RxMainScheduler.post { callback.onResult(result) }
+            postToMain { callback.onResult(result) }
         }
     }
 
@@ -153,8 +150,7 @@ object LauncherGameLaunchBridge {
         val pkg = emulatorPackage.trim()
         try {
             if (pkg.startsWith("internal.krkr") || pkg == "org.tvp.kirikiri2.internal") {
-                val prefs: SharedPreferences =
-                    context.applicationContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+                val prefs = context.yukiPrefs()
                 val krEngineVersion = prefs.getString(KEY_KR_ENGINE_VERSION, "auto")
                 return startActivitySafely(context, EmulatorLauncher.buildInternalKrkrIntent(context, game.rootUri, launchTarget, false, krEngineVersion, false))
             }

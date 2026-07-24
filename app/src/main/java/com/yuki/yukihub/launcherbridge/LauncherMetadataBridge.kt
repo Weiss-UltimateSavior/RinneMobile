@@ -1,7 +1,6 @@
 package com.yuki.yukihub.launcherbridge
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.yuki.yukihub.data.GameRepository
 import com.yuki.yukihub.data.MetadataRepository
 import com.yuki.yukihub.metadata.BangumiClient
@@ -10,14 +9,12 @@ import com.yuki.yukihub.metadata.VnMetadata
 import com.yuki.yukihub.metadata.VndbClient
 import com.yuki.yukihub.model.Game
 import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
 
 /**
  * 元数据桥接：VNDB/Bangumi/月幕Gal 搜索、保存、封面同步。
  */
 object LauncherMetadataBridge {
 
-    private const val APP_PREFS = "yukihub_prefs"
 
     interface Callback {
         fun onResult(success: Boolean)
@@ -32,8 +29,7 @@ object LauncherMetadataBridge {
     @JvmStatic
     fun getMetadataSource(context: Context?): String {
         if (context == null) return MetadataController.SOURCE_VNDB
-        val prefs: SharedPreferences = context.applicationContext
-            .getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        val prefs = context.yukiPrefs()
         return prefs.getString(MetadataController.KEY_METADATA_SOURCE, MetadataController.SOURCE_VNDB)
             ?: MetadataController.SOURCE_VNDB
     }
@@ -41,24 +37,21 @@ object LauncherMetadataBridge {
     @JvmStatic
     fun setMetadataSource(context: Context?, source: String?) {
         if (context == null) return
-        val prefs: SharedPreferences = context.applicationContext
-            .getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        val prefs = context.yukiPrefs()
         prefs.edit().putString(MetadataController.KEY_METADATA_SOURCE, source).apply()
     }
 
     @JvmStatic
     fun getBangumiToken(context: Context?): String {
         if (context == null) return ""
-        val prefs: SharedPreferences = context.applicationContext
-            .getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        val prefs = context.yukiPrefs()
         return prefs.getString(MetadataController.KEY_BANGUMI_TOKEN, "") ?: ""
     }
 
     @JvmStatic
     fun setBangumiToken(context: Context?, token: String?) {
         if (context == null) return
-        val prefs: SharedPreferences = context.applicationContext
-            .getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        val prefs = context.yukiPrefs()
         prefs.edit().putString(MetadataController.KEY_BANGUMI_TOKEN, token?.trim() ?: "").apply()
     }
 
@@ -125,7 +118,7 @@ object LauncherMetadataBridge {
             } catch (_: Throwable) {
             }
             val success = ok
-            RxMainScheduler.post { callback.onResult(success) }
+            postToMain { callback.onResult(success) }
         }
     }
 
@@ -148,7 +141,7 @@ object LauncherMetadataBridge {
             }
             val result = candidates ?: emptyList()
             val finalError = error
-            RxMainScheduler.post { callback.onResult(result, finalError) }
+            postToMain { callback.onResult(result, finalError) }
         }
     }
 
@@ -170,7 +163,7 @@ object LauncherMetadataBridge {
             } catch (_: Throwable) {
             }
             val finalSuccess = success
-            RxMainScheduler.post { callback.onResult(finalSuccess) }
+            postToMain { callback.onResult(finalSuccess) }
         }
     }
 
@@ -199,7 +192,7 @@ object LauncherMetadataBridge {
             }
             val result = candidates ?: emptyList()
             val finalError = error
-            RxMainScheduler.post { callback.onResult(result, finalError) }
+            postToMain { callback.onResult(result, finalError) }
         }
     }
 
@@ -221,7 +214,7 @@ object LauncherMetadataBridge {
             } catch (_: Throwable) {
             }
             val finalSuccess = success
-            RxMainScheduler.post { callback.onResult(finalSuccess) }
+            postToMain { callback.onResult(finalSuccess) }
         }
     }
 
@@ -284,19 +277,19 @@ object LauncherMetadataBridge {
             } catch (_: Throwable) {
             }
             val success = ok
-            RxMainScheduler.post { callback.onResult(success) }
+            postToMain { callback.onResult(success) }
         }
     }
 
     private fun setPreferredMetadataSource(context: Context, gameId: Long, source: String) {
-        context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        context.yukiPrefs()
             .edit()
             .putString(MetadataController.KEY_VISIBLE_METADATA_SOURCE_PREFIX + gameId, source)
             .apply()
     }
 
     private fun getPreferredMetadataSource(context: Context, gameId: Long): String {
-        val source = context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        val source = context.yukiPrefs()
             .getString(MetadataController.KEY_VISIBLE_METADATA_SOURCE_PREFIX + gameId, "") ?: ""
         return normalizeMetadataSource(source)
     }

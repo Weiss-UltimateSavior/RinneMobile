@@ -1,7 +1,6 @@
 package com.yuki.yukihub.launcherbridge
 
 import android.content.Context
-import android.content.SharedPreferences
 
 /**
  * KRKR 引擎设置桥接：负责读取/保存主项目 yukihub_prefs 中的 KRKR 引擎相关配置。
@@ -9,7 +8,6 @@ import android.content.SharedPreferences
  */
 object LauncherKrkrBridge {
 
-    private const val APP_PREFS = "yukihub_prefs"
     private const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
     private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
     private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
@@ -20,8 +18,7 @@ object LauncherKrkrBridge {
     const val ENGINE_VERSION_134 = "1.3.4"
     const val ENGINE_VERSION_126 = "1.2.6"
 
-    private fun prefs(context: Context): SharedPreferences =
-        context.applicationContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.yukiPrefs()
 
     @JvmStatic
     fun getEngineVersion(context: Context?): String {

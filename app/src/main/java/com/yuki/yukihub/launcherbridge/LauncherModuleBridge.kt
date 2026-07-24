@@ -1,7 +1,6 @@
 package com.yuki.yukihub.launcherbridge
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.yuki.yukihub.launcher.ExternalGodotPluginStrategy
 import com.yuki.yukihub.launcher.ExternalRenPyPluginStrategy
 import com.yuki.yukihub.launcher.ExternalRpgMakerPluginStrategy
@@ -21,7 +20,6 @@ import java.util.Locale
  */
 object LauncherModuleBridge {
 
-    private const val APP_PREFS = "yukihub_prefs"
     private const val KEY_RPGM_ENABLED = "module.rpgm.enabled"
     private const val KEY_RENPY_ENABLED = "module.renpy.enabled"
     private const val KEY_GODOT_ENABLED = "module.godot.enabled"
@@ -119,6 +117,5 @@ object LauncherModuleBridge {
         return p == "internal.godot" || p == "internal.godot3" || p == "internal.godot4"
     }
 
-    private fun getPrefs(context: Context): SharedPreferences =
-        context.applicationContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+    private fun getPrefs(context: Context) = context.yukiPrefs()
 }

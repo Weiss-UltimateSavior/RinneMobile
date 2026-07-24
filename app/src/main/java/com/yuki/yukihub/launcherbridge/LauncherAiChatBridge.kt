@@ -2,13 +2,8 @@ package com.yuki.yukihub.launcherbridge
 
 import android.content.Context
 import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 
 /**
@@ -53,7 +48,7 @@ object LauncherAiChatBridge {
                         messages.add(Message(item.optString("role"), item.optString("content"), item.optString("name")))
                     }
                 }
-                postMain { callback.onSuccess(messages) }
+                postToMain { callback.onSuccess(messages) }
             } catch (t: Throwable) {
                 postError(context, t, "获取聊天记录失败") { callback.onError(it) }
             }
@@ -69,7 +64,7 @@ object LauncherAiChatBridge {
                 body.put("persona", persona)
                 body.put("thread_id", threadId)
                 val json = JSONObject(request(context, "POST", "/ai/chat", body))
-                postMain { callback.onSuccess(json.optString("message", "")) }
+                postToMain { callback.onSuccess(json.optString("message", "")) }
             } catch (t: Throwable) {
                 postError(context, t, "聊天请求失败") { callback.onError(it) }
             }
@@ -81,7 +76,7 @@ object LauncherAiChatBridge {
         AppExecutors.runOnIo {
             try {
                 request(context, "DELETE", "/ai/chat/history/${encode(threadId)}", null)
-                postMain { callback.onSuccess() }
+                postToMain { callback.onSuccess() }
             } catch (t: Throwable) {
                 postError(context, t, "清空聊天记录失败") { callback.onError(it) }
             }
@@ -92,45 +87,10 @@ object LauncherAiChatBridge {
     private fun request(context: Context, method: String, path: String, body: JSONObject?): String {
         val token = LauncherAuthBridge.getToken(context)
         if (token.isNullOrBlank()) throw RuntimeException("未登录")
-        val connection = URL(API_BASE + path).openConnection() as HttpURLConnection
-        try {
-            connection.requestMethod = method
-            connection.connectTimeout = 10000
-            connection.readTimeout = 30000
-            connection.setRequestProperty("Accept", "application/json")
-            connection.setRequestProperty("Authorization", "Bearer $token")
-            if (body != null) {
-                val bytes = body.toString().toByteArray(Charsets.UTF_8)
-                connection.doOutput = true
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.setFixedLengthStreamingMode(bytes.size)
-                connection.outputStream.use { it.write(bytes) }
-            }
-            val code = connection.responseCode
-            val raw: InputStream? = if (code in 200..299) connection.inputStream else connection.errorStream
-            val output = ByteArrayOutputStream()
-            raw?.use { stream ->
-                val buffer = ByteArray(4096)
-                var length: Int
-                while (stream.read(buffer).also { length = it } != -1) {
-                    if (output.size() + length > MAX_RESPONSE_BYTES) throw java.io.IOException("response too large")
-                    output.write(buffer, 0, length)
-                }
-            }
-            val response = output.toString("UTF-8")
-            if (code !in 200..299) {
-                var detail = response
-                try {
-                    val value = JSONObject(response).opt("detail")
-                    if (value is JSONObject) detail = value.optString("message", response)
-                } catch (_: Throwable) {
-                }
-                throw RuntimeException("HTTP $code: $detail")
-            }
-            return response
-        } finally {
-            connection.disconnect()
-        }
+        return LauncherBridgeHttp.request(
+            url = API_BASE + path, method = method, body = body?.toString(), bearerToken = token,
+            readTimeoutMs = 30_000, maxResponseBytes = MAX_RESPONSE_BYTES
+        )
     }
 
     @Throws(Exception::class)
@@ -148,10 +108,6 @@ object LauncherAiChatBridge {
             message = "消息内容或会话参数不符合要求"
         }
         val finalMessage = message
-        postMain { sink(finalMessage) }
-    }
-
-    private fun postMain(runnable: Runnable) {
-        RxMainScheduler.post(runnable)
+        postToMain { sink(finalMessage) }
     }
 }
