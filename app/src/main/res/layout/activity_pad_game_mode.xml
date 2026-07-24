@@ -91,6 +91,7 @@
                 android:layout_height="56dp"
                 android:layout_weight="1"
                 android:clickable="true"
+                android:clipChildren="false"
                 android:focusable="true"
                 android:gravity="center"
                 android:orientation="vertical">
@@ -99,10 +100,7 @@
                      android:id="@+id/navLaunchCenterCircle"
                      android:layout_width="46dp"
                      android:layout_height="46dp"
-                     android:background="@drawable/launcher_icon_circle_green"
-                     android:elevation="3dp"
-                     android:translationZ="1dp"
-                     android:outlineProvider="background">
+                     android:background="@drawable/launcher_icon_circle_green">
 
                     <ImageView
                         android:id="@+id/navLaunchCenterImage"

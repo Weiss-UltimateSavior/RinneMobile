@@ -445,7 +445,7 @@ public class LauncherActivity extends AppCompatActivity {
 
     private void applyLauncherThemeTone() {
         if (binding == null) return;
-        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circle(this));
+        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circleWithSoftShadow(this));
         boolean rinneTheme = isRinneTheme(this);
         boolean anriTheme = isAnriTheme(this);
         boolean xinhaitianTheme = isXinhaitianTheme(this);

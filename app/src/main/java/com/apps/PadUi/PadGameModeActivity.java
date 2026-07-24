@@ -155,7 +155,7 @@ public class PadGameModeActivity extends AppCompatActivity {
     /** 跟随主题切换中间图标：默认图标或主题风格图标（凛弥/杏璃）。 */
     private void applyLauncherThemeTone() {
         if (binding == null) return;
-        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circle(this));
+        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circleWithSoftShadow(this));
         String style = LauncherActivity.getLauncherThemeStyle(this);
         boolean rinneTheme = LauncherActivity.THEME_STYLE_RINNE.equals(style);
         boolean anriTheme = LauncherActivity.THEME_STYLE_ANRI.equals(style);
