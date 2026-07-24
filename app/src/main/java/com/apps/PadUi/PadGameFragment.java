@@ -490,10 +490,12 @@ public class PadGameFragment extends Fragment {
     private void confirmLaunchGame(Game game) {
         PadDialogFactory.showConfirm(requireContext(), "启动游戏",
                 "确定启动「" + safeTitle(game) + "」吗？", "确定", () -> {
-            LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
-                if (!isAdded()) return;
-                if (result.success) runningSessionId = result.sessionId;
-                else Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
+            com.apps.game.GamePasswordLock.interceptLaunch(PadGameFragment.this, game, () -> {
+                LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
+                    if (!isAdded()) return;
+                    if (result.success) runningSessionId = result.sessionId;
+                    else Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
+                });
             });
         });
     }

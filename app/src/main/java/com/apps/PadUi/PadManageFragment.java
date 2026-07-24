@@ -643,7 +643,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (game == null) return;
         PadDialogFactory.showConfirm(requireContext(), "启动游戏",
                 "确定启动「" + safeTitle(game) + "」吗？", "确定",
-                () -> launchGameDirectly(game));
+                () -> com.apps.game.GamePasswordLock.interceptLaunch(PadManageFragment.this, game,
+                        () -> launchGameDirectly(game)));
     }
 
     private void showGameActionMenu(Game game) {
@@ -982,6 +983,9 @@ private void loadNextPage(boolean forceFullRefresh) {
         } else {
             onsIndex = -1;
         }
+        final boolean hasPassword = com.apps.game.GamePasswordLock.hasPassword(game);
+        labels.add(hasPassword ? "取消密码" : "密码锁定");
+        final int passwordIndex = labels.size() - 1;
         labels.add("删除游戏");
         int deleteIndex = labels.size() - 1;
         PadDialogFactory.showActionChoices(requireContext(), "更多选项",
@@ -991,6 +995,10 @@ private void loadNextPage(boolean forceFullRefresh) {
             else if (index == 2) LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id));
             else if (index == 3) syncMetadataToCard(game);
             else if (isOns && index == onsIndex) openOnsGameSettings(game);
+            else if (index == passwordIndex) {
+                if (hasPassword) com.apps.game.GamePasswordLock.clearPassword(this, game, null);
+                else com.apps.game.GamePasswordLock.setPassword(this, game, null);
+            }
             else if (index == deleteIndex) confirmDeleteGame(game);
         });
     }

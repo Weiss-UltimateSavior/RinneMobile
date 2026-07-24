@@ -88,6 +88,14 @@ public final class LauncherGameActionController {
         }
         addAction(root, "游戏状态", dialog, () -> showPlayStatusDialog(game));
         addAction(root, game.favorite ? "取消收藏" : "添加收藏", dialog, () -> toggleFavorite(game));
+        addAction(root, GamePasswordLock.hasPassword(game) ? "取消密码" : "密码锁定", dialog,
+                () -> {
+                    if (GamePasswordLock.hasPassword(game)) {
+                        GamePasswordLock.clearPassword(fragment, game, null);
+                    } else {
+                        GamePasswordLock.setPassword(fragment, game, null);
+                    }
+                });
         addAction(root, "更多选项", dialog, () -> showMoreOptionsDialog(game));
         root.addView(createDialogCancelButton(dialog));
         setDialogContent(dialog, root, 300);
@@ -252,6 +260,8 @@ public final class LauncherGameActionController {
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("更多选项"));
         addMoreOption(root, dialog, "修改时长", false, () -> showEditPlayTimeDialog(game));
+        addMoreOption(root, dialog, "添加到桌面", false,
+                () -> PinnedGameShortcut.requestPinShortcut(context(), game));
         addMoreOption(root, dialog, "重新匹配 VNDB 元数据", false,
                 () -> rematchMetadata(game));
         addMoreOption(root, dialog, "自定义搜索 VNDB", false,

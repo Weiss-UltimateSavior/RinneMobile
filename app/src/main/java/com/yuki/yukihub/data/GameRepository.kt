@@ -851,6 +851,7 @@ class GameRepository(context: Context) {
         v.put("updated_at", g.updatedAt)
         v.put("hidden", if (g.hidden) 1 else 0)
         v.put("favorite", if (g.favorite) 1 else 0)
+        v.put("password_lock", g.passwordLock)
         return v
     }
 
@@ -882,6 +883,7 @@ class GameRepository(context: Context) {
         g.hidden = c.getInt(c.getColumnIndexOrThrow("hidden")) == 1
         val favoriteIndex = c.getColumnIndex("favorite")
         g.favorite = favoriteIndex >= 0 && !c.isNull(favoriteIndex) && c.getInt(favoriteIndex) == 1
+        g.passwordLock = getStringOrNull(c, "password_lock")
         return g
     }
 

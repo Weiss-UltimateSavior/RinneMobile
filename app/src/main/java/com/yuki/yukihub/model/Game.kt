@@ -33,7 +33,8 @@ data class Game @JvmOverloads constructor(
     @JvmField var createdAt: Long = 0L,
     @JvmField var updatedAt: Long = 0L,
     @JvmField var hidden: Boolean = false,
-    @JvmField var favorite: Boolean = false
+    @JvmField var favorite: Boolean = false,
+    @JvmField var passwordLock: String? = null
 ) {
     init {
         if (engine == null) engine = EngineType.UNKNOWN

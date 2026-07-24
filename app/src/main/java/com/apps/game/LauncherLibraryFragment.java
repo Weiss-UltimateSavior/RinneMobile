@@ -995,7 +995,8 @@ private void loadNextPage(boolean forceFullRefresh) {
             btnCancel.setOnClickListener(v -> dialog.dismiss());
             btnConfirm.setOnClickListener(v -> {
                 dialog.dismiss();
-                launchGameDirectly(game);
+                com.apps.game.GamePasswordLock.interceptLaunch(LauncherLibraryFragment.this, game,
+                        () -> launchGameDirectly(game));
             });
         }
     }
@@ -1027,11 +1028,16 @@ private void loadNextPage(boolean forceFullRefresh) {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         addGameActionOption(root, "游戏详情", dialog, game, () -> showGameDetailDialog(game));
-        addGameActionOption(root, "添加到桌面", dialog, game,
-                () -> PinnedGameShortcut.requestPinShortcut(requireContext(), game));
         addGameActionOption(root, "编辑游戏", dialog, game, () -> startEditGameActivity(game));
         addGameActionOption(root, "游戏状态", dialog, game, () -> showPlayStatusDialog(game));
         addGameActionOption(root, game.favorite ? "取消收藏" : "添加收藏", dialog, game, () -> toggleFavorite(game));
+        addGameActionOption(root, com.apps.game.GamePasswordLock.hasPassword(game) ? "取消密码" : "密码锁定", dialog, game, () -> {
+            if (com.apps.game.GamePasswordLock.hasPassword(game)) {
+                com.apps.game.GamePasswordLock.clearPassword(this, game, null);
+            } else {
+                com.apps.game.GamePasswordLock.setPassword(this, game, null);
+            }
+        });
         addGameActionOption(root, "更多选项", dialog, game, () -> showMoreOptionsDialog(game));
 
         TextView cancel = new TextView(requireContext());
@@ -1381,6 +1387,7 @@ private void loadNextPage(boolean forceFullRefresh) {
 
         java.util.List<String[]> options = new java.util.ArrayList<>();
         options.add(new String[]{"修改时长", "edit_play_time"});
+        options.add(new String[]{"添加到桌面", "pin_shortcut"});
         options.add(new String[]{"重新匹配 VNDB 元数据", "rematch"});
         options.add(new String[]{"自定义搜索 VNDB", "custom_vndb"});
         options.add(new String[]{"同步元数据封面到卡片", "sync"});
@@ -1405,6 +1412,7 @@ private void loadNextPage(boolean forceFullRefresh) {
                 dialog.dismiss();
                 switch (action) {
                     case "edit_play_time": showEditPlayTimeDialog(game); break;
+                    case "pin_shortcut": PinnedGameShortcut.requestPinShortcut(requireContext(), game); break;
                     case "rematch": rematchMetadata(game); break;
                     case "custom_vndb": LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id)); break;
                     case "sync": syncMetadataToCard(game); break;

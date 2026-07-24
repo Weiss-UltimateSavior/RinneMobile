@@ -12,7 +12,7 @@ class YukiDatabaseHelper(context: Context) :
         // Keep this monotonic for the production package.  The launcher now uses the
         // same applicationId as existing installs; lowering this value makes SQLite
         // reject those installs before the launcher can load any data.
-        const val DB_VERSION = 14
+        const val DB_VERSION = 15
     }
 
     override fun onConfigure(db: SQLiteDatabase) {
@@ -48,7 +48,8 @@ class YukiDatabaseHelper(context: Context) :
                 "created_at INTEGER NOT NULL," +
                 "updated_at INTEGER NOT NULL," +
                 "hidden INTEGER DEFAULT 0," +
-                "favorite INTEGER DEFAULT 0" +
+                "favorite INTEGER DEFAULT 0," +
+                "password_lock TEXT" +
                 ")")
         db.execSQL("CREATE TABLE play_sessions (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -110,6 +111,9 @@ class YukiDatabaseHelper(context: Context) :
         }
         if (oldVersion < 13) {
             upgradeRootUriKeysAndIntegrity(db)
+        }
+        if (oldVersion < 15) {
+            safeAlter(db, "ALTER TABLE games ADD COLUMN password_lock TEXT")
         }
     }
 
