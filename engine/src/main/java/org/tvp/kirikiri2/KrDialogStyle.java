@@ -9,8 +9,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -28,8 +26,6 @@ import bridge.KrPathUtils;
  * 12sp muted 正文、13sp bold 按钮、38dp 按钮高度。</p>
  */
 public final class KrDialogStyle {
-    private static final String TAG = "KrDialogStyle";
-    private static final long IME_RETRY_DELAY_MS = 250L;
 
     // --- 回退颜色（无 Intent extras 时使用） ---
     private static final int FALLBACK_CARD         = 0xFF2A2A2A;
@@ -156,40 +152,22 @@ public final class KrDialogStyle {
         dialog.show();
 
         if (editText != null) {
-            // 部分 OEM 会在 Dialog 初次附着时忽略 IME 请求。等视图取得窗口令牌后请求一次，
-            // 再在 GL 线程可能抢回焦点后重试；不要使用 toggleSoftInput，它可能反而关闭键盘。
-            editText.post(() -> requestIme(dialog, editText));
-            editText.postDelayed(() -> requestIme(dialog, editText), IME_RETRY_DELAY_MS);
+            // Cocos2dx GL 环境下 focus 可能被抢回，延迟触发 IME 作为保底
+            editText.postDelayed(() -> {
+                try {
+                    editText.requestFocus();
+                    InputMethodManager imm = (InputMethodManager) editText.getContext()
+                            .getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(editText, InputMethodManager.SHOW_FORCED);
+                        if (!imm.isActive(editText)) {
+                            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }, 300);
         }
         return dialog;
-    }
-
-    private static void requestIme(Dialog dialog, EditText editText) {
-        if (!dialog.isShowing() || !editText.isAttachedToWindow()) return;
-        try {
-            editText.setShowSoftInputOnFocus(true);
-            editText.requestFocus();
-
-            Window window = dialog.getWindow();
-            if (window != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                WindowInsetsController controller = window.getInsetsController();
-                if (controller != null) {
-                    controller.show(WindowInsets.Type.ime());
-                }
-            }
-
-            // Android 10 及以下没有 WindowInsetsController；同时保留该调用作为
-            // Android 11+ 的 OEM 输入法兼容回退。
-            InputMethodManager imm = (InputMethodManager) editText.getContext()
-                    .getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) {
-                imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
-            } else {
-                android.util.Log.w(TAG, "InputMethodManager unavailable for dialog input");
-            }
-        } catch (Throwable error) {
-            android.util.Log.w(TAG, "Unable to request IME for dialog input", error);
-        }
     }
 
     // ---- 主题色解析 ----

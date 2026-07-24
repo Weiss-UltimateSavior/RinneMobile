@@ -115,10 +115,37 @@ public class LocalAgentActivity extends AppCompatActivity {
         binding.agentComposerOverlay.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateListPadding());
         // 用户主动触摸 EditText 时设置标志位，renderRunning 中的 clearFocus + hideSoftInput
         // 逻辑据此跳过，避免与用户已主动唤起的输入状态冲突。
+        // 同时主动 requestFocus 并通过 WindowInsetsController 唤起 IME —— edge-to-edge 模式
+        // 下 setSoftInputMode 已失效（Android 11+ 弃用），系统自动唤起在某些机型/系统版本
+        // 上不可靠（典型复现：Lenovo TB323FU / Android 16）。
         binding.agentInput.setOnTouchListener((v, event) -> {
             userTouchedInput = true;
+            if (!v.hasFocus()) {
+                v.requestFocus();
+                showImeExplicit(v);
+            }
             return false;
         });
+        // EditText 获焦时主动唤起 IME。覆盖 setEnabled(true) 自动获焦、点击获焦等所有路径。
+        binding.agentInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) showImeExplicit(v);
+        });
+    }
+
+    /** 主动唤起 IME，优先使用 API 30+ 的 WindowInsetsController，低版本回退到 IMM。 */
+    private void showImeExplicit(View view) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.view.WindowInsetsController controller = view.getWindowInsetsController();
+                if (controller != null) {
+                    controller.show(android.view.WindowInsets.Type.ime());
+                    return;
+                }
+            }
+            android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(view, 0);
+        } catch (Throwable ignored) {}
     }
 
     private void send() {
@@ -581,7 +608,8 @@ public class LocalAgentActivity extends AppCompatActivity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        // edge-to-edge 模式下 setSoftInputMode(SOFT_INPUT_ADJUST_RESIZE) 已失效
+        //（Android 11+ 弃用），IME inset 改由 bindInsets() 手动处理。
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
