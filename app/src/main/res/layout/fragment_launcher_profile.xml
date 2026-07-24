@@ -224,14 +224,8 @@
                 android:orientation="vertical">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                <LinearLayout
                     android:id="@+id/chatRoomRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginEnd="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -245,13 +239,12 @@
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
                         android:contentDescription="@null"
-                    android:src="@drawable/launcher_manage_arrow" />
+                        android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/moduleCompatibilityRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginStart="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -267,17 +260,10 @@
                         android:contentDescription="@null"
                         android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
 
                 <LinearLayout
                     android:id="@+id/profileInfoRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginEnd="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -296,8 +282,7 @@
 
                 <LinearLayout
                     android:id="@+id/accountSettingsRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginStart="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -313,17 +298,10 @@
                         android:contentDescription="@null"
                         android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
 
                 <LinearLayout
                     android:id="@+id/cloudRestoreRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginEnd="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -341,37 +319,8 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/mysteryRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginStart="5dp"
-                    android:clickable="false"
-                    android:focusable="false">
-
-                    <ImageView
-                        style="@style/LauncherProfileActionIcon"
-                        android:contentDescription="@null"
-                        android:src="@drawable/launcher_profile_action_translation" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="神秘功能" />
-
-                    <ImageView
-                        style="@style/LauncherManageArrowIcon"
-                        android:contentDescription="@null"
-                        android:src="@drawable/launcher_manage_arrow" />
-                </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                <LinearLayout
                     android:id="@+id/translationRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginEnd="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -390,8 +339,7 @@
 
                 <LinearLayout
                     android:id="@+id/logoutRow"
-                    style="@style/LauncherProfileActionGridItem"
-                    android:layout_marginStart="5dp">
+                    style="@style/LauncherManageItem">
 
                     <ImageView
                         style="@style/LauncherProfileActionIcon"
@@ -406,7 +354,6 @@
                         style="@style/LauncherManageArrowIcon"
                         android:contentDescription="@null"
                         android:src="@drawable/launcher_manage_arrow" />
-                </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

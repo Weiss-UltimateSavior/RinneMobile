@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -560,14 +561,14 @@ public class LauncherProfileFragment extends Fragment {
             View actionContainer = binding.profileActionList.getChildAt(i);
             if (!(actionContainer instanceof ViewGroup)) continue;
             ViewGroup group = (ViewGroup) actionContainer;
-            if (group.getChildCount() > 0 && group.getChildAt(0) instanceof TextView) {
-                // Backward-compatible single-column action row.
+            View firstChild = group.getChildCount() > 0 ? group.getChildAt(0) : null;
+            if (firstChild instanceof TextView || firstChild instanceof ImageView) {
+                // Single-column manage row (icon + title + arrow).
                 LauncherTheme.styleManageRow(actionContainer);
                 continue;
             }
-            // Profile actions are now arranged in two-column containers; the actual
-            // manage rows are the container's children rather than direct children
-            // of profileActionList.
+            // Two-column containers: the actual manage rows are the container's
+            // children rather than direct children of profileActionList.
             for (int j = 0; j < group.getChildCount(); j++) {
                 LauncherTheme.styleManageRow(group.getChildAt(j));
             }
