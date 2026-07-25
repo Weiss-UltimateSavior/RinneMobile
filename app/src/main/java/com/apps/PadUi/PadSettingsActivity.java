@@ -254,7 +254,7 @@ public class PadSettingsActivity extends AppCompatActivity {
                 ? "选择 Launcher 的主题风格与动态背景"
                 : showMetadata ? "选择游戏信息与封面获取的资料源"
                 : showAccount ? "管理云端同步、资料显示与账户功能偏好"
-                : "Rinne 默认使用统一存档管理目录，便于统一管理；遇到兼容性问题可关闭并使用游戏原目录。");
+                : "Rinne 默认使用统一存档管理目录，便于统一管理；存在旧存档的游戏关闭统一存档，会发生不可预料的bug。");
         if (showAccount) {
             renderAllAccountChips();
             refreshEmailSubscription();
