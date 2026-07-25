@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.view.Gravity
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -22,6 +25,8 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import java.io.ByteArrayInputStream
@@ -33,8 +38,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Tyrano WebView 宿主；资源服务与存档沙箱分别由独立组件负责。
  *
  * 本 Activity 隶属于 engine 模块，不依赖 app 层。用户偏好（UI 缩放、外网开关）
- * 直接读取共享的 yukihub_prefs，与 OnsSettings 同模式；确认对话框使用 appcompat
- * 默认 AlertDialog，与 SDLActivity/Cocos2dxHandler 在 engine 内的用法一致。
+ * 直接读取共享的 yukihub_prefs，与 OnsSettings 同模式；确认对话框通过 Intent extras
+ * 传入的 Launcher 主题色在 engine 内复刻 LauncherDialogFactory 的视觉风格，保持统一。
  */
 class TyranoActivity : Activity() {
     private var webView: WebView? = null
@@ -416,10 +421,13 @@ class TyranoActivity : Activity() {
     }
 
     /**
-     * 平台 AlertDialog 实现的确认对话框。
+     * 与 Launcher 统一风格的确认对话框。
      *
-     * engine 模块不依赖 app 的 LauncherDialogFactory/LauncherTheme，此处使用 appcompat
-     * 提供的 AlertDialog，与 SDLActivity/Cocos2dxHandler 在 engine 内的对话框用法一致。
+     * engine 模块不依赖 app 的 LauncherDialogFactory/LauncherTheme，但 Launcher 通过
+     * Intent extras 传入了主题色（primaryColor / themeColorCard / themeColorText 等，
+     * 见 ScriptEngineLaunchers.appendThemeColors）。此处用这些颜色在 engine 内复刻
+     * LauncherDialogFactory.showConfirm 的视觉效果：圆角卡片背景 + 药丸形按钮，
+     * 与 app 内其他确认弹窗保持一致。
      */
     private fun showEngineConfirm(
         title: String,
@@ -427,13 +435,136 @@ class TyranoActivity : Activity() {
         confirmText: String,
         onConfirm: () -> Unit,
     ) {
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(confirmText) { _, _ -> onConfirm() }
-            .setNegativeButton("取消", null)
-            .setCancelable(true)
-            .show()
+        val dialog = AlertDialog.Builder(this).create()
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(true)
+
+        val density = resources.displayMetrics.density
+        val dp = { value: Float -> (value * density + 0.5f).toInt() }
+        val colors = ThemeColors.fromIntent(intent)
+
+        // 根容器：圆角卡片，padding 22dp
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22f), dp(22f), dp(22f), dp(22f))
+            background = GradientDrawable().apply {
+                setColor(colors.card)
+                cornerRadius = dp(20f).toFloat()
+            }
+        }
+
+        // 标题：16sp bold 居中
+        val titleView = TextView(this).apply {
+            text = title
+            setTextColor(colors.text)
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(-1, -2)
+        }
+        root.addView(titleView)
+
+        // 消息：13sp 居中，topMargin 14dp
+        val messageView = TextView(this).apply {
+            text = message
+            setTextColor(colors.textMuted)
+            textSize = 13f
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = dp(14f)
+            }
+        }
+        root.addView(messageView)
+
+        // 按钮行：topMargin 22dp
+        val buttonRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = dp(22f)
+            }
+        }
+
+        // 取消按钮：药丸形（card 底色 + primary 文字）
+        val cancelBtn = TextView(this).apply {
+            text = "取消"
+            setTextColor(colors.primary)
+            textSize = 13f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply {
+                setColor(colors.card)
+                cornerRadius = dp(999f).toFloat()
+            }
+            layoutParams = LinearLayout.LayoutParams(0, dp(36f)).apply {
+                weight = 1f
+                marginEnd = dp(7f)
+            }
+        }
+        buttonRow.addView(cancelBtn)
+
+        // 确认按钮：药丸形（primary 底色 + onPrimary 文字）
+        val confirmBtn = TextView(this).apply {
+            text = confirmText
+            setTextColor(colors.onPrimary)
+            textSize = 13f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply {
+                setColor(colors.primary)
+                cornerRadius = dp(999f).toFloat()
+            }
+            layoutParams = LinearLayout.LayoutParams(0, dp(36f)).apply {
+                weight = 1f
+                marginStart = dp(7f)
+            }
+        }
+        buttonRow.addView(confirmBtn)
+        root.addView(buttonRow)
+
+        dialog.setView(root)
+        dialog.show()
+
+        // 窗口：透明背景 + 固定宽度 252dp，与 LauncherDialogFactory 一致
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setLayout(dp(252f), -2)
+        }
+
+        cancelBtn.setOnClickListener { dialog.dismiss() }
+        confirmBtn.setOnClickListener {
+            dialog.dismiss()
+            onConfirm()
+        }
+    }
+
+    /** 从 Intent extras 读取 Launcher 主题色，缺失时按 darkMode 回落到默认值。 */
+    private data class ThemeColors(
+        val primary: Int,
+        val onPrimary: Int,
+        val card: Int,
+        val text: Int,
+        val textMuted: Int,
+    ) {
+        companion object {
+            fun fromIntent(intent: Intent): ThemeColors {
+                val extras = intent.extras
+                val dark = extras?.getBoolean("darkMode", false) ?: false
+                // 缺失 Intent extras 时按 darkMode 回落到 Launcher 默认色值
+                val primary = if (dark) 0x22D88E else 0x18B978
+                val onPrimary = if (dark) 0x06120D else 0xFFFFFF
+                val card = if (dark) 0x1E1F1F else 0xFFFFFF
+                val text = if (dark) 0xF0F0F0 else 0x14221B
+                val textMuted = if (dark) 0x9A9A9A else 0x82908A
+                return ThemeColors(
+                    primary = extras?.getInt("primaryColor", primary) ?: primary,
+                    onPrimary = extras?.getInt("themeColorOnPrimary", onPrimary) ?: onPrimary,
+                    card = extras?.getInt("themeColorCard", card) ?: card,
+                    text = extras?.getInt("themeColorText", text) ?: text,
+                    textMuted = extras?.getInt("themeColorTextMuted", textMuted) ?: textMuted,
+                )
+            }
+        }
     }
 
     /**
