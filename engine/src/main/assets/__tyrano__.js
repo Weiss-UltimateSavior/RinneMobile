@@ -8,26 +8,32 @@ var TyranoPlayer = (function() {
     }
     var p = TyranoPlayer.prototype;
     p.pauseAllAudio = function() {
-        console.log("pause All Audio!");
-        console.log(TYRANO.kag.tmp.map_bgm);
-        var bgm_objs = TYRANO.kag.tmp.map_bgm;
-        var se_objs = TYRANO.kag.tmp.map_se;
-        for (var key in bgm_objs) { bgm_objs[key].pause(); }
-        for (var key in se_objs) { se_objs[key].pause(); }
+        try {
+            if (typeof TYRANO === 'undefined' || !TYRANO.kag || !TYRANO.kag.tmp) return;
+            console.log("pause All Audio!");
+            var bgm_objs = TYRANO.kag.tmp.map_bgm;
+            var se_objs = TYRANO.kag.tmp.map_se;
+            for (var key in bgm_objs) { bgm_objs[key].pause(); }
+            for (var key in se_objs) { se_objs[key].pause(); }
+        } catch(e) { console.log("pauseAllAudio failed: " + e); }
     }
     p.resumeAllAudio = function() {
-        console.log("resume All Audio!");
-        var bgm_objs = TYRANO.kag.tmp.map_bgm;
-        var se_objs = TYRANO.kag.tmp.map_se;
-        if (bgm_objs[TYRANO.kag.stat.current_bgm]) {
-            bgm_objs[TYRANO.kag.stat.current_bgm].play();
-        } else if (bgm_objs[0]) {
-            bgm_objs[0].play();
-        }
+        try {
+            if (typeof TYRANO === 'undefined' || !TYRANO.kag || !TYRANO.kag.tmp) return;
+            console.log("resume All Audio!");
+            var bgm_objs = TYRANO.kag.tmp.map_bgm;
+            var se_objs = TYRANO.kag.tmp.map_se;
+            if (bgm_objs[TYRANO.kag.stat.current_bgm]) {
+                bgm_objs[TYRANO.kag.stat.current_bgm].play();
+            } else if (bgm_objs[0]) {
+                bgm_objs[0].play();
+            }
+        } catch(e) { console.log("resumeAllAudio failed: " + e); }
     }
     return TyranoPlayer;
 })();
 var _tyrano_player = new TyranoPlayer("");
+if (typeof tyrano !== 'undefined' && tyrano.base) {
 tyrano.base.fitBaseSize = function(width, height) {
     $(".tyrano_base").css("position","absolute");
     var that = this;
@@ -58,6 +64,7 @@ tyrano.base.fitBaseSize = function(width, height) {
         }, 100);
     }
 };
+}
 $.setStorage = function(key, val, type) {
     if ("appJsInterface" in window) {
         appJsInterface.setStorage(key, escape(JSON.stringify(val)));
@@ -190,10 +197,10 @@ function hA() { jmb.hide(); jex.hide(); }
 jmb.on('click', function(e) { if (ds) return; hM(); e.stopPropagation(); });
 jb.on('click', function(e) { if (ds) return; mS(); e.stopPropagation(); });
 je.on('click', function(e) { if (ds) return; mS(); if ("appJsInterface" in window) appJsInterface.finishGame(); else location.href = "tyranoplayer-back://endgame"; e.stopPropagation(); });
-jsv.on('click', function(e) { if (ds) return; mS(); TYRANO.kag.menu.displaySave(); e.stopPropagation(); });
-jl.on('click', function(e) { if (ds) return; mS(); TYRANO.kag.menu.displayLoad(); e.stopPropagation(); });
-ja.on('click', function(e) { if (ds) return; mS(); TYRANO.kag.ftag.startTag("autostart", {}); e.stopPropagation(); });
-js.on('click', function(e) { if (ds) return; mS(); TYRANO.kag.ftag.startTag("skipstart", {}); e.stopPropagation(); });
+jsv.on('click', function(e) { if (ds) return; mS(); try { if (typeof TYRANO !== 'undefined' && TYRANO.kag && TYRANO.kag.menu) TYRANO.kag.menu.displaySave(); } catch(ex) {} e.stopPropagation(); });
+jl.on('click', function(e) { if (ds) return; mS(); try { if (typeof TYRANO !== 'undefined' && TYRANO.kag && TYRANO.kag.menu) TYRANO.kag.menu.displayLoad(); } catch(ex) {} e.stopPropagation(); });
+ja.on('click', function(e) { if (ds) return; mS(); try { if (typeof TYRANO !== 'undefined' && TYRANO.kag && TYRANO.kag.ftag) TYRANO.kag.ftag.startTag("autostart", {}); } catch(ex) {} e.stopPropagation(); });
+js.on('click', function(e) { if (ds) return; mS(); try { if (typeof TYRANO !== 'undefined' && TYRANO.kag && TYRANO.kag.ftag) TYRANO.kag.ftag.startTag("skipstart", {}); } catch(ex) {} e.stopPropagation(); });
 jc.on('click', function(e) { if (ds) return; if ("appJsInterface" in window) appJsInterface.closeGame(); else location.href = "tyranoplayer-back://endgame"; e.stopPropagation(); });
 
 oSli.on('input change', function() { mo = parseInt(this.value) / 100; oVal.text(Math.round(mo * 100) + '%'); saveAll(); refrOpa(); });
