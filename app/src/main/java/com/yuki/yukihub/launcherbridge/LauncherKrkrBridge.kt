@@ -19,7 +19,11 @@ object LauncherKrkrBridge {
     const val ENGINE_VERSION_134 = "1.3.4"
     const val ENGINE_VERSION_126 = "1.2.6"
 
-    private fun prefs(context: Context) = context.yukiPrefs()
+    // Keep this bridge independently compilable in every build variant.  Some release source
+    // sets do not expose the launcher extension helpers, while this preference file is shared
+    // by all launcher and engine components.
+    private fun prefs(context: Context) =
+        context.applicationContext.getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE)
 
     @JvmStatic
     fun getEngineVersion(context: Context?): String {
