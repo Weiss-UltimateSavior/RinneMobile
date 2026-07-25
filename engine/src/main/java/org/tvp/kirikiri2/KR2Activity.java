@@ -281,7 +281,6 @@ public class KR2Activity extends Cocos2dxActivity {
     public static native void onBannerSizeChanged(int w, int h);
     public static native void onMessageBoxOK(int which);
     public static native void onMessageBoxText(String text);
-    public static native void onNativeInit();
 
     @Override public void onLoadNativeLibraries() {
         System.loadLibrary("SDL2");
