@@ -79,24 +79,9 @@ public final class GamePasswordDialog {
         title.setTypeface(null, Typeface.BOLD);
         root.addView(title);
 
-        // 副标题（游戏名）
-        if (gameTitle != null && !gameTitle.trim().isEmpty()) {
-            TextView subtitle = new TextView(context);
-            subtitle.setText(gameTitle);
-            subtitle.setGravity(Gravity.CENTER);
-            subtitle.setSingleLine(true);
-            subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            subtitle.setTextColor(LauncherTheme.textMuted(context));
-            subtitle.setTextSize(12);
-            LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            subLp.topMargin = dp(context, 4);
-            root.addView(subtitle, subLp);
-        }
-
-        // 提示文字
+        // 提示文字（初始为空，仅用于动态消息：确认提示、错误提示）
         TextView hint = new TextView(context);
-        hint.setText(mode == MODE_SET ? "请输入 6 位数字密码" : "请输入密码以启动游戏");
+        hint.setText("");
         hint.setGravity(Gravity.CENTER);
         hint.setTextColor(LauncherTheme.textMuted(context));
         hint.setTextSize(11);
@@ -119,7 +104,7 @@ public final class GamePasswordDialog {
             View dot = new View(context);
             GradientDrawable dotBg = new GradientDrawable();
             dotBg.setShape(GradientDrawable.OVAL);
-            dotBg.setColor(LauncherTheme.card(context));
+            dotBg.setColor(LauncherTheme.bg(context));
             dot.setBackground(dotBg);
             LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dotSize, dotSize);
             if (i > 0) dotLp.leftMargin = dotSpacing;
@@ -268,7 +253,7 @@ public final class GamePasswordDialog {
 
     private static void updateDots(View[] dots, int count, Context context) {
         int activeColor = LauncherTheme.primary(context);
-        int inactiveColor = LauncherTheme.card(context);
+        int inactiveColor = LauncherTheme.bg(context);
         for (int i = 0; i < dots.length; i++) {
             GradientDrawable bg = new GradientDrawable();
             bg.setShape(GradientDrawable.OVAL);

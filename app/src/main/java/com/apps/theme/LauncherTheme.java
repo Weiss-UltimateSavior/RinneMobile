@@ -52,6 +52,10 @@ public final class LauncherTheme {
         return color(context, R.color.launcher_card_color);
     }
 
+    public static int bg(Context context) {
+        return color(context, R.color.launcher_bg_color);
+    }
+
     public static int line(Context context) {
         return color(context, R.color.launcher_line_color);
     }
