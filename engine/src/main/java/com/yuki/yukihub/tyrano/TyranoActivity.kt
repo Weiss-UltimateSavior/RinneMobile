@@ -3,6 +3,7 @@ package com.yuki.yukihub.tyrano
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -22,15 +23,19 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.Toast
-import com.apps.theme.LauncherDialogFactory
-import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge
-import com.yuki.yukihub.util.UiScaleUtil
+import androidx.appcompat.app.AlertDialog
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Tyrano WebView 宿主；资源服务与存档沙箱分别由独立组件负责。 */
+/**
+ * Tyrano WebView 宿主；资源服务与存档沙箱分别由独立组件负责。
+ *
+ * 本 Activity 隶属于 engine 模块，不依赖 app 层。用户偏好（UI 缩放、外网开关）
+ * 直接读取共享的 yukihub_prefs，与 OnsSettings 同模式；确认对话框使用 appcompat
+ * 默认 AlertDialog，与 SDLActivity/Cocos2dxHandler 在 engine 内的用法一致。
+ */
 class TyranoActivity : Activity() {
     private var webView: WebView? = null
     private var gameDir: String? = null
@@ -45,14 +50,15 @@ class TyranoActivity : Activity() {
     private val processExitScheduled = AtomicBoolean(false)
 
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(UiScaleUtil.wrap(newBase))
+        super.attachBaseContext(wrapContextForUiScale(newBase) ?: newBase)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         enterFullscreen()
-        allowExternalNetwork = LauncherKrkrBridge.isTyranoExternalNetworkEnabled(this)
+        allowExternalNetwork = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_TYRANO_EXTERNAL_NETWORK, false)
 
         gameDir = resolveGameDir(intent)
         Log.i(TAG, "onCreate gameDir=$gameDir")
@@ -305,8 +311,7 @@ class TyranoActivity : Activity() {
     }
 
     private fun confirmReturnToTitle() {
-        LauncherDialogFactory.showConfirm(
-            this,
+        showEngineConfirm(
             "返回标题",
             "确定要返回到标题界面吗？（请注意保存游戏进度。）",
             "确定",
@@ -340,8 +345,7 @@ class TyranoActivity : Activity() {
 
     @Deprecated("Deprecated in Android")
     override fun onBackPressed() {
-        LauncherDialogFactory.showConfirm(
-            this,
+        showEngineConfirm(
             "结束游戏",
             "确定要结束当前游戏吗？",
             "结束游戏",
@@ -412,6 +416,27 @@ class TyranoActivity : Activity() {
     }
 
     /**
+     * 平台 AlertDialog 实现的确认对话框。
+     *
+     * engine 模块不依赖 app 的 LauncherDialogFactory/LauncherTheme，此处使用 appcompat
+     * 提供的 AlertDialog，与 SDLActivity/Cocos2dxHandler 在 engine 内的对话框用法一致。
+     */
+    private fun showEngineConfirm(
+        title: String,
+        message: String,
+        confirmText: String,
+        onConfirm: () -> Unit,
+    ) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(confirmText) { _, _ -> onConfirm() }
+            .setNegativeButton("取消", null)
+            .setCancelable(true)
+            .show()
+    }
+
+    /**
      * Tyrano 游戏入口定位结果。
      *
      * @property contentRoot 包含 index.html 或 app.asar 的目录，将作为本地 HTTP 服务器的 root。
@@ -423,8 +448,8 @@ class TyranoActivity : Activity() {
      * 递归查找 Tyrano 游戏入口（index.html 或 app.asar）。
      *
      * 根目录优先匹配 app.asar / resources/app.asar / index.html；未命中时按
-     * [TYRANO_ENTRY_SUBDIRS] 列表递归搜索子目录，与 [com.yuki.yukihub.scanner.EngineDetector]
-     * 的特征探测子目录保持一致，避免扫描器识别成功但启动器找不到入口而闪退。
+     * [TYRANO_ENTRY_SUBDIRS] 列表递归搜索子目录，与启动器侧的引擎特征探测子目录保持一致，
+     * 避免扫描器识别成功但启动器找不到入口而闪退。
      *
      * @param dir 当前搜索目录。
      * @param depth 当前递归深度，根目录传入 0。
@@ -487,6 +512,19 @@ class TyranoActivity : Activity() {
         private const val MAX_ENTRY_SEARCH_DEPTH = 2
         private val TYRANO_ENTRY_SUBDIRS = arrayOf("resources", "app", "tyrano", "data", "scenario", "system", "game")
 
+        // 共享偏好键：与 app 模块的 LauncherKrkrBridge / UiScaleUtil 保持一致，
+        // engine 直接读取以保证 Launcher 修改后引擎侧立即可见。
+        private const val PREFS_NAME = "yukihub_prefs"
+        private const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
+        private const val KEY_UI_FONT_SCALE = "ui_font_scale"
+        private const val KEY_UI_SCALE = "ui_scale"
+        private const val DEFAULT_FONT_SCALE = 1.0f
+        private const val MIN_FONT_SCALE = 0.85f
+        private const val MAX_FONT_SCALE = 1.30f
+        private const val DEFAULT_UI_SCALE = 1.0f
+        private const val MIN_UI_SCALE = 0.70f
+        private const val MAX_UI_SCALE = 1.50f
+
         private fun ensureWritableSaveDirectory(directory: File?): Boolean = try {
             directory != null &&
                 (directory.exists() || directory.mkdirs()) &&
@@ -500,5 +538,31 @@ class TyranoActivity : Activity() {
         @Throws(Exception::class)
         fun resolveStorageFile(directory: File?, key: String?): File? =
             TyranoStorage.resolveFile(directory, key)
+
+        /**
+         * 通过 SharedPreferences 持久化的用户偏好创建自定义 Configuration 的 Context。
+         *
+         * 复刻 app 模块 UiScaleUtil.wrap 的语义：读取 yukihub_prefs 中的字体缩放与全局
+         * UI 缩放，应用到 Configuration 后返回新的 Context。engine 不依赖 app 的工具类，
+         * 此处保留独立的等价实现以避免反向依赖。
+         */
+        private fun wrapContextForUiScale(base: Context?): Context? {
+            if (base == null) return null
+            val prefs = base.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            // NaN/Infinite 回落到各自默认值，与 app 模块 UiScaleUtil.clamp/clampUiScale 严格一致
+            val fontScale = prefs.getFloat(KEY_UI_FONT_SCALE, DEFAULT_FONT_SCALE).let {
+                if (it.isNaN() || it.isInfinite()) DEFAULT_FONT_SCALE else it.coerceIn(MIN_FONT_SCALE, MAX_FONT_SCALE)
+            }
+            val uiScale = prefs.getFloat(KEY_UI_SCALE, DEFAULT_UI_SCALE).let {
+                if (it.isNaN() || it.isInfinite()) DEFAULT_UI_SCALE else it.coerceIn(MIN_UI_SCALE, MAX_UI_SCALE)
+            }
+            val config = Configuration(base.resources.configuration)
+            config.fontScale = fontScale
+            // 通过修改 densityDpi 实现全局 UI 缩放
+            if (uiScale != 1.0f) {
+                config.densityDpi = (config.densityDpi * uiScale).toInt()
+            }
+            return base.createConfigurationContext(config)
+        }
     }
 }
