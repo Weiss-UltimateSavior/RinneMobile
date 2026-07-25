@@ -23,6 +23,7 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.Toast
 import com.apps.theme.LauncherDialogFactory
+import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge
 import com.yuki.yukihub.util.UiScaleUtil
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -40,6 +41,7 @@ class TyranoActivity : Activity() {
     private var asarArchive: AsarArchive? = null
     private var firstResume = true
     private var localServer: TyranoLocalHttpServer? = null
+    private var allowExternalNetwork = false
     private val processExitScheduled = AtomicBoolean(false)
 
     override fun attachBaseContext(newBase: Context) {
@@ -50,6 +52,7 @@ class TyranoActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         enterFullscreen()
+        allowExternalNetwork = LauncherKrkrBridge.isTyranoExternalNetworkEnabled(this)
 
         gameDir = resolveGameDir(intent)
         Log.i(TAG, "onCreate gameDir=$gameDir")
@@ -178,7 +181,11 @@ class TyranoActivity : Activity() {
             blockNetworkImage = false
             mediaPlaybackRequiresUserGesture = false
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                mixedContentMode = if (allowExternalNetwork) {
+                    WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                } else {
+                    WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                }
             }
         }
     }
@@ -200,6 +207,8 @@ class TyranoActivity : Activity() {
     }
 
     private fun isAllowedGameResource(uri: Uri): Boolean = isLocalGameUri(uri) ||
+        (allowExternalNetwork && (uri.scheme.equals("http", ignoreCase = true) ||
+            uri.scheme.equals("https", ignoreCase = true))) ||
         uri.scheme.equals("data", ignoreCase = true) ||
         uri.scheme.equals("blob", ignoreCase = true) ||
         uri.scheme.equals("about", ignoreCase = true)

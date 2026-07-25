@@ -2,6 +2,7 @@ package com.yuki.yukihub.tyrano;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -22,5 +23,23 @@ public class TyranoStorageTest {
         assertNull(TyranoActivity.resolveStorageFile(root, "../slot"));
         assertNull(TyranoActivity.resolveStorageFile(root, "nested/slot"));
         assertNull(TyranoActivity.resolveStorageFile(root, "nested\\slot"));
+    }
+
+    @Test
+    public void resolveStorageFile_mapsSpecialKeysToSafeDeterministicName() throws Exception {
+        File root = Files.createTempDirectory("tyrano-storage").toFile();
+        File first = TyranoActivity.resolveStorageFile(root, "save data: 用户 1");
+        File second = TyranoActivity.resolveStorageFile(root, "save data: 用户 1");
+        assertEquals(first, second);
+        assertTrue(first.getName().matches("key_[0-9a-f]{64}\\.sav"));
+        assertTrue(first.getCanonicalPath().startsWith(root.getCanonicalPath() + File.separator));
+    }
+
+    @Test
+    public void resolveStorageFile_keepsSafeLegacySpecialFilename() throws Exception {
+        File root = Files.createTempDirectory("tyrano-storage").toFile();
+        File legacy = new File(root, "save data.sav");
+        assertTrue(legacy.createNewFile());
+        assertEquals(legacy.getCanonicalFile(), TyranoActivity.resolveStorageFile(root, "save data"));
     }
 }

@@ -157,6 +157,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         }
         setOnsEncodingSelection(onsEncodingIndex);
         binding.padTyranoScopedSwitch.setChecked(LauncherKrkrBridge.isTyranoScopedSaveDir(this));
+        binding.padTyranoExternalNetworkSwitch.setChecked(LauncherKrkrBridge.isTyranoExternalNetworkEnabled(this));
     }
 
     private void setupMetadataControls() {
@@ -495,6 +496,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         onsSettings.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex];
         onsSettings.save(this);
         LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.padTyranoScopedSwitch.isChecked());
+        LauncherKrkrBridge.setTyranoExternalNetworkEnabled(this, binding.padTyranoExternalNetworkSwitch.isChecked());
         Toast.makeText(this, "引擎设置已保存："
                 + LauncherKrkrBridge.engineVersionLabel(version), Toast.LENGTH_SHORT).show();
         finish();

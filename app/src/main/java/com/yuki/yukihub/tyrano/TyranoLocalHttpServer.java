@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
@@ -125,8 +126,12 @@ final class TyranoLocalHttpServer implements Runnable {
             }
             sendFile(socket, resolved.file, headers.get("range"), "HEAD".equalsIgnoreCase(method));
         } catch (Throwable t) {
-            try { sendText(socket, 500, "Internal Server Error", "server error"); } catch (Throwable ignored) { }
-            Log.w(TAG, "handle request failed", t);
+            if (isExpectedClientDisconnect(t)) {
+                Log.d(TAG, "client disconnected while serving local resource: " + t.getClass().getSimpleName());
+            } else {
+                try { sendText(socket, 500, "Internal Server Error", "server error"); } catch (Throwable ignored) { }
+                Log.w(TAG, "handle request failed", t);
+            }
         } finally {
             close(socket);
         }
@@ -361,6 +366,20 @@ final class TyranoLocalHttpServer implements Runnable {
 
     private static void close(Socket socket) { try { socket.close(); } catch (Throwable ignored) { } }
 
+    /** WebView commonly cancels media/preload requests; this is not a server failure. */
+    private static boolean isExpectedClientDisconnect(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof SocketException) {
+                String message = current.getMessage();
+                if (message == null || message.toLowerCase(Locale.ROOT).contains("reset") ||
+                        message.toLowerCase(Locale.ROOT).contains("broken pipe")) return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
     private static String mime(String name) {
         String n = name == null ? "" : name.toLowerCase(Locale.ROOT);
         if (n.endsWith(".html") || n.endsWith(".htm")) return "text/html; charset=utf-8";
@@ -391,4 +410,3 @@ final class TyranoLocalHttpServer implements Runnable {
         return "application/octet-stream";
     }
 }
-

@@ -67,7 +67,8 @@ public class LauncherUserData {
             "kr_engine_version",
             "kr_scoped_save_dir",
             "artemis_scoped_save_dir",
-            "tyrano_scoped_save_dir"
+            "tyrano_scoped_save_dir",
+            "tyrano_external_network"
     };
 
     // ── launcher_profile_prefs 键 ──

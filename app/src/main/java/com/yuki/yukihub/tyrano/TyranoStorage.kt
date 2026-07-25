@@ -3,12 +3,14 @@ package com.yuki.yukihub.tyrano
 import android.util.Log
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 
 /** 供 Tyrano JavaScript 桥使用的、限制在单一存档目录内的文件存储。 */
 internal object TyranoStorage {
     private const val TAG = "YukiTyrano"
     private const val MAX_SAVE_BYTES = 8L * 1024L * 1024L
-    private val validKey = Regex("[A-Za-z0-9._-]+")
+    private val directFileKey = Regex("[A-Za-z0-9._-]{1,128}")
+    private const val MAX_KEY_CHARS = 512
 
     @JvmStatic
     fun read(directory: File?, key: String?): String {
@@ -49,11 +51,34 @@ internal object TyranoStorage {
     fun resolveFile(directory: File?, key: String?): File? {
         if (directory == null || key == null) return null
         val clean = key.trim()
-        if (clean.isEmpty() || clean.length > 128 || ".." in clean || !validKey.matches(clean)) {
-            return null
-        }
+        if (clean.isEmpty() || clean.length > MAX_KEY_CHARS || clean.any { it == '\u0000' || it.isISOControl() }) return null
+        // Keys are data, never paths.  Special filename characters are supported through the
+        // hash mapping below, but directory separators remain invalid.
+        if (clean.contains('/') || clean.contains('\\') || clean.contains("..")) return null
         val root = directory.canonicalFile
-        val target = File(root, "$clean.sav").canonicalFile
-        return target.takeIf { it.path.startsWith(root.path + File.separator) }
+        // Preserve Tyranor/Rinne's established filename for normal keys, so existing saves
+        // remain readable.  Non-standard keys use a deterministic SHA-256 name instead of
+        // being rejected; the raw key never becomes part of a filesystem path.
+        if (directFileKey.matches(clean)) return insideRoot(root, File(root, "$clean.sav"))
+
+        // A legacy Tyranor save with spaces or Unicode may already exist under its raw key.
+        // Continue using it when it is safely a single filename, otherwise migrate new writes
+        // to the deterministic mapping below.
+        legacyFile(root, clean)?.takeIf(File::isFile)?.let { return it }
+        return insideRoot(root, File(root, "key_${sha256(clean)}.sav"))
     }
+
+    private fun legacyFile(root: File, key: String): File? {
+        return insideRoot(root, File(root, "$key.sav"))
+    }
+
+    private fun insideRoot(root: File, candidate: File): File? = try {
+        candidate.canonicalFile.takeIf { it.path.startsWith(root.path + File.separator) }
+    } catch (_: Throwable) {
+        null
+    }
+
+    private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(value.toByteArray(StandardCharsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
 }

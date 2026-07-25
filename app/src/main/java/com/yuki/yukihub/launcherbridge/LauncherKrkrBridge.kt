@@ -12,6 +12,7 @@ object LauncherKrkrBridge {
     private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
     private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
     private const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"
+    private const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
 
     const val ENGINE_VERSION_AUTO = "auto"
     const val ENGINE_VERSION_139 = "1.3.9"
@@ -73,6 +74,19 @@ object LauncherKrkrBridge {
     fun setTyranoScopedSaveDir(context: Context?, enabled: Boolean) {
         if (context == null) return
         prefs(context).edit().putBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, enabled).apply()
+    }
+
+    /** Enables remote HTTP(S) subresources for Tyrano games that require a CDN or online API. */
+    @JvmStatic
+    fun isTyranoExternalNetworkEnabled(context: Context?): Boolean {
+        if (context == null) return false
+        return prefs(context).getBoolean(KEY_TYRANO_EXTERNAL_NETWORK, false)
+    }
+
+    @JvmStatic
+    fun setTyranoExternalNetworkEnabled(context: Context?, enabled: Boolean) {
+        if (context == null) return
+        prefs(context).edit().putBoolean(KEY_TYRANO_EXTERNAL_NETWORK, enabled).apply()
     }
 
     @JvmStatic

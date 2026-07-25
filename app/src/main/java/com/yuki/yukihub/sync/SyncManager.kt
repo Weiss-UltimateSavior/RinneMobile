@@ -234,6 +234,7 @@ class SyncManager(context: Context) {
         settings.put("kr_scoped_save_dir", appPrefs.getBoolean(KEY_KR_SCOPED_SAVE_DIR, false))
         settings.put("artemis_scoped_save_dir", appPrefs.getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, false))
         settings.put("tyrano_scoped_save_dir", appPrefs.getBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, true))
+        settings.put("tyrano_external_network", appPrefs.getBoolean(KEY_TYRANO_EXTERNAL_NETWORK, false))
         settings.put("ui_font_scale", appPrefs.getFloat(KEY_UI_FONT_SCALE, 1.0f))
         // 不同步自定义背景文件引用：本地图片/视频路径跨设备通常无效，且视频背景不应进入同步逻辑。
         settings.put("background_dim_enabled", appPrefs.getBoolean(KEY_BACKGROUND_DIM_ENABLED, true))
@@ -325,6 +326,7 @@ class SyncManager(context: Context) {
             if (settings.has("kr_scoped_save_dir")) prefsEditor.putBoolean(KEY_KR_SCOPED_SAVE_DIR, settings.optBoolean("kr_scoped_save_dir", false))
             if (settings.has("artemis_scoped_save_dir")) prefsEditor.putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, settings.optBoolean("artemis_scoped_save_dir", false))
             if (settings.has("tyrano_scoped_save_dir")) prefsEditor.putBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, settings.optBoolean("tyrano_scoped_save_dir", true))
+            if (settings.has("tyrano_external_network")) prefsEditor.putBoolean(KEY_TYRANO_EXTERNAL_NETWORK, settings.optBoolean("tyrano_external_network", false))
             if (settings.has("ui_font_scale")) prefsEditor.putFloat(KEY_UI_FONT_SCALE, Math.max(0.85, Math.min(1.30, settings.optDouble("ui_font_scale", 1.0))).toFloat())
             // 不导入 custom_background/custom_background_type，避免旧备份里的本地图片/视频路径污染新设备。
             if (settings.has("background_dim_enabled")) prefsEditor.putBoolean(KEY_BACKGROUND_DIM_ENABLED, settings.optBoolean("background_dim_enabled", true))
@@ -407,6 +409,7 @@ class SyncManager(context: Context) {
         private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
         private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
         private const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"
+        private const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
         private const val KEY_UI_FONT_SCALE = "ui_font_scale"
         private const val KEY_GAME_COLUMNS = "game_columns"
         private const val KEY_UI_SCALE = "ui_scale"

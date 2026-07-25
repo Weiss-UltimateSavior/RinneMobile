@@ -66,6 +66,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         binding.krScopedSection.setVisibility(View.GONE);
         binding.artemisScopedSection.setVisibility(View.GONE);
         binding.tyranoScopedSection.setVisibility(View.GONE);
+        binding.tyranoExternalNetworkSection.setVisibility(View.GONE);
         binding.btnNativeKrkr.setText("恢复全局默认");
         binding.btnNativeKrkr.setOnClickListener(v -> clearPerGameSettings());
 
@@ -119,6 +120,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleSwitch(binding.onsDisableVideoSwitch);
         LauncherTheme.styleSwitch(binding.onsSharpnessSwitch);
         LauncherTheme.styleSwitch(binding.tyranoScopedSwitch);
+        LauncherTheme.styleSwitch(binding.tyranoExternalNetworkSwitch);
         LauncherTheme.formInputs(binding.onsSharpnessValueInput);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.longActionButton(binding.btnNativeKrkr);
@@ -153,6 +155,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         }
         setOnsEncodingSelection(onsEncodingIndex);
         binding.tyranoScopedSwitch.setChecked(LauncherKrkrBridge.isTyranoScopedSaveDir(this));
+        binding.tyranoExternalNetworkSwitch.setChecked(LauncherKrkrBridge.isTyranoExternalNetworkEnabled(this));
     }
 
     private void save() {
@@ -191,6 +194,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         onsSettings.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex];
         onsSettings.save(this);
         LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.tyranoScopedSwitch.isChecked());
+        LauncherKrkrBridge.setTyranoExternalNetworkEnabled(this, binding.tyranoExternalNetworkSwitch.isChecked());
 
         Toast.makeText(this, "引擎设置已保存：" + LauncherKrkrBridge.engineVersionLabel(version), Toast.LENGTH_SHORT).show();
         finish();

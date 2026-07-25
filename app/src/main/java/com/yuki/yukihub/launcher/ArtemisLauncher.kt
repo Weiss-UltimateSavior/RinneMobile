@@ -84,12 +84,9 @@ internal object ArtemisLauncher {
     @JvmStatic
     fun resolveGamePath(rootUri: String?, launchTarget: String?): String? {
         val root = ScriptEngineLaunchers.uriToFilePath(rootUri)?.takeUnless(String::isEmpty) ?: rootUri
-        val target = launchTarget?.trim()
-        if (root.isNullOrBlank() || target.isNullOrEmpty() || target == "[游戏目录]") return root
-        // Explicit Artemis entries (for example root.pfs) are relative to the selected game
-        // directory.  Do not combine absolute paths, which may be supplied by external callers.
-        if (target.startsWith("/") || target.contains("://")) return target
-        return File(root, target).path
+        // Artemis receives its selected entry in the separate launchTarget extra.  Its native
+        // resource resolver must still receive the game directory, including for root.pfs.
+        return root
     }
 
     @JvmStatic
