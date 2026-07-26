@@ -30,7 +30,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.core.databinding.FragmentLauncherHomeBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
-import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.launcherbridge.LauncherUpdateBridge;
 import com.core.model.Game;
@@ -47,6 +46,7 @@ import com.apps.agent.LocalAgentActivity;
 import com.apps.account.LauncherDisclaimerActivity;
 import com.apps.data.LauncherRepository;
 import com.apps.game.LauncherSaveCategoryActivity;
+import com.apps.game.GameSessionController;
 import com.apps.data.LauncherViewModel;
 import com.apps.settings.LauncherToolboxActivity;
 import com.apps.settings.ResourceStationActivity;
@@ -60,9 +60,6 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 public class LauncherHomeFragment extends Fragment {
     private static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_PROFILE_AVATAR = "profile_avatar";
-    private static final long MIN_PLAY_SESSION_MS = 0L;
-    private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
-
     private FragmentLauncherHomeBinding binding;
     private LauncherViewModel viewModel;
     private final ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher =
@@ -79,8 +76,7 @@ public class LauncherHomeFragment extends Fragment {
                     }
                 }
             });
-    private long runningSessionId = -1L;
-    private long runningGameId = -1L;
+    private GameSessionController sessionController;
 
     private void startCrop(Uri sourceUri) {
         Intent intent = new Intent(requireContext(), AvatarCropActivity.class);
@@ -100,6 +96,14 @@ public class LauncherHomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         LauncherTabletPortraitScaler.apply(binding.getRoot());
         viewModel = new ViewModelProvider(requireActivity()).get(LauncherViewModel.class);
+        sessionController = new GameSessionController(requireContext(), new com.core.util.RxMainQueue(),
+                new GameSessionController.Listener() {
+                    @Override
+                    public void reloadGame(long gameId) { refreshPlayStats(); }
+
+                    @Override
+                    public void reloadAllGames() { refreshPlayStats(); }
+                });
 
         applySystemBarInsets();
         setupRecentList();
@@ -119,8 +123,8 @@ public class LauncherHomeFragment extends Fragment {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         applyIconTone();
         renderAvatar();
-        if (runningSessionId > 0L) {
-            finishRecentPlaySessionIfNeeded();
+        if (sessionController != null && sessionController.hasActiveSession()) {
+            sessionController.finishDirectPlaySessionIfNeeded(this);
         } else {
             viewModel.refreshRecentItems();
         }
@@ -133,6 +137,7 @@ public class LauncherHomeFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (sessionController != null) sessionController.cleanup();
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
         }
@@ -475,17 +480,7 @@ public class LauncherHomeFragment extends Fragment {
                 }
                 return;
             }
-            LauncherGameLaunchBridge.launchAsync(app, game, result -> {
-                if (!isAdded()) return;
-                if (result.success) {
-                    runningSessionId = result.sessionId;
-                    runningGameId = gameId;
-                } else if (result.activeGameConflict) {
-                    LauncherGameLaunchBridge.showActiveGameDialog(requireContext(), result.activeGameTitle);
-                } else if (result.message != null && !result.message.trim().isEmpty()) {
-                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
-                }
-            });
+            if (sessionController != null) sessionController.launchGameDirectly(LauncherHomeFragment.this, game);
         });
     }
 
@@ -501,13 +496,8 @@ public class LauncherHomeFragment extends Fragment {
         );
     }
 
-    private void finishRecentPlaySessionIfNeeded() {
-        if (runningSessionId <= 0L) return;
-        Context context = getContext();
-        if (context == null) return;
-        LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
-        runningSessionId = -1L;
-        runningGameId = -1L;
+    private void refreshPlayStats() {
+        if (viewModel == null) return;
         viewModel.refreshStats();
         viewModel.refreshRecentItems();
     }

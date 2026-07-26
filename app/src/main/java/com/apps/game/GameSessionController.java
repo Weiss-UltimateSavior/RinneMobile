@@ -42,6 +42,13 @@ public final class GameSessionController {
         void reloadAllGames();
     }
 
+    /**
+     * 用于没有 Fragment 宿主的启动入口（例如桌面快捷方式）。回调在主线程执行。
+     */
+    public interface LaunchListener {
+        void onResult(LauncherGameLaunchBridge.LaunchResult result);
+    }
+
     private final Context appContext;
     private final RxMainQueue mainQueue;
     private final Listener listener;
@@ -75,8 +82,25 @@ public final class GameSessionController {
     /** 启动游戏：调用 LauncherGameLaunchBridge.launchAsync，成功后开启服务端会话。 */
     public void launchGameDirectly(@NonNull Fragment fragment, @NonNull Game game) {
         if (game == null) return;
-        LauncherGameLaunchBridge.launchAsync(fragment.requireContext(), game, result -> {
+        Context context = fragment.getContext();
+        if (context == null) return;
+        launchGame(context, game, result -> {
             if (!fragment.isAdded()) return;
+            if (result.activeGameConflict) {
+                LauncherGameLaunchBridge.showActiveGameDialog(fragment.requireContext(), result.activeGameTitle);
+            } else if (!result.success && result.message != null && !result.message.trim().isEmpty()) {
+                Toast.makeText(fragment.requireContext(), result.message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    /**
+     * 统一的无 Fragment 启动入口。成功后始终接管本地与服务端会话，
+     * 以便首页、横屏旧页和桌面快捷方式不会绕开实时游玩时间链路。
+     */
+    public void launchGame(@NonNull Context context, @NonNull Game game, LaunchListener callback) {
+        if (game == null) return;
+        LauncherGameLaunchBridge.launchAsync(context, game, result -> {
             if (result.success) {
                 runningSessionId = result.sessionId;
                 runningGameId = game.id;
@@ -84,11 +108,8 @@ public final class GameSessionController {
                 runningSessionStart = System.currentTimeMillis();
                 runningLaunchType = resolveLaunchTypeForRecord(game);
                 startServerPlaySession(game, result.sessionId);
-            } else if (result.activeGameConflict) {
-                LauncherGameLaunchBridge.showActiveGameDialog(fragment.requireContext(), result.activeGameTitle);
-            } else if (result.message != null && !result.message.trim().isEmpty()) {
-                Toast.makeText(fragment.requireContext(), result.message, Toast.LENGTH_LONG).show();
             }
+            if (callback != null) callback.onResult(result);
         });
     }
 
@@ -97,6 +118,14 @@ public final class GameSessionController {
         if (runningSessionId <= 0L) return;
         Context context = fragment.getContext();
         if (context == null) return;
+        finishDirectPlaySessionIfNeeded(context);
+    }
+
+    /**
+     * 无 Fragment 的会话收尾入口，供 Activity/快捷方式宿主在回到前台时调用。
+     */
+    public void finishDirectPlaySessionIfNeeded(@NonNull Context context) {
+        if (runningSessionId <= 0L) return;
         // 1) 主项目会话收尾（写入 play_sessions 表 + 累加 total_play_time）
         LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
         // 2) 线上实际游玩时长只结束服务端 session，不提交本地 duration。

@@ -24,16 +24,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.apps.LauncherActivity;
 import com.apps.game.LauncherGameActionController;
 import com.apps.game.LauncherGameEditActivity;
+import com.apps.game.GameSessionController;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
 import com.core.databinding.FragmentPadGameBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
-import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.model.Game;
 import com.core.util.AppExecutors;
 import com.core.util.SafeImageLoader;
+import com.core.util.RxMainQueue;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -47,8 +48,6 @@ public class PadGameFragment extends Fragment {
     private static final int PHONE_GRID_ROWS = 1;
     private static final int TABLET_GRID_ROWS = 2;
     private static final int TABLET_MIN_SMALLEST_WIDTH_DP = 600;
-    private static final long MIN_PLAY_SESSION_MS = 0L;
-    private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
 
     private FragmentPadGameBinding binding;
     private PadGameCardAdapter adapter;
@@ -63,7 +62,7 @@ public class PadGameFragment extends Fragment {
     private boolean pageAnimating;
     private int gridRows = PHONE_GRID_ROWS;
     private int pageSize = GRID_COLUMNS * PHONE_GRID_ROWS;
-    private long runningSessionId = -1L;
+    private GameSessionController sessionController;
 
     @Nullable
     @Override
@@ -83,6 +82,14 @@ public class PadGameFragment extends Fragment {
         binding.padAvatarContainer.setClipToOutline(true);
         gridRows = isTabletLayout() ? TABLET_GRID_ROWS : PHONE_GRID_ROWS;
         pageSize = GRID_COLUMNS * gridRows;
+        sessionController = new GameSessionController(requireContext(), new RxMainQueue(),
+                new GameSessionController.Listener() {
+                    @Override
+                    public void reloadGame(long gameId) { reloadGameInPlace(gameId); }
+
+                    @Override
+                    public void reloadAllGames() { loadGames(); }
+                });
         renderAvatar();
         renderAccountInfo();
         setupRecycler();
@@ -103,11 +110,8 @@ public class PadGameFragment extends Fragment {
         }
         renderAvatar();
         renderAccountInfo();
-        if (runningSessionId > 0L) {
-            LauncherGameLaunchBridge.finishSession(
-                    requireContext(), runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
-            runningSessionId = -1L;
-            loadGames();
+        if (sessionController != null && sessionController.hasActiveSession()) {
+            sessionController.finishDirectPlaySessionIfNeeded(this);
         } else if (pendingEditGameId > 0L) {
             // 编辑页返回时仅就地刷新该卡片，保留当前分页位置。
             long id = pendingEditGameId;
@@ -120,6 +124,7 @@ public class PadGameFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (sessionController != null) sessionController.cleanup();
         if (binding != null) {
             binding.padGameRecycler.setAdapter(null);
             binding.getRoot().setOnTouchListener(null);
@@ -491,14 +496,7 @@ public class PadGameFragment extends Fragment {
         PadDialogFactory.showConfirm(requireContext(), "启动游戏",
                 "确定启动「" + safeTitle(game) + "」吗？", "确定", () -> {
             com.apps.game.GamePasswordLock.interceptLaunch(PadGameFragment.this, game, () -> {
-                LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
-                    if (!isAdded()) return;
-                    if (result.success) runningSessionId = result.sessionId;
-                    else if (result.activeGameConflict) {
-                        LauncherGameLaunchBridge.showActiveGameDialog(requireContext(), result.activeGameTitle);
-                    }
-                    else Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
-                });
+                if (sessionController != null) sessionController.launchGameDirectly(PadGameFragment.this, game);
             });
         });
     }

@@ -37,6 +37,8 @@ import com.apps.account.LauncherAccountFragment;
 import com.apps.data.LauncherViewModel;
 import com.apps.game.LauncherLibraryFragment;
 import com.apps.game.PinnedGameShortcut;
+import com.apps.game.GameSessionController;
+import com.core.util.RxMainQueue;
 import com.apps.game.LauncherManageFragment;
 import com.apps.home.LauncherHomeFragment;
 import com.apps.home.LauncherPlaceholderFragment;
@@ -86,12 +88,17 @@ public class LauncherActivity extends AppCompatActivity {
     private LauncherViewModel.NavItem currentNavItem;
     private boolean navIndicatorReady;
     private Disposable splashDelay;
+    private GameSessionController pinnedGameSessionController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.Theme_YukiHub_Launcher);
         applySavedToneMode();
         super.onCreate(savedInstanceState);
+        pinnedGameSessionController = new GameSessionController(this, new RxMainQueue(), new GameSessionController.Listener() {
+            @Override public void reloadGame(long gameId) { if (viewModel != null) viewModel.refresh(); }
+            @Override public void reloadAllGames() { if (viewModel != null) viewModel.refresh(); }
+        });
         configureEdgeToEdgeWindow();
 
         // Android 12+ replaces a legacy window background with the system icon splash.
@@ -144,12 +151,16 @@ public class LauncherActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (splashDelay != null && !splashDelay.isDisposed()) splashDelay.dispose();
+        if (pinnedGameSessionController != null) pinnedGameSessionController.cleanup();
         super.onDestroy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (pinnedGameSessionController != null && pinnedGameSessionController.hasActiveSession()) {
+            pinnedGameSessionController.finishDirectPlaySessionIfNeeded(this);
+        }
         if (binding != null) {
             renderSelectedNav(currentNavItem);
             renderParticles();
@@ -179,7 +190,7 @@ public class LauncherActivity extends AppCompatActivity {
         long gameId = intent.getLongExtra(EXTRA_PINNED_GAME_ID, -1L);
         intent.removeExtra(EXTRA_PINNED_GAME_ID);
         intent.setAction(null);
-        PinnedGameShortcut.launchPinnedGame(this, gameId, result -> {
+        PinnedGameShortcut.launchPinnedGame(this, gameId, pinnedGameSessionController, result -> {
             if (!result.success && result.message != null && !result.message.trim().isEmpty()) {
                 if (result.activeGameConflict) {
                     LauncherGameLaunchBridge.showActiveGameDialog(this, result.activeGameTitle);

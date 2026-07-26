@@ -57,6 +57,15 @@ object PinnedGameShortcut {
     /** Resolves the current game by id before delegating to the shared launch bridge. */
     @JvmStatic
     fun launchPinnedGame(context: Context, gameId: Long, callback: LaunchCallback?) {
+        launchPinnedGame(context, gameId, null, callback)
+    }
+
+    /**
+     * Uses the shared session controller when the shortcut is launched from an Activity,
+     * allowing realtime server sessions to receive heartbeats and a finish event on return.
+     */
+    @JvmStatic
+    fun launchPinnedGame(context: Context, gameId: Long, sessionController: GameSessionController?, callback: LaunchCallback?) {
         if (gameId <= 0L) {
             callback?.onResult(LauncherGameLaunchBridge.LaunchResult.failure("游戏快捷方式无效"))
             return
@@ -64,10 +73,17 @@ object PinnedGameShortcut {
         val appContext = context.applicationContext
         AppExecutors.runOnIo {
             val game = GameRepository(appContext).findById(gameId)
-            val result = LauncherGameLaunchBridge.launch(appContext, game)
-            RxMainScheduler.post {
-                callback?.onResult(result)
+            if (game == null) {
+                val result = LauncherGameLaunchBridge.LaunchResult.failure("游戏不存在")
+                RxMainScheduler.post { callback?.onResult(result) }
+                return@runOnIo
             }
+            if (sessionController == null) {
+                val result = LauncherGameLaunchBridge.launch(appContext, game)
+                RxMainScheduler.post { callback?.onResult(result) }
+                return@runOnIo
+            }
+            sessionController.launchGame(appContext, game) { result -> callback?.onResult(result) }
         }
     }
 
