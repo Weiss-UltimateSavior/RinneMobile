@@ -12,7 +12,34 @@
 - 修改 UI 时只调整用户指定的层级，不顺带改动引擎启动、存档、账户同步或列表数据流。
 - 竖屏与 Pad 横屏分别复用各自组件；禁止把竖屏平板缩放器直接套到 `PadUi`。
 
-## 2. 主题色调与字体
+## 2. 新增功能代码规范
+
+### 语言与文件选择
+
+- 新增 Activity / Fragment 一律使用 Kotlin + XML 布局；不再新建 Java 页面文件。
+- 新增业务功能方法（Bridge、Controller、Manager、Repository、工具类等）一律使用 Kotlin。
+- 已存在的 Java 文件可在原文件内继续修改；只有大规模重构时才迁移到 Kotlin
+- 新增 Kotlin 业务文件放在与职责对应的 `com.core.*` 子包下；UI 页面放在 `com.apps.*` 对应子包。
+
+### Kotlin 代码风格
+
+- 工具类 / 桥接类使用 `object` + `@JvmStatic` 暴露入口给 Java 调用方；常量使用 `const val`；包内可见方法使用 `internal`。
+- 跨 Java 边界的方法参数优先声明为可空（如 `String?`），兼容 Java 调用方传入 null；保留既有约定（参考 `VndbClient.kt`、`MetadataUtils.cleanTitle()`）。
+- 需要复刻 Java `trim()` 语义时使用 `uriText == null || uriText.trim().isEmpty()`，不用 `isNullOrBlank()`（参考 `SafeImageLoader.kt`）。
+- 需要匹配 Java `Math.round(float)` 半向上语义时使用 `Math.round(float)`，不用 `roundToInt()`（参考 `UiScaleUtil.kt`）。
+- 集合优先使用只读 `List` / `Map`，需要可变时显式使用 `MutableList` / `MutableMap`。
+- 不滥用 `!!`；可空值用 `?.` 或 `?:` 兜底。
+- 单方法接口使用 `fun interface`；Java 枚举迁移使用 `enum class` + `companion object` + `@JvmStatic fromString`。
+- `@Volatile` 仅用于跨线程可见性需求；只在 `@Synchronized` 方法内访问的字段不需要 `@Volatile`。
+
+### XML 布局规范
+
+- 新增布局文件命名沿用 `snake_case`：`activity_xxx`、`fragment_xxx`、`dialog_xxx`、`item_xxx`、`view_xxx`。
+- 优先复用现有 style、`LauncherTheme` 语义资源、`launcher_*` 颜色；不在 XML 硬编码 `#RRGGBB` 或固定圆角 drawable。
+- 使用 ViewBinding 而非 `findViewById`；Fragment 在 `onDestroyView()` 中解除 listener 并置空 binding。
+- 新增普通页面通过 `LauncherActivity.wrapLauncherUiMode()` 包装 Context，并在 `super.onCreate()` 前应用保存的模式。
+
+## 3. 主题色调与字体
 
 ### 主题链路
 
@@ -90,7 +117,7 @@
 - 按键瀑布样式通过 `radius <= 0` 标记休眠粒子（index >= `SAKURA_ACTIVE_COUNT`），`updateSakura` 与 `drawSakura` 需在开头跳过休眠粒子；活跃粒子大小固定不随机。
 - 新增粒子样式时，必须同步扩展 `LauncherActivity.setLauncherParticleStyle()`/`getLauncherParticleStyle()` 的 `safeStyle` 校验、`LauncherParticleView.setParticleStyle()` 与 `isXxxStyle()` 分支，以及 `PadSettingsActivity` 与 `LauncherThemeMenuActivity` 的样式选择弹窗。
 
-## 3. 竖屏 Launcher 组件
+## 4. 竖屏 Launcher 组件
 
 ### 操作按钮
 
@@ -111,7 +138,7 @@
 - 选择器入口可复用表单外观，但保留“选择目录/封面/引擎”等业务语义，不能伪装为保存按钮。
 - 列表功能行按语义区分：设置行、主题选择行、聊天入口行、游戏内容项各自保留原行高与信息层级。
 
-## 4. 竖屏弹窗
+## 5. 竖屏弹窗
 
 普通 Launcher 弹窗使用 `com.apps.theme.LauncherDialogFactory`：
 
@@ -129,7 +156,7 @@
 - 确认回调必须先 `dismiss()` 再执行业务操作。
 - 含输入法、动态进度、复杂列表或不可控长文本的弹窗不能硬迁移到普通 API；先提供有明确生命周期的专用模板，再迁移。
 
-## 5. PadUi 横屏规范
+## 6. PadUi 横屏规范
 
 ### 布局与按钮
 
@@ -169,7 +196,7 @@
 - 粒子样式选择使用 `PadDialogFactory.showSingleChoice`（可滑动单选列表），通过 `checkedIndex` 表达已选状态、末项"关闭动态粒子"表达关闭操作、回调内 `Toast` 反馈；不要再手写选项行。
 - `PadManageFragment` 跨包调用 `com.apps.settings.LauncherCustomVndbSearchDialog` 属于复杂搜索专用界面，超出 PadUi 弹窗规范范围，保留跨包调用。
 
-## 6. 修改与验证清单
+## 7. 修改与验证清单
 
 1. 先查找同类页面/组件，复用现有公共方法。
 2. 保证运行时仍调用 `LauncherTheme`，不把主题色写死到 XML 或 Java。
