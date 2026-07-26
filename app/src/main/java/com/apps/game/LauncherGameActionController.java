@@ -33,8 +33,6 @@ import com.core.util.TimeFormatUtil;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherDialogFactory;
@@ -81,7 +79,7 @@ public final class LauncherGameActionController {
     private void showGameActionMenu(Game game) {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle(safeTitle(game)));
+        root.addView(createDialogTitle(GameMetadataFormatter.safeTitle(game)));
         addAction(root, "游戏详情", dialog, () -> showGameDetailDialog(game));
         if (includeEditAction) {
             addAction(root, "编辑游戏", dialog, () -> host.editGame(game));
@@ -182,8 +180,8 @@ public final class LauncherGameActionController {
         addWithTopMargin(root, buttons, 12);
 
         save.setOnClickListener(view -> {
-            Long totalMinutes = parseDuration(totalInput.getText().toString());
-            Long addMinutes = parseDuration(addInput.getText().toString());
+            Long totalMinutes = GameMetadataFormatter.parseDuration(totalInput.getText().toString());
+            Long addMinutes = GameMetadataFormatter.parseDuration(addInput.getText().toString());
             if (totalMinutes == null && addMinutes == null) {
                 Toast.makeText(context(), "请输入有效时长", Toast.LENGTH_SHORT).show();
                 return;
@@ -239,10 +237,10 @@ public final class LauncherGameActionController {
     private void showGameDetailDialog(Game game) {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle(safeTitle(game)));
+        root.addView(createDialogTitle(GameMetadataFormatter.safeTitle(game)));
         StringBuilder text = new StringBuilder();
-        text.append("状态：").append(playStatusText(game.playStatus));
-        text.append("\n引擎：").append(engineText(game.engine));
+        text.append("状态：").append(GameMetadataFormatter.playStatusText(game.playStatus));
+        text.append("\n引擎：").append(GameMetadataFormatter.engineText(game.engine));
         text.append("\n总时长：").append(TimeFormatUtil.playTime(game.totalPlayTime));
         text.append("\n最近游玩：").append(game.lastPlayedAt > 0
                 ? new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
@@ -342,7 +340,7 @@ public final class LauncherGameActionController {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
         root.addView(createDialogTitle("删除游戏"));
-        TextView message = bodyText("要删除「" + safeTitle(game)
+        TextView message = bodyText("要删除「" + GameMetadataFormatter.safeTitle(game)
                 + "」吗？此操作仅移除游戏库不进行实际删除。", true);
         message.setGravity(Gravity.CENTER);
         addWithTopMargin(root, message, 13);
@@ -504,54 +502,6 @@ public final class LauncherGameActionController {
         if (window == null) return;
         window.setContentView(content);
         window.setLayout(dp(widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
-    }
-
-    private Long parseDuration(String input) {
-        if (input == null || input.trim().isEmpty()) return null;
-        String text = input.trim().toLowerCase(Locale.ROOT);
-        try {
-            if (!text.matches(".*[dhms].*")) return (long) Double.parseDouble(text);
-            long minutes = 0L;
-            boolean found = false;
-            Matcher matcher = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*([dhms])").matcher(text);
-            while (matcher.find()) {
-                found = true;
-                double value = Double.parseDouble(matcher.group(1));
-                String unit = matcher.group(2);
-                if ("d".equals(unit)) minutes += value * 1440;
-                else if ("h".equals(unit)) minutes += value * 60;
-                else if ("m".equals(unit)) minutes += value;
-                else minutes += value / 60;
-            }
-            return found ? minutes : null;
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
-    private String safeTitle(Game game) {
-        return game == null || TextUtils.isEmpty(game.title) ? "未命名游戏" : game.title.trim();
-    }
-
-    private String playStatusText(String status) {
-        if ("playing".equals(status)) return "在玩";
-        if ("completed".equals(status)) return "玩过";
-        return "未玩";
-    }
-
-    private String engineText(EngineType engine) {
-        if (engine == null) return "未知";
-        switch (engine) {
-            case KIRIKIRI: return "Kirikiri";
-            case ONS: return "ONS";
-            case TYRANO: return "Tyrano";
-            case ARTEMIS: return "Artemis";
-            case WINLATOR: return "Winlator";
-            case GAMEHUB: return "GameHub";
-            case PSP: return "PSP";
-            case NINTENDO_3DS: return "3DS";
-            default: return "未知";
-        }
     }
 
     private int dp(int value) {

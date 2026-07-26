@@ -2,8 +2,6 @@ package com.apps.game;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Intent;
 import android.Manifest;
 import android.net.Uri;
@@ -31,12 +29,18 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.apps.LauncherActivity;
+import com.apps.game.CategoryBuildResult;
+import com.apps.game.CategoryOption;
+import com.apps.game.GameCategoryBuilder;
+import com.apps.game.GameMetadataFormatter;
+import com.apps.game.GameSessionController;
 import com.apps.theme.LauncherDialogFactory;
 import com.core.R;
 import com.core.databinding.FragmentLauncherLibraryBinding;
@@ -44,9 +48,7 @@ import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.PlaySessionCallback;
 import com.core.launcherbridge.PlaySession;
 import com.core.launcherbridge.LauncherGameLaunchBridge;
-import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
-import com.core.metadata.VnMetadata;
 import com.core.model.EngineType;
 import com.core.model.Game;
 import com.core.util.AppExecutors;
@@ -54,70 +56,66 @@ import com.core.util.RxMainQueue;
 
 import com.apps.UserData.LauncherUserData;
 
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
-public class LauncherLibraryFragment extends Fragment {
-    private static final long MIN_PLAY_SESSION_MS = 0L;
-    private static final long MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L;
-    private static final long PLAY_SESSION_HEARTBEAT_MS = 60L * 1000L;
-    private static final String CATEGORY_RECENT = "status:recent";
-    private static final String CATEGORY_PLAYING = "status:playing";
-    private static final String CATEGORY_COMPLETED = "status:completed";
-    private static final String CATEGORY_UNPLAYED = "status:unplayed";
-    private static final String CATEGORY_FAVORITE = "status:favorite";
-    private static final String CATEGORY_DEVELOPER_PREFIX = "developer:";
-
+public class LauncherLibraryFragment extends Fragment implements GameListController.Listener,
+        GameActionMenuFactory.ActionMenuCallbacks, GameSyncController.Listener {
     private FragmentLauncherLibraryBinding binding;
     private final RxMainQueue mainQueue = new RxMainQueue();
-    private final List<Game> allGames = new ArrayList<>();
-    private final List<Game> filteredGames = new ArrayList<>();
-    private final List<Game> visibleGames = new ArrayList<>();
-    private final GameLibraryState libraryState = new GameLibraryState();
+
+    /** Library 偏好使用 LauncherDialogFactory 的单选实现。 */
+    private final GameActionMenuFactory.SubDialogFactory subDialogFactory =
+            (ctx, title, labels, checked, onChoice) ->
+                    LauncherDialogFactory.showSingleChoice(ctx, title, labels, checked,
+                            index -> onChoice.accept(index));
+
+    /** Library 同步对话框工厂：自绘对话框，使用 launcher_dialog_bg 背景，252dp 宽度。 */
+    private final GameSyncController.DialogFactory syncDialogFactory =
+            new GameSyncController.DialogFactory() {
+                @Override
+                public void showSyncConfirmDialog(Runnable onConfirm) {
+                    LauncherDialogFactory.showStandardConfirm(requireContext(), "同步数据",
+                            "全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？",
+                            "确定同步", onConfirm);
+                }
+
+                @Override
+                public AlertDialog createSyncLoadingDialog(String title, String hint) {
+                    return createLibrarySyncLoadingDialog(title, hint);
+                }
+
+                @Override
+                public void showSyncResultDialog(int synced, int failed) {
+                    String message = "同步完成 " + synced + " 个" + (failed > 0 ? "\n失败 " + failed + " 个" : "");
+                    LauncherDialogFactory.showInfo(requireContext(), "同步完成", message);
+                }
+            };
+
+    private GameSessionController sessionController;
+    private GameListController listController;
+    private GameSyncController syncController;
     private final List<CategoryOption> categories = new ArrayList<>();
     private final Map<Long, List<String>> gameDevelopers = new HashMap<>();
     private LauncherGameAdapter adapter;
     private GridLayoutManager gridLayoutManager;
     private String selectedCategory = "";
     private String searchQuery = "";
-    private boolean loading;
-    private boolean fullyLoaded;
-    private boolean viewportFillCheckPending;
     private boolean categoriesCollapsed = true;
-    private boolean dataLoaded;
     // 编辑卡片后回退时，仅就地刷新被编辑的那张卡片，避免 loadGames() 重置分页与滑动位置。
     private long pendingEditGameId = -1L;
-    private long runningSessionId = -1L;
-    // 实际游玩时间监控：本地仍维护 play_sessions，线上排行榜使用服务端会话结算。
-    private long runningGameId = -1L;
-    private String runningGameTitle = "";
-    private long runningSessionStart = 0L;
-    private String runningServerSessionId = "";
-    private String runningLaunchType = "external";
     private Runnable searchDebounce;
-    private final Runnable playSessionHeartbeat = new Runnable() {
-        @Override
-        public void run() {
-            heartbeatServerPlaySession();
-            mainQueue.postDelayed(this, PLAY_SESSION_HEARTBEAT_MS);
-        }
-    };
     private GestureDetector swipeGestureDetector;
     private boolean swipeConsumed;
     private float loadMoreDragStartY;
     private boolean loadMoreDragCandidate;
-    private int currentPage;
     private boolean posterGridStyle;
     private static final String LIBRARY_PREFS = "launcher_library_preferences";
     private static final String KEY_POSTER_GRID_STYLE = "poster_grid_style";
@@ -135,7 +133,8 @@ public class LauncherLibraryFragment extends Fragment {
         return posterGridStyle ? 3 : Math.max(1, getGridColumns());
     }
 
-    protected int getPageSize() {
+    @Override
+    public int getPageSize() {
         return LauncherTabletPortraitScaler.libraryPageSize(getResources());
     }
 
@@ -147,7 +146,8 @@ public class LauncherLibraryFragment extends Fragment {
         return 0;
     }
 
-    protected boolean usesHorizontalPaging() {
+    @Override
+    public boolean usesHorizontalPaging() {
         return false;
     }
 
@@ -173,6 +173,14 @@ public class LauncherLibraryFragment extends Fragment {
                 .getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(KEY_POSTER_GRID_STYLE, false);
         setupSearchAndCategories();
+        sessionController = new GameSessionController(requireContext(), mainQueue, new GameSessionController.Listener() {
+            @Override
+            public void reloadGame(long gameId) { reloadSingleGame(gameId); }
+            @Override
+            public void reloadAllGames() { loadGames(); }
+        });
+        syncController = new GameSyncController(mainQueue, this, syncDialogFactory);
+        listController = new GameListController(mainQueue, this);
         setupRecycler();
         loadGames();
         setupSwipeGesture();
@@ -182,14 +190,14 @@ public class LauncherLibraryFragment extends Fragment {
     public void onResume() {
         super.onResume();
         checkStoragePermission();
-        if (runningSessionId > 0L) {
-            finishDirectPlaySessionIfNeeded();
+        if (sessionController != null && sessionController.hasActiveSession()) {
+            sessionController.finishDirectPlaySessionIfNeeded(this);
         } else if (pendingEditGameId > 0L) {
             // 编辑页返回时仅就地刷新该卡片，保留当前滑动位置与已加载分页。
             long id = pendingEditGameId;
             pendingEditGameId = -1L;
             reloadSingleGame(id);
-        } else if (!dataLoaded) {
+        } else if (!listController.isDataLoaded()) {
             loadGames();
         }
     }
@@ -197,9 +205,9 @@ public class LauncherLibraryFragment extends Fragment {
     private void checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= 30) {
             if (!Environment.isExternalStorageManager()) {
-                AlertDialog dialog = createLauncherDialog();
-                LinearLayout root = createDialogRoot();
-                root.addView(createDialogTitle("需要文件访问权限"));
+                AlertDialog dialog = GameActionMenuFactory.createLauncherDialog(requireContext());
+                LinearLayout root = GameActionMenuFactory.createDialogRoot(requireContext());
+                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), "需要文件访问权限"));
 
                 TextView info = new TextView(requireContext());
                 info.setText("应用需要完全访问文件夹的权限来读取游戏文件。请在系统页面允许\"管理所有文件\"。");
@@ -210,7 +218,7 @@ public class LauncherLibraryFragment extends Fragment {
                 infoLp.setMargins(0, dp(13), 0, 0);
                 root.addView(info, infoLp);
 
-                root.addView(createDialogButton("前往", true, () -> {
+                root.addView(GameActionMenuFactory.createDialogButton(requireContext(), "前往", true, () -> {
                     try {
                         startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
                                 Uri.parse("package:" + requireContext().getPackageName())));
@@ -219,13 +227,9 @@ public class LauncherLibraryFragment extends Fragment {
                     }
                 }, dialog));
 
-                root.addView(createDialogCancelButton(dialog));
+                root.addView(GameActionMenuFactory.createDialogCancelButton(requireContext(), dialog));
 
-                android.view.Window window = dialog.getWindow();
-                if (window != null) {
-                    window.setContentView(root);
-                    window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-                }
+                GameActionMenuFactory.setDialogContent(dialog, root, 288);
             }
         } else if (Build.VERSION.SDK_INT >= 23) {
             if (requireActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -236,7 +240,8 @@ public class LauncherLibraryFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        mainQueue.removeCallbacks(playSessionHeartbeat);
+        if (sessionController != null) sessionController.cleanup();
+        if (syncController != null) syncController.cleanup();
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
             binding.libraryRecycler.setAdapter(null);
@@ -335,9 +340,9 @@ public class LauncherLibraryFragment extends Fragment {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (usesHorizontalPaging() || dy <= 0 || loading || fullyLoaded) return;
+                if (usesHorizontalPaging() || dy <= 0 || listController.isLoading() || listController.isFullyLoaded()) return;
                 int lastVisible = gridLayoutManager.findLastVisibleItemPosition();
-                if (lastVisible >= Math.max(0, visibleGames.size() - getActiveGridColumns())) {
+                if (lastVisible >= Math.max(0, listController.getVisibleGames().size() - getActiveGridColumns())) {
                     loadNextPage();
                 }
             }
@@ -560,7 +565,7 @@ public class LauncherLibraryFragment extends Fragment {
         LauncherDialogFactory.showStandardActionChoices(requireContext(), "游戏库设置",
                 new CharSequence[]{"一键同步", styleLabel}, index -> {
                     if (index == 0) {
-                        showSyncDataConfirmDialog();
+                        syncController.showSyncDataConfirmDialog();
                     } else {
                         togglePosterGridStyle();
                     }
@@ -587,196 +592,85 @@ public class LauncherLibraryFragment extends Fragment {
     }
 
     private void loadGames() {
-        setLoading(true);
-        Context appContext = requireContext().getApplicationContext();
-        AppExecutors.runOnSingle(() -> {
-            List<Game> games;
-            Map<Long, List<String>> developers;
-            List<CategoryOption> builtCategories;
-            try {
-                games = LauncherRepositoryBridge.getAllGames(appContext);
-            } catch (Throwable throwable) {
-                games = Collections.emptyList();
-            }
-            // 在后台线程构建分类（含元数据查询），避免主线程卡顿
-            try {
-                CategoryBuildResult result = buildCategoriesInBackground(appContext, games);
-                developers = result.developers;
-                builtCategories = result.categories;
-            } catch (Throwable throwable) {
-                developers = Collections.emptyMap();
-                builtCategories = Collections.emptyList();
-            }
-            List<Game> loadedGames = games;
-            Map<Long, List<String>> loadedDevelopers = developers;
-            List<CategoryOption> loadedCategories = builtCategories;
-            mainQueue.post(() -> {
-                if (binding == null) return;
-                allGames.clear();
-                allGames.addAll(loadedGames);
-                libraryState.replaceAll(loadedGames);
-                gameDevelopers.clear();
-                gameDevelopers.putAll(loadedDevelopers);
-                categories.clear();
-                categories.addAll(loadedCategories);
-                if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
-                    selectedCategory = "";
-                }
-                renderCategories();
-                dataLoaded = true;
-                // 后台数据已经加载完成，必须先解除 loading 状态。
-                // 否则 RecyclerView 的滚动监听和上拉手势都会被 loading 条件拦截。
-                setLoading(false);
-                applyFilters();
-            });
-        });
+        listController.loadGames();
     }
 
     private void applyFilters() {
-    applyFilters(false);
-}
-
-private void applyFilters(boolean forceFullRefresh) {
-    libraryState.setQuery(searchQuery);
-    libraryState.setCategory(selectedCategory);
-    libraryState.rebuild((game, query, category) -> {
-        String normalized = query.trim().toLowerCase(Locale.ROOT);
-        return (normalized.isEmpty() || safeTitle(game).toLowerCase(Locale.ROOT).contains(normalized))
-                && (category.trim().isEmpty() || matchesCategory(game, category));
-    }, (left, right) -> Collator.getInstance(Locale.CHINA).compare(safeTitle(left), safeTitle(right)), getPageSize(), usesHorizontalPaging());
-    syncLibraryLists();
-    if (usesHorizontalPaging()) {
-        renderPagedGrid(forceFullRefresh);
-    } else {
-        if (adapter != null) adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
+        listController.applyFilters();
     }
-    renderState();
-}
 
-private void renderPagedGrid(boolean forceFullRefresh) {
-    if (adapter == null) return;
-    libraryState.renderPage(getPageSize());
-    syncLibraryLists();
-    adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-}
-
-/**
- * Updates a single game in-place without reloading the entire list, preserving scroll position.
- * Used by long-press dialog actions (status, play time, favorite, cover sync, metadata rematch).
- * DiffUtil detects only the changed card and dispatches a single notifyItemChanged.
- */
-private void updateSingleGame(Game updated) {
-    if (updated == null || binding == null) return;
-    for (int i = 0; i < allGames.size(); i++) {
-        Game g = allGames.get(i);
-        if (g != null && g.id == updated.id) {
-            allGames.set(i, updated);
-            break;
-        }
+    private void applyFilters(boolean forceFullRefresh) {
+        listController.applyFilters(forceFullRefresh);
     }
-    libraryState.updateGame(updated, (game, query, category) -> {
-        String normalized = query.trim().toLowerCase(Locale.ROOT);
-        return (normalized.isEmpty() || safeTitle(game).toLowerCase(Locale.ROOT).contains(normalized))
-                && (category.trim().isEmpty() || matchesCategory(game, category));
-    });
-    syncLibraryLists();
-    if (adapter != null) adapter.submit(new ArrayList<>(visibleGames));
-    renderState();
-}
 
-/** Removes a single game by id without reloading the entire list, preserving scroll position. */
-private void removeSingleGame(long gameId) {
-    if (binding == null) return;
-    for (int i = 0; i < allGames.size(); i++) {
-        Game g = allGames.get(i);
-        if (g != null && g.id == gameId) {
-            allGames.remove(i);
-            break;
-        }
+    private void renderPagedGrid(boolean forceFullRefresh) {
+        listController.renderPagedGrid(forceFullRefresh);
     }
-    libraryState.removeGame(gameId);
-    syncLibraryLists();
-    if (adapter != null) adapter.submit(new ArrayList<>(visibleGames));
-    renderState();
-}
 
-/** Re-fetches a single game from DB and updates it in-place, for async metadata operations. */
-private void reloadSingleGame(long gameId) {
-    AppExecutors.io().execute(() -> {
-        Game updated = null;
-        try {
-            updated = LauncherRepositoryBridge.findGameById(requireContext(), gameId);
-        } catch (Throwable ignored) {}
-        final Game result = updated;
-        if (getActivity() != null) getActivity().runOnUiThread(() -> {
-            if (result != null) updateSingleGame(result);
-        });
-    });
-}
+    /**
+     * Updates a single game in-place without reloading the entire list, preserving scroll position.
+     * Used by long-press dialog actions (status, play time, favorite, cover sync, metadata rematch).
+     * DiffUtil detects only the changed card and dispatches a single notifyItemChanged.
+     */
+    private void updateSingleGame(Game updated) {
+        listController.updateSingleGame(updated);
+    }
 
-private boolean showNextPage() {
-    if (!usesHorizontalPaging() || loading) return false;
-    if (!libraryState.nextPage(getPageSize())) return false;
-    syncLibraryLists();
-    renderPagedGrid(false);
-    renderState();
-    animatePageChange(true);
-    return true;
-}
+    /** Removes a single game by id without reloading the entire list, preserving scroll position. */
+    private void removeSingleGame(long gameId) {
+        listController.removeSingleGame(gameId);
+    }
 
-private boolean showPreviousPage() {
-    if (!usesHorizontalPaging() || loading || !libraryState.previousPage(getPageSize())) return false;
-    syncLibraryLists();
-    renderPagedGrid(false);
-    renderState();
-    animatePageChange(false);
-    return true;
-}
+    /** Re-fetches a single game from DB and updates it in-place, for async metadata operations. */
+    @Override
+    public void reloadSingleGame(long gameId) {
+        listController.reloadSingleGame(this, gameId);
+    }
 
-private void animatePageChange(boolean forward) {
-    if (binding == null) return;
-    float distance = dp(36) * (forward ? 1f : -1f);
-    binding.libraryRecycler.animate().cancel();
-    binding.libraryRecycler.setTranslationX(distance);
-    binding.libraryRecycler.setAlpha(0.72f);
-    binding.libraryRecycler.animate()
-            .translationX(0f)
-            .alpha(1f)
-            .setDuration(220L)
-            .setInterpolator(new AccelerateDecelerateInterpolator())
-            .start();
-}
+    private boolean showNextPage() {
+        if (!listController.showNextPage()) return false;
+        animatePageChange(true);
+        return true;
+    }
 
-private void loadNextPage() {
-    loadNextPage(false);
-}
+    private boolean showPreviousPage() {
+        if (!listController.showPreviousPage()) return false;
+        animatePageChange(false);
+        return true;
+    }
 
-private void loadNextPage(boolean forceFullRefresh) {
-    if (adapter == null || loading && !visibleGames.isEmpty()) return;
-    loading = true;
-    libraryState.loadNext(getPageSize());
-    syncLibraryLists();
-    adapter.submit(new ArrayList<>(visibleGames), forceFullRefresh);
-    loading = false;
-    renderState();
-}
+    private void animatePageChange(boolean forward) {
+        if (binding == null) return;
+        float distance = dp(36) * (forward ? 1f : -1f);
+        binding.libraryRecycler.animate().cancel();
+        binding.libraryRecycler.setTranslationX(distance);
+        binding.libraryRecycler.setAlpha(0.72f);
+        binding.libraryRecycler.animate()
+                .translationX(0f)
+                .alpha(1f)
+                .setDuration(220L)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
+    }
 
-    private void syncLibraryLists() {
-        filteredGames.clear(); filteredGames.addAll(libraryState.getFiltered());
-        visibleGames.clear(); visibleGames.addAll(libraryState.getVisible());
-        currentPage = libraryState.getPage(); fullyLoaded = libraryState.isFullyLoaded();
+    private void loadNextPage() {
+        listController.loadNextPage();
+    }
+
+    private void loadNextPage(boolean forceFullRefresh) {
+        listController.loadNextPage(forceFullRefresh);
     }
 
     private void renderState() {
         if (binding == null) return;
-        boolean hasGames = !visibleGames.isEmpty();
+        boolean hasGames = !listController.getVisibleGames().isEmpty();
         binding.libraryRecycler.setVisibility(hasGames ? View.VISIBLE : View.GONE);
         if (hasGames && usesHorizontalPaging()) {
             binding.libraryRecycler.post(this::updateFixedGridCardHeight);
         } else if (hasGames && usesTabletPortraitCardSizing()) {
             binding.libraryRecycler.post(this::updateTabletPortraitCardHeight);
         }
-        binding.libraryEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
+        binding.libraryEmpty.setText(listController.getAllGames().isEmpty() ? "还没有游戏" : "没有匹配的游戏");
         binding.libraryEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
         if (hasGames) scheduleLoadUntilViewportFilled();
     }
@@ -791,11 +685,12 @@ private void loadNextPage(boolean forceFullRefresh) {
      * canScrollVertically() 基于旧布局返回 true（误判为已填满），导致下一页无法自动加载。
      */
     private void scheduleLoadUntilViewportFilled() {
-        if (binding == null || viewportFillCheckPending || usesHorizontalPaging()
-                || loading || fullyLoaded || visibleGames.size() >= filteredGames.size()) {
+        if (binding == null || listController.isViewportFillCheckPending() || usesHorizontalPaging()
+                || listController.isLoading() || listController.isFullyLoaded()
+                || listController.getVisibleGames().size() >= listController.getFilteredGames().size()) {
             return;
         }
-        viewportFillCheckPending = true;
+        listController.setViewportFillCheckPending(true);
         RecyclerView recyclerView = binding.libraryRecycler;
         ViewTreeObserver observer = recyclerView.getViewTreeObserver();
         ViewTreeObserver.OnPreDrawListener listener = new ViewTreeObserver.OnPreDrawListener() {
@@ -803,14 +698,14 @@ private void loadNextPage(boolean forceFullRefresh) {
             public boolean onPreDraw() {
                 ViewTreeObserver vto = recyclerView.getViewTreeObserver();
                 vto.removeOnPreDrawListener(this);
-                viewportFillCheckPending = false;
-                if (binding == null || loading || fullyLoaded
-                        || visibleGames.size() >= filteredGames.size()) {
+                listController.setViewportFillCheckPending(false);
+                if (binding == null || listController.isLoading() || listController.isFullyLoaded()
+                        || listController.getVisibleGames().size() >= listController.getFilteredGames().size()) {
                     return true;
                 }
                 // 列表无法向下滚动时，说明内容未填满容器，加载下一页
                 if (!recyclerView.canScrollVertically(1)) {
-                    loadNextPage();
+                    listController.loadNextPage();
                 }
                 return true;
             }
@@ -820,7 +715,9 @@ private void loadNextPage(boolean forceFullRefresh) {
 
 
     private void handleLoadMoreDragWhenNotScrollable(@NonNull RecyclerView recyclerView, @NonNull MotionEvent event) {
-        if (loading || fullyLoaded || filteredGames.isEmpty() || visibleGames.size() >= filteredGames.size()) {
+        if (listController.isLoading() || listController.isFullyLoaded()
+                || listController.getFilteredGames().isEmpty()
+                || listController.getVisibleGames().size() >= listController.getFilteredGames().size()) {
             loadMoreDragCandidate = false;
             return;
         }
@@ -843,130 +740,6 @@ private void loadNextPage(boolean forceFullRefresh) {
                 loadMoreDragCandidate = false;
                 break;
         }
-    }
-
-    private void setLoading(boolean value) {
-        loading = value;
-    }
-
-    private void launchGameDirectly(Game game) {
-        if (game == null) return;
-        LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
-            if (!isAdded()) return;
-            if (result.success) {
-                runningSessionId = result.sessionId;
-                runningGameId = game.id;
-                runningGameTitle = safeTitle(game);
-                runningSessionStart = System.currentTimeMillis();
-                runningLaunchType = resolveLaunchTypeForRecord(game);
-                startServerPlaySession(game, result.sessionId);
-            } else if (result.activeGameConflict) {
-                LauncherGameLaunchBridge.showActiveGameDialog(requireContext(), result.activeGameTitle);
-            } else if (result.message != null && !result.message.trim().isEmpty()) {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    private void finishDirectPlaySessionIfNeeded() {
-        if (runningSessionId <= 0L) return;
-        Context context = getContext();
-        if (context == null) return;
-        // 1) 主项目会话收尾（写入 play_sessions 表 + 累加 total_play_time）
-        LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS);
-        Context app = context.getApplicationContext();
-        // 2) 线上实际游玩时长只结束服务端 session，不提交本地 duration。
-        finishServerPlaySession(app, runningSessionId);
-        // 捕获刚结束会话的游戏 id，用于就地刷新单张卡片；
-        // 不能调用 loadGames()，否则会重置分页并丢失滑动位置。
-        long finishedGameId = runningGameId;
-        runningSessionId = -1L;
-        runningGameId = -1L;
-        runningGameTitle = "";
-        runningSessionStart = 0L;
-        runningServerSessionId = "";
-        runningLaunchType = "external";
-        if (finishedGameId > 0L) {
-            reloadSingleGame(finishedGameId);
-        } else {
-            loadGames();
-        }
-    }
-
-    private void startServerPlaySession(Game game, long localSessionId) {
-        Context context = getContext();
-        if (context == null || game == null || localSessionId <= 0L) return;
-        Context app = context.getApplicationContext();
-        if (!LauncherAuthBridge.isLoggedIn(app)) return;
-        android.content.SharedPreferences prefs = app.getSharedPreferences("launcher_account_settings", Context.MODE_PRIVATE);
-        if (!prefs.getBoolean("realtime_playtime", true)) return;
-        String deviceId = LauncherUserData.getRealtimePlaytimeDeviceId(app);
-        LauncherAuthBridge.startPlayTimeSession(app, game.id, safeTitle(game), deviceId,
-                new PlaySessionCallback() {
-            @Override
-            public void onSuccess(PlaySession session) {
-                if (session == null || session.sessionId == null || session.sessionId.trim().isEmpty()) return;
-                if (runningSessionId != localSessionId) return;
-                runningServerSessionId = session.sessionId;
-                LauncherUserData.rememberServerPlaySession(app, localSessionId, game.id, safeTitle(game), session.sessionId);
-                scheduleServerPlayHeartbeat();
-            }
-
-            @Override
-            public void onError(String message) {
-                // 静默失败：不能回退到本地 duration 上传。
-            }
-        });
-    }
-
-    private void scheduleServerPlayHeartbeat() {
-        mainQueue.removeCallbacks(playSessionHeartbeat);
-        mainQueue.postDelayed(playSessionHeartbeat, PLAY_SESSION_HEARTBEAT_MS);
-    }
-
-    private void heartbeatServerPlaySession() {
-        Context context = getContext();
-        if (context == null || runningServerSessionId == null || runningServerSessionId.trim().isEmpty()) return;
-        Context app = context.getApplicationContext();
-        LauncherAuthBridge.heartbeatPlayTimeSession(app, runningServerSessionId, new PlaySessionCallback() {
-            @Override public void onSuccess(PlaySession session) { }
-            @Override public void onError(String message) { }
-        });
-    }
-
-    private void finishServerPlaySession(Context app, long localSessionId) {
-        mainQueue.removeCallbacks(playSessionHeartbeat);
-        String serverSessionId = runningServerSessionId == null || runningServerSessionId.trim().isEmpty()
-                ? LauncherUserData.findServerPlaySessionId(app, localSessionId)
-                : runningServerSessionId;
-        if (serverSessionId == null || serverSessionId.trim().isEmpty()) return;
-        LauncherAuthBridge.finishPlayTimeSession(app, serverSessionId, new PlaySessionCallback() {
-            @Override
-            public void onSuccess(PlaySession session) {
-                LauncherUserData.removeServerPlaySession(app, localSessionId);
-            }
-
-            @Override
-            public void onError(String message) {
-                // finish 可重试；失败时保留 session_id 映射，等待后续恢复流程处理。
-            }
-        });
-    }
-
-    /**
-     * 与 LauncherGameLaunchBridge.resolveLaunchType 保持一致的启动类型推导，
-     * 仅用于实际游玩记录的 launchType 字段标记，便于后续上传区分启动方式。
-     */
-    private String resolveLaunchTypeForRecord(Game game) {
-        if (game == null || game.emulatorPackage == null) return "external";
-        String pkg = game.emulatorPackage.trim().toLowerCase(Locale.ROOT);
-        if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) return "internal.krkr";
-        if (pkg.startsWith("internal.ons") || pkg.equals("com.core.ons")) return "internal.ons";
-        if (pkg.startsWith("internal.tyrano") || pkg.equals("com.core.tyrano")) return "internal.tyrano";
-        if (pkg.startsWith("internal.artemis")) return pkg;
-        if (pkg.startsWith("internal.psp") || pkg.equals("org.ppsspp.ppsspp")) return "internal.psp";
-        if (pkg.startsWith("internal.citra") || pkg.equals("io.github.azaharplus.android")) return "internal.citra";
-        return "external";
     }
 
     private void confirmLaunchGame(Game game) {
@@ -993,401 +766,71 @@ private void loadNextPage(boolean forceFullRefresh) {
             TextView btnConfirm = dialogView.findViewById(com.core.R.id.dialogBtnConfirm);
 
             titleView.setText("启动游戏");
-            messageView.setText("确定启动「" + safeTitle(game) + "」吗？");
+            messageView.setText("确定启动「" + GameMetadataFormatter.safeTitle(game) + "」吗？");
             LauncherTheme.dialogButtons(btnCancel, btnConfirm);
 
             btnCancel.setOnClickListener(v -> dialog.dismiss());
             btnConfirm.setOnClickListener(v -> {
                 dialog.dismiss();
                 com.apps.game.GamePasswordLock.interceptLaunch(LauncherLibraryFragment.this, game,
-                        () -> launchGameDirectly(game));
+                        () -> sessionController.launchGameDirectly(LauncherLibraryFragment.this, game));
             });
         }
     }
 
     private void showGameActionMenu(Game game) {
         if (game == null) return;
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        android.view.Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(safeTitle(game));
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setSingleLine(true);
-        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        addGameActionOption(root, "游戏详情", dialog, game, () -> showGameDetailDialog(game));
-        addGameActionOption(root, "编辑游戏", dialog, game, () -> startEditGameActivity(game));
-        addGameActionOption(root, "游戏状态", dialog, game, () -> showPlayStatusDialog(game));
-        addGameActionOption(root, game.favorite ? "取消收藏" : "添加收藏", dialog, game, () -> toggleFavorite(game));
-        addGameActionOption(root, com.apps.game.GamePasswordLock.hasPassword(game) ? "取消密码" : "密码锁定", dialog, game, () -> {
-            if (com.apps.game.GamePasswordLock.hasPassword(game)) {
-                com.apps.game.GamePasswordLock.clearPassword(this, game, null);
-            } else {
-                com.apps.game.GamePasswordLock.setPassword(this, game, null);
-            }
-        });
-        addGameActionOption(root, "更多选项", dialog, game, () -> showMoreOptionsDialog(game));
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        GameActionMenuFactory.ActionMenuConfig config = new GameActionMenuFactory.ActionMenuConfig();
+        // Library 默认包含编辑/收藏/密码，宽度 252dp（与原实现一致）
+        GameActionMenuFactory.showGameActionMenu(this, game, config, this);
     }
 
-    private void addGameActionOption(LinearLayout root, String label, AlertDialog dialog, Game game, Runnable action) {
-        TextView option = new TextView(requireContext());
-        option.setText(label);
-        option.setGravity(android.view.Gravity.CENTER);
-        option.setSingleLine(true);
-        option.setTextSize(13);
-        option.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.menuItem(option);
-        option.setOnClickListener(view -> {
-            dialog.dismiss();
-            action.run();
-        });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        lp.setMargins(0, dp(11), 0, 0);
-        root.addView(option, lp);
+    // ===== GameActionMenuFactory.ActionMenuCallbacks =====
+
+    @Override
+    public void onShowGameDetail(Game game) {
+        GameActionMenuFactory.showGameDetailDialog(this, game);
     }
 
-    private String safeTitle(Game game) {
-        if (game == null || game.title == null || game.title.trim().isEmpty()) return "未命名游戏";
-        return game.title.trim();
+    @Override
+    public void onEditGame(Game game) {
+        startEditGameActivity(game);
     }
 
-    private AlertDialog createLauncherDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        android.view.Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-        }
-        return dialog;
+    @Override
+    public void onShowPlayStatus(Game game) {
+        GameActionMenuFactory.showPlayStatusDialog(this, game, subDialogFactory, this::updateSingleGame);
     }
 
-    private LinearLayout createDialogRoot() {
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-        return root;
+    @Override
+    public void onEditPlayTime(Game game) {
+        GameActionMenuFactory.showEditPlayTimeDialog(this, game, this::updateSingleGame);
     }
 
-    private TextView createDialogTitle(String text) {
-        TextView title = new TextView(requireContext());
-        title.setText(text);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setSingleLine(true);
-        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        return title;
+    @Override
+    public void onToggleFavorite(Game game) {
+        toggleFavorite(game);
     }
 
-    private TextView createDialogButton(String text, boolean primary, Runnable action, AlertDialog dialog) {
-        TextView btn = new TextView(requireContext());
-        btn.setText(text);
-        btn.setGravity(android.view.Gravity.CENTER);
-        btn.setTextSize(13);
-        btn.setTypeface(null, android.graphics.Typeface.BOLD);
-        if (primary) {
-            LauncherTheme.primaryButton(btn);
+    @Override
+    public void onTogglePassword(Game game) {
+        if (GamePasswordLock.hasPassword(game)) {
+            GamePasswordLock.clearPassword(this, game, null);
         } else {
-            LauncherTheme.secondaryButton(btn);
+            GamePasswordLock.setPassword(this, game, null);
         }
-        btn.setOnClickListener(v -> { dialog.dismiss(); action.run(); });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
-        lp.setMargins(0, dp(9), 0, 0);
-        btn.setLayoutParams(lp);
-        return btn;
     }
 
-    private TextView createDialogCancelButton(AlertDialog dialog) {
-        TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        lp.setMargins(0, dp(9), 0, 0);
-        cancel.setLayoutParams(lp);
-        return cancel;
-    }
-
-    private void showPlayStatusDialog(Game game) {
-        if (game == null) return;
-        String[] labels = {"未玩", "在玩", "玩过"};
-        String[] values = {"unplayed", "playing", "completed"};
-        int checkedIndex = -1;
-        for (int i = 0; i < values.length; i++) {
-            if (values[i].equals(game.playStatus)) {
-                checkedIndex = i;
-                break;
-            }
-        }
-        LauncherDialogFactory.showSingleChoice(
-                requireContext(),
-                "设置游玩状态",
-                labels,
-                checkedIndex,
-                index -> updateGameStatus(game, values[index])
-        );
-    }
-
-    private void updateGameStatus(Game game, String status) {
-        AppExecutors.io().execute(() -> {
-            Game updated = null;
-            try {
-                Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
-                if (latest != null) {
-                    latest.playStatus = status;
-                    LauncherRepositoryBridge.updateGame(requireContext(), latest);
-                    updated = latest;
-                }
-            } catch (Throwable ignored) {}
-            final Game result = updated;
-            if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                if (result != null) updateSingleGame(result);
-            });
-        });
-    }
-
-    private void showEditPlayTimeDialog(Game game) {
-        if (game == null) return;
-        // 使用 Dialog 而非 AlertDialog，避免 FLAG_NOT_FOCUSABLE 导致输入法无法唤醒
-        Dialog dialog = new Dialog(requireContext());
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("修改游玩时长"));
-
-        TextView info = new TextView(requireContext());
-        info.setText("当前总时长：" + com.core.util.TimeFormatUtil.playTime(game.totalPlayTime)
-                + "\n最近游玩：" + (game.lastPlayedAt > 0 ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new java.util.Date(game.lastPlayedAt)) : "无"));
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
-        info.setTextSize(12);
-        info.setLineSpacing(dp(4), 1f);
-        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, dp(13), 0, 0);
-        root.addView(info, infoLp);
-
-        TextView totalLabel = new TextView(requireContext());
-        totalLabel.setText("设置新的总时长");
-        totalLabel.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        totalLabel.setTextSize(12);
-        totalLabel.setTypeface(null, android.graphics.Typeface.BOLD);
-        LinearLayout.LayoutParams tlLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        tlLp.setMargins(0, dp(13), 0, 0);
-        root.addView(totalLabel, tlLp);
-
-        android.widget.EditText totalInput = new com.apps.widget.LauncherEditText(requireContext());
-        totalInput.setHint("例如 3h 20m / 200m / 7200s / 2.5h");
-        totalInput.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        totalInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_input_hint_color));
-        totalInput.setTextSize(13);
-        totalInput.setPadding(dp(13), dp(9), dp(13), dp(9));
-        totalInput.setBackground(LauncherTheme.cancelChip(requireContext()));
-        LauncherTheme.styleTextInput(totalInput);
-        LinearLayout.LayoutParams tiLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        tiLp.setMargins(0, dp(5), 0, 0);
-        root.addView(totalInput, tiLp);
-
-        TextView addLabel = new TextView(requireContext());
-        addLabel.setText("追加游玩时长");
-        addLabel.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        addLabel.setTextSize(12);
-        addLabel.setTypeface(null, android.graphics.Typeface.BOLD);
-        LinearLayout.LayoutParams alLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        alLp.setMargins(0, dp(11), 0, 0);
-        root.addView(addLabel, alLp);
-
-        android.widget.EditText addInput = new com.apps.widget.LauncherEditText(requireContext());
-        addInput.setHint("例如 30m / 1h30m / 0.5h");
-        addInput.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        addInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_input_hint_color));
-        addInput.setTextSize(13);
-        addInput.setPadding(dp(13), dp(9), dp(13), dp(9));
-        addInput.setBackground(LauncherTheme.cancelChip(requireContext()));
-        LauncherTheme.styleTextInput(addInput);
-        LinearLayout.LayoutParams aiLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        aiLp.setMargins(0, dp(5), 0, 0);
-        root.addView(addInput, aiLp);
-
-        TextView hint = new TextView(requireContext());
-        hint.setText("可填 d/h/m/s 单位组合，纯数字视为分钟");
-        hint.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
-        hint.setTextSize(11);
-        LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hLp.setMargins(0, dp(7), 0, 0);
-        root.addView(hint, hLp);
-
-        LinearLayout btnRow = new LinearLayout(requireContext());
-        btnRow.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow.setWeightSum(2f);
-        LinearLayout.LayoutParams brLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        brLp.setMargins(0, dp(13), 0, 0);
-        btnRow.setLayoutParams(brLp);
-
-        TextView cancelBtn = new TextView(requireContext());
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(android.view.Gravity.CENTER);
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.secondaryButton(cancelBtn);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        cancelLp.setMargins(0, 0, dp(5), 0);
-        cancelBtn.setLayoutParams(cancelLp);
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        btnRow.addView(cancelBtn);
-
-        TextView saveBtn = new TextView(requireContext());
-        saveBtn.setText("保存");
-        saveBtn.setGravity(android.view.Gravity.CENTER);
-        saveBtn.setTextSize(13);
-        saveBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.primaryButton(saveBtn);
-        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        saveLp.setMargins(dp(5), 0, 0, 0);
-        saveBtn.setLayoutParams(saveLp);
-        saveBtn.setOnClickListener(v -> {
-            Long totalMinutes = parseDuration(totalInput.getText().toString().trim());
-            Long addMinutes = parseDuration(addInput.getText().toString().trim());
-            if (totalMinutes == null && addMinutes == null) {
-                Toast.makeText(requireContext(), "请输入有效时长", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            dialog.dismiss();
-            updatePlayTime(game, totalMinutes, addMinutes);
-        });
-        btnRow.addView(saveBtn);
-        root.addView(btnRow);
-
-        android.view.Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        }
-        dialog.setContentView(root);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        if (window != null) {
-            window.setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-        }
-
-        totalInput.requestFocus();
-        totalInput.post(() -> {
-            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) imm.showSoftInput(totalInput, 0);
-        });
-    }
-
-    private Long parseDuration(String text) {
-        if (text == null || text.trim().isEmpty()) return null;
-        text = text.trim().toLowerCase(Locale.ROOT);
-        try {
-            if (!text.matches(".*[dhms].*")) return (long) Double.parseDouble(text);
-            long total = 0;
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*([dhms])").matcher(text);
-            boolean found = false;
-            while (m.find()) {
-                found = true;
-                double val = Double.parseDouble(m.group(1));
-                String unit = m.group(2);
-                if (unit.equals("d")) total += val * 1440;
-                else if (unit.equals("h")) total += val * 60;
-                else if (unit.equals("m")) total += val;
-                else if (unit.equals("s")) total += val / 60;
-            }
-            return found ? total : null;
-        } catch (Throwable t) { return null; }
-    }
-
-    private void updatePlayTime(Game game, Long totalMinutes, Long addMinutes) {
-        AppExecutors.io().execute(() -> {
-            Game updated = null;
-            try {
-                Game latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id);
-                if (latest != null) {
-                    long finalDuration = latest.totalPlayTime;
-                    if (totalMinutes != null) finalDuration = totalMinutes * 60_000L;
-                    if (addMinutes != null) finalDuration += addMinutes * 60_000L;
-                    long clamped = Math.max(0, finalDuration);
-                    LauncherRepositoryBridge.setManualPlayTimeForGame(requireContext(), latest.id, clamped);
-                    latest.totalPlayTime = clamped;
-                    updated = latest;
-                }
-            } catch (Throwable ignored) {}
-            final Game result = updated;
-            if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                if (result != null) updateSingleGame(result);
-            });
-        });
-    }
-
-    private void showGameDetailDialog(Game game) {
-        if (game == null) return;
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle(safeTitle(game)));
-
-        TextView info = new TextView(requireContext());
-        StringBuilder sb = new StringBuilder();
-        sb.append("状态：").append(playStatusText(game.playStatus));
-        sb.append("\n引擎：").append(engineText(game.engine));
-        sb.append("\n总时长：").append(com.core.util.TimeFormatUtil.playTime(game.totalPlayTime));
-        sb.append("\n最近游玩：").append(game.lastPlayedAt > 0 ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new java.util.Date(game.lastPlayedAt)) : "未游玩");
-        if (game.emulatorPackage != null && !game.emulatorPackage.trim().isEmpty())
-            sb.append("\n模拟器：").append(game.emulatorPackage);
-        sb.append("\n\n路径：").append(game.rootUri == null ? "" : Uri.decode(game.rootUri));
-        info.setText(sb.toString());
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        info.setTextSize(12);
-        info.setLineSpacing(dp(4), 1f);
-        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, dp(13), 0, 0);
-        root.addView(info, infoLp);
-
-
-        root.addView(createDialogCancelButton(dialog));
-        dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(288), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+    @Override
+    public void onShowMoreOptions(Game game) {
+        showMoreOptionsDialog(game);
     }
 
     private void showMoreOptionsDialog(Game game) {
         if (game == null) return;
-        AlertDialog dialog = createLauncherDialog();
-        LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("更多选项"));
+        AlertDialog dialog = GameActionMenuFactory.createLauncherDialog(requireContext());
+        LinearLayout root = GameActionMenuFactory.createDialogRoot(requireContext());
+        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), "更多选项"));
 
         java.util.List<String[]> options = new java.util.ArrayList<>();
         options.add(new String[]{"修改时长", "edit_play_time"});
@@ -1415,11 +858,11 @@ private void loadNextPage(boolean forceFullRefresh) {
             option.setOnClickListener(v -> {
                 dialog.dismiss();
                 switch (action) {
-                    case "edit_play_time": showEditPlayTimeDialog(game); break;
+                    case "edit_play_time": GameActionMenuFactory.showEditPlayTimeDialog(this, game, this::updateSingleGame); break;
                     case "pin_shortcut": PinnedGameShortcut.requestPinShortcut(requireContext(), game); break;
-                    case "rematch": rematchMetadata(game); break;
+                    case "rematch": syncController.rematchMetadata(game); break;
                     case "custom_vndb": LauncherCustomVndbSearchDialog.show(this, game, () -> reloadSingleGame(game.id)); break;
-                    case "sync": syncMetadataToCard(game); break;
+                    case "sync": syncController.syncMetadataToCard(game); break;
                     case "ons_settings": openOnsGameSettings(game); break;
                     case "delete": confirmDeleteGame(game); break;
                 }
@@ -1428,9 +871,8 @@ private void loadNextPage(boolean forceFullRefresh) {
             lp.setMargins(0, dp(11), 0, 0);
             root.addView(option, lp);
         }
-        root.addView(createDialogCancelButton(dialog));
-        dialog.getWindow().setContentView(root);
-        dialog.getWindow().setLayout(dp(252), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        root.addView(GameActionMenuFactory.createDialogCancelButton(requireContext(), dialog));
+        GameActionMenuFactory.setDialogContent(dialog, root, 252);
     }
 
     private void openOnsGameSettings(Game game) {
@@ -1465,7 +907,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         LauncherDialogFactory.showDangerConfirm(
                 requireContext(),
                 "删除游戏",
-                "要删除「" + safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。",
+                "要删除「" + GameMetadataFormatter.safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。",
                 "移除",
                 () -> deleteGame(game)
         );
@@ -1483,190 +925,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         });
     }
 
-    private AlertDialog syncLoadingDialog;
-
-    private void showSyncDataConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText("同步数据");
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView message = new TextView(requireContext());
-        message.setText("全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？");
-        message.setGravity(android.view.Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        TextView confirmBtn = new TextView(requireContext());
-        confirmBtn.setText("确定同步");
-        confirmBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirmBtn);
-        confirmBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            performBatchSync();
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirmBtn, confirmLp);
-
-        TextView cancelBtn = new TextView(requireContext());
-        cancelBtn.setText("取消");
-        cancelBtn.setGravity(android.view.Gravity.CENTER);
-        cancelBtn.setTextColor(LauncherTheme.primary(requireContext()));
-        cancelBtn.setTextSize(13);
-        cancelBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancelBtn.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancelBtn, cancelLp);
-
-        window.setContentView(root);
-    }
-
-    private void performBatchSync() {
-        syncLoadingDialog = showSyncLoadingDialog("正在同步数据...", "请不要关闭应用及网络，否则可能导致数据出错");
-
-        Context appContext = requireContext().getApplicationContext();
-        AppExecutors.io().execute(() -> {
-            final long syncBatchVersion = System.currentTimeMillis();
-            // 获取所有游戏
-            List<Game> syncGames;
-            try {
-                syncGames = LauncherRepositoryBridge.getAllGames(appContext);
-            } catch (Throwable e) {
-                syncGames = Collections.emptyList();
-            }
-
-            int total = syncGames.size();
-            int synced = 0;
-            int failed = 0;
-
-            for (int i = 0; i < total; i++) {
-                Game game = syncGames.get(i);
-                if (game.title == null || game.title.trim().isEmpty()) {
-                    failed++;
-                    continue;
-                }
-                try {
-                    // 1. 重新匹配 VNDB 元数据（通过 Bridge 调用，内部封装 VndbClient + MetadataRepository）
-                    VnMetadata meta = LauncherMetadataBridge.fetchAndSaveVndbSync(appContext, game);
-                    if (meta != null) {
-                        // 2. 同步封面到卡片
-                        if (meta.coverUrl != null && !meta.coverUrl.trim().isEmpty()) {
-                            String cover = com.core.launcherbridge.LauncherCoverBridge.downloadCover(
-                                  appContext,
-                                  meta.coverUrl,
-                                  "sync_cover_" + game.id + "_" + syncBatchVersion
-                            );
-                            if (cover != null) {
-                                Game latest = LauncherRepositoryBridge.findGameById(appContext, game.id);
-                                if (latest != null) {
-                                    latest.coverUri = cover;
-                                    latest.coverPersistUri = cover;
-                                    latest.coverSourceType = 1;
-                                    LauncherRepositoryBridge.updateGame(appContext, latest);
-                                }
-                            }
-                        }
-                        synced++;
-                    } else {
-                        failed++;
-                    }
-                } catch (Throwable e) {
-                    failed++;
-                }
-
-                // 更新加载弹窗进度
-                final int progress = i + 1;
-                final int totalGames = total;
-                mainQueue.post(() -> {
-                    if (syncLoadingDialog != null && syncLoadingDialog.isShowing()) {
-                        Window w = syncLoadingDialog.getWindow();
-                        if (w != null) {
-                            android.widget.TextView progressView = w.getDecorView().findViewWithTag("sync_progress");
-                            if (progressView != null) {
-                                progressView.setText(progress + "/" + totalGames + " 已完成");
-                            }
-                        }
-                    }
-                });
-            }
-
-            // 同步完成后：在 IO 线程直接重新加载游戏列表，然后一次性刷新 UI
-            List<Game> finalGames;
-            try {
-                finalGames = LauncherRepositoryBridge.getAllGames(appContext);
-            } catch (Throwable e) {
-                finalGames = Collections.emptyList();
-            }
-
-            final int syncedCount = synced;
-            final int failedCount = failed;
-            List<Game> loadedGames = finalGames;
-            CategoryBuildResult categoryResult;
-try {
-    categoryResult = buildCategoriesInBackground(appContext, loadedGames);
-} catch (Throwable throwable) {
-    categoryResult = new CategoryBuildResult(Collections.emptyList(), Collections.emptyMap());
-}
-
-CategoryBuildResult loadedCategoryResult = categoryResult;
-
-mainQueue.post(() -> {
-    if (!isAdded()) return;
-
-    if (binding != null) {
-        allGames.clear();
-        allGames.addAll(loadedGames);
-        // 关键：必须同步更新 libraryState 内部的 all 列表，否则后续 applyFilters()
-        // 调用的 libraryState.rebuild() 仍会遍历旧 Game 对象，导致新封面无法刷新到卡片。
-        libraryState.replaceAll(loadedGames);
-
-        gameDevelopers.clear();
-        gameDevelopers.putAll(loadedCategoryResult.developers);
-
-        categories.clear();
-        categories.addAll(loadedCategoryResult.categories);
-
-        if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
-            selectedCategory = "";
-        }
-
-        renderCategories();
-        dataLoaded = true;
-
-        // libraryState 已持有最新数据，applyFilters(true) 会强制全量刷新卡片
-        applyFilters(true);
-    }
-
-    dismissSyncLoadingDialog();
-    showSyncResultDialog(syncedCount, failedCount);
-});
-        });
-    }
-
-    private AlertDialog showSyncLoadingDialog(String titleText, String hintText) {
+    /** Library 风格的同步加载对话框：包含进度文本（tag "sync_progress"），供 DialogFactory 调用。 */
+    private AlertDialog createLibrarySyncLoadingDialog(String titleText, String hintText) {
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
         dialog.setCancelable(false);
         dialog.show();
@@ -1722,78 +982,29 @@ mainQueue.post(() -> {
         return dialog;
     }
 
-    private void dismissSyncLoadingDialog() {
-        if (syncLoadingDialog != null && syncLoadingDialog.isShowing()) {
-            syncLoadingDialog.dismiss();
-            syncLoadingDialog = null;
+    // ===== GameSyncController.Listener =====
+
+    @Override
+    public void onBatchSyncComplete(List<Game> loadedGames, CategoryBuildResult categoryResult) {
+        if (binding == null) return;
+        listController.replaceAllGames(loadedGames);
+
+        gameDevelopers.clear();
+        gameDevelopers.putAll(categoryResult.developers);
+
+        categories.clear();
+        categories.addAll(categoryResult.categories);
+
+        if (selectedCategory != null && !selectedCategory.isEmpty()
+                && !GameCategoryBuilder.containsCategoryValue(categories, selectedCategory)) {
+            selectedCategory = "";
         }
-    }
 
-    private void showSyncResultDialog(int synced, int failed) {
-        String message = "同步完成 " + synced + " 个" + (failed > 0 ? "\n失败 " + failed + " 个" : "");
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
+        renderCategories();
+        listController.setDataLoaded(true);
 
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(requireContext());
-        titleView.setText("同步完成");
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(requireContext());
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
-        msgView.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(requireContext());
-        okBtn.setText("知道了");
-        okBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
-    }
-
-    private void rematchMetadata(Game game) {
-        Toast.makeText(requireContext(), "正在搜索 VNDB...", Toast.LENGTH_SHORT).show();
-        com.core.launcherbridge.LauncherMetadataBridge.fetchAndSaveMetadataAsync(requireContext(), game, success -> {
-            if (getActivity() == null) return;
-            getActivity().runOnUiThread(() -> {
-                Toast.makeText(requireContext(), success ? "元数据已更新" : "未找到匹配的元数据", Toast.LENGTH_SHORT).show();
-                if (success) reloadSingleGame(game.id);
-            });
-        });
-    }
-
-    private void syncMetadataToCard(Game game) {
-        Toast.makeText(requireContext(), "正在同步封面...", Toast.LENGTH_SHORT).show();
-        com.core.launcherbridge.LauncherMetadataBridge.syncCoverToGameAsync(requireContext(), game, success -> {
-            if (getActivity() == null) return;
-            getActivity().runOnUiThread(() -> {
-                Toast.makeText(requireContext(), success ? "封面已同步" : "无可用封面", Toast.LENGTH_SHORT).show();
-                if (success) reloadSingleGame(game.id);
-            });
-        });
+        // controller 已持有最新数据，applyFilters(true) 会强制全量刷新卡片
+        applyFilters(true);
     }
 
     private void startEditGameActivity(Game game) {
@@ -1802,190 +1013,6 @@ mainQueue.post(() -> {
         intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, game.id);
         startActivity(intent);
     }
-
-    private String playStatusText(String status) {
-        if (status == null) return "未玩";
-        switch (status) {
-            case "playing": return "在玩";
-            case "completed": return "玩过";
-            default: return "未玩";
-        }
-    }
-
-    private String engineText(EngineType engine) {
-        if (engine == null) return "未知";
-        switch (engine) {
-            case KIRIKIRI: return "Kirikiri";
-            case ONS: return "ONS";
-            case TYRANO: return "Tyrano";
-            case ARTEMIS: return "Artemis";
-            case WINLATOR: return "Winlator";
-            case GAMEHUB: return "GameHub";
-            case PSP: return "PSP";
-            case NINTENDO_3DS: return "3DS";
-            default: return "未知";
-        }
-    }
-
-    private void rebuildCategories() {
-    categories.clear();
-    gameDevelopers.clear();
-
-    int recentCount = 0;
-    int playingCount = 0;
-    int completedCount = 0;
-    int unplayedCount = 0;
-    int favoriteCount = 0;
-
-    Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    android.content.Context appContext = requireContext().getApplicationContext();
-
-    for (Game game : allGames) {
-        if (game == null) continue;
-
-        if (game.lastPlayedAt > 0L) {
-            recentCount++;
-        }
-
-        String status = normalizePlayStatus(game.playStatus);
-        if ("playing".equals(status)) {
-            playingCount++;
-        } else if ("completed".equals(status)) {
-            completedCount++;
-        } else {
-            unplayedCount++;
-        }
-        if (game.favorite) {
-            favoriteCount++;
-        }
-
-        List<String> developers = parseDevelopers(LauncherMetadataBridge.getDeveloperOf(appContext, game.id));
-        gameDevelopers.put(game.id, developers);
-
-        for (String developer : developers) {
-            developerCounts.put(
-                    developer,
-                    developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1
-            );
-        }
-    }
-
-    // 只添加有数据的固定分类
-    if (favoriteCount > 0) {
-        categories.add(new CategoryOption("收藏", CATEGORY_FAVORITE));
-    }
-    if (recentCount > 0) {
-        categories.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
-    }
-    if (playingCount > 0) {
-        categories.add(new CategoryOption("在玩", CATEGORY_PLAYING));
-    }
-    if (completedCount > 0) {
-        categories.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
-    }
-    if (unplayedCount > 0) {
-        categories.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
-    }
-
-    // 开发商分类本来就是统计出来的，这里也加一层保护
-    for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
-        if (entry.getValue() > 0) {
-            categories.add(new CategoryOption(
-                    "开发商 · " + entry.getKey() + " (" + entry.getValue() + ")",
-                    CATEGORY_DEVELOPER_PREFIX + entry.getKey()
-            ));
-        }
-    }
-
-    if (selectedCategory != null && !selectedCategory.isEmpty() && !containsCategoryValue(selectedCategory)) {
-        selectedCategory = "";
-    }
-
-    renderCategories();
-}
-
-    private static final class CategoryBuildResult {
-    final List<CategoryOption> categories;
-    final Map<Long, List<String>> developers;
-
-    CategoryBuildResult(List<CategoryOption> categories, Map<Long, List<String>> developers) {
-        this.categories = categories;
-        this.developers = developers;
-    }
-}
-
-    private CategoryBuildResult buildCategoriesInBackground(Context appContext, List<Game> games) {
-    List<CategoryOption> cats = new ArrayList<>();
-    Map<Long, List<String>> devs = new HashMap<>();
-
-    int recentCount = 0;
-    int playingCount = 0;
-    int completedCount = 0;
-    int unplayedCount = 0;
-    int favoriteCount = 0;
-
-    Map<String, Integer> developerCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-
-    if (games != null) {
-        for (Game game : games) {
-            if (game == null) continue;
-
-            if (game.lastPlayedAt > 0L) {
-                recentCount++;
-            }
-
-            String status = normalizePlayStatus(game.playStatus);
-            if ("playing".equals(status)) {
-                playingCount++;
-            } else if ("completed".equals(status)) {
-                completedCount++;
-            } else {
-                unplayedCount++;
-            }
-            if (game.favorite) {
-                favoriteCount++;
-            }
-
-            List<String> developers = parseDevelopers(LauncherMetadataBridge.getDeveloperOf(appContext, game.id));
-            devs.put(game.id, developers);
-
-            for (String developer : developers) {
-                developerCounts.put(
-                        developer,
-                        developerCounts.containsKey(developer) ? developerCounts.get(developer) + 1 : 1
-                );
-            }
-        }
-    }
-
-    // 只添加有数据的固定分类
-    if (favoriteCount > 0) {
-        cats.add(new CategoryOption("收藏", CATEGORY_FAVORITE));
-    }
-    if (recentCount > 0) {
-        cats.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
-    }
-    if (playingCount > 0) {
-        cats.add(new CategoryOption("在玩", CATEGORY_PLAYING));
-    }
-    if (completedCount > 0) {
-        cats.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
-    }
-    if (unplayedCount > 0) {
-        cats.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
-    }
-
-    for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
-        if (entry.getValue() > 0) {
-            cats.add(new CategoryOption(
-                    "开发商 · " + entry.getKey() + " (" + entry.getValue() + ")",
-                    CATEGORY_DEVELOPER_PREFIX + entry.getKey()
-            ));
-        }
-    }
-
-    return new CategoryBuildResult(cats, devs);
-}
 
     private void renderCategories() {
         if (binding == null) return;
@@ -2045,72 +1072,59 @@ mainQueue.post(() -> {
         view.setBackground(null);
     }
 
-    private void sortGamesByTitle(List<Game> games) {
-        if (games == null || games.size() <= 1) return;
-        Collator collator = Collator.getInstance(Locale.CHINA);
-        collator.setStrength(Collator.PRIMARY);
-        Collections.sort(games, (left, right) -> {
-            int result = collator.compare(safeTitle(left), safeTitle(right));
-            if (result != 0) return result;
-            long leftId = left == null ? 0L : left.id;
-            long rightId = right == null ? 0L : right.id;
-            return Long.compare(leftId, rightId);
-        });
-    }
-
-    private boolean matchesCategory(Game game, String category) {
-        if (game == null || category == null || category.isEmpty()) return true;
-        if (CATEGORY_RECENT.equals(category)) return game.lastPlayedAt > 0L;
-        if (CATEGORY_PLAYING.equals(category)) return "playing".equals(normalizePlayStatus(game.playStatus));
-        if (CATEGORY_COMPLETED.equals(category)) return "completed".equals(normalizePlayStatus(game.playStatus));
-        if (CATEGORY_UNPLAYED.equals(category)) return "unplayed".equals(normalizePlayStatus(game.playStatus));
-        if (CATEGORY_FAVORITE.equals(category)) return game.favorite;
-        if (category.startsWith(CATEGORY_DEVELOPER_PREFIX)) {
-            String selectedDeveloper = category.substring(CATEGORY_DEVELOPER_PREFIX.length()).toLowerCase(Locale.ROOT);
-            List<String> developers = gameDevelopers.get(game.id);
-            if (developers == null) developers = Collections.emptyList();
-            for (String developer : developers) {
-                if (developer.toLowerCase(Locale.ROOT).contains(selectedDeveloper)) return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean containsCategoryValue(String value) {
-        for (CategoryOption category : categories) {
-            if (category.value.equals(value)) return true;
-        }
-        return false;
-    }
-
-    private String normalizePlayStatus(String status) {
-        String value = status == null ? "" : status.trim().toLowerCase(Locale.ROOT);
-        if ("completed".equals(value) || "playing".equals(value)) return value;
-        return "unplayed";
-    }
-
-    private List<String> parseDevelopers(String developersText) {
-        List<String> result = new ArrayList<>();
-        if (developersText == null || developersText.trim().isEmpty() || "-".equals(developersText.trim())) return result;
-        String[] parts = developersText.split("/|、|,|，");
-        for (String raw : parts) {
-            String developer = raw == null ? "" : raw.trim();
-            if (!developer.isEmpty() && !result.contains(developer)) result.add(developer);
-        }
-        return result;
-    }
-
-    private static final class CategoryOption {
-        final String label;
-        final String value;
-
-        CategoryOption(String label, String value) {
-            this.label = label;
-            this.value = value;
-        }
-    }
-
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    // ===== GameListController.Listener =====
+    @Override
+    public Context getAppContext() {
+        return requireContext().getApplicationContext();
+    }
+
+    @Override
+    public boolean isBindingNull() {
+        return binding == null;
+    }
+
+    @Override
+    public String getSearchQuery() {
+        return searchQuery;
+    }
+
+    @Override
+    public String getSelectedCategory() {
+        return selectedCategory == null ? "" : selectedCategory;
+    }
+
+    @Override
+    public Map<Long, List<String>> getGameDevelopers() {
+        return gameDevelopers;
+    }
+
+    @Override
+    public void onDataLoaded(@NonNull List<CategoryOption> categories,
+                             @NonNull Map<Long, List<String>> developers) {
+        gameDevelopers.clear();
+        gameDevelopers.putAll(developers);
+        this.categories.clear();
+        this.categories.addAll(categories);
+        if (selectedCategory != null && !selectedCategory.isEmpty()
+                && !GameCategoryBuilder.containsCategoryValue(this.categories, selectedCategory)) {
+            selectedCategory = "";
+        }
+        renderCategories();
+    }
+
+    @Override
+    public void onVisibleGamesChanged(boolean forceFullRefresh) {
+        if (adapter != null) {
+            adapter.submit(new ArrayList<>(listController.getVisibleGames()), forceFullRefresh);
+        }
+    }
+
+    @Override
+    public void onRenderStateRequested() {
+        renderState();
     }
 }
