@@ -16,6 +16,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -97,6 +98,25 @@ public class ResourceStationActivity extends AppCompatActivity {
         FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(dp(47), dp(47));
         backParams.gravity = Gravity.START | Gravity.TOP;
         topBar.addView(backButton, backParams);
+
+        ImageView openExternalButton = new ImageView(this);
+        openExternalButton.setImageResource(com.core.R.drawable.launcher_resource_open_external);
+        openExternalButton.setColorFilter(ContextCompat.getColor(this, com.core.R.color.launcher_text_color));
+        openExternalButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        int iconPad = dp(11);
+        openExternalButton.setPadding(iconPad, iconPad, iconPad, iconPad);
+        openExternalButton.setOnClickListener(view -> {
+            String current = webView == null ? null : webView.getUrl();
+            if (current == null || current.trim().isEmpty()) {
+                Toast.makeText(this, "当前没有可打开的地址", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            openExternalUri(Uri.parse(current));
+        });
+
+        FrameLayout.LayoutParams openParams = new FrameLayout.LayoutParams(dp(47), dp(47));
+        openParams.gravity = Gravity.END | Gravity.TOP;
+        topBar.addView(openExternalButton, openParams);
 
         TextView title = new TextView(this);
         String titleText = getIntent().getStringExtra("resource_title");
