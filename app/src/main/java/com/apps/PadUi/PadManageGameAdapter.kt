@@ -2,7 +2,7 @@ package com.apps.PadUi
 
 import android.view.ViewGroup
 import com.apps.game.BaseGameCardAdapter
-import com.yuki.yukihub.databinding.ItemLauncherGameCardBinding
+import com.core.databinding.ItemLauncherGameCardBinding
 import kotlin.math.max
 import kotlin.math.min
 

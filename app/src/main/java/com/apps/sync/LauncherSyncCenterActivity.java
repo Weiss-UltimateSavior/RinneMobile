@@ -21,10 +21,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherSyncCenterBinding;
-import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.databinding.ActivityLauncherSyncCenterBinding;
+import com.core.launcherbridge.LauncherSyncBridge;
+import com.core.util.AppExecutors;
 
 import java.io.OutputStream;
 import com.apps.LauncherActivity;

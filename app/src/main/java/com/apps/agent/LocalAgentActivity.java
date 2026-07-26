@@ -35,10 +35,10 @@ import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherEditText;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLocalAgentBinding;
-import com.yuki.yukihub.util.AppExecutors;
-import com.yuki.yukihub.util.RxMainScheduler;
+import com.core.R;
+import com.core.databinding.ActivityLocalAgentBinding;
+import com.core.util.AppExecutors;
+import com.core.util.RxMainScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +100,7 @@ public class LocalAgentActivity extends AppCompatActivity {
         binding.agentStateIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
         int primary = LauncherTheme.primary(this);
         binding.agentInput.setTextColor(primary);
-        binding.agentInput.setHintTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_muted_color));
+        binding.agentInput.setHintTextColor(ContextCompat.getColor(this, com.core.R.color.launcher_text_muted_color));
         LauncherTheme.styleTextInput(binding.agentInput);
         binding.agentSend.setBackground(null);
         binding.agentSend.setImageTintList(ColorStateList.valueOf(primary));

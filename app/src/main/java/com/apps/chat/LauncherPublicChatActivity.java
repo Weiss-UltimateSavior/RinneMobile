@@ -28,17 +28,17 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.launcherbridge.LauncherPublicChatBridge;
-import com.yuki.yukihub.util.RxMainScheduler;
+import com.core.R;
+import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherPublicChatBridge;
+import com.core.util.RxMainScheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import okhttp3.WebSocket;
-import com.yuki.yukihub.util.Disposable;
+import com.core.util.Disposable;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;

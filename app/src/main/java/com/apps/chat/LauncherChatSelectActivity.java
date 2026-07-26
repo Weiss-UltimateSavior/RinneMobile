@@ -12,9 +12,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherChatSelectBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.core.R;
+import com.core.databinding.ActivityLauncherChatSelectBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;

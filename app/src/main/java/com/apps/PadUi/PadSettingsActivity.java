@@ -22,14 +22,14 @@ import com.apps.theme.LauncherMotion;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherTheme;
 import com.apps.UserData.LauncherUserData;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityPadSettingsBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
-import com.yuki.yukihub.launcherbridge.LauncherKrkrBridge;
-import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
-import com.yuki.yukihub.metadata.MetadataController;
-import com.yuki.yukihub.ons.OnsSettings;
+import com.core.R;
+import com.core.databinding.ActivityPadSettingsBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherGameLaunchBridge;
+import com.core.launcherbridge.LauncherKrkrBridge;
+import com.core.launcherbridge.LauncherMetadataBridge;
+import com.core.metadata.MetadataController;
+import com.core.ons.OnsSettings;
 
 /** 横屏设置页，仅提供与 Pad 游戏模式一致的设置入口布局。 */
 public class PadSettingsActivity extends AppCompatActivity {

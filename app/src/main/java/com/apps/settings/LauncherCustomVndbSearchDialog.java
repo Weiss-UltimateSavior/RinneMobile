@@ -16,11 +16,11 @@ import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
-import com.yuki.yukihub.metadata.MetadataController;
-import com.yuki.yukihub.metadata.VnMetadata;
-import com.yuki.yukihub.model.Game;
+import com.core.R;
+import com.core.launcherbridge.LauncherMetadataBridge;
+import com.core.metadata.MetadataController;
+import com.core.metadata.VnMetadata;
+import com.core.model.Game;
 
 import java.util.List;
 import com.apps.theme.LauncherMotion;

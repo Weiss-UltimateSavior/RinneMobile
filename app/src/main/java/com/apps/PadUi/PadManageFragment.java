@@ -33,16 +33,16 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.databinding.FragmentLauncherLibraryBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
-import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.metadata.VnMetadata;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
-import com.yuki.yukihub.util.RxMainQueue;
+import com.core.databinding.FragmentLauncherLibraryBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherGameLaunchBridge;
+import com.core.launcherbridge.LauncherMetadataBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.metadata.VnMetadata;
+import com.core.model.EngineType;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
+import com.core.util.RxMainQueue;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -168,7 +168,7 @@ public class PadManageFragment extends Fragment {
 
                 TextView info = new TextView(requireContext());
                 info.setText("应用需要完全访问文件夹的权限来读取游戏文件。请在系统页面允许\"管理所有文件\"。");
-                info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+                info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
                 info.setTextSize(12);
                 info.setLineSpacing(dp(4), 1f);
                 LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -631,8 +631,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (game == null || game.emulatorPackage == null) return "external";
         String pkg = game.emulatorPackage.trim().toLowerCase(Locale.ROOT);
         if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) return "internal.krkr";
-        if (pkg.startsWith("internal.ons") || pkg.equals("com.yuki.yukihub.ons")) return "internal.ons";
-        if (pkg.startsWith("internal.tyrano") || pkg.equals("com.yuki.yukihub.tyrano")) return "internal.tyrano";
+        if (pkg.startsWith("internal.ons") || pkg.equals("com.core.ons")) return "internal.ons";
+        if (pkg.startsWith("internal.tyrano") || pkg.equals("com.core.tyrano")) return "internal.tyrano";
         if (pkg.startsWith("internal.artemis")) return pkg;
         if (pkg.startsWith("internal.psp") || pkg.equals("org.ppsspp.ppsspp")) return "internal.psp";
         if (pkg.startsWith("internal.citra") || pkg.equals("io.github.azaharplus.android")) return "internal.citra";
@@ -690,7 +690,7 @@ private void loadNextPage(boolean forceFullRefresh) {
         title.setGravity(android.view.Gravity.CENTER);
         title.setSingleLine(true);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         return title;
@@ -771,9 +771,9 @@ private void loadNextPage(boolean forceFullRefresh) {
         root.addView(createDialogTitle("修改游玩时长"));
 
         TextView info = new TextView(requireContext());
-        info.setText("当前总时长：" + com.yuki.yukihub.util.TimeFormatUtil.playTime(game.totalPlayTime)
+        info.setText("当前总时长：" + com.core.util.TimeFormatUtil.playTime(game.totalPlayTime)
                 + "\n最近游玩：" + (game.lastPlayedAt > 0 ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new java.util.Date(game.lastPlayedAt)) : "无"));
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         info.setTextSize(12);
         info.setLineSpacing(dp(4), 1f);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -782,7 +782,7 @@ private void loadNextPage(boolean forceFullRefresh) {
 
         TextView totalLabel = new TextView(requireContext());
         totalLabel.setText("设置新的总时长");
-        totalLabel.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        totalLabel.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         totalLabel.setTextSize(12);
         totalLabel.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams tlLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -791,8 +791,8 @@ private void loadNextPage(boolean forceFullRefresh) {
 
         android.widget.EditText totalInput = new com.apps.widget.LauncherEditText(requireContext());
         totalInput.setHint("例如 3h 20m / 200m / 7200s / 2.5h");
-        totalInput.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        totalInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_input_hint_color));
+        totalInput.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
+        totalInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_input_hint_color));
         totalInput.setTextSize(13);
         totalInput.setPadding(dp(13), dp(9), dp(13), dp(9));
         totalInput.setBackground(LauncherTheme.cancelChip(requireContext()));
@@ -803,7 +803,7 @@ private void loadNextPage(boolean forceFullRefresh) {
 
         TextView addLabel = new TextView(requireContext());
         addLabel.setText("追加游玩时长");
-        addLabel.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        addLabel.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         addLabel.setTextSize(12);
         addLabel.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams alLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -812,8 +812,8 @@ private void loadNextPage(boolean forceFullRefresh) {
 
         android.widget.EditText addInput = new com.apps.widget.LauncherEditText(requireContext());
         addInput.setHint("例如 30m / 1h30m / 0.5h");
-        addInput.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
-        addInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_input_hint_color));
+        addInput.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
+        addInput.setHintTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_input_hint_color));
         addInput.setTextSize(13);
         addInput.setPadding(dp(13), dp(9), dp(13), dp(9));
         addInput.setBackground(LauncherTheme.cancelChip(requireContext()));
@@ -824,7 +824,7 @@ private void loadNextPage(boolean forceFullRefresh) {
 
         TextView hint = new TextView(requireContext());
         hint.setText("可填 d/h/m/s 单位组合，纯数字视为分钟");
-        hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        hint.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         hint.setTextSize(11);
         LinearLayout.LayoutParams hLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hLp.setMargins(0, dp(7), 0, 0);
@@ -943,13 +943,13 @@ private void loadNextPage(boolean forceFullRefresh) {
         StringBuilder sb = new StringBuilder();
         sb.append("状态：").append(playStatusText(game.playStatus));
         sb.append("\n引擎：").append(engineText(game.engine));
-        sb.append("\n总时长：").append(com.yuki.yukihub.util.TimeFormatUtil.playTime(game.totalPlayTime));
+        sb.append("\n总时长：").append(com.core.util.TimeFormatUtil.playTime(game.totalPlayTime));
         sb.append("\n最近游玩：").append(game.lastPlayedAt > 0 ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new java.util.Date(game.lastPlayedAt)) : "未游玩");
         if (game.emulatorPackage != null && !game.emulatorPackage.trim().isEmpty())
             sb.append("\n模拟器：").append(game.emulatorPackage);
         sb.append("\n\n路径：").append(game.rootUri == null ? "" : Uri.decode(game.rootUri));
         info.setText(sb.toString());
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         info.setTextSize(12);
         info.setLineSpacing(dp(4), 1f);
         info.setMaxLines(14);
@@ -1085,7 +1085,7 @@ private void loadNextPage(boolean forceFullRefresh) {
                     if (meta != null) {
                         // 2. 同步封面到卡片
                         if (meta.coverUrl != null && !meta.coverUrl.trim().isEmpty()) {
-                            String cover = com.yuki.yukihub.launcherbridge.LauncherCoverBridge.downloadCover(
+                            String cover = com.core.launcherbridge.LauncherCoverBridge.downloadCover(
                                   appContext,
                                   meta.coverUrl,
                                   "sync_cover_" + game.id + "_" + syncBatchVersion
@@ -1196,7 +1196,7 @@ mainQueue.post(() -> {
         TextView title = new TextView(requireContext());
         title.setText(titleText);
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -1214,7 +1214,7 @@ mainQueue.post(() -> {
         progressText.setTag("sync_progress");
         progressText.setText("0/0 已完成");
         progressText.setGravity(android.view.Gravity.CENTER);
-        progressText.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        progressText.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         progressText.setTextSize(12);
         LinearLayout.LayoutParams ptLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         ptLp.setMargins(0, dp(6), 0, 0);
@@ -1223,7 +1223,7 @@ mainQueue.post(() -> {
         TextView hint = new TextView(requireContext());
         hint.setText(hintText);
         hint.setGravity(android.view.Gravity.CENTER);
-        hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        hint.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         hint.setTextSize(11);
         LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hintLp.setMargins(0, dp(10), 0, 0);
@@ -1247,7 +1247,7 @@ mainQueue.post(() -> {
 
     private void rematchMetadata(Game game) {
         Toast.makeText(requireContext(), "正在搜索 VNDB...", Toast.LENGTH_SHORT).show();
-        com.yuki.yukihub.launcherbridge.LauncherMetadataBridge.fetchAndSaveMetadataAsync(requireContext(), game, success -> {
+        com.core.launcherbridge.LauncherMetadataBridge.fetchAndSaveMetadataAsync(requireContext(), game, success -> {
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
                 Toast.makeText(requireContext(), success ? "元数据已更新" : "未找到匹配的元数据", Toast.LENGTH_SHORT).show();
@@ -1258,7 +1258,7 @@ mainQueue.post(() -> {
 
     private void syncMetadataToCard(Game game) {
         Toast.makeText(requireContext(), "正在同步封面...", Toast.LENGTH_SHORT).show();
-        com.yuki.yukihub.launcherbridge.LauncherMetadataBridge.syncCoverToGameAsync(requireContext(), game, success -> {
+        com.core.launcherbridge.LauncherMetadataBridge.syncCoverToGameAsync(requireContext(), game, success -> {
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
                 Toast.makeText(requireContext(), success ? "封面已同步" : "无可用封面", Toast.LENGTH_SHORT).show();

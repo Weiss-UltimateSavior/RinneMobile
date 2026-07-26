@@ -41,7 +41,7 @@
     </queries>
 
     <application
-        android:name=".YukiHubApp"
+        android:name=".CoreApp"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -276,7 +276,7 @@
             android:exported="false"
             android:process=":kirikiri2"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Kirikiroid2"
+            android:taskAffinity="com.core.Kirikiroid2"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.YukiHub.Kirikiroid2"
             android:windowSoftInputMode="adjustPan"
@@ -287,7 +287,7 @@
             android:exported="false"
             android:process=":kirikiri2"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Kirikiroid2"
+            android:taskAffinity="com.core.Kirikiroid2"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.YukiHub.Kirikiroid2"
             android:windowSoftInputMode="adjustPan"
@@ -298,7 +298,7 @@
             android:exported="false"
             android:process=":kirikiri2"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Kirikiroid2"
+            android:taskAffinity="com.core.Kirikiroid2"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.YukiHub.Kirikiroid2Compatible"
             android:windowSoftInputMode="adjustPan"
@@ -309,18 +309,18 @@
             android:exported="false"
             android:process=":kirikiri2"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Kirikiroid2"
+            android:taskAffinity="com.core.Kirikiroid2"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.YukiHub.Kirikiroid2Compatible"
             android:windowSoftInputMode="adjustPan"
             android:configChanges="keyboardHidden|screenSize" />
 
         <activity
-            android:name="com.yuki.yukihub.tyrano.TyranoActivity"
+            android:name="com.core.tyrano.TyranoActivity"
             android:exported="false"
             android:process=":tyrano"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Tyrano"
+            android:taskAffinity="com.core.Tyrano"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|screenSize" />
 
@@ -329,7 +329,7 @@
             android:exported="false"
             android:process=":artemis"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Artemis"
+            android:taskAffinity="com.core.Artemis"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|screenSize"
             android:windowSoftInputMode="adjustPan">
@@ -341,7 +341,7 @@
             android:exported="false"
             android:process=":artemis"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Artemis"
+            android:taskAffinity="com.core.Artemis"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|screenSize"
             android:windowSoftInputMode="adjustPan">
@@ -353,7 +353,7 @@
             android:exported="false"
             android:process=":artemis"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.Artemis"
+            android:taskAffinity="com.core.Artemis"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|screenSize"
             android:windowSoftInputMode="adjustPan">
@@ -372,12 +372,12 @@
             android:exported="false"
             android:process=":ons"
             android:launchMode="singleInstance"
-            android:taskAffinity="com.yuki.yukihub.ONScripter"
+            android:taskAffinity="com.core.ONScripter"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode" />
 
         <activity
-            android:name="com.yuki.yukihub.ons.OnsVideoActivity"
+            android:name="com.core.ons.OnsVideoActivity"
             android:exported="false"
             android:process=":ons"
             android:screenOrientation="sensorLandscape"
@@ -388,14 +388,14 @@
             android:exported="false" />
 
         <activity
-            android:name="com.yuki.yukihub.translation.TranslationSettingActivity"
+            android:name="com.core.translation.TranslationSettingActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <service
-            android:name="com.yuki.yukihub.translation.OverlayTranslationService"
+            android:name="com.core.translation.OverlayTranslationService"
             android:foregroundServiceType="mediaProjection"
             android:exported="false" />
 

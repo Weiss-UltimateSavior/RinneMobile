@@ -17,9 +17,9 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.FragmentLauncherAccountBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.core.R;
+import com.core.databinding.FragmentLauncherAccountBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;

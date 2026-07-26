@@ -16,7 +16,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
-import com.yuki.yukihub.R;
+import com.core.R;
 
 /** Shared dialog shell for the landscape Pad surfaces. */
 public final class PadDialogFactory {

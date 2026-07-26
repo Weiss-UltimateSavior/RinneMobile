@@ -7,9 +7,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.R
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge
-import com.yuki.yukihub.util.TimeFormatUtil
+import com.core.R
+import com.core.launcherbridge.LauncherAuthBridge
+import com.core.util.TimeFormatUtil
 
 class LauncherLeaderboardAdapter : RecyclerView.Adapter<LauncherLeaderboardAdapter.Holder>() {
     private val entries = mutableListOf<LauncherAuthBridge.LeaderboardEntry>()

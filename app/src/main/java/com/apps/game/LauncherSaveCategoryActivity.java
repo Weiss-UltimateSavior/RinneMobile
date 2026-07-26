@@ -17,13 +17,13 @@ import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherSaveCategoryBinding;
-import com.yuki.yukihub.databinding.ItemLauncherManageBinding;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.databinding.ActivityLauncherSaveCategoryBinding;
+import com.core.databinding.ItemLauncherManageBinding;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.EngineType;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -126,9 +126,9 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
             case ARTEMIS:
                 return pkg.startsWith("internal.artemis");
             case ONS:
-                return pkg.startsWith("internal.ons") || "com.yuki.yukihub.ons".equals(pkg);
+                return pkg.startsWith("internal.ons") || "com.core.ons".equals(pkg);
             case TYRANO:
-                return pkg.startsWith("internal.tyrano") || "com.yuki.yukihub.tyrano".equals(pkg);
+                return pkg.startsWith("internal.tyrano") || "com.core.tyrano".equals(pkg);
             default:
                 return false;
         }

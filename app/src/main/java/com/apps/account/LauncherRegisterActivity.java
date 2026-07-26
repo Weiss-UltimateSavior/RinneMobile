@@ -18,9 +18,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherRegisterBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.core.R;
+import com.core.databinding.ActivityLauncherRegisterBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;

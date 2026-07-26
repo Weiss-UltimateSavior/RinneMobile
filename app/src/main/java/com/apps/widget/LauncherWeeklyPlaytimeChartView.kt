@@ -7,7 +7,7 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
 import com.apps.theme.LauncherTheme
-import com.yuki.yukihub.util.TimeFormatUtil
+import com.core.util.TimeFormatUtil
 import kotlin.math.max
 
 /** Compact seven-day actual-playtime line chart for Launcher cards. */

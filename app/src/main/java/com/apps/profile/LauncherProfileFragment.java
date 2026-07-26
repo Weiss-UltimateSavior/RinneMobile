@@ -28,12 +28,12 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.apps.UserData.LauncherUserData;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.FragmentLauncherProfileBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.util.TimeFormatUtil;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.databinding.FragmentLauncherProfileBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.util.TimeFormatUtil;
+import com.core.util.AppExecutors;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,7 +54,7 @@ import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.AvatarCropActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.translation.TranslationSettingActivity;
+import com.core.translation.TranslationSettingActivity;
 
 public class LauncherProfileFragment extends Fragment {
     private static final String PREFS_NAME = "launcher_profile_prefs";

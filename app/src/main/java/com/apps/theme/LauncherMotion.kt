@@ -5,8 +5,8 @@ import android.app.Dialog
 import android.content.Intent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
-import com.yuki.yukihub.R
-import com.yuki.yukihub.util.RxMainScheduler
+import com.core.R
+import com.core.util.RxMainScheduler
 
 object LauncherMotion {
     @JvmStatic

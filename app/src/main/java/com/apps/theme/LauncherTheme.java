@@ -8,7 +8,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 
-import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
+import com.core.launcherbridge.LauncherUpdateBridge;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +24,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.content.ContextCompat;
 
-import com.yuki.yukihub.R;
+import com.core.R;
 import com.apps.LauncherActivity;
 
 public final class LauncherTheme {
@@ -580,12 +580,12 @@ public final class LauncherTheme {
         android.widget.LinearLayout root = new android.widget.LinearLayout(context);
         root.setOrientation(android.widget.LinearLayout.VERTICAL);
         root.setPadding(dp(context, 22), dp(context, 20), dp(context, 22), dp(context, 16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         android.widget.TextView title = new android.widget.TextView(context);
         title.setText(hasUpdate ? "发现新版本" : "检查更新");
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(context, com.core.R.color.launcher_text_color));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -600,7 +600,7 @@ public final class LauncherTheme {
             android.widget.TextView message = new android.widget.TextView(context);
             message.setText(error);
             message.setGravity(android.view.Gravity.CENTER);
-            message.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_muted_color));
+            message.setTextColor(ContextCompat.getColor(context, com.core.R.color.launcher_text_muted_color));
             message.setTextSize(12);
             message.setLineSpacing(dp(context, 2), 1.05f);
             android.widget.LinearLayout.LayoutParams msgLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -629,7 +629,7 @@ public final class LauncherTheme {
             }
             message.setText(sb.toString());
             message.setGravity(android.view.Gravity.CENTER);
-            message.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_muted_color));
+            message.setTextColor(ContextCompat.getColor(context, com.core.R.color.launcher_text_muted_color));
             message.setTextSize(12);
             message.setLineSpacing(dp(context, 2), 1.05f);
             android.widget.LinearLayout.LayoutParams msgLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -652,7 +652,7 @@ public final class LauncherTheme {
             android.widget.TextView message = new android.widget.TextView(context);
             message.setText("已是最新版本：" + emptyOr(currentVersion, "未知"));
             message.setGravity(android.view.Gravity.CENTER);
-            message.setTextColor(ContextCompat.getColor(context, com.yuki.yukihub.R.color.launcher_text_muted_color));
+            message.setTextColor(ContextCompat.getColor(context, com.core.R.color.launcher_text_muted_color));
             message.setTextSize(12);
             message.setLineSpacing(dp(context, 2), 1.05f);
             android.widget.LinearLayout.LayoutParams msgLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);

@@ -7,8 +7,8 @@ import android.provider.DocumentsContract;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.model.Game;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.Game;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

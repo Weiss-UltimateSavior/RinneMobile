@@ -26,23 +26,23 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.databinding.FragmentLauncherManageBinding;
-import com.yuki.yukihub.importer.ImportGameData;
-import com.yuki.yukihub.importer.ImportResult;
-import com.yuki.yukihub.importer.ImporterService;
-import com.yuki.yukihub.importer.LunaBoxImporter;
-import com.yuki.yukihub.importer.PlayniteImporter;
-import com.yuki.yukihub.importer.PotatoVnImporter;
-import com.yuki.yukihub.importer.VniteImporter;
-import com.yuki.yukihub.launcherbridge.LauncherDiagnosticsBridge;
-import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
-import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
-import com.yuki.yukihub.scanner.ScanResult;
-import com.yuki.yukihub.scanner.ScanRequest;
-import com.yuki.yukihub.scanner.ScanReport;
-import com.yuki.yukihub.util.AppExecutors;
-import com.yuki.yukihub.util.RxMainQueue;
-import com.yuki.yukihub.util.DevLogger;
+import com.core.databinding.FragmentLauncherManageBinding;
+import com.core.importer.ImportGameData;
+import com.core.importer.ImportResult;
+import com.core.importer.ImporterService;
+import com.core.importer.LunaBoxImporter;
+import com.core.importer.PlayniteImporter;
+import com.core.importer.PotatoVnImporter;
+import com.core.importer.VniteImporter;
+import com.core.launcherbridge.LauncherDiagnosticsBridge;
+import com.core.launcherbridge.LauncherScanBridge;
+import com.core.launcherbridge.LauncherSyncBridge;
+import com.core.scanner.ScanResult;
+import com.core.scanner.ScanRequest;
+import com.core.scanner.ScanReport;
+import com.core.util.AppExecutors;
+import com.core.util.RxMainQueue;
+import com.core.util.DevLogger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -247,12 +247,12 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText("扫描游戏");
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -400,12 +400,12 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(18), dp(22), dp(15));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText("选择 XP3 入口");
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -413,7 +413,7 @@ public class LauncherManageFragment extends Fragment {
         TextView info = new TextView(requireContext());
         info.setText("《" + result.title + "》检测到多个 XP3 文件，请选择启动入口");
         info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(info, 12);
         info.setLineSpacing(dp(4), 1f);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -429,7 +429,7 @@ public class LauncherManageFragment extends Fragment {
             option.setGravity(android.view.Gravity.CENTER);
             option.setSingleLine(true);
             option.setEllipsize(TextUtils.TruncateAt.MIDDLE);
-            option.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+            option.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
             setResponsiveTextSize(option, 13);
             option.setBackground(LauncherTheme.cancelChip(requireContext()));
             option.setOnClickListener(view -> {
@@ -511,12 +511,12 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText(titleText);
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -533,7 +533,7 @@ public class LauncherManageFragment extends Fragment {
         TextView hint = new TextView(requireContext());
         hint.setText(hintText);
         hint.setGravity(android.view.Gravity.CENTER);
-        hint.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        hint.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(hint, 11);
         LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hintLp.setMargins(0, dp(10), 0, 0);
@@ -581,16 +581,16 @@ public class LauncherManageFragment extends Fragment {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
         row.setPadding(dp(13), 0, dp(9), 0);
-        row.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_white_card);
+        row.setBackgroundResource(com.core.R.drawable.launcher_white_card);
 
         ImageView directoryIcon = new ImageView(requireContext());
-        directoryIcon.setImageResource(com.yuki.yukihub.R.drawable.launcher_manage_scan_directory_icon);
+        directoryIcon.setImageResource(com.core.R.drawable.launcher_manage_scan_directory_icon);
         directoryIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(requireContext())));
         row.addView(directoryIcon, new LinearLayout.LayoutParams(dp(25), dp(25)));
 
         TextView title = new TextView(requireContext());
         title.setText(directoryLabel(root));
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         setResponsiveTextSize(title, 13);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setSingleLine(true);
@@ -667,7 +667,7 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = dialogTitle("云端同步");
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -675,7 +675,7 @@ public class LauncherManageFragment extends Fragment {
         TextView info = new TextView(requireContext());
         info.setGravity(android.view.Gravity.CENTER);
         info.setText(syncStatusText());
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(11), 0, 0);
@@ -754,7 +754,7 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = dialogTitle("日志诊断");
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -763,7 +763,7 @@ public class LauncherManageFragment extends Fragment {
         info.setText("日志状态：" + (LauncherDiagnosticsBridge.isLogEnabled() ? "已开启" : "已关闭")
                 + " · 当前大小：" + DevLogger.formatSize(LauncherDiagnosticsBridge.logSize()));
         info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(11), 0, 0);
@@ -785,7 +785,7 @@ public class LauncherManageFragment extends Fragment {
         TextView title = new TextView(requireContext());
         title.setText(text);
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         return title;
@@ -1052,7 +1052,7 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         root.addView(dialogTitle("跨端同步"),
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -1060,7 +1060,7 @@ public class LauncherManageFragment extends Fragment {
         TextView info = new TextView(requireContext());
         info.setText("选择数据来源平台，导入后仅保留元数据与游玩记录");
         info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(11), 0, 0);
@@ -1188,7 +1188,7 @@ public class LauncherManageFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(18), dp(22), dp(15));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         root.addView(dialogTitle("导入预览"),
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -1198,7 +1198,7 @@ public class LauncherManageFragment extends Fragment {
         TextView info = new TextView(requireContext());
         info.setText("共 " + totalCount + " 个，已存在 " + existCount + " 个");
         info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(10), 0, 0);
@@ -1312,8 +1312,8 @@ public class LauncherManageFragment extends Fragment {
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
         name.setTextColor(ContextCompat.getColor(requireContext(),
-                g.exists ? com.yuki.yukihub.R.color.launcher_text_muted_color
-                        : com.yuki.yukihub.R.color.launcher_text_color));
+                g.exists ? com.core.R.color.launcher_text_muted_color
+                        : com.core.R.color.launcher_text_color));
         setResponsiveTextSize(name, 13);
         textCol.addView(name, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -1336,7 +1336,7 @@ public class LauncherManageFragment extends Fragment {
         status.setText(statusText.toString());
         status.setSingleLine(true);
         status.setEllipsize(TextUtils.TruncateAt.END);
-        status.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        status.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         setResponsiveTextSize(status, 10);
         LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);

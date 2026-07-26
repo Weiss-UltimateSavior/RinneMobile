@@ -11,9 +11,9 @@ import androidx.core.content.ContextCompat
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.R
-import com.yuki.yukihub.databinding.ActivityLauncherDisclaimerBinding
-import com.yuki.yukihub.launcherbridge.LauncherDisclaimerBridge
+import com.core.R
+import com.core.databinding.ActivityLauncherDisclaimerBinding
+import com.core.launcherbridge.LauncherDisclaimerBridge
 
 class LauncherDisclaimerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLauncherDisclaimerBinding

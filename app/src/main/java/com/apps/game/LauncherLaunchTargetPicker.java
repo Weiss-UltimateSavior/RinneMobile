@@ -17,9 +17,9 @@ import androidx.documentfile.provider.DocumentFile;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.model.EngineType;
+import com.core.util.AppExecutors;
 
 import java.util.ArrayList;
 import java.util.List;

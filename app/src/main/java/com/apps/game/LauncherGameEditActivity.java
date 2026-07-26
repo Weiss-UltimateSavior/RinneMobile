@@ -23,12 +23,12 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.diagnostics.GameDiagnostics;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.diagnostics.GameDiagnostics;
+import com.core.model.EngineType;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -39,7 +39,7 @@ import java.util.Locale;
 
 import rikka.shizuku.Shizuku;
 
-import com.yuki.yukihub.launcherbridge.LauncherGameHubShortcutBridge;
+import com.core.launcherbridge.LauncherGameHubShortcutBridge;
 
 public class LauncherGameEditActivity extends AppCompatActivity {
     public static final String EXTRA_GAME_ID = "extra_game_id";
@@ -316,7 +316,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         AppExecutors.io().execute(() -> {
             try {
                 if (selectedCoverUri != null) {
-                    String cover = com.yuki.yukihub.launcherbridge.LauncherScanBridge.copyCoverToInternalStorage(this, selectedCoverUri.toString());
+                    String cover = com.core.launcherbridge.LauncherScanBridge.copyCoverToInternalStorage(this, selectedCoverUri.toString());
                     if (cover != null) {
                         game.coverUri = cover;
                         game.coverPersistUri = cover;

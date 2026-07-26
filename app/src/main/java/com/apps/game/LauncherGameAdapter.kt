@@ -3,8 +3,8 @@ package com.apps.game
 import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
-import com.yuki.yukihub.R
-import com.yuki.yukihub.databinding.ItemLauncherGameCardBinding
+import com.core.R
+import com.core.databinding.ItemLauncherGameCardBinding
 import com.apps.widget.LauncherTabletPortraitScaler
 
 /** Portrait card policy; data, selection and bindings are shared with Pad. */

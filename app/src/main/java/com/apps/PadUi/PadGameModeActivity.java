@@ -21,8 +21,8 @@ import androidx.fragment.app.Fragment;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityPadGameModeBinding;
+import com.core.R;
+import com.core.databinding.ActivityPadGameModeBinding;
 
 /** 横屏游戏模式外壳；具体的游戏和管理内容后续由两个占位 Fragment 承载。 */
 public class PadGameModeActivity extends AppCompatActivity {

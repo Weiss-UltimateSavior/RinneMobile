@@ -2,8 +2,8 @@ package com.apps.agent;
 
 import android.content.Context;
 
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.model.Game;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.Game;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

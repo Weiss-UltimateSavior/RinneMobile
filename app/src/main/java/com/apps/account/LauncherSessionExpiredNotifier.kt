@@ -14,8 +14,8 @@ import androidx.core.content.ContextCompat
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
-import com.yuki.yukihub.R
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge
+import com.core.R
+import com.core.launcherbridge.LauncherAuthBridge
 import java.lang.ref.WeakReference
 import kotlin.math.roundToInt
 

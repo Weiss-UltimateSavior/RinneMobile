@@ -7,7 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.apps.UserData.LauncherUserData
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge
+import com.core.launcherbridge.LauncherAuthBridge
 import java.util.Calendar
 
 /** Schedules the nightly Launcher configuration and play-data backup. */

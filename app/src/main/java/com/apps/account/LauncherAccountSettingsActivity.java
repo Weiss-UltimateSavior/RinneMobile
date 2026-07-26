@@ -18,9 +18,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.apps.UserData.LauncherUserData;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherAccountSettingsBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.core.R;
+import com.core.databinding.ActivityLauncherAccountSettingsBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherDialogFactory;

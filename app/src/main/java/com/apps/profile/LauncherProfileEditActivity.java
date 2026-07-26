@@ -14,9 +14,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherProfileEditBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.core.R;
+import com.core.databinding.ActivityLauncherProfileEditBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;

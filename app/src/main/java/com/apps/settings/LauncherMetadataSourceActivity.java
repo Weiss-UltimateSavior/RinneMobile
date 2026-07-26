@@ -13,10 +13,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherMetadataSourceBinding;
-import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
-import com.yuki.yukihub.metadata.MetadataController;
+import com.core.R;
+import com.core.databinding.ActivityLauncherMetadataSourceBinding;
+import com.core.launcherbridge.LauncherMetadataBridge;
+import com.core.metadata.MetadataController;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;

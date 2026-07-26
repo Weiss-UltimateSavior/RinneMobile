@@ -3,12 +3,12 @@ package com.apps.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge.RecentActivity;
-import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.TimeFormatUtil;
+import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge.RecentActivity;
+import com.core.launcherbridge.LauncherSyncBridge;
+import com.core.model.Game;
+import com.core.util.TimeFormatUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace 'com.yuki.engine'
+    namespace 'com.core.engine'
     compileSdk 36
 
     defaultConfig {

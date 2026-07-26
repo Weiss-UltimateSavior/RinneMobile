@@ -22,13 +22,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.launcherbridge.LauncherMetadataBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
-import com.yuki.yukihub.util.TimeFormatUtil;
+import com.core.R;
+import com.core.launcherbridge.LauncherMetadataBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.EngineType;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
+import com.core.util.TimeFormatUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

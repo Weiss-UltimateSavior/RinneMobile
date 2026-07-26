@@ -27,9 +27,9 @@ import android.view.ViewGroup;
 
 import org.libsdl.app.SDLActivity;
 
-import com.yuki.yukihub.ons.OnsLibLoader;
-import com.yuki.yukihub.ons.OnsSettings;
-import com.yuki.yukihub.ons.OnsVideoActivity;
+import com.core.ons.OnsLibLoader;
+import com.core.ons.OnsSettings;
+import com.core.ons.OnsVideoActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;

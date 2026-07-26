@@ -6,9 +6,9 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
 
 /**
  * 游戏密码锁定工具类。

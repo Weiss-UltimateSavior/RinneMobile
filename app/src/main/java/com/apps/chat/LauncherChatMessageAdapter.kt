@@ -11,8 +11,8 @@ import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.R
-import com.yuki.yukihub.launcherbridge.LauncherPublicChatBridge
+import com.core.R
+import com.core.launcherbridge.LauncherPublicChatBridge
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.max

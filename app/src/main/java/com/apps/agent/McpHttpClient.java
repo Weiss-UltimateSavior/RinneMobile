@@ -1,6 +1,6 @@
 package com.apps.agent;
 
-import com.yuki.yukihub.net.HttpClient;
+import com.core.net.HttpClient;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

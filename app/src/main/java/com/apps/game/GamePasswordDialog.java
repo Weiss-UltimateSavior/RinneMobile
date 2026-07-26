@@ -19,7 +19,7 @@ import android.widget.Toast;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
-import com.yuki.yukihub.R;
+import com.core.R;
 
 import java.security.MessageDigest;
 

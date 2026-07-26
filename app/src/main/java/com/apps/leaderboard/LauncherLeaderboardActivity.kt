@@ -15,9 +15,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.R
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge
-import com.yuki.yukihub.util.TimeFormatUtil
+import com.core.R
+import com.core.launcherbridge.LauncherAuthBridge
+import com.core.util.TimeFormatUtil
 
 class LauncherLeaderboardActivity : AppCompatActivity() {
     private lateinit var adapter: LauncherLeaderboardAdapter; private lateinit var topThree: FrameLayout; private lateinit var state: TextView

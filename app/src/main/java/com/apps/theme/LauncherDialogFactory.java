@@ -15,7 +15,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.R;
+import com.core.R;
 
 /** Shared non-engine Launcher dialog shell. */
 public final class LauncherDialogFactory {

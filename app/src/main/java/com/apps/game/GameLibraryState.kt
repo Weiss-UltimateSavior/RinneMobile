@@ -1,6 +1,6 @@
 package com.apps.game
 
-import com.yuki.yukihub.model.Game
+import com.core.model.Game
 import java.util.Collections
 import java.util.Comparator
 import kotlin.math.max

@@ -11,12 +11,12 @@ import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import com.apps.LauncherActivity
-import com.yuki.yukihub.R
-import com.yuki.yukihub.data.GameRepository
-import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge
-import com.yuki.yukihub.model.Game
-import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
+import com.core.R
+import com.core.data.GameRepository
+import com.core.launcherbridge.LauncherGameLaunchBridge
+import com.core.model.Game
+import com.core.util.AppExecutors
+import com.core.util.RxMainScheduler
 
 /** Creates and handles Android pinned shortcuts for individual library games. */
 object PinnedGameShortcut {

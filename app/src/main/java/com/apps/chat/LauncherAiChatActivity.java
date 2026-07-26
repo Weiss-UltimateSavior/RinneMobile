@@ -28,9 +28,9 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.launcherbridge.LauncherAiChatBridge;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
+import com.core.R;
+import com.core.launcherbridge.LauncherAiChatBridge;
+import com.core.launcherbridge.LauncherAuthBridge;
 
 import java.util.ArrayList;
 import java.util.List;

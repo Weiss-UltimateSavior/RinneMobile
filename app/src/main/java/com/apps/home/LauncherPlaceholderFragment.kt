@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.databinding.FragmentLauncherPlaceholderBinding
+import com.core.databinding.FragmentLauncherPlaceholderBinding
 
 class LauncherPlaceholderFragment : Fragment() {
     private var binding: FragmentLauncherPlaceholderBinding? = null

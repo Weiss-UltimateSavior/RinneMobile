@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.apps.data.LauncherRepository
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.R
+import com.core.R
 
 class LauncherRecentAdapter : RecyclerView.Adapter<LauncherRecentAdapter.Holder>() {
     private val items = mutableListOf<LauncherRepository.RecentItem>()

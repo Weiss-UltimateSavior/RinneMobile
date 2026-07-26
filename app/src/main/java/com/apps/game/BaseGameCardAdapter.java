@@ -9,10 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ItemLauncherGameCardBinding;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.TimeFormatUtil;
+import com.core.R;
+import com.core.databinding.ItemLauncherGameCardBinding;
+import com.core.model.Game;
+import com.core.util.TimeFormatUtil;
 
 import java.util.ArrayList;
 import java.util.List;

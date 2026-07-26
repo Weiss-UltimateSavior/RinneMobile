@@ -10,7 +10,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
-import com.yuki.yukihub.databinding.ItemLocalAgentEventBinding
+import com.core.databinding.ItemLocalAgentEventBinding
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

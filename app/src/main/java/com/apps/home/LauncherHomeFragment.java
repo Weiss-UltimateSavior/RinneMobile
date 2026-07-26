@@ -28,14 +28,14 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.yuki.yukihub.databinding.FragmentLauncherHomeBinding;
-import com.yuki.yukihub.launcherbridge.LauncherAuthBridge;
-import com.yuki.yukihub.launcherbridge.LauncherGameLaunchBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
-import com.yuki.yukihub.util.SafeImageLoader;
+import com.core.databinding.FragmentLauncherHomeBinding;
+import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherGameLaunchBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.launcherbridge.LauncherUpdateBridge;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
+import com.core.util.SafeImageLoader;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -197,20 +197,20 @@ public class LauncherHomeFragment extends Fragment {
     private void applyThemeStyle() {
         if (binding == null) return;
         if (LauncherActivity.isRinneTheme(requireContext())) {
-            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_rinne_bg);
+            binding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_rinne_bg);
             binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
         } else if (LauncherActivity.isAnriTheme(requireContext())) {
-            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_bg_anri);
+            binding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_bg_anri);
             binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
         } else if (LauncherActivity.isXinhaitianTheme(requireContext())) {
-            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_xinhaitian_bg);
+            binding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_xinhaitian_bg);
             binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
         } else if (LauncherActivity.isNatsumeTheme(requireContext())) {
-            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_natsume_bg);
+            binding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_natsume_bg);
             binding.homeStatsScrim.setBackground(LauncherTheme.statsScrim(requireContext()));
         } else {
-            binding.homeStatsImage.setImageResource(com.yuki.yukihub.R.drawable.launcher_home_stats_bg);
-            binding.homeStatsScrim.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_home_stats_scrim);
+            binding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_bg);
+            binding.homeStatsScrim.setBackgroundResource(com.core.R.drawable.launcher_home_stats_scrim);
         }
     }
 
@@ -218,13 +218,13 @@ public class LauncherHomeFragment extends Fragment {
         if (binding == null || anchor == null) return;
         LinearLayout menu = new LinearLayout(requireContext());
         menu.setOrientation(LinearLayout.VERTICAL);
-        menu.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_white_card);
+        menu.setBackgroundResource(com.core.R.drawable.launcher_white_card);
         menu.setPadding(dp(7), dp(7), dp(7), dp(7));
 
         PopupWindow popupWindow = new PopupWindow(menu, dp(119), ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setOutsideTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        popupWindow.setAnimationStyle(com.yuki.yukihub.R.style.LauncherDialogAnimation);
+        popupWindow.setAnimationStyle(com.core.R.style.LauncherDialogAnimation);
 
         addMenuItem(menu, "主题管理", popupWindow, () ->
                 startLauncherActivity(new Intent(requireContext(), LauncherThemeMenuActivity.class)));
@@ -276,12 +276,12 @@ public class LauncherHomeFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText("资讯站");
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -339,12 +339,12 @@ public class LauncherHomeFragment extends Fragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.yuki.yukihub.R.drawable.launcher_dialog_bg);
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
         title.setText("建议反馈");
         title.setGravity(Gravity.CENTER);
-        title.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
         title.setTextSize(16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -426,12 +426,12 @@ public class LauncherHomeFragment extends Fragment {
         binding.recentList.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         for (LauncherRepository.RecentItem item : items) {
-            View itemView = inflater.inflate(com.yuki.yukihub.R.layout.item_launcher_recent, binding.recentList, false);
+            View itemView = inflater.inflate(com.core.R.layout.item_launcher_recent, binding.recentList, false);
             LauncherTabletPortraitScaler.apply(itemView);
-            TextView icon = itemView.findViewById(com.yuki.yukihub.R.id.recentIcon);
-            TextView title = itemView.findViewById(com.yuki.yukihub.R.id.recentTitle);
-            TextView meta = itemView.findViewById(com.yuki.yukihub.R.id.recentMeta);
-            TextView status = itemView.findViewById(com.yuki.yukihub.R.id.recentStatus);
+            TextView icon = itemView.findViewById(com.core.R.id.recentIcon);
+            TextView title = itemView.findViewById(com.core.R.id.recentTitle);
+            TextView meta = itemView.findViewById(com.core.R.id.recentMeta);
+            TextView status = itemView.findViewById(com.core.R.id.recentStatus);
             icon.setText(item.iconText);
             title.setText(item.title);
             meta.setText(item.timeAndDuration);
@@ -685,7 +685,7 @@ public class LauncherHomeFragment extends Fragment {
         TextView button = new TextView(requireContext());
         button.setText(text);
         button.setGravity(Gravity.CENTER);
-        button.setTextColor(ContextCompat.getColor(requireContext(), com.yuki.yukihub.R.color.launcher_text_muted_color));
+        button.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
         button.setTextSize(13);
         button.setOnClickListener(listener);
         return button;

@@ -19,13 +19,13 @@ import androidx.core.content.ContextCompat;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.data.GameSaveFileManager;
-import com.yuki.yukihub.diagnostics.GameDiagnostics;
-import com.yuki.yukihub.databinding.ActivityLauncherSaveManagerBinding;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.data.GameSaveFileManager;
+import com.core.diagnostics.GameDiagnostics;
+import com.core.databinding.ActivityLauncherSaveManagerBinding;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
 
 /** File operations for one game's automatically resolved built-in-engine save location. */
 public class LauncherSaveManagerActivity extends AppCompatActivity {

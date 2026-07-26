@@ -10,8 +10,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
-import com.yuki.yukihub.R
-import com.yuki.yukihub.launcherbridge.LauncherAiChatBridge
+import com.core.R
+import com.core.launcherbridge.LauncherAiChatBridge
 import kotlin.math.max
 
 class LauncherAiChatMessageAdapter(

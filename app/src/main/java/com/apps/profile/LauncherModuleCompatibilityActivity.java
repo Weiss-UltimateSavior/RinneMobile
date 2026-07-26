@@ -18,10 +18,10 @@ import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherModuleCompatibilityBinding;
-import com.yuki.yukihub.launcherbridge.LauncherModuleBridge;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.databinding.ActivityLauncherModuleCompatibilityBinding;
+import com.core.launcherbridge.LauncherModuleBridge;
+import com.core.util.AppExecutors;
 
 /** 模块兼容页面：展示并管理 Rinne 所兼容的第三方 JoiPlay 插件（RPGM / RenPy / Godot）。 */
 public class LauncherModuleCompatibilityActivity extends AppCompatActivity {

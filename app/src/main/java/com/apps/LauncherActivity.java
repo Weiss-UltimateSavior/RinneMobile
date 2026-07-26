@@ -26,12 +26,12 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.yuki.yukihub.util.Disposable;
+import com.core.util.Disposable;
 
 import com.apps.PadUi.PadGameModeActivity;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ActivityLauncherBinding;
-import com.yuki.yukihub.launcherbridge.LauncherUpdateBridge;
+import com.core.R;
+import com.core.databinding.ActivityLauncherBinding;
+import com.core.launcherbridge.LauncherUpdateBridge;
 import com.apps.account.LauncherAccountFragment;
 import com.apps.data.LauncherViewModel;
 import com.apps.game.LauncherLibraryFragment;
@@ -53,7 +53,9 @@ public class LauncherActivity extends AppCompatActivity {
     private static final long SPLASH_MIN_DISPLAY_MS = 400L;
     public static final String EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login";
     public static final String EXTRA_PINNED_GAME_ID = "pinned_game_id";
-    public static final String ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME";
+    public static final String ACTION_LAUNCH_PINNED_GAME = "com.core.action.LAUNCH_PINNED_GAME";
+    // Keep shortcuts pinned before the package refactor working after an app update.
+    private static final String LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME";
     static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked";
     static final String KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode";
@@ -110,7 +112,7 @@ public class LauncherActivity extends AppCompatActivity {
             @Override
             public boolean onPreDraw() {
                 content.getViewTreeObserver().removeOnPreDrawListener(this);
-                splashDelay = com.yuki.yukihub.util.RxMainScheduler.postDelayed(
+                splashDelay = com.core.util.RxMainScheduler.postDelayed(
                         LauncherActivity.this::showLauncherContent, SPLASH_MIN_DISPLAY_MS);
                 return true;
             }
@@ -169,7 +171,10 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void launchPinnedGameIfRequested(Intent intent) {
-        if (intent == null || !ACTION_LAUNCH_PINNED_GAME.equals(intent.getAction())) return;
+        if (intent == null) return;
+        String action = intent.getAction();
+        if (!ACTION_LAUNCH_PINNED_GAME.equals(action)
+                && !LEGACY_ACTION_LAUNCH_PINNED_GAME.equals(action)) return;
         long gameId = intent.getLongExtra(EXTRA_PINNED_GAME_ID, -1L);
         intent.removeExtra(EXTRA_PINNED_GAME_ID);
         intent.setAction(null);
@@ -195,7 +200,7 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void scheduleAutoUpdateCheck() {
-        com.yuki.yukihub.util.RxMainScheduler.postDelayed(() -> {
+        com.core.util.RxMainScheduler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
             LauncherUpdateBridge.checkUpdate(this, new LauncherUpdateBridge.Callback() {
                 @Override

@@ -6,8 +6,8 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.LruCache
 import android.widget.ImageView
-import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
+import com.core.util.AppExecutors
+import com.core.util.RxMainScheduler
 import kotlin.math.max
 
 /** Async cover decoder with a bounded in-memory bitmap cache. */

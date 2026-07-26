@@ -10,10 +10,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.apps.widget.LauncherCoverLoader;
 import com.apps.theme.LauncherTheme;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.databinding.ItemPadGameCardBinding;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.TimeFormatUtil;
+import com.core.R;
+import com.core.databinding.ItemPadGameCardBinding;
+import com.core.model.Game;
+import com.core.util.TimeFormatUtil;
 
 import java.util.ArrayList;
 import java.util.List;

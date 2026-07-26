@@ -4,9 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge
-import com.yuki.yukihub.util.AppExecutors
-import com.yuki.yukihub.util.RxMainScheduler
+import com.core.launcherbridge.LauncherRepositoryBridge
+import com.core.util.AppExecutors
+import com.core.util.RxMainScheduler
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 

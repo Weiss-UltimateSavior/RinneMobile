@@ -2,7 +2,7 @@ package com.apps.agent;
 
 import android.content.Context;
 
-import com.yuki.yukihub.util.RxMainScheduler;
+import com.core.util.RxMainScheduler;
 
 import org.json.JSONObject;
 

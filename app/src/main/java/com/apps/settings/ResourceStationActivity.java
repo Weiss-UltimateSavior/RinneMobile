@@ -38,7 +38,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         configureImmersiveStatusBar();
 
         webView = new WebView(this);
-        webView.setBackgroundColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_bg_color));
+        webView.setBackgroundColor(ContextCompat.getColor(this, com.core.R.color.launcher_bg_color));
         FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -48,7 +48,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         configureWebView(webView);
 
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_bg_color));
+        root.setBackgroundColor(ContextCompat.getColor(this, com.core.R.color.launcher_bg_color));
         root.addView(webView);
         root.addView(createTopBar());
         setContentView(root);
@@ -64,7 +64,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_bottom_bar_color));
+        window.setNavigationBarColor(ContextCompat.getColor(this, com.core.R.color.launcher_bottom_bar_color));
         window.getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -75,7 +75,7 @@ public class ResourceStationActivity extends AppCompatActivity {
 
     private FrameLayout createTopBar() {
         FrameLayout topBar = new FrameLayout(this);
-        topBar.setBackgroundColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_card_color));
+        topBar.setBackgroundColor(ContextCompat.getColor(this, com.core.R.color.launcher_card_color));
         topBar.setElevation(dp(4));
 
         FrameLayout.LayoutParams topBarParams = new FrameLayout.LayoutParams(
@@ -88,7 +88,7 @@ public class ResourceStationActivity extends AppCompatActivity {
 
         TextView backButton = new TextView(this);
         backButton.setText("<");
-        backButton.setTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_color));
+        backButton.setTextColor(ContextCompat.getColor(this, com.core.R.color.launcher_text_color));
         backButton.setTextSize(22);
         backButton.setTypeface(null, android.graphics.Typeface.BOLD);
         backButton.setGravity(Gravity.CENTER);
@@ -102,7 +102,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         String titleText = getIntent().getStringExtra("resource_title");
         if (titleText == null || titleText.trim().isEmpty()) titleText = DEFAULT_TITLE;
         title.setText(titleText);
-        title.setTextColor(ContextCompat.getColor(this, com.yuki.yukihub.R.color.launcher_text_color));
+        title.setTextColor(ContextCompat.getColor(this, com.core.R.color.launcher_text_color));
         title.setTextSize(15);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setGravity(Gravity.CENTER);

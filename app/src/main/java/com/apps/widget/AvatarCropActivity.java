@@ -32,8 +32,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.util.AppExecutors;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -3,8 +3,8 @@ package com.apps.UserData;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.launcherbridge.LauncherSyncBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.launcherbridge.LauncherSyncBridge;
 
 import org.json.JSONArray;
 import org.json.JSONException;

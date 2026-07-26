@@ -39,14 +39,14 @@ import androidx.documentfile.provider.DocumentFile;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.launcherbridge.LauncherCoverBridge;
-import com.yuki.yukihub.launcherbridge.LauncherGameHubShortcutBridge;
-import com.yuki.yukihub.launcherbridge.LauncherRepositoryBridge;
-import com.yuki.yukihub.launcherbridge.LauncherScanBridge;
-import com.yuki.yukihub.model.EngineType;
-import com.yuki.yukihub.model.Game;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.launcherbridge.LauncherCoverBridge;
+import com.core.launcherbridge.LauncherGameHubShortcutBridge;
+import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.launcherbridge.LauncherScanBridge;
+import com.core.model.EngineType;
+import com.core.model.Game;
+import com.core.util.AppExecutors;
 
 import java.io.File;
 import java.io.FileOutputStream;

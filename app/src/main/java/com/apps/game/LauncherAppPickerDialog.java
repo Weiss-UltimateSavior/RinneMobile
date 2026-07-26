@@ -22,8 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.yuki.yukihub.R;
-import com.yuki.yukihub.util.AppExecutors;
+import com.core.R;
+import com.core.util.AppExecutors;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

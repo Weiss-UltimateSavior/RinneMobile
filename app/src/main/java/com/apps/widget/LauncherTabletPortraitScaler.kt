@@ -19,9 +19,9 @@ object LauncherTabletPortraitScaler {
     @JvmStatic fun applyActivityContent(activity: Activity?) { activity?.findViewById<View>(android.R.id.content)?.let(::apply) }
     @JvmStatic fun apply(root: View?) {
         val scale = scaleFor(root)
-        if (root == null || scale <= 1f || root.getTag(com.yuki.yukihub.R.id.launcher_tablet_portrait_scaled) != null) return
+        if (root == null || scale <= 1f || root.getTag(com.core.R.id.launcher_tablet_portrait_scaled) != null) return
         applyToTree(root, scale)
-        root.setTag(com.yuki.yukihub.R.id.launcher_tablet_portrait_scaled, true)
+        root.setTag(com.core.R.id.launcher_tablet_portrait_scaled, true)
     }
     @JvmStatic fun scaleFor(view: View?): Float = scaleFor(view?.resources)
     @JvmStatic fun scaleFor(resources: Resources?): Float {
