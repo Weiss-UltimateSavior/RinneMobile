@@ -210,6 +210,7 @@ public class PadManageFragment extends Fragment implements GameListController.Li
     public void onDestroyView() {
         if (sessionController != null) sessionController.cleanup();
         if (syncController != null) syncController.cleanup();
+        if (listController != null) listController.cleanup();
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
             binding.libraryRecycler.setAdapter(null);

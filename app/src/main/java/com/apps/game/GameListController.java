@@ -69,6 +69,8 @@ public class GameListController {
     private final RxMainQueue mainQueue;
     private final Listener listener;
 
+    // volatile：在 IO 线程的 loadGames/reloadSingleGame 任务中检查，确保 cleanup() 后能立即观察到
+    private volatile boolean disposed;
     private boolean loading;
     private boolean fullyLoaded;
     private boolean dataLoaded;
@@ -77,6 +79,17 @@ public class GameListController {
     public GameListController(@NonNull RxMainQueue mainQueue, @NonNull Listener listener) {
         this.mainQueue = mainQueue;
         this.listener = listener;
+    }
+
+    /**
+     * Fragment 视图销毁时调用，标记 Controller 已废弃。后续 IO 回调将不再更新状态或 UI，
+     * 避免无意义的 DB 查询和 mainQueue.post 浪费。
+     *
+     * <p>注意：与 {@link GameSessionController#cleanup()} 和 {@link GameSyncController#cleanup()}
+     * 保持一致的生命周期契约，由 Fragment 在 onDestroyView 中调用。</p>
+     */
+    public void cleanup() {
+        disposed = true;
     }
 
     public List<Game> getAllGames() { return Collections.unmodifiableList(allGames); }
@@ -109,6 +122,7 @@ public class GameListController {
         setLoading(true);
         Context appContext = listener.getAppContext();
         AppExecutors.runOnSingle(() -> {
+            if (disposed) return;
             List<Game> games;
             Map<Long, List<String>> developers;
             List<CategoryOption> builtCategories;
@@ -117,6 +131,7 @@ public class GameListController {
             } catch (Throwable throwable) {
                 games = Collections.emptyList();
             }
+            if (disposed) return;
             // 在后台线程构建分类（含元数据查询），避免主线程卡顿
             try {
                 CategoryBuildResult result = GameCategoryBuilder.build(appContext, games);
@@ -130,7 +145,7 @@ public class GameListController {
             Map<Long, List<String>> loadedDevelopers = developers;
             List<CategoryOption> loadedCategories = builtCategories;
             mainQueue.post(() -> {
-                if (listener.isBindingNull()) return;
+                if (disposed || listener.isBindingNull()) return;
                 allGames.clear();
                 allGames.addAll(loadedGames);
                 libraryState.replaceAll(loadedGames);
@@ -236,16 +251,24 @@ public class GameListController {
         listener.onRenderStateRequested();
     }
 
-    /** 异步从 DB 重新拉取单张卡片，用于封面/元数据等异步操作完成后回填。 */
+    /**
+     * 异步从 DB 重新拉取单张卡片，用于封面/元数据等异步操作完成后回填。
+     *
+     * <p>使用 {@link Listener#getAppContext()} 而非 {@code fragment.requireContext()}，
+     * 避免在 IO 线程持有 Fragment 引用导致 detach 后 IllegalStateException 被静默吞掉。</p>
+     */
     public void reloadSingleGame(@NonNull Fragment fragment, long gameId) {
+        Context appContext = listener.getAppContext();
         AppExecutors.io().execute(() -> {
+            if (disposed) return;
             Game updated = null;
             try {
-                updated = LauncherRepositoryBridge.findGameById(fragment.requireContext(), gameId);
+                updated = LauncherRepositoryBridge.findGameById(appContext, gameId);
             } catch (Throwable ignored) {}
             final Game result = updated;
-            if (fragment.getActivity() != null) fragment.getActivity().runOnUiThread(() -> {
-                if (result != null) updateSingleGame(result);
+            mainQueue.post(() -> {
+                if (disposed || listener.isBindingNull() || result == null) return;
+                updateSingleGame(result);
             });
         });
     }

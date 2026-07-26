@@ -1,0 +1,734 @@
+package com.apps.theme
+
+import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.os.Build
+import android.text.InputType
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.ArrayAdapter
+import android.widget.CompoundButton
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
+import androidx.annotation.NonNull
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
+import com.apps.LauncherActivity
+import com.core.R
+import com.core.launcherbridge.LauncherUpdateBridge
+import kotlin.math.max
+import kotlin.math.min
+
+object LauncherTheme {
+
+    private fun uiContext(context: Context): Context {
+        val wrapped = LauncherActivity.wrapLauncherUiMode(context)
+        return wrapped ?: context
+    }
+
+    private fun color(context: Context, colorResId: Int): Int {
+        return ContextCompat.getColor(uiContext(context), colorResId)
+    }
+
+    @JvmStatic
+    fun primary(context: Context): Int {
+        return LauncherActivity.launcherPrimaryColor(context)
+    }
+
+    @JvmStatic
+    fun onPrimary(context: Context): Int = color(context, R.color.launcher_on_primary_color)
+
+    @JvmStatic
+    fun card(context: Context): Int = color(context, R.color.launcher_card_color)
+
+    @JvmStatic
+    fun bg(context: Context): Int = color(context, R.color.launcher_bg_color)
+
+    @JvmStatic
+    fun line(context: Context): Int = color(context, R.color.launcher_line_color)
+
+    @JvmStatic
+    fun text(context: Context): Int = color(context, R.color.launcher_text_color)
+
+    @JvmStatic
+    fun textMuted(context: Context): Int = color(context, R.color.launcher_text_muted_color)
+
+    @JvmStatic
+    fun primaryText(context: Context): Int = color(context, R.color.launcher_primary_color)
+
+    @JvmStatic
+    fun danger(context: Context): Int = color(context, R.color.launcher_danger_color)
+
+    @JvmStatic
+    fun onDanger(context: Context): Int = color(context, R.color.launcher_on_danger_color)
+
+    @JvmStatic
+    fun primaryButton(context: Context, radiusDp: Float): GradientDrawable {
+        if (LauncherActivity.isXinhaitianTheme(context)) {
+            return xinhaitianGradient(context, radiusDp, false)
+        }
+        return solidPrimary(context, radiusDp)
+    }
+
+    /** Primary tone without theme-specific gradients. */
+    @JvmStatic
+    fun solidPrimary(context: Context, radiusDp: Float): GradientDrawable {
+        val drawable = GradientDrawable()
+        drawable.setColor(primary(context))
+        drawable.cornerRadius = dp(context, radiusDp).toFloat()
+        return drawable
+    }
+
+    /** Theme-colored card copy overlay with the same opacity as launcher_game_text_overlay. */
+    @JvmStatic
+    fun primaryTextOverlay(context: Context): GradientDrawable {
+        val drawable = primaryButton(context, 0f)
+        drawable.setAlpha(0xD9)
+        return drawable
+    }
+
+    @JvmStatic
+    fun secondaryButton(context: Context, radiusDp: Float): GradientDrawable {
+        val drawable = GradientDrawable()
+        drawable.setColor(card(context))
+        drawable.cornerRadius = dp(context, radiusDp).toFloat()
+        return drawable
+    }
+
+    @JvmStatic
+    fun dangerButton(context: Context, radiusDp: Float): GradientDrawable {
+        val drawable = GradientDrawable()
+        drawable.setColor(danger(context))
+        drawable.cornerRadius = dp(context, radiusDp).toFloat()
+        return drawable
+    }
+
+    @JvmStatic
+    fun primaryGradientCard(context: Context, radiusDp: Float): GradientDrawable {
+        val baseColor = primary(context)
+        val drawable = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(
+                shiftColor(baseColor, 0.76f),
+                baseColor,
+                shiftColor(baseColor, 1.18f)
+            )
+        )
+        drawable.cornerRadius = dp(context, radiusDp).toFloat()
+        return drawable
+    }
+
+    /** Outgoing messages use the active tone; incoming messages use the neutral card surface. */
+    @JvmStatic
+    fun chatBubble(context: Context, outgoing: Boolean): GradientDrawable {
+        return if (outgoing) primaryButton(context, 18f) else secondaryButton(context, 18f)
+    }
+
+    @JvmStatic
+    fun selectedChip(context: Context): GradientDrawable = primaryButton(context, 999f)
+
+    @JvmStatic
+    fun cancelChip(context: Context): GradientDrawable = secondaryButton(context, 999f)
+
+    @JvmStatic
+    fun selectedOption(context: Context): GradientDrawable {
+        val drawable = GradientDrawable()
+        drawable.setColor(card(context))
+        drawable.cornerRadius = dp(context, 9f).toFloat()
+        return drawable
+    }
+
+    @JvmStatic
+    fun circle(context: Context): GradientDrawable {
+        if (LauncherActivity.isXinhaitianTheme(context)) {
+            return xinhaitianGradient(context, 0f, true)
+        }
+        return circle(context, primary(context))
+    }
+
+    @JvmStatic
+    fun circle(context: Context, color: Int): GradientDrawable {
+        val drawable = GradientDrawable()
+        drawable.shape = GradientDrawable.OVAL
+        drawable.setColor(color)
+        return drawable
+    }
+
+    /**
+     * 导航栏中间按钮专用：circle 背景外包裹 3dp 软渐变阴影环。
+     * 用多层同心圆递进透明度模拟高斯模糊，四周均匀可见。
+     */
+    @JvmStatic
+    fun circleWithSoftShadow(context: Context): Drawable {
+        val total = dp(context, 3f)
+        val i1 = total / 3
+        val i2 = total * 2 / 3
+
+        val s0 = GradientDrawable()
+        s0.shape = GradientDrawable.OVAL
+        s0.setColor(Color.argb(5, 0, 0, 0))
+
+        val s1 = GradientDrawable()
+        s1.shape = GradientDrawable.OVAL
+        s1.setColor(Color.argb(12, 0, 0, 0))
+
+        val s2 = GradientDrawable()
+        s2.shape = GradientDrawable.OVAL
+        s2.setColor(Color.argb(22, 0, 0, 0))
+
+        val main = circle(context)
+
+        val layers = LayerDrawable(arrayOf<Drawable>(s0, s1, s2, main))
+        layers.setLayerInset(1, i1, i1, i1, i1)
+        layers.setLayerInset(2, i2, i2, i2, i2)
+        layers.setLayerInset(3, total, total, total, total)
+        return layers
+    }
+
+    /** Circle with card background color, matching the white-card style of manage rows. */
+    @JvmStatic
+    fun cardCircle(context: Context): GradientDrawable = circle(context, card(context))
+
+    /**
+     * 统一应用右上角圆形按钮样式：cardCircle 背景 + 深色模式白色 tint / 浅色模式原色。
+     * 供 LauncherHomeFragment.actionProfileMenu 和 LauncherProfileFragment.actionChangeCover 复用。
+     */
+    @JvmStatic
+    fun applyCardCircleIcon(view: ImageView?, context: Context) {
+        if (view == null) return
+        view.background = cardCircle(context)
+        if (LauncherActivity.isLauncherDarkMode(context)) {
+            view.setColorFilter(Color.WHITE)
+        } else {
+            view.clearColorFilter()
+        }
+    }
+
+    @JvmStatic
+    fun xinhaitianCircle(context: Context): GradientDrawable = xinhaitianGradient(context, 0f, true)
+
+    private fun xinhaitianGradient(context: Context, radiusDp: Float, oval: Boolean): GradientDrawable {
+        val drawable = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(
+                LauncherActivity.XINHAITIAN_PRIMARY_COLOR,
+                LauncherActivity.XINHAITIAN_ACCENT_COLOR
+            )
+        )
+        drawable.shape = if (oval) GradientDrawable.OVAL else GradientDrawable.RECTANGLE
+        if (!oval) drawable.cornerRadius = dp(context, radiusDp).toFloat()
+        return drawable
+    }
+
+    @JvmStatic
+    fun statsScrim(context: Context): GradientDrawable = statsScrim(primary(context))
+
+    @JvmStatic
+    fun statsScrim(baseColor: Int): GradientDrawable {
+        return GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(
+                Color.argb(230, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor)),
+                Color.argb(179, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor)),
+                Color.argb(0, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor))
+            )
+        )
+    }
+
+    @JvmStatic
+    fun textPrimary(view: TextView?) {
+        if (view != null) view.setTextColor(primary(view.context))
+    }
+
+    @JvmStatic
+    fun textOnPrimary(view: TextView?) {
+        if (view != null) view.setTextColor(onPrimary(view.context))
+    }
+
+    @JvmStatic
+    fun chip(view: TextView?, selected: Boolean) {
+        if (view == null) return
+        view.setTextColor(if (selected) onPrimary(view.context) else primary(view.context))
+        view.background = if (selected) selectedChip(view.context) else secondaryButton(view.context, 999f)
+    }
+
+    @JvmStatic
+    fun primaryButton(view: TextView?) {
+        if (view == null) return
+        view.setTextColor(onPrimary(view.context))
+        view.background = primaryButton(view.context, 20f)
+    }
+
+    /** Applies the common full-width action treatment used by Launcher setting pages. */
+    @JvmStatic
+    fun longActionButton(view: TextView?) {
+        if (view == null) return
+        view.gravity = Gravity.CENTER
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        view.setTypeface(null, Typeface.BOLD)
+        primaryButton(view)
+    }
+
+    /** Applies the compact form of the shared Launcher action treatment. */
+    @JvmStatic
+    fun shortActionButton(view: TextView?) {
+        longActionButton(view)
+    }
+
+    /** Applies the compact secondary action treatment while preserving shared button metrics. */
+    @JvmStatic
+    fun shortSecondaryActionButton(view: TextView?) {
+        if (view == null) return
+        view.gravity = Gravity.CENTER
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        view.setTypeface(null, Typeface.BOLD)
+        secondaryButton(view)
+    }
+
+    /** Normalizes ordinary page form fields; call only from non-dialog page roots. */
+    @JvmStatic
+    fun formInputs(vararg views: EditText?) {
+        for (view in views) {
+            if (view == null) continue
+            val context = view.context
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            view.setPaddingRelative(dp(context, 13f), view.paddingTop, dp(context, 13f), view.paddingBottom)
+            view.background = secondaryButton(context, 20f)
+            val inputType = view.inputType
+            val multiline = (inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0
+            if (!multiline && view.layoutParams != null) {
+                view.layoutParams.height = dp(context, 45f)
+                view.requestLayout()
+            }
+            styleTextInput(view)
+        }
+    }
+
+    @JvmStatic
+    fun secondaryButton(view: TextView?) {
+        if (view == null) return
+        view.setTextColor(primary(view.context))
+        view.background = secondaryButton(view.context, 20f)
+    }
+
+    @JvmStatic
+    fun dangerButton(view: TextView?) {
+        if (view == null) return
+        view.setTextColor(onDanger(view.context))
+        view.background = dangerButton(view.context, 20f)
+    }
+
+    @JvmStatic
+    fun menuItem(view: TextView?) {
+        if (view == null) return
+        view.setTextColor(primary(view.context))
+        view.background = secondaryButton(view.context, 999f)
+    }
+
+    @JvmStatic
+    fun dangerMenuItem(view: TextView?) {
+        if (view == null) return
+        view.setTextColor(danger(view.context))
+        view.background = secondaryButton(view.context, 999f)
+    }
+
+    @JvmStatic
+    fun styleSpinner(spinner: Spinner?) {
+        if (spinner == null) return
+        val context = spinner.context
+        spinner.background = secondaryButton(context, 20f)
+        // dropdown 容器使用与弹窗一致的圆角背景
+        spinner.setPopupBackgroundResource(R.drawable.launcher_spinner_popup_bg)
+    }
+
+    /**
+     * 统一 SwitchCompat 启停按钮的色调：开启时使用主题主色，关闭时使用中性灰。
+     * 必须在 Activity 创建后调用，确保主题已加载。
+     */
+    @JvmStatic
+    fun styleSwitch(switchCompat: SwitchCompat?) {
+        if (switchCompat == null) return
+        val context = switchCompat.context
+        val primary = primary(context)
+        val mutedGray = ContextCompat.getColor(context, R.color.launcher_text_muted_color)
+
+        // thumb：开关圆点。开启时主色，关闭时浅灰
+        val thumbStates = arrayOf(
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf(-android.R.attr.state_checked)
+        )
+        val thumbColors = intArrayOf(primary, mutedGray)
+        switchCompat.thumbTintList = ColorStateList(thumbStates, thumbColors)
+
+        // track：开关轨道。开启时半透明主色，关闭时更浅的灰
+        val trackOn = blend(primary, Color.WHITE, 0.6f)
+        val trackOff = blend(mutedGray, Color.WHITE, 0.6f)
+        val trackStates = arrayOf(
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf(-android.R.attr.state_checked)
+        )
+        val trackColors = intArrayOf(trackOn, trackOff)
+        switchCompat.trackTintList = ColorStateList(trackStates, trackColors)
+    }
+
+    /** Applies the active Launcher tone to a text input's insertion cursor. */
+    @JvmStatic
+    fun styleTextInput(input: EditText?) {
+        if (input == null) return
+        val primary = primary(input.context)
+        input.highlightColor = ColorUtils.setAlphaComponent(primary, 82)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val cursor = GradientDrawable()
+        cursor.setColor(primary)
+        cursor.setSize(dp(input.context, 2f), -1)
+        input.setTextCursorDrawable(cursor)
+        input.setTextSelectHandle(selectionHandle(input.context, primary))
+        input.setTextSelectHandleLeft(selectionHandle(input.context, primary))
+        input.setTextSelectHandleRight(selectionHandle(input.context, primary))
+    }
+
+    private fun selectionHandle(context: Context, color: Int): GradientDrawable {
+        val handle = GradientDrawable()
+        handle.shape = GradientDrawable.OVAL
+        handle.setColor(color)
+        val size = dp(context, 18f)
+        handle.setSize(size, size)
+        return handle
+    }
+
+    private fun blend(color1: Int, color2: Int, ratio: Float): Int {
+        val r = (Color.red(color1) * (1 - ratio) + Color.red(color2) * ratio).toInt()
+        val g = (Color.green(color1) * (1 - ratio) + Color.green(color2) * ratio).toInt()
+        val b = (Color.blue(color1) * (1 - ratio) + Color.blue(color2) * ratio).toInt()
+        return Color.rgb(r, g, b)
+    }
+
+    @JvmStatic
+    fun <T> spinnerAdapter(context: Context, items: Array<T>): ArrayAdapter<T> {
+        return object : ArrayAdapter<T>(context, R.layout.spinner_item_themed, items) {
+            @NonNull
+            override fun getView(position: Int, convertView: View?, @NonNull parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                styleSpinnerItemView(view, false)
+                return view
+            }
+
+            @NonNull
+            override fun getDropDownView(position: Int, convertView: View?, @NonNull parent: ViewGroup): View {
+                val view = convertView
+                    ?: LayoutInflater.from(context).inflate(R.layout.spinner_dropdown_themed, parent, false)
+                if (view is TextView) {
+                    view.text = getItem(position)?.toString() ?: "null"
+                }
+                styleSpinnerItemView(view, true)
+                return view
+            }
+        }
+    }
+
+    @JvmStatic
+    fun dialogButtons(cancel: TextView?, confirm: TextView?) {
+        if (cancel != null) {
+            secondaryButton(cancel)
+        }
+        primaryButton(confirm)
+    }
+
+    @JvmStatic
+    fun applyPrimaryTone(root: View?) {
+        if (root == null) return
+        val context = root.context
+        val defaultPrimary = primaryText(context)
+        val themedPrimary = primary(context)
+
+        if (root is TextView) {
+            if (root.currentTextColor == defaultPrimary) {
+                root.setTextColor(themedPrimary)
+            }
+        }
+        if (root is CompoundButton) {
+            root.buttonTintList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(themedPrimary, textMuted(context))
+            )
+        }
+        if (root is EditText) {
+            styleTextInput(root)
+        }
+
+        val idName = idName(root)
+        if (isPrimaryButtonId(idName) && root is TextView) {
+            primaryButton(root)
+        } else if (isSecondaryButtonId(idName) && root is TextView) {
+            secondaryButton(root)
+        } else if (isDangerButtonId(idName) && root is TextView) {
+            dangerButton(root)
+        }
+
+        if (root is ViewGroup) {
+            val group = root
+            for (i in 0 until group.childCount) {
+                applyPrimaryTone(group.getChildAt(i))
+            }
+        }
+    }
+
+    /** Applies the shared icon and arrow treatment used by Launcher action rows. */
+    @JvmStatic
+    fun styleManageRow(row: View?) {
+        if (row !is ViewGroup) return
+        val context = row.context
+        val group: ViewGroup = row
+        if (group.childCount > 0 && group.getChildAt(0) is TextView) {
+            val icon = group.getChildAt(0) as TextView
+            icon.background = circle(context)
+            icon.setTextColor(onPrimary(context))
+        } else if (group.childCount > 0 && group.getChildAt(0) is ImageView) {
+            val icon = group.getChildAt(0) as ImageView
+            icon.background = null
+            icon.imageTintList = ColorStateList.valueOf(primary(context))
+        }
+        if (group.childCount > 2 && group.getChildAt(2) is ImageView) {
+            (group.getChildAt(2) as ImageView).imageTintList =
+                ColorStateList.valueOf(primary(context))
+        }
+    }
+
+    @JvmStatic
+    fun idName(view: View?): String {
+        if (view == null || view.id == View.NO_ID) return ""
+        return try {
+            view.resources.getResourceEntryName(view.id)
+        } catch (ignored: Throwable) {
+            ""
+        }
+    }
+
+    @JvmStatic
+    fun dp(context: Context, value: Float): Int {
+        return (value * context.resources.displayMetrics.density + 0.5f).toInt()
+    }
+
+    private fun isPrimaryButtonId(idName: String?): Boolean {
+        if (idName == null) return false
+        return "btnSubmit" == idName
+            || "addGameSave" == idName
+            || "aiDetailClose" == idName
+            || "aiGenerateSubmit" == idName
+            || "aiHistoryClear" == idName
+            || "aiReviewGenerate" == idName
+            || "aiReviewSave" == idName
+            || "btnSave" == idName
+            || "registerCreate" == idName
+            || "chatSelectContinue" == idName
+            || "disclaimerClose" == idName
+            || "imagePreviewShare" == idName
+            || "themeMenuApply" == idName
+            || "pendingClose" == idName
+    }
+
+    private fun isSecondaryButtonId(idName: String?): Boolean {
+        if (idName == null) return false
+        return "aiReviewHistory" == idName
+            || "aiGenerateHistory" == idName
+            || "btnCancel" == idName
+            || "btnPickCover" == idName
+            || "imagePreviewClose" == idName
+            || "imagePreviewSave" == idName
+    }
+
+    private fun isDangerButtonId(idName: String?): Boolean {
+        return "dialogDangerButton" == idName
+    }
+
+    private fun styleSpinnerItemView(view: View, dropdown: Boolean) {
+        if (view !is TextView) return
+        val textView = view
+        val context = textView.context
+        textView.setTextColor(text(context))
+        if (dropdown) {
+            // dropdown item 透明背景，让 popup 容器的圆角背景统一显示
+            textView.setBackgroundColor(Color.TRANSPARENT)
+            textView.setPadding(dp(context, 13f), 0, dp(context, 13f), 0)
+        } else {
+            textView.setBackgroundColor(Color.TRANSPARENT)
+        }
+    }
+
+    private fun shiftColor(color: Int, factor: Float): Int {
+        return Color.rgb(
+            clamp(Math.round(Color.red(color) * factor)),
+            clamp(Math.round(Color.green(color) * factor)),
+            clamp(Math.round(Color.blue(color) * factor))
+        )
+    }
+
+    private fun clamp(value: Int): Int {
+        return max(0, min(255, value))
+    }
+
+    @JvmStatic
+    fun dp(context: Context, value: Int): Int {
+        return (value * context.resources.displayMetrics.density + 0.5f).toInt()
+    }
+
+    @JvmStatic
+    fun showUpdateResultDialog(
+        context: Context, info: LauncherUpdateBridge.UpdateInfo?,
+        currentVersion: String?, hasUpdate: Boolean, error: String?
+    ) {
+        val dialog = AlertDialog.Builder(context).create()
+        dialog.show()
+        LauncherMotion.applyDialogMotion(dialog)
+
+        val window = dialog.window ?: return
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        window.setLayout(dp(context, 252), WindowManager.LayoutParams.WRAP_CONTENT)
+
+        val root = LinearLayout(context)
+        root.orientation = LinearLayout.VERTICAL
+        root.setPadding(dp(context, 22), dp(context, 20), dp(context, 22), dp(context, 16))
+        root.setBackgroundResource(R.drawable.launcher_dialog_bg)
+
+        val title = TextView(context)
+        title.text = if (hasUpdate) "发现新版本" else "检查更新"
+        title.gravity = Gravity.CENTER
+        title.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_color))
+        title.textSize = 16f
+        title.setTypeface(null, Typeface.BOLD)
+        root.addView(title, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+
+        val optionLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36))
+        optionLp.setMargins(0, dp(context, 11), 0, 0)
+
+        val cancelLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36))
+        cancelLp.setMargins(0, dp(context, 9), 0, 0)
+
+        if (error != null) {
+            val message = TextView(context)
+            message.text = error
+            message.gravity = Gravity.CENTER
+            message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
+            message.textSize = 12f
+            message.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
+            val msgLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            msgLp.setMargins(0, dp(context, 11), 0, 0)
+            root.addView(message, msgLp)
+
+            val btn = TextView(context)
+            btn.text = "知道了"
+            btn.gravity = Gravity.CENTER
+            btn.setTextColor(primary(context))
+            btn.textSize = 13f
+            btn.setTypeface(null, Typeface.BOLD)
+            btn.background = cancelChip(context)
+            btn.setOnClickListener { dialog.dismiss() }
+            root.addView(btn, cancelLp)
+        } else if (hasUpdate && info != null) {
+            val message = TextView(context)
+            val sb = StringBuilder()
+            sb.append("当前版本：").append(emptyOr(currentVersion, "未知")).append("\n")
+            sb.append("最新版本：").append(emptyOr(info.tagName, info.version)).append("\n\n")
+            val body = trimUpdateBody(info.body, 1600)
+            if (body != null && body.trim { it <= ' ' }.isNotEmpty()) {
+                sb.append("更新内容：\n").append(body.trim { it <= ' ' })
+            } else {
+                sb.append("发现新的 GitHub Release，可前往发布页查看详情。")
+            }
+            message.text = sb.toString()
+            message.gravity = Gravity.CENTER
+            message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
+            message.textSize = 12f
+            message.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
+            val msgLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            msgLp.setMargins(0, dp(context, 11), 0, 0)
+            root.addView(message, msgLp)
+
+            addDialogOption(root, "前往下载", dialog, { openUrl(context, emptyOr(info.apkUrl, info.releaseUrl)) }, optionLp)
+            addDialogOption(root, "发布页", dialog, { openUrl(context, emptyOr(info.releaseUrl, "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test")) }, optionLp)
+
+            val cancel = TextView(context)
+            cancel.text = "稍后"
+            cancel.gravity = Gravity.CENTER
+            cancel.setTextColor(primary(context))
+            cancel.textSize = 13f
+            cancel.setTypeface(null, Typeface.BOLD)
+            cancel.background = cancelChip(context)
+            cancel.setOnClickListener { dialog.dismiss() }
+            root.addView(cancel, cancelLp)
+        } else {
+            val message = TextView(context)
+            message.text = "已是最新版本：" + emptyOr(currentVersion, "未知")
+            message.gravity = Gravity.CENTER
+            message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
+            message.textSize = 12f
+            message.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
+            val msgLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            msgLp.setMargins(0, dp(context, 11), 0, 0)
+            root.addView(message, msgLp)
+
+            val btn = TextView(context)
+            btn.text = "知道了"
+            btn.gravity = Gravity.CENTER
+            btn.setTextColor(primary(context))
+            btn.textSize = 13f
+            btn.setTypeface(null, Typeface.BOLD)
+            btn.background = cancelChip(context)
+            btn.setOnClickListener { dialog.dismiss() }
+            root.addView(btn, cancelLp)
+        }
+
+        window.setContentView(root)
+    }
+
+    private fun addDialogOption(
+        root: LinearLayout, label: String,
+        dialog: AlertDialog, action: Runnable, lp: LinearLayout.LayoutParams
+    ) {
+        val option = TextView(root.context)
+        option.text = label
+        option.gravity = Gravity.CENTER
+        option.isSingleLine = true
+        option.textSize = 13f
+        option.setTypeface(null, Typeface.BOLD)
+        menuItem(option)
+        option.setOnClickListener {
+            dialog.dismiss()
+            action.run()
+        }
+        root.addView(option, lp)
+    }
+
+    private fun emptyOr(value: String?, fallback: String): String {
+        return if (value == null || value.trim { it <= ' ' }.isEmpty()) fallback else value
+    }
+
+    private fun trimUpdateBody(text: String?, max: Int): String {
+        if (text == null) return ""
+        val t = text.trim { it <= ' ' }
+        if (max <= 0 || t.length <= max) return t
+        return t.substring(0, max) + "\n..."
+    }
+
+    private fun openUrl(context: Context, url: String) {
+        try {
+            context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+        } catch (ignored: Throwable) {
+        }
+    }
+}

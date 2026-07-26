@@ -156,12 +156,20 @@ public final class GameSessionController {
                 new PlaySessionCallback() {
                     @Override
                     public void onSuccess(PlaySession session) {
-                        if (session == null || session.sessionId == null || session.sessionId.trim().isEmpty()) return;
-                        if (runningSessionId != localSessionId) return;
-                        runningServerSessionId = session.sessionId;
-                        LauncherUserData.rememberServerPlaySession(appContext, localSessionId, game.id,
-                                GameMetadataFormatter.safeTitle(game), session.sessionId);
-                        scheduleServerPlayHeartbeat();
+                        // 网络回调线程与主线程并发访问 runningSessionId/runningServerSessionId
+                        // 时存在 check-then-act 竞态：若主线程在检查与赋值之间将
+                        // runningSessionId 置为 -1（finishDirectPlaySessionIfNeeded），
+                        // 仍可能写入已结束会话的 serverSessionId，导致后续心跳发往无效会话。
+                        // 切回主线程执行可保证状态读写的串行化与原子性。
+                        mainQueue.post(() -> {
+                            if (session == null || session.sessionId == null
+                                    || session.sessionId.trim().isEmpty()) return;
+                            if (runningSessionId != localSessionId) return;
+                            runningServerSessionId = session.sessionId;
+                            LauncherUserData.rememberServerPlaySession(appContext, localSessionId, game.id,
+                                    GameMetadataFormatter.safeTitle(game), session.sessionId);
+                            scheduleServerPlayHeartbeat();
+                        });
                     }
 
                     @Override

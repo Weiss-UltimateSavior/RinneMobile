@@ -242,6 +242,7 @@ public class LauncherLibraryFragment extends Fragment implements GameListControl
     public void onDestroyView() {
         if (sessionController != null) sessionController.cleanup();
         if (syncController != null) syncController.cleanup();
+        if (listController != null) listController.cleanup();
         if (binding != null) {
             binding.getRoot().setOnApplyWindowInsetsListener(null);
             binding.libraryRecycler.setAdapter(null);
