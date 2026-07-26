@@ -24,7 +24,7 @@ object PinnedGameShortcut {
     private const val MAX_ICON_SIZE_PX = 192
 
     interface LaunchCallback {
-        fun onResult(success: Boolean, message: String?)
+        fun onResult(result: LauncherGameLaunchBridge.LaunchResult)
     }
 
     @JvmStatic
@@ -58,7 +58,7 @@ object PinnedGameShortcut {
     @JvmStatic
     fun launchPinnedGame(context: Context, gameId: Long, callback: LaunchCallback?) {
         if (gameId <= 0L) {
-            callback?.onResult(false, "游戏快捷方式无效")
+            callback?.onResult(LauncherGameLaunchBridge.LaunchResult.failure("游戏快捷方式无效"))
             return
         }
         val appContext = context.applicationContext
@@ -66,7 +66,7 @@ object PinnedGameShortcut {
             val game = GameRepository(appContext).findById(gameId)
             val result = LauncherGameLaunchBridge.launch(appContext, game)
             RxMainScheduler.post {
-                callback?.onResult(result.success, result.message)
+                callback?.onResult(result)
             }
         }
     }

@@ -1,6 +1,8 @@
 package com.core.launcherbridge
 
 import android.app.Activity
+import android.app.ActivityManager
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import androidx.documentfile.provider.DocumentFile
@@ -18,6 +20,15 @@ import java.util.Locale
 object LauncherGameLaunchBridge {
 
     private const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
+    private const val LAUNCH_GATE_PREFS = "launcher_active_game_gate"
+    private const val KEY_ACTIVE_SESSION_ID = "active_session_id"
+    private const val KEY_ACTIVE_GAME_ID = "active_game_id"
+    private const val KEY_ACTIVE_GAME_TITLE = "active_game_title"
+    private const val KEY_ACTIVE_EMULATOR_PACKAGE = "active_emulator_package"
+    private const val KEY_ACTIVE_STARTED_AT = "active_started_at"
+    private const val ACTIVE_PROCESS_GRACE_MS = 5_000L
+    private const val MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L
+    private val launchGateLock = Any()
     // Values from releases before the core package refactor may still be stored in games.db.
     private const val LEGACY_INTERNAL_TYRANO_PACKAGE = "com.yuki.yukihub.tyrano"
     private const val LEGACY_INTERNAL_ONS_PACKAGE = "com.yuki.yukihub.ons"
@@ -51,13 +62,18 @@ object LauncherGameLaunchBridge {
             return LaunchResult.failure(validationError)
         }
 
-        val sessionId = repository.startPlaySession(game.id, System.currentTimeMillis(), resolveLaunchType(emulatorPackage))
+        val gate = acquireLaunchGate(appContext, repository, game, emulatorPackage)
+        if (gate.conflict != null) return LaunchResult.activeGame(gate.conflict.gameTitle)
+        if (gate.sessionId <= 0L) return LaunchResult.failure("无法创建游戏会话，请稍后重试")
+
+        val sessionId = gate.sessionId
         val attempt = startGameActivity(context, game, emulatorPackage, launchTarget)
         if (attempt.success) {
             GameDiagnostics.recordLaunch(appContext, game, true, "启动请求已发送", launchTarget)
             return LaunchResult.success(sessionId)
         }
         repository.cancelPlaySession(sessionId)
+        releaseLaunchGate(appContext, sessionId)
         val message = "启动失败：未找到该模拟器，或该模拟器不接受当前启动目标"
         GameDiagnostics.recordLaunch(appContext, game, false, message, launchTarget, attempt.errorCategory, attempt.error)
         return LaunchResult.failure(message)
@@ -66,13 +82,145 @@ object LauncherGameLaunchBridge {
     @JvmStatic
     fun finishSession(context: Context?, sessionId: Long, minDuration: Long, maxDuration: Long) {
         if (context == null || sessionId <= 0L) return
-        GameRepository(context.applicationContext).finishPlaySession(
+        val appContext = context.applicationContext
+        GameRepository(appContext).finishPlaySession(
             sessionId,
             System.currentTimeMillis(),
             minDuration,
             maxDuration
         )
+        releaseLaunchGate(appContext, sessionId)
     }
+
+    /**
+     * 在所有启动入口使用同一提示：不会结束或强制关闭当前游戏，用户需自行退出/划掉它。
+     */
+    @JvmStatic
+    fun showActiveGameDialog(context: Context?, activeGameTitle: String?) {
+        if (context == null) return
+        val title = activeGameTitle?.trim().takeUnless { it.isNullOrEmpty() } ?: "当前游戏"
+        try {
+            AlertDialog.Builder(context)
+                .setTitle("已有游戏正在运行")
+                .setMessage("《$title》仍在运行。请先保存进度，并在最近任务中手动划掉或正常退出该游戏后再启动其他游戏。")
+                .setPositiveButton("知道了", null)
+                .show()
+        } catch (_: Throwable) {
+            // A non-Activity context cannot own a dialog window. Callers still receive the message.
+        }
+    }
+
+    private fun acquireLaunchGate(
+        context: Context,
+        repository: GameRepository,
+        game: Game,
+        emulatorPackage: String,
+    ): GateAcquireResult = synchronized(launchGateLock) {
+        val prefs = context.getSharedPreferences(LAUNCH_GATE_PREFS, Context.MODE_PRIVATE)
+        val active = readActiveGate(prefs)
+        if (active != null) {
+            if (isActiveGameStillRunning(context, active)) return@synchronized GateAcquireResult(conflict = active)
+            // The launcher process may have died while the game was open.  Once its process is
+            // gone, close that persisted session before admitting the next game.
+            repository.finishPlaySession(active.sessionId, System.currentTimeMillis(), 0L, MAX_PLAY_SESSION_MS)
+            clearActiveGate(prefs)
+        }
+
+        val startedAt = System.currentTimeMillis()
+        val sessionId = repository.startPlaySession(game.id, startedAt, resolveLaunchType(emulatorPackage))
+        if (sessionId <= 0L) return@synchronized GateAcquireResult()
+        val gate = ActiveGameGate(
+            sessionId = sessionId,
+            gameId = game.id,
+            gameTitle = safeTitle(game),
+            emulatorPackage = emulatorPackage,
+            startedAt = startedAt,
+        )
+        // commit() makes the reservation durable before startActivity() can hand execution to an engine process.
+        if (!writeActiveGate(prefs, gate)) {
+            repository.cancelPlaySession(sessionId)
+            return@synchronized GateAcquireResult()
+        }
+        GateAcquireResult(sessionId = sessionId)
+    }
+
+    private fun releaseLaunchGate(context: Context, sessionId: Long) = synchronized(launchGateLock) {
+        val prefs = context.getSharedPreferences(LAUNCH_GATE_PREFS, Context.MODE_PRIVATE)
+        val active = readActiveGate(prefs)
+        if (active?.sessionId == sessionId) clearActiveGate(prefs)
+    }
+
+    /**
+     * The persisted lock survives a launcher-process death.  On a later launch, release it only
+     * after its engine/external emulator process has disappeared; the short grace period prevents
+     * a rapid double tap from winning before Android has spawned that process.
+     */
+    private fun isActiveGameStillRunning(context: Context, active: ActiveGameGate): Boolean {
+        if (System.currentTimeMillis() - active.startedAt < ACTIVE_PROCESS_GRACE_MS) return true
+        val target = activeProcessName(context, active.emulatorPackage)
+        return isProcessRunning(context, target)
+    }
+
+    private fun activeProcessName(context: Context, emulatorPackage: String): String {
+        val pkg = emulatorPackage.trim().lowercase(Locale.ROOT)
+        val ownPackage = context.packageName
+        return when {
+            pkg.startsWith("internal.krkr") || pkg == "org.tvp.kirikiri2.internal" -> "$ownPackage:kirikiri2"
+            pkg.startsWith("internal.tyrano") || pkg == "com.core.tyrano" || pkg == LEGACY_INTERNAL_TYRANO_PACKAGE -> "$ownPackage:tyrano"
+            pkg.startsWith("internal.ons") || pkg == "com.core.ons" || pkg == LEGACY_INTERNAL_ONS_PACKAGE -> "$ownPackage:ons"
+            pkg.startsWith("internal.artemis") -> "$ownPackage:artemis"
+            pkg.startsWith("internal.psp") -> "org.ppsspp.ppsspp"
+            else -> emulatorPackage.trim()
+        }
+    }
+
+    private fun isProcessRunning(context: Context, processOrPackage: String): Boolean = try {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return false
+        manager.runningAppProcesses.orEmpty().any { process ->
+            process.processName == processOrPackage || process.pkgList?.any { it == processOrPackage } == true
+        }
+    } catch (_: Throwable) {
+        // Keep the gate when the platform refuses process visibility rather than permitting a second game.
+        true
+    }
+
+    private fun readActiveGate(prefs: android.content.SharedPreferences): ActiveGameGate? {
+        val sessionId = prefs.getLong(KEY_ACTIVE_SESSION_ID, -1L)
+        if (sessionId <= 0L) return null
+        return ActiveGameGate(
+            sessionId,
+            prefs.getLong(KEY_ACTIVE_GAME_ID, -1L),
+            prefs.getString(KEY_ACTIVE_GAME_TITLE, "当前游戏") ?: "当前游戏",
+            prefs.getString(KEY_ACTIVE_EMULATOR_PACKAGE, "") ?: "",
+            prefs.getLong(KEY_ACTIVE_STARTED_AT, 0L),
+        )
+    }
+
+    private fun writeActiveGate(prefs: android.content.SharedPreferences, active: ActiveGameGate): Boolean =
+        prefs.edit()
+            .putLong(KEY_ACTIVE_SESSION_ID, active.sessionId)
+            .putLong(KEY_ACTIVE_GAME_ID, active.gameId)
+            .putString(KEY_ACTIVE_GAME_TITLE, active.gameTitle)
+            .putString(KEY_ACTIVE_EMULATOR_PACKAGE, active.emulatorPackage)
+            .putLong(KEY_ACTIVE_STARTED_AT, active.startedAt)
+            .commit()
+
+    private fun clearActiveGate(prefs: android.content.SharedPreferences) {
+        prefs.edit().clear().commit()
+    }
+
+    private data class ActiveGameGate(
+        val sessionId: Long,
+        val gameId: Long,
+        val gameTitle: String,
+        val emulatorPackage: String,
+        val startedAt: Long,
+    )
+
+    private data class GateAcquireResult(
+        val sessionId: Long = -1L,
+        val conflict: ActiveGameGate? = null,
+    )
 
     /**
      * 构建进入原生 KRKR 引擎（origin 模式、无具体游戏路径）的 Intent。
@@ -278,16 +426,24 @@ object LauncherGameLaunchBridge {
     class LaunchResult private constructor(
         @JvmField val success: Boolean,
         @JvmField val sessionId: Long,
-        @JvmField val message: String
+        @JvmField val message: String,
+        @JvmField val activeGameConflict: Boolean,
+        @JvmField val activeGameTitle: String,
     ) {
         companion object {
             @JvmStatic
             fun success(sessionId: Long): LaunchResult =
-                LaunchResult(true, sessionId, "")
+                LaunchResult(true, sessionId, "", false, "")
 
             @JvmStatic
             fun failure(message: String?): LaunchResult =
-                LaunchResult(false, -1L, if (message.isNullOrBlank()) "启动失败" else message)
+                LaunchResult(false, -1L, if (message.isNullOrBlank()) "启动失败" else message, false, "")
+
+            @JvmStatic
+            fun activeGame(gameTitle: String?): LaunchResult {
+                val title = gameTitle?.trim().takeUnless { it.isNullOrEmpty() } ?: "当前游戏"
+                return LaunchResult(false, -1L, "已有游戏正在运行：$title", true, title)
+            }
         }
     }
 }

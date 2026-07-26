@@ -480,6 +480,8 @@ public class LauncherHomeFragment extends Fragment {
                 if (result.success) {
                     runningSessionId = result.sessionId;
                     runningGameId = gameId;
+                } else if (result.activeGameConflict) {
+                    LauncherGameLaunchBridge.showActiveGameDialog(requireContext(), result.activeGameTitle);
                 } else if (result.message != null && !result.message.trim().isEmpty()) {
                     Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
                 }

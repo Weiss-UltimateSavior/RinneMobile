@@ -32,6 +32,7 @@ import com.apps.PadUi.PadGameModeActivity;
 import com.core.R;
 import com.core.databinding.ActivityLauncherBinding;
 import com.core.launcherbridge.LauncherUpdateBridge;
+import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.apps.account.LauncherAccountFragment;
 import com.apps.data.LauncherViewModel;
 import com.apps.game.LauncherLibraryFragment;
@@ -178,9 +179,13 @@ public class LauncherActivity extends AppCompatActivity {
         long gameId = intent.getLongExtra(EXTRA_PINNED_GAME_ID, -1L);
         intent.removeExtra(EXTRA_PINNED_GAME_ID);
         intent.setAction(null);
-        PinnedGameShortcut.launchPinnedGame(this, gameId, (success, message) -> {
-            if (!success && message != null && !message.trim().isEmpty()) {
-                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        PinnedGameShortcut.launchPinnedGame(this, gameId, result -> {
+            if (!result.success && result.message != null && !result.message.trim().isEmpty()) {
+                if (result.activeGameConflict) {
+                    LauncherGameLaunchBridge.showActiveGameDialog(this, result.activeGameTitle);
+                } else {
+                    Toast.makeText(this, result.message, Toast.LENGTH_LONG).show();
+                }
             }
         });
     }

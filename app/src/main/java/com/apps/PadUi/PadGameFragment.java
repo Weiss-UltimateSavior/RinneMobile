@@ -494,6 +494,9 @@ public class PadGameFragment extends Fragment {
                 LauncherGameLaunchBridge.launchAsync(requireContext(), game, result -> {
                     if (!isAdded()) return;
                     if (result.success) runningSessionId = result.sessionId;
+                    else if (result.activeGameConflict) {
+                        LauncherGameLaunchBridge.showActiveGameDialog(requireContext(), result.activeGameTitle);
+                    }
                     else Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
                 });
             });

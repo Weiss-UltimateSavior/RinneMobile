@@ -858,6 +858,8 @@ private void loadNextPage(boolean forceFullRefresh) {
                 runningSessionStart = System.currentTimeMillis();
                 runningLaunchType = resolveLaunchTypeForRecord(game);
                 startServerPlaySession(game, result.sessionId);
+            } else if (result.activeGameConflict) {
+                LauncherGameLaunchBridge.showActiveGameDialog(requireContext(), result.activeGameTitle);
             } else if (result.message != null && !result.message.trim().isEmpty()) {
                 Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show();
             }
