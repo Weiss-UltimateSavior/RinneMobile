@@ -1,0 +1,249 @@
+package com.apps.game;
+
+import android.text.TextUtils;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+
+import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherTheme;
+import com.core.launcherbridge.LauncherScanBridge;
+import com.core.scanner.ScanReport;
+import com.core.scanner.ScanRequest;
+import com.core.scanner.ScanResult;
+import com.core.util.AppExecutors;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 从 LauncherManageFragment 抽取的 XP3 入口解析与扫描执行控制器。
+ *
+ * 负责扫描根目录、收集 XP3 候选项、在多个候选时弹窗让用户选择启动入口，
+ * 最终将解析后的结果写入游戏库。所有 Fragment 相关能力通过 {@link ManageHost} 桥接。
+ */
+public final class Xp3TargetResolver {
+
+    private final ManageHost host;
+    private AlertDialog scanLoadingDialog;
+    private ScanRequest activeScanRequest;
+
+    public Xp3TargetResolver(ManageHost host) {
+        this.host = host;
+    }
+
+    public void executeScan(List<String> roots, int depth) {
+        scanAndResolveXp3Targets(roots, depth);
+    }
+
+    private void scanAndResolveXp3Targets(List<String> roots, int depth) {
+        ScanRequest request = ScanRequest.defaults(depth);
+        activeScanRequest = request;
+        scanLoadingDialog = showScanLoadingDialog();
+        scanLoadingDialog.setCancelable(true);
+        scanLoadingDialog.setCanceledOnTouchOutside(false);
+        scanLoadingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消扫描", (dialog, which) -> request.cancel());
+        scanLoadingDialog.setOnCancelListener(dialog -> request.cancel());
+        android.content.Context appContext = host.getAppContext();
+        AppExecutors.runOnSingle(() -> {
+            LauncherScanBridge.ScanBatchResult result = LauncherScanBridge.scanWithReport(appContext, roots, request);
+            host.getMainQueue().post(() -> {
+                if (!host.isAdded()) return;
+                dismissScanLoadingDialog();
+                activeScanRequest = null;
+                handleScanDiscovery(result);
+            });
+        });
+    }
+
+    private void handleScanDiscovery(LauncherScanBridge.ScanBatchResult result) {
+        if (result == null) return;
+        List<ScanResult> results = result.getResults();
+        String summary = "已访问 " + result.getVisitedNodes() + " 个项目，发现 " + results.size() + " 个游戏";
+        if (!result.getErrors().isEmpty()) summary += "\n错误 " + result.getErrors().size() + " 项：\n• " + TextUtils.join("\n• ", result.getErrors());
+        if (result.isPartial()) {
+            summary += "\n扫描已" + stopReasonText(result.getStopReason()) + "。";
+            if (results.isEmpty()) {
+                host.showConfirmDialog("扫描未完成", summary, "知道了", () -> {});
+            } else {
+                host.showConfirmDialog("扫描未完成", summary + "\n是否导入已发现的结果？", "导入", () -> resolveXp3Candidates(results, 0));
+            }
+            return;
+        }
+        if (!result.getErrors().isEmpty()) {
+            if (results.isEmpty()) {
+                host.showConfirmDialog("扫描完成（有错误）", summary, "知道了", () -> {});
+            } else {
+                host.showConfirmDialog("扫描完成（有错误）",
+                        summary + "\n其余目录已扫描完成，是否继续导入已发现的结果？",
+                        "继续导入", () -> resolveXp3Candidates(results, 0));
+            }
+            return;
+        }
+        resolveXp3Candidates(results, 0);
+    }
+
+    private String stopReasonText(ScanReport.StopReason reason) {
+        if (reason == ScanReport.StopReason.CANCELLED) return "取消";
+        if (reason == ScanReport.StopReason.DEADLINE) return "超时停止";
+        if (reason == ScanReport.StopReason.NODE_LIMIT) return "达到项目上限";
+        return "停止";
+    }
+
+    private void resolveXp3Candidates(List<ScanResult> results, int startIndex) {
+        if (!host.isAdded()) return;
+        if (results == null) {
+            importResolvedScanResults(new ArrayList<>());
+            return;
+        }
+        for (int i = startIndex; i < results.size(); i++) {
+            ScanResult result = results.get(i);
+            if (result == null || result.xp3Candidates == null || result.xp3Candidates.size() < 2) continue;
+            showXp3TargetDialog(results, i, result);
+            return;
+        }
+        importResolvedScanResults(results);
+    }
+
+    private void showXp3TargetDialog(List<ScanResult> results, int index, ScanResult result) {
+        AlertDialog dialog = new AlertDialog.Builder(host.requireContext()).create();
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+        LauncherMotion.applyDialogMotion(dialog);
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setLayout(host.dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout root = new LinearLayout(host.requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(host.dp(22), host.dp(18), host.dp(22), host.dp(15));
+        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
+
+        TextView title = new TextView(host.requireContext());
+        title.setText("选择 XP3 入口");
+        title.setGravity(android.view.Gravity.CENTER);
+        title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
+        host.setResponsiveTextSize(title, 16);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView info = new TextView(host.requireContext());
+        info.setText("《" + result.title + "》检测到多个 XP3 文件，请选择启动入口");
+        info.setGravity(android.view.Gravity.CENTER);
+        info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
+        host.setResponsiveTextSize(info, 12);
+        info.setLineSpacing(host.dp(4), 1f);
+        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        infoLp.setMargins(0, host.dp(10), 0, 0);
+        root.addView(info, infoLp);
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(host.requireContext());
+        LinearLayout choices = new LinearLayout(host.requireContext());
+        choices.setOrientation(LinearLayout.VERTICAL);
+        for (String candidate : result.xp3Candidates) {
+            TextView option = new TextView(host.requireContext());
+            option.setText(candidate);
+            option.setGravity(android.view.Gravity.CENTER);
+            option.setSingleLine(true);
+            option.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+            option.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
+            host.setResponsiveTextSize(option, 13);
+            option.setBackground(LauncherTheme.cancelChip(host.requireContext()));
+            option.setOnClickListener(view -> {
+                result.launchTarget = candidate;
+                dialog.dismiss();
+                resolveXp3Candidates(results, index + 1);
+            });
+            LinearLayout.LayoutParams optionLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(38));
+            optionLp.setMargins(0, host.dp(8), 0, 0);
+            choices.addView(option, optionLp);
+        }
+        scroll.addView(choices);
+        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                Math.min(host.dp(250), host.dp(8) + result.xp3Candidates.size() * host.dp(46)));
+        scrollLp.setMargins(0, host.dp(4), 0, 0);
+        root.addView(scroll, scrollLp);
+
+        LinearLayout buttons = new LinearLayout(host.requireContext());
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        buttons.setWeightSum(2);
+        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
+        buttonsLp.setMargins(0, host.dp(12), 0, 0);
+
+        TextView skip = new TextView(host.requireContext());
+        skip.setText("跳过此游戏");
+        skip.setGravity(android.view.Gravity.CENTER);
+        host.setResponsiveTextSize(skip, 13);
+        skip.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(skip);
+        skip.setOnClickListener(view -> {
+            results.remove(index);
+            dialog.dismiss();
+            resolveXp3Candidates(results, index);
+        });
+        buttons.addView(skip, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+
+        TextView cancel = new TextView(host.requireContext());
+        cancel.setText("取消扫描");
+        cancel.setGravity(android.view.Gravity.CENTER);
+        host.setResponsiveTextSize(cancel, 13);
+        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.secondaryButton(cancel);
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        cancelLp.setMargins(host.dp(8), 0, 0, 0);
+        buttons.addView(cancel, cancelLp);
+        root.addView(buttons, buttonsLp);
+        window.setContentView(root);
+    }
+
+    private void importResolvedScanResults(List<ScanResult> results) {
+        scanLoadingDialog = host.showScanLoadingDialog("正在导入...", "正在写入游戏库");
+        android.content.Context appContext = host.getAppContext();
+        AppExecutors.runOnSingle(() -> {
+            LauncherScanBridge.ImportStats stats = LauncherScanBridge.importScanResults(appContext, results);
+            host.getMainQueue().post(() -> {
+                if (!host.isAdded()) return;
+                dismissScanLoadingDialog();
+                showScanResultDialog(stats);
+            });
+        });
+    }
+
+    private AlertDialog showScanLoadingDialog() {
+        return host.showScanLoadingDialog("正在扫描...", "请不要关闭应用，扫描可能需要一些时间");
+    }
+
+    private void dismissScanLoadingDialog() {
+        if (scanLoadingDialog != null && scanLoadingDialog.isShowing()) {
+            scanLoadingDialog.dismiss();
+            scanLoadingDialog = null;
+        }
+    }
+
+    private void showScanResultDialog(LauncherScanBridge.ImportStats stats) {
+        if (stats == null) return;
+        StringBuilder msg = new StringBuilder();
+        msg.append("扫描到 ").append(stats.scanned).append(" 个结果\n")
+                .append("新增 ").append(stats.added).append(" 个，已存在 ").append(stats.skipped).append(" 个，失败 ").append(stats.failed).append(" 个");
+        if (!stats.failedItems.isEmpty()) {
+            msg.append("\n");
+            for (String item : stats.failedItems) {
+                msg.append("\n• ").append(item);
+            }
+        }
+        host.showConfirmDialog("扫描完成", msg.toString(), "知道了", () -> {});
+    }
+
+    public void cleanup() {
+        if (activeScanRequest != null) activeScanRequest.cancel();
+        activeScanRequest = null;
+        dismissScanLoadingDialog();
+    }
+}
