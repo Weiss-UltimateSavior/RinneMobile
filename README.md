@@ -154,6 +154,7 @@
 │       ├── java/
 │       │   ├── com/apps/             # Launcher UI 层
 │       │   │   ├── account/          # 账号（登录/注册/免责声明）
+│       │   │   ├── agent/            # 本地 AI 智能体
 │       │   │   ├── chat/             # AI 对话与公共聊天
 │       │   │   ├── game/             # 游戏库管理
 │       │   │   ├── home/             # 首页
@@ -166,26 +167,35 @@
 │       │   │   ├── data/             # 仓库与 ViewModel
 │       │   │   ├── PadUi/            # 平板适配 UI
 │       │   │   └── UserData/         # 用户数据导入导出
-│       │   └── com/yuki/yukihub/     # Core 层 + Bridge
+│       │   └── com/core/             # Core 层 + Bridge
+│       │       ├── CoreApp.kt        # Application 入口
 │       │       ├── data/             # 数据库与仓库
+│       │       ├── diagnostics/      # 诊断与日志
+│       │       ├── importer/         # 第三方数据导入（LunaBox/Playnite/Vnite/PotatoVn）
+│       │       ├── launcher/         # 启动器与引擎调度
+│       │       ├── launcherbridge/   # WebView Bridge 通道
 │       │       ├── metadata/         # 元数据（VNDB / Bangumi）
-│       │       ├── launcher/         # 启动器
-│       │       ├── launcherbridge/   # Bridge 通道
 │       │       ├── model/            # 数据模型
 │       │       ├── net/              # 网络层
 │       │       ├── scanner/          # 引擎检测与扫描
 │       │       ├── sync/             # 同步管理
-│       │       ├── tyrano/           # Tyrano 引擎
+│       │       ├── translation/      # 翻译覆盖服务
 │       │       └── util/             # 工具类
 │       └── res/                      # 资源文件
 ├── engine/                           # 引擎独立 library 模块
 │   └── src/main/
-│       ├── java/                     # KRKR / ONS / Artemis 等引擎
+│       ├── java/
+│       │   ├── com/core/             # 自研引擎宿主
+│       │   │   ├── ons/              # ONScripter 引擎
+│       │   │   └── tyrano/           # Tyrano 引擎
+│       │   ├── org/tvp/kirikiri2/    # KRKR 引擎
+│       │   ├── com/ies_net/artemis/  # Artemis 引擎
+│       │   ├── org/libsdl/app/       # SDL 底层
+│       │   └── org/cocos2dx/lib/     # Cocos2d-x 底层
 │       ├── jniLibs/                  # 原生库（arm64）
 │       └── assets/                   # 引擎运行时资源
 ├── gradle/
 │   └── libs.versions.toml            # 版本目录
-└── third_party/                      # 第三方组件
 ```
 
 ***
@@ -367,7 +377,7 @@
 - Android Gradle Plugin: `8.13.2`
 - 多模块架构：`app` + `engine`（引擎独立 library 模块）
 - 代码压缩：R8 + 资源压缩（Release）
-- 当前版本：`0.1.4`（Version Code: `6`）
+- 当前版本：`0.9.9.9.5.3`（Version Code: `6`）
 
 ***
 

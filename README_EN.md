@@ -27,25 +27,13 @@ This is a branch version based on secondary development of YukiHub.
 
 ## Features
 
-* Supports adding, editing, and deleting game entries
-* Integrates game metadata sources from VNDB and Bangumi
-* Supports game entries with empty directories
-
-  * Suitable for Android app-style games, external programs, and custom launch entries
-* Supports importing GameHub shortcuts
-
-  * Shortcut list supports icon display
-  * Supports search and filtering
-* Supports multiple launch methods
-* Supports local games, Android app-style entries, and external launch entries
-* Supports game synchronization and import/export
-
-  * Supports game entry synchronization
-  * Supports play record synchronization
-  * Supports matching and restoring empty-directory entries
-* Supports viewing the complete disclaimer in Settings
-* Requires accepting the disclaimer on first launch before entering
-* Dark-style interface, suitable for landscape use
+- **Unified Game Library**: Add, edit, delete, and manage local games, Android apps, and external launch entries.
+- **Game Metadata**: Integrated VNDB and Bangumi data sources for supplementing game information.
+- **Flexible Launching**: Supports empty-directory entries, package-name launching, custom shortcuts, and multiple launch methods.
+- **GameHub Import**: Import shortcuts with icon display and search/filter support.
+- **Local AI Agent**: Built-in AI agent connecting to your own OpenAI-compatible API — query the game library, browse and search game files, assist with translation text replacement, and more. Two permission modes, configurable temperature and tool-call limits. Supports MCP (Model Context Protocol) Streamable HTTP servers for extended tool capabilities.
+- **Data Sync**: Supports import, export, and synchronization of game entries and play records; empty-directory entries can be matched and restored.
+- **Usage Safeguards**: Built-in disclaimer confirmation flow, with dark mode and landscape support.
 
 ---
 
@@ -67,12 +55,13 @@ It is suitable for the following scenarios:
 ## Project Structure
 
 ```
-YukiHub/
+RinneMobile/
 ├── app/                              # Main application module
 │   └── src/main/
 │       ├── java/
 │       │   ├── com/apps/             # Launcher UI layer
 │       │   │   ├── account/          # Account (login/register/disclaimer)
+│       │   │   ├── agent/            # Local AI agent
 │       │   │   ├── chat/             # AI chat & public chat
 │       │   │   ├── game/             # Game library management
 │       │   │   ├── home/             # Home screen
@@ -85,26 +74,35 @@ YukiHub/
 │       │   │   ├── data/             # Repository & ViewModel
 │       │   │   ├── PadUi/            # Tablet UI
 │       │   │   └── UserData/         # User data import/export
-│       │   └── com/yuki/yukihub/     # Core layer + Bridge
+│       │   └── com/core/             # Core layer + Bridge
+│       │       ├── CoreApp.kt        # Application entry
 │       │       ├── data/             # Database & repository
+│       │       ├── diagnostics/      # Diagnostics & logging
+│       │       ├── importer/         # Third-party data import (LunaBox/Playnite/Vnite/PotatoVn)
+│       │       ├── launcher/         # Launcher & engine dispatch
+│       │       ├── launcherbridge/   # WebView Bridge channel
 │       │       ├── metadata/         # Metadata (VNDB / Bangumi)
-│       │       ├── launcher/         # Launcher
-│       │       ├── launcherbridge/   # Bridge channel
 │       │       ├── model/            # Data models
 │       │       ├── net/              # Network layer
 │       │       ├── scanner/          # Engine detection & scanning
 │       │       ├── sync/             # Sync manager
-│       │       ├── tyrano/           # Tyrano engine
+│       │       ├── translation/      # Translation overlay service
 │       │       └── util/             # Utilities
 │       └── res/                      # Resources
 ├── engine/                           # Standalone engine library module
 │   └── src/main/
-│       ├── java/                     # KRKR / ONS / Artemis / RMMZ engines
+│       ├── java/
+│       │   ├── com/core/             # In-house engine hosts
+│       │   │   ├── ons/              # ONScripter engine
+│       │   │   └── tyrano/           # Tyrano engine
+│       │   ├── org/tvp/kirikiri2/    # KRKR engine
+│       │   ├── com/ies_net/artemis/  # Artemis engine
+│       │   ├── org/libsdl/app/       # SDL foundation
+│       │   └── org/cocos2dx/lib/     # Cocos2d-x foundation
 │       ├── jniLibs/                  # Native libraries (arm64)
 │       └── assets/                   # Engine runtime assets
 ├── gradle/
 │   └── libs.versions.toml            # Version catalog
-└── third_party/                      # Third-party components
 ```
 
 ---
@@ -113,42 +111,63 @@ YukiHub/
 
 ### 1. Game Management
 
-Supports adding, editing, and deleting game entries, and provides unified management for different types of launch entries.
+Supports adding, editing, and deleting game entries, with unified management for different types of launch entries.
 
-### 2. Empty-directory Entry Support
+### 2. Scanning and Launch Coverage
 
-For games or app entries that do not require a local directory, the directory field is not mandatory.
+Directory scanning first probes the selected root directory itself, then scans its subdirectories and entry files. You can select a single game directory or a parent directory containing multiple games.
 
-This is especially useful for the following scenarios:
+| Type | Auto-scan Signatures | Post-import Status |
+| --- | --- | --- |
+| Kirikiri | `.xp3`, `startup.tjs`, `config.tjs` | Launched via built-in KRKR. Multiple XP3 candidates prompt for entry selection. |
+| ONScripter | `0.txt`, `nscript.dat`, `onscript.nt*`, `.nsa`, `.sar` | Launched via built-in ONScripter. |
+| Tyrano | `index.html` and Tyrano / Electron directory signatures | Launched via built-in Tyrano. |
+| Artemis | `system.ini`, `system/first.iet`, `.pfs` | Launched via built-in Artemis. |
+| Winlator | `.desktop` shortcuts | Recognized; requires selecting an installed Winlator package that supports external direct launch. `.exe` entries currently need manual addition via "Add Game". |
+| Nintendo 3DS | `.3ds`, `.cci`, `.zcci`, `.cxi`, `.zcxi`, `.cia`, `.zcia`, `.3dsx`, `.z3dsx` | Imported as file URIs; launch requires Azahar emulator. Title and cover currently derived from filename and directory image. |
+| RPG Maker | `.rgssad` (XP), `.rgss2a` (VX), `.rgss3a` (VX Ace), `game.ini` + `.rxdata` / `.rvdata` / `.rvdata2` | Launched via external RPG Maker plugin. Auto-detects XP / VX / VX Ace / mkxp-z sub-engines and selects the corresponding runtime. |
+| Ren'Py | `.rpa`, `game/script.rpy`, `game/options.rpy`, `renpy/` directory + `.rpy` / `.rpyc` | Launched via external Ren'Py plugin. |
+| PSP | `.iso`, `.cso`, `.chd`, `.elf`, `.pbp` | Imported as file URIs; launch requires PPSSPP. Title and cover currently derived from filename and directory image; `PARAM.SFO` / `ICON0.PNG` parsing not yet implemented. |
+| GameHub | Not via directory scanning | Reads GameHub desktop shortcuts via Shizuku and imports `localGameId`. |
 
-* Directly launching Android apps
-* Entries launched by package name
-* External program entries
-* Custom quick-launch entries
+Android apps, external package-name entries, and custom shortcuts are also manageable entries but are not in the auto-scan scope — create them via manual addition or the corresponding shortcut import entry. The project currently has no RMMZ `EngineType`, auto-detection, or launch strategy, so RMMZ is not listed as a supported scan type.
 
-### 3. GameHub Shortcut Import
+### 3. Empty-directory Entry Support
 
-Supports importing shortcuts from GameHub and provides:
+Shortcuts imported via shortcut import, sync restore, or existing entries can retain empty-directory entries; the "Add Game" page currently requires selecting a game directory first.
 
-* Icon display
-* Search and filtering
-* A clearer list selection experience
+This is especially useful for:
 
-### 4. Synchronization
+- Directly launching Android apps
+- Entries launched by package name
+- External program entries
+- Custom quick-launch entries
 
-Supports synchronization, import, and export of game data and play records, suitable for local backup or multi-device migration. It also supports ☁️ WebDAV cloud synchronization.
+### 4. GameHub Shortcut Import
 
-During synchronization, matching will be attempted based on the following information:
+Supports reading desktop shortcuts from GameHub via Shizuku, providing:
 
-* root path
-* local ID
-* game title
+- Icon display
+- Search and filtering
+- A clearer list selection experience
+
+### 5. Synchronization
+
+Supports import, export, and synchronization of game data and play records, suitable for local backup and multi-device migration. Also supports ☁️ WebDAV cloud sync.
+
+Matching is attempted based on:
+
+- root path
+- local ID
+- game title
 
 For empty-directory entries, title matching is prioritized.
 
-### 5. Play Time Recording
+### 6. Play Time Recording
 
-* The current play time recording mode works as follows: when you launch a game from the app, timing starts; when you return to the app foreground, timing ends. It is fine if the app is sent to the background midway, and the time can still be recorded when you return. However, do not switch back to the app out of curiosity halfway through and then immediately return to the game, because the remaining time after that will not be counted. You need to launch the game from the app again for a new session to be recorded.
+Timing starts when you launch a game from the app; it ends when you return to the app foreground. If the app is killed in the background, recorded time is still preserved when you reopen it.
+
+> Note: If you return to the app foreground mid-game and then switch back to the game directly, subsequent time will not be auto-counted. Relaunch the game from the app to start a new session.
 
 ---
 
@@ -157,14 +176,14 @@ For empty-directory entries, title matching is prioritized.
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>Entry Interface</b></td>
-      <td align="center"><b>Sync Page</b></td>
-      <td align="center"><b>Game Library</b></td>
+      <td align="center"><b>Theme 1</b></td>
+      <td align="center"><b>Theme 2</b></td>
+      <td align="center"><b>Theme 3</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/main.jpg" width="280" /></td>
-      <td><img src="screenshots/tongbu.jpg" width="280" /></td>
-      <td><img src="screenshots/game.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题3.jpg" width="280" /></td>
     </tr>
   </table>
 </p>
@@ -172,14 +191,73 @@ For empty-directory entries, title matching is prioritized.
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>Style Theme</b></td>
+      <td align="center"><b>Theme Menu</b></td>
+      <td align="center"><b>Particle Background</b></td>
       <td align="center"><b>Dark Mode</b></td>
-      <td align="center"><b>Online Features</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/theme.jpg" width="280" /></td>
-      <td><img src="screenshots/dark.jpg" width="280" /></td>
-      <td><img src="screenshots/net.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏主题菜单.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏粒子菜单.jpg" width="280" /></td>
+      <td><img src="screenshots/深色模式.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>Game Library</b></td>
+      <td align="center"><b>Manage Settings</b></td>
+      <td align="center"><b>Profile</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/竖屏游戏页.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏设置页.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏个人页.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>Game Management</b></td>
+      <td align="center"><b>Game Management</b></td>
+      <td align="center"><b>Game Management</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/竖屏游戏管理1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏游戏管理2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏游戏管理3.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>Features</b></td>
+      <td align="center"><b>Features</b></td>
+      <td align="center"><b>Features</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/竖屏功能1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏功能2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏功能3.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td><img src="screenshots/横屏首页.jpg" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/横屏游戏.jpg" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/横屏设置.jpg" width="960" /></td>
     </tr>
   </table>
 </p>
@@ -214,15 +292,13 @@ For empty-directory entries, title matching is prioritized.
 
 ---
 
-### Currently Known Issues
+### Resolved Compatibility & Known Issues
 
-* 1. Direct launching KRKR games with TF card paths was previously suspected to not work. As of version `0.125+3`, this has been fixed. When running games from an SD card, the app automatically enables mirrored directory mode. Save data location is consistent with independent save mode.
+- Text input dialogs in KRKR games are unavailable. Testing showed they cause crashes. Decompiling the hook revealed that the native library driver's `win32dialog.dll` is missing the `Header`, `allBitmaps`, and `finalize` functions required by the game.
+- KRKR games on TF cards can now be launched via mirrored directory mode; save data location is consistent with independent save mode.
+- Storage access compatibility on Huawei and similar devices has been improved: try enabling "External Private Save" or lightweight SAF. If issues persist, please report your device and reproduction steps.
 
-* 2. Due to storage read/write restrictions on Huawei and some other phones, KRKR, Artemis, and other engine games may not play normally. An external private save option has been added. You can try enabling it; maybe it helps. A lightweight SAF option has also been added 🤔. Whether it works still depends on testing. Feature entry is shown below. ✓ As of version `0.12.5+1`, this has been fixed. If you still encounter issues, please report them.
-
-<p align="center"><img src="screenshots/save1.jpg" width="280" /></p>
-
-* That is all for now. PRs from capable people are welcome meow 😽😽😽
+PRs from capable developers are welcome. 😽
 
 ---
 
@@ -299,7 +375,8 @@ Then open the project and run the build.
 
 ## Build Information
 
-* Application ID: `com.yuki.yukihub`
+* Application ID: `com.yuki.yukihub.rinne`
+* Source namespace: `com.core` (app) / `com.core.engine` (engine)
 * Min SDK: `26`
 * Target SDK: `33`
 * Compile SDK: `36`
@@ -307,7 +384,7 @@ Then open the project and run the build.
 * Android Gradle Plugin: `8.13.2`
 * Multi-module architecture: `app` + `engine` (standalone engine library module)
 * Code shrinking: R8 + resource shrinking (Release)
-* Current version: `0.1.4` (Version Code: `6`)
+* Current version: `0.9.9.9.5.3` (Version Code: `6`)
 
 ---
 
