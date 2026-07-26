@@ -32,6 +32,11 @@ import com.core.R;
 import com.core.databinding.FragmentLauncherProfileBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.launcherbridge.UserInfoCallback;
+import com.core.launcherbridge.MyRankCallback;
+import com.core.launcherbridge.MyRank;
+import com.core.launcherbridge.ConfigCallback;
+import com.core.launcherbridge.PlayDataCallback;
 import com.core.util.TimeFormatUtil;
 import com.core.util.AppExecutors;
 
@@ -164,7 +169,7 @@ public class LauncherProfileFragment extends Fragment {
         renderUserInfo();
         // 如果已登录，刷新用户信息
         if (LauncherAuthBridge.isLoggedIn(requireContext())) {
-            LauncherAuthBridge.fetchUserInfo(requireContext(), new LauncherAuthBridge.UserInfoCallback() {
+            LauncherAuthBridge.fetchUserInfo(requireContext(), new UserInfoCallback() {
                 @Override
                 public void onSuccess(String nickname, String email) {
                     if (binding != null) renderUserInfo();
@@ -202,8 +207,8 @@ public class LauncherProfileFragment extends Fragment {
             return;
         }
         renderPlayTimeRankLoading();
-        LauncherAuthBridge.fetchMyPlayTimeRank(requireContext(), new LauncherAuthBridge.MyRankCallback() {
-            @Override public void onSuccess(LauncherAuthBridge.MyRank rank) {
+        LauncherAuthBridge.fetchMyPlayTimeRank(requireContext(), new MyRankCallback() {
+            @Override public void onSuccess(MyRank rank) {
                 if (binding == null || !isAdded()) return;
                 binding.profilePlaytimeRankValue.setText(rank.rank > 0 ? "全站第 " + rank.rank + " 名" : "暂无游玩记录");
                 binding.profilePlaytimeTotalValue.setText(TimeFormatUtil.playTime(rank.totalDurationMs));
@@ -298,10 +303,10 @@ public class LauncherProfileFragment extends Fragment {
     private void performCloudRestore() {
         loadingDialog = showLoadingDialog("正在恢复配置...", "请不要关闭应用及网络，否则可能导致配置出错");
 
-        LauncherAuthBridge.fetchConfig(requireContext(), new LauncherAuthBridge.ConfigCallback() {
+        LauncherAuthBridge.fetchConfig(requireContext(), new ConfigCallback() {
             @Override
             public void onSuccess(String configJson) {
-                LauncherAuthBridge.fetchPlayData(requireContext(), new LauncherAuthBridge.PlayDataCallback() {
+                LauncherAuthBridge.fetchPlayData(requireContext(), new PlayDataCallback() {
                     @Override
                     public void onSuccess(String playSql) {
                         // 直接导入云端设置

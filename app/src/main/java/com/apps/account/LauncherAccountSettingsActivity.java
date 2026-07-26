@@ -20,7 +20,10 @@ import androidx.core.content.ContextCompat;
 import com.apps.UserData.LauncherUserData;
 import com.core.R;
 import com.core.databinding.ActivityLauncherAccountSettingsBinding;
+import com.core.launcherbridge.ConfigCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.PlayDataCallback;
+import com.core.launcherbridge.SubscriptionCallback;
 import com.apps.LauncherActivity;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherDialogFactory;
@@ -61,7 +64,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
     private void refreshEmailSubscription() {
         if (!LauncherAuthBridge.isLoggedIn(this)) return;
-        LauncherAuthBridge.fetchEmailSubscription(this, new LauncherAuthBridge.SubscriptionCallback() {
+        LauncherAuthBridge.fetchEmailSubscription(this, new SubscriptionCallback() {
             @Override
             public void onSuccess(boolean subscribed) {
                 if (isFinishing()) return;
@@ -103,7 +106,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     private void updateEmailSubscription(boolean subscribed) {
         emailSubscriptionUpdating = true;
         binding.rowEmailSubscribe.setEnabled(false);
-        LauncherAuthBridge.updateEmailSubscription(this, subscribed, new LauncherAuthBridge.SubscriptionCallback() {
+        LauncherAuthBridge.updateEmailSubscription(this, subscribed, new SubscriptionCallback() {
             @Override
             public void onSuccess(boolean actualSubscribed) {
                 if (isFinishing()) return;
@@ -190,7 +193,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
         // 导出并上传
         String settingsJson = LauncherUserData.exportSettingsJson(this);
-        LauncherAuthBridge.uploadConfig(this, settingsJson, new LauncherAuthBridge.ConfigCallback() {
+        LauncherAuthBridge.uploadConfig(this, settingsJson, new ConfigCallback() {
             @Override
             public void onSuccess(String configJson) {
                 // 上传游玩记录
@@ -201,7 +204,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                     showResultDialog("部分上传失败", "配置已上传，但本地数据导出失败，游玩记录未能上传");
                     return;
                 }
-                LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playData, new LauncherAuthBridge.PlayDataCallback() {
+                LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playData, new PlayDataCallback() {
                     @Override
                     public void onSuccess(String playData) {
                         dismissLoading();

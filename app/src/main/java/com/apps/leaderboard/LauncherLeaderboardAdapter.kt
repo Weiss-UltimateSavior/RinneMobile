@@ -9,12 +9,13 @@ import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
 import com.core.launcherbridge.LauncherAuthBridge
+import com.core.launcherbridge.LeaderboardEntry
 import com.core.util.TimeFormatUtil
 
 class LauncherLeaderboardAdapter : RecyclerView.Adapter<LauncherLeaderboardAdapter.Holder>() {
-    private val entries = mutableListOf<LauncherAuthBridge.LeaderboardEntry>()
+    private val entries = mutableListOf<LeaderboardEntry>()
 
-    fun submit(items: List<LauncherAuthBridge.LeaderboardEntry>?) {
+    fun submit(items: List<LeaderboardEntry>?) {
         entries.clear()
         items?.let(entries::addAll)
         notifyDataSetChanged()

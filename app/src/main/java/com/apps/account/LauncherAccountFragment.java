@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 
 import com.core.R;
 import com.core.databinding.FragmentLauncherAccountBinding;
+import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.theme.LauncherMotion;
@@ -155,7 +156,7 @@ public class LauncherAccountFragment extends Fragment {
         binding.btnSubmit.setEnabled(false);
         binding.btnSubmit.setText("登录中...");
 
-        LauncherAuthBridge.login(requireContext(), email, password, new LauncherAuthBridge.AuthCallback() {
+        LauncherAuthBridge.login(requireContext(), email, password, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {

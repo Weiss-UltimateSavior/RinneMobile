@@ -31,6 +31,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.core.R;
 import com.core.launcherbridge.LauncherAiChatBridge;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LlmConfigCallback;
+import com.core.launcherbridge.LlmConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -277,15 +279,15 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             if (imm != null) imm.showSoftInput(baseUrl, android.view.inputmethod.InputMethodManager.SHOW_FORCED);
         }, 420L);
 
-        LauncherAuthBridge.fetchLlmConfig(this, new LauncherAuthBridge.LlmConfigCallback() {
-            @Override public void onSuccess(LauncherAuthBridge.LlmConfig config) {
+        LauncherAuthBridge.fetchLlmConfig(this, new LlmConfigCallback() {
+            @Override public void onSuccess(LlmConfig config) {
                 if (!dialog.isShowing()) return;
                 baseUrl.setText(config.baseUrl); apiKey.setText(config.apiKey); model.setText(config.model); temperature.setText(config.temperature);
                 loading.setText("留空即回退到系统默认模型");
             }
             @Override public void onError(String message) { if (dialog.isShowing()) loading.setText("读取失败：" + message); }
         });
-        reset.setOnClickListener(view -> saveLlmConfig(dialog, new LauncherAuthBridge.LlmConfig(), reset, "恢复中...", "恢复系统默认"));
+        reset.setOnClickListener(view -> saveLlmConfig(dialog, new LlmConfig(), reset, "恢复中...", "恢复系统默认"));
         save.setOnClickListener(view -> {
             String baseUrlValue = textOf(baseUrl);
             String baseUrlError = validatePublicBaseUrl(baseUrlValue);
@@ -297,7 +299,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                     if (value < 0d || value > 2d) throw new NumberFormatException();
                 } catch (NumberFormatException error) { temperature.setError("温度需在 0.0 到 2.0 之间"); return; }
             }
-            LauncherAuthBridge.LlmConfig config = new LauncherAuthBridge.LlmConfig();
+            LlmConfig config = new LlmConfig();
             config.baseUrl = baseUrlValue; config.apiKey = textOf(apiKey); config.model = textOf(model); config.temperature = temp;
             saveLlmConfig(dialog, config, save, "验证并保存中...", "保存");
         });
@@ -323,7 +325,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         return field;
     }
 
-    private void saveLlmConfig(android.app.Dialog dialog, LauncherAuthBridge.LlmConfig config, TextView action,
+    private void saveLlmConfig(android.app.Dialog dialog, LlmConfig config, TextView action,
                                String loadingText, String idleText) {
         action.setEnabled(false);
         action.setText(loadingText);
@@ -331,8 +333,8 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                 && (config.apiKey == null || config.apiKey.trim().isEmpty())
                 && (config.model == null || config.model.trim().isEmpty())
                 && (config.temperature == null || config.temperature.trim().isEmpty());
-        LauncherAuthBridge.updateLlmConfig(this, config, new LauncherAuthBridge.LlmConfigCallback() {
-            @Override public void onSuccess(LauncherAuthBridge.LlmConfig saved) {
+        LauncherAuthBridge.updateLlmConfig(this, config, new LlmConfigCallback() {
+            @Override public void onSuccess(LlmConfig saved) {
                 if (dialog.isShowing()) dialog.dismiss();
                 Toast.makeText(LauncherAiChatActivity.this,
                         restoresDefault ? "已恢复系统默认模型" : "模型连通性验证通过，配置已保存", Toast.LENGTH_SHORT).show();

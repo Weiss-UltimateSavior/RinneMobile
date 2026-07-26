@@ -20,7 +20,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherRegisterBinding;
+import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.SimpleCallback;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
@@ -151,7 +153,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         }
         binding.registerSendCode.setEnabled(false);
         binding.registerSendCode.setText("发送中...");
-        LauncherAuthBridge.sendRegistrationVerificationCode(this, email, inviteCode, new LauncherAuthBridge.SimpleCallback() {
+        LauncherAuthBridge.sendRegistrationVerificationCode(this, email, inviteCode, new SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;
@@ -234,7 +236,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         binding.registerCreate.setEnabled(false);
         binding.registerCreate.setText("注册中...");
 
-        LauncherAuthBridge.register(this, username, email, password, inviteCode, verificationCode, new LauncherAuthBridge.AuthCallback() {
+        LauncherAuthBridge.register(this, username, email, password, inviteCode, verificationCode, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {

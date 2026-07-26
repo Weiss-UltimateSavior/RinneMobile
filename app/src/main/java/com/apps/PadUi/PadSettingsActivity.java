@@ -24,10 +24,13 @@ import com.apps.theme.LauncherTheme;
 import com.apps.UserData.LauncherUserData;
 import com.core.R;
 import com.core.databinding.ActivityPadSettingsBinding;
+import com.core.launcherbridge.ConfigCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.core.launcherbridge.LauncherKrkrBridge;
 import com.core.launcherbridge.LauncherMetadataBridge;
+import com.core.launcherbridge.PlayDataCallback;
+import com.core.launcherbridge.SubscriptionCallback;
 import com.core.metadata.MetadataController;
 import com.core.ons.OnsSettings;
 
@@ -567,7 +570,7 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void refreshEmailSubscription() {
         if (!LauncherAuthBridge.isLoggedIn(this)) return;
-        LauncherAuthBridge.fetchEmailSubscription(this, new LauncherAuthBridge.SubscriptionCallback() {
+        LauncherAuthBridge.fetchEmailSubscription(this, new SubscriptionCallback() {
             @Override
             public void onSuccess(boolean subscribed) {
                 if (isFinishing()) return;
@@ -603,7 +606,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         emailSubscriptionUpdating = true;
         binding.padRowEmailSubscribe.setEnabled(false);
         LauncherAuthBridge.updateEmailSubscription(this, subscribed,
-                new LauncherAuthBridge.SubscriptionCallback() {
+                new SubscriptionCallback() {
                     @Override
                     public void onSuccess(boolean actualSubscribed) {
                         if (isFinishing()) return;
@@ -666,7 +669,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherSyncScheduler.updateSchedule(this);
         accountLoadingDialog = showAccountLoading("正在上传配置...", "请不要关闭应用及网络，否则可能导致配置出错");
         String settingsJson = LauncherUserData.exportSettingsJson(this);
-        LauncherAuthBridge.uploadConfig(this, settingsJson, new LauncherAuthBridge.ConfigCallback() {
+        LauncherAuthBridge.uploadConfig(this, settingsJson, new ConfigCallback() {
             @Override
             public void onSuccess(String configJson) {
                 String playData = LauncherUserData.exportCloudPlayData(PadSettingsActivity.this);
@@ -676,7 +679,7 @@ public class PadSettingsActivity extends AppCompatActivity {
                     return;
                 }
                 LauncherAuthBridge.uploadPlayData(PadSettingsActivity.this, playData,
-                        new LauncherAuthBridge.PlayDataCallback() {
+                        new PlayDataCallback() {
                             @Override
                             public void onSuccess(String playData) {
                                 dismissAccountLoading();

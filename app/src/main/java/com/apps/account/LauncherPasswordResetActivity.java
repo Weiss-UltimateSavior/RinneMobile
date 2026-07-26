@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.core.R;
 import com.core.databinding.ActivityLauncherPasswordResetBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.SimpleCallback;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -56,7 +57,7 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         }
         binding.resetSendCode.setEnabled(false);
         binding.resetSendCode.setText("发送中...");
-        LauncherAuthBridge.sendPasswordResetCode(this, email, new LauncherAuthBridge.SimpleCallback() {
+        LauncherAuthBridge.sendPasswordResetCode(this, email, new SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;
@@ -97,7 +98,7 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         }
         binding.resetSubmit.setEnabled(false);
         binding.resetSubmit.setText("重置中...");
-        LauncherAuthBridge.resetPassword(this, email, code, password, new LauncherAuthBridge.SimpleCallback() {
+        LauncherAuthBridge.resetPassword(this, email, code, password, new SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;

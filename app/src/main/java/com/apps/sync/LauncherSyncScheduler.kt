@@ -8,6 +8,8 @@ import android.os.Build
 import android.util.Log
 import com.apps.UserData.LauncherUserData
 import com.core.launcherbridge.LauncherAuthBridge
+import com.core.launcherbridge.ConfigCallback
+import com.core.launcherbridge.PlayDataCallback
 import java.util.Calendar
 
 /** Schedules the nightly Launcher configuration and play-data backup. */
@@ -70,7 +72,7 @@ object LauncherSyncScheduler {
         if (!context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getBoolean(KEY_SYNC_CONFIG, false)) return
 
         LauncherUserData.exportSettingsJson(context)?.let { settingsJson ->
-            LauncherAuthBridge.uploadConfig(context, settingsJson, object : LauncherAuthBridge.ConfigCallback {
+            LauncherAuthBridge.uploadConfig(context, settingsJson, object : ConfigCallback {
                 override fun onSuccess(configJson: String) {
                     Log.d(TAG, "配置备份成功")
                 }
@@ -87,7 +89,7 @@ object LauncherSyncScheduler {
             scheduleNextBackup(context)
             return
         }
-        LauncherAuthBridge.uploadPlayData(context, playData, object : LauncherAuthBridge.PlayDataCallback {
+        LauncherAuthBridge.uploadPlayData(context, playData, object : PlayDataCallback {
             override fun onSuccess(playSql: String) {
                 Log.d(TAG, "游玩记录备份成功")
                 scheduleNextBackup(context)

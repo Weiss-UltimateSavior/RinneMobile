@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherProfileEditBinding;
+import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
@@ -117,7 +118,7 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
         binding.btnUpdateUsername.setEnabled(false);
         binding.btnUpdateUsername.setText("修改中...");
 
-        LauncherAuthBridge.updateUsername(this, newUsername, new LauncherAuthBridge.AuthCallback() {
+        LauncherAuthBridge.updateUsername(this, newUsername, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {
@@ -145,7 +146,7 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
         binding.btnUpdatePassword.setEnabled(false);
         binding.btnUpdatePassword.setText("修改中...");
 
-        LauncherAuthBridge.updatePassword(this, oldPassword, newPassword, new LauncherAuthBridge.AuthCallback() {
+        LauncherAuthBridge.updatePassword(this, oldPassword, newPassword, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {

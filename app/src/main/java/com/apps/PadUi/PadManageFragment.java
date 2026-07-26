@@ -35,6 +35,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.core.databinding.FragmentLauncherLibraryBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.PlaySessionCallback;
+import com.core.launcherbridge.PlaySession;
 import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
@@ -574,9 +576,9 @@ private void loadNextPage(boolean forceFullRefresh) {
         if (!prefs.getBoolean("realtime_playtime", true)) return;
         String deviceId = LauncherUserData.getRealtimePlaytimeDeviceId(app);
         LauncherAuthBridge.startPlayTimeSession(app, game.id, safeTitle(game), deviceId,
-                new LauncherAuthBridge.PlaySessionCallback() {
+                new PlaySessionCallback() {
             @Override
-            public void onSuccess(LauncherAuthBridge.PlaySession session) {
+            public void onSuccess(PlaySession session) {
                 if (session == null || session.sessionId == null || session.sessionId.trim().isEmpty()) return;
                 if (runningSessionId != localSessionId) return;
                 runningServerSessionId = session.sessionId;
@@ -600,8 +602,8 @@ private void loadNextPage(boolean forceFullRefresh) {
         Context context = getContext();
         if (context == null || runningServerSessionId == null || runningServerSessionId.trim().isEmpty()) return;
         Context app = context.getApplicationContext();
-        LauncherAuthBridge.heartbeatPlayTimeSession(app, runningServerSessionId, new LauncherAuthBridge.PlaySessionCallback() {
-            @Override public void onSuccess(LauncherAuthBridge.PlaySession session) { }
+        LauncherAuthBridge.heartbeatPlayTimeSession(app, runningServerSessionId, new PlaySessionCallback() {
+            @Override public void onSuccess(PlaySession session) { }
             @Override public void onError(String message) { }
         });
     }
@@ -612,9 +614,9 @@ private void loadNextPage(boolean forceFullRefresh) {
                 ? LauncherUserData.findServerPlaySessionId(app, localSessionId)
                 : runningServerSessionId;
         if (serverSessionId == null || serverSessionId.trim().isEmpty()) return;
-        LauncherAuthBridge.finishPlayTimeSession(app, serverSessionId, new LauncherAuthBridge.PlaySessionCallback() {
+        LauncherAuthBridge.finishPlayTimeSession(app, serverSessionId, new PlaySessionCallback() {
             @Override
-            public void onSuccess(LauncherAuthBridge.PlaySession session) {
+            public void onSuccess(PlaySession session) {
                 LauncherUserData.removeServerPlaySession(app, localSessionId);
             }
 
