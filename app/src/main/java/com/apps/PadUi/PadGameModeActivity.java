@@ -11,7 +11,6 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -143,10 +142,8 @@ public class PadGameModeActivity extends AppCompatActivity {
 
     private void renderSelectedNav(Page page) {
         int primary = LauncherActivity.launcherPrimaryColor(this);
-        setNavSelected(binding.navGame, binding.navGameIcon, binding.navGameLabel,
-                page == Page.GAME, primary);
-        setNavSelected(binding.navManage, binding.navManageIcon, binding.navManageLabel,
-                page == Page.MANAGE, primary);
+        setNavSelected(binding.navGame, binding.navGameIcon, page == Page.GAME, primary);
+        setNavSelected(binding.navManage, binding.navManageIcon, page == Page.MANAGE, primary);
 
         applyLauncherThemeTone();
         moveNavIndicator(page == Page.GAME ? binding.navGame : binding.navManage);
@@ -185,13 +182,11 @@ public class PadGameModeActivity extends AppCompatActivity {
         }
     }
 
-    private void setNavSelected(LinearLayout container, ImageView icon, TextView label,
+    private void setNavSelected(LinearLayout container, ImageView icon,
                                 boolean selected, int primary) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected);
         int color = selected ? primary : Color.GRAY;
         icon.setColorFilter(color);
-        label.setTextColor(color);
-        label.setTypeface(null, android.graphics.Typeface.BOLD);
     }
 
     private void moveNavIndicator(View target) {

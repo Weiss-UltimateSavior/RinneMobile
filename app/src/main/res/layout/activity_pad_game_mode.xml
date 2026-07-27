@@ -58,7 +58,7 @@
             <LinearLayout
                 android:id="@+id/navGame"
                 android:layout_width="0dp"
-                android:layout_height="45dp"
+                android:layout_height="36dp"
                 android:layout_weight="1"
                 android:background="@drawable/launcher_nav_unselected"
                 android:clickable="true"
@@ -68,27 +68,17 @@
 
                 <ImageView
                     android:id="@+id/navGameIcon"
-                    android:layout_width="17dp"
-                    android:layout_height="17dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:contentDescription="首页"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_nav_home" />
-
-                <TextView
-                    android:id="@+id/navGameLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="首页"
-                    android:textColor="@color/launcher_primary_color"
-                    android:textSize="7.5sp"
-                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/navLaunchCenter"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="54dp"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:clipChildren="false"
@@ -98,14 +88,14 @@
 
                 <FrameLayout
                      android:id="@+id/navLaunchCenterCircle"
-                     android:layout_width="46dp"
-                     android:layout_height="46dp"
+                     android:layout_width="44dp"
+                     android:layout_height="44dp"
                      android:background="@drawable/launcher_icon_circle_green">
 
                     <ImageView
                         android:id="@+id/navLaunchCenterImage"
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:layout_gravity="center"
                         android:contentDescription="@string/game_center"
                         android:scaleType="fitCenter"
@@ -113,8 +103,8 @@
 
                     <ImageView
                         android:id="@+id/navLaunchCenterText"
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:layout_gravity="center"
                         android:contentDescription="@string/game_center"
                         android:scaleType="fitCenter"
@@ -126,7 +116,7 @@
             <LinearLayout
                 android:id="@+id/navManage"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
+                android:layout_height="40dp"
                 android:layout_weight="1"
                 android:background="@drawable/launcher_nav_unselected"
                 android:clickable="true"
@@ -136,20 +126,11 @@
 
                 <ImageView
                     android:id="@+id/navManageIcon"
-                    android:layout_width="17dp"
-                    android:layout_height="17dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:contentDescription="游戏"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_nav_game" />
-
-                <TextView
-                    android:id="@+id/navManageLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="游戏"
-                    android:textColor="@color/launcher_nav_muted_color"
-                    android:textSize="7.5sp" />
             </LinearLayout>
         </LinearLayout>
     </FrameLayout>
