@@ -25,12 +25,9 @@ import com.core.util.AppExecutors;
 
 /** 模块兼容页面：展示并管理 Rinne 所兼容的第三方 JoiPlay 插件（RPGM / RenPy / Godot）。 */
 public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
-    /** Temporary routable placeholder; replace with the published RPGM module URL when available. */
-    private static final String RPGM_INSTALL_URL = "https://example.com/";
-    /** Temporary routable placeholder; replace with the published RenPy module URL when available. */
-    private static final String RENPY_INSTALL_URL = "https://example.com/";
-    /** Temporary routable placeholder; replace with the published Godot module URL when available. */
-    private static final String GODOT_INSTALL_URL = "https://example.com/";
+    private static final String RPGM_INSTALL_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RPGMPlugin-1.22.00-patreon-release.apk";
+    private static final String RENPY_INSTALL_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RenPyPlugin-8.5.0-1.01.00.apk";
+    private static final String GODOT_INSTALL_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/Godot.4.3-Plugin-1.00.60.apk";
 
     private ActivityLauncherModuleCompatibilityBinding binding;
     private boolean rpgmModuleInstalled;
