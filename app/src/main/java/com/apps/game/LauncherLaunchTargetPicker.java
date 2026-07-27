@@ -2,6 +2,7 @@ package com.apps.game;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager;
@@ -27,6 +28,7 @@ import java.util.Locale;
 
 /** Shared startup-target picker for add-game and edit-game forms. */
 final class LauncherLaunchTargetPicker {
+    private static final String TAG = "LauncherLaunchTargetPicker";
     private static final String DIRECTORY_TARGET = "[游戏目录]";
 
     interface Callback {
@@ -118,7 +120,8 @@ final class LauncherLaunchTargetPicker {
         try {
             DocumentFile root = DocumentFile.fromTreeUri(context, directoryUri);
             collectTargets(root, "", 1, 2, targets, hasRenpyEntry);
-        } catch (Throwable ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "scanLaunchTargets failed", e);
         }
         if (hasRenpyEntry[0]) {
             targets.add(0, new Target("Ren'Py 游戏目录", DIRECTORY_TARGET));
@@ -144,7 +147,8 @@ final class LauncherLaunchTargetPicker {
             boolean isDirectory = false;
             try {
                 isDirectory = file.isDirectory();
-            } catch (Throwable ignored) {
+            } catch (Exception e) {
+                Log.d(TAG, "isDirectory check failed: " + file, e);
             }
             String target = prefix.isEmpty() ? name : prefix + "/" + name;
             if (isDirectory) {

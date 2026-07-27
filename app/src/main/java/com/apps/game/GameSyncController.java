@@ -1,6 +1,7 @@
 package com.apps.game;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +31,8 @@ import java.util.List;
  * 通过 DialogFactory 接口注入平台差异化的对话框实现（Library 自绘 / Pad 复用 PadDialogFactory）。
  */
 public final class GameSyncController {
+
+    private static final String TAG = "GameSyncController";
 
     public interface Listener {
         /** 提供应用级 Context，用于 Bridge 调用，避免持有 Activity Context。 */
@@ -90,7 +93,8 @@ public final class GameSyncController {
             List<Game> syncGames;
             try {
                 syncGames = LauncherRepositoryBridge.getAllGames(appContext);
-            } catch (Throwable e) {
+            } catch (Exception e) {
+                Log.w(TAG, "getAllGames failed", e);
                 syncGames = Collections.emptyList();
             }
 
@@ -121,7 +125,15 @@ public final class GameSyncController {
                                     latest.coverUri = cover;
                                     latest.coverPersistUri = cover;
                                     latest.coverSourceType = 1;
-                                    LauncherRepositoryBridge.updateGame(appContext, latest);
+                                    if (LauncherRepositoryBridge.updateGame(appContext, latest) <= 0) {
+                                        throw new IllegalStateException(
+                                                "Failed to persist synced cover for game " + game.id
+                                        );
+                                    }
+                                } else {
+                                    throw new IllegalStateException(
+                                            "Game disappeared during sync: " + game.id
+                                    );
                                 }
                             }
                         }
@@ -129,7 +141,8 @@ public final class GameSyncController {
                     } else {
                         failed++;
                     }
-                } catch (Throwable e) {
+                } catch (Exception e) {
+                    Log.w(TAG, "sync single game failed: " + game.id, e);
                     failed++;
                 }
 
@@ -153,7 +166,8 @@ public final class GameSyncController {
             List<Game> finalGames;
             try {
                 finalGames = LauncherRepositoryBridge.getAllGames(appContext);
-            } catch (Throwable e) {
+            } catch (Exception e) {
+                Log.w(TAG, "getAllGames after sync failed", e);
                 finalGames = Collections.emptyList();
             }
 
@@ -163,7 +177,8 @@ public final class GameSyncController {
             CategoryBuildResult categoryResult;
             try {
                 categoryResult = GameCategoryBuilder.build(appContext, loadedGames);
-            } catch (Throwable throwable) {
+            } catch (Exception e) {
+                Log.w(TAG, "GameCategoryBuilder.build failed", e);
                 categoryResult = new CategoryBuildResult(Collections.emptyList(), Collections.emptyMap());
             }
 

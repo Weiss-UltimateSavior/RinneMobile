@@ -1,6 +1,7 @@
 package com.apps.game;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -25,6 +26,8 @@ import java.util.Map;
  * 把 Adapter 与 Controller 的事件对接。所有列表状态由本类独占。</p>
  */
 public class GameListController {
+
+    private static final String TAG = "GameListController";
 
     /** 宿主 Fragment 注入的钩子。 */
     public interface Listener {
@@ -264,7 +267,9 @@ public class GameListController {
             Game updated = null;
             try {
                 updated = LauncherRepositoryBridge.findGameById(appContext, gameId);
-            } catch (Throwable ignored) {}
+            } catch (Exception e) {
+                Log.w(TAG, "reloadSingleGame failed", e);
+            }
             final Game result = updated;
             mainQueue.post(() -> {
                 if (disposed || listener.isBindingNull() || result == null) return;

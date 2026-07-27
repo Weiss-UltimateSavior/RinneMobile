@@ -139,14 +139,17 @@ public final class ExternalImportController {
                     dismissImportLoading();
                     showImportPreviewDialog(games);
                 });
-            } catch (Throwable t) {
-                Log.e("LauncherManage", "external import parse failed", t);
+            } catch (Error error) {
+                // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
+                throw error;
+            } catch (Exception e) {
+                Log.e("LauncherManage", "external import parse failed", e);
                 host.getMainQueue().post(() -> {
                     if (!host.isAdded()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
                     host.showConfirmDialog("解析失败",
-                            t.getMessage() != null ? t.getMessage() : "未知错误",
+                            e.getMessage() != null ? e.getMessage() : "未知错误",
                             "知道了", () -> {});
                 });
             }
@@ -368,14 +371,17 @@ public final class ExternalImportController {
                     host.setImportInProgress(false);
                     afterExternalImport(result);
                 });
-            } catch (Throwable t) {
-                Log.e("LauncherManage", "external import write failed", t);
+            } catch (Error error) {
+                // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
+                throw error;
+            } catch (Exception e) {
+                Log.e("LauncherManage", "external import write failed", e);
                 host.getMainQueue().post(() -> {
                     if (!host.isAdded()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
                     host.showConfirmDialog("导入失败",
-                            t.getMessage() != null ? t.getMessage() : "未知错误",
+                            e.getMessage() != null ? e.getMessage() : "未知错误",
                             "知道了", () -> {});
                 });
             }

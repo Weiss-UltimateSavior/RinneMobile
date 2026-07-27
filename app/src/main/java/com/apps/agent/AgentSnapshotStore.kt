@@ -1,6 +1,7 @@
 package com.apps.agent
 
 import android.content.Context
+import com.core.util.TimeFormatUtil
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -11,9 +12,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.UUID
 
 /** Recoverable mutation snapshots stored outside Android backup and FileProvider roots. */
@@ -143,8 +141,7 @@ object AgentSnapshotStore {
                     .append("\n文件：").append(value.optString("relative_path"))
                     .append("\n状态：").append(value.optString("status", "pending"))
                     .append("\n快照 ID：").append(value.optString("id"))
-                    .append("\n时间：").append(SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                        .format(Date(value.optLong("created_at"))))
+                    .append("\n时间：").append(TimeFormatUtil.date(value.optLong("created_at")))
                     .append('\n')
                 count++
             } catch (ignored: Throwable) { }

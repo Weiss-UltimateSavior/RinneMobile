@@ -210,3 +210,49 @@ git diff --check
 ```
 
 6. 涉及 IME、同步、权限、引擎启动或真机现象时，再按对应业务路径做实机验证；不要以 UI 编译成功替代行为验证。
+
+## 8. `app/src/main/java` 通用代码规范
+
+本章适用于 `com.apps.*` 与 `com.core.*`。第 1～7 章仍是 UI 改动的优先规则；如本章与既有实现冲突，新代码遵循本章，存量代码只在相关功能改动时渐进迁移，禁止为满足格式要求进行无业务价值的大规模重写。
+
+### 分层与包依赖
+
+- `com.apps.*` 是展示层：Activity、Fragment、Adapter、View、UI 状态及导航协调代码。它可以依赖 `com.core.*`，但不直接承担持久化、网络协议解析或可独立复用的领域决策。
+- `com.core.*` 是业务与平台层：model、data、net、sync、scanner、importer、launcher、metadata、translation 的非 UI 能力及通用 util。`com.core.*` 禁止 import `com.apps.*`，也不得直接持有或启动 Activity、Fragment、Dialog、Theme 等 UI 对象。
+- UI 所需的 core 回调通过接口、状态模型或事件向上交付；core 不反向调用 UI。Application 级 UI 初始化应移到 `com.apps` 的启动协调代码，避免 core 成为 UI 的依赖方。
+- 新包名一律小写，使用 `lowercase`；新增 Pad 代码放入 `com.apps.padui`，用户数据代码放入 `com.apps.userdata`。既有 `PadUi`、`UserData` 仅在其周边改动时迁移，迁移时同步更新所有引用。
+- 按功能归属文件：一个 feature 的 UI、状态和协调代码放在对应 `com.apps.<feature>`；可复用的领域能力放在对应 `com.core.<feature>`。不要仅为“工具类”而创建无业务语义的公共包。
+
+### 状态、线程与生命周期
+
+- 新增 Kotlin 异步代码使用结构化协程：页面相关任务使用 `lifecycleScope`，ViewModel 任务使用 `viewModelScope`，并显式指定 `Dispatchers.IO`、`Default` 或 `Main`。不得使用 `GlobalScope`。
+- `AppExecutors` 是 Java 及存量调用的兼容层；新增 Kotlin 业务代码不新增 `AppExecutors + runOnUiThread` 链路。迁移旧代码时优先按所在生命周期替换，而不是在无生命周期的静态对象中创建 scope。
+- 后台任务不得直接更新 View；回到主线程前先确认 Activity/Fragment 仍有效。Fragment 的 View 任务必须在 `onDestroyView()` 后自动取消或不再访问 binding。
+- Repository/Bridge 返回领域结果或 `Result`；UI 层只负责加载、成功、空态和失败态渲染。不要让 Activity/Fragment 同时处理 HTTP、文件读写、持久化和复杂业务决策。
+- 共享状态仅在确有并发访问时使用 `@Volatile`、锁或原子类型；说明其保护的状态与线程边界，避免以全局可变单例代替状态所有权。
+
+### 异常、日志与数据处理
+
+- 禁止捕获 `Throwable`，除非处于明确的进程边界、回滚清理或日志兜底点，且必须说明原因；不得吞掉 `CancellationException`、`InterruptedException`、`Error` 等不可恢复信号。
+- 只捕获可预期的具体异常；失败必须返回给调用方、显示合适的用户提示或写入 `DevLogger`。允许忽略的异常必须在紧邻 catch 处说明为何可安全忽略。
+- 不使用 `!!` 作为常规控制流。可空值优先使用 `?.`、`?:`、提前返回或 `requireNotNull`（仅用于违反内部不变量的情形）。
+- 时间展示统一复用 `TimeFormatUtil`；网络协议或导入格式解析可使用专用 `SimpleDateFormat`，但须显式指定 `Locale` 与格式来源。不要在 UI 中重复实现通用展示格式。
+- 用户可见文本优先放入资源；日志不得包含 access token、API key、密码或完整的私有路径。涉及外部输入、文件与 URI 时先校验可读性、边界和编码。
+
+### 文件职责与可维护性
+
+- 一个类/文件只保留一个主要职责。页面拆分为 UI 绑定与渲染、状态/事件协调、业务操作；Repository 拆分为查询、写入、迁移或外部源适配等明确职责。
+- 单文件超过约 500 行、或同时包含 UI、线程调度、I/O 和领域规则时，应在下一次相关功能改动中拆分。优先提取可独立测试的 Controller、Use Case、Formatter 或数据源，不改变对外行为。
+- 新增公共 API 需有 KDoc/Javadoc：说明用途、线程要求、可空约定、失败方式及 Java 互操作约束（若适用）。不要为显而易见的私有实现添加噪声注释。
+- 保持 import 分组和格式化一致；不引入与文件现有语言无关的 Java/Kotlin 互操作包装。新业务类优先 Kotlin，Java 文件仅维护既有实现或确有互操作必要的代码。
+
+### 自动检查与提交要求
+
+- 新增或迁移代码应通过 Android Lint、Kotlin 格式检查和静态分析；在引入工具前，至少执行构建与 `git diff --check`。建议逐步接入 Ktlint/Spotless 与 Detekt，并先对新增问题设为阻断。
+- 涉及分层调整时，检查 `com.core` 不新增 `import com.apps`；涉及线程调整时，验证页面销毁后没有 UI 更新或任务泄漏。
+- 最低验证命令保持如下；涉及 core 逻辑时同时补充或运行对应单元测试：
+
+```bash
+./gradlew :app:assembleDebug
+git diff --check
+```

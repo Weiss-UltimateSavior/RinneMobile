@@ -36,11 +36,8 @@ import com.core.model.Game;
 import com.core.util.AppExecutors;
 import com.core.util.TimeFormatUtil;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /** Second-level screen: lists only games belonging to one emulator type. */
 public class LauncherSaveGameListActivity extends AppCompatActivity {
@@ -316,7 +313,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
 
     private static String recentMeta(Game game) {
         if (game != null && game.lastPlayedAt > 0L) {
-            String time = new SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()).format(new Date(game.lastPlayedAt));
+            String time = TimeFormatUtil.shortDate(game.lastPlayedAt);
             return time + " · " + TimeFormatUtil.playTime(game.totalPlayTime);
         }
         return "尚未游玩";

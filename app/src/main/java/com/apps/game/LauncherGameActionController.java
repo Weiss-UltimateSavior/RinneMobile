@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,9 +31,6 @@ import com.core.model.Game;
 import com.core.util.AppExecutors;
 import com.core.util.TimeFormatUtil;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherDialogFactory;
@@ -148,8 +146,7 @@ public final class LauncherGameActionController {
 
         TextView info = bodyText("当前总时长：" + TimeFormatUtil.playTime(game.totalPlayTime)
                 + "\n最近游玩：" + (game.lastPlayedAt > 0
-                ? new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                .format(new Date(game.lastPlayedAt)) : "无"), true);
+                ? TimeFormatUtil.date(game.lastPlayedAt) : "无"), true);
         addWithTopMargin(root, info, 13);
 
         TextView totalLabel = label("设置新的总时长");
@@ -211,6 +208,7 @@ public final class LauncherGameActionController {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
             Game updated = null;
+            boolean failed = false;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(app, game.id);
                 if (latest != null) {
@@ -222,12 +220,20 @@ public final class LauncherGameActionController {
                     latest.totalPlayTime = clamped;
                     updated = latest;
                 }
-            } catch (Throwable ignored) { }
+            } catch (Exception e) {
+                Log.w("LauncherGameAction", "setManualPlayTimeForGame failed", e);
+                failed = true;
+            }
             final Game result = updated;
+            final boolean failedFinal = failed;
             Activity activity = fragment.getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
+                if (failedFinal) {
+                    Toast.makeText(context(), "修改失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (result != null) host.updateGame(result);
                 else host.refreshGames();
             });
@@ -243,8 +249,7 @@ public final class LauncherGameActionController {
         text.append("\n引擎：").append(GameMetadataFormatter.engineText(game.engine));
         text.append("\n总时长：").append(TimeFormatUtil.playTime(game.totalPlayTime));
         text.append("\n最近游玩：").append(game.lastPlayedAt > 0
-                ? new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                .format(new Date(game.lastPlayedAt)) : "未游玩");
+                ? TimeFormatUtil.date(game.lastPlayedAt) : "未游玩");
         if (!TextUtils.isEmpty(game.emulatorPackage)) text.append("\n模拟器：").append(game.emulatorPackage);
         text.append("\n\n路径：").append(game.rootUri == null ? "" : Uri.decode(game.rootUri));
         TextView info = bodyText(text.toString(), false);
@@ -368,13 +373,22 @@ public final class LauncherGameActionController {
     private void deleteGame(Game game) {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
+            boolean failed = false;
             try {
-                LauncherRepositoryBridge.deleteGame(app, game.id);
-            } catch (Throwable ignored) { }
+                failed = LauncherRepositoryBridge.deleteGame(app, game.id) <= 0;
+            } catch (Exception e) {
+                Log.w("LauncherGameAction", "deleteGame failed", e);
+                failed = true;
+            }
+            final boolean failedFinal = failed;
             Activity activity = fragment.getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
+                if (failedFinal) {
+                    Toast.makeText(context(), "删除失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Toast.makeText(context(), "已删除", Toast.LENGTH_SHORT).show();
                 host.removeGame(game.id);
             });
@@ -389,19 +403,33 @@ public final class LauncherGameActionController {
         Context app = context().getApplicationContext();
         AppExecutors.io().execute(() -> {
             Game updated = null;
+            boolean failed = false;
             try {
                 Game latest = LauncherRepositoryBridge.findGameById(app, game.id);
                 if (latest != null) {
                     mutation.apply(latest);
-                    LauncherRepositoryBridge.updateGame(app, latest);
-                    updated = latest;
+                    if (LauncherRepositoryBridge.updateGame(app, latest) > 0) {
+                        updated = latest;
+                    } else {
+                        failed = true;
+                    }
+                } else {
+                    failed = true;
                 }
-            } catch (Throwable ignored) { }
+            } catch (Exception e) {
+                Log.w("LauncherGameAction", "runGameUpdate failed", e);
+                failed = true;
+            }
             final Game result = updated;
+            final boolean failedFinal = failed;
             Activity activity = fragment.getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
+                if (failedFinal) {
+                    Toast.makeText(context(), "操作失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (message != null) Toast.makeText(context(), message, Toast.LENGTH_SHORT).show();
                 if (result != null) host.updateGame(result);
                 else host.refreshGames();

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -44,6 +45,7 @@ import java.util.Locale;
 
 /** 横屏游戏库：手机每页 1 行 × 5 列，平板每页 2 行 × 5 列，横向手势切换分页。 */
 public class PadGameFragment extends Fragment {
+    private static final String TAG = "PadGameFragment";
     private static final int GRID_COLUMNS = 5;
     private static final int PHONE_GRID_ROWS = 1;
     private static final int TABLET_GRID_ROWS = 2;
@@ -413,7 +415,8 @@ public class PadGameFragment extends Fragment {
                 games = LauncherRepositoryBridge.getAllGames(appContext);
                 Collator collator = Collator.getInstance(Locale.getDefault());
                 games.sort((left, right) -> collator.compare(safeTitle(left), safeTitle(right)));
-            } catch (Throwable throwable) {
+            } catch (Exception e) {
+                Log.w(TAG, "DB query failed", e);
                 games = Collections.emptyList();
             }
             List<Game> loadedGames = games;
@@ -484,7 +487,7 @@ public class PadGameFragment extends Fragment {
             Game updated = null;
             try {
                 updated = LauncherRepositoryBridge.findGameById(requireContext(), gameId);
-            } catch (Throwable ignored) {}
+            } catch (Exception e) { Log.w(TAG, "DB query failed", e); }
             final Game result = updated;
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
                 if (result != null) updateGameInPlace(result);
@@ -557,7 +560,8 @@ public class PadGameFragment extends Fragment {
             }
             binding.padAvatarImage.setVisibility(View.GONE);
             binding.padAvatarInitial.setVisibility(View.VISIBLE);
-        } catch (Throwable throwable) {
+        } catch (Exception e) {
+            Log.w(TAG, "avatar load failed: " + avatar, e);
             binding.padAvatarImage.setImageDrawable(null);
             binding.padAvatarImage.setVisibility(View.GONE);
             binding.padAvatarInitial.setVisibility(View.VISIBLE);

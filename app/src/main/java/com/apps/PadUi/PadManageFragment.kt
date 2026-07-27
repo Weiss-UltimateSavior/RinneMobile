@@ -14,6 +14,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -569,19 +570,23 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     }
 
     private fun toggleFavorite(game: Game) {
-        AppExecutors.io().execute {
+        val app = requireContext().applicationContext
+        AppExecutors.runOnSingle {
             var updated: Game? = null
             try {
-                val latest = LauncherRepositoryBridge.findGameById(requireContext(), game.id)
+                val latest = LauncherRepositoryBridge.findGameById(app, game.id)
                 if (latest != null) {
                     latest.favorite = !latest.favorite
-                    LauncherRepositoryBridge.updateGame(requireContext(), latest)
-                    updated = latest
+                    if (LauncherRepositoryBridge.updateGame(app, latest) > 0) {
+                        updated = latest
+                    }
                 }
-            } catch (ignored: Throwable) {
+            } catch (e: Exception) {
+                Log.w("PadManageFragment", "Failed to toggle favorite", e)
             }
             val result = updated
-            activity?.runOnUiThread {
+            mainQueue.post {
+                if (!isAdded || view == null) return@post
                 if (result != null) updateSingleGame(result)
             }
         }
@@ -597,14 +602,23 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     }
 
     private fun deleteGame(game: Game) {
-        AppExecutors.io().execute {
-            try {
-                LauncherRepositoryBridge.deleteGame(requireContext(), game.id)
-            } catch (ignored: Throwable) {
+        // 在主线程捕获 ApplicationContext，避免 IO 线程内调用 fragment.requireContext()
+        val app = requireContext().applicationContext
+        AppExecutors.runOnSingle {
+            val deleted = try {
+                LauncherRepositoryBridge.deleteGame(app, game.id) > 0
+            } catch (e: Exception) {
+                Log.w("PadManageFragment", "Failed to delete game", e)
+                false
             }
-            activity?.runOnUiThread {
+            mainQueue.post {
+                if (!isAdded || view == null) return@post
+                if (!deleted) {
+                    Toast.makeText(app, "删除失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                    return@post
+                }
                 removeSingleGame(game.id)
-                Toast.makeText(requireContext(), "已删除", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, "已删除", Toast.LENGTH_SHORT).show()
             }
         }
     }

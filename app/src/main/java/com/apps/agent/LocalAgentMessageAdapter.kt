@@ -11,9 +11,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
 import com.core.databinding.ItemLocalAgentEventBinding
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.core.util.TimeFormatUtil
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -70,7 +68,7 @@ class LocalAgentMessageAdapter(
             }
         }
         binding.agentEventTitle.text = if (tool) "本地操作" else "智能体"
-        var meta = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.createdAt))
+        var meta = TimeFormatUtil.clock(message.createdAt)
         if (tool && message.name.isNotEmpty()) meta += "  ·  ${message.name}"
         binding.agentEventMeta.text = meta
         binding.agentEventContent.text = if (message.content.isEmpty() && !user && !tool) "正在生成结果…" else message.content

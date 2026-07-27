@@ -1,12 +1,13 @@
 package com.apps.game
 
-import android.app.Activity
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.Game
 import com.core.util.AppExecutors
+import com.core.util.RxMainScheduler
 
 /**
  * 游戏密码锁定工具类。
@@ -63,24 +64,32 @@ object GamePasswordLock {
         toastMessage: String, onDone: Runnable?
     ) {
         val app: Context = fragment.requireContext().applicationContext
-        AppExecutors.io().execute {
-            var success = false
-            try {
+        // 用户确认后的持久化任务由应用级执行器承载，不随 Fragment View 销毁而取消。
+        AppExecutors.runOnSingle {
+            val success = try {
                 val latest = LauncherRepositoryBridge.findGameById(app, game.id)
-                if (latest != null) {
+                if (latest == null) {
+                    false
+                } else {
                     latest.passwordLock = hashedPassword
-                    LauncherRepositoryBridge.updateGame(app, latest)
-                    game.passwordLock = hashedPassword
-                    success = true
+                    LauncherRepositoryBridge.updateGame(app, latest) > 0
                 }
-            } catch (ignored: Throwable) {
+            } catch (e: Exception) {
+                Log.w("GamePasswordLock", "Failed to save password", e)
+                false
             }
-            val activity: Activity? = fragment.activity
-            if (activity == null) return@execute
-            activity.runOnUiThread {
-                if (!fragment.isAdded) return@runOnUiThread
-                Toast.makeText(fragment.requireContext(), toastMessage, Toast.LENGTH_SHORT).show()
-                onDone?.run()
+            RxMainScheduler.post {
+                // 页面已销毁时只保留落库结果，新页面会从数据库重新加载。
+                if (!fragment.isAdded || fragment.view == null) return@post
+                if (success) {
+                    game.passwordLock = hashedPassword
+                    Toast.makeText(fragment.requireContext(), toastMessage, Toast.LENGTH_SHORT).show()
+                    onDone?.run()
+                } else {
+                    Toast.makeText(
+                        fragment.requireContext(), "密码保存失败，请重试", Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }

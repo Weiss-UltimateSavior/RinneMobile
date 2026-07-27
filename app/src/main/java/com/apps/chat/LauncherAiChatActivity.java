@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -29,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.core.R;
+import com.core.databinding.ActivityLauncherAiChatBinding;
 import com.core.launcherbridge.LauncherAiChatBridge;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LlmConfigCallback;
@@ -50,13 +50,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
 
     private final List<LauncherAiChatBridge.Message> messages = new ArrayList<>();
     private LauncherAiChatMessageAdapter adapter;
-    private RecyclerView messageList;
-    private View topOverlay;
-    private View titleBar;
-    private View composerOverlay;
-    private EditText input;
-    private ImageView send;
-    private TextView hint;
+    private ActivityLauncherAiChatBinding binding;
     private int messageListBaseBottomPadding;
     private String persona;
     private String threadId;
@@ -80,37 +74,31 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             LauncherMotion.finish(this);
             return;
         }
-        setContentView(R.layout.activity_launcher_ai_chat);
+        binding = ActivityLauncherAiChatBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
         characterName = title == null || title.trim().isEmpty() ? "AI" : title.replace("（AI）", "");
-        ((TextView) findViewById(R.id.aiChatTitle)).setText(title == null || title.trim().isEmpty() ? "AI 聊天" : title);
-        hint = findViewById(R.id.aiChatHint);
-        input = findViewById(R.id.aiChatInput);
-        send = findViewById(R.id.aiChatSend);
-        messageList = findViewById(R.id.aiChatMessages);
-        topOverlay = findViewById(R.id.aiChatTopOverlay);
-        titleBar = findViewById(R.id.aiChatTitleBar);
-        composerOverlay = findViewById(R.id.aiChatComposerOverlay);
-        messageListBaseBottomPadding = messageList.getPaddingBottom();
-        topOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
-        titleBar.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
-        composerOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        binding.aiChatTitle.setText(title == null || title.trim().isEmpty() ? "AI 聊天" : title);
+        messageListBaseBottomPadding = binding.aiChatMessages.getPaddingBottom();
+        binding.aiChatTopOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        binding.aiChatTitleBar.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        binding.aiChatComposerOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
         applyInsets();
         adapter = new LauncherAiChatMessageAdapter(messages, characterName);
-        messageList.setLayoutManager(new LinearLayoutManager(this));
-        messageList.setAdapter(adapter);
-        LauncherTheme.applyPrimaryTone(findViewById(R.id.aiChatRoot));
-        titleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
-        ((TextView) findViewById(R.id.aiChatTitle)).setTextColor(LauncherTheme.onPrimary(this));
-        ((TextView) findViewById(R.id.aiChatMore)).setTextColor(LauncherTheme.onPrimary(this));
-        findViewById(R.id.aiChatInputThemeBar).setBackground(LauncherTheme.primaryButton(this, 0f));
-        input.setTextColor(LauncherTheme.text(this));
-        input.setHintTextColor(LauncherTheme.textMuted(this));
-        findViewById(R.id.aiChatCharacterIcon).setBackground(LauncherTheme.circle(this));
-        send.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
-        findViewById(R.id.aiChatMore).setOnClickListener(this::showMoreMenu);
-        send.setOnClickListener(view -> sendMessage());
-        input.addTextChangedListener(new TextWatcher() {
+        binding.aiChatMessages.setLayoutManager(new LinearLayoutManager(this));
+        binding.aiChatMessages.setAdapter(adapter);
+        LauncherTheme.applyPrimaryTone(binding.aiChatRoot);
+        binding.aiChatTitleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
+        binding.aiChatTitle.setTextColor(LauncherTheme.onPrimary(this));
+        binding.aiChatMore.setTextColor(LauncherTheme.onPrimary(this));
+        binding.aiChatInputThemeBar.setBackground(LauncherTheme.primaryButton(this, 0f));
+        binding.aiChatInput.setTextColor(LauncherTheme.text(this));
+        binding.aiChatInput.setHintTextColor(LauncherTheme.textMuted(this));
+        binding.aiChatCharacterIcon.setBackground(LauncherTheme.circle(this));
+        binding.aiChatSend.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
+        binding.aiChatMore.setOnClickListener(this::showMoreMenu);
+        binding.aiChatSend.setOnClickListener(view -> sendMessage());
+        binding.aiChatInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { renderInputState(); }
             @Override public void afterTextChanged(Editable s) { }
@@ -158,7 +146,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     }
 
     private void loadHistory() {
-        hint.setText("加载聊天记录中…");
+        binding.aiChatHint.setText("加载聊天记录中…");
         LauncherAiChatBridge.loadHistory(this, threadId, new LauncherAiChatBridge.HistoryCallback() {
             @Override public void onSuccess(List<LauncherAiChatBridge.Message> loaded) {
                 if (isFinishing()) return;
@@ -167,38 +155,38 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                     if ("user".equals(item.role) || "assistant".equals(item.role) || "tool".equals(item.role)) messages.add(item);
                 }
                 adapter.notifyDataSetChanged();
-                hint.setText(messages.isEmpty() ? "开始和我聊天吧" : "历史消息已加载");
+                binding.aiChatHint.setText(messages.isEmpty() ? "开始和我聊天吧" : "历史消息已加载");
                 scrollToEnd();
             }
-            @Override public void onError(String message) { if (!isFinishing()) { hint.setText("聊天记录加载失败"); showError(message); } }
+            @Override public void onError(String message) { if (!isFinishing()) { binding.aiChatHint.setText("聊天记录加载失败"); showError(message); } }
         });
     }
 
     private void sendMessage() {
-        String text = input.getText() == null ? "" : input.getText().toString().trim();
+        String text = binding.aiChatInput.getText() == null ? "" : binding.aiChatInput.getText().toString().trim();
         int length = weightedLength(text);
         if (sending || text.isEmpty() || length > 100) return;
         sending = true;
-        input.setText("");
+        binding.aiChatInput.setText("");
         messages.add(new LauncherAiChatBridge.Message("user", text, ""));
         adapter.notifyItemInserted(messages.size() - 1);
         scrollToEnd();
         renderInputState();
-        hint.setText("正在回复…");
+        binding.aiChatHint.setText("正在回复…");
         LauncherAiChatBridge.send(this, text, persona, threadId, new LauncherAiChatBridge.ReplyCallback() {
             @Override public void onSuccess(String reply) {
                 if (isFinishing()) return;
                 sending = false;
                 messages.add(new LauncherAiChatBridge.Message("assistant", reply, ""));
                 adapter.notifyItemInserted(messages.size() - 1);
-                hint.setText("AI 回复完成");
+                binding.aiChatHint.setText("AI 回复完成");
                 scrollToEnd();
                 renderInputState();
             }
             @Override public void onError(String message) {
                 if (isFinishing()) return;
                 sending = false;
-                hint.setText("回复失败，请重试");
+                binding.aiChatHint.setText("回复失败，请重试");
                 renderInputState();
                 showError(message);
             }
@@ -206,9 +194,9 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     }
 
     private void renderInputState() {
-        int length = weightedLength(input.getText() == null ? "" : input.getText().toString());
-        send.setEnabled(!sending && length > 0 && length <= 100);
-        send.setAlpha(send.isEnabled() ? 1f : .45f);
+        int length = weightedLength(binding.aiChatInput.getText() == null ? "" : binding.aiChatInput.getText().toString());
+        binding.aiChatSend.setEnabled(!sending && length > 0 && length <= 100);
+        binding.aiChatSend.setAlpha(binding.aiChatSend.isEnabled() ? 1f : .45f);
     }
 
     private void showCustomLlmDialog() {
@@ -412,7 +400,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         confirm.setOnClickListener(view -> {
             dialog.dismiss();
             LauncherAiChatBridge.clearHistory(this, threadId, new LauncherAiChatBridge.Callback() {
-                @Override public void onSuccess() { if (!isFinishing()) { messages.clear(); adapter.notifyDataSetChanged(); hint.setText("聊天记录已清空"); } }
+                @Override public void onSuccess() { if (!isFinishing()) { messages.clear(); adapter.notifyDataSetChanged(); binding.aiChatHint.setText("聊天记录已清空"); } }
                 @Override public void onError(String error) { if (!isFinishing()) showError(error); }
             });
         });
@@ -441,20 +429,20 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         return (halfUnits + 1) / 2;
     }
 
-    private void scrollToEnd() { if (!messages.isEmpty()) messageList.scrollToPosition(messages.size() - 1); }
+    private void scrollToEnd() { if (!messages.isEmpty()) binding.aiChatMessages.scrollToPosition(messages.size() - 1); }
     private void showError(String message) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
     private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
     private void applyInsets() {
-        View root = findViewById(R.id.aiChatRoot);
+        View root = binding.aiChatRoot;
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
             int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            setOverlayMargins(topOverlay, 0, 0);
-            titleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
+            setOverlayMargins(binding.aiChatTopOverlay, 0, 0);
+            binding.aiChatTitleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
             boolean keyboardVisible = imeBottom > systemBottom;
-            setOverlayMargins(composerOverlay, 0, keyboardVisible ? imeBottom : 0);
-            View inputThemeBar = findViewById(R.id.aiChatInputThemeBar);
+            setOverlayMargins(binding.aiChatComposerOverlay, 0, keyboardVisible ? imeBottom : 0);
+            View inputThemeBar = binding.aiChatInputThemeBar;
             inputThemeBar.setPaddingRelative(
                     inputThemeBar.getPaddingStart(),
                     dp(13),
@@ -478,28 +466,28 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     }
 
     private void updateMessageListOverlayPadding() {
-        if (messageList == null || topOverlay == null || composerOverlay == null) return;
-        int listTop = topOverlay.getVisibility() == View.GONE
+        if (binding.aiChatMessages == null || binding.aiChatTopOverlay == null || binding.aiChatComposerOverlay == null) return;
+        int listTop = binding.aiChatTopOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, topOverlay.getBottom());
+                : Math.max(0, binding.aiChatTopOverlay.getBottom());
         setMessageListTopMargin(listTop);
-        int bottomSpace = composerOverlay.getVisibility() == View.GONE
+        int bottomSpace = binding.aiChatComposerOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, messageList.getBottom() - composerOverlay.getTop()) + dp(8);
-        messageList.setPadding(
-                messageList.getPaddingLeft(),
-                messageList.getPaddingTop(),
-                messageList.getPaddingRight(),
+                : Math.max(0, binding.aiChatMessages.getBottom() - binding.aiChatComposerOverlay.getTop()) + dp(8);
+        binding.aiChatMessages.setPadding(
+                binding.aiChatMessages.getPaddingLeft(),
+                binding.aiChatMessages.getPaddingTop(),
+                binding.aiChatMessages.getPaddingRight(),
                 messageListBaseBottomPadding + bottomSpace);
     }
 
     private void setMessageListTopMargin(int topMargin) {
-        ViewGroup.LayoutParams params = messageList.getLayoutParams();
+        ViewGroup.LayoutParams params = binding.aiChatMessages.getLayoutParams();
         if (!(params instanceof ViewGroup.MarginLayoutParams)) return;
         ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
         if (margins.topMargin == topMargin) return;
         margins.topMargin = topMargin;
-        messageList.setLayoutParams(margins);
+        binding.aiChatMessages.setLayoutParams(margins);
     }
 
     private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (ColorUtils.calculateLuminance(LauncherTheme.primary(this)) > 0.5d) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }

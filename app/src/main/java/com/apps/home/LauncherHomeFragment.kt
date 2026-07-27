@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +24,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.apps.LauncherActivity
 import com.apps.account.LauncherDisclaimerActivity
 import com.apps.agent.LocalAgentActivity
@@ -44,9 +46,16 @@ import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.launcherbridge.LauncherUpdateBridge
 import com.core.model.Game
 import com.core.util.AppExecutors
+import com.core.util.RxMainScheduler
 import com.core.util.SafeImageLoader
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LauncherHomeFragment : Fragment() {
 
@@ -496,14 +505,21 @@ class LauncherHomeFragment : Fragment() {
             return
         }
         val app = requireContext().applicationContext
-        AppExecutors.runOnIo {
-            val game = LauncherRepositoryBridge.findGameById(app, gameId)
-            if (game == null) {
-                activity?.runOnUiThread {
-                    if (!isAdded) return@runOnUiThread
-                    Toast.makeText(requireContext(), "游戏已被删除或不存在", Toast.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val game = try {
+                withContext(Dispatchers.IO) {
+                    LauncherRepositoryBridge.findGameById(app, gameId)
                 }
-                return@runOnIo
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("LauncherHomeFragment", "Failed to load recent game", e)
+                Toast.makeText(app, "无法打开：读取游戏信息失败", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            if (game == null) {
+                Toast.makeText(app, "游戏已被删除或不存在", Toast.LENGTH_SHORT).show()
+                return@launch
             }
             sessionController?.launchGameDirectly(this@LauncherHomeFragment, game)
         }
@@ -546,38 +562,65 @@ class LauncherHomeFragment : Fragment() {
     }
 
     private fun copyAvatarToInternal(sourceUri: Uri) {
-        AppExecutors.runOnIo {
-            val outFile = File(requireContext().filesDir, "launcher_avatar.jpg")
-            var ok = false
-            try {
-                requireContext().contentResolver.openInputStream(sourceUri)!!.use { input ->
-                    FileOutputStream(outFile).use { out ->
+        val app = requireContext().applicationContext
+        // 用户确认后的文件与偏好持久化由应用级任务承载，不随 Home View 销毁而取消。
+        AppExecutors.runOnSingle {
+            val outFile = File(app.filesDir, "launcher_avatar.jpg")
+            val savedUri = Uri.fromFile(outFile).toString()
+            var tempFile: File? = null
+            val success = try {
+                val pendingFile =
+                    File.createTempFile("launcher_avatar_", ".tmp", app.filesDir)
+                tempFile = pendingFile
+                val input = app.contentResolver.openInputStream(sourceUri)
+                    ?: throw IllegalStateException("Unable to open avatar source")
+                input.use {
+                    FileOutputStream(pendingFile).use { out ->
                         val buffer = ByteArray(8192)
-                        var n = input.read(buffer)
+                        var n = it.read(buffer)
                         while (n > 0) {
                             out.write(buffer, 0, n)
-                            n = input.read(buffer)
+                            n = it.read(buffer)
                         }
-                        ok = true
+                        out.flush()
+                        out.fd.sync()
                     }
                 }
-            } catch (ignored: Throwable) {
-            }
-            val success = ok
-            val savedUri = Uri.fromFile(outFile).toString()
-            val activity = activity ?: return@runOnIo
-            activity.runOnUiThread {
-                if (!isAdded) return@runOnUiThread
-                if (!success) {
-                    Toast.makeText(requireContext(), "头像保存失败", Toast.LENGTH_SHORT).show()
-                    return@runOnUiThread
+                // 临时文件与目标位于同一目录；原子替换失败时旧头像保持不变。
+                Files.move(
+                    pendingFile.toPath(),
+                    outFile.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+                val homeCommitted = app.getSharedPreferences(APP_PREFS, 0)
+                    .edit().putString(KEY_PROFILE_AVATAR, savedUri).commit()
+                if (homeCommitted) {
+                    val profileCommitted = app.getSharedPreferences("launcher_profile_prefs", 0)
+                        .edit().putString("custom_avatar_uri", savedUri).commit()
+                    if (!profileCommitted) {
+                        Log.w("LauncherHomeFragment", "Failed to mirror avatar preference")
+                    }
                 }
-                prefs().edit().putString(KEY_PROFILE_AVATAR, savedUri).apply()
-                // 同步头像到个人页
-                requireContext().getSharedPreferences("launcher_profile_prefs", 0)
-                    .edit().putString("custom_avatar_uri", savedUri).apply()
+                homeCommitted
+            } catch (e: Exception) {
+                Log.w("LauncherHomeFragment", "Failed to persist avatar", e)
+                false
+            } finally {
+                tempFile?.let { pending ->
+                    if (pending.exists() && !pending.delete()) {
+                        Log.w("LauncherHomeFragment", "Failed to delete temporary avatar")
+                    }
+                }
+            }
+            RxMainScheduler.post {
+                if (!isAdded || view == null) return@post
+                if (!success) {
+                    Toast.makeText(app, "头像保存失败", Toast.LENGTH_SHORT).show()
+                    return@post
+                }
                 renderAvatar()
-                Toast.makeText(requireContext(), "头像已更新", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, "头像已更新", Toast.LENGTH_SHORT).show()
             }
         }
     }

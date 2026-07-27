@@ -10,11 +10,9 @@ import com.core.launcherbridge.LauncherSyncBridge;
 import com.core.model.Game;
 import com.core.util.TimeFormatUtil;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class LauncherRepository {
@@ -137,11 +135,11 @@ public class LauncherRepository {
 
     private String formatRecentTime(long time) {
         if (time <= 0L) return "从未记录";
-        return new SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()).format(time);
+        return TimeFormatUtil.shortDate(time);
     }
 
     private String formatSyncTime(long time) {
-        return new SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()).format(time);
+        return TimeFormatUtil.shortDate(time);
     }
 
     private String launchTypeLabel(String launchType) {

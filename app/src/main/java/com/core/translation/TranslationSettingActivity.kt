@@ -13,19 +13,16 @@ import android.provider.Settings
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import android.widget.EditText
-import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
 import com.core.R
+import com.core.databinding.ActivityTranslationSettingBinding
 import com.core.util.AppExecutors
 
 /**
@@ -39,16 +36,7 @@ import com.core.util.AppExecutors
  */
 class TranslationSettingActivity : AppCompatActivity() {
 
-    private lateinit var translationScroll: ScrollView
-    private lateinit var enabledSwitch: SwitchCompat
-    private lateinit var baseUrlInput: EditText
-    private lateinit var modelInput: EditText
-    private lateinit var apiKeyInput: EditText
-    private lateinit var saveButton: TextView
-    private lateinit var testButton: TextView
-    private lateinit var overlayStatus: TextView
-    private lateinit var overlayButton: TextView
-    private lateinit var projectionStatus: TextView
+    private lateinit var binding: ActivityTranslationSettingBinding
     private var awaitingOverlayPermissionResult = false
 
     private val projectionLauncher: ActivityResultLauncher<Intent> =
@@ -76,8 +64,8 @@ class TranslationSettingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         configureEdgeToEdgeWindow()
 
-        setContentView(R.layout.activity_translation_setting)
-        translationScroll = findViewById(R.id.translationScroll)
+        binding = ActivityTranslationSettingBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         applySystemBarInsets()
 
         // 冷启动时 projectionData 静态变量丢失，截屏权限已失效，
@@ -97,35 +85,26 @@ class TranslationSettingActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        enabledSwitch = findViewById(R.id.translationEnabledSwitch)
-        baseUrlInput = findViewById(R.id.translationBaseUrlInput)
-        modelInput = findViewById(R.id.translationModelInput)
-        apiKeyInput = findViewById(R.id.translationApiKeyInput)
-        saveButton = findViewById(R.id.translationSaveButton)
-        testButton = findViewById(R.id.translationTestButton)
-        overlayStatus = findViewById(R.id.translationOverlayStatus)
-        overlayButton = findViewById(R.id.translationOverlayButton)
-        projectionStatus = findViewById(R.id.translationProjectionStatus)
-        LauncherTheme.applyPrimaryTone(findViewById(R.id.translationSettingRoot))
-        LauncherTheme.styleSwitch(enabledSwitch)
-        LauncherTheme.formInputs(baseUrlInput, modelInput, apiKeyInput)
+        LauncherTheme.applyPrimaryTone(binding.translationSettingRoot)
+        LauncherTheme.styleSwitch(binding.translationEnabledSwitch)
+        LauncherTheme.formInputs(binding.translationBaseUrlInput, binding.translationModelInput, binding.translationApiKeyInput)
         // 显式应用主题色按钮样式（applyPrimaryTone 按 id 白名单匹配，自定义 id 不会被处理）
-        LauncherTheme.primaryButton(saveButton)
-        LauncherTheme.secondaryButton(testButton)
-        overlayButton.background = null
-        overlayButton.setTextColor(LauncherTheme.primary(this))
+        LauncherTheme.primaryButton(binding.translationSaveButton)
+        LauncherTheme.secondaryButton(binding.translationTestButton)
+        binding.translationOverlayButton.background = null
+        binding.translationOverlayButton.setTextColor(LauncherTheme.primary(this))
     }
 
     private fun renderConfig() {
         val config = TranslationConfigStore.get(this)
-        enabledSwitch.isChecked = config.enabled
-        baseUrlInput.setText(config.baseUrl)
-        modelInput.setText(config.model)
-        apiKeyInput.hint = if (config.hasApiKey) "已保存（留空表示不修改）" else "API Key"
+        binding.translationEnabledSwitch.isChecked = config.enabled
+        binding.translationBaseUrlInput.setText(config.baseUrl)
+        binding.translationModelInput.setText(config.model)
+        binding.translationApiKeyInput.hint = if (config.hasApiKey) "已保存（留空表示不修改）" else "API Key"
     }
 
     private fun bindActions() {
-        enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
+        binding.translationEnabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             TranslationConfigStore.setEnabled(this, isChecked)
             if (isChecked) {
                 // 启动失败时回滚开关，用 setEnabledSwitchChecked 避免递归
@@ -136,20 +115,20 @@ class TranslationSettingActivity : AppCompatActivity() {
                 stopService(Intent(this, OverlayTranslationService::class.java))
             }
         }
-        saveButton.setOnClickListener { saveConfig() }
-        testButton.setOnClickListener { testConnection() }
-        overlayButton.setOnClickListener { requestOverlayPermission() }
+        binding.translationSaveButton.setOnClickListener { saveConfig() }
+        binding.translationTestButton.setOnClickListener { testConnection() }
+        binding.translationOverlayButton.setOnClickListener { requestOverlayPermission() }
     }
 
     /**
      * 安全地修改开关状态，避免触发 [enabledSwitch] 的 OnCheckedChangeListener 递归。
      */
     private fun setEnabledSwitchChecked(checked: Boolean) {
-        enabledSwitch.setOnCheckedChangeListener(null)
-        enabledSwitch.isChecked = checked
+        binding.translationEnabledSwitch.setOnCheckedChangeListener(null)
+        binding.translationEnabledSwitch.isChecked = checked
         TranslationConfigStore.setEnabled(this, checked)
         // 重新绑定 listener
-        enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
+        binding.translationEnabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             TranslationConfigStore.setEnabled(this, isChecked)
             if (isChecked) {
                 if (!tryStartServiceIfReady()) {
@@ -162,14 +141,14 @@ class TranslationSettingActivity : AppCompatActivity() {
     }
 
     private fun saveConfig() {
-        val baseUrl = baseUrlInput.text?.toString() ?: ""
-        val model = modelInput.text?.toString() ?: ""
-        val apiKey = apiKeyInput.text?.toString() ?: ""
+        val baseUrl = binding.translationBaseUrlInput.text?.toString() ?: ""
+        val model = binding.translationModelInput.text?.toString() ?: ""
+        val apiKey = binding.translationApiKeyInput.text?.toString() ?: ""
         val replaceKey = apiKey.isNotEmpty()
         try {
             TranslationConfigStore.save(this, baseUrl, model, apiKey, replaceKey)
-            apiKeyInput.setText("")
-            apiKeyInput.hint = "已保存（留空表示不修改）"
+            binding.translationApiKeyInput.setText("")
+            binding.translationApiKeyInput.hint = "已保存（留空表示不修改）"
             Toast.makeText(this, "配置已保存", Toast.LENGTH_SHORT).show()
             renderConfig()
         } catch (e: Exception) {
@@ -184,8 +163,8 @@ class TranslationSettingActivity : AppCompatActivity() {
      * 发送一张 2x2 测试图片，根据响应弹统一信息窗提示结果。
      */
     private fun testConnection() {
-        val baseUrl = baseUrlInput.text?.toString()?.trim() ?: ""
-        val model = modelInput.text?.toString()?.trim() ?: ""
+        val baseUrl = binding.translationBaseUrlInput.text?.toString()?.trim() ?: ""
+        val model = binding.translationModelInput.text?.toString()?.trim() ?: ""
         // 未填写时回退到已保存配置
         val effectiveUrl = baseUrl.takeIf { it.isNotEmpty() }
             ?: TranslationConfigStore.get(this).baseUrl
@@ -208,12 +187,12 @@ class TranslationSettingActivity : AppCompatActivity() {
         }
 
         val loadingDialog = LauncherDialogFactory.showLoading(this, "正在测试", "发送测试图片到模型...")
-        testButton.isEnabled = false
+        binding.translationTestButton.isEnabled = false
         AppExecutors.runOnSingle {
             val result = VisionTranslationClient.testVision(this, effectiveUrl, effectiveModel)
             runOnUiThread {
                 loadingDialog.dismiss()
-                testButton.isEnabled = true
+                binding.translationTestButton.isEnabled = true
                 if (result.success) {
                     LauncherDialogFactory.showInfo(
                         this,
@@ -233,20 +212,20 @@ class TranslationSettingActivity : AppCompatActivity() {
 
     private fun refreshPermissionStatus() {
         if (hasOverlayPermission()) {
-            overlayStatus.text = "已授权"
-            overlayStatus.setTextColor(LauncherTheme.primary(this))
-            overlayButton.visibility = View.GONE
+            binding.translationOverlayStatus.text = "已授权"
+            binding.translationOverlayStatus.setTextColor(LauncherTheme.primary(this))
+            binding.translationOverlayButton.visibility = View.GONE
         } else {
-            overlayStatus.text = "未授权"
-            overlayStatus.setTextColor(getColor(R.color.launcher_text_muted_color))
-            overlayButton.visibility = View.VISIBLE
+            binding.translationOverlayStatus.text = "未授权"
+            binding.translationOverlayStatus.setTextColor(getColor(R.color.launcher_text_muted_color))
+            binding.translationOverlayButton.visibility = View.VISIBLE
         }
         if (OverlayTranslationService.projectionData != null) {
-            projectionStatus.text = "已授权"
-            projectionStatus.setTextColor(LauncherTheme.primary(this))
+            binding.translationProjectionStatus.text = "已授权"
+            binding.translationProjectionStatus.setTextColor(LauncherTheme.primary(this))
         } else {
-            projectionStatus.text = "未授权（开启开关时申请）"
-            projectionStatus.setTextColor(getColor(R.color.launcher_text_muted_color))
+            binding.translationProjectionStatus.text = "未授权（开启开关时申请）"
+            binding.translationProjectionStatus.setTextColor(getColor(R.color.launcher_text_muted_color))
         }
     }
 
@@ -320,7 +299,7 @@ class TranslationSettingActivity : AppCompatActivity() {
             if (hasOverlayPermission() && OverlayTranslationService.projectionData == null) {
                 // 悬浮窗授权成功后，顺序申请截屏权限；点“授权”文字和开启开关都适用。
                 requestProjectionPermission()
-            } else if (!hasOverlayPermission() && enabledSwitch.isChecked) {
+            } else if (!hasOverlayPermission() && binding.translationEnabledSwitch.isChecked) {
                 setEnabledSwitchChecked(false)
             }
         }
@@ -348,14 +327,14 @@ class TranslationSettingActivity : AppCompatActivity() {
      * 将系统状态栏高度应用为 ScrollView 的顶部 padding，避免内容被状态栏遮挡。
      */
     private fun applySystemBarInsets() {
-        val left = translationScroll.paddingLeft
-        val top = translationScroll.paddingTop
-        val right = translationScroll.paddingRight
-        val bottom = translationScroll.paddingBottom
-        translationScroll.setOnApplyWindowInsetsListener { view, insets ->
-            translationScroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
+        val left = binding.translationScroll.paddingLeft
+        val top = binding.translationScroll.paddingTop
+        val right = binding.translationScroll.paddingRight
+        val bottom = binding.translationScroll.paddingBottom
+        binding.translationScroll.setOnApplyWindowInsetsListener { view, insets ->
+            binding.translationScroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
             insets
         }
-        translationScroll.requestApplyInsets()
+        binding.translationScroll.requestApplyInsets()
     }
 }

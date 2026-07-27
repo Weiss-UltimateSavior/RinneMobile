@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,9 +45,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.Map;
 import com.apps.LauncherActivity;
 import com.apps.account.LauncherAccountFragment;
@@ -245,7 +244,6 @@ public class LauncherProfileFragment extends Fragment {
             day.set(Calendar.SECOND, 0);
             day.set(Calendar.MILLISECOND, 0);
             day.add(Calendar.DAY_OF_YEAR, -6);
-            SimpleDateFormat formatter = new SimpleDateFormat("E", Locale.CHINA);
             for (int i = 0; i < 7; i++) {
                 long start = day.getTimeInMillis();
                 long end = start + 24L * 60L * 60L * 1000L;
@@ -254,7 +252,7 @@ public class LauncherProfileFragment extends Fragment {
                     if (duration != null) total += Math.max(0L, duration);
                 }
                 durations[i] = total;
-                labels[i] = formatter.format(day.getTime());
+                labels[i] = TimeFormatUtil.weekDayLabel(day.getTimeInMillis());
                 day.add(Calendar.DAY_OF_YEAR, 1);
             }
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
@@ -492,7 +490,8 @@ public class LauncherProfileFragment extends Fragment {
                 int n;
                 while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
                 ok = true;
-            } catch (Throwable ignored) {
+            } catch (Exception e) {
+                Log.w("LauncherProfile", "copyImageToInternal failed: " + fileName, e);
             }
             final boolean success = ok;
             final String savedUri = Uri.fromFile(outFile).toString();

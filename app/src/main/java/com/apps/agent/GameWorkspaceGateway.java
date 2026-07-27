@@ -2,6 +2,7 @@ package com.apps.agent;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
@@ -45,6 +46,7 @@ import org.xml.sax.SAXParseException;
 
 /** Workspace access is scoped to a game selected by local database ID and its persisted SAF tree. */
 final class GameWorkspaceGateway {
+    private static final String TAG = "GameWorkspaceGateway";
     private static final int MAX_READ_BYTES = 64 * 1024;
     private static final int MAX_SEARCH_FILE_BYTES = 128 * 1024;
     private static final int MAX_SEARCH_TOTAL_BYTES = 2 * 1024 * 1024;
@@ -329,7 +331,7 @@ final class GameWorkspaceGateway {
         String preview = "";
         if (!"unknown".equals(selected)) {
             try { preview = decode(source.bytes, selected.replace("-bom", "")).text; }
-            catch (Throwable ignored) { }
+            catch (Exception e) { Log.w(TAG, "diagnostic-preview-decode-failed", e); }
         }
         if (preview.length() > 240) preview = preview.substring(0, 240) + "…";
         return source.baseWithoutEncoding().put("selected_encoding", selected).put("candidates", candidates)
@@ -507,7 +509,7 @@ final class GameWorkspaceGateway {
         } catch (AgentMutationTransaction.Failure error) {
             boolean restored = error.restored;
             String observed = "";
-            try { observed = sha256(readBounded(context, file, MAX_READ_BYTES)); } catch (Throwable ignored) { }
+            try { observed = sha256(readBounded(context, file, MAX_READ_BYTES)); } catch (Exception e) { Log.w(TAG, "diagnostic-sha256-after-failure-failed", e); }
             try { AgentSnapshotStore.markStatus(context, snapshotId,
                     restored ? "rolled_back" : "recovery_required", observed); }
             catch (Throwable statusError) { error.addSuppressed(statusError); }
@@ -693,7 +695,7 @@ final class GameWorkspaceGateway {
         try {
             String utf8 = decode(bytes, "utf-8").text;
             candidates.add(new EncodingCandidate("utf-8", ascii ? 0.90 : 0.99, languageScore(utf8)));
-        } catch (Throwable ignored) { }
+        } catch (Exception e) { Log.w(TAG, "diagnostic-utf8-decode-failed", e); }
         int evenZero = 0, oddZero = 0;
         for (int i = 0; i < bytes.length; i++) if (bytes[i] == 0) { if ((i & 1) == 0) evenZero++; else oddZero++; }
         if (evenZero > bytes.length / 8 || oddZero > bytes.length / 8) {
@@ -717,7 +719,7 @@ final class GameWorkspaceGateway {
             int score = languageScore(text);
             double confidence = Math.min(0.89, baseConfidence + Math.min(0.20, score / 1000.0));
             values.add(new EncodingCandidate(encoding, confidence, score));
-        } catch (Throwable ignored) { }
+        } catch (Exception e) { Log.w(TAG, "diagnostic-encoding-candidate-failed", e); }
     }
 
     private static int languageScore(String text) {

@@ -1,5 +1,6 @@
 package com.apps.game;
 
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
@@ -20,6 +21,8 @@ import com.core.util.DevLogger;
  * 依赖 ManageHost 提供 Context、UI 缩放及共享对话框构建器。
  */
 public final class DiagnosticsController {
+
+    private static final String TAG = "DiagnosticsController";
 
     private final ManageHost host;
 
@@ -77,8 +80,9 @@ public final class DiagnosticsController {
             if (!LauncherDiagnosticsBridge.exportLog(host.requireContext())) {
                 Toast.makeText(host.requireContext(), "暂无日志文件", Toast.LENGTH_SHORT).show();
             }
-        } catch (Throwable throwable) {
-            Toast.makeText(host.requireContext(), "导出失败：" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(TAG, "exportLog failed", e);
+            Toast.makeText(host.requireContext(), "导出失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

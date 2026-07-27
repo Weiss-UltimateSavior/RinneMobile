@@ -8,13 +8,10 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.ImageView;
-import com.apps.widget.LauncherEditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.core.R;
+import com.core.databinding.ActivityLauncherGameEditBinding;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.diagnostics.GameDiagnostics;
 import com.core.model.EngineType;
@@ -55,9 +53,10 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private static final String STATE_DESCRIPTION = "description";
     private static final String STATE_DIRECTORY_REBOUND = "directory_rebound";
     private static final String STATE_ENGINE_CHANGED = "engine_changed";
+    private static final String STATE_DIRECTORY_PERMISSION_DEGRADED =
+            "directory_permission_degraded";
 
-    private EditText etTitle;
-    private TextView tvEngine;
+    private ActivityLauncherGameEditBinding binding;
     private EngineOption currentEngineOption;
     private final EngineOption[] engineOptions = new EngineOption[]{
             new EngineOption(EngineType.AUTO, "自动识别", null),
@@ -77,19 +76,6 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             new EngineOption(EngineType.GODOT, "Godot (自动检测 3/4)", "godot4"),
             new EngineOption(EngineType.UNKNOWN, "未知", null)
     };
-    private LauncherEditText etEmulator;
-    private ImageView btnPickEmulatorApp;
-    private EditText etLaunchTarget;
-    private EditText etGameHubLocalGameId;
-    private EditText etDescription;
-    private TextView tvDir;
-    private TextView btnPickDirectory;
-    private TextView tvCoverStatus;
-    private TextView btnPickCover;
-    private ImageView btnImportGameHubShortcut;
-    private TextView btnCancel;
-    private TextView btnSave;
-
     private Game game;
     private Uri selectedCoverUri;
     private Uri selectedGameDirectoryUri;
@@ -98,6 +84,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private boolean engineChanged;
     private EngineType originalEngine;
     private String lastEngineDefaultPackage = "";
+    /** 标记游戏目录 SAF 持久化授权降级为只读或彻底失败，便于 saveGame 时给用户提示。 */
+    private boolean directoryPermissionDegraded;
     private boolean restoreEngineSelection;
     private boolean restoreDirectorySelection;
     private boolean restoreCoverSelection;
@@ -106,12 +94,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private final ActivityResultLauncher<Uri> directoryPicker = registerForActivityResult(
             new ActivityResultContracts.OpenDocumentTree(), uri -> {
                 if (uri == null) return;
-                persistUriPermission(uri);
+                directoryPermissionDegraded = !persistUriPermission(uri);
                 selectedGameDirectoryUri = uri;
                 directoryRebound = game != null && game.rootUri != null
                         && !game.rootUri.equals(uri.toString());
-                tvDir.setText(displayDirectoryUri(uri));
-                tvDir.setTextColor(LauncherTheme.primary(this));
+                binding.editDir.setText(displayDirectoryUri(uri));
+                binding.editDir.setTextColor(LauncherTheme.primary(this));
             });
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
@@ -129,7 +117,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null && result.getData().getData() != null) {
                     selectedCoverUri = result.getData().getData();
-                    tvCoverStatus.setText("封面：已选择封面");
+                    binding.editCoverStatus.setText("封面：已选择封面");
                 }
             });
 
@@ -138,7 +126,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
-        setContentView(R.layout.activity_launcher_game_edit);
+        binding = ActivityLauncherGameEditBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
         bindViews();
         restoreTransientState(savedInstanceState);
@@ -153,22 +142,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void bindViews() {
-        etTitle = findViewById(R.id.editTitle);
-        tvEngine = findViewById(R.id.editEngineText);
         currentEngineOption = engineOptions[0];
-        tvEngine.setText(currentEngineOption.label);
-        etEmulator = findViewById(R.id.editEmulator);
-        btnPickEmulatorApp = findViewById(R.id.btnPickEmulatorApp);
-        etLaunchTarget = findViewById(R.id.editLaunchTarget);
-        etGameHubLocalGameId = findViewById(R.id.editGameHubLocalGameId);
-        etDescription = findViewById(R.id.editDescription);
-        tvDir = findViewById(R.id.editDir);
-        btnPickDirectory = findViewById(R.id.btnPickDirectory);
-        tvCoverStatus = findViewById(R.id.editCoverStatus);
-        btnPickCover = findViewById(R.id.btnPickCover);
-        btnImportGameHubShortcut = findViewById(R.id.btnImportGameHubShortcut);
-        btnCancel = findViewById(R.id.btnCancel);
-        btnSave = findViewById(R.id.btnSave);
+        binding.editEngineText.setText(currentEngineOption.label);
     }
 
     @Override
@@ -178,13 +153,14 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         outState.putString(STATE_LAST_ENGINE_DEFAULT_PACKAGE, lastEngineDefaultPackage);
         if (selectedGameDirectoryUri != null) outState.putString(STATE_GAME_DIRECTORY_URI, selectedGameDirectoryUri.toString());
         if (selectedCoverUri != null) outState.putString(STATE_COVER_URI, selectedCoverUri.toString());
-        outState.putString(STATE_TITLE, etTitle.getText().toString());
-        outState.putString(STATE_EMULATOR_PACKAGE, etEmulator.getText().toString());
-        outState.putString(STATE_LAUNCH_TARGET, etLaunchTarget.getText().toString());
-        outState.putString(STATE_GAMEHUB_LOCAL_GAME_ID, etGameHubLocalGameId.getText().toString());
-        outState.putString(STATE_DESCRIPTION, etDescription.getText().toString());
+        outState.putString(STATE_TITLE, binding.editTitle.getText().toString());
+        outState.putString(STATE_EMULATOR_PACKAGE, binding.editEmulator.getText().toString());
+        outState.putString(STATE_LAUNCH_TARGET, binding.editLaunchTarget.getText().toString());
+        outState.putString(STATE_GAMEHUB_LOCAL_GAME_ID, binding.editGameHubLocalGameId.getText().toString());
+        outState.putString(STATE_DESCRIPTION, binding.editDescription.getText().toString());
         outState.putBoolean(STATE_DIRECTORY_REBOUND, directoryRebound);
         outState.putBoolean(STATE_ENGINE_CHANGED, engineChanged);
+        outState.putBoolean(STATE_DIRECTORY_PERMISSION_DEGRADED, directoryPermissionDegraded);
     }
 
     private void restoreTransientState(@Nullable Bundle savedInstanceState) {
@@ -192,29 +168,31 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         restoreFormState = savedInstanceState.containsKey(STATE_TITLE);
         directoryRebound = savedInstanceState.getBoolean(STATE_DIRECTORY_REBOUND, false);
         engineChanged = savedInstanceState.getBoolean(STATE_ENGINE_CHANGED, false);
+        directoryPermissionDegraded =
+                savedInstanceState.getBoolean(STATE_DIRECTORY_PERMISSION_DEGRADED, false);
         if (restoreFormState) {
-            etTitle.setText(savedInstanceState.getString(STATE_TITLE, ""));
-            etEmulator.setText(savedInstanceState.getString(STATE_EMULATOR_PACKAGE, ""));
-            etLaunchTarget.setText(savedInstanceState.getString(STATE_LAUNCH_TARGET, ""));
-            etGameHubLocalGameId.setText(savedInstanceState.getString(STATE_GAMEHUB_LOCAL_GAME_ID, ""));
-            etDescription.setText(savedInstanceState.getString(STATE_DESCRIPTION, ""));
+            binding.editTitle.setText(savedInstanceState.getString(STATE_TITLE, ""));
+            binding.editEmulator.setText(savedInstanceState.getString(STATE_EMULATOR_PACKAGE, ""));
+            binding.editLaunchTarget.setText(savedInstanceState.getString(STATE_LAUNCH_TARGET, ""));
+            binding.editGameHubLocalGameId.setText(savedInstanceState.getString(STATE_GAMEHUB_LOCAL_GAME_ID, ""));
+            binding.editDescription.setText(savedInstanceState.getString(STATE_DESCRIPTION, ""));
         }
         restoreEngineSelection = savedInstanceState.containsKey(STATE_ENGINE_OPTION_INDEX);
         if (restoreEngineSelection) {
             currentEngineOption = engineOptions[boundedEngineOptionIndex(
                     savedInstanceState.getInt(STATE_ENGINE_OPTION_INDEX, 0))];
-            tvEngine.setText(currentEngineOption.label);
+            binding.editEngineText.setText(currentEngineOption.label);
             lastEngineDefaultPackage = savedInstanceState.getString(STATE_LAST_ENGINE_DEFAULT_PACKAGE, "");
         }
         selectedGameDirectoryUri = uriFromState(savedInstanceState.getString(STATE_GAME_DIRECTORY_URI));
         restoreDirectorySelection = selectedGameDirectoryUri != null;
         if (restoreDirectorySelection) {
-            tvDir.setText(displayDirectoryUri(selectedGameDirectoryUri));
-            tvDir.setTextColor(LauncherTheme.primary(this));
+            binding.editDir.setText(displayDirectoryUri(selectedGameDirectoryUri));
+            binding.editDir.setTextColor(LauncherTheme.primary(this));
         }
         selectedCoverUri = uriFromState(savedInstanceState.getString(STATE_COVER_URI));
         restoreCoverSelection = selectedCoverUri != null;
-        if (restoreCoverSelection) tvCoverStatus.setText("封面：已选择封面");
+        if (restoreCoverSelection) binding.editCoverStatus.setText("封面：已选择封面");
     }
 
     @Nullable
@@ -228,21 +206,21 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        tvEngine.setOnClickListener(v -> showEnginePicker());
+        binding.editEngineText.setOnClickListener(v -> showEnginePicker());
         // 模拟器包名支持手动输入；右侧图标点击从应用列表选择。
-        btnPickEmulatorApp.setOnClickListener(v -> LauncherAppPickerDialog.show(this, etEmulator::setText));
-        etLaunchTarget.setOnClickListener(v -> LauncherLaunchTargetPicker.show(
-                this, selectedGameDirectoryUri, selectedEngineOption().engine, etLaunchTarget::setText));
-        btnPickDirectory.setOnClickListener(v -> directoryPicker.launch(selectedGameDirectoryUri));
-        btnPickCover.setOnClickListener(v -> {
+        binding.btnPickEmulatorApp.setOnClickListener(v -> LauncherAppPickerDialog.show(this, binding.editEmulator::setText));
+        binding.editLaunchTarget.setOnClickListener(v -> LauncherLaunchTargetPicker.show(
+                this, selectedGameDirectoryUri, selectedEngineOption().engine, binding.editLaunchTarget::setText));
+        binding.btnPickDirectory.setOnClickListener(v -> directoryPicker.launch(selectedGameDirectoryUri));
+        binding.btnPickCover.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
             coverPicker.launch(intent);
         });
-        btnImportGameHubShortcut.setOnClickListener(v -> importGameHubShortcutFromShizuku());
-        btnCancel.setOnClickListener(v -> finish());
-        btnSave.setOnClickListener(v -> saveGame());
+        binding.btnImportGameHubShortcut.setOnClickListener(v -> importGameHubShortcutFromShizuku());
+        binding.btnCancel.setOnClickListener(v -> finish());
+        binding.btnSave.setOnClickListener(v -> saveGame());
     }
 
     private void loadGame() {
@@ -255,26 +233,26 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 game = g;
                 originalEngine = game.engine;
                 if (!restoreFormState) {
-                    etTitle.setText(game.title);
-                    etEmulator.setText(game.emulatorPackage);
-                    etLaunchTarget.setText(game.launchTarget);
-                    etGameHubLocalGameId.setText(game.gamehubLocalGameId);
-                    etDescription.setText(game.description);
+                    binding.editTitle.setText(game.title);
+                    binding.editEmulator.setText(game.emulatorPackage);
+                    binding.editLaunchTarget.setText(game.launchTarget);
+                    binding.editGameHubLocalGameId.setText(game.gamehubLocalGameId);
+                    binding.editDescription.setText(game.description);
                 }
                 if (!restoreEngineSelection) {
                     currentEngineOption = findEngineOption(game.engine, game.emulatorPackage);
-                    tvEngine.setText(currentEngineOption.label);
+                    binding.editEngineText.setText(currentEngineOption.label);
                     lastEngineDefaultPackage = defaultEmulatorPackageForOption(currentEngineOption);
                 }
                 if (!restoreDirectorySelection && game.rootUri != null && game.rootUri.startsWith("content://")) {
                     selectedGameDirectoryUri = Uri.parse(game.rootUri);
-                    tvDir.setText(displayDirectoryUri(selectedGameDirectoryUri));
+                    binding.editDir.setText(displayDirectoryUri(selectedGameDirectoryUri));
                 } else if (!restoreDirectorySelection) {
-                    tvDir.setText(game.rootUri == null || game.rootUri.trim().isEmpty()
+                    binding.editDir.setText(game.rootUri == null || game.rootUri.trim().isEmpty()
                             ? "尚未选择游戏目录" : game.rootUri);
                 }
                 if (!restoreCoverSelection && game.coverUri != null && !game.coverUri.trim().isEmpty()) {
-                    tvCoverStatus.setText("封面：已有封面");
+                    binding.editCoverStatus.setText("封面：已有封面");
                 }
             });
         });
@@ -282,13 +260,13 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private void saveGame() {
         if (game == null) return;
-        String title = etTitle.getText().toString().trim();
+        String title = binding.editTitle.getText().toString().trim();
         if (title.isEmpty()) {
             Toast.makeText(this, "请输入标题", Toast.LENGTH_SHORT).show();
             return;
         }
-        btnSave.setEnabled(false);
-        btnSave.setText("保存中...");
+        binding.btnSave.setEnabled(false);
+        binding.btnSave.setText("保存中...");
 
         game.title = title;
         EngineOption opt = selectedEngineOption();
@@ -298,7 +276,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         game.engine = directoryRebound && !engineChanged && originalEngine != null
                 ? originalEngine
                 : (opt != null ? opt.engine : EngineType.UNKNOWN);
-        String emuPkg = etEmulator.getText().toString().trim();
+        String emuPkg = binding.editEmulator.getText().toString().trim();
         // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>。
         if (emuPkg.isEmpty() && opt != null
                 && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY
@@ -307,11 +285,11 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             emuPkg = "internal." + opt.rpgMakerSubtype;
         }
         game.emulatorPackage = emuPkg;
-        game.launchTarget = etLaunchTarget.getText().toString().trim();
+        game.launchTarget = binding.editLaunchTarget.getText().toString().trim();
         if (game.launchTarget.isEmpty()) game.launchTarget = "[游戏目录]";
         if (selectedGameDirectoryUri != null) game.rootUri = selectedGameDirectoryUri.toString();
-        game.gamehubLocalGameId = etGameHubLocalGameId.getText().toString().trim();
-        game.description = etDescription.getText().toString().trim();
+        game.gamehubLocalGameId = binding.editGameHubLocalGameId.getText().toString().trim();
+        game.description = binding.editDescription.getText().toString().trim();
 
         AppExecutors.io().execute(() -> {
             try {
@@ -323,17 +301,25 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                         game.coverSourceType = 1;
                     }
                 }
-                LauncherRepositoryBridge.updateGame(this, game);
+                int affected = LauncherRepositoryBridge.updateGame(this, game);
+                if (affected <= 0) {
+                    throw new IllegalStateException("游戏记录不存在或未能写入");
+                }
                 if (directoryRebound) GameDiagnostics.recordDirectoryRebound(this, game);
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
+                    if (directoryPermissionDegraded) {
+                        // 游戏目录 SAF 持久化授权降级为只读或彻底失败，提示用户可能无法写入存档
+                        Toast.makeText(this, "已保存，但目录授权受限，可能无法写入存档", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
+                    }
                     setResult(RESULT_OK);
                     finish();
                 });
             } catch (Throwable t) {
                 runOnUiThread(() -> {
-                    btnSave.setEnabled(true);
-                    btnSave.setText("保存");
+                    binding.btnSave.setEnabled(true);
+                    binding.btnSave.setText("保存");
                     Toast.makeText(this, "保存失败: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
@@ -341,26 +327,32 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
-        LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
-        LauncherTheme.formInputs(etTitle, etEmulator, etLaunchTarget, etGameHubLocalGameId, etDescription);
-        LauncherTheme.longActionButton(btnPickDirectory);
-        LauncherTheme.longActionButton(btnPickCover);
-        btnPickEmulatorApp.setImageTintList(
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.formInputs(binding.editTitle, binding.editEmulator, binding.editLaunchTarget, binding.editGameHubLocalGameId, binding.editDescription);
+        LauncherTheme.longActionButton(binding.btnPickDirectory);
+        LauncherTheme.longActionButton(binding.btnPickCover);
+        binding.btnPickEmulatorApp.setImageTintList(
                 ColorStateList.valueOf(LauncherTheme.primary(this)));
-        btnImportGameHubShortcut.setImageTintList(
+        binding.btnImportGameHubShortcut.setImageTintList(
                 ColorStateList.valueOf(LauncherTheme.primary(this)));
-        LauncherTheme.longActionButton(btnSave);
-        LauncherTheme.longActionButton(btnCancel);
+        LauncherTheme.longActionButton(binding.btnSave);
+        LauncherTheme.longActionButton(binding.btnCancel);
     }
 
-    private void persistUriPermission(Uri uri) {
+    /** 持久化 URI 授权。返回 true 表示 RW 授权成功，false 表示降级为只读或彻底失败。 */
+    private boolean persistUriPermission(Uri uri) {
         int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
         try {
             getContentResolver().takePersistableUriPermission(uri, flags);
-        } catch (Throwable first) {
+            return true;
+        } catch (Exception first) {
+            Log.w("LauncherGameEdit", "takePersistableUriPermission(RW) failed, retry RO", first);
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (Throwable ignored) {
+                return false;
+            } catch (Exception e) {
+                Log.w("LauncherGameEdit", "takePersistableUriPermission(RO) failed", e);
+                return false;
             }
         }
     }
@@ -395,9 +387,9 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             return;
         }
 
-        btnImportGameHubShortcut.setEnabled(false);
-        btnImportGameHubShortcut.setAlpha(0.45f);
-        btnImportGameHubShortcut.setContentDescription("正在读取 GameHub 快捷方式");
+        binding.btnImportGameHubShortcut.setEnabled(false);
+        binding.btnImportGameHubShortcut.setAlpha(0.45f);
+        binding.btnImportGameHubShortcut.setContentDescription("正在读取 GameHub 快捷方式");
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try {
@@ -407,9 +399,9 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             }
             List<LauncherGameHubShortcutBridge.Shortcut> result = items;
             runOnUiThread(() -> {
-                btnImportGameHubShortcut.setEnabled(true);
-                btnImportGameHubShortcut.setAlpha(1f);
-                btnImportGameHubShortcut.setContentDescription("导入 GameHub 快捷方式");
+                binding.btnImportGameHubShortcut.setEnabled(true);
+                binding.btnImportGameHubShortcut.setAlpha(1f);
+                binding.btnImportGameHubShortcut.setContentDescription("导入 GameHub 快捷方式");
                 if (isFinishing()) return;
                 if (result.isEmpty()) {
                     showGameHubImportUnavailableDialog();
@@ -432,12 +424,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private void applyGameHubShortcut(LauncherGameHubShortcutBridge.Shortcut item) {
         if (item == null) return;
-        etGameHubLocalGameId.setText(item.localGameId);
-        if (etTitle.getText() == null || etTitle.getText().toString().trim().isEmpty()) {
-            etTitle.setText(item.localAppName);
+        binding.editGameHubLocalGameId.setText(item.localGameId);
+        if (binding.editTitle.getText() == null || binding.editTitle.getText().toString().trim().isEmpty()) {
+            binding.editTitle.setText(item.localAppName);
         }
-        if (etEmulator.getText() == null || etEmulator.getText().toString().trim().isEmpty()) {
-            etEmulator.setText("com.xiaoji.egggame");
+        if (binding.editEmulator.getText() == null || binding.editEmulator.getText().toString().trim().isEmpty()) {
+            binding.editEmulator.setText("com.xiaoji.egggame");
         }
     }
 
@@ -491,10 +483,10 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private void applyEngineSelection(int index) {
         currentEngineOption = engineOptions[boundedEngineOptionIndex(index)];
         engineChanged = true;
-        tvEngine.setText(currentEngineOption.label);
+        binding.editEngineText.setText(currentEngineOption.label);
         // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
         String nextDefault = defaultEmulatorPackageForOption(currentEngineOption);
-        etEmulator.setText(nextDefault);
+        binding.editEmulator.setText(nextDefault);
         lastEngineDefaultPackage = nextDefault;
     }
 
@@ -544,16 +536,15 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void applySystemBarInsets() {
-        View scroll = findViewById(R.id.editScroll);
-        int left = scroll.getPaddingLeft();
-        int top = scroll.getPaddingTop();
-        int right = scroll.getPaddingRight();
-        int bottom = scroll.getPaddingBottom();
-        scroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            scroll.setPadding(left, top + insets.getSystemWindowInsetTop(), right, bottom);
+        int left = binding.editScroll.getPaddingLeft();
+        int top = binding.editScroll.getPaddingTop();
+        int right = binding.editScroll.getPaddingRight();
+        int bottom = binding.editScroll.getPaddingBottom();
+        binding.editScroll.setOnApplyWindowInsetsListener((view, insets) -> {
+            binding.editScroll.setPadding(left, top + insets.getSystemWindowInsetTop(), right, bottom);
             return insets;
         });
-        scroll.requestApplyInsets();
+        binding.editScroll.requestApplyInsets();
     }
 
     private void configureEdgeToEdgeWindow() {

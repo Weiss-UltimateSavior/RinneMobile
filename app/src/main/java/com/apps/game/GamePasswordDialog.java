@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -28,6 +29,8 @@ import java.security.MessageDigest;
  * 密码为 6 位纯数字，存储时使用 SHA-256 哈希。
  */
 public final class GamePasswordDialog {
+
+    private static final String TAG = "GamePasswordDialog";
 
     public interface OnPasswordSetListener {
         void onPasswordSet(String hashedPassword);
@@ -228,9 +231,15 @@ public final class GamePasswordDialog {
                 hint.setText("请再次输入以确认");
             } else {
                 if (entered.equals(firstInput[0])) {
-                    String hashed = hash(entered);
-                    dialog.dismiss();
-                    if (setListener != null) setListener.onPasswordSet(hashed);
+                    try {
+                        String hashed = hash(entered);
+                        dialog.dismiss();
+                        if (setListener != null) setListener.onPasswordSet(hashed);
+                    } catch (IllegalStateException e) {
+                        hint.setText("密码加密失败，无法保存");
+                        shakeError(hint);
+                        Toast.makeText(context, "密码加密失败", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     firstInputDone[0] = false;
                     firstInput[0] = "";
@@ -239,14 +248,20 @@ public final class GamePasswordDialog {
                 }
             }
         } else {
-            String hashed = hash(entered);
-            if (hashed.equals(hashedPassword)) {
-                dialog.dismiss();
-                if (verifySuccess != null) verifySuccess.run();
-            } else {
-                hint.setText("密码错误，请重新输入");
+            try {
+                String hashed = hash(entered);
+                if (hashed.equals(hashedPassword)) {
+                    dialog.dismiss();
+                    if (verifySuccess != null) verifySuccess.run();
+                } else {
+                    hint.setText("密码错误，请重新输入");
+                    shakeError(hint);
+                    Toast.makeText(context, "密码错误", Toast.LENGTH_SHORT).show();
+                }
+            } catch (IllegalStateException e) {
+                hint.setText("密码加密失败，无法验证");
                 shakeError(hint);
-                Toast.makeText(context, "密码错误", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "密码加密失败", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -270,7 +285,7 @@ public final class GamePasswordDialog {
         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
     }
 
-    /** SHA-256 哈希，结果转 hex 字符串 */
+    /** SHA-256 哈希，结果转 hex 字符串。失败时抛出异常，禁止返回明文以避免明文落库。 */
     public static String hash(String raw) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -281,7 +296,8 @@ public final class GamePasswordDialog {
             }
             return sb.toString();
         } catch (Exception e) {
-            return raw;
+            Log.e(TAG, "hash failed, refusing to return raw password", e);
+            throw new IllegalStateException("密码加密失败", e);
         }
     }
 

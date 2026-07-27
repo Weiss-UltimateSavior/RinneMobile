@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,8 @@ import java.util.Map;
 
 /** Shared searchable package picker used by the add-game and edit-game forms. */
 final class LauncherAppPickerDialog {
+    private static final String TAG = "LauncherAppPickerDialog";
+
     interface Callback {
         void onPackageSelected(String packageName);
     }
@@ -112,7 +115,8 @@ final class LauncherAppPickerDialog {
                     }
                 }
             }
-        } catch (Throwable ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "PackageManager query failed", e);
         }
         List<Item> items = new ArrayList<>(itemsByPackage.values());
         items.sort((left, right) -> left.label.compareToIgnoreCase(right.label));
@@ -126,7 +130,8 @@ final class LauncherAppPickerDialog {
             CharSequence label = packageManager.getApplicationLabel(app);
             itemsByPackage.put(app.packageName, new Item(label == null ? app.packageName : label.toString(),
                     app.packageName, packageManager.getApplicationIcon(app)));
-        } catch (Throwable ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "PackageManager query failed", e);
         }
     }
 

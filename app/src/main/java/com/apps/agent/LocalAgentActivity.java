@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +46,7 @@ import java.util.List;
 
 /** Independent local agent surface. It does not use account login, personas or /ai/chat. */
 public class LocalAgentActivity extends AppCompatActivity {
+    private static final String TAG = "LocalAgentActivity";
     private ActivityLocalAgentBinding binding;
     private final List<AgentConversationRepository.Message> messages = new ArrayList<>();
     private AgentConversationRepository repository;
@@ -142,7 +144,7 @@ public class LocalAgentActivity extends AppCompatActivity {
             android.view.inputmethod.InputMethodManager imm =
                     (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             if (imm != null) imm.showSoftInput(view, 0);
-        } catch (Throwable ignored) {}
+        } catch (Exception e) { Log.d(TAG, "show IME failed", e); }
     }
 
     private void send() {

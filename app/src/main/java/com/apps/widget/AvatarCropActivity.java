@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -48,6 +49,7 @@ public class AvatarCropActivity extends AppCompatActivity {
 
     public static final String EXTRA_INPUT_URI = "input_uri";
     public static final String EXTRA_OUTPUT_URI = "output_uri";
+    private static final String TAG = "AvatarCropActivity";
     private static final String OUTPUT_FILE_NAME = "launcher_avatar_cropped.jpg";
 
     private CropView cropView;
@@ -197,7 +199,10 @@ public class AvatarCropActivity extends AppCompatActivity {
             boolean ok = false;
             try (FileOutputStream fos = new FileOutputStream(outFile)) {
                 ok = output.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-            } catch (Throwable ignored) {
+            } catch (OutOfMemoryError oom) {
+                throw oom;
+            } catch (Exception e) {
+                Log.w(TAG, "avatar-jpeg-compress-failed", e);
             }
             // 仅回收独立副本；若返回的是源 bitmap 本身则交由 CropView.release() 处理
             if (output != source && !output.isRecycled()) {
@@ -286,7 +291,10 @@ public class AvatarCropActivity extends AppCompatActivity {
                 Bitmap b = null;
                 try {
                     b = decodeBitmap(appContext, uri);
-                } catch (Throwable ignored) {
+                } catch (OutOfMemoryError oom) {
+                    throw oom;
+                } catch (Exception e) {
+                    Log.w(TAG, "avatar-decode-failed", e);
                 }
                 final Bitmap result = b;
                 MAIN.post(() -> {
@@ -306,7 +314,10 @@ public class AvatarCropActivity extends AppCompatActivity {
             opts.inJustDecodeBounds = true;
             try (InputStream in = context.getContentResolver().openInputStream(uri)) {
                 BitmapFactory.decodeStream(in, null, opts);
-            } catch (Throwable ignored) {
+            } catch (OutOfMemoryError oom) {
+                throw oom;
+            } catch (Exception e) {
+                Log.w(TAG, "avatar-probe-decode-failed", e);
             }
             int target = Math.min(displayWidth, displayHeight) * 2;
             opts.inSampleSize = calculateSampleSize(opts.outWidth, opts.outHeight, target);
@@ -314,7 +325,10 @@ public class AvatarCropActivity extends AppCompatActivity {
             opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
             try (InputStream in = context.getContentResolver().openInputStream(uri)) {
                 return BitmapFactory.decodeStream(in, null, opts);
-            } catch (Throwable ignored) {
+            } catch (OutOfMemoryError oom) {
+                throw oom;
+            } catch (Exception e) {
+                Log.w(TAG, "avatar-decode-failed", e);
                 return null;
             }
         }

@@ -1,6 +1,7 @@
 package com.apps.agent;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.core.util.RxMainScheduler;
 
@@ -20,6 +21,7 @@ import java.util.Set;
 
 /** Local orchestration loop: the network model may request only tools registered on this device. */
 public final class LocalAgentRuntime {
+    private static final String TAG = "LocalAgentRuntime";
     private static final int MAX_MODEL_TOOL_ROUNDS = 20;
     private static final int MAX_REASONING_TRACE_CHARS = 128 * 1024;
     private static final String SYSTEM_PROMPT =
@@ -201,7 +203,7 @@ public final class LocalAgentRuntime {
                     try {
                         finalText = AgentOutcomeGuard.enforceMcpRegistry(finalText,
                                 McpServerStore.savedSummary(appContext));
-                    } catch (Throwable ignored) { }
+                    } catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
                     ensureActive(token);
                     if (!token.tryCommit()) throw new InterruptedException("cancelled");
                     if (reasoningTrace.length() > 0) {
@@ -297,7 +299,7 @@ public final class LocalAgentRuntime {
                                 sideEffectsCommitted = true;
                                 token.markMutationCommitted();
                                 try { repository.add("tool", "已确认并完成扫描目录整理；" + toolName, toolName); }
-                                catch (Throwable ignored) { }
+                                catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
                             }
                         } else if (AgentToolRegistry.requiresApproval(toolName)) {
                             GameWorkspaceGateway.PendingWrite pending = AgentToolRegistry.prepareWrite(
@@ -315,7 +317,7 @@ public final class LocalAgentRuntime {
                                 successfulMutationTools.add(toolName);
                                 sideEffectsCommitted = true;
                                 try { repository.add("tool", "已确认并完成游戏文件修改；" + auditResult(toolResult), toolName); }
-                                catch (Throwable ignored) { /* Snapshot metadata is the durable mutation journal. */ }
+                                catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); /* Snapshot metadata is the durable mutation journal. */ }
                             }
                         } else if (AgentToolRegistry.requiresMcpApproval(toolName)) {
                             AgentToolRegistry.McpApproval pending = AgentToolRegistry.prepareMcpApproval(
@@ -338,7 +340,7 @@ public final class LocalAgentRuntime {
                                                 try { repository.add("tool",
                                                         "远程 MCP 工具请求已开始；若调用中断，服务器端执行状态可能未知",
                                                         toolName); }
-                                                catch (Throwable ignored) { }
+                                                catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
                                             }
                                         });
                                 if ("mcp_call_tool".equals(toolName)) remoteMcpEffectUncertain.set(false);
@@ -350,7 +352,7 @@ public final class LocalAgentRuntime {
                                 }
                                 sideEffectsCommitted = true;
                                 try { repository.add("tool", "已确认 MCP 操作；" + toolName, toolName); }
-                                catch (Throwable ignored) { }
+                                catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
                             }
                         } else {
                             toolResult = AgentToolRegistry.execute(appContext, toolName, arguments, token::isActive,
@@ -370,7 +372,7 @@ public final class LocalAgentRuntime {
                                 }
                                 repository.add("tool", wsAudit, toolName);
                             }
-                            catch (Throwable ignored) { }
+                            catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
                         }
                     } catch (AgentPrivateWorkspace.MutationFailure error) {
                         sideEffectsCommitted = true;
@@ -396,6 +398,9 @@ public final class LocalAgentRuntime {
                         success = false;
                         toolResult = new JSONObject().put("error", "INVALID_TOOL_ARGUMENTS")
                                 .put("message", "工具参数无法解析或不符合要求").toString();
+                    } catch (Error error) {
+                        // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续推理
+                        throw error;
                     } catch (Throwable error) {
                         success = false;
                         toolResult = new JSONObject().put("error", "TOOL_EXECUTION_FAILED")
@@ -420,7 +425,34 @@ public final class LocalAgentRuntime {
                 }
             }
             throw new IllegalStateException("智能体未在限定轮次内完成任务");
+        } catch (InterruptedException error) {
+            // 取消信号必须恢复中断标志，避免上层无法感知
+            Thread.currentThread().interrupt();
+            if (!sideEffectsCommitted && !remoteMcpEffectUncertain.get()) {
+                for (Long id : pendingRows) repository.delete(id == null ? -1L : id);
+            }
+            final boolean committedEffects = sideEffectsCommitted || token.hasMutationCommitted();
+            final boolean remoteEffectUnknown = remoteMcpEffectUncertain.get();
+            final String message = failureMessage(true, committedEffects, remoteEffectUnknown,
+                    successfulMcpRegistration, readableError(error));
+            if (committedEffects || remoteEffectUnknown) {
+                try { repository.add("assistant", message, "error"); }
+                catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
+            }
+            post(() -> callback.onError(message));
+        } catch (Error error) {
+            // OOM/VirtualMachineError 等：Best-effort 清理未提交的待写记录，然后重新抛出，
+            // 避免在已损坏的 JVM 状态下继续运行
+            if (!sideEffectsCommitted && !remoteMcpEffectUncertain.get()) {
+                try {
+                    for (Long id : pendingRows) repository.delete(id == null ? -1L : id);
+                } catch (RuntimeException cleanupFailure) {
+                    Log.w(TAG, "pending-rows-cleanup-on-error-failed", cleanupFailure);
+                }
+            }
+            throw error;
         } catch (Throwable error) {
+            // 进程边界顶层兜底：转换为业务错误消息
             if (!sideEffectsCommitted && !remoteMcpEffectUncertain.get()) {
                 for (Long id : pendingRows) repository.delete(id == null ? -1L : id);
             }
@@ -431,7 +463,7 @@ public final class LocalAgentRuntime {
                     mcpConfirmation, readableError(error));
             if (committedEffects || remoteEffectUnknown) {
                 try { repository.add("assistant", message, "error"); }
-                catch (Throwable ignored) { }
+                catch (RuntimeException logFailure) { Log.w(TAG, "audit-log-failed", logFailure); }
             }
             post(() -> callback.onError(message));
         } finally {
@@ -475,7 +507,8 @@ public final class LocalAgentRuntime {
                 : "\n当前是受限权限模式：目录访问、文件修改与 MCP 敏感操作需要本机确认。";
         try {
             runtimePrompt += "\n\n" + McpServerStore.trustedModelContext(appContext);
-        } catch (Throwable ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "trustedModelContext failed", e);
             runtimePrompt += "\n\n设备本地 MCP 注册表暂时无法读取；不得据此推断用户未确认或未保存。";
         }
         values.add(new OpenAiCompatibleAgentClient.ModelMessage("system", runtimePrompt));

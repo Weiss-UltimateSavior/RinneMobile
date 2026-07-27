@@ -1,14 +1,21 @@
 package com.apps.data
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.core.launcherbridge.LauncherRepositoryBridge
-import com.core.util.AppExecutors
 import com.core.util.RxMainScheduler
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * 顶层 ViewModel，向 [LauncherActivity] 及其 Fragment 暴露不可变的 [LauncherState] 快照。
@@ -44,10 +51,19 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private val repository = LauncherRepository(application)
     private val launcherState: MutableLiveData<LauncherState> = MutableLiveData(emptyState(true))
+    /** 独立的数据域版本号，避免统计刷新与最近记录刷新相互淘汰。 */
+    private val statsRefreshToken = AtomicInteger()
     private val recentRefreshToken = AtomicInteger()
+    /** 删除开始即推进版本，使已读取删除前数据的请求不能再回写。 */
+    private val dataMutationVersion = AtomicInteger()
+    /** 按实际持锁完成删除的顺序编号，仅允许最新数据库快照提交到 UI。 */
+    private val deleteCommitVersion = AtomicInteger()
+    /** 使读取与删除按仓库操作顺序执行，防止读取旧列表在删除提交后回写。 */
+    private val repositoryMutex = Mutex()
+    /** 仅用于 UI 控制的 refreshing 显示，与状态写入校验分离。 */
+    private val visibleRecentRefreshToken = AtomicInteger()
 
     @Volatile private var selectedItem: NavItem = NavItem.HOME
-    @Volatile private var visibleRecentRefreshToken = 0
     @Volatile private var recentItemsLoadStarted = false
     @Volatile private var recentItemsLoaded = false
 
@@ -65,40 +81,69 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun refresh() {
-        AppExecutors.runOnSingle {
-            val snapshot = repository.loadSnapshot()
-            RxMainScheduler.post {
-                launcherState.value = LauncherState(
-                    selectedItem = selectedItem,
-                    accountName = snapshot.accountName,
-                    accountMode = snapshot.accountMode,
-                    syncStatus = snapshot.syncStatus,
-                    gameCount = snapshot.gameCount,
-                    totalPlayTime = snapshot.totalPlayTime,
-                    todayPlayTime = snapshot.todayPlayTime,
-                    recentItems = ArrayList(snapshot.recentItems),
-                    isLoading = false,
-                    isRecentRefreshing = false
-                )
+        val statsToken = statsRefreshToken.incrementAndGet()
+        val recentToken = recentRefreshToken.incrementAndGet()
+        val mutationVersion = dataMutationVersion.get()
+        viewModelScope.launch {
+            val snapshot = try {
+                withContext(Dispatchers.IO) { repositoryMutex.withLock { repository.loadSnapshot() } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("LauncherViewModel", "Failed to load snapshot", e)
+                if (statsRefreshToken.get() == statsToken && recentRefreshToken.get() == recentToken &&
+                    dataMutationVersion.get() == mutationVersion) {
+                    val current = currentState()
+                    launcherState.value = current.copy(isLoading = false, isRecentRefreshing = false)
+                }
+                return@launch
             }
+            val current = currentState()
+            val mutationUnchanged = dataMutationVersion.get() == mutationVersion
+            val updateStats = mutationUnchanged && statsRefreshToken.get() == statsToken
+            val updateRecent = mutationUnchanged && recentRefreshToken.get() == recentToken
+            if (!updateStats && !updateRecent) return@launch
+            launcherState.value = current.copy(
+                accountName = if (updateStats) snapshot.accountName else current.accountName,
+                accountMode = if (updateStats) snapshot.accountMode else current.accountMode,
+                syncStatus = if (updateStats) snapshot.syncStatus else current.syncStatus,
+                gameCount = if (updateStats) snapshot.gameCount else current.gameCount,
+                totalPlayTime = if (updateStats) snapshot.totalPlayTime else current.totalPlayTime,
+                todayPlayTime = if (updateStats) snapshot.todayPlayTime else current.todayPlayTime,
+                recentItems = if (updateRecent) ArrayList(snapshot.recentItems) else current.recentItems,
+                isLoading = false,
+                isRecentRefreshing = if (updateRecent) false else current.isRecentRefreshing
+            )
         }
     }
 
     fun refreshStats() {
-        AppExecutors.runOnSingle {
-            val snapshot = repository.loadStatsSnapshot()
-            RxMainScheduler.post {
-                val current = currentState()
-                launcherState.value = current.copy(
-                    accountName = snapshot.accountName,
-                    accountMode = snapshot.accountMode,
-                    syncStatus = snapshot.syncStatus,
-                    gameCount = snapshot.gameCount,
-                    totalPlayTime = snapshot.totalPlayTime,
-                    todayPlayTime = snapshot.todayPlayTime,
-                    isLoading = false
-                )
+        val token = statsRefreshToken.incrementAndGet()
+        val mutationVersion = dataMutationVersion.get()
+        viewModelScope.launch {
+            val snapshot = try {
+                withContext(Dispatchers.IO) { repositoryMutex.withLock { repository.loadStatsSnapshot() } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("LauncherViewModel", "Failed to load stats snapshot", e)
+                if (statsRefreshToken.get() == token && dataMutationVersion.get() == mutationVersion) {
+                    val current = currentState()
+                    launcherState.value = current.copy(isLoading = false)
+                }
+                return@launch
             }
+            if (statsRefreshToken.get() != token || dataMutationVersion.get() != mutationVersion) return@launch
+            val current = currentState()
+            launcherState.value = current.copy(
+                accountName = snapshot.accountName,
+                accountMode = snapshot.accountMode,
+                syncStatus = snapshot.syncStatus,
+                gameCount = snapshot.gameCount,
+                totalPlayTime = snapshot.totalPlayTime,
+                todayPlayTime = snapshot.todayPlayTime,
+                isLoading = false
+            )
         }
     }
 
@@ -122,24 +167,39 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     @JvmOverloads
     fun refreshRecentItems(showRefreshing: Boolean = false) {
         val token = recentRefreshToken.incrementAndGet()
+        val mutationVersion = dataMutationVersion.get()
         synchronized(this) {
             recentItemsLoadStarted = true
         }
         if (showRefreshing) {
             setRecentRefreshing(true)
-            visibleRecentRefreshToken = token
+            visibleRecentRefreshToken.set(token)
         }
-        AppExecutors.runOnSingle {
-            val recentItems = repository.loadRecentItems()
-            RxMainScheduler.post {
-                val current = currentState()
-                synchronized(this@LauncherViewModel) {
-                    recentItemsLoaded = true
-                    recentItemsLoadStarted = false
-                }
-                val keepRefreshing = current.isRecentRefreshing && visibleRecentRefreshToken > token
+        viewModelScope.launch {
+            val recentItems: List<LauncherRepository.RecentItem>? = try {
+                withContext(Dispatchers.IO) { repositoryMutex.withLock { repository.loadRecentItems() } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("LauncherViewModel", "Failed to load recent items", e)
+                null
+            }
+            if (recentRefreshToken.get() != token || dataMutationVersion.get() != mutationVersion) return@launch
+            val current = currentState()
+            synchronized(this@LauncherViewModel) {
+                recentItemsLoaded = true
+                recentItemsLoadStarted = false
+            }
+            val keepRefreshing = current.isRecentRefreshing && visibleRecentRefreshToken.get() > token
+            if (recentItems != null) {
                 launcherState.value = current.copy(
                     recentItems = ArrayList(recentItems),
+                    isLoading = false,
+                    isRecentRefreshing = keepRefreshing
+                )
+            } else {
+                // 加载失败时恢复 loading 状态，保留旧数据
+                launcherState.value = current.copy(
                     isLoading = false,
                     isRecentRefreshing = keepRefreshing
                 )
@@ -159,22 +219,55 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
      *
      * 删除在 IO 线程执行；成功后在主线程更新 [launcherState]，
      * 从 recentItems 中过滤掉对应 sessionId 的条目并刷新统计数据。
+     *
+     * 删除与读取共用 [repositoryMutex]，确保读请求不会把删除前的快照回写到删除后状态。
      */
     fun deleteRecentItem(sessionId: Long) {
         if (sessionId <= 0) return
-        AppExecutors.runOnSingle {
-            val affected = LauncherRepositoryBridge.deletePlaySession(getApplication(), sessionId)
-            if (affected > 0) {
-                val snapshot = repository.loadStatsSnapshot()
-                val recentItems = repository.loadRecentItems()
-                RxMainScheduler.post {
-                    val current = currentState()
-                    launcherState.value = current.copy(
-                        recentItems = ArrayList(recentItems),
-                        gameCount = snapshot.gameCount,
-                        totalPlayTime = snapshot.totalPlayTime,
-                        todayPlayTime = snapshot.todayPlayTime
-                    )
+        dataMutationVersion.incrementAndGet()
+        viewModelScope.launch {
+            val deleteResult = try {
+                withContext(Dispatchers.IO) { repositoryMutex.withLock {
+                    val affected = LauncherRepositoryBridge.deletePlaySession(getApplication(), sessionId)
+                    if (affected > 0) {
+                        val statsAndRecent =
+                            Pair(repository.loadStatsSnapshot(), repository.loadRecentItems())
+                        Pair(statsAndRecent, deleteCommitVersion.incrementAndGet())
+                    } else {
+                        null
+                    }
+                } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("LauncherViewModel", "Failed to delete recent item", e)
+                null
+            }
+            if (deleteResult != null) {
+                val (statsAndRecent, commitVersion) = deleteResult
+                // 以实际完成数据库操作的顺序为准，旧快照不能覆盖后完成的删除。
+                if (deleteCommitVersion.get() != commitVersion) return@launch
+                val (snapshot, recentItems) = statsAndRecent
+                val current = currentState()
+                synchronized(this@LauncherViewModel) {
+                    recentItemsLoaded = true
+                    recentItemsLoadStarted = false
+                }
+                launcherState.value = current.copy(
+                    recentItems = ArrayList(recentItems),
+                    gameCount = snapshot.gameCount,
+                    totalPlayTime = snapshot.totalPlayTime,
+                    todayPlayTime = snapshot.todayPlayTime,
+                    isRecentRefreshing = false
+                )
+            } else {
+                // 删除失败/记录不存在同样要收束已被本次删除作废的下拉刷新状态。
+                synchronized(this@LauncherViewModel) {
+                    recentItemsLoadStarted = false
+                }
+                val current = currentState()
+                if (current.isRecentRefreshing) {
+                    launcherState.value = current.copy(isRecentRefreshing = false)
                 }
             }
         }

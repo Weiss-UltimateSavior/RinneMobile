@@ -206,9 +206,12 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
                     out.flush();
                 }
                 runOnUiThread(() -> Toast.makeText(this, "备份完成：" + (backup.bytes.length / 1024) + "KB（压缩后，原始 " + (backup.originalSize / 1024) + "KB）", Toast.LENGTH_LONG).show());
-            } catch (Throwable t) {
-                Log.e("YukiHub", "export backup failed", t);
-                runOnUiThread(() -> Toast.makeText(this, "备份失败：" + t.getMessage(), Toast.LENGTH_LONG).show());
+            } catch (Error error) {
+                // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
+                throw error;
+            } catch (Exception e) {
+                Log.e("YukiHub", "export backup failed", e);
+                runOnUiThread(() -> Toast.makeText(this, "备份失败：" + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
     }
@@ -224,11 +227,14 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
                     importInProgress = false;
                     Toast.makeText(this, "导入完成", Toast.LENGTH_LONG).show();
                 });
-            } catch (Throwable t) {
-                Log.e("YukiHub", "import backup failed", t);
+            } catch (Error error) {
+                // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
+                throw error;
+            } catch (Exception e) {
+                Log.e("YukiHub", "import backup failed", e);
                 runOnUiThread(() -> {
                     importInProgress = false;
-                    Toast.makeText(this, "导入失败：" + t.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "导入失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });

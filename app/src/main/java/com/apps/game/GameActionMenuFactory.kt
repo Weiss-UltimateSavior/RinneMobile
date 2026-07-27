@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Typeface
 import android.net.Uri
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.Window
@@ -23,10 +24,8 @@ import com.core.R
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.Game
 import com.core.util.AppExecutors
+import com.core.util.RxMainScheduler
 import com.core.util.TimeFormatUtil
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.function.Consumer
 
 /**
@@ -256,22 +255,23 @@ object GameActionMenuFactory {
         fragment: Fragment, game: Game, status: String,
         callback: GameUpdateCallback
     ) {
-        // 在主线程捕获 ApplicationContext，避免 IO 线程内调用 fragment.requireContext()
-        // 在 Fragment detach 后抛 IllegalStateException 被静默吞掉。
         val appContext = fragment.requireContext().applicationContext
-        AppExecutors.io().execute {
+        AppExecutors.runOnSingle {
             var updated: Game? = null
             try {
                 val latest = LauncherRepositoryBridge.findGameById(appContext, game.id)
                 if (latest != null) {
                     latest.playStatus = status
-                    LauncherRepositoryBridge.updateGame(appContext, latest)
-                    updated = latest
+                    if (LauncherRepositoryBridge.updateGame(appContext, latest) > 0) {
+                        updated = latest
+                    }
                 }
-            } catch (_: Throwable) {
+            } catch (e: Exception) {
+                Log.w("GameActionMenuFactory", "Failed to update game status", e)
             }
             val result = updated
-            fragment.activity?.runOnUiThread {
+            RxMainScheduler.post {
+                if (!fragment.isAdded || fragment.view == null) return@post
                 if (result != null) callback.onGameUpdated(result)
             }
         }
@@ -293,7 +293,7 @@ object GameActionMenuFactory {
         sb.append("\n总时长：").append(TimeFormatUtil.playTime(game.totalPlayTime))
         sb.append("\n最近游玩：").append(
             if (game.lastPlayedAt > 0)
-                SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(game.lastPlayedAt))
+                TimeFormatUtil.date(game.lastPlayedAt)
             else
                 "未游玩"
         )
@@ -335,7 +335,7 @@ object GameActionMenuFactory {
 
         val info = TextView(ctx)
         val lastPlayedText = if (game.lastPlayedAt > 0) {
-            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(game.lastPlayedAt))
+            TimeFormatUtil.date(game.lastPlayedAt)
         } else {
             "无"
         }
@@ -475,10 +475,8 @@ object GameActionMenuFactory {
         fragment: Fragment, game: Game, totalMinutes: Long?,
         addMinutes: Long?, callback: GameUpdateCallback
     ) {
-        // 在主线程捕获 ApplicationContext，避免 IO 线程内调用 fragment.requireContext()
-        // 在 Fragment detach 后抛 IllegalStateException 被静默吞掉。
         val appContext = fragment.requireContext().applicationContext
-        AppExecutors.io().execute {
+        AppExecutors.runOnSingle {
             var updated: Game? = null
             try {
                 val latest = LauncherRepositoryBridge.findGameById(appContext, game.id)
@@ -491,10 +489,12 @@ object GameActionMenuFactory {
                     latest.totalPlayTime = clamped
                     updated = latest
                 }
-            } catch (_: Throwable) {
+            } catch (e: Exception) {
+                Log.w("GameActionMenuFactory", "Failed to update play time", e)
             }
             val result = updated
-            fragment.activity?.runOnUiThread {
+            RxMainScheduler.post {
+                if (!fragment.isAdded || fragment.view == null) return@post
                 if (result != null) callback.onGameUpdated(result)
             }
         }

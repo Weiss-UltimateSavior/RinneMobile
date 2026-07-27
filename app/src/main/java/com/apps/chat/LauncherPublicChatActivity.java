@@ -13,9 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -29,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.core.R;
+import com.core.databinding.ActivityLauncherPublicChatBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherPublicChatBridge;
 import com.core.util.RxMainScheduler;
@@ -47,15 +45,7 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 public class LauncherPublicChatActivity extends AppCompatActivity {
     private final List<LauncherPublicChatBridge.Message> messages = new ArrayList<>();
     private LauncherChatMessageAdapter adapter;
-    private RecyclerView messageList;
-    private TextView noticeView;
-    private View announcementBar;
-    private View topOverlay;
-    private View titleBar;
-    private View composerOverlay;
-    private TextView connectionView;
-    private EditText inputView;
-    private ImageView sendView;
+    private ActivityLauncherPublicChatBinding binding;
     private int messageListBaseBottomPadding;
     private Integer nextBeforeId;
     private boolean loadingOlder;
@@ -72,47 +62,39 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
-        setContentView(R.layout.activity_launcher_public_chat);
+        binding = ActivityLauncherPublicChatBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
 
-        messageList = findViewById(R.id.publicChatMessages);
-        noticeView = findViewById(R.id.publicChatNotice);
-        announcementBar = findViewById(R.id.publicChatAnnouncementBar);
-        topOverlay = findViewById(R.id.publicChatTopOverlay);
-        titleBar = findViewById(R.id.publicChatTitleBar);
-        composerOverlay = findViewById(R.id.publicChatComposerOverlay);
-        connectionView = findViewById(R.id.publicChatConnection);
-        inputView = findViewById(R.id.publicChatInput);
-        sendView = findViewById(R.id.publicChatSend);
-        messageListBaseBottomPadding = messageList.getPaddingBottom();
-        topOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
-        titleBar.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
-        composerOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        messageListBaseBottomPadding = binding.publicChatMessages.getPaddingBottom();
+        binding.publicChatTopOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        binding.publicChatTitleBar.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
+        binding.publicChatComposerOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
         applyInsets();
         adapter = new LauncherChatMessageAdapter(messages, LauncherAuthBridge.getNickname(this));
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        messageList.setLayoutManager(layoutManager);
-        messageList.setAdapter(adapter);
-        messageList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.publicChatMessages.setLayoutManager(layoutManager);
+        binding.publicChatMessages.setAdapter(adapter);
+        binding.publicChatMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (!recyclerView.canScrollVertically(-1)) loadOlder();
             }
         });
-        sendView.setOnClickListener(view -> sendMessage());
-        inputView.addTextChangedListener(new TextWatcher() {
+        binding.publicChatSend.setOnClickListener(view -> sendMessage());
+        binding.publicChatInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { updateSendState(); }
             @Override public void afterTextChanged(Editable s) { }
         });
-        LauncherTheme.applyPrimaryTone(findViewById(R.id.publicChatRoot));
-        titleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
-        ((TextView) findViewById(R.id.publicChatTitle)).setTextColor(LauncherTheme.onPrimary(this));
-        connectionView.setTextColor(ColorUtils.setAlphaComponent(LauncherTheme.onPrimary(this), 190));
-        findViewById(R.id.publicChatAnnouncementIcon).setBackground(LauncherTheme.circle(this));
-        findViewById(R.id.publicChatInputThemeBar).setBackground(LauncherTheme.primaryButton(this, 0f));
-        inputView.setTextColor(LauncherTheme.text(this));
-        inputView.setHintTextColor(LauncherTheme.textMuted(this));
-        sendView.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
+        LauncherTheme.applyPrimaryTone(binding.publicChatRoot);
+        binding.publicChatTitleBar.setBackground(LauncherTheme.primaryButton(this, 0f));
+        binding.publicChatTitle.setTextColor(LauncherTheme.onPrimary(this));
+        binding.publicChatConnection.setTextColor(ColorUtils.setAlphaComponent(LauncherTheme.onPrimary(this), 190));
+        binding.publicChatAnnouncementIcon.setBackground(LauncherTheme.circle(this));
+        binding.publicChatInputThemeBar.setBackground(LauncherTheme.primaryButton(this, 0f));
+        binding.publicChatInput.setTextColor(LauncherTheme.text(this));
+        binding.publicChatInput.setHintTextColor(LauncherTheme.textMuted(this));
+        binding.publicChatSend.setImageTintList(ColorStateList.valueOf(LauncherTheme.primary(this)));
         renderStatus();
         loadChannel();
     }
@@ -121,7 +103,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         LauncherPublicChatBridge.loadInitial(this, new LauncherPublicChatBridge.ChatCallback() {
             @Override public void onSuccess(List<LauncherPublicChatBridge.Message> loaded, Integer cursor) {
                 messages.clear(); messages.addAll(loaded); sortMessages(); nextBeforeId = cursor; adapter.notifyDataSetChanged();
-                if (!messages.isEmpty()) messageList.scrollToPosition(messages.size() - 1);
+                if (!messages.isEmpty()) binding.publicChatMessages.scrollToPosition(messages.size() - 1);
             }
             @Override public void onError(String message) { showError(message); }
         });
@@ -145,18 +127,18 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
                 int previousCount = messages.size();
                 for (int i = loaded.size() - 1; i >= 0; i--) upsert(loaded.get(i), false);
                 nextBeforeId = cursor; loadingOlder = false; adapter.notifyDataSetChanged();
-                if (messages.size() > previousCount) messageList.scrollToPosition(messages.size() - previousCount);
+                if (messages.size() > previousCount) binding.publicChatMessages.scrollToPosition(messages.size() - previousCount);
             }
             @Override public void onError(String message) { loadingOlder = false; showError(message); }
         });
     }
 
     private void sendMessage() {
-        String content = inputView.getText().toString().trim();
+        String content = binding.publicChatInput.getText().toString().trim();
         if (content.isEmpty()) return;
         if (readonly || muted) { renderStatus(); return; }
         sending = true;
-        inputView.setText("");
+        binding.publicChatInput.setText("");
         updateSendState();
         startSendAnimation();
         LauncherPublicChatBridge.send(this, content, new LauncherPublicChatBridge.MessageCallback() {
@@ -167,7 +149,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             @Override public void onError(String message) {
                 sending = false;
                 stopSendAnimation();
-                inputView.setText(content);
+                binding.publicChatInput.setText(content);
                 updateSendState();
                 showError(message);
             }
@@ -176,7 +158,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
 
     private void startSendAnimation() {
         stopSendAnimation();
-        sendAnimator = ObjectAnimator.ofFloat(sendView, View.ROTATION, 0f, 360f);
+        sendAnimator = ObjectAnimator.ofFloat(binding.publicChatSend, View.ROTATION, 0f, 360f);
         sendAnimator.setDuration(700L);
         sendAnimator.setInterpolator(new LinearInterpolator());
         sendAnimator.setRepeatCount(ValueAnimator.INFINITE);
@@ -188,7 +170,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             sendAnimator.cancel();
             sendAnimator = null;
         }
-        sendView.setRotation(0f);
+        binding.publicChatSend.setRotation(0f);
     }
 
     private void upsert(LauncherPublicChatBridge.Message message, boolean scrollToEnd) {
@@ -203,7 +185,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         messages.add(message);
         sortMessages();
         adapter.notifyDataSetChanged();
-        if (scrollToEnd) messageList.scrollToPosition(messages.size() - 1);
+        if (scrollToEnd) binding.publicChatMessages.scrollToPosition(messages.size() - 1);
     }
 
     private void sortMessages() {
@@ -222,8 +204,8 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             text.append(item.title).append("\n").append(item.content);
         }
         boolean hasAnnouncement = text.length() > 0;
-        announcementBar.setVisibility(hasAnnouncement ? View.VISIBLE : View.GONE);
-        if (hasAnnouncement) noticeView.setText(text);
+        binding.publicChatAnnouncementBar.setVisibility(hasAnnouncement ? View.VISIBLE : View.GONE);
+        if (hasAnnouncement) binding.publicChatNotice.setText(text);
         updateMessageListOverlayPadding();
     }
 
@@ -232,22 +214,22 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         if (readonly) text = "只读";
         else if (muted) text = TextUtils.isEmpty(muteReason) ? "已禁言" : "已禁言：" + muteReason;
         boolean canSend = !readonly && !muted;
-        inputView.setEnabled(canSend);
-        inputView.setHint(canSend ? "输入消息…" : text);
+        binding.publicChatInput.setEnabled(canSend);
+        binding.publicChatInput.setHint(canSend ? "输入消息…" : text);
         updateSendState();
         renderConnectionStatus(text);
     }
 
     private void updateSendState() {
-        if (inputView == null || sendView == null) return;
-        boolean hasContent = inputView.getText() != null && inputView.getText().toString().trim().length() > 0;
+        if (binding == null || isFinishing() || isDestroyed()) return;
+        boolean hasContent = binding.publicChatInput.getText() != null && binding.publicChatInput.getText().toString().trim().length() > 0;
         boolean enabled = !sending && !readonly && !muted && hasContent;
-        sendView.setEnabled(enabled);
-        sendView.setAlpha(enabled ? 1f : .45f);
+        binding.publicChatSend.setEnabled(enabled);
+        binding.publicChatSend.setAlpha(enabled ? 1f : .45f);
     }
 
     private void renderConnectionStatus(String channelState) {
-        connectionView.setText(TextUtils.isEmpty(channelState)
+        binding.publicChatConnection.setText(TextUtils.isEmpty(channelState)
                 ? connectionState
                 : connectionState + " · " + channelState);
     }
@@ -286,16 +268,16 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
 
     private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
     private void applyInsets() {
-        View root = findViewById(R.id.publicChatRoot);
+        View root = binding.publicChatRoot;
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
             int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            setOverlayMargins(topOverlay, 0, 0);
-            titleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
+            setOverlayMargins(binding.publicChatTopOverlay, 0, 0);
+            binding.publicChatTitleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
             boolean keyboardVisible = imeBottom > systemBottom;
-            setOverlayMargins(composerOverlay, 0, keyboardVisible ? imeBottom : 0);
-            View inputThemeBar = findViewById(R.id.publicChatInputThemeBar);
+            setOverlayMargins(binding.publicChatComposerOverlay, 0, keyboardVisible ? imeBottom : 0);
+            View inputThemeBar = binding.publicChatInputThemeBar;
             inputThemeBar.setPaddingRelative(
                     inputThemeBar.getPaddingStart(),
                     dp(13),
@@ -318,28 +300,28 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     }
 
     private void updateMessageListOverlayPadding() {
-        if (messageList == null || titleBar == null || composerOverlay == null) return;
-        int listTop = topOverlay.getVisibility() == View.GONE
+        if (binding == null || isFinishing() || isDestroyed()) return;
+        int listTop = binding.publicChatTopOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, topOverlay.getBottom());
+                : Math.max(0, binding.publicChatTopOverlay.getBottom());
         setMessageListTopMargin(listTop);
-        int bottomSpace = composerOverlay.getVisibility() == View.GONE
+        int bottomSpace = binding.publicChatComposerOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, messageList.getBottom() - composerOverlay.getTop()) + dp(8);
-        messageList.setPadding(
-                messageList.getPaddingLeft(),
-                messageList.getPaddingTop(),
-                messageList.getPaddingRight(),
+                : Math.max(0, binding.publicChatMessages.getBottom() - binding.publicChatComposerOverlay.getTop()) + dp(8);
+        binding.publicChatMessages.setPadding(
+                binding.publicChatMessages.getPaddingLeft(),
+                binding.publicChatMessages.getPaddingTop(),
+                binding.publicChatMessages.getPaddingRight(),
                 messageListBaseBottomPadding + bottomSpace);
     }
 
     private void setMessageListTopMargin(int topMargin) {
-        ViewGroup.LayoutParams params = messageList.getLayoutParams();
+        ViewGroup.LayoutParams params = binding.publicChatMessages.getLayoutParams();
         if (!(params instanceof ViewGroup.MarginLayoutParams)) return;
         ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
         if (margins.topMargin == topMargin) return;
         margins.topMargin = topMargin;
-        messageList.setLayoutParams(margins);
+        binding.publicChatMessages.setLayoutParams(margins);
     }
 
     private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (ColorUtils.calculateLuminance(LauncherTheme.primary(this)) > 0.5d) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }

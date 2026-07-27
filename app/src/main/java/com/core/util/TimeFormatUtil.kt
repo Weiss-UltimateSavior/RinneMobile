@@ -30,4 +30,28 @@ object TimeFormatUtil {
         if (time <= 0) return "从未游玩"
         return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(time))
     }
+
+    /** 短日期展示（MM-dd HH:mm），用于列表行等横向空间受限场景。 */
+    @JvmStatic
+    fun shortDate(time: Long): String {
+        if (time <= 0) return ""
+        return SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()).format(Date(time))
+    }
+
+    /** 仅时分展示（HH:mm），用于消息时间标签等场景。 */
+    @JvmStatic
+    fun clock(time: Long): String {
+        if (time <= 0) return ""
+        return SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(time))
+    }
+
+    /**
+     * 星期缩写（如"周一"/"周二"），固定使用 [Locale.CHINA]。
+     * 用于个人资料页一周热力图等场景，避免随系统语言变化。
+     */
+    @JvmStatic
+    fun weekDayLabel(time: Long): String {
+        if (time <= 0) return ""
+        return SimpleDateFormat("E", Locale.CHINA).format(Date(time))
+    }
 }

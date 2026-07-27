@@ -15,16 +15,14 @@ import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.ImageView;
-import com.apps.widget.LauncherEditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +38,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.core.R;
+import com.core.databinding.ActivityLauncherAddGameBinding;
 import com.core.launcherbridge.LauncherCoverBridge;
 import com.core.launcherbridge.LauncherGameHubShortcutBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
@@ -68,19 +67,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private static final String STATE_GAME_DIRECTORY_URI = "game_directory_uri";
     private static final String STATE_COVER_URI = "cover_uri";
     private static final String STATE_LAUNCH_TARGET = "launch_target";
-    private ScrollView scroll;
-    private EditText nameInput;
-    private TextView launchTargetText;
+    private static final String STATE_DIRECTORY_PERMISSION_DEGRADED =
+            "directory_permission_degraded";
+    private static final String STATE_COVER_PERMISSION_DEGRADED = "cover_permission_degraded";
+    private ActivityLauncherAddGameBinding binding;
     private String launchTargetName = "";
-    private LauncherEditText emulatorText;
-    private ImageView btnPickEmulatorApp;
-    private EditText gameHubIdInput;
-    private ImageView importGameHubShortcutButton;
-    private EditText descriptionInput;
-    private TextView dirText;
-    private TextView coverText;
-    private TextView saveButton;
-    private TextView engineText;
     private EngineOption selectedEngineOption;
     private final EngineOption[] engineOptions = new EngineOption[]{
             new EngineOption(EngineType.AUTO, "自动识别", null),
@@ -102,6 +93,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private Uri gameDirUri;
     private Uri coverUri;
     private String lastEngineDefaultPackage = "";
+    /** 标记游戏目录 SAF 持久化授权降级为只读或彻底失败，便于 saveGame 时给用户提示。 */
+    private boolean directoryPermissionDegraded;
+    /** 标记封面 SAF 持久化授权降级为只读或彻底失败（封面只需读，不影响写入）。 */
+    private boolean coverPermissionDegraded;
     private static final int SHIZUKU_GAMEHUB_PERMISSION_REQUEST = 62002;
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener =
@@ -114,20 +109,20 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private final ActivityResultLauncher<Uri> directoryPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
                 if (uri == null) return;
-                persistUriPermission(uri);
+                directoryPermissionDegraded = !persistUriPermission(uri);
                 gameDirUri = uri;
-                dirText.setText(displayUri(uri));
+                binding.addGameDirText.setText(displayUri(uri));
                 fillTitleFromDirIfEmpty(uri);
                 launchTargetName = "";
-                launchTargetText.setText("点击选择启动文件");
+                binding.addGameLaunchTargetInput.setText("点击选择启动文件");
             });
 
     private final ActivityResultLauncher<String[]> coverPicker =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
                 if (uri == null) return;
-                persistUriPermission(uri);
+                coverPermissionDegraded = !persistUriPermission(uri);
                 coverUri = uri;
-                coverText.setText(displayUri(uri));
+                binding.addGameCoverText.setText(displayUri(uri));
             });
 
     @Override
@@ -135,7 +130,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
-        setContentView(R.layout.activity_launcher_add_game);
+        binding = ActivityLauncherAddGameBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
 
         bindViews();
@@ -148,20 +144,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     private void bindViews() {
-        scroll = findViewById(R.id.addGameScroll);
-        nameInput = findViewById(R.id.addGameNameInput);
-        launchTargetText = findViewById(R.id.addGameLaunchTargetInput);
-        emulatorText = findViewById(R.id.addGameEmulatorInput);
-        btnPickEmulatorApp = findViewById(R.id.addGamePickEmulatorApp);
-        gameHubIdInput = findViewById(R.id.addGameGameHubIdInput);
-        importGameHubShortcutButton = findViewById(R.id.addGameImportGameHubShortcut);
-        descriptionInput = findViewById(R.id.addGameDescriptionInput);
-        dirText = findViewById(R.id.addGameDirText);
-        coverText = findViewById(R.id.addGameCoverText);
-        saveButton = findViewById(R.id.addGameSave);
-        engineText = findViewById(R.id.addGameEngineText);
         selectedEngineOption = engineOptions[0];
-        engineText.setText(selectedEngineOption.label);
+        binding.addGameEngineText.setText(selectedEngineOption.label);
     }
 
     @Override
@@ -172,20 +156,26 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (gameDirUri != null) outState.putString(STATE_GAME_DIRECTORY_URI, gameDirUri.toString());
         if (coverUri != null) outState.putString(STATE_COVER_URI, coverUri.toString());
         outState.putString(STATE_LAUNCH_TARGET, launchTargetName);
+        outState.putBoolean(STATE_DIRECTORY_PERMISSION_DEGRADED, directoryPermissionDegraded);
+        outState.putBoolean(STATE_COVER_PERMISSION_DEGRADED, coverPermissionDegraded);
     }
 
     private void restoreTransientState(@Nullable Bundle savedInstanceState) {
         if (savedInstanceState == null) return;
         selectedEngineOption = engineOptions[boundedEngineOptionIndex(
                 savedInstanceState.getInt(STATE_ENGINE_OPTION_INDEX, 0))];
-        engineText.setText(selectedEngineOption.label);
+        binding.addGameEngineText.setText(selectedEngineOption.label);
         lastEngineDefaultPackage = savedInstanceState.getString(STATE_LAST_ENGINE_DEFAULT_PACKAGE, "");
         gameDirUri = uriFromState(savedInstanceState.getString(STATE_GAME_DIRECTORY_URI));
-        if (gameDirUri != null) dirText.setText(displayUri(gameDirUri));
+        if (gameDirUri != null) binding.addGameDirText.setText(displayUri(gameDirUri));
         coverUri = uriFromState(savedInstanceState.getString(STATE_COVER_URI));
-        if (coverUri != null) coverText.setText(displayUri(coverUri));
+        if (coverUri != null) binding.addGameCoverText.setText(displayUri(coverUri));
         launchTargetName = savedInstanceState.getString(STATE_LAUNCH_TARGET, "");
-        if (!launchTargetName.isEmpty()) launchTargetText.setText(launchTargetName);
+        if (!launchTargetName.isEmpty()) binding.addGameLaunchTargetInput.setText(launchTargetName);
+        directoryPermissionDegraded =
+                savedInstanceState.getBoolean(STATE_DIRECTORY_PERMISSION_DEGRADED, false);
+        coverPermissionDegraded =
+                savedInstanceState.getBoolean(STATE_COVER_PERMISSION_DEGRADED, false);
     }
 
     @Nullable
@@ -199,12 +189,12 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     private void applySystemBarInsets() {
-        int originalLeft = scroll.getPaddingLeft();
-        int originalTop = scroll.getPaddingTop();
-        int originalRight = scroll.getPaddingRight();
-        int originalBottom = scroll.getPaddingBottom();
-        scroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            scroll.setPadding(
+        int originalLeft = binding.addGameScroll.getPaddingLeft();
+        int originalTop = binding.addGameScroll.getPaddingTop();
+        int originalRight = binding.addGameScroll.getPaddingRight();
+        int originalBottom = binding.addGameScroll.getPaddingBottom();
+        binding.addGameScroll.setOnApplyWindowInsetsListener((view, insets) -> {
+            binding.addGameScroll.setPadding(
                     originalLeft,
                     originalTop + insets.getSystemWindowInsetTop(),
                     originalRight,
@@ -212,11 +202,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             );
             return insets;
         });
-        scroll.requestApplyInsets();
+        binding.addGameScroll.requestApplyInsets();
     }
 
     private void setupEnginePicker() {
-        engineText.setOnClickListener(v -> {
+        binding.addGameEngineText.setOnClickListener(v -> {
             CharSequence[] labels = new CharSequence[engineOptions.length];
             for (int i = 0; i < engineOptions.length; i++) labels[i] = engineOptions[i].label;
             int checked = 0;
@@ -232,10 +222,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void applyEngineSelection(int index) {
         selectedEngineOption = engineOptions[boundedEngineOptionIndex(index)];
-        engineText.setText(selectedEngineOption.label);
+        binding.addGameEngineText.setText(selectedEngineOption.label);
         // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
         String nextDefault = defaultEmulatorPackageForOption(selectedEngineOption);
-        emulatorText.setText(nextDefault);
+        binding.addGameEmulatorInput.setText(nextDefault);
         lastEngineDefaultPackage = nextDefault;
     }
 
@@ -251,22 +241,22 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        dirText.setOnClickListener(view -> directoryPicker.launch(null));
-        launchTargetText.setOnClickListener(view -> showLaunchTargetPicker());
+        binding.addGameDirText.setOnClickListener(view -> directoryPicker.launch(null));
+        binding.addGameLaunchTargetInput.setOnClickListener(view -> showLaunchTargetPicker());
         // 模拟器包名支持手动输入；右侧图标点击从应用列表选择。
-        btnPickEmulatorApp.setOnClickListener(view -> showAppPicker(emulatorText));
-        importGameHubShortcutButton.setOnClickListener(view -> importGameHubShortcutFromShizuku());
-        coverText.setOnClickListener(view -> coverPicker.launch(new String[]{"image/*"}));
-        saveButton.setOnClickListener(view -> saveGame());
+        binding.addGamePickEmulatorApp.setOnClickListener(view -> showAppPicker(binding.addGameEmulatorInput));
+        binding.addGameImportGameHubShortcut.setOnClickListener(view -> importGameHubShortcutFromShizuku());
+        binding.addGameCoverText.setOnClickListener(view -> coverPicker.launch(new String[]{"image/*"}));
+        binding.addGameSave.setOnClickListener(view -> saveGame());
     }
 
     private void applyThemeTone() {
-        LauncherTheme.longActionButton(saveButton);
-        LauncherTheme.applyPrimaryTone(findViewById(android.R.id.content));
-        LauncherTheme.formInputs(nameInput, emulatorText, gameHubIdInput, descriptionInput);
-        btnPickEmulatorApp.setImageTintList(
+        LauncherTheme.longActionButton(binding.addGameSave);
+        LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.formInputs(binding.addGameNameInput, binding.addGameEmulatorInput, binding.addGameGameHubIdInput, binding.addGameDescriptionInput);
+        binding.addGamePickEmulatorApp.setImageTintList(
                 ColorStateList.valueOf(LauncherTheme.primary(this)));
-        importGameHubShortcutButton.setImageTintList(
+        binding.addGameImportGameHubShortcut.setImageTintList(
                 ColorStateList.valueOf(LauncherTheme.primary(this)));
     }
 
@@ -284,18 +274,18 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             catch (Throwable error) { Toast.makeText(this, "无法请求 Shizuku 授权", Toast.LENGTH_LONG).show(); }
             return;
         }
-        importGameHubShortcutButton.setEnabled(false);
-        importGameHubShortcutButton.setAlpha(0.45f);
-        importGameHubShortcutButton.setContentDescription("正在读取 GameHub 快捷方式");
+        binding.addGameImportGameHubShortcut.setEnabled(false);
+        binding.addGameImportGameHubShortcut.setAlpha(0.45f);
+        binding.addGameImportGameHubShortcut.setContentDescription("正在读取 GameHub 快捷方式");
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try { items = LauncherGameHubShortcutBridge.loadShortcuts(); }
             catch (Throwable ignored) { items = new ArrayList<>(); }
             final List<LauncherGameHubShortcutBridge.Shortcut> shortcuts = items;
             runOnUiThread(() -> {
-                importGameHubShortcutButton.setEnabled(true);
-                importGameHubShortcutButton.setAlpha(1f);
-                importGameHubShortcutButton.setContentDescription("导入 GameHub 快捷方式");
+                binding.addGameImportGameHubShortcut.setEnabled(true);
+                binding.addGameImportGameHubShortcut.setAlpha(1f);
+                binding.addGameImportGameHubShortcut.setContentDescription("导入 GameHub 快捷方式");
                 if (isFinishing()) return;
                 if (shortcuts.isEmpty()) {
                     Toast.makeText(this, "未读取到快捷方式；请确认盖世已创建桌面快捷方式", Toast.LENGTH_LONG).show();
@@ -311,21 +301,21 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void applyGameHubShortcut(LauncherGameHubShortcutBridge.Shortcut item) {
         if (item == null) return;
-        gameHubIdInput.setText(item.localGameId);
-        if (textOf(nameInput).isEmpty()) nameInput.setText(item.localAppName);
-        if (textOf(emulatorText).isEmpty()) emulatorText.setText("com.xiaoji.egggame");
+        binding.addGameGameHubIdInput.setText(item.localGameId);
+        if (textOf(binding.addGameNameInput).isEmpty()) binding.addGameNameInput.setText(item.localAppName);
+        if (textOf(binding.addGameEmulatorInput).isEmpty()) binding.addGameEmulatorInput.setText("com.xiaoji.egggame");
     }
 
     /** 扫描游戏目录下的相关游戏文件，弹出列表供用户选择启动入口。 */
     private void showLaunchTargetPicker() {
         LauncherLaunchTargetPicker.show(this, gameDirUri, selectedEngine(), target -> {
             launchTargetName = target;
-            launchTargetText.setText(target);
+            binding.addGameLaunchTargetInput.setText(target);
         });
     }
 
     private void saveGame() {
-        String title = textOf(nameInput);
+        String title = textOf(binding.addGameNameInput);
         if (title.isEmpty()) {
             Toast.makeText(this, "请填写游戏名称", Toast.LENGTH_SHORT).show();
             return;
@@ -335,8 +325,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             return;
         }
 
-        saveButton.setEnabled(false);
-        saveButton.setText("保存中...");
+        binding.addGameSave.setEnabled(false);
+        binding.addGameSave.setText("保存中...");
 
         android.content.Context appContext = getApplicationContext();
         EngineType selectedEngine = selectedEngine();
@@ -344,9 +334,9 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         // 用户显式选择时优先于此值，避免被扫描器误判的 detected.rpgMakerSubtype 覆盖。
         String userRpgSubtype = selectedRpgMakerSubtype();
         String selectedLaunchTarget = launchTargetName;
-        String selectedEmulator = textOf(emulatorText);
-        String selectedGameHubId = textOf(gameHubIdInput);
-        String selectedDescription = textOf(descriptionInput);
+        String selectedEmulator = textOf(binding.addGameEmulatorInput);
+        String selectedGameHubId = textOf(binding.addGameGameHubIdInput);
+        String selectedDescription = textOf(binding.addGameDescriptionInput);
         Uri selectedGameDir = gameDirUri;
         Uri selectedCover = coverUri;
         AppExecutors.runOnSingle(() -> {
@@ -380,7 +370,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                             ? detected.launchTarget
                             : "[游戏目录]"
             );
-            // emulatorPackage 优先级：用户手动填的 emulatorText > 用户在选择器显式选的子类型
+            // emulatorPackage 优先级：用户手动填的 binding.addGameEmulatorInput > 用户在选择器显式选的子类型
             // （RPGMAKER 的 rpgmxp/rpgmvx/rpgmvxace/mkxp-z 或 RENPY 的 renpy）
             // > 扫描器检测到的子类型 > 引擎默认包名。
             // 关键：用户显式选了 RPG Maker XP/VX/VX Ace/mkxp-z 时，必须用对应的 mkxp native 库
@@ -405,10 +395,15 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 LauncherCoverBridge.fetchCoverForGameAsync(appContext, game);
             }
             runOnUiThread(() -> {
-                saveButton.setEnabled(true);
-                saveButton.setText("保存");
+                binding.addGameSave.setEnabled(true);
+                binding.addGameSave.setText("保存");
                 if (id > 0) {
-                    Toast.makeText(this, "游戏已添加", Toast.LENGTH_SHORT).show();
+                    if (directoryPermissionDegraded) {
+                        // 游戏目录 SAF 持久化授权降级为只读或彻底失败，提示用户可能无法写入存档
+                        Toast.makeText(this, "游戏已添加，但目录授权受限，可能无法写入存档", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "游戏已添加", Toast.LENGTH_SHORT).show();
+                    }
                     setResult(RESULT_OK);
                     finish();
                 } else {
@@ -442,7 +437,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     /**
      * 当扫描器给出 RPG Maker 子引擎（rpgmxp/rpgmvx/rpgmvxace/mkxp-z）时，
      * 使用 {@code internal.<subtype>} 作为默认 packageName，覆盖通用默认。
-     * 这样无需用户手动调整 emulatorText 即可调用对应的 mkxp native 库。
+     * 这样无需用户手动调整 binding.addGameEmulatorInput 即可调用对应的 mkxp native 库。
      */
     private String defaultEmulatorPackageForDetected(EngineType engine, LauncherScanBridge.DetectionResult detected) {
         String fallback = defaultEmulatorPackage(engine);
@@ -528,26 +523,32 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         }
     }
 
-    private void persistUriPermission(Uri uri) {
-        if (uri == null) return;
+    /** 持久化 URI 授权。返回 true 表示 RW 授权成功，false 表示降级为只读或彻底失败。 */
+    private boolean persistUriPermission(Uri uri) {
+        if (uri == null) return false;
         int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
         try {
             getContentResolver().takePersistableUriPermission(uri, flags);
-        } catch (Throwable first) {
+            return true;
+        } catch (Exception first) {
+            Log.w("LauncherAddGame", "takePersistableUriPermission(RW) failed, retry RO", first);
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (Throwable ignored) {
+                return false;
+            } catch (Exception e) {
+                Log.w("LauncherAddGame", "takePersistableUriPermission(RO) failed", e);
+                return false;
             }
         }
     }
 
     private void fillTitleFromDirIfEmpty(Uri uri) {
-        if (!textOf(nameInput).isEmpty() || uri == null) return;
+        if (!textOf(binding.addGameNameInput).isEmpty() || uri == null) return;
         String display = displayUri(uri);
         int slash = display.lastIndexOf('/');
         String title = slash >= 0 && slash < display.length() - 1 ? display.substring(slash + 1) : display;
         if (title.startsWith("primary:")) title = title.substring("primary:".length());
-        if (!title.trim().isEmpty()) nameInput.setText(title.trim());
+        if (!title.trim().isEmpty()) binding.addGameNameInput.setText(title.trim());
     }
 
     private String displayUri(Uri uri) {
