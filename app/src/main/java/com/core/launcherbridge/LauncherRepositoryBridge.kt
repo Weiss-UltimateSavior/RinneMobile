@@ -55,6 +55,26 @@ object LauncherRepositoryBridge {
     }
 
     /**
+     * 清空游戏库：删除 games 表全部记录（仅数据库记录，不删除实际文件）。
+     * 同时清理 ONS 引擎的 game-level 覆盖配置，防止旧 gameId 串到新游戏。
+     *
+     * @return 删除的行数；-1 表示执行失败
+     */
+    @JvmStatic
+    fun deleteAllGames(context: Context?): Int {
+        if (context == null) return -1
+        val app = context.applicationContext
+        val deleted = try {
+            GameRepository(app).deleteAll()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return -1
+        }
+        if (deleted > 0) LauncherOnsGameSettingsBridge.clearAllOverrides(app)
+        return deleted
+    }
+
+    /**
      * 返回游戏标题 -> 总游玩时长的映射，
      * 统计 end_time 落在 [startInclusive, endExclusive) 区间内的会话。
      */

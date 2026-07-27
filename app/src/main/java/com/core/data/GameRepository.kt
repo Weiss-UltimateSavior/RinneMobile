@@ -167,6 +167,12 @@ class GameRepository(context: Context) {
         return db.delete("games", "id=?", arrayOf(id.toString()))
     }
 
+    /** 删除 games 表全部记录（仅数据库记录，不删除实际文件）。返回删除行数。 */
+    fun deleteAll(): Int {
+        val db = helper.writableDatabase
+        return db.delete("games", null, null)
+    }
+
     fun startPlaySession(gameId: Long, start: Long, launchType: String?): Long {
         val db = helper.writableDatabase
         val session = ContentValues()

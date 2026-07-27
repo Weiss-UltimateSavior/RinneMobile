@@ -555,12 +555,12 @@ open class LauncherLibraryFragment : Fragment(),
         val styleLabel = if (posterGridStyle) "横向卡片" else "海报网格"
         LauncherDialogFactory.showStandardActionChoices(
             requireContext(), "游戏库设置",
-            arrayOf("一键同步", styleLabel)
+            arrayOf("一键同步", styleLabel, "清除列表")
         ) { index ->
-            if (index == 0) {
-                syncController.showSyncDataConfirmDialog()
-            } else {
-                togglePosterGridStyle()
+            when (index) {
+                0 -> syncController.showSyncDataConfirmDialog()
+                1 -> togglePosterGridStyle()
+                2 -> confirmClearList()
             }
         }
     }
@@ -926,6 +926,44 @@ open class LauncherLibraryFragment : Fragment(),
                 }
                 removeSingleGame(game.id)
                 Toast.makeText(app, "已删除", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun confirmClearList() {
+        LauncherDialogFactory.showDangerConfirm(
+            requireContext(),
+            "清除列表",
+            "将清空游戏库全部记录，不会实际删除游戏文件。是否继续？",
+            "清除"
+        ) { clearList() }
+    }
+
+    private fun clearList() {
+        // 在主线程捕获 ApplicationContext，避免 IO 线程内调用 fragment.requireContext()
+        val app = requireContext().applicationContext
+        AppExecutors.runOnSingle {
+            val deleted = try {
+                LauncherRepositoryBridge.deleteAllGames(app)
+            } catch (e: Exception) {
+                Log.w("LauncherLibraryFragment", "Failed to clear game list", e)
+                -1
+            }
+            mainQueue.post {
+                if (!isAdded || view == null) return@post
+                if (deleted < 0) {
+                    Toast.makeText(app, "清除失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                    return@post
+                }
+                // 清空内存中的列表、分类、开发商缓存，并重置 controller 状态。
+                listController.clearAllGames()
+                listController.setDataLoaded(true)
+                categories.clear()
+                gameDevelopers.clear()
+                selectedCategory = ""
+                renderCategories()
+                applyFilters(true)
+                Toast.makeText(app, "已清空游戏库", Toast.LENGTH_SHORT).show()
             }
         }
     }
