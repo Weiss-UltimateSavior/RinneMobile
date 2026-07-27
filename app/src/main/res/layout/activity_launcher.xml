@@ -115,7 +115,7 @@
             <LinearLayout
                 android:id="@+id/navLaunchCenter"
                 android:layout_width="0dp"
-                android:layout_height="68dp"
+                android:layout_height="71dp"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:clipChildren="false"
@@ -125,14 +125,14 @@
 
             <FrameLayout
                 android:id="@+id/navLaunchCenterCircle"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
                 android:background="@drawable/launcher_icon_circle_green">
 
                 <ImageView
                     android:id="@+id/navLaunchCenterImage"
-                    android:layout_width="29dp"
-                    android:layout_height="29dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:contentDescription="@string/game_center"
                     android:scaleType="fitCenter"
@@ -140,8 +140,8 @@
 
                 <ImageView
                     android:id="@+id/navLaunchCenterText"
-                    android:layout_width="29dp"
-                    android:layout_height="29dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:contentDescription="@string/game_center"
                     android:scaleType="fitCenter"
