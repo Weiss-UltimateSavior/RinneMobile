@@ -1,7 +1,7 @@
 # Rinne Mobile
 
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxhdpi/ic_launcher.png" alt="YukiHub" width="120" />
+  <img src="screenshots/home-index.png" alt="RinneMobile" width="750" />
 </p>
 
 <p align="center">
@@ -11,15 +11,13 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white" alt="Android" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="GPL-3.0" />
-  <img src="https://img.shields.io/github/downloads/xm486/YukiHub/total?logo=github" alt="Downloads">
-  <img src="https://img.shields.io/github/v/release/xm486/YukiHub?logo=github&color=green" alt="Latest Version">
 </p>
 
-An Android Galgame / visual novel management and launcher tool. It is suitable for managing local games, Android app-style entries, emulator game launch entries, external program shortcuts, and play records.
+An Android Galgame / visual novel management and launcher tool with support for mainstream game engines. It is suitable for playing and managing local games, Android apps, game entries, external-program shortcuts, and play records.
 
-Its goal is to integrate “game library management, quick launch, data synchronization, and metadata lookup” into a unified mobile interface.
+Its goal is to bring “game library management, quick launch, data synchronization, metadata lookup, and game-engine support” together in one unified mobile management center.
 
-This is a branch version based on secondary development of YukiHub.
+This is a YukiHub-derived version rebuilt with a more modern technology stack and MVVM architecture, and is currently being migrated to Kotlin as part of its third major refactor.
 
 > This project is open-sourced under the **GPL-3.0** license.
 
@@ -27,12 +25,15 @@ This is a branch version based on secondary development of YukiHub.
 
 ## Features
 
+- **Multi-engine Support**: Built-in KRKR, Tyrano, Artemis, and ONS engines; external modules for RPG Maker, Ren'Py, and Godot; plus external launching for mainstream game environments.
 - **Unified Game Library**: Add, edit, delete, and manage local games, Android apps, and external launch entries.
+- **Unified Save Management**: Import, export, replace, and manage saves for games using the built-in engines.
 - **Game Metadata**: Integrated VNDB and Bangumi data sources for supplementing game information.
+- **Multiple Themes**: Choose among several visual themes and animated particle backgrounds.
 - **Flexible Launching**: Supports empty-directory entries, package-name launching, custom shortcuts, and multiple launch methods.
-- **GameHub Import**: Import shortcuts with icon display and search/filter support.
-- **Local AI Agent**: Built-in AI agent connecting to your own OpenAI-compatible API — query the game library, browse and search game files, assist with translation text replacement, and more. Two permission modes, configurable temperature and tool-call limits. Supports MCP (Model Context Protocol) Streamable HTTP servers for extended tool capabilities.
+- **Local AI Agent**: Built-in AI agent that connects to your own API to query the game library, browse and search game files, assist with translation text replacement, and more. It provides two permission modes and configurable temperature and tool-call limits, and supports MCP (Model Context Protocol) Streamable HTTP servers for extended tools.
 - **Data Sync**: Supports import, export, and synchronization of game entries and play records; empty-directory entries can be matched and restored.
+- **Smart Translation**: Connect a multimodal model for in-game dialogue translation.
 - **Usage Safeguards**: Built-in disclaimer confirmation flow, with dark mode and landscape support.
 
 ---
