@@ -56,9 +56,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class LauncherHomeFragment : Fragment() {
+open class LauncherHomeFragment : Fragment() {
 
-    private var binding: FragmentLauncherHomeBinding? = null
+    protected var binding: FragmentLauncherHomeBinding? = null
     private lateinit var viewModel: LauncherViewModel
     private var sessionController: GameSessionController? = null
 
@@ -120,6 +120,7 @@ class LauncherHomeFragment : Fragment() {
         LauncherTheme.applyPrimaryTone(currentBinding.root)
         applyIconTone()
         bindActions()
+        onHomeLayoutReady()
         observeState()
     }
 
@@ -206,7 +207,9 @@ class LauncherHomeFragment : Fragment() {
         }
     }
 
-    private fun applyIconTone() {
+    protected open fun onHomeLayoutReady() = Unit
+
+    protected open fun applyIconTone() {
         val currentBinding = binding ?: return
         val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
         val white = android.graphics.Color.WHITE
@@ -412,6 +415,20 @@ class LauncherHomeFragment : Fragment() {
         }
     }
 
+    protected open fun recentItemLayoutRes(): Int = com.core.R.layout.item_launcher_recent
+
+    protected open fun bindRecentItem(itemView: View, item: LauncherRepository.RecentItem) {
+        val icon: TextView = itemView.findViewById(com.core.R.id.recentIcon)
+        val title: TextView = itemView.findViewById(com.core.R.id.recentTitle)
+        val meta: TextView = itemView.findViewById(com.core.R.id.recentMeta)
+        val status: TextView = itemView.findViewById(com.core.R.id.recentStatus)
+        icon.text = item.iconText
+        title.text = item.title
+        meta.text = item.timeAndDuration
+        status.text = LauncherRepository.launchTypeLabel(requireContext(), item.launchType)
+            .ifEmpty { getString(com.core.R.string.repo_played) }
+    }
+
     private fun renderRecentItems(items: List<LauncherRepository.RecentItem>?) {
         val currentBinding = binding ?: return
         if (items.isNullOrEmpty()) {
@@ -426,20 +443,12 @@ class LauncherHomeFragment : Fragment() {
         val inflater = LayoutInflater.from(requireContext())
         for (item in items) {
             val itemView = inflater.inflate(
-                com.core.R.layout.item_launcher_recent,
+                recentItemLayoutRes(),
                 currentBinding.recentList,
                 false
             )
             LauncherTabletPortraitScaler.apply(itemView)
-            val icon: TextView = itemView.findViewById(com.core.R.id.recentIcon)
-            val title: TextView = itemView.findViewById(com.core.R.id.recentTitle)
-            val meta: TextView = itemView.findViewById(com.core.R.id.recentMeta)
-            val status: TextView = itemView.findViewById(com.core.R.id.recentStatus)
-            icon.text = item.iconText
-            title.text = item.title
-            meta.text = item.timeAndDuration
-            status.text = LauncherRepository.launchTypeLabel(requireContext(), item.launchType)
-                .ifEmpty { getString(com.core.R.string.repo_played) }
+            bindRecentItem(itemView, item)
             LauncherTheme.applyPrimaryTone(itemView)
             itemView.setOnClickListener { confirmLaunchRecentGame(item) }
             itemView.setOnLongClickListener {
@@ -564,6 +573,7 @@ class LauncherHomeFragment : Fragment() {
                 if (homeCommitted) {
                     val profileCommitted = app.getSharedPreferences("launcher_profile_prefs", 0)
                         .edit().putString("custom_avatar_uri", savedUri).commit()
+                    SafeImageLoader.invalidateUri(savedUri)
                     if (!profileCommitted) {
                         Log.w("LauncherHomeFragment", "Failed to mirror avatar preference")
                     }
@@ -623,6 +633,9 @@ class LauncherHomeFragment : Fragment() {
         }
         try {
             currentBinding.launcherAvatarImage.clipToOutline = true
+            // 先显示回退态；缓存命中时 SafeImageLoader 会同步回填并立即覆盖此状态。
+            currentBinding.launcherAvatarImage.visibility = View.GONE
+            currentBinding.launcherAvatarInitial.visibility = View.VISIBLE
             if (!SafeImageLoader.loadUri(
                     currentBinding.launcherAvatarImage,
                     avatar,
@@ -640,8 +653,6 @@ class LauncherHomeFragment : Fragment() {
                 showDefaultAvatar()
                 return
             }
-            currentBinding.launcherAvatarImage.visibility = View.GONE
-            currentBinding.launcherAvatarInitial.visibility = View.VISIBLE
         } catch (throwable: Throwable) {
             showDefaultAvatar()
         }

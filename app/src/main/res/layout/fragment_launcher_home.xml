@@ -219,6 +219,7 @@
             </FrameLayout>
 
             <GridLayout
+                android:id="@+id/homeActionsGrid"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/launcher_home_actions_grid_height"
                 android:layout_marginTop="@dimen/launcher_home_actions_grid_margin_top"
@@ -249,6 +250,7 @@
                         android:src="@drawable/launcher_profile_action_save" />
 
                     <TextView
+                        android:id="@+id/actionSaveSlotLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/launcher_home_action_text_gap"
@@ -280,6 +282,7 @@
                         android:src="@drawable/launcher_action_resources" />
 
                     <TextView
+                        android:id="@+id/actionResourceStationLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/launcher_home_action_text_gap"
@@ -310,6 +313,7 @@
                         android:src="@drawable/launcher_action_toolbox" />
 
                     <TextView
+                        android:id="@+id/actionToolboxLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/launcher_home_action_text_gap"
@@ -340,6 +344,7 @@
                         android:src="@drawable/launcher_action_agent" />
 
                     <TextView
+                        android:id="@+id/actionAgentLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/launcher_home_action_text_gap"

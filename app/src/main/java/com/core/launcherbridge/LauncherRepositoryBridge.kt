@@ -30,6 +30,15 @@ object LauncherRepositoryBridge {
         return GameRepository(context.applicationContext).findById(id)
     }
 
+    /**
+     * 批量按主键查询游戏，包含隐藏游戏；供列表关联数据使用，避免逐项访问数据库。
+     */
+    @JvmStatic
+    fun findGamesByIds(context: Context?, ids: Collection<Long>?): List<Game> {
+        if (context == null || ids.isNullOrEmpty()) return emptyList()
+        return GameRepository(context.applicationContext).findByIds(ids)
+    }
+
     /** 若不存在相同 rootUri 的记录则插入游戏。返回新 id 或 -1。 */
     @JvmStatic
     fun insertGameIfNotExists(context: Context?, game: Game?): Long {

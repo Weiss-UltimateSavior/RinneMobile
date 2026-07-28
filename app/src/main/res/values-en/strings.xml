@@ -13,6 +13,13 @@
     <string name="app_start_page_dialog_title">Choose Startup Page</string>
     <string name="app_start_page_portrait">Portrait Home</string>
     <string name="app_start_page_landscape">Landscape Home</string>
+    <string name="app_home_style_label">Home Style</string>
+    <string name="app_home_style_dialog_title">Choose Home Style</string>
+    <string name="app_home_style_default">Default Home</string>
+    <string name="app_home_style_featured">Featured Card Home</string>
+    <string name="home_featured_games">Featured Games</string>
+    <string name="home_quick_features">Quick Actions</string>
+    <string name="home_featured_empty">No games to display yet</string>
     <string name="app_splash_image_label">Startup Image</string>
     <string name="app_splash_image_default">Default startup image</string>
     <string name="app_splash_image_custom">Custom startup image in use</string>

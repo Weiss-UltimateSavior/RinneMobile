@@ -40,6 +40,7 @@ import com.core.launcherbridge.ConfigCallback;
 import com.core.launcherbridge.PlayDataCallback;
 import com.core.util.TimeFormatUtil;
 import com.core.util.AppExecutors;
+import com.core.util.SafeImageLoader;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -525,6 +526,7 @@ public class LauncherProfileFragment extends Fragment {
                         .edit().putString(prefsKey, savedUri).apply();
                 if (syncToHome) {
                     syncAvatarToHome(savedUri);
+                    SafeImageLoader.invalidateUri(savedUri);
                 }
                 onDone.run();
                 Toast.makeText(requireContext(), R.string.profile_image_updated,

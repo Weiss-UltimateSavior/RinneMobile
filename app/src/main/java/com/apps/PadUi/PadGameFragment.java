@@ -552,6 +552,9 @@ public class PadGameFragment extends Fragment {
         }
         try {
             binding.padAvatarImage.setClipToOutline(true);
+            // 缓存命中时回调会同步显示图片，因此回退态必须在发起请求前设置。
+            binding.padAvatarImage.setVisibility(View.GONE);
+            binding.padAvatarInitial.setVisibility(View.VISIBLE);
             if (!SafeImageLoader.loadUri(binding.padAvatarImage, avatar, success -> {
                 if (binding == null) return;
                 binding.padAvatarImage.setVisibility(success ? View.VISIBLE : View.GONE);
@@ -562,8 +565,6 @@ public class PadGameFragment extends Fragment {
                 binding.padAvatarInitial.setVisibility(View.VISIBLE);
                 return;
             }
-            binding.padAvatarImage.setVisibility(View.GONE);
-            binding.padAvatarInitial.setVisibility(View.VISIBLE);
         } catch (Exception e) {
             Log.w(TAG, "avatar load failed: " + avatar, e);
             binding.padAvatarImage.setImageDrawable(null);

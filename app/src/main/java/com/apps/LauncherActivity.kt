@@ -32,6 +32,7 @@ import com.apps.game.LauncherLibraryFragment
 import com.apps.game.LauncherManageFragment
 import com.apps.game.PinnedGameShortcut
 import com.apps.home.LauncherHomeFragment
+import com.apps.home.LauncherFeaturedHomeFragment
 import com.apps.home.LauncherPlaceholderFragment
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
@@ -143,6 +144,9 @@ class LauncherActivity : AppCompatActivity() {
         if (binding != null) {
             renderSelectedNav(currentNavItem)
             renderParticles()
+            if (currentNavItem == LauncherViewModel.NavItem.HOME) {
+                showFragment(LauncherViewModel.NavItem.HOME)
+            }
         }
         viewModel?.refreshStats()
     }
@@ -328,7 +332,14 @@ class LauncherActivity : AppCompatActivity() {
     private fun showFragment(selectedItem: LauncherViewModel.NavItem?) {
         binding ?: return
         val navItem = selectedItem ?: LauncherViewModel.NavItem.HOME
-        if (currentNavItem == navItem && supportFragmentManager.findFragmentById(R.id.launcherFragmentContainer) != null) {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.launcherFragmentContainer)
+        val expectedHomeFragment = if (isFeaturedHomeStyle(this)) {
+            LauncherFeaturedHomeFragment::class.java
+        } else {
+            LauncherHomeFragment::class.java
+        }
+        if (currentNavItem == navItem && currentFragment != null &&
+            (navItem != LauncherViewModel.NavItem.HOME || currentFragment.javaClass == expectedHomeFragment)) {
             return
         }
 
@@ -338,7 +349,7 @@ class LauncherActivity : AppCompatActivity() {
         currentNavItem = navItem
         val fragment: Fragment
         if (navItem == LauncherViewModel.NavItem.HOME) {
-            fragment = LauncherHomeFragment()
+            fragment = if (isFeaturedHomeStyle(this)) LauncherFeaturedHomeFragment() else LauncherHomeFragment()
         } else if (navItem == LauncherViewModel.NavItem.LIBRARY) {
             fragment = LauncherLibraryFragment()
         } else if (navItem == LauncherViewModel.NavItem.MANAGE) {
@@ -529,6 +540,7 @@ class LauncherActivity : AppCompatActivity() {
         private const val LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME"
         const val APP_PREFS = "yukihub_prefs"
         private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
+        private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
         const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
@@ -717,6 +729,19 @@ class LauncherActivity : AppCompatActivity() {
             context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
                 .edit()
                 .putBoolean(KEY_START_LANDSCAPE_PAGE, enabled)
+                .apply()
+        }
+
+        @JvmStatic
+        fun isFeaturedHomeStyle(context: android.content.Context): Boolean =
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_FEATURED_HOME_STYLE, false)
+
+        @JvmStatic
+        fun setFeaturedHomeStyle(context: android.content.Context, enabled: Boolean) {
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_FEATURED_HOME_STYLE, enabled)
                 .apply()
         }
 

@@ -46,6 +46,32 @@ class GameRepository(context: Context) {
     }
 
     /**
+     * 一次读取指定 id 的游戏，包含隐藏游戏；缺失的 id 不会出现在结果中。
+     *
+     * 适用于展示最近游玩记录等小批量关联查询，避免逐行创建 Repository 并查询数据库。
+     */
+    fun findByIds(ids: Collection<Long>): List<Game> {
+        val distinctIds = ids.filter { it > 0L }.distinct()
+        if (distinctIds.isEmpty()) return emptyList()
+        val placeholders = distinctIds.joinToString(",") { "?" }
+        val db = helper.readableDatabase
+        val c = db.query(
+            "games",
+            null,
+            "id IN ($placeholders)",
+            distinctIds.map(Long::toString).toTypedArray(),
+            null,
+            null,
+            null
+        )
+        return c.use {
+            buildList {
+                while (it.moveToNext()) add(fromCursor(it))
+            }
+        }
+    }
+
+    /**
      * 插入游戏记录，返回新行 id。
      *
      * 契约变化（相对 Java 原版）：

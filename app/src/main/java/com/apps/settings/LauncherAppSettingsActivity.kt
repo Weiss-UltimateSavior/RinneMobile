@@ -47,6 +47,8 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         binding.appLanguageText.setOnClickListener { showLanguagePicker() }
         renderStartPageState()
         binding.appStartPageText.setOnClickListener { showStartPagePicker() }
+        renderHomeStyleState()
+        binding.appHomeStyleText.setOnClickListener { showHomeStylePicker() }
         renderSplashImageState()
         binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
     }
@@ -90,6 +92,23 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         ) { index ->
             LauncherActivity.setLandscapeStartupPage(this, index == 1)
             renderStartPageState()
+        }
+    }
+
+    private fun showHomeStylePicker() {
+        val labels: Array<CharSequence> = arrayOf(
+            getString(R.string.app_home_style_default),
+            getString(R.string.app_home_style_featured),
+        )
+        LauncherDialogFactory.showSingleChoice(
+            this,
+            getString(R.string.app_home_style_dialog_title),
+            labels,
+            if (LauncherActivity.isFeaturedHomeStyle(this)) 1 else 0,
+        ) { index ->
+            LauncherActivity.setFeaturedHomeStyle(this, index == 1)
+            // 返回首页时由 LauncherActivity.onResume() 立即替换对应 Fragment，无需重启应用。
+            finish()
         }
     }
 
@@ -144,6 +163,16 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
                 R.string.app_start_page_landscape
             } else {
                 R.string.app_start_page_portrait
+            }
+        )
+    }
+
+    private fun renderHomeStyleState() {
+        binding.appHomeStyleText.setText(
+            if (LauncherActivity.isFeaturedHomeStyle(this)) {
+                R.string.app_home_style_featured
+            } else {
+                R.string.app_home_style_default
             }
         )
     }

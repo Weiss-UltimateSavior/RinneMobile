@@ -15,13 +15,14 @@ import com.core.R;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class LauncherRepository {
     private static final String APP_PREFS = "yukihub_prefs";
     private static final int RECENT_ITEM_LIMIT = 5;
-    private static final int RECENT_TITLE_MAX_CODE_POINTS = 10;
+    private static final int RECENT_TITLE_MAX_CODE_POINTS = 19;
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_AUTH_ACCESS_TOKEN = "auth_access_token";
     private static final String KEY_AUTH_NICKNAME = "auth_nickname";
@@ -77,26 +78,40 @@ public class LauncherRepository {
     }
 
     public List<RecentItem> loadRecentItems() {
+        List<RecentActivity> activities = LauncherRepositoryBridge.getRecentPlayActivities(appContext, RECENT_ITEM_LIMIT);
+        List<Long> gameIds = new ArrayList<>(activities.size());
+        for (RecentActivity activity : activities) {
+            if (activity != null && activity.gameId > 0L) gameIds.add(activity.gameId);
+        }
+        Map<Long, Game> gamesById = new HashMap<>();
+        for (Game game : LauncherRepositoryBridge.findGamesByIds(appContext, gameIds)) {
+            if (game != null && game.id > 0L) gamesById.put(game.id, game);
+        }
         List<RecentItem> recentItems = new ArrayList<>();
-        for (RecentActivity activity : LauncherRepositoryBridge.getRecentPlayActivities(appContext, RECENT_ITEM_LIMIT)) {
-            recentItems.add(toRecentItem(activity));
+        for (RecentActivity activity : activities) {
+            if (activity != null) recentItems.add(toRecentItem(activity, gamesById.get(activity.gameId)));
         }
         return recentItems;
     }
 
-    private RecentItem toRecentItem(RecentActivity activity) {
+    private RecentItem toRecentItem(RecentActivity activity, Game game) {
         String fullTitle = activity.gameTitle == null || activity.gameTitle.trim().isEmpty()
                 ? textContext().getString(R.string.pad_untitled_game)
                 : activity.gameTitle.trim();
         String title = ellipsizeByCodePoint(fullTitle, RECENT_TITLE_MAX_CODE_POINTS);
-        String time = formatRecentTime(activity.endTime) + " · " + TimeFormatUtil.playTime(activity.duration);
+        String dateTime = formatRecentTime(activity.endTime);
+        String time = dateTime + " · " + TimeFormatUtil.playTime(activity.duration);
         String status = launchTypeLabel(appContext, activity.launchType);
         if (status.isEmpty()) status = textContext().getString(R.string.repo_played);
+        String coverUri = game == null ? "" : (game.coverPersistUri != null && !game.coverPersistUri.trim().isEmpty()
+                ? game.coverPersistUri : game.coverUri);
         return new RecentItem(
                 title,
                 time,
+                dateTime,
                 status,
                 firstTitleChar(fullTitle),
+                coverUri,
                 activity.gameId,
                 activity.sessionId,
                 activity.launchType
@@ -248,8 +263,10 @@ public class LauncherRepository {
     public static final class RecentItem {
         public final String title;
         public final String timeAndDuration;
+        public final String dateTime;
         public final String status;
         public final String iconText;
+        public final String coverUri;
         public final long gameId;
         public final long sessionId;
         public final String launchType;
@@ -257,16 +274,20 @@ public class LauncherRepository {
         RecentItem(
                 String title,
                 String timeAndDuration,
+                String dateTime,
                 String status,
                 String iconText,
+                String coverUri,
                 long gameId,
                 long sessionId,
                 String launchType
         ) {
             this.title = title;
             this.timeAndDuration = timeAndDuration;
+            this.dateTime = dateTime;
             this.status = status;
             this.iconText = iconText;
+            this.coverUri = coverUri;
             this.gameId = gameId;
             this.sessionId = sessionId;
             this.launchType = launchType;

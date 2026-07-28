@@ -3,8 +3,8 @@ package com.core.util
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.LruCache
 import android.widget.ImageView
-import java.io.InputStream
 import java.util.WeakHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -19,25 +19,49 @@ object SafeImageLoader {
 
     private val REQUEST_IDS = AtomicLong()
     private val ACTIVE_REQUESTS: WeakHashMap<ImageView, Long> = WeakHashMap()
+    /** 已显示图片的内存缓存，避免 Fragment 切换后封面重新解码时闪出首字回退。 */
+    private val MEMORY_CACHE = object : LruCache<String, Bitmap>(12 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
+    }
+
+    /**
+     * 使指定 URI 的已解码图片失效。
+     *
+     * 调用方在原地覆写本地文件后必须调用此方法；缓存中的 Bitmap 可能仍被 ImageView 使用，
+     * 因此这里只移除缓存引用，不主动 recycle。
+     */
+    @JvmStatic
+    fun invalidateUri(uriText: String?) {
+        if (uriText == null || uriText.trim().isEmpty()) return
+        MEMORY_CACHE.remove(uriText.trim())
+    }
 
     @JvmStatic
     fun loadUri(imageView: ImageView?, uriText: String?, callback: Callback?): Boolean {
         if (imageView == null) return false
         val requestId = REQUEST_IDS.incrementAndGet()
         synchronized(ACTIVE_REQUESTS) { ACTIVE_REQUESTS[imageView] = requestId }
-        imageView.setImageDrawable(null)
         // 严格等价原 Java: uriText == null || uriText.trim().isEmpty()
         // 不使用 isNullOrBlank() —— 后者按 Char.isWhitespace() 判定 Unicode 空白(如全角空格/NBSP)，
         // 而 Java trim() 仅去 <= U+0020；保留原语义以避免边界差异
         if (uriText == null || uriText.trim().isEmpty()) return false
+        val uriKey = uriText.trim()
         val context = imageView.context.applicationContext
         val requestedWidth = imageView.width
         val requestedHeight = imageView.height
         val uri: Uri = try {
-            Uri.parse(uriText.trim())
+            Uri.parse(uriKey)
         } catch (ignored: Throwable) {
             return false
         }
+        val cached = MEMORY_CACHE.get(uriKey)
+        if (cached != null && !cached.isRecycled) {
+            synchronized(ACTIVE_REQUESTS) { ACTIVE_REQUESTS.remove(imageView) }
+            imageView.setImageBitmap(cached)
+            callback?.onResult(true)
+            return true
+        }
+        imageView.setImageDrawable(null)
         AppExecutors.runOnIo {
             val bitmap = decodeSampled(context, uri, requestedWidth, requestedHeight)
             RxMainScheduler.post {
@@ -51,7 +75,12 @@ object SafeImageLoader {
                     bitmap?.recycle()
                     return@post
                 }
-                if (bitmap != null) imageView.setImageBitmap(bitmap) else imageView.setImageDrawable(null)
+                if (bitmap != null) {
+                    MEMORY_CACHE.put(uriKey, bitmap)
+                    imageView.setImageBitmap(bitmap)
+                } else {
+                    imageView.setImageDrawable(null)
+                }
                 callback?.onResult(bitmap != null)
             }
         }
