@@ -2,7 +2,9 @@ package com.apps.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge.RecentActivity;
@@ -84,12 +86,12 @@ public class LauncherRepository {
 
     private RecentItem toRecentItem(RecentActivity activity) {
         String fullTitle = activity.gameTitle == null || activity.gameTitle.trim().isEmpty()
-                ? appContext.getString(R.string.pad_untitled_game)
+                ? textContext().getString(R.string.pad_untitled_game)
                 : activity.gameTitle.trim();
         String title = ellipsizeByCodePoint(fullTitle, RECENT_TITLE_MAX_CODE_POINTS);
         String time = formatRecentTime(activity.endTime) + " · " + TimeFormatUtil.playTime(activity.duration);
         String status = launchTypeLabel(appContext, activity.launchType);
-        if (status.isEmpty()) status = appContext.getString(R.string.repo_played);
+        if (status.isEmpty()) status = textContext().getString(R.string.repo_played);
         return new RecentItem(
                 title,
                 time,
@@ -108,28 +110,30 @@ public class LauncherRepository {
         }
         String profileName = appPrefs.getString(KEY_PROFILE_NAME, "");
         if (profileName != null && !profileName.trim().isEmpty()) return profileName.trim();
-        return appContext.getString(R.string.home_local_player);
+        return textContext().getString(R.string.home_local_player);
     }
 
     private String accountMode() {
         String status = appPrefs.getString(KEY_AUTH_STATUS, "");
-        if (AUTH_STATUS_EXPIRED.equals(status)) return appContext.getString(R.string.repo_local_expired);
-        if (!LauncherAuthBridge.isLoggedIn(appContext)) return appContext.getString(R.string.home_local_mode);
-        if (AUTH_STATUS_ONLINE.equals(status)) return appContext.getString(R.string.pad_online_mode);
-        if (AUTH_STATUS_SYNCING.equals(status)) return appContext.getString(R.string.pad_online_syncing);
-        return appContext.getString(R.string.pad_online_mode);
+        Context textContext = textContext();
+        if (AUTH_STATUS_EXPIRED.equals(status)) return textContext.getString(R.string.repo_local_expired);
+        if (!LauncherAuthBridge.isLoggedIn(appContext)) return textContext.getString(R.string.home_local_mode);
+        if (AUTH_STATUS_ONLINE.equals(status)) return textContext.getString(R.string.pad_online_mode);
+        if (AUTH_STATUS_SYNCING.equals(status)) return textContext.getString(R.string.pad_online_syncing);
+        return textContext.getString(R.string.pad_online_mode);
     }
 
     private String syncStatus() {
-        if (!LauncherSyncBridge.isConfigured(appContext)) return appContext.getString(R.string.repo_webdav_not_configured);
-        StringBuilder builder = new StringBuilder(appContext.getString(R.string.repo_webdav_configured));
-        builder.append(appContext.getString(LauncherSyncBridge.isAutoSyncEnabled(appContext)
+        Context textContext = textContext();
+        if (!LauncherSyncBridge.isConfigured(appContext)) return textContext.getString(R.string.repo_webdav_not_configured);
+        StringBuilder builder = new StringBuilder(textContext.getString(R.string.repo_webdav_configured));
+        builder.append(textContext.getString(LauncherSyncBridge.isAutoSyncEnabled(appContext)
                 ? R.string.repo_auto_sync_on : R.string.repo_auto_sync_off));
         long lastSync = LauncherSyncBridge.lastSyncTime(appContext);
         if (lastSync > 0) {
-            builder.append(appContext.getString(R.string.repo_last_sync, formatSyncTime(lastSync)));
+            builder.append(textContext.getString(R.string.repo_last_sync, formatSyncTime(lastSync)));
         } else {
-            builder.append(appContext.getString(R.string.repo_never_synced));
+            builder.append(textContext.getString(R.string.repo_never_synced));
         }
         return builder.toString();
     }
@@ -144,7 +148,7 @@ public class LauncherRepository {
     }
 
     private String formatRecentTime(long time) {
-        if (time <= 0L) return appContext.getString(R.string.repo_never_recorded);
+        if (time <= 0L) return textContext().getString(R.string.repo_never_recorded);
         return TimeFormatUtil.shortDate(time);
     }
 
@@ -166,9 +170,9 @@ public class LauncherRepository {
     }
 
     private String firstTitleChar(String title) {
-        if (title == null) return appContext.getString(R.string.pad_game_fallback_initial);
+        if (title == null) return textContext().getString(R.string.pad_game_fallback_initial);
         String trimmed = title.trim();
-        if (trimmed.isEmpty()) return appContext.getString(R.string.pad_game_fallback_initial);
+        if (trimmed.isEmpty()) return textContext().getString(R.string.pad_game_fallback_initial);
         int end = trimmed.offsetByCodePoints(0, 1);
         return trimmed.substring(0, end);
     }
@@ -180,6 +184,23 @@ public class LauncherRepository {
         if (trimmed.codePointCount(0, trimmed.length()) <= maxCodePoints) return trimmed;
         int end = trimmed.offsetByCodePoints(0, maxCodePoints);
         return trimmed.substring(0, end) + "...";
+    }
+
+    /**
+     * AppCompat stores its selected locale separately on pre-Android 13. The Application
+     * resources held by this long-lived repository can therefore lag behind a language change.
+     * Resolve display strings through a fresh configuration context on every snapshot load.
+     */
+    private Context textContext() {
+        try {
+            androidx.core.os.LocaleListCompat locales = AppCompatDelegate.getApplicationLocales();
+            if (locales.isEmpty() || locales.get(0) == null) return appContext;
+            Configuration configuration = new Configuration(appContext.getResources().getConfiguration());
+            configuration.setLocale(locales.get(0));
+            return appContext.createConfigurationContext(configuration);
+        } catch (Throwable ignored) {
+            return appContext;
+        }
     }
 
     public static class StatsSnapshot {
