@@ -88,7 +88,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="思考过程"
+                    android:text="@string/social_agent_thinking_process"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -97,7 +97,7 @@
                     android:id="@+id/agentReasoningState"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="思考中"
+                    android:text="@string/social_agent_thinking"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="10sp" />
             </LinearLayout>

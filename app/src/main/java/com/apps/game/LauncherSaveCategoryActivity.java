@@ -62,10 +62,11 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
     private void renderCategories(Map<EngineType, Integer> counts) {
         binding.saveCategoryList.removeAllViews();
         if (counts == null || counts.isEmpty()) {
-            binding.saveCategoryStatus.setText("暂无游戏，请先扫描或添加游戏。");
+            binding.saveCategoryStatus.setText(R.string.game_save_category_empty);
             return;
         }
-        binding.saveCategoryStatus.setText("共 " + totalCount(counts) + " 个游戏，按模拟器类型分类。 ");
+        binding.saveCategoryStatus.setText(getString(
+                R.string.game_save_category_count, totalCount(counts)));
         for (Map.Entry<EngineType, Integer> entry : counts.entrySet()) addCategory(entry.getKey(), entry.getValue());
     }
 
@@ -87,7 +88,7 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
         icon.setText(engineIcon(engine));
 
         TextView title = itemBinding.manageItemTitle;
-        title.setText(engineLabel(engine) + " · " + count + " 个游戏");
+        title.setText(getString(R.string.game_save_category_row, engineLabel(this, engine), count));
         LauncherTheme.applyPrimaryTone(row);
         LauncherTheme.styleManageRow(row);
         binding.saveCategoryList.addView(row);
@@ -99,8 +100,8 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
         return total;
     }
 
-    public static String engineLabel(EngineType engine) {
-        if (engine == null) return "其它游戏";
+    public static String engineLabel(android.content.Context context, EngineType engine) {
+        if (engine == null) return context.getString(R.string.game_save_other_games);
         switch (engine) {
             case KIRIKIRI: return "KRKR";
             case ARTEMIS: return "Artemis";

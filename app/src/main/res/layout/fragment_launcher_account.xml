@@ -44,7 +44,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="7dp"
-                    android:text="欢迎回来"
+                    android:text="@string/social_account_title"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="23sp"
                     android:textStyle="bold" />
@@ -62,7 +62,7 @@
                     style="@style/LauncherShortSecondaryActionButton"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="1"
-                    android:text="QQ群聊"
+                    android:text="@string/social_qq_group"
                     />
 
                 <TextView
@@ -71,7 +71,7 @@
                     style="@style/LauncherShortSecondaryActionButton"
                     android:layout_marginStart="5dp"
                     android:layout_weight="1"
-                    android:text="官网首页"
+                    android:text="@string/social_official_site"
                     />
             </LinearLayout>
 
@@ -93,7 +93,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="11dp"
                     android:layout_marginEnd="11dp"
-                    android:text="登录或使用以上方式获取邀请码注册"
+                    android:text="@string/social_auth_invite_help"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="13sp" />
 
@@ -115,7 +115,7 @@
                     android:id="@+id/labelName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="昵称"
+                    android:text="@string/social_nickname"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -127,7 +127,7 @@
                     android:layout_height="44dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="输入昵称"
+                    android:hint="@string/social_nickname_hint"
                     android:inputType="textPersonName"
                     android:maxLines="1"
                     android:paddingStart="14dp"
@@ -140,7 +140,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="邮箱"
+                    android:text="@string/social_email"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -151,7 +151,7 @@
                     android:layout_height="44dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="请输入邮箱"
+                    android:hint="@string/social_email_hint"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
                     android:paddingStart="14dp"
@@ -164,7 +164,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="13dp"
-                    android:text="密码"
+                    android:text="@string/social_password"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -175,7 +175,7 @@
                     android:layout_height="44dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="请输入密码"
+                    android:hint="@string/social_password_hint"
                     android:inputType="textPassword"
                     android:maxLines="1"
                     android:paddingStart="14dp"
@@ -189,7 +189,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="13dp"
-                    android:text="确认密码"
+                    android:text="@string/social_confirm_password"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -201,7 +201,7 @@
                     android:layout_height="44dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="请再次输入密码"
+                    android:hint="@string/social_confirm_password_hint"
                     android:inputType="textPassword"
                     android:maxLines="1"
                     android:paddingStart="14dp"
@@ -227,7 +227,7 @@
                         android:buttonTint="@color/launcher_primary_color"
                         android:checked="true"
                         android:gravity="center_vertical"
-                        android:text="记住我"
+                        android:text="@string/social_remember_me"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="13sp" />
 
@@ -236,7 +236,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
-                        android:text="忘记密码？"
+                        android:text="@string/social_forgot_password"
                         android:textColor="@color/launcher_primary_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -251,7 +251,7 @@
             <TextView
                 android:id="@+id/btnSubmit"
                 style="@style/LauncherLongActionButton"
-                android:text="登录"
+                android:text="@string/social_login"
                 />
 
             <LinearLayout
@@ -264,7 +264,7 @@
                     android:id="@+id/switchHint"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="还没有账户？"
+                    android:text="@string/social_no_account"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp" />
 
@@ -273,7 +273,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:text="注册"
+                    android:text="@string/social_register"
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />

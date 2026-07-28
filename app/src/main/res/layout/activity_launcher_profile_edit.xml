@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="个人资料"
+                android:text="@string/profile_edit_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
-                android:text="修改用户名"
+                android:text="@string/profile_change_username"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -44,7 +44,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
-                android:text="新用户名"
+                android:text="@string/profile_new_username"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -55,7 +55,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="3-32位字母、数字或下划线"
+                android:hint="@string/profile_username_hint"
                 android:inputType="textPersonName"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -69,7 +69,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
-                android:text="修改密码"
+                android:text="@string/profile_change_password"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -78,7 +78,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
-                android:text="旧密码"
+                android:text="@string/profile_old_password"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -89,7 +89,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="输入当前密码"
+                android:hint="@string/profile_old_password_hint"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -102,7 +102,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="新密码"
+                android:text="@string/profile_new_password"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -113,7 +113,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="6-128位"
+                android:hint="@string/profile_password_hint"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -126,7 +126,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="确认新密码"
+                android:text="@string/profile_confirm_new_password"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -137,7 +137,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="再次输入新密码"
+                android:hint="@string/profile_confirm_password_hint"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -151,7 +151,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="9dp"
                 android:gravity="center"
-                android:text="修改密码后需重新登录"
+                android:text="@string/profile_password_relogin_notice"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp" />
 
@@ -164,21 +164,21 @@
                 <TextView
                     android:id="@+id/btnUpdateUsername"
                     style="@style/LauncherLongActionButton"
-                    android:text="修改用户名"
+                    android:text="@string/profile_change_username"
                     />
 
                 <TextView
                     android:id="@+id/btnUpdatePassword"
                     style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:text="修改密码"
+                    android:text="@string/profile_change_password"
                     />
 
                 <TextView
                     android:id="@+id/profileEditBack"
                     style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:text="返回"
+                    android:text="@string/settings_back"
                     />
             </LinearLayout>
         </LinearLayout>

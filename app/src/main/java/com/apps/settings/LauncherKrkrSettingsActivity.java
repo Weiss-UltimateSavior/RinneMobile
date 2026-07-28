@@ -26,7 +26,6 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     public static final String EXTRA_GAME_ID = "extra_game_id";
 
-    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4", "1.2.6"};
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_ONS_ENCODING_INDEX = "ons_encoding_index";
@@ -67,20 +66,19 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         binding.artemisScopedSection.setVisibility(View.GONE);
         binding.tyranoScopedSection.setVisibility(View.GONE);
         binding.tyranoExternalNetworkSection.setVisibility(View.GONE);
-        binding.btnNativeKrkr.setText("恢复全局默认");
+        binding.btnNativeKrkr.setText(R.string.settings_restore_global_defaults);
         binding.btnNativeKrkr.setOnClickListener(v -> clearPerGameSettings());
 
         Game game = LauncherRepositoryBridge.findGameById(this, gameId);
         String title = (game != null && game.title != null && !game.title.trim().isEmpty())
-                ? game.title.trim() : "ONS 引擎设置";
+                ? game.title.trim() : getString(R.string.settings_ons_engine_title);
         binding.krkrSectionTitle.setText(title);
-        binding.krkrSectionDescription.setText(
-                "以下设置将完整覆盖该 ONS 游戏的全局默认；可使用“恢复全局默认”取消覆盖。下次启动该游戏时生效。");
+        binding.krkrSectionDescription.setText(R.string.settings_ons_game_override_summary);
     }
 
     private void clearPerGameSettings() {
         LauncherOnsGameSettingsBridge.clearOverride(this, gameId);
-        Toast.makeText(this, "已恢复全局 ONS 设置", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.settings_ons_global_restored, Toast.LENGTH_SHORT).show();
         finish();
     }
 
@@ -176,7 +174,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
             perGame.sharpnessValue = binding.onsSharpnessValueInput.getText().toString().trim();
             perGame.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex];
             LauncherOnsGameSettingsBridge.save(this, gameId, perGame);
-            Toast.makeText(this, "已保存该游戏的 ONS 设置", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.settings_ons_game_saved, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -196,22 +194,26 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.tyranoScopedSwitch.isChecked());
         LauncherKrkrBridge.setTyranoExternalNetworkEnabled(this, binding.tyranoExternalNetworkSwitch.isChecked());
 
-        Toast.makeText(this, "引擎设置已保存：" + LauncherKrkrBridge.engineVersionLabel(version), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.settings_engine_saved,
+                engineVersionLabels()[selectedEngineVersionIndex]), Toast.LENGTH_SHORT).show();
         finish();
     }
 
     private void showEngineVersionPicker() {
-        com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "选择 KR 引擎版本",
-                ENGINE_VERSION_LABELS, selectedEngineVersionIndex, this::setEngineVersionSelection);
+        com.apps.theme.LauncherDialogFactory.showSingleChoice(this,
+                getString(R.string.settings_choose_kr_engine_version),
+                engineVersionLabels(), selectedEngineVersionIndex, this::setEngineVersionSelection);
     }
 
     private void setEngineVersionSelection(int index) {
-        selectedEngineVersionIndex = index >= 0 && index < ENGINE_VERSION_LABELS.length ? index : 0;
-        binding.engineVersionText.setText(ENGINE_VERSION_LABELS[selectedEngineVersionIndex]);
+        String[] labels = engineVersionLabels();
+        selectedEngineVersionIndex = index >= 0 && index < labels.length ? index : 0;
+        binding.engineVersionText.setText(labels[selectedEngineVersionIndex]);
     }
 
     private void showOnsEncodingPicker() {
-        com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "ONS 文本编码",
+        com.apps.theme.LauncherDialogFactory.showSingleChoice(this,
+                getString(R.string.settings_ons_text_encoding),
                 ONS_ENCODING_LABELS, selectedOnsEncodingIndex, this::setOnsEncodingSelection);
     }
 
@@ -232,8 +234,12 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         try {
             startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(this));
         } catch (Throwable t) {
-            Toast.makeText(this, "无法进入原生 KRKR", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.settings_native_krkr_unavailable, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String[] engineVersionLabels() {
+        return new String[]{getString(R.string.settings_auto), "1.3.9", "1.3.4", "1.2.6"};
     }
 
     private void configureEdgeToEdgeWindow() {

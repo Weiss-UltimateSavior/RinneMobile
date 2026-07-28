@@ -2,7 +2,6 @@ package com.apps.home
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -14,7 +13,6 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -33,6 +31,7 @@ import com.apps.data.LauncherViewModel
 import com.apps.game.GameSessionController
 import com.apps.game.LauncherSaveCategoryActivity
 import com.apps.settings.LauncherToolboxActivity
+import com.apps.settings.LauncherAppSettingsActivity
 import com.apps.settings.ResourceStationActivity
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
@@ -170,8 +169,27 @@ class LauncherHomeFragment : Fragment() {
 
     private fun bindActions() {
         val currentBinding = binding ?: return
+        parentFragmentManager.setFragmentResultListener(
+            LauncherHomeAccountBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            when (result.getString(LauncherHomeAccountBottomSheet.RESULT_ACTION)) {
+                LauncherHomeAccountBottomSheet.ACTION_APP_SETTINGS -> {
+                    startLauncherActivity(Intent(requireContext(), LauncherAppSettingsActivity::class.java))
+                }
+                LauncherHomeAccountBottomSheet.ACTION_THEME -> {
+                    startLauncherActivity(Intent(requireContext(), LauncherThemeMenuActivity::class.java))
+                }
+                LauncherHomeAccountBottomSheet.ACTION_TONE -> confirmToggleTone()
+                LauncherHomeAccountBottomSheet.ACTION_UPDATE -> checkUpdate()
+                LauncherHomeAccountBottomSheet.ACTION_FEEDBACK -> showFeedbackOptions()
+                LauncherHomeAccountBottomSheet.ACTION_DISCLAIMER -> openDisclaimer()
+            }
+        }
         currentBinding.launcherAvatarContainer.setOnClickListener { showChangeAvatarDialog() }
-        currentBinding.actionProfileMenu.setOnClickListener { showPlaceholderMenu(it) }
+        currentBinding.actionProfileMenu.setOnClickListener {
+            LauncherHomeAccountBottomSheet.show(parentFragmentManager)
+        }
         currentBinding.actionSaveSlot.setOnClickListener {
             startLauncherActivity(Intent(requireContext(), LauncherSaveCategoryActivity::class.java))
         }
@@ -228,61 +246,6 @@ class LauncherHomeFragment : Fragment() {
         }
     }
 
-    private fun showPlaceholderMenu(anchor: View) {
-        binding ?: return
-        val menu = LinearLayout(requireContext())
-        menu.orientation = LinearLayout.VERTICAL
-        menu.setBackgroundResource(com.core.R.drawable.launcher_white_card)
-        menu.setPadding(dp(7), dp(7), dp(7), dp(7))
-
-        val popupWindow = PopupWindow(menu, dp(119), ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popupWindow.isOutsideTouchable = true
-        popupWindow.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
-        popupWindow.animationStyle = com.core.R.style.LauncherDialogAnimation
-
-        addMenuItem(menu, "主题管理", popupWindow) {
-            startLauncherActivity(Intent(requireContext(), LauncherThemeMenuActivity::class.java))
-        }
-        addMenuItem(menu, "色调切换", popupWindow) { confirmToggleTone() }
-        addMenuItem(menu, "检查更新", popupWindow) { checkUpdate() }
-        addMenuItem(menu, "建议反馈", popupWindow) { showFeedbackOptions() }
-        addMenuItem(menu, "免责声明", popupWindow) { openDisclaimer() }
-
-        popupWindow.showAsDropDown(anchor, anchor.width - dp(119), dp(5), Gravity.NO_GRAVITY)
-    }
-
-    private fun addMenuItem(
-        menu: LinearLayout,
-        label: String?,
-        popupWindow: PopupWindow,
-        action: Runnable?
-    ) {
-        val item = TextView(requireContext())
-        item.text = label
-        item.textSize = 13f
-        item.setTypeface(null, android.graphics.Typeface.BOLD)
-        item.gravity = Gravity.CENTER
-        item.isSingleLine = true
-        item.setPadding(dp(13), 0, dp(13), 0)
-        item.setTextColor(LauncherTheme.primary(requireContext()))
-        item.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-        item.setOnClickListener {
-            popupWindow.dismiss()
-            if (action != null) {
-                action.run()
-            } else {
-                Toast.makeText(requireContext(), "$label 功能待接入", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            dp(34)
-        )
-        lp.setMargins(0, 0, 0, dp(5))
-        menu.addView(item, lp)
-    }
-
     private fun showResourceStationDialog() {
         val dialog = AlertDialog.Builder(requireContext()).create()
         dialog.show()
@@ -298,7 +261,7 @@ class LauncherHomeFragment : Fragment() {
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg)
 
         val title = TextView(requireContext())
-        title.text = "资讯站"
+        title.setText(com.core.R.string.home_resource_station)
         title.gravity = android.view.Gravity.CENTER
         title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color))
         title.textSize = 16f
@@ -308,13 +271,13 @@ class LauncherHomeFragment : Fragment() {
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         )
 
-        addResourceOption(root, "聚合搜索", "https://searchgal.top", dialog)
-        addResourceOption(root, "鲲Galgame", "https://www.kungal.com", dialog)
-        addResourceOption(root, "真红小站", "https://www.shinnku.com/", dialog)
+        addResourceOption(root, getString(com.core.R.string.home_resource_aggregated_search), "https://searchgal.top", dialog)
+        addResourceOption(root, getString(com.core.R.string.home_resource_kungal), "https://www.kungal.com", dialog)
+        addResourceOption(root, getString(com.core.R.string.home_resource_shinnku), "https://www.shinnku.com/", dialog)
         addResourceOption(root, "Touch Gal", "https://www.touchgal.ink/", dialog)
 
         val cancel = TextView(requireContext())
-        cancel.text = "取消"
+        cancel.setText(com.core.R.string.core_cancel)
         cancel.gravity = android.view.Gravity.CENTER
         cancel.setTextColor(LauncherTheme.primary(requireContext()))
         cancel.textSize = 13f
@@ -363,7 +326,7 @@ class LauncherHomeFragment : Fragment() {
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg)
 
         val title = TextView(requireContext())
-        title.text = "建议反馈"
+        title.setText(com.core.R.string.home_feedback)
         title.gravity = Gravity.CENTER
         title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color))
         title.textSize = 16f
@@ -373,15 +336,15 @@ class LauncherHomeFragment : Fragment() {
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         )
 
-        addFeedbackOption(root, "GitHub 仓库", dialog) {
+        addFeedbackOption(root, getString(com.core.R.string.home_github_repository), dialog) {
             openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile")
         }
-        addFeedbackOption(root, "QQ 交流群", dialog) {
+        addFeedbackOption(root, getString(com.core.R.string.home_qq_group), dialog) {
             openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info")
         }
 
         val cancel = TextView(requireContext())
-        cancel.text = "取消"
+        cancel.setText(com.core.R.string.core_cancel)
         cancel.gravity = Gravity.CENTER
         cancel.setTextColor(LauncherTheme.primary(requireContext()))
         cancel.textSize = 13f
@@ -414,12 +377,14 @@ class LauncherHomeFragment : Fragment() {
 
     private fun confirmToggleTone() {
         val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
-        val nextTone = if (darkMode) "浅色模式" else "深色模式"
+        val nextTone = getString(
+            if (darkMode) com.core.R.string.home_light_mode else com.core.R.string.home_dark_mode
+        )
         LauncherDialogFactory.showConfirm(
             requireContext(),
-            "切换色调",
-            "确定切换到${nextTone}吗？",
-            "确定"
+            getString(com.core.R.string.home_switch_tone),
+            getString(com.core.R.string.home_switch_tone_message, nextTone),
+            getString(com.core.R.string.core_confirm)
         ) {
             LauncherMotion.recreateWithToneOverlay(requireActivity()) {
                 LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode)
@@ -473,7 +438,8 @@ class LauncherHomeFragment : Fragment() {
             icon.text = item.iconText
             title.text = item.title
             meta.text = item.timeAndDuration
-            status.text = item.status
+            status.text = LauncherRepository.launchTypeLabel(requireContext(), item.launchType)
+                .ifEmpty { getString(com.core.R.string.repo_played) }
             LauncherTheme.applyPrimaryTone(itemView)
             itemView.setOnClickListener { confirmLaunchRecentGame(item) }
             itemView.setOnLongClickListener {
@@ -487,21 +453,21 @@ class LauncherHomeFragment : Fragment() {
     private fun confirmLaunchRecentGame(item: LauncherRepository.RecentItem) {
         if (!isAdded || binding == null) return
         val displayTitle = if (item.title == null || item.title.trim { it <= ' ' }.isEmpty()) {
-            "该游戏"
+            getString(com.core.R.string.home_this_game)
         } else {
             item.title
         }
         LauncherDialogFactory.showConfirm(
             requireContext(),
-            "打开游戏",
-            "是否打开《$displayTitle》？",
-            "打开"
+            getString(com.core.R.string.home_open_game),
+            getString(com.core.R.string.home_open_game_message, displayTitle),
+            getString(com.core.R.string.home_open_game)
         ) { launchRecentGame(item.gameId) }
     }
 
     private fun launchRecentGame(gameId: Long) {
         if (gameId <= 0) {
-            Toast.makeText(requireContext(), "无法打开：游戏信息缺失", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), com.core.R.string.home_game_info_missing, Toast.LENGTH_SHORT).show()
             return
         }
         val app = requireContext().applicationContext
@@ -514,11 +480,11 @@ class LauncherHomeFragment : Fragment() {
                 throw e
             } catch (e: Exception) {
                 Log.w("LauncherHomeFragment", "Failed to load recent game", e)
-                Toast.makeText(app, "无法打开：读取游戏信息失败", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, com.core.R.string.home_game_read_failed, Toast.LENGTH_SHORT).show()
                 return@launch
             }
             if (game == null) {
-                Toast.makeText(app, "游戏已被删除或不存在", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, com.core.R.string.home_game_missing, Toast.LENGTH_SHORT).show()
                 return@launch
             }
             sessionController?.launchGameDirectly(this@LauncherHomeFragment, game)
@@ -528,15 +494,15 @@ class LauncherHomeFragment : Fragment() {
     private fun confirmDeleteRecentItem(item: LauncherRepository.RecentItem) {
         if (!isAdded || binding == null) return
         val displayTitle = if (item.title == null || item.title.trim { it <= ' ' }.isEmpty()) {
-            "该动态"
+            getString(com.core.R.string.home_this_activity)
         } else {
             item.title
         }
         LauncherDialogFactory.showConfirm(
             requireContext(),
-            "删除动态",
-            "是否删除《$displayTitle》的游玩动态？",
-            "删除"
+            getString(com.core.R.string.home_delete_activity),
+            getString(com.core.R.string.home_delete_activity_message, displayTitle),
+            getString(com.core.R.string.home_delete)
         ) { viewModel.deleteRecentItem(item.sessionId) }
     }
 
@@ -549,9 +515,9 @@ class LauncherHomeFragment : Fragment() {
     private fun showChangeAvatarDialog() {
         LauncherDialogFactory.showStandardConfirm(
             requireContext(),
-            "修改头像",
-            "是否从图库选择新头像？",
-            "确定"
+            getString(com.core.R.string.home_change_avatar),
+            getString(com.core.R.string.home_change_avatar_message),
+            getString(com.core.R.string.core_confirm)
         ) {
             avatarPickerLauncher.launch(
                 PickVisualMediaRequest.Builder()
@@ -616,11 +582,11 @@ class LauncherHomeFragment : Fragment() {
             RxMainScheduler.post {
                 if (!isAdded || view == null) return@post
                 if (!success) {
-                    Toast.makeText(app, "头像保存失败", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(app, com.core.R.string.home_avatar_save_failed, Toast.LENGTH_SHORT).show()
                     return@post
                 }
                 renderAvatar()
-                Toast.makeText(app, "头像已更新", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, com.core.R.string.home_avatar_updated, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -707,7 +673,7 @@ class LauncherHomeFragment : Fragment() {
     }
 
     private fun checkUpdate() {
-        Toast.makeText(requireContext(), "正在检查更新...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), com.core.R.string.home_checking_update, Toast.LENGTH_SHORT).show()
         LauncherUpdateBridge.checkUpdate(requireContext(), object : LauncherUpdateBridge.Callback {
             override fun onResult(info: LauncherUpdateBridge.UpdateInfo?, currentVersion: String, hasUpdate: Boolean) {
                 if (!isAdded) return
@@ -743,7 +709,7 @@ class LauncherHomeFragment : Fragment() {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (throwable: Throwable) {
-            Toast.makeText(requireContext(), "无法打开链接", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), com.core.R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show()
         }
     }
 

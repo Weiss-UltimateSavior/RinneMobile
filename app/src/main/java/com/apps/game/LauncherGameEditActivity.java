@@ -58,8 +58,11 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private ActivityLauncherGameEditBinding binding;
     private EngineOption currentEngineOption;
-    private final EngineOption[] engineOptions = new EngineOption[]{
-            new EngineOption(EngineType.AUTO, "自动识别", null),
+    private EngineOption[] engineOptions;
+
+    private EngineOption[] createEngineOptions() {
+        return new EngineOption[]{
+            new EngineOption(EngineType.AUTO, getString(R.string.game_engine_auto), null),
             new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
             new EngineOption(EngineType.ONS, "ONScripter", null),
             new EngineOption(EngineType.TYRANO, "Tyrano", null),
@@ -71,11 +74,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
-            new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
+            new EngineOption(EngineType.RPGMAKER, getString(R.string.game_engine_rpgmaker_mkxp), "mkxp-z"),
             new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
-            new EngineOption(EngineType.GODOT, "Godot (自动检测 3/4)", "godot4"),
-            new EngineOption(EngineType.UNKNOWN, "未知", null)
-    };
+            new EngineOption(EngineType.GODOT, getString(R.string.game_engine_godot_auto), "godot4"),
+            new EngineOption(EngineType.UNKNOWN, getString(R.string.game_common_unknown), null)
+        };
+    }
     private Game game;
     private Uri selectedCoverUri;
     private Uri selectedGameDirectoryUri;
@@ -108,7 +112,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 if (grantResult == PackageManager.PERMISSION_GRANTED) {
                     importGameHubShortcutFromShizuku();
                 } else {
-                    Toast.makeText(this, "未获得 Shizuku 授权，仍可手动填写 localGameId", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.game_shizuku_manual_id, Toast.LENGTH_LONG).show();
                 }
             };
 
@@ -117,7 +121,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null && result.getData().getData() != null) {
                     selectedCoverUri = result.getData().getData();
-                    binding.editCoverStatus.setText("封面：已选择封面");
+                    binding.editCoverStatus.setText(R.string.game_cover_selected);
                 }
             });
 
@@ -128,6 +132,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         configureEdgeToEdgeWindow();
         binding = ActivityLauncherGameEditBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        engineOptions = createEngineOptions();
         LauncherTabletPortraitScaler.applyActivityContent(this);
         bindViews();
         restoreTransientState(savedInstanceState);
@@ -192,7 +197,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         }
         selectedCoverUri = uriFromState(savedInstanceState.getString(STATE_COVER_URI));
         restoreCoverSelection = selectedCoverUri != null;
-        if (restoreCoverSelection) binding.editCoverStatus.setText("封面：已选择封面");
+        if (restoreCoverSelection) binding.editCoverStatus.setText(R.string.game_cover_selected);
     }
 
     @Nullable
@@ -229,7 +234,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         AppExecutors.io().execute(() -> {
             Game g = LauncherRepositoryBridge.findGameById(this, gameId);
             runOnUiThread(() -> {
-                if (g == null) { Toast.makeText(this, "游戏不存在", Toast.LENGTH_SHORT).show(); finish(); return; }
+                if (g == null) { Toast.makeText(this, R.string.game_not_found, Toast.LENGTH_SHORT).show(); finish(); return; }
                 game = g;
                 originalEngine = game.engine;
                 if (!restoreFormState) {
@@ -249,10 +254,10 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                     binding.editDir.setText(displayDirectoryUri(selectedGameDirectoryUri));
                 } else if (!restoreDirectorySelection) {
                     binding.editDir.setText(game.rootUri == null || game.rootUri.trim().isEmpty()
-                            ? "尚未选择游戏目录" : game.rootUri);
+                            ? getString(R.string.game_directory_not_selected) : game.rootUri);
                 }
                 if (!restoreCoverSelection && game.coverUri != null && !game.coverUri.trim().isEmpty()) {
-                    binding.editCoverStatus.setText("封面：已有封面");
+                    binding.editCoverStatus.setText(R.string.game_cover_existing);
                 }
             });
         });
@@ -262,11 +267,11 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         if (game == null) return;
         String title = binding.editTitle.getText().toString().trim();
         if (title.isEmpty()) {
-            Toast.makeText(this, "请输入标题", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.game_title_required, Toast.LENGTH_SHORT).show();
             return;
         }
         binding.btnSave.setEnabled(false);
-        binding.btnSave.setText("保存中...");
+        binding.btnSave.setText(R.string.game_common_saving);
 
         game.title = title;
         EngineOption opt = selectedEngineOption();
@@ -286,6 +291,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         }
         game.emulatorPackage = emuPkg;
         game.launchTarget = binding.editLaunchTarget.getText().toString().trim();
+        // launchTarget is persisted engine data. Keep the canonical sentinel language-neutral
+        // from the UI locale so internal launchers never receive a translated display label.
         if (game.launchTarget.isEmpty()) game.launchTarget = "[游戏目录]";
         if (selectedGameDirectoryUri != null) game.rootUri = selectedGameDirectoryUri.toString();
         game.gamehubLocalGameId = binding.editGameHubLocalGameId.getText().toString().trim();
@@ -303,15 +310,15 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 }
                 int affected = LauncherRepositoryBridge.updateGame(this, game);
                 if (affected <= 0) {
-                    throw new IllegalStateException("游戏记录不存在或未能写入");
+                    throw new IllegalStateException(getString(R.string.game_record_write_failed));
                 }
                 if (directoryRebound) GameDiagnostics.recordDirectoryRebound(this, game);
                 runOnUiThread(() -> {
                     if (directoryPermissionDegraded) {
                         // 游戏目录 SAF 持久化授权降级为只读或彻底失败，提示用户可能无法写入存档
-                        Toast.makeText(this, "已保存，但目录授权受限，可能无法写入存档", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, R.string.game_saved_limited_access, Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.game_saved, Toast.LENGTH_SHORT).show();
                     }
                     setResult(RESULT_OK);
                     finish();
@@ -319,8 +326,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             } catch (Throwable t) {
                 runOnUiThread(() -> {
                     binding.btnSave.setEnabled(true);
-                    binding.btnSave.setText("保存");
-                    Toast.makeText(this, "保存失败: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    binding.btnSave.setText(R.string.game_common_save);
+                    Toast.makeText(this, getString(R.string.game_save_failed_reason, t.getMessage()), Toast.LENGTH_LONG).show();
                 });
             }
         });
@@ -358,7 +365,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private String displayDirectoryUri(Uri uri) {
-        if (uri == null) return "尚未选择游戏目录";
+        if (uri == null) return getString(R.string.game_directory_not_selected);
         try {
             String documentId = DocumentsContract.getTreeDocumentId(uri);
             if (documentId != null && !documentId.trim().isEmpty()) return Uri.decode(documentId);
@@ -370,12 +377,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private void importGameHubShortcutFromShizuku() {
         EngineOption opt = selectedEngineOption();
         if (opt == null || opt.engine != EngineType.GAMEHUB) {
-            Toast.makeText(this, "请先将引擎设为 GameHub", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.game_select_gamehub_first, Toast.LENGTH_SHORT).show();
             return;
         }
         try {
             if (!Shizuku.pingBinder()) {
-                Toast.makeText(this, "请先启动 Shizuku，再授权读取盖世快捷方式", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.game_shizuku_start_first, Toast.LENGTH_LONG).show();
                 return;
             }
             if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
@@ -383,13 +390,14 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 return;
             }
         } catch (Throwable error) {
-            Toast.makeText(this, "无法连接 Shizuku：" + error.getClass().getSimpleName(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.game_shizuku_connect_failed,
+                    error.getClass().getSimpleName()), Toast.LENGTH_LONG).show();
             return;
         }
 
         binding.btnImportGameHubShortcut.setEnabled(false);
         binding.btnImportGameHubShortcut.setAlpha(0.45f);
-        binding.btnImportGameHubShortcut.setContentDescription("正在读取 GameHub 快捷方式");
+        binding.btnImportGameHubShortcut.setContentDescription(getString(R.string.game_gamehub_reading_shortcuts));
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try {
@@ -401,7 +409,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 binding.btnImportGameHubShortcut.setEnabled(true);
                 binding.btnImportGameHubShortcut.setAlpha(1f);
-                binding.btnImportGameHubShortcut.setContentDescription("导入 GameHub 快捷方式");
+                binding.btnImportGameHubShortcut.setContentDescription(getString(R.string.game_gamehub_import_shortcut));
                 if (isFinishing()) return;
                 if (result.isEmpty()) {
                     showGameHubImportUnavailableDialog();
@@ -418,7 +426,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             LauncherGameHubShortcutBridge.Shortcut item = items.get(i);
             labels[i] = item.displayLabel + "\n" + item.localGameId;
         }
-        com.apps.theme.LauncherDialogFactory.showActionChoices(this, "选择盖世快捷方式",
+        com.apps.theme.LauncherDialogFactory.showActionChoices(this, getString(R.string.game_gamehub_choose_shortcut),
                 labels, which -> applyGameHubShortcut(items.get(which)));
     }
 
@@ -434,8 +442,9 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void showGameHubImportUnavailableDialog() {
-        com.apps.theme.LauncherDialogFactory.showInfo(this, "未读取到盖世快捷方式",
-                "请确认：\n1. Shizuku 正在运行且已授权；\n2. 盖世已创建桌面快捷方式；\n3. 已安装 com.xiaoji.egggamz 或 com.xiaoji.egggame。\n\n也可以手动填写 localGameId。");
+        com.apps.theme.LauncherDialogFactory.showInfo(this,
+                getString(R.string.game_gamehub_no_shortcut_title),
+                getString(R.string.game_gamehub_no_shortcut_help));
     }
 
     private EngineOption findEngineOption(EngineType engine, String emulatorPackage) {
@@ -474,7 +483,8 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         for (int i = 0; i < engineOptions.length; i++) {
             if (engineOptions[i] == currentEngineOption) { checked = i; break; }
         }
-        com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "选择游戏引擎",
+        com.apps.theme.LauncherDialogFactory.showSingleChoice(this,
+                getString(R.string.game_select_engine_title),
                 labels, checked, index -> {
                     applyEngineSelection(index);
                 });

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rinne Mobile</string>
+    <string name="game_center">ゲームセンター</string>
+    <string name="launcher_action_save_slot">セーブ管理</string>
+    <string name="launcher_action_resources">リソース</string>
+    <string name="launcher_action_toolbox">ツールボックス</string>
+    <string name="launcher_action_agent">エージェント</string>
+    <string name="app_settings_title">アプリ設定</string>
+    <string name="app_language_label">アプリの言語</string>
+    <string name="app_language_dialog_title">アプリの言語を選択</string>
+    <string name="language_simplified_chinese">简体中文</string>
+    <string name="language_english">English</string>
+    <string name="language_japanese">日本語</string>
+    <string name="launcher_dialog_cancel">キャンセル</string>
+    <string name="launcher_settings_action_theme">テーマ管理</string>
+    <string name="launcher_settings_action_tone">ライト／ダークモード</string>
+    <string name="launcher_settings_action_update">アップデートを確認</string>
+    <string name="launcher_settings_action_feedback">フィードバック</string>
+    <string name="launcher_settings_action_disclaimer">免責事項</string>
+</resources>

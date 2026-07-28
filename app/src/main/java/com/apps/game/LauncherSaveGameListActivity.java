@@ -66,7 +66,8 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         saveManager = new GameSaveFileManager(this);
         engineName = getIntent().getStringExtra(EXTRA_ENGINE);
         EngineType engine = EngineType.fromString(engineName);
-        binding.saveGameListTitle.setText(LauncherSaveCategoryActivity.engineLabel(engine) + " 游戏");
+        binding.saveGameListTitle.setText(getString(R.string.game_save_engine_games,
+                LauncherSaveCategoryActivity.engineLabel(this, engine)));
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         loadGames();
@@ -95,14 +96,16 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 binding.saveGameList.removeAllViews();
                 if (!LauncherSaveCategoryActivity.isSupportedBuiltInEngine(requestedEngine)) {
-                    binding.saveGameListStatus.setText("该类型不是内置模拟器，不提供存档管理。");
+                    binding.saveGameListStatus.setText(R.string.game_save_not_internal);
                     return;
                 }
                 for (int index = 0; index < managedGames.size(); index++) {
                     addGame(managedGames.get(index), saveStates.get(index));
                 }
                 int count = managedGames.size();
-                binding.saveGameListStatus.setText(count == 0 ? "该模拟器下暂无游戏。" : "共 " + count + " 个游戏，选择后管理真实存档文件。 ");
+                binding.saveGameListStatus.setText(count == 0
+                        ? getString(R.string.game_save_engine_empty)
+                        : getString(R.string.game_save_engine_count, count));
             });
         });
     }
@@ -116,7 +119,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         TextView title = itemView.findViewById(R.id.recentTitle);
         TextView meta = itemView.findViewById(R.id.recentMeta);
         TextView status = itemView.findViewById(R.id.recentStatus);
-        String gameTitle = game.title == null || game.title.trim().isEmpty() ? "未命名游戏" : game.title.trim();
+        String gameTitle = safeTitle(game);
         icon.setText(firstTitleChar(gameTitle));
         title.setText(gameTitle);
         meta.setText(recentMeta(game));
@@ -136,9 +139,9 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     private void showNoSaveImportDialog(Game game) {
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "暂无存档",
-                "“" + safeTitle(game) + "”当前没有可管理的存档文件。可从 ZIP 备份恢复存档。",
-                "导入 ZIP",
+                getString(R.string.game_save_none),
+                getString(R.string.game_save_none_message, safeTitle(game)),
+                getString(R.string.game_save_import_zip),
                 () -> {
                     selectedSaveGame = game;
                     overwriteZipPicker.launch(new String[]{"application/zip", "application/x-zip-compressed"});
@@ -149,8 +152,9 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     private void showSaveActionsDialog(Game game) {
         LauncherDialogFactory.showStandardActionChoices(
                 this,
-                abbreviateGameTitle(game) + " 存档",
-                new String[]{"导出 ZIP", "导入 ZIP"},
+                getString(R.string.game_save_game_title, abbreviateGameTitle(game)),
+                new String[]{getString(R.string.game_save_export_zip),
+                        getString(R.string.game_save_import_zip)},
                 index -> {
                     if (index == 0) {
                         selectedSaveGame = game;
@@ -165,9 +169,9 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     private void showOverwriteConfirmDialog(Game game) {
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "覆盖导入",
-                "将清空当前游戏的真实存档，再从 ZIP 备份导入。",
-                "选择 ZIP",
+                getString(R.string.game_save_overwrite_import),
+                getString(R.string.game_save_overwrite_short_message),
+                getString(R.string.game_save_choose_zip),
                 () -> {
                     selectedSaveGame = game;
                     overwriteZipPicker.launch(new String[]{"application/zip", "application/x-zip-compressed"});
@@ -179,11 +183,14 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             try {
                 int count = saveManager.exportInternalSaveToZip(game, destinationUri);
-                runOnUiThread(() -> Toast.makeText(this, "已导出 ZIP（" + count + " 个文件）", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this,
+                        getString(R.string.game_save_exported_count, count), Toast.LENGTH_LONG).show());
             } catch (Exception error) {
                 GameDiagnostics.record(this, "save_exception", game,
-                        "导出存档失败：" + (error.getMessage() == null ? "未知错误" : error.getMessage()));
-                showError("导出失败", error);
+                        getString(R.string.game_save_export_failed_detail,
+                                error.getMessage() == null
+                                        ? getString(R.string.game_common_unknown_error) : error.getMessage()));
+                showError(getString(R.string.game_save_export_failed), error);
             }
         });
     }
@@ -193,11 +200,14 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             try {
                 int count = saveManager.importInternalSaveFromZip(game, sourceUri, true);
-                runOnUiThread(() -> Toast.makeText(this, "已覆盖导入 " + count + " 个文件", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this,
+                        getString(R.string.game_save_imported_count, count), Toast.LENGTH_LONG).show());
             } catch (Exception error) {
                 GameDiagnostics.record(this, "save_exception", game,
-                        "导入存档失败：" + (error.getMessage() == null ? "未知错误" : error.getMessage()));
-                showError("覆盖导入失败", error);
+                        getString(R.string.game_save_import_failed_detail,
+                                error.getMessage() == null
+                                        ? getString(R.string.game_common_unknown_error) : error.getMessage()));
+                showError(getString(R.string.game_save_overwrite_failed), error);
             }
         });
     }
@@ -212,7 +222,8 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
 
     private void showError(String title, Exception error) {
         runOnUiThread(() -> LauncherDialogFactory.showInfo(this, title,
-                error.getMessage() == null ? "未知错误" : error.getMessage()));
+                error.getMessage() == null
+                        ? getString(R.string.game_common_unknown_error) : error.getMessage()));
     }
 
     private AlertDialog createLauncherDialog() {
@@ -258,7 +269,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
 
     private TextView createDialogCancelButton(AlertDialog dialog) {
         TextView cancel = new TextView(this);
-        cancel.setText("取消");
+        cancel.setText(R.string.game_common_cancel);
         cancel.setGravity(Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(this));
         cancel.setTextSize(13);
@@ -289,34 +300,35 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
-    private static String buildArchiveFileName(Game game) {
+    private String buildArchiveFileName(Game game) {
         String title = safeTitle(game).replaceAll("[\\\\/:*?\"<>|]", "_").trim();
-        if (title.isEmpty()) title = "游戏存档";
-        return title + "_存档.zip";
+        if (title.isEmpty()) title = getString(R.string.game_save_default_archive_title);
+        return title + getString(R.string.game_save_archive_suffix);
     }
 
-    private static String safeTitle(Game game) {
-        return game == null || game.title == null || game.title.trim().isEmpty() ? "未命名游戏" : game.title.trim();
+    private String safeTitle(Game game) {
+        return game == null || game.title == null || game.title.trim().isEmpty()
+                ? getString(R.string.game_unnamed) : game.title.trim();
     }
 
-    private static String abbreviateGameTitle(Game game) {
+    private String abbreviateGameTitle(Game game) {
         String title = safeTitle(game);
         if (title.codePointCount(0, title.length()) <= 6) return title;
         return title.substring(0, title.offsetByCodePoints(0, 6)) + "...";
     }
 
-    private static String firstTitleChar(String title) {
-        if (title == null || title.isEmpty()) return "游";
+    private String firstTitleChar(String title) {
+        if (title == null || title.isEmpty()) return getString(R.string.game_default_initial);
         int end = title.offsetByCodePoints(0, 1);
         return title.substring(0, end);
     }
 
-    private static String recentMeta(Game game) {
+    private String recentMeta(Game game) {
         if (game != null && game.lastPlayedAt > 0L) {
             String time = TimeFormatUtil.shortDate(game.lastPlayedAt);
             return time + " · " + TimeFormatUtil.playTime(game.totalPlayTime);
         }
-        return "尚未游玩";
+        return getString(R.string.game_save_never_played);
     }
 
     private void applySystemBarInsets() {

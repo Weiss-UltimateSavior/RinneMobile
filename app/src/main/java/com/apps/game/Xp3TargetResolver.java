@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
+import com.core.R;
 import com.core.launcherbridge.LauncherScanBridge;
 import com.core.scanner.ScanReport;
 import com.core.scanner.ScanRequest;
@@ -46,7 +47,9 @@ public final class Xp3TargetResolver {
         scanLoadingDialog = showScanLoadingDialog();
         scanLoadingDialog.setCancelable(true);
         scanLoadingDialog.setCanceledOnTouchOutside(false);
-        scanLoadingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "取消扫描", (dialog, which) -> request.cancel());
+        scanLoadingDialog.setButton(AlertDialog.BUTTON_NEGATIVE,
+                host.getString(R.string.game_xp3_cancel_scan),
+                (dialog, which) -> request.cancel());
         scanLoadingDialog.setOnCancelListener(dialog -> request.cancel());
         android.content.Context appContext = host.getAppContext();
         AppExecutors.runOnSingle(() -> {
@@ -63,24 +66,35 @@ public final class Xp3TargetResolver {
     private void handleScanDiscovery(LauncherScanBridge.ScanBatchResult result) {
         if (result == null) return;
         List<ScanResult> results = result.getResults();
-        String summary = "已访问 " + result.getVisitedNodes() + " 个项目，发现 " + results.size() + " 个游戏";
-        if (!result.getErrors().isEmpty()) summary += "\n错误 " + result.getErrors().size() + " 项：\n• " + TextUtils.join("\n• ", result.getErrors());
+        String summary = host.getString(R.string.game_scan_summary,
+                result.getVisitedNodes(), results.size());
+        if (!result.getErrors().isEmpty()) {
+            summary += host.getString(R.string.game_scan_error_summary,
+                    result.getErrors().size(), TextUtils.join("\n• ", result.getErrors()));
+        }
         if (result.isPartial()) {
-            summary += "\n扫描已" + stopReasonText(result.getStopReason()) + "。";
+            summary += host.getString(
+                    R.string.game_scan_stopped_summary, stopReasonText(result.getStopReason()));
             if (results.isEmpty()) {
-                host.showConfirmDialog("扫描未完成", summary, "知道了", () -> {});
+                host.showConfirmDialog(host.getString(R.string.game_scan_incomplete), summary,
+                        host.getString(R.string.game_common_got_it), () -> {});
             } else {
-                host.showConfirmDialog("扫描未完成", summary + "\n是否导入已发现的结果？", "导入", () -> resolveXp3Candidates(results, 0));
+                host.showConfirmDialog(host.getString(R.string.game_scan_incomplete),
+                        summary + host.getString(R.string.game_scan_import_found),
+                        host.getString(R.string.game_common_import),
+                        () -> resolveXp3Candidates(results, 0));
             }
             return;
         }
         if (!result.getErrors().isEmpty()) {
             if (results.isEmpty()) {
-                host.showConfirmDialog("扫描完成（有错误）", summary, "知道了", () -> {});
+                host.showConfirmDialog(host.getString(R.string.game_scan_complete_errors), summary,
+                        host.getString(R.string.game_common_got_it), () -> {});
             } else {
-                host.showConfirmDialog("扫描完成（有错误）",
-                        summary + "\n其余目录已扫描完成，是否继续导入已发现的结果？",
-                        "继续导入", () -> resolveXp3Candidates(results, 0));
+                host.showConfirmDialog(host.getString(R.string.game_scan_complete_errors),
+                        summary + host.getString(R.string.game_scan_continue_import),
+                        host.getString(R.string.game_scan_continue_import_action),
+                        () -> resolveXp3Candidates(results, 0));
             }
             return;
         }
@@ -88,10 +102,16 @@ public final class Xp3TargetResolver {
     }
 
     private String stopReasonText(ScanReport.StopReason reason) {
-        if (reason == ScanReport.StopReason.CANCELLED) return "取消";
-        if (reason == ScanReport.StopReason.DEADLINE) return "超时停止";
-        if (reason == ScanReport.StopReason.NODE_LIMIT) return "达到项目上限";
-        return "停止";
+        if (reason == ScanReport.StopReason.CANCELLED) {
+            return host.getString(R.string.game_scan_stop_cancelled);
+        }
+        if (reason == ScanReport.StopReason.DEADLINE) {
+            return host.getString(R.string.game_scan_stop_timeout);
+        }
+        if (reason == ScanReport.StopReason.NODE_LIMIT) {
+            return host.getString(R.string.game_scan_stop_limit);
+        }
+        return host.getString(R.string.game_scan_stop_generic);
     }
 
     private void resolveXp3Candidates(List<ScanResult> results, int startIndex) {
@@ -126,7 +146,7 @@ public final class Xp3TargetResolver {
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(host.requireContext());
-        title.setText("选择 XP3 入口");
+        title.setText(R.string.game_xp3_choose_entry);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
         host.setResponsiveTextSize(title, 16);
@@ -134,7 +154,7 @@ public final class Xp3TargetResolver {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView info = new TextView(host.requireContext());
-        info.setText("《" + result.title + "》检测到多个 XP3 文件，请选择启动入口");
+        info.setText(host.getString(R.string.game_xp3_multiple_files, result.title));
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
         host.setResponsiveTextSize(info, 12);
@@ -177,7 +197,7 @@ public final class Xp3TargetResolver {
         buttonsLp.setMargins(0, host.dp(12), 0, 0);
 
         TextView skip = new TextView(host.requireContext());
-        skip.setText("跳过此游戏");
+        skip.setText(R.string.game_xp3_skip);
         skip.setGravity(android.view.Gravity.CENTER);
         host.setResponsiveTextSize(skip, 13);
         skip.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -190,7 +210,7 @@ public final class Xp3TargetResolver {
         buttons.addView(skip, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         TextView cancel = new TextView(host.requireContext());
-        cancel.setText("取消扫描");
+        cancel.setText(R.string.game_xp3_cancel_scan);
         cancel.setGravity(android.view.Gravity.CENTER);
         host.setResponsiveTextSize(cancel, 13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -204,7 +224,9 @@ public final class Xp3TargetResolver {
     }
 
     private void importResolvedScanResults(List<ScanResult> results) {
-        scanLoadingDialog = host.showScanLoadingDialog("正在导入...", "正在写入游戏库");
+        scanLoadingDialog = host.showScanLoadingDialog(
+                host.getString(R.string.game_import_importing),
+                host.getString(R.string.game_import_writing_library));
         android.content.Context appContext = host.getAppContext();
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.importScanResults(appContext, results);
@@ -217,7 +239,8 @@ public final class Xp3TargetResolver {
     }
 
     private AlertDialog showScanLoadingDialog() {
-        return host.showScanLoadingDialog("正在扫描...", "请不要关闭应用，扫描可能需要一些时间");
+        return host.showScanLoadingDialog(host.getString(R.string.game_scan_scanning),
+                host.getString(R.string.game_scan_wait_hint));
     }
 
     private void dismissScanLoadingDialog() {
@@ -230,15 +253,16 @@ public final class Xp3TargetResolver {
     private void showScanResultDialog(LauncherScanBridge.ImportStats stats) {
         if (stats == null) return;
         StringBuilder msg = new StringBuilder();
-        msg.append("扫描到 ").append(stats.scanned).append(" 个结果\n")
-                .append("新增 ").append(stats.added).append(" 个，已存在 ").append(stats.skipped).append(" 个，失败 ").append(stats.failed).append(" 个");
+        msg.append(host.getString(R.string.game_scan_result_counts,
+                stats.scanned, stats.added, stats.skipped, stats.failed));
         if (!stats.failedItems.isEmpty()) {
             msg.append("\n");
             for (String item : stats.failedItems) {
                 msg.append("\n• ").append(item);
             }
         }
-        host.showConfirmDialog("扫描完成", msg.toString(), "知道了", () -> {});
+        host.showConfirmDialog(host.getString(R.string.game_scan_complete_title), msg.toString(),
+                host.getString(R.string.game_common_got_it), () -> {});
     }
 
     public void cleanup() {

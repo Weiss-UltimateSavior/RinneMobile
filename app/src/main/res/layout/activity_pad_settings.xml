@@ -33,7 +33,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
                 android:gravity="center"
-                android:text="常规设置"
+                android:text="@string/pad_general_settings"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -42,7 +42,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
                 android:gravity="center"
-                android:text="主题设置"
+                android:text="@string/pad_theme_settings"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="14sp" />
 
@@ -51,7 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
                 android:gravity="center"
-                android:text="封面设置"
+                android:text="@string/settings_cover_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="14sp" />
 
@@ -60,7 +60,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
                 android:gravity="center"
-                android:text="账号设置"
+                android:text="@string/settings_account_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="14sp"
                 android:visibility="gone" />
@@ -75,7 +75,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
                 android:gravity="center"
-                android:text="返回"
+                android:text="@string/settings_back"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -91,7 +91,7 @@
                 android:id="@+id/padSettingsPageTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="常规"
+                android:text="@string/pad_general"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -101,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="设置项暂仅展示，不会改变应用行为"
+                android:text="@string/pad_settings_preview_notice"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -129,7 +129,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="KR 引擎版本"
+                    android:text="@string/settings_kr_engine_version"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -145,7 +145,7 @@
                     android:maxLines="1"
                     android:paddingStart="11dp"
                     android:paddingEnd="11dp"
-                    android:text="自动"
+                    android:text="@string/settings_auto"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="13sp" />
 
@@ -160,7 +160,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="KRKR 统一存档目录"
+                        android:text="@string/settings_krkr_unified_save"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -182,7 +182,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Artemis 统一存档目录"
+                        android:text="@string/settings_artemis_unified_save"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -204,7 +204,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="ONS 统一存档目录"
+                        android:text="@string/settings_ons_unified_save"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -219,7 +219,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="ONScripter 显示与兼容性"
+                    android:text="@string/settings_ons_display_compatibility"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -228,7 +228,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="下次启动 ONS 游戏生效；锐化会增加 GPU 负载。"
+                    android:text="@string/pad_ons_display_summary"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="10sp" />
 
@@ -236,7 +236,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="文本编码"
+                    android:text="@string/settings_text_encoding"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -267,7 +267,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="拉伸全屏"
+                        android:text="@string/settings_stretch_fullscreen"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -289,7 +289,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="允许绘制到刘海/挖孔区域"
+                        android:text="@string/settings_draw_in_cutout"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -311,7 +311,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="禁用游戏内视频"
+                        android:text="@string/settings_disable_ingame_video"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -333,7 +333,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="启用图像锐化"
+                        android:text="@string/settings_enable_sharpening"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -348,7 +348,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="锐化值（仅启用锐化时生效）"
+                    android:text="@string/settings_sharpening_value"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -359,7 +359,7 @@
                     android:layout_height="40dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="默认 2"
+                    android:hint="@string/settings_default_two"
                     android:inputType="numberDecimal"
                     android:paddingStart="13dp"
                     android:paddingEnd="13dp"
@@ -379,7 +379,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Tyrano 统一存档目录"
+                        android:text="@string/settings_tyrano_unified_save"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -401,7 +401,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Tyrano 允许外部网络资源"
+                        android:text="@string/settings_tyrano_external_resources"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -424,7 +424,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="进入原生 KRKR"
+                        android:text="@string/settings_open_native_krkr"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -435,7 +435,7 @@
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="取消"
+                        android:text="@string/settings_cancel"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -446,7 +446,7 @@
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="保存"
+                        android:text="@string/settings_save"
                         android:textSize="13sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -477,7 +477,7 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:clipToOutline="true"
-                        android:contentDescription="清新绿意主题"
+                        android:contentDescription="@string/pad_theme_default_content_description"
                         android:scaleType="centerCrop"
                         android:src="@drawable/launcher_theme_default_logo" />
 
@@ -492,7 +492,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="丛雨（默认）"
+                            android:text="@string/theme_default_display_name"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -501,7 +501,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="当前启动界面的默认主题"
+                            android:text="@string/theme_default_description"
                             android:textColor="@color/launcher_text_muted_color"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -534,7 +534,7 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:clipToOutline="true"
-                        android:contentDescription="园神凛弥主题"
+                        android:contentDescription="@string/pad_theme_rinne_content_description"
                         android:scaleType="centerCrop"
                         android:src="@drawable/launcher_theme_rinne_logo" />
 
@@ -549,7 +549,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="园神凛弥（风格）"
+                            android:text="@string/theme_rinne_display_name"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -558,7 +558,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="不断的轮回，只为迎接新的未来"
+                            android:text="@string/theme_rinne_description"
                             android:textColor="@color/launcher_text_muted_color"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -591,7 +591,7 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:clipToOutline="true"
-                        android:contentDescription="鹰仓杏璃主题"
+                        android:contentDescription="@string/pad_theme_anri_content_description"
                         android:scaleType="centerCrop"
                         android:src="@drawable/launcher_theme_anri_logo" />
 
@@ -606,7 +606,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="鹰仓杏璃（风格）"
+                            android:text="@string/theme_anri_display_name"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -615,7 +615,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="能对你为所欲为的，只有我"
+                            android:text="@string/theme_anri_description"
                             android:textColor="@color/launcher_text_muted_color"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -648,7 +648,7 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:clipToOutline="true"
-                        android:contentDescription="心海天主题"
+                        android:contentDescription="@string/pad_theme_xinhaitian_content_description"
                         android:scaleType="centerCrop"
                         android:src="@drawable/launcher_theme_xinhaitian_logo" />
 
@@ -663,7 +663,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="心海天（风格）"
+                            android:text="@string/pad_theme_xinhaitian_display_name"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -672,7 +672,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="心海澄澈，天光温柔"
+                            android:text="@string/theme_xinhaitian_description"
                             android:textColor="@color/launcher_text_muted_color"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -705,7 +705,7 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:clipToOutline="true"
-                        android:contentDescription="四季夏目主题"
+                        android:contentDescription="@string/pad_theme_natsume_content_description"
                         android:scaleType="centerCrop"
                         android:src="@drawable/launcher_theme_natsume_logo" />
 
@@ -720,7 +720,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="四季夏目（风格）"
+                            android:text="@string/theme_natsume_display_name"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -729,7 +729,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="四季流转，夏日常驻"
+                            android:text="@string/theme_natsume_description"
                             android:textColor="@color/launcher_text_muted_color"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -777,7 +777,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="动态粒子"
+                            android:text="@string/theme_dynamic_particles"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -786,7 +786,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="控制 Launcher 背景的小圆点特效"
+                            android:text="@string/theme_particles_description"
                             android:textColor="@color/launcher_text_muted_color"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -806,7 +806,7 @@
                     android:layout_height="38dp"
                     android:layout_marginTop="12dp"
                     android:gravity="center"
-                    android:text="应用"
+                    android:text="@string/theme_apply"
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -822,7 +822,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="资料源"
+                    android:text="@string/settings_metadata_source"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -838,7 +838,7 @@
                     android:maxLines="1"
                     android:paddingStart="11dp"
                     android:paddingEnd="11dp"
-                    android:text="VNDB（默认）"
+                    android:text="@string/settings_metadata_vndb_default"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="13sp" />
 
@@ -857,7 +857,7 @@
                     android:layout_height="40dp"
                     android:layout_marginTop="5dp"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="选择 Bangumi 时必填"
+                    android:hint="@string/settings_bangumi_token_hint"
                     android:inputType="textVisiblePassword"
                     android:paddingStart="13dp"
                     android:paddingEnd="13dp"
@@ -870,7 +870,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="7dp"
-                    android:text="没有 Token？前往申请"
+                    android:text="@string/settings_request_token"
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -880,7 +880,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Bangumi Token 建议使用注册超过三个月的账号申请。月幕 Gal 使用公开 API，无需 Token。切换资料源后，可对当前游戏重新匹配以刷新资料与封面。"
+                    android:text="@string/pad_metadata_notice"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="11sp" />
 
@@ -896,7 +896,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="取消"
+                        android:text="@string/settings_cancel"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -907,7 +907,7 @@
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="保存"
+                        android:text="@string/settings_save"
                         android:textSize="13sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -938,7 +938,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="应用配置同步"
+                        android:text="@string/settings_account_config_sync"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -969,7 +969,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="实时游玩时间"
+                        android:text="@string/settings_account_realtime_playtime"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -999,7 +999,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="邮箱信息订阅"
+                        android:text="@string/settings_account_email_subscription"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />

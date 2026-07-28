@@ -137,7 +137,7 @@ object GameActionMenuFactory {
     @JvmStatic
     fun createDialogCancelButton(ctx: Context, dialog: AlertDialog): TextView {
         val cancel = TextView(ctx)
-        cancel.text = "取消"
+        cancel.setText(R.string.game_common_cancel)
         cancel.gravity = Gravity.CENTER
         cancel.setTextColor(LauncherTheme.primary(ctx))
         cancel.textSize = 13f
@@ -175,25 +175,27 @@ object GameActionMenuFactory {
         val ctx = fragment.requireContext()
         val dialog = createLauncherDialog(ctx)
         val root = createDialogRoot(ctx)
-        root.addView(createDialogTitle(ctx, GameMetadataFormatter.safeTitle(game)))
+        root.addView(createDialogTitle(ctx, GameMetadataFormatter.safeTitle(ctx, game)))
 
-        addActionOption(ctx, root, "游戏详情", dialog) { callbacks.onShowGameDetail(game) }
+        addActionOption(ctx, root, ctx.getString(R.string.game_action_details), dialog) { callbacks.onShowGameDetail(game) }
         if (config.includeEditAction) {
-            addActionOption(ctx, root, "编辑游戏", dialog) { callbacks.onEditGame(game) }
+            addActionOption(ctx, root, ctx.getString(R.string.game_action_edit), dialog) { callbacks.onEditGame(game) }
         }
-        addActionOption(ctx, root, "游戏状态", dialog) { callbacks.onShowPlayStatus(game) }
+        addActionOption(ctx, root, ctx.getString(R.string.game_action_status), dialog) { callbacks.onShowPlayStatus(game) }
         if (config.includeEditPlayTimeAction) {
-            addActionOption(ctx, root, "修改时长", dialog) { callbacks.onEditPlayTime(game) }
+            addActionOption(ctx, root, ctx.getString(R.string.game_action_edit_duration), dialog) { callbacks.onEditPlayTime(game) }
         }
         if (config.includeFavoriteAction) {
-            val favoriteLabel = if (game.favorite) "取消收藏" else "添加收藏"
+            val favoriteLabel = ctx.getString(if (game.favorite)
+                R.string.game_action_favorite_remove else R.string.game_action_favorite_add)
             addActionOption(ctx, root, favoriteLabel, dialog) { callbacks.onToggleFavorite(game) }
         }
         if (config.includePasswordAction) {
-            val passwordLabel = if (GamePasswordLock.hasPassword(game)) "取消密码" else "密码锁定"
+            val passwordLabel = ctx.getString(if (GamePasswordLock.hasPassword(game))
+                R.string.game_action_password_remove else R.string.game_action_password_lock)
             addActionOption(ctx, root, passwordLabel, dialog) { callbacks.onTogglePassword(game) }
         }
-        addActionOption(ctx, root, "更多选项", dialog) { callbacks.onShowMoreOptions(game) }
+        addActionOption(ctx, root, ctx.getString(R.string.game_action_more), dialog) { callbacks.onShowMoreOptions(game) }
 
         root.addView(createDialogCancelButton(ctx, dialog))
         setDialogContent(dialog, root, config.dialogWidthDp)
@@ -232,7 +234,12 @@ object GameActionMenuFactory {
         callback: GameUpdateCallback
     ) {
         if (game == null) return
-        val labels: Array<CharSequence> = arrayOf("未玩", "在玩", "玩过")
+        val ctx = fragment.requireContext()
+        val labels: Array<CharSequence> = arrayOf(
+            ctx.getString(R.string.game_status_unplayed),
+            ctx.getString(R.string.game_status_playing),
+            ctx.getString(R.string.game_status_completed)
+        )
         val values = arrayOf("unplayed", "playing", "completed")
         var checkedIndex = -1
         for (i in values.indices) {
@@ -242,8 +249,8 @@ object GameActionMenuFactory {
             }
         }
         subDialogFactory.showSingleChoice(
-            fragment.requireContext(),
-            "设置游玩状态",
+            ctx,
+            ctx.getString(R.string.game_action_set_status),
             labels,
             checkedIndex
         ) { index -> updateGameStatus(fragment, game, values[index], callback) }
@@ -284,24 +291,24 @@ object GameActionMenuFactory {
         val ctx = fragment.requireContext()
         val dialog = createLauncherDialog(ctx)
         val root = createDialogRoot(ctx)
-        root.addView(createDialogTitle(ctx, GameMetadataFormatter.safeTitle(game)))
+        root.addView(createDialogTitle(ctx, GameMetadataFormatter.safeTitle(ctx, game)))
 
         val info = TextView(ctx)
         val sb = StringBuilder()
-        sb.append("状态：").append(GameMetadataFormatter.playStatusText(game.playStatus))
-        sb.append("\n引擎：").append(GameMetadataFormatter.engineText(game.engine))
-        sb.append("\n总时长：").append(TimeFormatUtil.playTime(game.totalPlayTime))
-        sb.append("\n最近游玩：").append(
-            if (game.lastPlayedAt > 0)
-                TimeFormatUtil.date(game.lastPlayedAt)
-            else
-                "未游玩"
-        )
+        sb.append(ctx.getString(
+            R.string.game_detail_format,
+            GameMetadataFormatter.playStatusText(ctx, game.playStatus),
+            GameMetadataFormatter.engineText(ctx, game.engine),
+            TimeFormatUtil.playTime(game.totalPlayTime),
+            if (game.lastPlayedAt > 0) TimeFormatUtil.date(game.lastPlayedAt)
+            else ctx.getString(R.string.game_status_never_played)
+        ))
         val emulatorPackage = game.emulatorPackage
         if (emulatorPackage != null && emulatorPackage.trim { it <= ' ' }.isNotEmpty()) {
-            sb.append("\n模拟器：").append(emulatorPackage)
+            sb.append("\n").append(ctx.getString(R.string.game_detail_emulator, emulatorPackage))
         }
-        sb.append("\n\n路径：").append(if (game.rootUri == null) "" else Uri.decode(game.rootUri))
+        sb.append("\n\n").append(ctx.getString(
+            R.string.game_detail_path, if (game.rootUri == null) "" else Uri.decode(game.rootUri)))
         info.text = sb.toString()
         info.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
         info.textSize = 12f
@@ -331,15 +338,16 @@ object GameActionMenuFactory {
         val dialog = Dialog(ctx)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         val root = createDialogRoot(ctx)
-        root.addView(createDialogTitle(ctx, "修改游玩时长"))
+        root.addView(createDialogTitle(ctx, ctx.getString(R.string.game_action_edit_duration)))
 
         val info = TextView(ctx)
         val lastPlayedText = if (game.lastPlayedAt > 0) {
             TimeFormatUtil.date(game.lastPlayedAt)
         } else {
-            "无"
+            ctx.getString(R.string.game_action_none)
         }
-        info.text = "当前总时长：${TimeFormatUtil.playTime(game.totalPlayTime)}\n最近游玩：$lastPlayedText"
+        info.text = ctx.getString(R.string.game_action_current_duration,
+            TimeFormatUtil.playTime(game.totalPlayTime), lastPlayedText)
         info.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_muted_color))
         info.textSize = 12f
         info.setLineSpacing(dp(ctx, 4).toFloat(), 1f)
@@ -350,7 +358,7 @@ object GameActionMenuFactory {
         root.addView(info, infoLp)
 
         val totalLabel = TextView(ctx)
-        totalLabel.text = "设置新的总时长"
+        totalLabel.setText(R.string.game_action_set_total_duration)
         totalLabel.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
         totalLabel.textSize = 12f
         totalLabel.setTypeface(null, Typeface.BOLD)
@@ -361,7 +369,7 @@ object GameActionMenuFactory {
         root.addView(totalLabel, tlLp)
 
         val totalInput = LauncherEditText(ctx)
-        totalInput.hint = "例如 3h 20m / 200m / 7200s / 2.5h"
+        totalInput.setHint(R.string.game_action_total_duration_hint)
         totalInput.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
         totalInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
         totalInput.textSize = 13f
@@ -375,7 +383,7 @@ object GameActionMenuFactory {
         root.addView(totalInput, tiLp)
 
         val addLabel = TextView(ctx)
-        addLabel.text = "追加游玩时长"
+        addLabel.setText(R.string.game_action_add_duration)
         addLabel.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
         addLabel.textSize = 12f
         addLabel.setTypeface(null, Typeface.BOLD)
@@ -386,7 +394,7 @@ object GameActionMenuFactory {
         root.addView(addLabel, alLp)
 
         val addInput = LauncherEditText(ctx)
-        addInput.hint = "例如 30m / 1h30m / 0.5h"
+        addInput.setHint(R.string.game_action_add_duration_hint)
         addInput.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
         addInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
         addInput.textSize = 13f
@@ -400,7 +408,7 @@ object GameActionMenuFactory {
         root.addView(addInput, aiLp)
 
         val hint = TextView(ctx)
-        hint.text = "可填 d/h/m/s 单位组合，纯数字视为分钟"
+        hint.setText(R.string.game_action_duration_units_hint)
         hint.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_muted_color))
         hint.textSize = 11f
         val hLp = LinearLayout.LayoutParams(
@@ -419,7 +427,7 @@ object GameActionMenuFactory {
         btnRow.layoutParams = brLp
 
         val cancelBtn = TextView(ctx)
-        cancelBtn.text = "取消"
+        cancelBtn.setText(R.string.game_common_cancel)
         cancelBtn.gravity = Gravity.CENTER
         cancelBtn.textSize = 13f
         cancelBtn.setTypeface(null, Typeface.BOLD)
@@ -431,7 +439,7 @@ object GameActionMenuFactory {
         btnRow.addView(cancelBtn)
 
         val saveBtn = TextView(ctx)
-        saveBtn.text = "保存"
+        saveBtn.setText(R.string.game_common_save)
         saveBtn.gravity = Gravity.CENTER
         saveBtn.textSize = 13f
         saveBtn.setTypeface(null, Typeface.BOLD)
@@ -443,7 +451,7 @@ object GameActionMenuFactory {
             val totalMinutes = GameMetadataFormatter.parseDuration(totalInput.text.toString().trim { it <= ' ' })
             val addMinutes = GameMetadataFormatter.parseDuration(addInput.text.toString().trim { it <= ' ' })
             if (totalMinutes == null && addMinutes == null) {
-                Toast.makeText(ctx, "请输入有效时长", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, R.string.game_action_invalid_duration, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             dialog.dismiss()

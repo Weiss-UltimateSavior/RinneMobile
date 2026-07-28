@@ -31,7 +31,7 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:gravity="center"
-                    android:text="立即注册"
+                    android:text="@string/social_register_now"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="23sp"
                     android:textStyle="bold" />
@@ -44,7 +44,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="输入昵称"
+                android:text="@string/social_register_nickname"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -55,7 +55,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请你的输入昵称"
+                android:hint="@string/social_register_nickname_hint"
                 android:inputType="textPersonName"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -68,7 +68,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="输入邀请码"
+                android:text="@string/social_invite_code"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -79,7 +79,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="输入你的邀请码"
+                android:hint="@string/social_invite_code_hint"
                 android:inputType="text"
                 android:maxLength="7"
                 android:maxLines="1"
@@ -93,7 +93,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="输入邮箱"
+                android:text="@string/social_register_email"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -104,7 +104,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请输入你的邮箱"
+                android:hint="@string/social_register_email_hint"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -117,7 +117,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="邮箱验证码"
+                android:text="@string/social_verification_code"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -134,7 +134,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="请输入 6 位验证码"
+                    android:hint="@string/social_verification_code_hint"
                     android:inputType="number"
                     android:maxLength="6"
                     android:maxLines="1"
@@ -149,7 +149,7 @@
                     style="@style/LauncherInlineActionButton"
                     android:layout_width="106dp"
                     android:layout_marginStart="9dp"
-                    android:text="获取验证码"
+                    android:text="@string/social_action_get_code"
                     />
             </LinearLayout>
 
@@ -157,7 +157,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="输入密码"
+                android:text="@string/social_register_password"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -168,7 +168,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请输入你的密码"
+                android:hint="@string/social_register_password_hint"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -181,7 +181,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="确认密码"
+                android:text="@string/social_confirm_password"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -192,7 +192,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
-                android:hint="请再次输入密码"
+                android:hint="@string/social_confirm_password_hint"
                 android:inputType="textPassword"
                 android:maxLines="1"
                 android:paddingStart="14dp"
@@ -206,7 +206,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="9dp"
                 android:gravity="center"
-                android:text="邀请码验证通过后发送验证码；验证码有效期为 5 分钟"
+                android:text="@string/social_register_tip"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp" />
 
@@ -214,7 +214,7 @@
                 android:id="@+id/registerCreate"
                 style="@style/LauncherLongActionButton"
                 android:layout_marginTop="25dp"
-                android:text="创建账户"
+                android:text="@string/social_create_account"
                 />
         </LinearLayout>
     </ScrollView>

@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="选择聊天"
+                android:text="@string/social_select_chat"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -54,7 +54,7 @@
                     android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="公共聊天室"
+                    android:text="@string/social_public_chat"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -95,7 +95,7 @@
                     android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="Yuki娘（AI）"
+                    android:text="@string/social_yuki_ai"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -136,7 +136,7 @@
                     android:layout_marginStart="13dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="园神凛弥（AI）"
+                    android:text="@string/social_rinne_ai"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -160,7 +160,7 @@
             <TextView
                 android:id="@+id/chatSelectContinue"
                 style="@style/LauncherLongActionButton"
-                android:text="进入"
+                android:text="@string/social_action_enter"
                 />
         </LinearLayout>
     </ScrollView>

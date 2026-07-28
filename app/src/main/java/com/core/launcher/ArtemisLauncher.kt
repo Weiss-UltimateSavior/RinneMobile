@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.FileObserver
 import android.system.Os
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import com.akira.tyranoemu.remote.ArtemisActivityV1
 import com.akira.tyranoemu.remote.ArtemisActivityV2
 import com.akira.tyranoemu.remote.ArtemisActivityV3
@@ -305,6 +306,13 @@ internal object ArtemisLauncher {
             intent.putExtra("themeColorCard", LauncherTheme.card(context))
             intent.putExtra("themeColorText", LauncherTheme.text(context))
             intent.putExtra("themeColorTextMuted", LauncherTheme.textMuted(context))
+            val appLocales = AppCompatDelegate.getApplicationLocales()
+            val languageTag = if (!appLocales.isEmpty) {
+                appLocales[0]?.toLanguageTag()
+            } else {
+                context.resources.configuration.locales[0].toLanguageTag()
+            }
+            intent.putExtra("uiLanguageTag", languageTag)
         } catch (error: Throwable) {
             logWarn("appendThemeColors failed", error)
         }

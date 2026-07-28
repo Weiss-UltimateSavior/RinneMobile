@@ -53,7 +53,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     private boolean readonly;
     private boolean muted;
     private String muteReason = "";
-    private String connectionState = "连接中";
+    private String connectionState;
     private WebSocket socket;
     private ObjectAnimator sendAnimator;
     private Disposable heartbeatDisposable;
@@ -64,6 +64,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         configureEdgeToEdgeWindow();
         binding = ActivityLauncherPublicChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        connectionState = getString(R.string.social_connecting);
         LauncherTabletPortraitScaler.applyActivityContent(this);
 
         messageListBaseBottomPadding = binding.publicChatMessages.getPaddingBottom();
@@ -211,11 +212,13 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
 
     private void renderStatus() {
         String text = "";
-        if (readonly) text = "只读";
-        else if (muted) text = TextUtils.isEmpty(muteReason) ? "已禁言" : "已禁言：" + muteReason;
+        if (readonly) text = getString(R.string.social_read_only);
+        else if (muted) text = TextUtils.isEmpty(muteReason)
+                ? getString(R.string.social_muted)
+                : getString(R.string.social_muted_reason, muteReason);
         boolean canSend = !readonly && !muted;
         binding.publicChatInput.setEnabled(canSend);
-        binding.publicChatInput.setHint(canSend ? "输入消息…" : text);
+        binding.publicChatInput.setHint(canSend ? getString(R.string.social_input_message) : text);
         updateSendState();
         renderConnectionStatus(text);
     }
@@ -237,14 +240,14 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     private void showError(String message) { if (!isFinishing()) Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
 
     private final class RealtimeCallbacks implements LauncherPublicChatBridge.RealtimeListener {
-        @Override public void onConnected() { runOnUiThread(() -> { connectionState = "已连接"; renderStatus(); scheduleHeartbeat(); }); }
+        @Override public void onConnected() { runOnUiThread(() -> { connectionState = getString(R.string.social_connected); renderStatus(); scheduleHeartbeat(); }); }
         @Override public void onMessageCreated(LauncherPublicChatBridge.Message message) { runOnUiThread(() -> upsert(message, true)); }
         @Override public void onMessageDeleted(int messageId) { runOnUiThread(() -> removeMessage(messageId)); }
         @Override public void onMessagePinned(LauncherPublicChatBridge.Message message) { runOnUiThread(() -> upsert(message, false)); }
         @Override public void onReadonlyChanged(boolean value) { runOnUiThread(() -> { readonly = value; renderStatus(); }); }
         @Override public void onMuted(boolean value, Long until, String reason) { runOnUiThread(() -> { muted = value; muteReason = reason; renderStatus(); }); }
         @Override public void onAnnouncementChanged(LauncherPublicChatBridge.Announcement announcement) { LauncherPublicChatBridge.loadAnnouncements(LauncherPublicChatActivity.this, new LauncherPublicChatBridge.AnnouncementsCallback() { @Override public void onSuccess(List<LauncherPublicChatBridge.Announcement> list) { renderAnnouncements(list); } @Override public void onError(String message) { showError(message); } }); }
-        @Override public void onError(String message) { runOnUiThread(() -> { connectionState = "连接已断开"; renderStatus(); }); }
+        @Override public void onError(String message) { runOnUiThread(() -> { connectionState = getString(R.string.social_disconnected); renderStatus(); }); }
     }
 
     @Override protected void onDestroy() { cancelHeartbeat(); stopSendAnimation(); if (socket != null) socket.close(1000, "页面关闭"); super.onDestroy(); }

@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="同步中心"
+                android:text="@string/sync_center_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -43,7 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="服务器地址"
+                android:text="@string/sync_server_address"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -52,14 +52,14 @@
                 android:id="@+id/syncServerInput"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:hint="例如 https://dav.jianguoyun.com/dav/"
+                android:hint="@string/sync_server_address_hint"
                 android:inputType="textUri" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="账号"
+                android:text="@string/sync_account"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -68,14 +68,14 @@
                 android:id="@+id/syncUserInput"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:hint="WebDAV 账号"
+                android:hint="@string/sync_account_hint"
                 android:inputType="text" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="密码"
+                android:text="@string/sync_password"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -84,7 +84,7 @@
                 android:id="@+id/syncPasswordInput"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:hint="WebDAV 密码 / 应用密码"
+                android:hint="@string/sync_password_hint"
                 android:inputType="textPassword" />
 
             <LinearLayout
@@ -98,7 +98,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="启动时自动同步"
+                    android:text="@string/sync_auto_on_start"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -115,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="提示：坚果云请使用应用密码而非账号密码，并先在云盘创建 YukiHub 文件夹。"
+                android:text="@string/sync_webdav_notice"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -137,7 +137,7 @@
                         android:layout_height="match_parent"
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:text="测试连接" />
+                        android:text="@string/sync_test_connection" />
 
                     <TextView
                         android:id="@+id/btnSyncNow"
@@ -146,7 +146,7 @@
                         android:layout_height="match_parent"
                         android:layout_marginStart="5dp"
                         android:layout_weight="1"
-                        android:text="立即同步" />
+                        android:text="@string/sync_now" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -162,7 +162,7 @@
                         android:layout_height="match_parent"
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:text="导出本地备份" />
+                        android:text="@string/sync_export_local_backup" />
 
                     <TextView
                         android:id="@+id/btnImport"
@@ -171,14 +171,14 @@
                         android:layout_height="match_parent"
                         android:layout_marginStart="5dp"
                         android:layout_weight="1"
-                        android:text="导入本地备份" />
+                        android:text="@string/sync_import_local_backup" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/btnSave"
                     style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:text="保存配置" />
+                    android:text="@string/settings_save_configuration" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.core.R
 import com.apps.LauncherActivity
 import com.apps.settings.LauncherCustomVndbSearchDialog
 import com.apps.settings.LauncherKrkrSettingsActivity
@@ -70,9 +71,9 @@ open class LauncherLibraryFragment : Fragment(),
     private val syncDialogFactory = object : GameSyncController.DialogFactory {
         override fun showSyncConfirmDialog(onConfirm: Runnable) {
             LauncherDialogFactory.showStandardConfirm(
-                requireContext(), "同步数据",
-                "全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？",
-                "确定同步", onConfirm
+                requireContext(), getString(R.string.game_library_sync_title),
+                getString(R.string.game_library_sync_message),
+                getString(R.string.game_library_sync_confirm), onConfirm
             )
         }
 
@@ -81,8 +82,9 @@ open class LauncherLibraryFragment : Fragment(),
         }
 
         override fun showSyncResultDialog(synced: Int, failed: Int) {
-            val message = "同步完成 $synced 个" + if (failed > 0) "\n失败 $failed 个" else ""
-            LauncherDialogFactory.showInfo(requireContext(), "同步完成", message)
+            val message = getString(R.string.game_library_sync_complete_count, synced) +
+                if (failed > 0) "\n" + getString(R.string.game_library_sync_failed_count, failed) else ""
+            LauncherDialogFactory.showInfo(requireContext(), getString(R.string.game_sync_complete), message)
         }
     }
 
@@ -140,7 +142,7 @@ open class LauncherLibraryFragment : Fragment(),
     }
 
     protected open fun getLibraryTitle(): String {
-        return "游戏库"
+        return getString(R.string.game_library_title)
     }
 
     override fun onCreateView(
@@ -193,10 +195,11 @@ open class LauncherLibraryFragment : Fragment(),
             if (!Environment.isExternalStorageManager()) {
                 val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
                 val root = GameActionMenuFactory.createDialogRoot(requireContext())
-                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), "需要文件访问权限"))
+                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(),
+                    getString(R.string.game_library_permission_title)))
 
                 val info = TextView(requireContext())
-                info.text = "应用需要完全访问文件夹的权限来读取游戏文件。请在系统页面允许\"管理所有文件\"。"
+                info.setText(R.string.game_library_permission_message)
                 info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color))
                 info.textSize = 12f
                 info.setLineSpacing(dp(4).toFloat(), 1f)
@@ -204,7 +207,8 @@ open class LauncherLibraryFragment : Fragment(),
                 infoLp.setMargins(0, dp(13), 0, 0)
                 root.addView(info, infoLp)
 
-                root.addView(GameActionMenuFactory.createDialogButton(requireContext(), "前往", true, Runnable {
+                root.addView(GameActionMenuFactory.createDialogButton(requireContext(),
+                    getString(R.string.game_library_go), true, Runnable {
                     try {
                         startActivity(
                             Intent(
@@ -456,7 +460,7 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun getFlatCategories(): List<CategoryOption> {
         val flat = mutableListOf<CategoryOption>()
-        flat.add(CategoryOption("全部", ""))
+        flat.add(CategoryOption(getString(R.string.game_common_all), ""))
         flat.addAll(categories)
         return flat
     }
@@ -552,10 +556,12 @@ open class LauncherLibraryFragment : Fragment(),
     }
 
     private fun showLibrarySettingsMenu() {
-        val styleLabel = if (posterGridStyle) "横向卡片" else "海报网格"
+        val styleLabel = getString(if (posterGridStyle)
+            R.string.game_library_horizontal_cards else R.string.game_library_poster_grid)
         LauncherDialogFactory.showStandardActionChoices(
-            requireContext(), "游戏库设置",
-            arrayOf("一键同步", styleLabel, "清除列表")
+            requireContext(), getString(R.string.game_library_settings),
+            arrayOf(getString(R.string.game_library_sync_all), styleLabel,
+                getString(R.string.game_library_clear))
         ) { index ->
             when (index) {
                 0 -> syncController.showSyncDataConfirmDialog()
@@ -585,7 +591,8 @@ open class LauncherLibraryFragment : Fragment(),
         }
         Toast.makeText(
             requireContext(),
-            if (posterGridStyle) "已切换为海报网格" else "已切换为横向卡片",
+            getString(if (posterGridStyle)
+                R.string.game_library_switched_poster else R.string.game_library_switched_horizontal),
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -669,7 +676,8 @@ open class LauncherLibraryFragment : Fragment(),
             currentBinding.libraryRecycler.post { updateTabletPortraitCardHeight() }
         }
         currentBinding.libraryEmpty.text =
-            if (listController.getAllGames().isEmpty()) "还没有游戏" else "没有匹配的游戏"
+            getString(if (listController.getAllGames().isEmpty())
+                R.string.game_empty else R.string.game_empty_search)
         currentBinding.libraryEmpty.visibility = if (hasGames) View.GONE else View.VISIBLE
         if (hasGames) scheduleLoadUntilViewportFilled()
     }
@@ -763,8 +771,9 @@ open class LauncherLibraryFragment : Fragment(),
         val btnCancel = dialogView.findViewById<TextView>(com.core.R.id.dialogBtnCancel)
         val btnConfirm = dialogView.findViewById<TextView>(com.core.R.id.dialogBtnConfirm)
 
-        titleView.text = "启动游戏"
-        messageView.text = "确定启动「" + GameMetadataFormatter.safeTitle(game) + "」吗？"
+        titleView.setText(R.string.game_launch_title)
+        messageView.text = getString(
+            R.string.game_launch_message, GameMetadataFormatter.safeTitle(requireContext(), game))
         LauncherTheme.dialogButtons(btnCancel, btnConfirm)
 
         btnCancel.setOnClickListener { dialog.dismiss() }
@@ -821,19 +830,20 @@ open class LauncherLibraryFragment : Fragment(),
         if (game == null) return
         val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
         val root = GameActionMenuFactory.createDialogRoot(requireContext())
-        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), "更多选项"))
+        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(),
+            getString(R.string.game_action_more)))
 
         val options = mutableListOf<Array<String>>()
-        options.add(arrayOf("修改时长", "edit_play_time"))
-        options.add(arrayOf("添加到桌面", "pin_shortcut"))
-        options.add(arrayOf("重新匹配 VNDB 元数据", "rematch"))
-        options.add(arrayOf("自定义搜索 VNDB", "custom_vndb"))
-        options.add(arrayOf("同步元数据封面到卡片", "sync"))
+        options.add(arrayOf(getString(R.string.game_action_edit_duration), "edit_play_time"))
+        options.add(arrayOf(getString(R.string.game_action_pin_shortcut), "pin_shortcut"))
+        options.add(arrayOf(getString(R.string.game_action_rematch_vndb), "rematch"))
+        options.add(arrayOf(getString(R.string.game_action_custom_vndb), "custom_vndb"))
+        options.add(arrayOf(getString(R.string.game_action_sync_cover), "sync"))
         // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
         if (game.engine == EngineType.ONS) {
-            options.add(arrayOf("ONS 引擎设置", "ons_settings"))
+            options.add(arrayOf(getString(R.string.game_action_ons_settings), "ons_settings"))
         }
-        options.add(arrayOf("删除游戏", "delete"))
+        options.add(arrayOf(getString(R.string.game_action_delete), "delete"))
         for (opt in options) {
             val option = TextView(requireContext())
             option.text = opt[0]
@@ -872,7 +882,7 @@ open class LauncherLibraryFragment : Fragment(),
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
         } catch (ignored: Throwable) {
-            Toast.makeText(requireContext(), "无法打开 ONS 引擎设置", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), R.string.game_action_ons_open_failed, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -902,9 +912,10 @@ open class LauncherLibraryFragment : Fragment(),
     private fun confirmDeleteGame(game: Game) {
         LauncherDialogFactory.showDangerConfirm(
             requireContext(),
-            "删除游戏",
-            "要删除「" + GameMetadataFormatter.safeTitle(game) + "」吗？此操作仅移除游戏库不进行实际删除。",
-            "移除"
+            getString(R.string.game_action_delete),
+            getString(R.string.game_delete_message,
+                GameMetadataFormatter.safeTitle(requireContext(), game)),
+            getString(R.string.game_common_remove)
         ) { deleteGame(game) }
     }
 
@@ -921,11 +932,11 @@ open class LauncherLibraryFragment : Fragment(),
             mainQueue.post {
                 if (!isAdded || view == null) return@post
                 if (!deleted) {
-                    Toast.makeText(app, "删除失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(app, R.string.game_library_delete_retry, Toast.LENGTH_SHORT).show()
                     return@post
                 }
                 removeSingleGame(game.id)
-                Toast.makeText(app, "已删除", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, R.string.game_deleted, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -933,9 +944,9 @@ open class LauncherLibraryFragment : Fragment(),
     private fun confirmClearList() {
         LauncherDialogFactory.showDangerConfirm(
             requireContext(),
-            "清除列表",
-            "将清空游戏库全部记录，不会实际删除游戏文件。是否继续？",
-            "清除"
+            getString(R.string.game_library_clear),
+            getString(R.string.game_library_clear_message),
+            getString(R.string.game_library_clear_action)
         ) { clearList() }
     }
 
@@ -952,7 +963,7 @@ open class LauncherLibraryFragment : Fragment(),
             mainQueue.post {
                 if (!isAdded || view == null) return@post
                 if (deleted < 0) {
-                    Toast.makeText(app, "清除失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(app, R.string.game_library_clear_failed, Toast.LENGTH_SHORT).show()
                     return@post
                 }
                 // 清空内存中的列表、分类、开发商缓存，并重置 controller 状态。
@@ -963,7 +974,7 @@ open class LauncherLibraryFragment : Fragment(),
                 selectedCategory = ""
                 renderCategories()
                 applyFilters(true)
-                Toast.makeText(app, "已清空游戏库", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, R.string.game_library_cleared, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1007,7 +1018,7 @@ open class LauncherLibraryFragment : Fragment(),
 
         val progressText = TextView(requireContext())
         progressText.tag = "sync_progress"
-        progressText.text = "0/0 已完成"
+        progressText.text = getString(R.string.game_sync_progress, 0, 0)
         progressText.gravity = Gravity.CENTER
         progressText.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color))
         progressText.textSize = 12f
@@ -1063,7 +1074,7 @@ open class LauncherLibraryFragment : Fragment(),
     private fun renderCategories() {
         val currentBinding = _binding ?: return
         currentBinding.libraryCategoryRow.removeAllViews()
-        addCategoryChip("全部", "")
+        addCategoryChip(getString(R.string.game_common_all), "")
         for (category in categories) {
             addCategoryChip(category.label, category.value)
         }

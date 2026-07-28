@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
+import com.core.R;
 import com.core.launcherbridge.LauncherScanBridge;
 
 import java.util.ArrayList;
@@ -67,7 +68,9 @@ public final class ScanDirectoryController {
     }
 
     public void confirmAddDirectory() {
-        host.showConfirmDialog("添加目录", "部分模拟器属于外置跳转，不可直接扫描游玩（PPSSPP、Winlator 等）可通过工具箱进行下载", "添加", () ->
+        host.showConfirmDialog(host.getString(R.string.game_scan_add_directory),
+                host.getString(R.string.game_scan_add_directory_message),
+                host.getString(R.string.game_scan_add), () ->
                 scanDirectoryPicker.launch(null));
     }
 
@@ -85,20 +88,23 @@ public final class ScanDirectoryController {
         String value = uri.toString();
         roots.remove(value);
         if (roots.size() >= MAX_SCAN_ROOTS) {
-            Toast.makeText(host.requireContext(), "最多绑定 " + MAX_SCAN_ROOTS + " 个扫描目录", Toast.LENGTH_SHORT).show();
+            Toast.makeText(host.requireContext(),
+                    host.getString(R.string.game_scan_root_limit, MAX_SCAN_ROOTS),
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         roots.add(value);
         saveScanRootUris(roots);
         renderScanDirectories();
-        Toast.makeText(host.requireContext(), "目录已添加，请选择扫描层次", Toast.LENGTH_SHORT).show();
+        Toast.makeText(host.requireContext(), R.string.game_scan_added, Toast.LENGTH_SHORT).show();
         showScanDepthDialog(Collections.singletonList(value));
     }
 
     public void scanConfiguredDirectories() {
         List<String> roots = getActiveScanRootUris();
         if (roots.isEmpty()) {
-            String message = getScanRootUris().isEmpty() ? "请先添加目录" : "请先启用扫描目录";
+            String message = host.getString(getScanRootUris().isEmpty()
+                    ? R.string.game_scan_add_first : R.string.game_scan_enable_first);
             Toast.makeText(host.requireContext(), message, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -121,7 +127,7 @@ public final class ScanDirectoryController {
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(host.requireContext());
-        title.setText("扫描游戏");
+        title.setText(R.string.game_scan_title);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
         host.setResponsiveTextSize(title, 16);
@@ -129,8 +135,12 @@ public final class ScanDirectoryController {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         String[] depthLabels = {
-                "浅层扫描（1层）", "标准扫描（2层）", "深层扫描（3层）", "深度扫描（4层）",
-                "遍历扫描（all层）", "递归扫描（命中）"
+                host.getString(R.string.game_scan_shallow),
+                host.getString(R.string.game_scan_standard),
+                host.getString(R.string.game_scan_deep),
+                host.getString(R.string.game_scan_deeper),
+                host.getString(R.string.game_scan_all),
+                host.getString(R.string.game_scan_recursive)
         };
         int currentDepth = scanDepth();
         int[] depthValues = {1, 2, 3, 4, LauncherScanBridge.SCAN_ALL_LEVELS, LauncherScanBridge.SCAN_UNTIL_GAME_MATCH};
@@ -158,7 +168,7 @@ public final class ScanDirectoryController {
         }
 
         TextView cancel = new TextView(host.requireContext());
-        cancel.setText("取消");
+        cancel.setText(R.string.game_common_cancel);
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(host.requireContext()));
         host.setResponsiveTextSize(cancel, 13);
@@ -212,7 +222,8 @@ public final class ScanDirectoryController {
         titleLp.setMargins(host.dp(11), 0, 0, 0);
         row.addView(title, titleLp);
 
-        TextView toggle = smallAction(enabled ? "停用" : "启用", enabled);
+        TextView toggle = smallAction(host.getString(enabled
+                ? R.string.game_scan_disable : R.string.game_scan_enable), enabled);
         toggle.setOnClickListener(view -> {
             List<Boolean> states = getScanRootEnabledStates();
             while (states.size() <= index) states.add(true);
@@ -222,7 +233,7 @@ public final class ScanDirectoryController {
         });
         row.addView(toggle);
 
-        TextView remove = smallAction("移除", false);
+        TextView remove = smallAction(host.getString(R.string.game_common_remove), false);
         remove.setOnClickListener(view -> confirmRemoveDirectory(index));
         LinearLayout.LayoutParams removeLp = new LinearLayout.LayoutParams(host.dp(47), host.dp(29));
         removeLp.setMargins(host.dp(7), 0, 0, 0);
@@ -255,7 +266,9 @@ public final class ScanDirectoryController {
     }
 
     private void confirmRemoveDirectory(int index) {
-        host.showConfirmDialog("移除扫描目录", "确定移除这个扫描目录吗？", "移除", () -> {
+        host.showConfirmDialog(host.getString(R.string.game_scan_remove_title),
+                host.getString(R.string.game_scan_remove_message),
+                host.getString(R.string.game_common_remove), () -> {
             List<String> roots = getScanRootUris();
             List<Boolean> states = getScanRootEnabledStates();
             if (index >= 0 && index < roots.size()) roots.remove(index);
@@ -344,7 +357,9 @@ public final class ScanDirectoryController {
     }
 
     private String directoryLabel(String root) {
-        if (root == null || root.trim().isEmpty()) return "未命名目录";
+        if (root == null || root.trim().isEmpty()) {
+            return host.getString(R.string.game_directory_unnamed);
+        }
         String last = Uri.parse(root).getLastPathSegment();
         if (last == null || last.trim().isEmpty()) return root;
         int colon = last.lastIndexOf(':');

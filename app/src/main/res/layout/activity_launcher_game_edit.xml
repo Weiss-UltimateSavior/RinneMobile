@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="编辑游戏"
+                android:text="@string/game_edit_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -34,7 +34,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="标题"
+                android:text="@string/game_title_label"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -43,14 +43,14 @@
                 android:id="@+id/editTitle"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:hint="游戏标题"
+                android:hint="@string/game_title_hint"
                 android:inputType="text" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="引擎"
+                android:text="@string/game_engine_short_label"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -62,7 +62,7 @@
                 android:ellipsize="middle"
                 android:gravity="center_vertical"
                 android:maxLines="1"
-                android:text="自动识别"
+                android:text="@string/game_engine_auto"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="14sp" />
 
@@ -70,7 +70,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="模拟器包名"
+                android:text="@string/game_emulator_package_label"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -87,7 +87,7 @@
                     android:layout_width="0dp"
                     android:layout_marginTop="0dp"
                     android:layout_weight="1"
-                    android:hint="手动输入或点击右侧选择模拟器"
+                    android:hint="@string/game_emulator_package_hint"
                     android:inputType="text" />
 
                 <ImageView
@@ -96,7 +96,7 @@
                     android:layout_height="45dp"
                     android:layout_marginStart="7dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="从应用列表选择模拟器"
+                    android:contentDescription="@string/game_emulator_app_picker"
                     android:padding="6dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_import_gamehub_shortcut" />
@@ -106,7 +106,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="启动目标"
+                android:text="@string/game_launch_target_label"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -115,7 +115,7 @@
                 android:id="@+id/editLaunchTarget"
                 style="@style/LauncherFormInput"
                 android:layout_marginTop="5dp"
-                android:hint="[游戏目录]"
+                android:hint="@string/game_directory_target"
                 android:inputType="text" />
 
             <TextView
@@ -139,7 +139,7 @@
                     android:layout_width="0dp"
                     android:layout_marginTop="0dp"
                     android:layout_weight="1"
-                    android:hint="选择 GameHub 引擎后可从盖世导入"
+                    android:hint="@string/game_gamehub_edit_hint"
                     android:inputType="text" />
 
                 <ImageView
@@ -148,7 +148,7 @@
                     android:layout_height="45dp"
                     android:layout_marginStart="7dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="导入 GameHub 快捷方式"
+                    android:contentDescription="@string/game_gamehub_import_shortcut"
                     android:padding="6dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_import_gamehub_shortcut" />
@@ -158,7 +158,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="描述"
+                android:text="@string/game_description_label"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -167,7 +167,7 @@
                 android:id="@+id/editDescription"
                 style="@style/LauncherFormMultilineInput"
                 android:layout_marginTop="5dp"
-                android:hint="可选描述"
+                android:hint="@string/game_description_optional"
                 android:inputType="textMultiLine"
                 />
 
@@ -175,7 +175,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="游戏目录"
+                android:text="@string/game_directory_label"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -187,7 +187,7 @@
                 android:layout_marginTop="5dp"
                 android:ellipsize="middle"
                 android:maxLines="2"
-                android:text="尚未选择游戏目录"
+                android:text="@string/game_directory_not_selected"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="12sp" />
 
@@ -195,8 +195,8 @@
                 android:id="@+id/btnPickDirectory"
                 style="@style/LauncherLongActionButton"
                 android:layout_marginTop="10dp"
-                android:contentDescription="选择游戏目录"
-                android:text="选择游戏目录"
+                android:contentDescription="@string/game_directory_choose"
+                android:text="@string/game_directory_choose"
                 />
 
             <TextView
@@ -204,7 +204,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="封面：未选择封面"
+                android:text="@string/game_cover_none"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -213,7 +213,7 @@
                 android:id="@+id/btnPickCover"
                 style="@style/LauncherLongActionButton"
                 android:layout_marginTop="5dp"
-                android:text="选择封面"
+                android:text="@string/game_cover_choose"
                 />
 
             <LinearLayout
@@ -225,14 +225,14 @@
                 <TextView
                     android:id="@+id/btnSave"
                     style="@style/LauncherLongActionButton"
-                    android:text="保存"
+                    android:text="@string/game_common_save"
                     />
 
                 <TextView
                     android:id="@+id/btnCancel"
                     style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:text="取消"
+                    android:text="@string/game_common_cancel"
                     />
             </LinearLayout>
         </LinearLayout>

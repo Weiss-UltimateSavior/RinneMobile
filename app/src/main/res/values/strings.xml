@@ -6,5 +6,17 @@
     <string name="launcher_action_resources">资讯站</string>
     <string name="launcher_action_toolbox">工具箱</string>
     <string name="launcher_action_agent">智能体</string>
+    <string name="app_settings_title">应用设置</string>
+    <string name="app_language_label">应用语言</string>
+    <string name="app_language_dialog_title">选择应用语言</string>
+    <string name="language_simplified_chinese">简体中文</string>
+    <string name="language_english">English</string>
+    <string name="language_japanese">日本語</string>
+    <string name="launcher_dialog_cancel">取消</string>
+    <string name="launcher_settings_action_theme">主题管理</string>
+    <string name="launcher_settings_action_tone">色调切换</string>
+    <string name="launcher_settings_action_update">检查更新</string>
+    <string name="launcher_settings_action_feedback">建议反馈</string>
+    <string name="launcher_settings_action_disclaimer">免责声明</string>
 
 </resources>

@@ -3,6 +3,7 @@ package com.core.sync
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.core.R
 import com.core.data.GameRepository
 import com.core.data.MetadataRepository
 import com.core.data.YukiDatabaseHelper
@@ -74,13 +75,14 @@ class SyncManager(context: Context) {
 
     fun sync(listener: SyncListener?) {
         if (!isConfigured) {
-            listener?.onError("WebDAV 未配置")
+            listener?.onError(context.getString(R.string.core_webdav_not_configured))
             return
         }
         AppExecutors.runOnSingle {
             try {
                 listener?.onSyncStart()
-                val c = getClient() ?: throw Exception("WebDAV 客户端初始化失败")
+                val c = getClient()
+                    ?: throw Exception(context.getString(R.string.core_webdav_client_init_failed))
                 // 坚果云根目录通常不可直接创建同步文件夹；要求用户先在坚果云创建 YukiHub 文件夹。
 
                 val local = buildLocalSnapshot()
@@ -96,7 +98,9 @@ class SyncManager(context: Context) {
                     val remoteBytes = c.readFileLimited(REMOTE_FILE, MAX_REMOTE_SNAPSHOT_BYTES.toLong())
                     remoteText = decompressIfGzip(remoteBytes, MAX_REMOTE_SNAPSHOT_BYTES)
                     remote = JSONObject(remoteText)
-                    if ("YukiHub" != remote.optString("app", "")) throw Exception("云端文件不是有效的 YukiHub 同步文件")
+                    if ("YukiHub" != remote.optString("app", "")) {
+                        throw Exception(context.getString(R.string.core_cloud_sync_file_invalid))
+                    }
                     remoteHash = sha256(remoteText)
                 }
 
@@ -108,7 +112,7 @@ class SyncManager(context: Context) {
                     c.writeFile(REMOTE_FILE, compressGzip(localText))
                     markSynced(localHash)
                     result.uploaded = true
-                    listener?.onProgress("首次上传", true)
+                    listener?.onProgress(context.getString(R.string.core_sync_first_upload), true)
                     listener?.onSyncComplete(result)
                     return@runOnSingle
                 }
@@ -121,7 +125,7 @@ class SyncManager(context: Context) {
                     importSnapshot(remote!!)
                     markSynced(remoteHash)
                     result.downloaded = true
-                    listener?.onProgress("首次下载云端数据", true)
+                    listener?.onProgress(context.getString(R.string.core_sync_first_download), true)
                     listener?.onSyncComplete(result)
                     return@runOnSingle
                 }
@@ -129,7 +133,7 @@ class SyncManager(context: Context) {
                 if (!localChanged && !remoteChanged) {
                     result.noChanges = true
                     markSynced(localHash)
-                    listener?.onProgress("数据检查", false)
+                    listener?.onProgress(context.getString(R.string.core_sync_checking_data), false)
                     listener?.onSyncComplete(result)
                     return@runOnSingle
                 }
@@ -137,7 +141,7 @@ class SyncManager(context: Context) {
                     c.writeFile(REMOTE_FILE, compressGzip(localText))
                     markSynced(localHash)
                     result.uploaded = true
-                    listener?.onProgress("上传本地修改", true)
+                    listener?.onProgress(context.getString(R.string.core_sync_uploading_local), true)
                     listener?.onSyncComplete(result)
                     return@runOnSingle
                 }
@@ -145,7 +149,7 @@ class SyncManager(context: Context) {
                     importSnapshot(remote!!)
                     markSynced(remoteHash)
                     result.downloaded = true
-                    listener?.onProgress("下载云端修改", true)
+                    listener?.onProgress(context.getString(R.string.core_sync_downloading_cloud), true)
                     listener?.onSyncComplete(result)
                     return@runOnSingle
                 }
@@ -175,7 +179,7 @@ class SyncManager(context: Context) {
                 listener?.onSyncComplete(result)
             } catch (t: Throwable) {
                 Log.e(TAG, "sync failed", t)
-                listener?.onError(t.message ?: "未知错误")
+                listener?.onError(t.message ?: context.getString(R.string.core_unknown_error))
             }
         }
     }
@@ -266,7 +270,7 @@ class SyncManager(context: Context) {
         if (roots.isEmpty()) return
         for (root in roots) {
             if (root == null || "YukiHub" != root.optString("app", "")) {
-                throw Exception("不是有效的 YukiHub 同步文件")
+                throw Exception(context.getString(R.string.core_sync_file_invalid))
             }
         }
         val prefsEditor = appPrefs.edit()
@@ -293,7 +297,9 @@ class SyncManager(context: Context) {
             }
         }
         // 偏好设置在数据库完整提交后一次性落盘，失败的数据库导入不会污染配置。
-        if (!prefsEditor.commit()) throw Exception("同步设置保存失败")
+        if (!prefsEditor.commit()) {
+            throw Exception(context.getString(R.string.core_sync_settings_save_failed))
+        }
     }
 
     private fun applySnapshotPreferences(root: JSONObject, prefsEditor: SharedPreferences.Editor) {

@@ -17,14 +17,8 @@ import com.apps.LauncherActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherThemeMenuActivity extends AppCompatActivity {
-    private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
-    private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
-    private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
-    private static final String THEME_XINHAITIAN_LABEL = "新海天（风格）";
-    private static final String THEME_NATSUME_LABEL = "四季夏目（风格）";
-
     private ActivityLauncherThemeMenuBinding binding;
-    private String selectedTheme = THEME_DEFAULT_LABEL;
+    private String selectedTheme = LauncherActivity.THEME_STYLE_DEFAULT;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,18 +29,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         binding = ActivityLauncherThemeMenuBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
-        String style = LauncherActivity.getLauncherThemeStyle(this);
-        if (LauncherActivity.THEME_STYLE_RINNE.equals(style)) {
-            selectedTheme = THEME_RINNE_LABEL;
-        } else if (LauncherActivity.THEME_STYLE_ANRI.equals(style)) {
-            selectedTheme = THEME_ANRI_LABEL;
-        } else if (LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style)) {
-            selectedTheme = THEME_XINHAITIAN_LABEL;
-        } else if (LauncherActivity.THEME_STYLE_NATSUME.equals(style)) {
-            selectedTheme = THEME_NATSUME_LABEL;
-        } else {
-            selectedTheme = THEME_DEFAULT_LABEL;
-        }
+        selectedTheme = LauncherActivity.getLauncherThemeStyle(this);
         applySystemBarInsets();
         bindActions();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
@@ -75,11 +58,11 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        binding.freshThemeRow.setOnClickListener(view -> selectTheme(THEME_DEFAULT_LABEL));
-        binding.nightThemeRow.setOnClickListener(view -> selectTheme(THEME_RINNE_LABEL));
-        binding.pinkThemeRow.setOnClickListener(view -> selectTheme(THEME_ANRI_LABEL));
-        binding.xinhaitianThemeRow.setOnClickListener(view -> selectTheme(THEME_XINHAITIAN_LABEL));
-        binding.natsumeThemeRow.setOnClickListener(view -> selectTheme(THEME_NATSUME_LABEL));
+        binding.freshThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_DEFAULT));
+        binding.nightThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_RINNE));
+        binding.pinkThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_ANRI));
+        binding.xinhaitianThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_XINHAITIAN));
+        binding.natsumeThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_NATSUME));
         binding.particleToggleRow.setOnClickListener(view -> showParticleStyleDialog());
         binding.themeMenuApply.setOnClickListener(view -> applySelectedTheme());
     }
@@ -107,11 +90,11 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     }
 
     private void renderSelection() {
-        boolean freshSelected = THEME_DEFAULT_LABEL.equals(selectedTheme);
-        boolean nightSelected = THEME_RINNE_LABEL.equals(selectedTheme);
-        boolean pinkSelected = THEME_ANRI_LABEL.equals(selectedTheme);
-        boolean xinhaitianSelected = THEME_XINHAITIAN_LABEL.equals(selectedTheme);
-        boolean natsumeSelected = THEME_NATSUME_LABEL.equals(selectedTheme);
+        boolean freshSelected = LauncherActivity.THEME_STYLE_DEFAULT.equals(selectedTheme);
+        boolean nightSelected = LauncherActivity.THEME_STYLE_RINNE.equals(selectedTheme);
+        boolean pinkSelected = LauncherActivity.THEME_STYLE_ANRI.equals(selectedTheme);
+        boolean xinhaitianSelected = LauncherActivity.THEME_STYLE_XINHAITIAN.equals(selectedTheme);
+        boolean natsumeSelected = LauncherActivity.THEME_STYLE_NATSUME.equals(selectedTheme);
 
         binding.freshThemeRow.setBackgroundResource(freshSelected
                 ? 0
@@ -142,23 +125,24 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     }
 
     private void applySelectedTheme() {
-        if (THEME_RINNE_LABEL.equals(selectedTheme)) {
+        if (LauncherActivity.THEME_STYLE_RINNE.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_RINNE);
-            Toast.makeText(this, "已应用园神凛弥风格", Toast.LENGTH_SHORT).show();
-        } else if (THEME_ANRI_LABEL.equals(selectedTheme)) {
+            Toast.makeText(this, R.string.theme_rinne_applied, Toast.LENGTH_SHORT).show();
+        } else if (LauncherActivity.THEME_STYLE_ANRI.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_ANRI);
-            Toast.makeText(this, "已应用鹰仓杏璃风格", Toast.LENGTH_SHORT).show();
-        } else if (THEME_XINHAITIAN_LABEL.equals(selectedTheme)) {
+            Toast.makeText(this, R.string.theme_anri_applied, Toast.LENGTH_SHORT).show();
+        } else if (LauncherActivity.THEME_STYLE_XINHAITIAN.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_XINHAITIAN);
-            Toast.makeText(this, "已应用心海天风格", Toast.LENGTH_SHORT).show();
-        } else if (THEME_NATSUME_LABEL.equals(selectedTheme)) {
+            Toast.makeText(this, R.string.theme_xinhaitian_applied, Toast.LENGTH_SHORT).show();
+        } else if (LauncherActivity.THEME_STYLE_NATSUME.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_NATSUME);
-            Toast.makeText(this, "已应用四季夏目风格", Toast.LENGTH_SHORT).show();
-        } else if (THEME_DEFAULT_LABEL.equals(selectedTheme)) {
+            Toast.makeText(this, R.string.theme_natsume_applied, Toast.LENGTH_SHORT).show();
+        } else if (LauncherActivity.THEME_STYLE_DEFAULT.equals(selectedTheme)) {
             LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_DEFAULT);
-            Toast.makeText(this, "已恢复默认主题", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.theme_default_restored, Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, selectedTheme + " 待接入", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.theme_not_available, selectedTheme),
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         LauncherMotion.finish(this);
@@ -176,7 +160,16 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
                 LauncherActivity.PARTICLE_STYLE_CONSTELLATION,
                 LauncherActivity.PARTICLE_STYLE_RIPPLES
         };
-        String[] labels = {"漂浮光点", "斜向雨滴", "星星粒子", "按键瀑布", "萤火虫", "星座连线", "涟漪扩散", "关闭动态粒子"};
+        String[] labels = {
+                getString(R.string.theme_particle_floating),
+                getString(R.string.theme_particle_rain),
+                getString(R.string.theme_particle_star),
+                getString(R.string.theme_particle_button_waterfall),
+                getString(R.string.theme_particle_fireflies),
+                getString(R.string.theme_particle_constellation),
+                getString(R.string.theme_particle_ripples),
+                getString(R.string.theme_particles_off)
+        };
         int checkedIndex = styles.length; // 关闭位置 = 7
         if (enabled) {
             for (int i = 0; i < styles.length; i++) {
@@ -188,26 +181,27 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         }
         LauncherDialogFactory.showSingleChoice(
                 this,
-                "动态粒子样式",
+                getString(R.string.theme_particle_style_title),
                 labels,
                 checkedIndex,
                 index -> {
                     if (index == styles.length) {
                         LauncherActivity.setLauncherParticlesEnabled(this, false);
                         renderParticleToggle();
-                        Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.theme_particles_disabled, Toast.LENGTH_SHORT).show();
                         return;
                     }
                     LauncherActivity.setLauncherParticleStyle(this, styles[index]);
                     LauncherActivity.setLauncherParticlesEnabled(this, true);
                     renderParticleToggle();
-                    Toast.makeText(this, "已应用" + labels[index] + "效果", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.theme_particle_applied, labels[index]),
+                            Toast.LENGTH_SHORT).show();
                 }
         );
     }
 
     private void renderParticleToggle() {
-        binding.particleToggleState.setText("设置");
+        binding.particleToggleState.setText(R.string.theme_configure);
         LauncherTheme.chip(binding.particleToggleState, true);
     }
 

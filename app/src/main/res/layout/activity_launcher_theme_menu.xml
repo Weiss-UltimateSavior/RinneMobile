@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="主题菜单"
+                android:text="@string/theme_menu_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -66,7 +66,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="丛雨（默认）"
+                        android:text="@string/theme_default_display_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -77,7 +77,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="当前启动界面的默认主题"
+                        android:text="@string/theme_default_description"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -130,7 +130,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="园神凛弥（风格）"
+                        android:text="@string/theme_rinne_display_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -141,7 +141,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="不断的轮回，只为迎接新的未来"
+                        android:text="@string/theme_rinne_description"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -194,7 +194,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="鹰仓杏璃（风格）"
+                        android:text="@string/theme_anri_display_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -205,7 +205,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="能对你为所欲为的，只有我"
+                        android:text="@string/theme_anri_description"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -257,7 +257,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="新海天（风格）"
+                        android:text="@string/theme_xinhaitian_display_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -268,7 +268,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="心海澄澈，天光温柔"
+                        android:text="@string/theme_xinhaitian_description"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -320,7 +320,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="四季夏目（风格）"
+                        android:text="@string/theme_natsume_display_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -331,7 +331,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="四季流转，夏日常驻"
+                        android:text="@string/theme_natsume_description"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -384,7 +384,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="动态粒子"
+                        android:text="@string/theme_dynamic_particles"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -395,7 +395,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="控制 Launcher 背景的小圆点特效"
+                        android:text="@string/theme_particles_description"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -416,7 +416,7 @@
             <TextView
                 android:id="@+id/themeMenuApply"
                 style="@style/LauncherLongActionButton"
-                android:text="应用"
+                android:text="@string/theme_apply"
                 />
         </LinearLayout>
     </ScrollView>

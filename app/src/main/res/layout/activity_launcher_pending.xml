@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="该功能尚未接入"
+            android:text="@string/pending_feature_unavailable"
             android:textColor="@color/launcher_text_color"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="7dp"
             android:gravity="center"
-            android:text="智能体功能正在准备中，请稍后再来。"
+            android:text="@string/pending_feature_message"
             android:textColor="@color/launcher_text_muted_color"
             android:textSize="13sp" />
 
@@ -84,7 +84,7 @@
         <TextView
             android:id="@+id/pendingClose"
             style="@style/LauncherLongActionButton"
-            android:text="关闭"
+            android:text="@string/pending_close"
             />
     </LinearLayout>
 </FrameLayout>

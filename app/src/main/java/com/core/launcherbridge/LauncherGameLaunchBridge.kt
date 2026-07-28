@@ -6,6 +6,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import androidx.documentfile.provider.DocumentFile
+import com.core.R
 import com.core.diagnostics.GameDiagnostics
 import com.core.data.GameRepository
 import com.core.launcher.EmulatorLauncher
@@ -51,7 +52,7 @@ object LauncherGameLaunchBridge {
     @JvmStatic
     fun launch(context: Context?, game: Game?): LaunchResult {
         if (context == null) return LaunchResult.failure("上下文不可用")
-        if (game == null) return LaunchResult.failure("游戏不存在")
+        if (game == null) return LaunchResult.failure(context.getString(R.string.core_game_not_found))
         val appContext = context.applicationContext
         val repository = GameRepository(appContext)
         val emulatorPackage = resolveEmulatorPackage(context, game)
@@ -63,18 +64,32 @@ object LauncherGameLaunchBridge {
         }
 
         val gate = acquireLaunchGate(appContext, repository, game, emulatorPackage)
-        if (gate.conflict != null) return LaunchResult.activeGame(gate.conflict.gameTitle)
-        if (gate.sessionId <= 0L) return LaunchResult.failure("无法创建游戏会话，请稍后重试")
+        if (gate.conflict != null) {
+            return LaunchResult.activeGame(
+                gate.conflict.gameTitle,
+                context.getString(R.string.core_current_game),
+                context.getString(R.string.core_active_game_message, gate.conflict.gameTitle),
+            )
+        }
+        if (gate.sessionId <= 0L) {
+            return LaunchResult.failure(context.getString(R.string.core_game_session_create_failed))
+        }
 
         val sessionId = gate.sessionId
         val attempt = startGameActivity(context, game, emulatorPackage, launchTarget)
         if (attempt.success) {
-            GameDiagnostics.recordLaunch(appContext, game, true, "启动请求已发送", launchTarget)
+            GameDiagnostics.recordLaunch(
+                appContext,
+                game,
+                true,
+                context.getString(R.string.core_launch_request_sent),
+                launchTarget,
+            )
             return LaunchResult.success(sessionId)
         }
         repository.cancelPlaySession(sessionId)
         releaseLaunchGate(appContext, sessionId)
-        val message = "启动失败：未找到该模拟器，或该模拟器不接受当前启动目标"
+        val message = context.getString(R.string.core_emulator_launch_failed)
         GameDiagnostics.recordLaunch(appContext, game, false, message, launchTarget, attempt.errorCategory, attempt.error)
         return LaunchResult.failure(message)
     }
@@ -98,12 +113,13 @@ object LauncherGameLaunchBridge {
     @JvmStatic
     fun showActiveGameDialog(context: Context?, activeGameTitle: String?) {
         if (context == null) return
-        val title = activeGameTitle?.trim().takeUnless { it.isNullOrEmpty() } ?: "当前游戏"
+        val title = activeGameTitle?.trim().takeUnless { it.isNullOrEmpty() }
+            ?: context.getString(R.string.core_current_game)
         try {
             AlertDialog.Builder(context)
-                .setTitle("已有游戏正在运行")
-                .setMessage("《$title》仍在运行。请先保存进度，并在最近任务中手动划掉或正常退出该游戏后再启动其他游戏。")
-                .setPositiveButton("知道了", null)
+                .setTitle(R.string.core_active_game_title)
+                .setMessage(context.getString(R.string.core_active_game_dialog_message, title))
+                .setPositiveButton(R.string.core_got_it, null)
                 .show()
         } catch (_: Throwable) {
             // A non-Activity context cannot own a dialog window. Callers still receive the message.
@@ -132,7 +148,7 @@ object LauncherGameLaunchBridge {
         val gate = ActiveGameGate(
             sessionId = sessionId,
             gameId = game.id,
-            gameTitle = safeTitle(game),
+            gameTitle = safeTitle(context, game),
             emulatorPackage = emulatorPackage,
             startedAt = startedAt,
         )
@@ -239,7 +255,7 @@ object LauncherGameLaunchBridge {
         if (!root.isNullOrEmpty() && root.startsWith("content://")) {
             val readable = try { DocumentFile.fromTreeUri(context, android.net.Uri.parse(root))?.canRead() == true } catch (_: Throwable) { false }
             if (!readable) {
-                val message = "游戏目录访问失败：SAF 权限可能已失效，请重新绑定目录。"
+                val message = context.getString(R.string.core_game_directory_permission_lost)
                 GameDiagnostics.recordSafPermissionInvalid(context, game, message)
                 return message
             }
@@ -249,35 +265,35 @@ object LauncherGameLaunchBridge {
             if (ghMode != "program" && ghMode != "normal"
                 && game.gamehubLocalGameId.isNullOrBlank()
             ) {
-                return "请先在游戏中心编辑游戏，导入 GameHub localGameId。"
+                return context.getString(R.string.core_gamehub_local_id_required)
             }
         }
         if (emulatorPackage.isEmpty()) {
-            return "请先在游戏中心编辑游戏，填写模拟器包名。"
+            return context.getString(R.string.core_emulator_package_required)
         }
         if ((emulatorPackage.startsWith("internal.psp") || emulatorPackage == "org.ppsspp.ppsspp")
             && !EmulatorLauncher.isPPSSPPInstalled(context)
         ) {
-            return "启动 PSP 游戏需要安装 PPSSPP 模拟器。"
+            return context.getString(R.string.core_ppsspp_required)
         }
         // 外部插件启用状态拦截：模块被禁用时拒绝启动，引导用户去模块兼容页启用。
         if (LauncherModuleBridge.isRpgMakerPluginPackage(emulatorPackage)
             && LauncherModuleBridge.isRpgMakerModuleInstalled(context)
             && !LauncherModuleBridge.isRpgMakerModuleEnabled(context)
         ) {
-            return "RPGM 模块未启用，请在「模块兼容」页面启用后再试。"
+            return context.getString(R.string.core_rpgm_module_disabled)
         }
         if (LauncherModuleBridge.isRenPyPluginPackage(emulatorPackage)
             && LauncherModuleBridge.isRenPyModuleInstalled(context)
             && !LauncherModuleBridge.isRenPyModuleEnabled(context)
         ) {
-            return "RenPy 模块未启用，请在「模块兼容」页面启用后再试。"
+            return context.getString(R.string.core_renpy_module_disabled)
         }
         if (LauncherModuleBridge.isGodotPluginPackage(emulatorPackage)
             && LauncherModuleBridge.isGodotModuleInstalled(context)
             && !LauncherModuleBridge.isGodotModuleEnabled(context)
         ) {
-            return "Godot 模块未启用，请在「模块兼容」页面启用后再试。"
+            return context.getString(R.string.core_godot_module_disabled)
         }
         return null
     }
@@ -329,8 +345,30 @@ object LauncherGameLaunchBridge {
         // directory when the field is absent, but must not silently discard a user selection.
         if ((game.engine == EngineType.ARTEMIS || game.engine == EngineType.TYRANO)
             && game.launchTarget.isNullOrBlank()) return "[游戏目录]"
-        if (game.engine == EngineType.GAMEHUB) return safeTitle(game)
-        return game.launchTarget
+        if (game.engine == EngineType.GAMEHUB) {
+            return game.title?.trim().takeUnless { it.isNullOrEmpty() }
+        }
+        return canonicalLaunchTarget(game.launchTarget)
+    }
+
+    /**
+     * Releases briefly persisted localized directory labels from builds that translated the
+     * launchTarget sentinel. This value is protocol data, not UI text.
+     */
+    private fun canonicalLaunchTarget(target: String?): String? {
+        val value = target?.trim() ?: return null
+        return if (
+            value.equals("DIR", ignoreCase = true)
+            || value == "[游戏目录]"
+            || value == "[Game folder]"
+            || value == "[Game directory]"
+            || value == "[ゲームフォルダー]"
+            || value == "[ゲームディレクトリ]"
+        ) {
+            "[游戏目录]"
+        } else {
+            target
+        }
     }
 
     private fun startGameActivity(context: Context, game: Game, emulatorPackage: String, launchTarget: String?): StartAttempt {
@@ -417,9 +455,9 @@ object LauncherGameLaunchBridge {
         return "external"
     }
 
-    private fun safeTitle(game: Game?): String {
+    private fun safeTitle(context: Context, game: Game?): String {
         val title = game?.title
-        if (title.isNullOrBlank()) return "未命名游戏"
+        if (title.isNullOrBlank()) return context.getString(R.string.core_untitled_game)
         return title.trim()
     }
 
@@ -440,9 +478,19 @@ object LauncherGameLaunchBridge {
                 LaunchResult(false, -1L, if (message.isNullOrBlank()) "启动失败" else message, false, "")
 
             @JvmStatic
-            fun activeGame(gameTitle: String?): LaunchResult {
-                val title = gameTitle?.trim().takeUnless { it.isNullOrEmpty() } ?: "当前游戏"
-                return LaunchResult(false, -1L, "已有游戏正在运行：$title", true, title)
+            fun activeGame(
+                gameTitle: String?,
+                defaultTitle: String = "当前游戏",
+                message: String? = null,
+            ): LaunchResult {
+                val title = gameTitle?.trim().takeUnless { it.isNullOrEmpty() } ?: defaultTitle
+                return LaunchResult(
+                    false,
+                    -1L,
+                    message ?: "已有游戏正在运行：$title",
+                    true,
+                    title,
+                )
             }
         }
     }

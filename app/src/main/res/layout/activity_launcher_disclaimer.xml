@@ -63,7 +63,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="免责声明"
+            android:text="@string/social_disclaimer"
             android:textColor="@color/launcher_text_color"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -94,7 +94,7 @@
         <TextView
             android:id="@+id/disclaimerClose"
             style="@style/LauncherLongActionButton"
-            android:text="关闭"
+            android:text="@string/social_action_close"
             />
     </LinearLayout>
 </FrameLayout>

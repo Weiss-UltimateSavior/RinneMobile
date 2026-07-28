@@ -26,7 +26,7 @@
                 android:id="@+id/addGameTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="添加游戏"
+                android:text="@string/game_add_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -37,55 +37,55 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="填写信息后保存到游戏库"
+                android:text="@string/game_add_subtitle"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
                 android:layout_marginTop="22dp"
-                android:text="游戏名称" />
+                android:text="@string/game_name_label" />
 
             <com.apps.widget.LauncherEditText
                 android:id="@+id/addGameNameInput"
                 style="@style/LauncherAddGameInput"
-                android:hint="输入游戏名称" />
+                android:hint="@string/game_name_hint" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
-                android:text="游戏引擎" />
+                android:text="@string/game_engine_label" />
 
             <TextView
                 android:id="@+id/addGameEngineText"
                 style="@style/LauncherAddGameInputText"
-                android:text="自动识别" />
+                android:text="@string/game_engine_auto" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
-                android:text="游戏目录" />
+                android:text="@string/game_directory_label" />
 
             <TextView
                 android:id="@+id/addGameDirText"
                 style="@style/LauncherAddGameInputText"
-                android:text="点击选择游戏目录" />
+                android:text="@string/game_directory_select" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
-                android:text="封面图片" />
+                android:text="@string/game_cover_label" />
 
             <TextView
                 android:id="@+id/addGameCoverText"
                 style="@style/LauncherAddGameInputText"
-                android:text="点击选择封面图片" />
+                android:text="@string/game_cover_select" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
-                android:text="启动入口" />
+                android:text="@string/game_launch_entry_label" />
 
             <TextView
                 android:id="@+id/addGameLaunchTargetInput"
                 style="@style/LauncherAddGameInputText"
-                android:text="点击选择启动文件" />
+                android:text="@string/game_launch_file_select" />
 
             <TextView
                 style="@style/LauncherAddGameLabel"
@@ -103,7 +103,7 @@
                     android:layout_height="45dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="仅 GameHub，需要 Shizuku 导入或手填"
+                    android:hint="@string/game_gamehub_id_hint"
                     android:inputType="text"
                     android:paddingStart="13dp"
                     android:paddingEnd="13dp"
@@ -117,7 +117,7 @@
                     android:layout_height="45dp"
                     android:layout_marginStart="7dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="导入 GameHub 快捷方式"
+                    android:contentDescription="@string/game_gamehub_import_shortcut"
                     android:padding="6dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_import_gamehub_shortcut" />
@@ -125,7 +125,7 @@
 
             <TextView
                 style="@style/LauncherAddGameLabel"
-                android:text="模拟器包名" />
+                android:text="@string/game_emulator_package_label" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -139,7 +139,7 @@
                     android:layout_height="45dp"
                     android:layout_weight="1"
                     android:background="@drawable/launcher_account_input"
-                    android:hint="手动输入或点击右侧选择模拟器"
+                    android:hint="@string/game_emulator_package_hint"
                     android:inputType="text"
                     android:paddingStart="13dp"
                     android:paddingEnd="13dp"
@@ -153,7 +153,7 @@
                     android:layout_height="45dp"
                     android:layout_marginStart="7dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="从应用列表选择模拟器"
+                    android:contentDescription="@string/game_emulator_app_picker"
                     android:padding="6dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_import_gamehub_shortcut" />
@@ -161,7 +161,7 @@
 
             <TextView
                 style="@style/LauncherAddGameLabel"
-                android:text="备注" />
+                android:text="@string/game_notes_label" />
 
             <com.apps.widget.LauncherEditText
                 android:id="@+id/addGameDescriptionInput"
@@ -170,7 +170,7 @@
                 android:layout_marginTop="7dp"
                 android:background="@drawable/launcher_account_input"
                 android:gravity="top"
-                android:hint="可选"
+                android:hint="@string/game_common_optional"
                 android:paddingStart="13dp"
                 android:paddingTop="11dp"
                 android:paddingEnd="13dp"
@@ -183,7 +183,7 @@
                 android:id="@+id/addGameSave"
                 style="@style/LauncherLongActionButton"
                 android:layout_marginTop="20dp"
-                android:text="保存"
+                android:text="@string/game_common_save"
                 />
         </LinearLayout>
     </ScrollView>

@@ -31,7 +31,7 @@
             android:id="@+id/agentEmptyTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="创建一个游戏维护任务"
+            android:text="@string/social_agent_task_title"
             android:gravity="center"
             android:textColor="@color/launcher_text_color"
             android:textSize="18sp"
@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="2dp"
-            android:text="本地 AI 智能体，运行在设备端，模型负责推理、本地工具负责执行。支持查询与筛选游戏库、浏览游戏文件、多编码读取与搜索文本、精确替换文件内容（需逐次确认）、修改快照恢复。可通过工作区命令检查文件、解析 JSON/INI/XML、诊断编码。支持整理扫描目录（移动/重命名/创建文件夹）、私有工作空间自由读写，以及通过 MCP 协议连接远程工具服务器扩展能力。所有写入与远程调用均需本机确认。"
+            android:text="@string/social_agent_description"
             android:textColor="@color/launcher_text_muted_color"
             android:textSize="13sp" />
     </LinearLayout>
@@ -99,7 +99,7 @@
                     android:id="@+id/agentStateLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="工作台待命"
+                    android:text="@string/social_agent_ready"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -110,7 +110,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:maxLines="2"
-                    android:text="配置模型后即可创建任务"
+                    android:text="@string/social_agent_configure_hint"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -119,7 +119,7 @@
                 android:id="@+id/agentStateIcon"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:contentDescription="智能体设置"
+                android:contentDescription="@string/social_agent_settings"
                 android:padding="3dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/launcher_agent_settings" />
@@ -159,7 +159,7 @@
                 android:layout_weight="1"
                 android:background="@null"
                 android:gravity="center_vertical|start"
-                android:hint="请输入你的指令"
+                android:hint="@string/social_agent_instruction_hint"
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxHeight="28dp"
                 android:maxLines="2"
@@ -174,7 +174,7 @@
                 android:id="@+id/agentSend"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:contentDescription="执行或停止任务"
+                android:contentDescription="@string/social_agent_run_or_stop"
                 android:padding="16dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/launcher_ic_send" />

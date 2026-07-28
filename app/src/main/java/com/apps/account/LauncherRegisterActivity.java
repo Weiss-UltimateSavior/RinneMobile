@@ -144,20 +144,20 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         String email = textOf(binding.registerEmail);
         String inviteCode = textOf(binding.registerKey);
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.registerEmail.setError("请输入正确的邮箱");
+            binding.registerEmail.setError(getString(R.string.social_error_email_invalid));
             return;
         }
         if (!inviteCode.matches("[A-Za-z0-9]{7}")) {
-            binding.registerKey.setError("请输入 7 位邀请码");
+            binding.registerKey.setError(getString(R.string.social_error_invite_code));
             return;
         }
         binding.registerSendCode.setEnabled(false);
-        binding.registerSendCode.setText("发送中...");
+        binding.registerSendCode.setText(R.string.social_action_sending);
         LauncherAuthBridge.sendRegistrationVerificationCode(this, email, inviteCode, new SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;
-                Toast.makeText(LauncherRegisterActivity.this, "验证码已发送，请查收邮箱", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LauncherRegisterActivity.this, R.string.social_verification_sent, Toast.LENGTH_SHORT).show();
                 startVerificationCodeCountdown();
             }
 
@@ -165,8 +165,8 @@ public class LauncherRegisterActivity extends AppCompatActivity {
             public void onError(String message) {
                 if (isFinishing()) return;
                 binding.registerSendCode.setEnabled(true);
-                binding.registerSendCode.setText("获取验证码");
-                showAuthResultDialog("验证码发送失败", message);
+                binding.registerSendCode.setText(R.string.social_action_get_code);
+                showAuthResultDialog(getString(R.string.social_verification_failed), message);
             }
         });
     }
@@ -177,13 +177,14 @@ public class LauncherRegisterActivity extends AppCompatActivity {
             @Override
             public void onTick(long millisUntilFinished) {
                 binding.registerSendCode.setEnabled(false);
-                binding.registerSendCode.setText((millisUntilFinished + 999L) / 1000L + " 秒后重试");
+                binding.registerSendCode.setText(getString(R.string.social_action_retry_seconds,
+                        (millisUntilFinished + 999L) / 1000L));
             }
 
             @Override
             public void onFinish() {
                 binding.registerSendCode.setEnabled(true);
-                binding.registerSendCode.setText("获取验证码");
+                binding.registerSendCode.setText(R.string.social_action_get_code);
             }
         }.start();
     }
@@ -197,53 +198,53 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         String verificationCode = textOf(binding.registerVerificationCode);
 
         if (username.isEmpty()) {
-            binding.registerName.setError("请输入用户名");
+            binding.registerName.setError(getString(R.string.social_error_username_required));
             return;
         }
         if (!username.matches("[A-Za-z0-9_]{3,32}")) {
-            binding.registerName.setError("用户名需为 3-32 位字母、数字或下划线");
+            binding.registerName.setError(getString(R.string.social_error_username_format));
             return;
         }
         if (email.isEmpty()) {
-            binding.registerEmail.setError("请输入邮箱");
+            binding.registerEmail.setError(getString(R.string.social_error_email_required));
             return;
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.registerEmail.setError("邮箱格式不正确");
+            binding.registerEmail.setError(getString(R.string.social_error_email_invalid));
             return;
         }
         if (password.isEmpty()) {
-            binding.registerPassword.setError("请输入密码");
+            binding.registerPassword.setError(getString(R.string.social_error_password_required));
             return;
         }
         if (password.length() < 6 || password.length() > 128) {
-            binding.registerPassword.setError("密码需为 6-128 位");
+            binding.registerPassword.setError(getString(R.string.social_error_password_length));
             return;
         }
         if (!password.equals(confirmPassword)) {
-            binding.registerConfirmPassword.setError("两次密码不一致");
+            binding.registerConfirmPassword.setError(getString(R.string.social_error_password_mismatch));
             return;
         }
         if (!inviteCode.matches("[A-Za-z0-9]{7}")) {
-            binding.registerKey.setError("请输入 7 位邀请码");
+            binding.registerKey.setError(getString(R.string.social_error_invite_code));
             return;
         }
         if (!verificationCode.matches("\\d{6}")) {
-            binding.registerVerificationCode.setError("请输入 6 位邮箱验证码");
+            binding.registerVerificationCode.setError(getString(R.string.social_error_verification_code));
             return;
         }
 
         binding.registerCreate.setEnabled(false);
-        binding.registerCreate.setText("注册中...");
+        binding.registerCreate.setText(R.string.social_registering);
 
         LauncherAuthBridge.register(this, username, email, password, inviteCode, verificationCode, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {
                     binding.registerCreate.setEnabled(true);
-                    binding.registerCreate.setText("创建账户");
+                    binding.registerCreate.setText(R.string.social_create_account);
                 }
-                Toast.makeText(LauncherRegisterActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LauncherRegisterActivity.this, R.string.social_register_success, Toast.LENGTH_SHORT).show();
                 // 注册成功后返回，LauncherAccountFragment.onResume 会检测已登录状态并跳转到个人信息页
                 setResult(RESULT_OK);
                 LauncherMotion.finish(LauncherRegisterActivity.this);
@@ -253,9 +254,9 @@ public class LauncherRegisterActivity extends AppCompatActivity {
             public void onError(String message) {
                 if (binding != null) {
                     binding.registerCreate.setEnabled(true);
-                    binding.registerCreate.setText("创建账户");
+                    binding.registerCreate.setText(R.string.social_create_account);
                 }
-                showAuthResultDialog("注册失败", message);
+                showAuthResultDialog(getString(R.string.social_register_failed), message);
             }
         });
     }

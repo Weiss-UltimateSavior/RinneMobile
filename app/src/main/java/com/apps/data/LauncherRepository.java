@@ -9,6 +9,7 @@ import com.core.launcherbridge.LauncherRepositoryBridge.RecentActivity;
 import com.core.launcherbridge.LauncherSyncBridge;
 import com.core.model.Game;
 import com.core.util.TimeFormatUtil;
+import com.core.R;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -83,13 +84,21 @@ public class LauncherRepository {
 
     private RecentItem toRecentItem(RecentActivity activity) {
         String fullTitle = activity.gameTitle == null || activity.gameTitle.trim().isEmpty()
-                ? "未命名游戏"
+                ? appContext.getString(R.string.pad_untitled_game)
                 : activity.gameTitle.trim();
         String title = ellipsizeByCodePoint(fullTitle, RECENT_TITLE_MAX_CODE_POINTS);
         String time = formatRecentTime(activity.endTime) + " · " + TimeFormatUtil.playTime(activity.duration);
-        String status = launchTypeLabel(activity.launchType);
-        if (status.isEmpty()) status = "已游玩";
-        return new RecentItem(title, time, status, firstTitleChar(fullTitle), activity.gameId, activity.sessionId);
+        String status = launchTypeLabel(appContext, activity.launchType);
+        if (status.isEmpty()) status = appContext.getString(R.string.repo_played);
+        return new RecentItem(
+                title,
+                time,
+                status,
+                firstTitleChar(fullTitle),
+                activity.gameId,
+                activity.sessionId,
+                activity.launchType
+        );
     }
 
     private String displayName() {
@@ -99,27 +108,28 @@ public class LauncherRepository {
         }
         String profileName = appPrefs.getString(KEY_PROFILE_NAME, "");
         if (profileName != null && !profileName.trim().isEmpty()) return profileName.trim();
-        return "本地玩家";
+        return appContext.getString(R.string.home_local_player);
     }
 
     private String accountMode() {
         String status = appPrefs.getString(KEY_AUTH_STATUS, "");
-        if (AUTH_STATUS_EXPIRED.equals(status)) return "本地模式 · 登录过期";
-        if (!LauncherAuthBridge.isLoggedIn(appContext)) return "本地模式";
-        if (AUTH_STATUS_ONLINE.equals(status)) return "在线模式";
-        if (AUTH_STATUS_SYNCING.equals(status)) return "在线模式 · 同步中";
-        return "在线模式";
+        if (AUTH_STATUS_EXPIRED.equals(status)) return appContext.getString(R.string.repo_local_expired);
+        if (!LauncherAuthBridge.isLoggedIn(appContext)) return appContext.getString(R.string.home_local_mode);
+        if (AUTH_STATUS_ONLINE.equals(status)) return appContext.getString(R.string.pad_online_mode);
+        if (AUTH_STATUS_SYNCING.equals(status)) return appContext.getString(R.string.pad_online_syncing);
+        return appContext.getString(R.string.pad_online_mode);
     }
 
     private String syncStatus() {
-        if (!LauncherSyncBridge.isConfigured(appContext)) return "WebDAV 未配置";
-        StringBuilder builder = new StringBuilder("WebDAV 已配置");
-        builder.append(LauncherSyncBridge.isAutoSyncEnabled(appContext) ? " · 自动同步开启" : " · 自动同步关闭");
+        if (!LauncherSyncBridge.isConfigured(appContext)) return appContext.getString(R.string.repo_webdav_not_configured);
+        StringBuilder builder = new StringBuilder(appContext.getString(R.string.repo_webdav_configured));
+        builder.append(appContext.getString(LauncherSyncBridge.isAutoSyncEnabled(appContext)
+                ? R.string.repo_auto_sync_on : R.string.repo_auto_sync_off));
         long lastSync = LauncherSyncBridge.lastSyncTime(appContext);
         if (lastSync > 0) {
-            builder.append(" · 上次同步 ").append(formatSyncTime(lastSync));
+            builder.append(appContext.getString(R.string.repo_last_sync, formatSyncTime(lastSync)));
         } else {
-            builder.append(" · 尚未同步");
+            builder.append(appContext.getString(R.string.repo_never_synced));
         }
         return builder.toString();
     }
@@ -134,7 +144,7 @@ public class LauncherRepository {
     }
 
     private String formatRecentTime(long time) {
-        if (time <= 0L) return "从未记录";
+        if (time <= 0L) return appContext.getString(R.string.repo_never_recorded);
         return TimeFormatUtil.shortDate(time);
     }
 
@@ -142,23 +152,23 @@ public class LauncherRepository {
         return TimeFormatUtil.shortDate(time);
     }
 
-    private String launchTypeLabel(String launchType) {
+    public static String launchTypeLabel(Context context, String launchType) {
         if (launchType == null || launchType.trim().isEmpty()) return "";
         String value = launchType.trim();
-        if (value.startsWith("internal.krkr")) return "内置 KRKR";
-        if (value.startsWith("internal.ons")) return "内置 ONS";
-        if (value.startsWith("internal.tyrano")) return "内置 Tyrano";
-        if (value.startsWith("internal.artemis")) return "内置 Artemis";
-        if (value.startsWith("internal.")) return "内置启动";
-        if ("manual".equals(value)) return "手动记录";
-        if ("external".equals(value)) return "外部模拟器";
+        if (value.startsWith("internal.krkr")) return context.getString(R.string.repo_internal_krkr);
+        if (value.startsWith("internal.ons")) return context.getString(R.string.repo_internal_ons);
+        if (value.startsWith("internal.tyrano")) return context.getString(R.string.repo_internal_tyrano);
+        if (value.startsWith("internal.artemis")) return context.getString(R.string.repo_internal_artemis);
+        if (value.startsWith("internal.")) return context.getString(R.string.repo_internal_launch);
+        if ("manual".equals(value)) return context.getString(R.string.repo_manual_record);
+        if ("external".equals(value)) return context.getString(R.string.repo_external_emulator);
         return value;
     }
 
     private String firstTitleChar(String title) {
-        if (title == null) return "游";
+        if (title == null) return appContext.getString(R.string.pad_game_fallback_initial);
         String trimmed = title.trim();
-        if (trimmed.isEmpty()) return "游";
+        if (trimmed.isEmpty()) return appContext.getString(R.string.pad_game_fallback_initial);
         int end = trimmed.offsetByCodePoints(0, 1);
         return trimmed.substring(0, end);
     }
@@ -221,14 +231,24 @@ public class LauncherRepository {
         public final String iconText;
         public final long gameId;
         public final long sessionId;
+        public final String launchType;
 
-        RecentItem(String title, String timeAndDuration, String status, String iconText, long gameId, long sessionId) {
+        RecentItem(
+                String title,
+                String timeAndDuration,
+                String status,
+                String iconText,
+                long gameId,
+                long sessionId,
+                String launchType
+        ) {
             this.title = title;
             this.timeAndDuration = timeAndDuration;
             this.status = status;
             this.iconText = iconText;
             this.gameId = gameId;
             this.sessionId = sessionId;
+            this.launchType = launchType;
         }
     }
 }

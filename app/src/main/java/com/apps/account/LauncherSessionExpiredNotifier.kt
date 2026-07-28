@@ -58,13 +58,13 @@ object LauncherSessionExpiredNotifier : LauncherAuthBridge.SessionExpiredListene
         window.setBackgroundDrawableResource(android.R.color.transparent)
         window.setLayout(dp(activity, 252), WindowManager.LayoutParams.WRAP_CONTENT)
         val root = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(activity,22),dp(activity,20),dp(activity,22),dp(activity,16)); setBackgroundResource(R.drawable.launcher_dialog_bg) }
-        root.addView(text(activity,"登录已过期",16f,true), LinearLayout.LayoutParams(-1,-2))
-        root.addView(text(activity,"当前账号的登录状态已失效。重新登录后即可继续使用聊天、云同步和在线游玩统计。",12f,false), LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(activity,13),0,0) })
+        root.addView(text(activity,activity.getString(R.string.social_session_expired_title),16f,true), LinearLayout.LayoutParams(-1,-2))
+        root.addView(text(activity,activity.getString(R.string.social_session_expired_message),12f,false), LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(activity,13),0,0) })
         val actions=LinearLayout(activity).apply { gravity=Gravity.CENTER }
         val actionParams=LinearLayout.LayoutParams(-1,dp(activity,36)).apply { setMargins(0,dp(activity,16),0,0) }
         root.addView(actions,actionParams)
-        actions.addView(text(activity,"稍后",13f,true).apply { LauncherTheme.secondaryButton(this); setOnClickListener { dialog.dismiss() } },LinearLayout.LayoutParams(0,-1,1f))
-        actions.addView(text(activity,"重新登录",13f,true).apply { LauncherTheme.primaryButton(this); setOnClickListener { dialog.dismiss(); activity.startActivity(Intent(activity,LauncherActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra(LauncherActivity.EXTRA_OPEN_ACCOUNT_LOGIN,true)) } },LinearLayout.LayoutParams(0,-1,1f).apply { setMargins(dp(activity,8),0,0,0) })
+        actions.addView(text(activity,activity.getString(R.string.social_action_later),13f,true).apply { LauncherTheme.secondaryButton(this); setOnClickListener { dialog.dismiss() } },LinearLayout.LayoutParams(0,-1,1f))
+        actions.addView(text(activity,activity.getString(R.string.social_action_log_in_again),13f,true).apply { LauncherTheme.primaryButton(this); setOnClickListener { dialog.dismiss(); activity.startActivity(Intent(activity,LauncherActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra(LauncherActivity.EXTRA_OPEN_ACCOUNT_LOGIN,true)) } },LinearLayout.LayoutParams(0,-1,1f).apply { setMargins(dp(activity,8),0,0,0) })
         window.setContentView(root)
     }
     private fun text(activity:Activity,value:String,size:Float,bold:Boolean)=TextView(activity).apply { text=value; gravity=Gravity.CENTER; textSize=size; setTextColor(ContextCompat.getColor(activity,if(bold) R.color.launcher_text_color else R.color.launcher_text_muted_color)); if(bold) setTypeface(null,Typeface.BOLD) }

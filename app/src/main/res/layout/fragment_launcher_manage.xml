@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="管理"
+                android:text="@string/game_manage_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -48,7 +48,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="添加目录" />
+                        android:text="@string/game_scan_add_directory" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -67,7 +67,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="扫描游戏" />
+                        android:text="@string/game_scan_title" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -86,7 +86,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="添加游戏" />
+                        android:text="@string/game_add_title" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -105,7 +105,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="云端同步" />
+                        android:text="@string/game_sync_cloud" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -124,7 +124,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="跨端同步" />
+                        android:text="@string/game_import_cross_platform" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -143,7 +143,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="日志诊断" />
+                        android:text="@string/game_diagnostics_title" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -162,7 +162,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="封面设置" />
+                        android:text="@string/game_manage_cover_settings" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -181,7 +181,7 @@
 
                     <TextView
                         style="@style/LauncherManageTitle"
-                        android:text="引擎设置" />
+                        android:text="@string/game_manage_engine_settings" />
 
                     <ImageView
                         style="@style/LauncherManageArrowIcon"
@@ -194,7 +194,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="9dp"
-                android:text="扫描目录"
+                android:text="@string/game_manage_scan_directories"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -213,7 +213,7 @@
                 android:layout_marginTop="9dp"
                 android:background="@drawable/launcher_white_card"
                 android:gravity="center"
-                android:text="还没有添加扫描目录"
+                android:text="@string/game_manage_no_scan_directories"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="13sp" />
 
@@ -222,7 +222,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:text="最近扫描结果"
+                android:text="@string/game_manage_recent_scan_results"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="15sp"
                 android:textStyle="bold"

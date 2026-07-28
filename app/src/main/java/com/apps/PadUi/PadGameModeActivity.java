@@ -115,7 +115,13 @@ public class PadGameModeActivity extends AppCompatActivity {
     }
 
     private void confirmReturnToPortrait() {
-        PadDialogFactory.showConfirm(this, "竖屏管理模式", "要返回竖屏管理模式吗？", "确定", this::finish);
+        PadDialogFactory.showConfirm(
+                this,
+                getString(R.string.pad_portrait_mode_title),
+                getString(R.string.pad_portrait_mode_message),
+                getString(R.string.core_confirm),
+                this::finish
+        );
     }
 
     private void selectPage(Page page) {

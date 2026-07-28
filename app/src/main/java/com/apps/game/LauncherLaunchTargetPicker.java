@@ -40,7 +40,7 @@ final class LauncherLaunchTargetPicker {
 
     static void show(AppCompatActivity activity, Uri directoryUri, EngineType engine, Callback callback) {
         if (directoryUri == null) {
-            Toast.makeText(activity, "请先选择游戏目录", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, R.string.game_directory_required, Toast.LENGTH_SHORT).show();
             return;
         }
         AlertDialog dialog = new AlertDialog.Builder(activity).create();
@@ -56,11 +56,11 @@ final class LauncherLaunchTargetPicker {
         root.setPadding(dp(activity, 22), dp(activity, 20), dp(activity, 22), dp(activity, 16));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
-        TextView title = text(activity, "选择启动文件", 16, true);
+        TextView title = text(activity, activity.getString(R.string.game_launch_choose_file), 16, true);
         root.addView(title, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        TextView status = text(activity, "正在扫描游戏文件...", 13, false);
+        TextView status = text(activity, activity.getString(R.string.game_launch_scanning), 13, false);
         status.setTextColor(ContextCompat.getColor(activity, R.color.launcher_text_muted_color));
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -75,7 +75,7 @@ final class LauncherLaunchTargetPicker {
                 if (!dialog.isShowing()) return;
                 root.removeView(status);
                 if (targets.isEmpty()) {
-                    status.setText("未找到游戏文件");
+                    status.setText(R.string.game_launch_no_file);
                     root.addView(status, statusParams);
                 } else {
                     ScrollView scroll = new ScrollView(activity);
@@ -102,7 +102,8 @@ final class LauncherLaunchTargetPicker {
                     scrollParams.setMargins(0, dp(activity, 7), 0, 0);
                     root.addView(scroll, scrollParams);
                 }
-                TextView cancel = text(activity, "取消", 13, true);
+                TextView cancel = text(activity,
+                        activity.getString(R.string.game_common_cancel), 13, true);
                 cancel.setTextColor(LauncherTheme.primary(activity));
                 cancel.setBackground(LauncherTheme.cancelChip(activity));
                 LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
@@ -124,7 +125,8 @@ final class LauncherLaunchTargetPicker {
             Log.w(TAG, "scanLaunchTargets failed", e);
         }
         if (hasRenpyEntry[0]) {
-            targets.add(0, new Target("Ren'Py 游戏目录", DIRECTORY_TARGET));
+            targets.add(0, new Target(
+                    context.getString(R.string.game_launch_renpy_directory), DIRECTORY_TARGET));
         }
         return targets;
     }

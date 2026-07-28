@@ -52,7 +52,7 @@
                         android:id="@+id/launcherAvatarImage"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:contentDescription="用户头像"
+                        android:contentDescription="@string/home_user_avatar"
                         android:scaleType="centerCrop"
                         android:visibility="gone" />
                 </FrameLayout>
@@ -68,7 +68,7 @@
                         android:id="@+id/tvAccountMode"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="本地模式"
+                        android:text="@string/home_local_mode"
                         android:textColor="@color/launcher_text_muted_color"
                         android:textSize="@dimen/launcher_home_account_mode_text_size" />
 
@@ -79,7 +79,7 @@
                         android:layout_marginTop="@dimen/launcher_home_state_title_margin_top"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="本地玩家"
+                        android:text="@string/home_local_player"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="@dimen/launcher_home_state_title_text_size"
                         android:textStyle="bold" />
@@ -91,7 +91,7 @@
                     android:layout_height="@dimen/launcher_home_menu_size"
                     android:background="@drawable/launcher_white_card"
                     android:clickable="true"
-                    android:contentDescription="菜单"
+                    android:contentDescription="@string/home_settings"
                     android:focusable="true"
                     android:gravity="center"
                     android:padding="@dimen/launcher_home_menu_padding"
@@ -144,7 +144,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="游戏总数"
+                        android:text="@string/home_game_count"
                         android:textColor="@color/launcher_on_primary_color"
                         android:textSize="@dimen/launcher_home_stats_label_text_size" />
 
@@ -177,7 +177,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="累计游玩"
+                                android:text="@string/home_total_playtime"
                                 android:textColor="@color/launcher_on_primary_color"
                                 android:textSize="@dimen/launcher_home_stats_label_text_size" />
 
@@ -200,7 +200,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="今日游玩"
+                                android:text="@string/home_today_playtime"
                                 android:textColor="@color/launcher_on_primary_color"
                                 android:textSize="@dimen/launcher_home_stats_label_text_size" />
 
@@ -359,7 +359,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="最近动态"
+                    android:text="@string/home_recent_activity"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="@dimen/launcher_home_recent_title_text_size"
                     android:textStyle="bold" />
@@ -371,7 +371,7 @@
                     android:layout_marginTop="@dimen/launcher_home_recent_content_margin_top"
                     android:background="@drawable/launcher_white_card"
                     android:gravity="center"
-                    android:text="还没有游玩记录"
+                    android:text="@string/home_no_recent_activity"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="@dimen/launcher_home_recent_text_size" />
 

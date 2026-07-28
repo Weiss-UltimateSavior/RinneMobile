@@ -71,18 +71,20 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
     private void confirmUpdateUsername() {
         String newUsername = binding.inputNewUsername.getText() == null ? "" : binding.inputNewUsername.getText().toString().trim();
         if (newUsername.isEmpty()) {
-            binding.inputNewUsername.setError("请输入新用户名");
+            binding.inputNewUsername.setError(getString(R.string.profile_enter_new_username));
             return;
         }
         if (newUsername.length() < 3 || newUsername.length() > 32) {
-            binding.inputNewUsername.setError("用户名需3-32位");
+            binding.inputNewUsername.setError(getString(R.string.profile_username_length_error));
             return;
         }
         if (!newUsername.matches("^[a-zA-Z0-9_]+$")) {
-            binding.inputNewUsername.setError("仅支持字母、数字和下划线");
+            binding.inputNewUsername.setError(getString(R.string.profile_username_characters_error));
             return;
         }
-        showConfirmDialog("修改用户名", "确定将用户名修改为「" + newUsername + "」吗？", this::performUpdateUsername);
+        showConfirmDialog(getString(R.string.profile_change_username),
+                getString(R.string.profile_confirm_username_change, newUsername),
+                this::performUpdateUsername);
     }
 
     private void confirmUpdatePassword() {
@@ -90,51 +92,54 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
         String newPassword = binding.inputNewPassword.getText() == null ? "" : binding.inputNewPassword.getText().toString().trim();
         String confirmPassword = binding.inputConfirmNewPassword.getText() == null ? "" : binding.inputConfirmNewPassword.getText().toString().trim();
         if (oldPassword.isEmpty()) {
-            binding.inputOldPassword.setError("请输入旧密码");
+            binding.inputOldPassword.setError(getString(R.string.profile_enter_old_password));
             return;
         }
         if (newPassword.isEmpty()) {
-            binding.inputNewPassword.setError("请输入新密码");
+            binding.inputNewPassword.setError(getString(R.string.profile_enter_new_password));
             return;
         }
         if (newPassword.length() < 6) {
-            binding.inputNewPassword.setError("密码至少6位");
+            binding.inputNewPassword.setError(getString(R.string.profile_password_too_short));
             return;
         }
         if (!newPassword.equals(confirmPassword)) {
-            binding.inputConfirmNewPassword.setError("两次密码不一致");
+            binding.inputConfirmNewPassword.setError(getString(R.string.profile_passwords_do_not_match));
             return;
         }
-        showConfirmDialog("修改密码", "确定修改密码吗？修改后需重新登录。", this::performUpdatePassword);
+        showConfirmDialog(getString(R.string.profile_change_password),
+                getString(R.string.profile_confirm_password_change), this::performUpdatePassword);
     }
 
     private void showConfirmDialog(String title, String message, Runnable onConfirm) {
-        LauncherDialogFactory.showStandardConfirm(this, title, message, "确定", onConfirm);
+        LauncherDialogFactory.showStandardConfirm(this, title, message,
+                getString(R.string.settings_confirm), onConfirm);
     }
 
     private void performUpdateUsername() {
         String newUsername = binding.inputNewUsername.getText() == null ? "" : binding.inputNewUsername.getText().toString().trim();
 
         binding.btnUpdateUsername.setEnabled(false);
-        binding.btnUpdateUsername.setText("修改中...");
+        binding.btnUpdateUsername.setText(R.string.profile_updating);
 
         LauncherAuthBridge.updateUsername(this, newUsername, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {
                     binding.btnUpdateUsername.setEnabled(true);
-                    binding.btnUpdateUsername.setText("修改用户名");
+                    binding.btnUpdateUsername.setText(R.string.profile_change_username);
                 }
-                Toast.makeText(LauncherProfileEditActivity.this, "用户名修改成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LauncherProfileEditActivity.this,
+                        R.string.profile_username_changed, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onError(String message) {
                 if (binding != null) {
                     binding.btnUpdateUsername.setEnabled(true);
-                    binding.btnUpdateUsername.setText("修改用户名");
+                    binding.btnUpdateUsername.setText(R.string.profile_change_username);
                 }
-                showResultDialog("修改失败", message);
+                showResultDialog(getString(R.string.profile_update_failed), message);
             }
         });
     }
@@ -144,16 +149,17 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
         String newPassword = binding.inputNewPassword.getText() == null ? "" : binding.inputNewPassword.getText().toString().trim();
 
         binding.btnUpdatePassword.setEnabled(false);
-        binding.btnUpdatePassword.setText("修改中...");
+        binding.btnUpdatePassword.setText(R.string.profile_updating);
 
         LauncherAuthBridge.updatePassword(this, oldPassword, newPassword, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {
                     binding.btnUpdatePassword.setEnabled(true);
-                    binding.btnUpdatePassword.setText("修改密码");
+                    binding.btnUpdatePassword.setText(R.string.profile_change_password);
                 }
-                Toast.makeText(LauncherProfileEditActivity.this, "密码修改成功，请重新登录", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LauncherProfileEditActivity.this,
+                        R.string.profile_password_changed_relogin, Toast.LENGTH_SHORT).show();
                 // 密码修改后 Token 已吊销，返回登录页
                 setResult(RESULT_OK);
                 finish();
@@ -163,9 +169,9 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
             public void onError(String message) {
                 if (binding != null) {
                     binding.btnUpdatePassword.setEnabled(true);
-                    binding.btnUpdatePassword.setText("修改密码");
+                    binding.btnUpdatePassword.setText(R.string.profile_change_password);
                 }
-                showResultDialog("修改失败", message);
+                showResultDialog(getString(R.string.profile_update_failed), message);
             }
         });
     }

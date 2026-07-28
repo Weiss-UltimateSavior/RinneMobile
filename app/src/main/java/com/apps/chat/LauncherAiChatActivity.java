@@ -62,7 +62,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         configureEdgeToEdgeWindow();
         if (!LauncherAuthBridge.isLoggedIn(this)) {
-            Toast.makeText(this, "请先登录后再使用 AI 聊天", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.social_ai_login_required, Toast.LENGTH_SHORT).show();
             LauncherMotion.finish(this);
             return;
         }
@@ -70,7 +70,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         threadId = getIntent().getStringExtra(EXTRA_THREAD_ID);
         String title = getIntent().getStringExtra(EXTRA_TITLE);
         if (persona == null || !persona.matches("persona_[A-Za-z0-9_]+") || threadId == null || !threadId.matches("[A-Za-z0-9_.:-]{1,128}")) {
-            Toast.makeText(this, "聊天角色参数无效", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.social_invalid_chat_character, Toast.LENGTH_SHORT).show();
             LauncherMotion.finish(this);
             return;
         }
@@ -78,7 +78,8 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
         characterName = title == null || title.trim().isEmpty() ? "AI" : title.replace("（AI）", "");
-        binding.aiChatTitle.setText(title == null || title.trim().isEmpty() ? "AI 聊天" : title);
+        binding.aiChatTitle.setText(title == null || title.trim().isEmpty()
+                ? getString(R.string.social_ai_chat) : title);
         messageListBaseBottomPadding = binding.aiChatMessages.getPaddingBottom();
         binding.aiChatTopOverlay.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
         binding.aiChatTitleBar.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateMessageListOverlayPadding());
@@ -120,8 +121,8 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setAnimationStyle(R.style.LauncherDialogAnimation);
 
-        addMoreMenuItem(menu, "自定义模型", popupWindow, this::showCustomLlmDialog);
-        addMoreMenuItem(menu, "清空记录", popupWindow, this::showClearConfirmDialog);
+        addMoreMenuItem(menu, getString(R.string.social_custom_model), popupWindow, this::showCustomLlmDialog);
+        addMoreMenuItem(menu, getString(R.string.social_clear_history), popupWindow, this::showClearConfirmDialog);
         popupWindow.showAsDropDown(anchor, anchor.getWidth() - dp(119), dp(5), android.view.Gravity.NO_GRAVITY);
     }
 
@@ -146,7 +147,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     }
 
     private void loadHistory() {
-        binding.aiChatHint.setText("加载聊天记录中…");
+        binding.aiChatHint.setText(R.string.social_loading_chat_history);
         LauncherAiChatBridge.loadHistory(this, threadId, new LauncherAiChatBridge.HistoryCallback() {
             @Override public void onSuccess(List<LauncherAiChatBridge.Message> loaded) {
                 if (isFinishing()) return;
@@ -155,10 +156,11 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                     if ("user".equals(item.role) || "assistant".equals(item.role) || "tool".equals(item.role)) messages.add(item);
                 }
                 adapter.notifyDataSetChanged();
-                binding.aiChatHint.setText(messages.isEmpty() ? "开始和我聊天吧" : "历史消息已加载");
+                binding.aiChatHint.setText(messages.isEmpty()
+                        ? R.string.social_start_chatting : R.string.social_history_loaded);
                 scrollToEnd();
             }
-            @Override public void onError(String message) { if (!isFinishing()) { binding.aiChatHint.setText("聊天记录加载失败"); showError(message); } }
+            @Override public void onError(String message) { if (!isFinishing()) { binding.aiChatHint.setText(R.string.social_history_load_failed); showError(message); } }
         });
     }
 
@@ -172,21 +174,21 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         adapter.notifyItemInserted(messages.size() - 1);
         scrollToEnd();
         renderInputState();
-        binding.aiChatHint.setText("正在回复…");
+        binding.aiChatHint.setText(R.string.social_replying);
         LauncherAiChatBridge.send(this, text, persona, threadId, new LauncherAiChatBridge.ReplyCallback() {
             @Override public void onSuccess(String reply) {
                 if (isFinishing()) return;
                 sending = false;
                 messages.add(new LauncherAiChatBridge.Message("assistant", reply, ""));
                 adapter.notifyItemInserted(messages.size() - 1);
-                binding.aiChatHint.setText("AI 回复完成");
+                binding.aiChatHint.setText(R.string.social_reply_complete);
                 scrollToEnd();
                 renderInputState();
             }
             @Override public void onError(String message) {
                 if (isFinishing()) return;
                 sending = false;
-                binding.aiChatHint.setText("回复失败，请重试");
+                binding.aiChatHint.setText(R.string.social_reply_failed);
                 renderInputState();
                 showError(message);
             }
@@ -214,23 +216,23 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(18), dp(22), dp(15));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        TextView title = dialogText("自定义 LLM 模型", 16, R.color.launcher_text_color);
+        TextView title = dialogText(getString(R.string.social_custom_llm_title), 16, R.color.launcher_text_color);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title);
-        TextView info = dialogText("留空的字段将使用系统默认配置。保存后仅影响你的 AI 聊天。", 11, R.color.launcher_text_muted_color);
+        TextView info = dialogText(getString(R.string.social_custom_llm_note), 11, R.color.launcher_text_muted_color);
         info.setLineSpacing(dp(3), 1f);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, dp(9), 0, 0);
         root.addView(info, infoLp);
-        EditText baseUrl = llmInput(root, "接口地址", "https://api.example.com/v1", android.text.InputType.TYPE_TEXT_VARIATION_URI);
-        EditText apiKey = llmInput(root, "API Key", "留空则使用系统默认", android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        EditText model = llmInput(root, "模型名称", "例如 gpt-4o-mini", android.text.InputType.TYPE_CLASS_TEXT);
-        EditText temperature = llmInput(root, "温度", "0.0 - 2.0，可留空", android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        TextView loading = dialogText("正在读取当前配置…", 11, R.color.launcher_text_muted_color);
+        EditText baseUrl = llmInput(root, getString(R.string.social_api_endpoint), "https://api.example.com/v1", android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        EditText apiKey = llmInput(root, getString(R.string.social_api_key), getString(R.string.social_api_key_default_hint), android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        EditText model = llmInput(root, getString(R.string.social_model_name), getString(R.string.social_model_example), android.text.InputType.TYPE_CLASS_TEXT);
+        EditText temperature = llmInput(root, getString(R.string.social_temperature), getString(R.string.social_temperature_hint), android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        TextView loading = dialogText(getString(R.string.social_reading_config), 11, R.color.launcher_text_muted_color);
         LinearLayout.LayoutParams loadingLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         loadingLp.setMargins(0, dp(8), 0, 0);
         root.addView(loading, loadingLp);
-        TextView reset = dialogText("恢复系统默认", 12, R.color.launcher_text_color);
+        TextView reset = dialogText(getString(R.string.social_restore_default), 12, R.color.launcher_text_color);
         LauncherTheme.secondaryButton(reset);
         LinearLayout.LayoutParams resetLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(34));
         resetLp.setMargins(0, dp(11), 0, 0);
@@ -239,11 +241,11 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
         buttonsLp.setMargins(0, dp(8), 0, 0);
-        TextView cancel = dialogText("取消", 13, R.color.launcher_text_color);
+        TextView cancel = dialogText(getString(R.string.social_action_cancel), 13, R.color.launcher_text_color);
         LauncherTheme.secondaryButton(cancel);
         cancel.setOnClickListener(view -> dialog.dismiss());
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        TextView save = dialogText("保存", 13, R.color.launcher_on_primary_color);
+        TextView save = dialogText(getString(R.string.social_action_save), 13, R.color.launcher_on_primary_color);
         LauncherTheme.primaryButton(save);
         LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
         saveLp.setMargins(dp(8), 0, 0, 0);
@@ -271,11 +273,12 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             @Override public void onSuccess(LlmConfig config) {
                 if (!dialog.isShowing()) return;
                 baseUrl.setText(config.baseUrl); apiKey.setText(config.apiKey); model.setText(config.model); temperature.setText(config.temperature);
-                loading.setText("留空即回退到系统默认模型");
+                loading.setText(R.string.social_default_model_hint);
             }
-            @Override public void onError(String message) { if (dialog.isShowing()) loading.setText("读取失败：" + message); }
+            @Override public void onError(String message) { if (dialog.isShowing()) loading.setText(getString(R.string.social_read_failed, message)); }
         });
-        reset.setOnClickListener(view -> saveLlmConfig(dialog, new LlmConfig(), reset, "恢复中...", "恢复系统默认"));
+        reset.setOnClickListener(view -> saveLlmConfig(dialog, new LlmConfig(), reset,
+                getString(R.string.social_restoring), getString(R.string.social_restore_default)));
         save.setOnClickListener(view -> {
             String baseUrlValue = textOf(baseUrl);
             String baseUrlError = validatePublicBaseUrl(baseUrlValue);
@@ -285,11 +288,12 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                 try {
                     double value = Double.parseDouble(temp);
                     if (value < 0d || value > 2d) throw new NumberFormatException();
-                } catch (NumberFormatException error) { temperature.setError("温度需在 0.0 到 2.0 之间"); return; }
+                } catch (NumberFormatException error) { temperature.setError(getString(R.string.social_temperature_error)); return; }
             }
             LlmConfig config = new LlmConfig();
             config.baseUrl = baseUrlValue; config.apiKey = textOf(apiKey); config.model = textOf(model); config.temperature = temp;
-            saveLlmConfig(dialog, config, save, "验证并保存中...", "保存");
+            saveLlmConfig(dialog, config, save, getString(R.string.social_validating_and_saving),
+                    getString(R.string.social_action_save));
         });
     }
 
@@ -325,7 +329,8 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             @Override public void onSuccess(LlmConfig saved) {
                 if (dialog.isShowing()) dialog.dismiss();
                 Toast.makeText(LauncherAiChatActivity.this,
-                        restoresDefault ? "已恢复系统默认模型" : "模型连通性验证通过，配置已保存", Toast.LENGTH_SHORT).show();
+                        restoresDefault ? R.string.social_default_model_restored
+                                : R.string.social_model_saved, Toast.LENGTH_SHORT).show();
             }
             @Override public void onError(String message) {
                 if (!isFinishing()) {
@@ -344,13 +349,13 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             java.net.URI uri = new java.net.URI(value.trim());
             String scheme = uri.getScheme();
             String host = uri.getHost();
-            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) return "仅支持 http 或 https 地址";
-            if (uri.getUserInfo() != null) return "接口地址不能包含账号或密码";
-            if (host == null || host.trim().isEmpty()) return "请输入有效的公网接口地址";
+            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) return getString(R.string.social_error_http_only);
+            if (uri.getUserInfo() != null) return getString(R.string.social_error_endpoint_credentials);
+            if (host == null || host.trim().isEmpty()) return getString(R.string.social_error_public_endpoint);
             String normalized = host.toLowerCase(Locale.ROOT);
             if (normalized.equals("localhost") || normalized.endsWith(".localhost") || normalized.endsWith(".local")
                     || normalized.equals("0.0.0.0") || normalized.equals("::1") || normalized.startsWith("fe80:")
-                    || normalized.startsWith("fc") || normalized.startsWith("fd")) return "不支持本机或内网接口地址";
+                    || normalized.startsWith("fc") || normalized.startsWith("fd")) return getString(R.string.social_error_private_endpoint);
             String[] parts = normalized.split("\\.");
             boolean ipv4Literal = parts.length == 4;
             for (String part : parts) if (!part.matches("\\d+")) ipv4Literal = false;
@@ -359,12 +364,12 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                 int second = Integer.parseInt(parts[1]);
                 if (first == 10 || first == 127 || first == 0 || first == 169 && second == 254
                         || first == 172 && second >= 16 && second <= 31 || first == 192 && second == 168) {
-                    return "不支持本机或内网接口地址";
+                    return getString(R.string.social_error_private_endpoint);
                 }
             }
             return null;
         } catch (Throwable ignored) {
-            return "请输入有效的公网 http/https 接口地址";
+            return getString(R.string.social_error_http_endpoint);
         }
     }
 
@@ -380,10 +385,10 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(20), dp(22), dp(16));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        TextView title = dialogText("清空聊天记录", 16, R.color.launcher_text_color);
+        TextView title = dialogText(getString(R.string.social_clear_history_title), 16, R.color.launcher_text_color);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title);
-        TextView message = dialogText("将清除该角色的全部聊天记录，此操作无法撤销。", 12, R.color.launcher_text_muted_color);
+        TextView message = dialogText(getString(R.string.social_clear_history_message), 12, R.color.launcher_text_muted_color);
         LinearLayout.LayoutParams messageLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         messageLp.setMargins(0, dp(13), 0, 0);
         root.addView(message, messageLp);
@@ -391,16 +396,16 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
         buttonsLp.setMargins(0, dp(14), 0, 0);
-        TextView cancel = dialogText("取消", 13, R.color.launcher_text_color);
+        TextView cancel = dialogText(getString(R.string.social_action_cancel), 13, R.color.launcher_text_color);
         LauncherTheme.secondaryButton(cancel);
         cancel.setOnClickListener(view -> dialog.dismiss());
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        TextView confirm = dialogText("清空", 13, R.color.launcher_on_primary_color);
+        TextView confirm = dialogText(getString(R.string.social_action_clear), 13, R.color.launcher_on_primary_color);
         LauncherTheme.dangerButton(confirm);
         confirm.setOnClickListener(view -> {
             dialog.dismiss();
             LauncherAiChatBridge.clearHistory(this, threadId, new LauncherAiChatBridge.Callback() {
-                @Override public void onSuccess() { if (!isFinishing()) { messages.clear(); adapter.notifyDataSetChanged(); binding.aiChatHint.setText("聊天记录已清空"); } }
+                @Override public void onSuccess() { if (!isFinishing()) { messages.clear(); adapter.notifyDataSetChanged(); binding.aiChatHint.setText(R.string.social_history_cleared); } }
                 @Override public void onError(String error) { if (!isFinishing()) showError(error); }
             });
         });

@@ -97,11 +97,11 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
                 applyModuleIconTint(binding.moduleRenpyIcon, renpyInstalled, renpyEnabled);
                 applyModuleIconTint(binding.moduleGodotIcon, godotInstalled, godotEnabled);
                 updateModuleDescription(binding.moduleRpgmDescription, rpgmInstalled, rpgmEnabled,
-                        "提供 RPGM 游戏所需环境");
+                        R.string.module_rpgm_detail);
                 updateModuleDescription(binding.moduleRenpyDescription, renpyInstalled, renpyEnabled,
-                        "提供 RenPy 游戏所需环境");
+                        R.string.module_renpy_detail);
                 updateModuleDescription(binding.moduleGodotDescription, godotInstalled, godotEnabled,
-                        "提供 Godot 游戏所需环境");
+                        R.string.module_godot_detail);
             });
         });
     }
@@ -134,17 +134,18 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
      *   <li>已安装 · 未启用：{@code 已安装 · 未启用 - <detail>}（textMuted 灰）</li>
      * </ul>
      */
-    private void updateModuleDescription(TextView description, boolean installed, boolean enabled, String detail) {
+    private void updateModuleDescription(TextView description, boolean installed, boolean enabled, int detailRes) {
+        String detail = getString(detailRes);
         String text;
         int color;
         if (!installed) {
-            text = "未安装 - " + detail;
+            text = getString(R.string.module_status_not_installed, detail);
             color = LauncherTheme.danger(this);
         } else if (enabled) {
-            text = "已安装 · 已启用 - " + detail;
+            text = getString(R.string.module_status_installed_enabled, detail);
             color = LauncherTheme.primary(this);
         } else {
-            text = "已安装 · 未启用 - " + detail;
+            text = getString(R.string.module_status_installed_disabled, detail);
             color = LauncherTheme.textMuted(this);
         }
         description.setText(text);
@@ -156,9 +157,9 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     private void promptDownload(String moduleName, Runnable openInstallPage) {
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "下载 " + moduleName + " 模块",
-                "是否前往浏览器下载该模块？",
-                "前往下载",
+                getString(R.string.module_download_title, moduleName),
+                getString(R.string.module_download_message),
+                getString(R.string.theme_go_to_download),
                 openInstallPage);
     }
 
@@ -168,19 +169,19 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         if (rpgmModuleInstalled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "RPGM 模块",
+                    getString(R.string.module_rpgm_name),
                     rpgmModuleEnabled
-                            ? "该模块已安装并启用。点击右侧图标可禁用。"
-                            : "该模块已安装但未启用。点击右侧图标可启用。",
-                    "知道了",
+                            ? getString(R.string.module_installed_enabled_hint)
+                            : getString(R.string.module_installed_disabled_hint),
+                    getString(R.string.settings_got_it),
                     null);
             return;
         }
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "安装 RPGM 模块",
-                "是否安装该模块？",
-                "前往安装",
+                getString(R.string.module_install_title, "RPGM"),
+                getString(R.string.module_install_message),
+                getString(R.string.module_go_to_install),
                 this::openRpgmInstallPage);
     }
 
@@ -188,19 +189,19 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         if (renpyModuleInstalled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "RenPy 模块",
+                    getString(R.string.module_renpy_name),
                     renpyModuleEnabled
-                            ? "该模块已安装并启用。点击右侧图标可禁用。"
-                            : "该模块已安装但未启用。点击右侧图标可启用。",
-                    "知道了",
+                            ? getString(R.string.module_installed_enabled_hint)
+                            : getString(R.string.module_installed_disabled_hint),
+                    getString(R.string.settings_got_it),
                     null);
             return;
         }
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "安装 RenPy 模块",
-                "是否安装该模块？",
-                "前往安装",
+                getString(R.string.module_install_title, "RenPy"),
+                getString(R.string.module_install_message),
+                getString(R.string.module_go_to_install),
                 this::openRenpyInstallPage);
     }
 
@@ -208,19 +209,19 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         if (godotModuleInstalled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "Godot 模块",
+                    getString(R.string.module_godot_name),
                     godotModuleEnabled
-                            ? "该模块已安装并启用。点击右侧图标可禁用。"
-                            : "该模块已安装但未启用。点击右侧图标可启用。",
-                    "知道了",
+                            ? getString(R.string.module_installed_enabled_hint)
+                            : getString(R.string.module_installed_disabled_hint),
+                    getString(R.string.settings_got_it),
                     null);
             return;
         }
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "安装 Godot 模块",
-                "是否安装该模块？",
-                "前往安装",
+                getString(R.string.module_install_title, "Godot"),
+                getString(R.string.module_install_message),
+                getString(R.string.module_go_to_install),
                 this::openGodotInstallPage);
     }
 
@@ -234,28 +235,28 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         if (rpgmModuleEnabled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "禁用 RPGM 模块",
-                    "禁用后该模块将无法用于启动 RPGM 游戏。是否禁用？",
-                    "禁用",
+                    getString(R.string.module_disable_title, "RPGM"),
+                    getString(R.string.module_disable_message, "RPGM"),
+                    getString(R.string.module_disable),
                     () -> {
                         LauncherModuleBridge.setRpgMakerModuleEnabled(this, false);
                         rpgmModuleEnabled = false;
                         applyModuleIconTint(binding.moduleRpgmIcon, rpgmModuleInstalled, rpgmModuleEnabled);
                         updateModuleDescription(binding.moduleRpgmDescription, rpgmModuleInstalled, rpgmModuleEnabled,
-                                "提供 RPGM 游戏所需环境");
+                                R.string.module_rpgm_detail);
                     });
         } else {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "启用 RPGM 模块",
-                    "启用后该模块可用于启动 RPGM 游戏。是否启用？",
-                    "启用",
+                    getString(R.string.module_enable_title, "RPGM"),
+                    getString(R.string.module_enable_message, "RPGM"),
+                    getString(R.string.module_enable),
                     () -> {
                         LauncherModuleBridge.setRpgMakerModuleEnabled(this, true);
                         rpgmModuleEnabled = true;
                         applyModuleIconTint(binding.moduleRpgmIcon, rpgmModuleInstalled, rpgmModuleEnabled);
                         updateModuleDescription(binding.moduleRpgmDescription, rpgmModuleInstalled, rpgmModuleEnabled,
-                                "提供 RPGM 游戏所需环境");
+                                R.string.module_rpgm_detail);
                     });
         }
     }
@@ -268,28 +269,28 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         if (renpyModuleEnabled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "禁用 RenPy 模块",
-                    "禁用后该模块将无法用于启动 RenPy 游戏。是否禁用？",
-                    "禁用",
+                    getString(R.string.module_disable_title, "RenPy"),
+                    getString(R.string.module_disable_message, "RenPy"),
+                    getString(R.string.module_disable),
                     () -> {
                         LauncherModuleBridge.setRenPyModuleEnabled(this, false);
                         renpyModuleEnabled = false;
                         applyModuleIconTint(binding.moduleRenpyIcon, renpyModuleInstalled, renpyModuleEnabled);
                         updateModuleDescription(binding.moduleRenpyDescription, renpyModuleInstalled, renpyModuleEnabled,
-                                "提供 RenPy 游戏所需环境");
+                                R.string.module_renpy_detail);
                     });
         } else {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "启用 RenPy 模块",
-                    "启用后该模块可用于启动 RenPy 游戏。是否启用？",
-                    "启用",
+                    getString(R.string.module_enable_title, "RenPy"),
+                    getString(R.string.module_enable_message, "RenPy"),
+                    getString(R.string.module_enable),
                     () -> {
                         LauncherModuleBridge.setRenPyModuleEnabled(this, true);
                         renpyModuleEnabled = true;
                         applyModuleIconTint(binding.moduleRenpyIcon, renpyModuleInstalled, renpyModuleEnabled);
                         updateModuleDescription(binding.moduleRenpyDescription, renpyModuleInstalled, renpyModuleEnabled,
-                                "提供 RenPy 游戏所需环境");
+                                R.string.module_renpy_detail);
                     });
         }
     }
@@ -302,28 +303,28 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         if (godotModuleEnabled) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "禁用 Godot 模块",
-                    "禁用后该模块将无法用于启动 Godot 游戏。是否禁用？",
-                    "禁用",
+                    getString(R.string.module_disable_title, "Godot"),
+                    getString(R.string.module_disable_message, "Godot"),
+                    getString(R.string.module_disable),
                     () -> {
                         LauncherModuleBridge.setGodotModuleEnabled(this, false);
                         godotModuleEnabled = false;
                         applyModuleIconTint(binding.moduleGodotIcon, godotModuleInstalled, godotModuleEnabled);
                         updateModuleDescription(binding.moduleGodotDescription, godotModuleInstalled, godotModuleEnabled,
-                                "提供 Godot 游戏所需环境");
+                                R.string.module_godot_detail);
                     });
         } else {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    "启用 Godot 模块",
-                    "启用后该模块可用于启动 Godot 游戏。是否启用？",
-                    "启用",
+                    getString(R.string.module_enable_title, "Godot"),
+                    getString(R.string.module_enable_message, "Godot"),
+                    getString(R.string.module_enable),
                     () -> {
                         LauncherModuleBridge.setGodotModuleEnabled(this, true);
                         godotModuleEnabled = true;
                         applyModuleIconTint(binding.moduleGodotIcon, godotModuleInstalled, godotModuleEnabled);
                         updateModuleDescription(binding.moduleGodotDescription, godotModuleInstalled, godotModuleEnabled,
-                                "提供 Godot 游戏所需环境");
+                                R.string.module_godot_detail);
                     });
         }
     }
@@ -348,7 +349,9 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
             browserIntent.addCategory(Intent.CATEGORY_BROWSABLE);
             startActivity(browserIntent);
         } catch (Throwable ignored) {
-            LauncherDialogFactory.showInfo(this, "无法打开浏览器", "请稍后重试。");
+            LauncherDialogFactory.showInfo(this,
+                    getString(R.string.module_cannot_open_browser),
+                    getString(R.string.module_try_again_later));
         }
     }
 

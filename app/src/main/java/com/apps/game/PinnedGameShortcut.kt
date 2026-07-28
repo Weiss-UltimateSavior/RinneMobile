@@ -31,15 +31,16 @@ object PinnedGameShortcut {
     fun requestPinShortcut(context: Context, game: Game?) {
         if (game == null || game.id <= 0L) return
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            Toast.makeText(context, "当前 Android 版本不支持添加桌面快捷方式", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.game_shortcut_android_unsupported, Toast.LENGTH_SHORT).show()
             return
         }
         val manager = context.getSystemService(ShortcutManager::class.java)
         if (manager == null || !manager.isRequestPinShortcutSupported) {
-            Toast.makeText(context, "当前桌面不支持添加快捷方式", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.game_shortcut_launcher_unsupported, Toast.LENGTH_SHORT).show()
             return
         }
-        val title = game.title?.trim().takeUnless { it.isNullOrEmpty() } ?: "未命名游戏"
+        val title = game.title?.trim().takeUnless { it.isNullOrEmpty() }
+            ?: context.getString(R.string.game_unnamed)
         val intent = Intent(context, LauncherActivity::class.java)
             .setAction(LauncherActivity.ACTION_LAUNCH_PINNED_GAME)
             .putExtra(LauncherActivity.EXTRA_PINNED_GAME_ID, game.id)
@@ -51,7 +52,7 @@ object PinnedGameShortcut {
             .setIcon(shortcutIcon(context, game))
             .build()
         manager.requestPinShortcut(shortcut, null)
-        Toast.makeText(context, "请在系统弹窗中确认添加到桌面", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.game_shortcut_confirm_system, Toast.LENGTH_SHORT).show()
     }
 
     /** Resolves the current game by id before delegating to the shared launch bridge. */
@@ -67,14 +68,16 @@ object PinnedGameShortcut {
     @JvmStatic
     fun launchPinnedGame(context: Context, gameId: Long, sessionController: GameSessionController?, callback: LaunchCallback?) {
         if (gameId <= 0L) {
-            callback?.onResult(LauncherGameLaunchBridge.LaunchResult.failure("游戏快捷方式无效"))
+            callback?.onResult(LauncherGameLaunchBridge.LaunchResult.failure(
+                context.getString(R.string.game_shortcut_invalid)))
             return
         }
         val appContext = context.applicationContext
         AppExecutors.runOnIo {
             val game = GameRepository(appContext).findById(gameId)
             if (game == null) {
-                val result = LauncherGameLaunchBridge.LaunchResult.failure("游戏不存在")
+                val result = LauncherGameLaunchBridge.LaunchResult.failure(
+                    context.getString(R.string.game_not_found))
                 RxMainScheduler.post { callback?.onResult(result) }
                 return@runOnIo
             }

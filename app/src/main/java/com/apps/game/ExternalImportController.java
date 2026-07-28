@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
+import com.core.R;
 import com.core.importer.ImportGameData;
 import com.core.importer.ImportResult;
 import com.core.importer.ImporterService;
@@ -73,11 +74,11 @@ public final class ExternalImportController {
         root.setPadding(host.dp(22), host.dp(20), host.dp(22), host.dp(16));
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
-        root.addView(host.createDialogTitle("跨端同步"),
+        root.addView(host.createDialogTitle(host.getString(R.string.game_import_cross_platform)),
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView info = new TextView(host.requireContext());
-        info.setText("选择数据来源平台，导入后仅保留元数据与游玩记录");
+        info.setText(R.string.game_import_source_message);
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
         host.setResponsiveTextSize(info, 12);
@@ -89,7 +90,7 @@ public final class ExternalImportController {
                 playniteLauncher.launch(new String[]{"application/json", "text/*", "*/*"}));
         host.addFeedbackOption(root, "PotatoVN（ZIP）", dialog, () ->
                 potatovnLauncher.launch(new String[]{"application/zip", "application/*zip*", "*/*"}));
-        host.addFeedbackOption(root, "Vnite（目录）", dialog, () ->
+        host.addFeedbackOption(root, host.getString(R.string.game_import_vnite_directory), dialog, () ->
                 vniteLauncher.launch(null));
         host.addFeedbackOption(root, "LunaBox（ZIP）", dialog, () ->
                 lunaboxLauncher.launch(new String[]{"application/zip", "application/*zip*", "*/*"}));
@@ -129,7 +130,7 @@ public final class ExternalImportController {
 
     private void parseAndPreview(android.content.Context appContext, ParseTask task) {
         host.setImportInProgress(true);
-        showImportLoading("正在解析数据...");
+        showImportLoading(host.getString(R.string.game_import_parsing));
         AppExecutors.runOnSingle(() -> {
             try {
                 List<ImportGameData> games = task.parse();
@@ -148,9 +149,10 @@ public final class ExternalImportController {
                     if (!host.isAdded()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
-                    host.showConfirmDialog("解析失败",
-                            e.getMessage() != null ? e.getMessage() : "未知错误",
-                            "知道了", () -> {});
+                    host.showConfirmDialog(host.getString(R.string.game_import_parse_failed),
+                            e.getMessage() != null ? e.getMessage()
+                                    : host.getString(R.string.game_common_unknown_error),
+                            host.getString(R.string.game_common_got_it), () -> {});
                 });
             }
         });
@@ -158,7 +160,8 @@ public final class ExternalImportController {
 
     private void showImportLoading(String hint) {
         dismissImportLoading();
-        importLoadingDialog = host.showScanLoadingDialog("正在导入...", hint);
+        importLoadingDialog = host.showScanLoadingDialog(
+                host.getString(R.string.game_import_importing), hint);
         importLoadingDialog.setCancelable(false);
         importLoadingDialog.setCanceledOnTouchOutside(false);
     }
@@ -173,7 +176,9 @@ public final class ExternalImportController {
     private void showImportPreviewDialog(List<ImportGameData> games) {
         if (games == null || games.isEmpty()) {
             host.setImportInProgress(false);
-            host.showConfirmDialog("无可导入项", "未在所选数据中找到可导入的游戏", "知道了", () -> {});
+            host.showConfirmDialog(host.getString(R.string.game_import_none_title),
+                    host.getString(R.string.game_import_none_message),
+                    host.getString(R.string.game_common_got_it), () -> {});
             return;
         }
 
@@ -196,13 +201,13 @@ public final class ExternalImportController {
         root.setPadding(host.dp(22), host.dp(18), host.dp(22), host.dp(15));
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
-        root.addView(host.createDialogTitle("导入预览"),
+        root.addView(host.createDialogTitle(host.getString(R.string.game_import_preview)),
                 new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         int totalCount = games.size();
         long existCount = games.stream().filter(g -> g.exists).count();
         TextView info = new TextView(host.requireContext());
-        info.setText("共 " + totalCount + " 个，已存在 " + existCount + " 个");
+        info.setText(host.getString(R.string.game_import_preview_count, totalCount, existCount));
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
         host.setResponsiveTextSize(info, 12);
@@ -234,7 +239,7 @@ public final class ExternalImportController {
         buttonsLp.setMargins(0, host.dp(12), 0, 0);
 
         TextView toggleAll = new TextView(host.requireContext());
-        toggleAll.setText("全选");
+        toggleAll.setText(R.string.game_import_select_all);
         toggleAll.setGravity(android.view.Gravity.CENTER);
         host.setResponsiveTextSize(toggleAll, 13);
         toggleAll.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -254,7 +259,7 @@ public final class ExternalImportController {
         buttons.addView(toggleAll, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         TextView importBtn = new TextView(host.requireContext());
-        importBtn.setText("导入");
+        importBtn.setText(R.string.game_common_import);
         importBtn.setGravity(android.view.Gravity.CENTER);
         host.setResponsiveTextSize(importBtn, 13);
         importBtn.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -271,7 +276,7 @@ public final class ExternalImportController {
         buttons.addView(importBtn, importLp);
 
         TextView cancel = new TextView(host.requireContext());
-        cancel.setText("取消");
+        cancel.setText(R.string.game_common_cancel);
         cancel.setGravity(android.view.Gravity.CENTER);
         host.setResponsiveTextSize(cancel, 13);
         cancel.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -324,16 +329,20 @@ public final class ExternalImportController {
         TextView status = new TextView(host.requireContext());
         StringBuilder statusText = new StringBuilder();
         if (g.exists) {
-            statusText.append("已存在 - 跳过");
+            statusText.append(host.getString(R.string.game_import_exists_skip));
         } else {
-            statusText.append("新游戏");
-            if (g.totalPlayTime > 0) statusText.append(" · 时长 ").append(formatSeconds(g.totalPlayTime));
+            statusText.append(host.getString(R.string.game_import_new_game));
+            if (g.totalPlayTime > 0) statusText.append(
+                    host.getString(R.string.game_import_duration, formatSeconds(g.totalPlayTime)));
             if (g.lunaBoxSessions != null && !g.lunaBoxSessions.isEmpty()) {
-                statusText.append(" · 记录 ").append(g.lunaBoxSessions.size());
+                statusText.append(host.getString(
+                        R.string.game_import_records, g.lunaBoxSessions.size()));
             } else if (g.vniteTimers != null && !g.vniteTimers.isEmpty()) {
-                statusText.append(" · 记录 ").append(g.vniteTimers.size());
+                statusText.append(host.getString(
+                        R.string.game_import_records, g.vniteTimers.size()));
             } else if (g.playedTimeMap != null && !g.playedTimeMap.isEmpty()) {
-                statusText.append(" · 记录 ").append(g.playedTimeMap.size());
+                statusText.append(host.getString(
+                        R.string.game_import_records, g.playedTimeMap.size()));
             }
         }
         status.setText(statusText.toString());
@@ -350,18 +359,20 @@ public final class ExternalImportController {
         return row;
     }
 
-    private static String formatSeconds(long seconds) {
-        if (seconds <= 0) return "0分钟";
+    private String formatSeconds(long seconds) {
+        if (seconds <= 0) return host.getString(R.string.game_duration_minutes, 0);
         long minutes = seconds / 60;
-        if (minutes < 60) return minutes + "分钟";
+        if (minutes < 60) return host.getString(R.string.game_duration_minutes, minutes);
         long hours = minutes / 60;
         long remainMinutes = minutes % 60;
-        return hours + "小时" + (remainMinutes > 0 ? remainMinutes + "分" : "");
+        return host.getString(R.string.game_duration_hours_minutes, hours,
+                remainMinutes > 0
+                        ? host.getString(R.string.game_duration_remaining_minutes, remainMinutes) : "");
     }
 
     private void executeExternalImport(List<ImportGameData> games) {
         android.content.Context appContext = host.getAppContext();
-        showImportLoading("正在写入游戏库...");
+        showImportLoading(host.getString(R.string.game_import_writing));
         AppExecutors.runOnSingle(() -> {
             try {
                 ImportResult result = new ImporterService(appContext).importSelected(games);
@@ -380,9 +391,10 @@ public final class ExternalImportController {
                     if (!host.isAdded()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
-                    host.showConfirmDialog("导入失败",
-                            e.getMessage() != null ? e.getMessage() : "未知错误",
-                            "知道了", () -> {});
+                    host.showConfirmDialog(host.getString(R.string.game_import_failed),
+                            e.getMessage() != null ? e.getMessage()
+                                    : host.getString(R.string.game_common_unknown_error),
+                            host.getString(R.string.game_common_got_it), () -> {});
                 });
             }
         });
@@ -390,19 +402,22 @@ public final class ExternalImportController {
 
     private void afterExternalImport(ImportResult result) {
         if (result == null) {
-            host.showConfirmDialog("导入完成", "未执行导入", "知道了", () -> {});
+            host.showConfirmDialog(host.getString(R.string.game_import_complete),
+                    host.getString(R.string.game_import_not_performed),
+                    host.getString(R.string.game_common_got_it), () -> {});
             return;
         }
         StringBuilder msg = new StringBuilder(result.summary());
         if (!result.skippedNames.isEmpty()) {
-            msg.append("\n\n跳过项：");
+            msg.append(host.getString(R.string.game_import_skipped_items));
             for (String n : result.skippedNames) msg.append("\n• ").append(n);
         }
         if (!result.failedNames.isEmpty()) {
-            msg.append("\n\n失败项：");
+            msg.append(host.getString(R.string.game_import_failed_items));
             for (String n : result.failedNames) msg.append("\n• ").append(n);
         }
-        host.showConfirmDialog("导入完成", msg.toString(), "知道了", () -> {});
+        host.showConfirmDialog(host.getString(R.string.game_import_complete), msg.toString(),
+                host.getString(R.string.game_common_got_it), () -> {});
     }
 
     public void cleanup() {

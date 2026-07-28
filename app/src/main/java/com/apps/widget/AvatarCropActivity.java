@@ -70,7 +70,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String inputUriString = intent != null ? intent.getStringExtra(EXTRA_INPUT_URI) : null;
         if (inputUriString == null || inputUriString.trim().isEmpty()) {
-            Toast.makeText(this, "图片加载失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.avatar_load_failed, Toast.LENGTH_SHORT).show();
             setResult(RESULT_CANCELED);
             finish();
             return;
@@ -107,7 +107,7 @@ public class AvatarCropActivity extends AppCompatActivity {
 
         // 顶部标题"裁剪头像"
         final TextView title = new TextView(this);
-        title.setText("裁剪头像");
+        title.setText(R.string.avatar_crop_title);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(textColor);
@@ -120,7 +120,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         // 中部裁剪区域，占据剩余空间
         cropView = new CropView(this, Uri.parse(inputUriString), () -> {
             if (isFinishing() || isDestroyed()) return;
-            Toast.makeText(this, "图片加载失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.avatar_load_failed, Toast.LENGTH_SHORT).show();
             setResult(RESULT_CANCELED);
             finish();
         });
@@ -135,7 +135,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         buttonBar.setPadding(barPad, 0, barPad, 0);
 
         TextView cancelButton = new TextView(this);
-        cancelButton.setText("取消");
+        cancelButton.setText(R.string.core_cancel);
         cancelButton.setGravity(Gravity.CENTER);
         cancelButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
         cancelButton.setTypeface(null, Typeface.BOLD);
@@ -143,7 +143,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         cancelButton.setOnClickListener(v -> finish());
 
         TextView confirm = new TextView(this);
-        confirm.setText("确定");
+        confirm.setText(R.string.core_confirm);
         confirm.setGravity(Gravity.CENTER);
         confirm.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
         confirm.setTypeface(null, Typeface.BOLD);
@@ -184,7 +184,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         if (cropView == null) return;
         Bitmap cropped = cropView.getCroppedBitmap();
         if (cropped == null) {
-            Toast.makeText(this, "图片处理失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.avatar_process_failed, Toast.LENGTH_SHORT).show();
             return;
         }
         saving = true;

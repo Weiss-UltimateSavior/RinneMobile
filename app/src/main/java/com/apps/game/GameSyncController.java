@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.core.R;
 import com.core.launcherbridge.LauncherCoverBridge;
 import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
@@ -84,10 +85,11 @@ public final class GameSyncController {
 
     /** 执行批量同步：遍历所有游戏，依次刷新 VNDB 元数据与封面。 */
     public void performBatchSync() {
-        syncLoadingDialog = dialogFactory.createSyncLoadingDialog(
-                "正在同步数据...", "请不要关闭应用及网络，否则可能导致数据出错");
-
         Context appContext = listener.getAppContext();
+        syncLoadingDialog = dialogFactory.createSyncLoadingDialog(
+                appContext.getString(R.string.game_sync_data_progress),
+                appContext.getString(R.string.game_sync_keep_app_open));
+
         AppExecutors.io().execute(() -> {
             final long syncBatchVersion = System.currentTimeMillis();
             List<Game> syncGames;
@@ -155,7 +157,8 @@ public final class GameSyncController {
                         if (w != null) {
                             TextView progressView = w.getDecorView().findViewWithTag("sync_progress");
                             if (progressView != null) {
-                                progressView.setText(progress + "/" + totalGames + " 已完成");
+                                progressView.setText(appContext.getString(
+                                        R.string.game_sync_progress, progress, totalGames));
                             }
                         }
                     }
@@ -205,11 +208,13 @@ public final class GameSyncController {
     /** 重新匹配单个游戏的 VNDB 元数据。 */
     public void rematchMetadata(Game game) {
         Context appContext = listener.getAppContext();
-        Toast.makeText(appContext, "正在搜索 VNDB...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(appContext, R.string.game_vndb_searching, Toast.LENGTH_SHORT).show();
         LauncherMetadataBridge.fetchAndSaveMetadataAsync(appContext, game, success -> {
             mainQueue.post(() -> {
                 if (!listener.isAdded()) return;
-                Toast.makeText(appContext, success ? "元数据已更新" : "未找到匹配的元数据", Toast.LENGTH_SHORT).show();
+                Toast.makeText(appContext, success
+                        ? R.string.game_metadata_updated : R.string.game_metadata_not_found,
+                        Toast.LENGTH_SHORT).show();
                 if (success) listener.reloadSingleGame(game.id);
             });
         });
@@ -218,11 +223,13 @@ public final class GameSyncController {
     /** 同步单个游戏的封面到卡片。 */
     public void syncMetadataToCard(Game game) {
         Context appContext = listener.getAppContext();
-        Toast.makeText(appContext, "正在同步封面...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(appContext, R.string.game_cover_syncing, Toast.LENGTH_SHORT).show();
         LauncherMetadataBridge.syncCoverToGameAsync(appContext, game, success -> {
             mainQueue.post(() -> {
                 if (!listener.isAdded()) return;
-                Toast.makeText(appContext, success ? "封面已同步" : "无可用封面", Toast.LENGTH_SHORT).show();
+                Toast.makeText(appContext, success
+                        ? R.string.game_cover_synced : R.string.game_cover_unavailable,
+                        Toast.LENGTH_SHORT).show();
                 if (success) listener.reloadSingleGame(game.id);
             });
         });

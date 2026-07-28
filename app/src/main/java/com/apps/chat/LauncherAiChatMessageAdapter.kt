@@ -30,14 +30,24 @@ class LauncherAiChatMessageAdapter(
         val message = messages[position]
         val user = message.role == "user"
         val tool = message.role == "tool"
-        val content = if (message.content.trim().isEmpty() && tool) "已使用工具：${message.name}" else message.content
+        val content = if (message.content.trim().isEmpty() && tool) {
+            holder.content.context.getString(R.string.social_tool_used, message.name)
+        } else {
+            message.content
+        }
         holder.content.text = content
         (holder.bubble.layoutParams as FrameLayout.LayoutParams).apply {
             gravity = if (user) Gravity.END else Gravity.START
             holder.bubble.layoutParams = this
         }
         holder.bubble.background = LauncherTheme.chatBubble(holder.bubble.context, user)
-        holder.author.text = if (user) "我" else if (tool) "工具 · ${message.name}" else assistantName
+        holder.author.text = if (user) {
+            holder.author.context.getString(R.string.social_me)
+        } else if (tool) {
+            holder.author.context.getString(R.string.social_tool_author, message.name)
+        } else {
+            assistantName
+        }
         holder.time.visibility = View.GONE
         holder.pinned.visibility = View.GONE
         val contentColor = if (user) LauncherTheme.onPrimary(holder.bubble.context) else LauncherTheme.text(holder.bubble.context)

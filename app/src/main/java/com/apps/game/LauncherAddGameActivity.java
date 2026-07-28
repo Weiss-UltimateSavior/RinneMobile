@@ -73,8 +73,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private ActivityLauncherAddGameBinding binding;
     private String launchTargetName = "";
     private EngineOption selectedEngineOption;
-    private final EngineOption[] engineOptions = new EngineOption[]{
-            new EngineOption(EngineType.AUTO, "自动识别", null),
+    private EngineOption[] engineOptions;
+
+    private EngineOption[] createEngineOptions() {
+        return new EngineOption[]{
+            new EngineOption(EngineType.AUTO, getString(R.string.game_engine_auto), null),
             new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
             new EngineOption(EngineType.ONS, "ONScripter", null),
             new EngineOption(EngineType.TYRANO, "Tyrano", null),
@@ -86,10 +89,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
-            new EngineOption(EngineType.RPGMAKER, "mkxp-z (Ruby 3.x, 自定义/通用)", "mkxp-z"),
+            new EngineOption(EngineType.RPGMAKER, getString(R.string.game_engine_rpgmaker_mkxp), "mkxp-z"),
             new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
-            new EngineOption(EngineType.GODOT, "Godot (自动检测 3/4)", "godot4")
-    };
+            new EngineOption(EngineType.GODOT, getString(R.string.game_engine_godot_auto), "godot4")
+        };
+    }
     private Uri gameDirUri;
     private Uri coverUri;
     private String lastEngineDefaultPackage = "";
@@ -103,7 +107,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             (requestCode, grantResult) -> {
                 if (requestCode != SHIZUKU_GAMEHUB_PERMISSION_REQUEST) return;
                 if (grantResult == PackageManager.PERMISSION_GRANTED) importGameHubShortcutFromShizuku();
-                else Toast.makeText(this, "未获得 Shizuku 授权，仍可手动填写 localGameId", Toast.LENGTH_LONG).show();
+                else Toast.makeText(this, R.string.game_shizuku_manual_id, Toast.LENGTH_LONG).show();
             };
 
     private final ActivityResultLauncher<Uri> directoryPicker =
@@ -114,7 +118,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 binding.addGameDirText.setText(displayUri(uri));
                 fillTitleFromDirIfEmpty(uri);
                 launchTargetName = "";
-                binding.addGameLaunchTargetInput.setText("点击选择启动文件");
+                binding.addGameLaunchTargetInput.setText(R.string.game_launch_file_select);
             });
 
     private final ActivityResultLauncher<String[]> coverPicker =
@@ -132,6 +136,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         configureEdgeToEdgeWindow();
         binding = ActivityLauncherAddGameBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        engineOptions = createEngineOptions();
         LauncherTabletPortraitScaler.applyActivityContent(this);
 
         bindViews();
@@ -213,7 +218,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             for (int i = 0; i < engineOptions.length; i++) {
                 if (engineOptions[i] == selectedEngineOption) { checked = i; break; }
             }
-            com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "选择游戏引擎",
+            com.apps.theme.LauncherDialogFactory.showSingleChoice(this, getString(R.string.game_select_engine_title),
                     labels, checked, index -> {
                         applyEngineSelection(index);
                     });
@@ -262,21 +267,21 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void importGameHubShortcutFromShizuku() {
         if (selectedEngine() != EngineType.GAMEHUB) {
-            Toast.makeText(this, "请先将游戏引擎设为 GameHub", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.game_select_gamehub_first, Toast.LENGTH_SHORT).show();
             return;
         }
         if (!LauncherGameHubShortcutBridge.isShizukuRunning()) {
-            Toast.makeText(this, "请先启动 Shizuku，再授权读取盖世快捷方式", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.game_shizuku_start_first, Toast.LENGTH_LONG).show();
             return;
         }
         if (!LauncherGameHubShortcutBridge.hasShizukuPermission()) {
             try { LauncherGameHubShortcutBridge.requestShizukuPermission(SHIZUKU_GAMEHUB_PERMISSION_REQUEST); }
-            catch (Throwable error) { Toast.makeText(this, "无法请求 Shizuku 授权", Toast.LENGTH_LONG).show(); }
+            catch (Throwable error) { Toast.makeText(this, R.string.game_shizuku_request_failed, Toast.LENGTH_LONG).show(); }
             return;
         }
         binding.addGameImportGameHubShortcut.setEnabled(false);
         binding.addGameImportGameHubShortcut.setAlpha(0.45f);
-        binding.addGameImportGameHubShortcut.setContentDescription("正在读取 GameHub 快捷方式");
+        binding.addGameImportGameHubShortcut.setContentDescription(getString(R.string.game_gamehub_reading_shortcuts));
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try { items = LauncherGameHubShortcutBridge.loadShortcuts(); }
@@ -285,15 +290,15 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 binding.addGameImportGameHubShortcut.setEnabled(true);
                 binding.addGameImportGameHubShortcut.setAlpha(1f);
-                binding.addGameImportGameHubShortcut.setContentDescription("导入 GameHub 快捷方式");
+                binding.addGameImportGameHubShortcut.setContentDescription(getString(R.string.game_gamehub_import_shortcut));
                 if (isFinishing()) return;
                 if (shortcuts.isEmpty()) {
-                    Toast.makeText(this, "未读取到快捷方式；请确认盖世已创建桌面快捷方式", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.game_gamehub_no_shortcuts, Toast.LENGTH_LONG).show();
                     return;
                 }
                 CharSequence[] labels = new CharSequence[shortcuts.size()];
                 for (int i = 0; i < shortcuts.size(); i++) labels[i] = shortcuts.get(i).displayLabel + "\n" + shortcuts.get(i).localGameId;
-                com.apps.theme.LauncherDialogFactory.showActionChoices(this, "选择盖世快捷方式",
+                com.apps.theme.LauncherDialogFactory.showActionChoices(this, getString(R.string.game_gamehub_choose_shortcut),
                         labels, which -> applyGameHubShortcut(shortcuts.get(which)));
             });
         });
@@ -317,16 +322,16 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private void saveGame() {
         String title = textOf(binding.addGameNameInput);
         if (title.isEmpty()) {
-            Toast.makeText(this, "请填写游戏名称", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.game_name_required, Toast.LENGTH_SHORT).show();
             return;
         }
         if (gameDirUri == null) {
-            Toast.makeText(this, "请选择游戏目录", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.game_directory_required, Toast.LENGTH_SHORT).show();
             return;
         }
 
         binding.addGameSave.setEnabled(false);
-        binding.addGameSave.setText("保存中...");
+        binding.addGameSave.setText(R.string.game_common_saving);
 
         android.content.Context appContext = getApplicationContext();
         EngineType selectedEngine = selectedEngine();
@@ -396,18 +401,18 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             }
             runOnUiThread(() -> {
                 binding.addGameSave.setEnabled(true);
-                binding.addGameSave.setText("保存");
+                binding.addGameSave.setText(R.string.game_common_save);
                 if (id > 0) {
                     if (directoryPermissionDegraded) {
                         // 游戏目录 SAF 持久化授权降级为只读或彻底失败，提示用户可能无法写入存档
-                        Toast.makeText(this, "游戏已添加，但目录授权受限，可能无法写入存档", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, R.string.game_added_limited_access, Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, "游戏已添加", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.game_added, Toast.LENGTH_SHORT).show();
                     }
                     setResult(RESULT_OK);
                     finish();
                 } else {
-                    Toast.makeText(this, "保存失败：该目录可能已经在游戏库中", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.game_save_duplicate_failed, Toast.LENGTH_LONG).show();
                 }
             });
         });

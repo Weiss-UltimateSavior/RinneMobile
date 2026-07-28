@@ -36,7 +36,7 @@ public final class LauncherCustomVndbSearchDialog {
         final String[] selectedSource = {MetadataController.SOURCE_VNDB};
         Dialog dialog = createDialog(fragment);
         LinearLayout root = createRoot(fragment);
-        TextView titleView = title(fragment, sourceSearchTitle(selectedSource[0]));
+        TextView titleView = title(fragment, sourceSearchTitle(fragment, selectedSource[0]));
         root.addView(titleView);
 
         // 数据源选择器
@@ -44,7 +44,11 @@ public final class LauncherCustomVndbSearchDialog {
         sourceRow.setOrientation(LinearLayout.HORIZONTAL);
         sourceRow.setWeightSum(3f);
         String[] sources = {MetadataController.SOURCE_VNDB, MetadataController.SOURCE_BANGUMI, MetadataController.SOURCE_BANGUMI_MIRROR};
-        String[] sourceLabels = {"VNDB", "Bangumi", "Bangumi镜像"};
+        String[] sourceLabels = {
+                "VNDB",
+                "Bangumi",
+                fragment.getString(R.string.settings_bangumi_mirror)
+        };
         TextView[] sourceChips = new TextView[3];
         for (int i = 0; i < 3; i++) {
             final int idx = i;
@@ -57,7 +61,7 @@ public final class LauncherCustomVndbSearchDialog {
             LauncherTheme.chip(chip, sources[i].equals(selectedSource[0]));
             chip.setOnClickListener(v -> {
                 selectedSource[0] = sources[idx];
-                titleView.setText(sourceSearchTitle(selectedSource[0]));
+                titleView.setText(sourceSearchTitle(fragment, selectedSource[0]));
                 for (int j = 0; j < 3; j++) LauncherTheme.chip(sourceChips[j], j == idx);
             });
             LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -70,13 +74,15 @@ public final class LauncherCustomVndbSearchDialog {
         sourceRowParams.setMargins(0, dp(fragment, 13), 0, 0);
         root.addView(sourceRow, sourceRowParams);
 
-        TextView info = info(fragment, "使用自定义关键词搜索，并从候选结果中选择要绑定的元数据。");
+        TextView info = info(fragment,
+                fragment.getString(R.string.settings_custom_search_summary));
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoParams.setMargins(0, dp(fragment, 13), 0, 0);
         root.addView(info, infoParams);
 
-        TextView label = label(fragment, "搜索关键词");
+        TextView label = label(fragment,
+                fragment.getString(R.string.settings_search_keywords));
         LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         labelParams.setMargins(0, dp(fragment, 13), 0, 0);
@@ -86,7 +92,7 @@ public final class LauncherCustomVndbSearchDialog {
         input.setSingleLine(true);
         input.setText(safe(game.title));
         input.setSelectAllOnFocus(true);
-        input.setHint("输入搜索关键词或原名");
+        input.setHint(R.string.settings_search_keywords_hint);
         input.setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_text_color));
         input.setHintTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_input_hint_color));
         input.setTextSize(13);
@@ -98,7 +104,8 @@ public final class LauncherCustomVndbSearchDialog {
         inputParams.setMargins(0, dp(fragment, 5), 0, 0);
         root.addView(input, inputParams);
 
-        TextView hint = hint(fragment, "默认填入当前游戏标题，可改成原名、别名或关键词");
+        TextView hint = hint(fragment,
+                fragment.getString(R.string.settings_search_keywords_description));
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         hintParams.setMargins(0, dp(fragment, 7), 0, 0);
@@ -112,35 +119,42 @@ public final class LauncherCustomVndbSearchDialog {
         btnRowParams.setMargins(0, dp(fragment, 13), 0, 0);
         btnRow.setLayoutParams(btnRowParams);
 
-        TextView cancel = button(fragment, "取消", false);
+        TextView cancel = button(fragment,
+                fragment.getString(R.string.settings_cancel), false);
         LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dp(fragment, 38), 1f);
         cancelParams.setMargins(0, 0, dp(fragment, 5), 0);
         cancel.setLayoutParams(cancelParams);
         cancel.setOnClickListener(view -> dialog.dismiss());
         btnRow.addView(cancel);
 
-        TextView search = button(fragment, "搜索", true);
+        TextView search = button(fragment,
+                fragment.getString(R.string.settings_search), true);
         LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, dp(fragment, 38), 1f);
         searchParams.setMargins(dp(fragment, 5), 0, 0, 0);
         search.setLayoutParams(searchParams);
         search.setOnClickListener(view -> {
             String keyword = input.getText() == null ? "" : input.getText().toString().trim();
             if (keyword.isEmpty()) {
-                Toast.makeText(fragment.requireContext(), "请输入搜索关键词", Toast.LENGTH_SHORT).show();
+                Toast.makeText(fragment.requireContext(),
+                        R.string.settings_enter_search_keywords, Toast.LENGTH_SHORT).show();
                 return;
             }
             search.setEnabled(false);
-            search.setText("正在搜索...");
+            search.setText(R.string.settings_searching);
             String src = selectedSource[0];
             LauncherMetadataBridge.CandidatesCallback cb = (candidates, error) -> {
                 if (!fragment.isAdded()) return;
                 dialog.dismiss();
                 if (error != null) {
-                    Toast.makeText(fragment.requireContext(), sourceLabel(src) + " 搜索失败：" + error, Toast.LENGTH_LONG).show();
+                    Toast.makeText(fragment.requireContext(),
+                            fragment.getString(R.string.settings_source_search_failed,
+                                    sourceLabel(fragment, src), error), Toast.LENGTH_LONG).show();
                     return;
                 }
                 if (candidates == null || candidates.isEmpty()) {
-                    Toast.makeText(fragment.requireContext(), "没有匹配到" + sourceLabel(src) + "结果", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(fragment.requireContext(),
+                            fragment.getString(R.string.settings_no_source_results,
+                                    sourceLabel(fragment, src)), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 showCandidates(fragment, game, candidates, onSaved, src);
@@ -157,24 +171,29 @@ public final class LauncherCustomVndbSearchDialog {
         focusAndShowKeyboard(dialog, input, fragment);
     }
 
-    private static String sourceLabel(String source) {
+    private static String sourceLabel(Fragment fragment, String source) {
         if (MetadataController.SOURCE_BANGUMI.equals(source)) return "Bangumi";
-        if (MetadataController.SOURCE_BANGUMI_MIRROR.equals(source)) return "Bangumi镜像";
+        if (MetadataController.SOURCE_BANGUMI_MIRROR.equals(source)) {
+            return fragment.getString(R.string.settings_bangumi_mirror);
+        }
         return "VNDB";
     }
 
-    private static String sourceSearchTitle(String source) {
-        return "自定义搜索 " + sourceLabel(source);
+    private static String sourceSearchTitle(Fragment fragment, String source) {
+        return fragment.getString(R.string.settings_custom_search_title,
+                sourceLabel(fragment, source));
     }
 
     private static void showCandidates(Fragment fragment, Game game, List<VnMetadata> candidates,
                                        Runnable onSaved, String source) {
-        String label = sourceLabel(source);
+        String label = sourceLabel(fragment, source);
         Dialog dialog = createDialog(fragment);
         LinearLayout root = createRoot(fragment);
-        root.addView(title(fragment, "选择 " + label + " 匹配结果"));
+        root.addView(title(fragment,
+                fragment.getString(R.string.settings_choose_source_result, label)));
 
-        TextView info = info(fragment, "点选一个候选项后会保存 " + label + " 元数据绑定。封面同步仍使用更多选项里的同步功能。");
+        TextView info = info(fragment,
+                fragment.getString(R.string.settings_choose_source_result_summary, label));
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoParams.setMargins(0, dp(fragment, 13), 0, 0);
@@ -185,9 +204,11 @@ public final class LauncherCustomVndbSearchDialog {
         for (VnMetadata metadata : candidates) {
             if (metadata == null) continue;
             TextView row = new TextView(fragment.requireContext());
-            String displayTitle = first(metadata.chineseTitle, metadata.romanTitle, "未命名");
+            String displayTitle = first(metadata.chineseTitle, metadata.romanTitle,
+                    fragment.getString(R.string.settings_unnamed));
             String original = first(metadata.originalTitle, metadata.id, "");
-            String developer = first(metadata.developer, label + " 候选");
+            String developer = first(metadata.developer,
+                    fragment.getString(R.string.settings_source_candidate, label));
             row.setText(displayTitle + "\n" + original + "\n" + developer);
             row.setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_text_color));
             row.setTextSize(12);
@@ -200,7 +221,11 @@ public final class LauncherCustomVndbSearchDialog {
                     if (!fragment.isAdded()) return;
                     dialog.dismiss();
                     Toast.makeText(fragment.requireContext(),
-                            success ? label + " 元数据已绑定" : label + " 元数据保存失败", Toast.LENGTH_SHORT).show();
+                            fragment.getString(success
+                                            ? R.string.settings_metadata_bound
+                                            : R.string.settings_metadata_save_failed,
+                                    label),
+                            Toast.LENGTH_SHORT).show();
                     if (success && onSaved != null) onSaved.run();
                 };
                 if (MetadataController.SOURCE_VNDB.equals(source)) {
@@ -222,7 +247,8 @@ public final class LauncherCustomVndbSearchDialog {
         scrollParams.setMargins(0, dp(fragment, 4), 0, 0);
         root.addView(scroll, scrollParams);
 
-        TextView cancel = button(fragment, "取消", false);
+        TextView cancel = button(fragment,
+                fragment.getString(R.string.settings_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
         LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(fragment, 38));

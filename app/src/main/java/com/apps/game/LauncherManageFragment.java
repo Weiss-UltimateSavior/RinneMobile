@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.core.R;
 import com.core.databinding.FragmentLauncherManageBinding;
 import com.core.util.RxMainQueue;
 
@@ -249,7 +250,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
     @Override
     public TextView createDialogCancelButton(AlertDialog dialog) {
         TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
+        cancel.setText(R.string.game_common_cancel);
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
         setResponsiveTextSize(cancel, 13);

@@ -842,7 +842,7 @@ class GameRepository(context: Context) {
         v.put("cover_persist_uri", g.coverPersistUri)
         v.put("cover_source_type", g.coverSourceType)
         v.put("emulator_package", g.emulatorPackage)
-        v.put("launch_target", g.launchTarget?.takeIf { it.isNotEmpty() } ?: "[游戏目录]")
+        v.put("launch_target", normalizeLaunchTarget(g.launchTarget))
         v.put("winlator_launch_mode", normalizeWinlatorLaunchMode(g.winlatorLaunchMode))
         v.put("description", g.description)
         v.put("tags", g.tags)
@@ -872,8 +872,7 @@ class GameRepository(context: Context) {
         g.coverPersistUri = getStringOrNull(c, "cover_persist_uri")
         g.coverSourceType = getIntOrDefault(c, "cover_source_type", 0)
         g.emulatorPackage = c.getString(c.getColumnIndexOrThrow("emulator_package"))
-        g.launchTarget = getStringOrNull(c, "launch_target")
-        if (g.launchTarget.isNullOrEmpty()) g.launchTarget = "[游戏目录]"
+        g.launchTarget = normalizeLaunchTarget(getStringOrNull(c, "launch_target"))
         g.winlatorLaunchMode = normalizeWinlatorLaunchMode(getStringOrNull(c, "winlator_launch_mode"))
         g.description = c.getString(c.getColumnIndexOrThrow("description"))
         g.tags = c.getString(c.getColumnIndexOrThrow("tags"))
@@ -891,6 +890,25 @@ class GameRepository(context: Context) {
         g.favorite = favoriteIndex >= 0 && !c.isNull(favoriteIndex) && c.getInt(favoriteIndex) == 1
         g.passwordLock = getStringOrNull(c, "password_lock")
         return g
+    }
+
+    /**
+     * launch_target is persisted protocol data. A previous localization pass briefly wrote the
+     * translated directory label into this column, so normalize those values on every read/write.
+     */
+    private fun normalizeLaunchTarget(target: String?): String {
+        val value = target?.trim().orEmpty()
+        if (value.isEmpty()
+            || value.equals("DIR", ignoreCase = true)
+            || value == "[游戏目录]"
+            || value == "[Game folder]"
+            || value == "[Game directory]"
+            || value == "[ゲームフォルダー]"
+            || value == "[ゲームディレクトリ]"
+        ) {
+            return "[游戏目录]"
+        }
+        return target ?: "[游戏目录]"
     }
 
     private fun getStringOrNull(c: Cursor, column: String): String? {

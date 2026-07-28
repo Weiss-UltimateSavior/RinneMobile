@@ -3,6 +3,7 @@ package com.akira.tyranoemu.remote;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.Locale;
 import bridge.NativeBridge;
+import com.core.engine.R;
 import org.tvp.kirikiri2.KR2Activity;
 
 /**
@@ -61,6 +63,20 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private boolean pendingMaps;
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        // The bundled KRKR shell only ships its startup scene resources for zh-CN. App-level
+        // locales are also applied to the dedicated :kirikiri2 process, so selecting English or
+        // Japanese made the native shell start without its file-selector form and immediately
+        // exit before startupFrom could receive the game path. Keep this engine-internal locale
+        // independent from the launcher's display language.
+        Locale engineLocale = Locale.SIMPLIFIED_CHINESE;
+        Locale.setDefault(engineLocale);
+        Configuration configuration = new Configuration(newBase.getResources().getConfiguration());
+        configuration.setLocale(engineLocale);
+        super.attachBaseContext(newBase.createConfigurationContext(configuration));
+    }
+
+    @Override
     public void onCreate(Bundle bundle) {
         doSetSystemUiVisibility();
         super.onCreate(bundle);
@@ -88,10 +104,10 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         ProgressBar spinner = new ProgressBar(this);
         spinner.setIndeterminateTintList(ColorStateList.valueOf(primaryColor));
         spinner.getIndeterminateDrawable().setColorFilter(primaryColor, PorterDuff.Mode.SRC_IN);
-        spinner.setContentDescription("游戏加载中");
+        spinner.setContentDescription(uiString(R.string.engine_game_loading));
 
         TextView title = new TextView(this);
-        title.setText("正在启动游戏");
+        title.setText(uiString(R.string.engine_starting_game));
         title.setTextColor(textColor);
         title.setTextSize(16.0f);
         title.setTypeface(null, Typeface.BOLD);
@@ -106,7 +122,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         loadingPanel.addView(spinner, spinnerParams);
 
         TextView hint = new TextView(this);
-        hint.setText("请稍候，正在准备游戏内容");
+        hint.setText(uiString(R.string.engine_preparing_game));
         hint.setTextColor(mutedTextColor);
         hint.setTextSize(11.0f);
         hint.setGravity(Gravity.CENTER);
@@ -209,7 +225,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private synchronized void requestGameLaunch(String path, boolean maps) {
         if (!nativeBridgeInitialized) {
             Log.e(TAG, "skip launch because native bridge was not initialized");
-            showLaunchFailure("KRKR 引擎初始化失败");
+            showLaunchFailure(uiString(R.string.engine_krkr_initialization_failed));
             return;
         }
         pendingGamePath = path;
@@ -247,7 +263,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             Log.e(TAG, "renderer-ready launch failed", t);
         }
         if (!launchSucceeded) {
-            showLaunchFailure("启动失败");
+            showLaunchFailure(uiString(R.string.engine_launch_failed));
         } else if (mask != null) {
             // Keep the KRKR shell hidden until the native update hook reports
             // that doStartup and the menu transition completed. The fallback
@@ -279,7 +295,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             if (destroyed || isFinishing() || mask == null) return;
             if (loadingSpinner != null) loadingSpinner.setVisibility(View.GONE);
             if (maskMessage != null) maskMessage.setText(message);
-            if (maskHint != null) maskHint.setText("请返回后重试");
+            if (maskHint != null) maskHint.setText(uiString(R.string.engine_return_and_retry));
         });
     }
 
@@ -348,6 +364,18 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         return this;
     }
 
+    private String uiString(int resourceId) {
+        String languageTag = getIntent() == null ? null : getIntent().getStringExtra("uiLanguageTag");
+        if (languageTag == null || languageTag.trim().isEmpty()) return getString(resourceId);
+        try {
+            Configuration configuration = new Configuration(getResources().getConfiguration());
+            configuration.setLocale(Locale.forLanguageTag(languageTag));
+            return createConfigurationContext(configuration).getString(resourceId);
+        } catch (Throwable ignored) {
+            return getString(resourceId);
+        }
+    }
+
     private boolean isLauncherDarkMode() {
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("darkMode")) {
@@ -412,7 +440,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         String oldPath = oldIntent.getStringExtra("path");
         String newPath = intent.getStringExtra("path");
         if (newPath != null && !newPath.equals(oldPath)) {
-            Toast.makeText(this, "已有游戏在运行，请先存档并退出游戏后再启动新游戏", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, uiString(R.string.engine_another_game_running), Toast.LENGTH_SHORT).show();
         }
     }
 

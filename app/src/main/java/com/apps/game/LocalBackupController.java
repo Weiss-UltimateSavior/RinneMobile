@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultLauncher;
 
 import org.json.JSONObject;
 
+import com.core.R;
 import com.core.launcherbridge.LauncherSyncBridge;
 import com.core.util.AppExecutors;
 
@@ -31,7 +32,9 @@ public final class LocalBackupController {
     }
 
     public void confirmImportLocalBackup() {
-        host.showConfirmDialog("本地导入", "将从备份文件（.ykbak 或 .json）导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？", "选择文件", () ->
+        host.showConfirmDialog(host.getString(R.string.game_backup_import_title),
+                host.getString(R.string.game_backup_import_message),
+                host.getString(R.string.game_backup_choose_file), () ->
                 backupOpenLauncher.launch(new String[]{"application/octet-stream", "application/json", "text/*", "*/*"}));
     }
 
@@ -49,14 +52,20 @@ public final class LocalBackupController {
                 host.getMainQueue().post(() -> {
                     if (!host.isAdded()) return;
                     host.setImportInProgress(false);
-                    host.showConfirmDialog("导入成功", "游戏 " + gameCount + "，记录 " + sessionCount + "，元数据 " + metaCount, "知道了", () -> {});
+                    host.showConfirmDialog(host.getString(R.string.game_backup_import_success),
+                            host.getString(R.string.game_backup_import_counts,
+                                    gameCount, sessionCount, metaCount),
+                            host.getString(R.string.game_common_got_it), () -> {});
                 });
             } catch (Throwable t) {
                 Log.e("LauncherManage", "import backup failed", t);
                 host.getMainQueue().post(() -> {
                     if (!host.isAdded()) return;
                     host.setImportInProgress(false);
-                    host.showConfirmDialog("导入失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
+                    host.showConfirmDialog(host.getString(R.string.game_import_failed),
+                            t.getMessage() != null ? t.getMessage()
+                                    : host.getString(R.string.game_common_unknown_error),
+                            host.getString(R.string.game_common_got_it), () -> {});
                 });
             }
         });
@@ -66,7 +75,10 @@ public final class LocalBackupController {
         try {
             backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".ykbak");
         } catch (Throwable t) {
-            host.showConfirmDialog("导出失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
+            host.showConfirmDialog(host.getString(R.string.game_save_export_failed),
+                    t.getMessage() != null ? t.getMessage()
+                            : host.getString(R.string.game_common_unknown_error),
+                    host.getString(R.string.game_common_got_it), () -> {});
         }
     }
 
@@ -84,13 +96,19 @@ public final class LocalBackupController {
                 int originalKb = backup.originalSize / 1024;
                 host.getMainQueue().post(() -> {
                     if (!host.isAdded()) return;
-                    host.showConfirmDialog("导出成功", "备份大小：" + compressedKb + "KB（压缩后，原始 " + originalKb + "KB）", "知道了", () -> {});
+                    host.showConfirmDialog(host.getString(R.string.game_backup_export_success),
+                            host.getString(R.string.game_backup_export_size,
+                                    compressedKb, originalKb),
+                            host.getString(R.string.game_common_got_it), () -> {});
                 });
             } catch (Throwable t) {
                 Log.e("LauncherManage", "export backup failed", t);
                 host.getMainQueue().post(() -> {
                     if (!host.isAdded()) return;
-                    host.showConfirmDialog("导出失败", t.getMessage() != null ? t.getMessage() : "未知错误", "知道了", () -> {});
+                    host.showConfirmDialog(host.getString(R.string.game_save_export_failed),
+                            t.getMessage() != null ? t.getMessage()
+                                    : host.getString(R.string.game_common_unknown_error),
+                            host.getString(R.string.game_common_got_it), () -> {});
                 });
             }
         });

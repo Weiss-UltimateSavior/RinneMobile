@@ -22,7 +22,10 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherChatSelectActivity extends AppCompatActivity {
     private ActivityLauncherChatSelectBinding binding;
-    private String selectedChat = "公共聊天室";
+    private static final String CHAT_PUBLIC = "public";
+    private static final String CHAT_YUKI = "yuki";
+    private static final String CHAT_RINNE = "rinne";
+    private String selectedChat = CHAT_PUBLIC;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,9 +63,9 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        binding.publicChatRow.setOnClickListener(view -> selectChat("公共聊天室"));
-        binding.yukiAiRow.setOnClickListener(view -> selectChat("Yuki娘（AI）"));
-        binding.rinmiAiRow.setOnClickListener(view -> selectChat("园神凛弥（AI）"));
+        binding.publicChatRow.setOnClickListener(view -> selectChat(CHAT_PUBLIC));
+        binding.yukiAiRow.setOnClickListener(view -> selectChat(CHAT_YUKI));
+        binding.rinmiAiRow.setOnClickListener(view -> selectChat(CHAT_RINNE));
         binding.chatSelectContinue.setOnClickListener(view -> openSelectedChat());
     }
 
@@ -72,20 +75,20 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
 
     private void openSelectedChat() {
         if (!LauncherAuthBridge.isLoggedIn(this)) {
-            Toast.makeText(this, "请先在个人中心登录后再进入聊天室", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.social_chat_login_required, Toast.LENGTH_LONG).show();
             return;
         }
         Intent intent;
-        if ("Yuki娘（AI）".equals(selectedChat)) {
+        if (CHAT_YUKI.equals(selectedChat)) {
             intent = new Intent(this, LauncherAiChatActivity.class)
                     .putExtra(LauncherAiChatActivity.EXTRA_PERSONA, "persona_yuki")
                     .putExtra(LauncherAiChatActivity.EXTRA_THREAD_ID, "launcher-yuki")
-                    .putExtra(LauncherAiChatActivity.EXTRA_TITLE, "Yuki娘（AI）");
-        } else if ("园神凛弥（AI）".equals(selectedChat)) {
+                    .putExtra(LauncherAiChatActivity.EXTRA_TITLE, getString(R.string.social_yuki_ai));
+        } else if (CHAT_RINNE.equals(selectedChat)) {
             intent = new Intent(this, LauncherAiChatActivity.class)
                     .putExtra(LauncherAiChatActivity.EXTRA_PERSONA, "persona_rinne")
                     .putExtra(LauncherAiChatActivity.EXTRA_THREAD_ID, "launcher-rinne")
-                    .putExtra(LauncherAiChatActivity.EXTRA_TITLE, "园神凛弥（AI）");
+                    .putExtra(LauncherAiChatActivity.EXTRA_TITLE, getString(R.string.social_rinne_ai));
         } else {
             intent = new Intent(this, LauncherPublicChatActivity.class);
         }
@@ -99,9 +102,9 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
     }
 
     private void renderSelection() {
-        boolean publicSelected = "公共聊天室".equals(selectedChat);
-        boolean yukiSelected = "Yuki娘（AI）".equals(selectedChat);
-        boolean rinmiSelected = "园神凛弥（AI）".equals(selectedChat);
+        boolean publicSelected = CHAT_PUBLIC.equals(selectedChat);
+        boolean yukiSelected = CHAT_YUKI.equals(selectedChat);
+        boolean rinmiSelected = CHAT_RINNE.equals(selectedChat);
 
         binding.publicChatRow.setBackgroundResource(publicSelected
                 ? 0

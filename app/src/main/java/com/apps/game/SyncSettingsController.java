@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat;
 
 import com.apps.sync.LauncherSyncCenterActivity;
 import com.apps.theme.LauncherMotion;
+import com.core.R;
 import com.core.launcherbridge.LauncherSyncBridge;
 
 /**
@@ -52,7 +53,7 @@ public final class SyncSettingsController {
         root.setPadding(host.dp(22), host.dp(20), host.dp(22), host.dp(16));
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
-        TextView title = host.createDialogTitle("云端同步");
+        TextView title = host.createDialogTitle(host.getString(R.string.game_sync_cloud));
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView info = new TextView(host.requireContext());
@@ -64,11 +65,13 @@ public final class SyncSettingsController {
         infoLp.setMargins(0, host.dp(11), 0, 0);
         root.addView(info, infoLp);
 
-        host.addFeedbackOption(root, "立即同步", dialog, this::syncNow);
-        host.addFeedbackOption(root, "打开同步中心", dialog, () ->
+        host.addFeedbackOption(root, host.getString(R.string.game_sync_now), dialog, this::syncNow);
+        host.addFeedbackOption(root, host.getString(R.string.game_sync_open_center), dialog, () ->
                 host.startActivity(new Intent(host.requireContext(), LauncherSyncCenterActivity.class)));
-        host.addFeedbackOption(root, "导出本地备份", dialog, backupActions::onExportLocalBackup);
-        host.addFeedbackOption(root, "导入本地备份", dialog, backupActions::onConfirmImportLocalBackup);
+        host.addFeedbackOption(root, host.getString(R.string.game_sync_export_backup),
+                dialog, backupActions::onExportLocalBackup);
+        host.addFeedbackOption(root, host.getString(R.string.game_sync_import_backup),
+                dialog, backupActions::onConfirmImportLocalBackup);
 
         TextView cancel = host.createDialogCancelButton(dialog);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
@@ -79,18 +82,21 @@ public final class SyncSettingsController {
     }
 
     private String syncStatusText() {
-        if (!LauncherSyncBridge.isConfigured(host.requireContext())) return "WebDAV 尚未配置，请先打开同步中心。";
+        if (!LauncherSyncBridge.isConfigured(host.requireContext())) {
+            return host.getString(R.string.game_sync_webdav_not_configured);
+        }
         long last = LauncherSyncBridge.lastSyncTime(host.requireContext());
-        if (last <= 0L) return "已配置 WebDAV，尚未完成过同步。";
-        return "上次同步：" + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", last);
+        if (last <= 0L) return host.getString(R.string.game_sync_webdav_never);
+        return host.getString(R.string.game_sync_last_time,
+                android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", last));
     }
 
     private void syncNow() {
         if (!LauncherSyncBridge.isConfigured(host.requireContext())) {
             host.showConfirmDialog(
-                    "未登录",
-                    "请打开同步中心登录后再同步。",
-                    "打开",
+                    host.getString(R.string.game_sync_not_logged_in),
+                    host.getString(R.string.game_sync_login_first),
+                    host.getString(R.string.game_common_open),
                     () -> host.startActivity(new Intent(host.requireContext(), LauncherSyncCenterActivity.class))
             );
             return;
@@ -98,7 +104,7 @@ public final class SyncSettingsController {
         LauncherSyncBridge.syncNow(host.requireContext(), new LauncherSyncBridge.Callback() {
             @Override
             public void onStart() {
-                Toast.makeText(host.requireContext(), "正在同步...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(host.requireContext(), R.string.game_sync_syncing, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -107,12 +113,14 @@ public final class SyncSettingsController {
 
             @Override
             public void onComplete(String message) {
-                host.showConfirmDialog("同步完成", message, "知道了", () -> {});
+                host.showConfirmDialog(host.getString(R.string.game_sync_complete), message,
+                        host.getString(R.string.game_common_got_it), () -> {});
             }
 
             @Override
             public void onError(String error) {
-                host.showConfirmDialog("同步失败", error, "知道了", () -> {});
+                host.showConfirmDialog(host.getString(R.string.game_sync_failed), error,
+                        host.getString(R.string.game_common_got_it), () -> {});
             }
         });
     }

@@ -10,7 +10,7 @@
         android:id="@+id/tvLauncherAppPickerTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="选择模拟器应用"
+        android:text="@string/game_app_picker_title"
         android:textColor="@color/launcher_text_color"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -20,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:text="正在读取手机应用列表…"
+        android:text="@string/game_app_picker_reading"
         android:textColor="@color/launcher_text_muted_color"
         android:textSize="11sp" />
 
@@ -30,7 +30,7 @@
         android:layout_height="38dp"
         android:layout_marginTop="11dp"
         android:background="@drawable/launcher_account_input"
-        android:hint="搜索应用名或包名"
+        android:hint="@string/game_app_picker_search_hint"
         android:imeOptions="actionSearch"
         android:inputType="text"
         android:paddingStart="13dp"
@@ -71,7 +71,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="11dp"
-                android:text="加载应用中…"
+                android:text="@string/game_app_picker_loading"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -83,7 +83,7 @@
         android:layout_height="38dp"
         android:layout_marginTop="11dp"
         android:gravity="center"
-        android:text="取消"
+        android:text="@string/game_common_cancel"
         android:textAllCaps="false"
         android:textColor="@color/launcher_text_color"
         android:textSize="13sp" />

@@ -42,7 +42,7 @@ object LauncherDialogFactory {
         val root = root(context, false)
         root.addView(standardTitle(context, title))
         root.addView(standardMessage(context, message), topMargin(context, 13))
-        val confirm = button(context, "知道了", true)
+        val confirm = button(context, context.getString(R.string.settings_got_it), true)
         confirm.setOnClickListener {
             dialog.dismiss()
             onAcknowledge?.run()
@@ -175,7 +175,7 @@ object LauncherDialogFactory {
 
         val actions = LinearLayout(context)
         actions.orientation = LinearLayout.HORIZONTAL
-        val cancel = button(context, "取消", false)
+        val cancel = button(context, context.getString(R.string.launcher_dialog_cancel), false)
         cancel.setOnClickListener { dialog.dismiss() }
         actions.addView(cancel, LinearLayout.LayoutParams(0, dp(context, 38), 1f))
 
@@ -251,7 +251,7 @@ object LauncherDialogFactory {
         val scrollParams = topMargin(context, 12)
         scrollParams.height = Math.min(dp(context, 252), dp(context, listHeight))
         root.addView(scroll, scrollParams)
-        val cancel = button(context, "取消", false)
+        val cancel = button(context, context.getString(R.string.launcher_dialog_cancel), false)
         cancel.setOnClickListener { dialog.dismiss() }
         root.addView(cancel, fixedHeightTopMargin(context, 12, 36))
         setContent(dialog, root, WIDTH_ACTION_MENU_DP)
@@ -424,7 +424,7 @@ object LauncherDialogFactory {
 
     private fun cancelButton(context: Context): TextView {
         val view = TextView(context)
-        view.text = "取消"
+        view.text = context.getString(R.string.launcher_dialog_cancel)
         view.gravity = Gravity.CENTER
         view.setTextColor(LauncherTheme.primary(context))
         view.textSize = 13f

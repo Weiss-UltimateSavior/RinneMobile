@@ -25,7 +25,8 @@ class LauncherPlaceholderFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val currentBinding = requireNotNull(binding)
         LauncherTabletPortraitScaler.apply(currentBinding.root)
-        currentBinding.tvPlaceholderTitle.text = arguments?.getString(ARG_TITLE, "占位") ?: "占位"
+        val fallback = getString(com.core.R.string.core_placeholder)
+        currentBinding.tvPlaceholderTitle.text = arguments?.getString(ARG_TITLE, fallback) ?: fallback
     }
 
     override fun onDestroyView() {

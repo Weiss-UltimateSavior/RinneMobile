@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_game_not_found">ゲームが見つかりません</string>
+    <string name="core_game_session_create_failed">ゲームセッションを作成できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="core_launch_request_sent">起動リクエストを送信しました</string>
+    <string name="core_emulator_launch_failed">起動に失敗しました。エミュレーターが見つからないか、選択した起動対象に対応していません。</string>
+    <string name="core_current_game">現在のゲーム</string>
+    <string name="core_active_game_title">別のゲームが実行中です</string>
+    <string name="core_active_game_message">別のゲームが実行中です：%1$s</string>
+    <string name="core_active_game_dialog_message">%1$s はまだ実行中です。進行状況を保存し、通常終了するか履歴画面から終了してから別のゲームを起動してください。</string>
+    <string name="core_got_it">了解</string>
+    <string name="core_game_directory_permission_lost">ゲームフォルダーにアクセスできません。SAF 権限が失効した可能性があります。フォルダーを再設定してください。</string>
+    <string name="core_gamehub_local_id_required">先にゲームセンターでゲームを編集し、GameHub の localGameId を取り込んでください。</string>
+    <string name="core_emulator_package_required">先にゲームセンターでゲームを編集し、エミュレーターのパッケージ名を入力してください。</string>
+    <string name="core_ppsspp_required">PSP ゲームを起動するには PPSSPP のインストールが必要です。</string>
+    <string name="core_rpgm_module_disabled">RPGM モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
+    <string name="core_renpy_module_disabled">Ren’Py モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
+    <string name="core_godot_module_disabled">Godot モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
+    <string name="core_untitled_game">無題のゲーム</string>
+
+    <string name="core_backup_empty">バックアップの内容が空です</string>
+    <string name="core_backup_invalid">有効な YukiHub バックアップではありません</string>
+    <string name="core_backup_file_unavailable">バックアップファイルを利用できません</string>
+    <string name="core_backup_declared_too_large">ローカルバックアップが大きすぎます（申告サイズ：%1$d バイト、上限：%2$d バイト）</string>
+    <string name="core_backup_too_large">ローカルバックアップが大きすぎます（上限：%1$d バイト）</string>
+    <string name="core_sync_conflict">同期の競合を検出しました。同期センターを開いて解決してください。</string>
+    <string name="core_sync_failed">同期に失敗しました</string>
+    <string name="core_sync_complete">同期が完了しました</string>
+    <string name="core_sync_cancelled">同期をキャンセルしました</string>
+    <string name="core_sync_uploaded">ローカルの変更をアップロードしました</string>
+    <string name="core_sync_downloaded">クラウドの変更をダウンロードしました</string>
+    <string name="core_sync_merged">同期データを統合しました</string>
+    <string name="core_sync_up_to_date">クラウドとローカルは最新です</string>
+    <string name="core_webdav_not_configured">WebDAV が設定されていません</string>
+    <string name="core_webdav_client_init_failed">WebDAV クライアントを初期化できませんでした</string>
+    <string name="core_cloud_sync_file_invalid">クラウドのファイルは有効な YukiHub 同期ファイルではありません</string>
+    <string name="core_sync_first_upload">初回アップロード</string>
+    <string name="core_sync_first_download">クラウドから初回ダウンロード</string>
+    <string name="core_sync_checking_data">データを確認中</string>
+    <string name="core_sync_uploading_local">ローカルの変更をアップロード中</string>
+    <string name="core_sync_downloading_cloud">クラウドの変更をダウンロード中</string>
+    <string name="core_unknown_error">不明なエラー</string>
+    <string name="core_sync_file_invalid">有効な YukiHub 同期ファイルではありません</string>
+    <string name="core_sync_settings_save_failed">同期設定を保存できませんでした</string>
+    <string name="core_not_signed_in">ログインしていません</string>
+    <string name="core_session_expired">ログインの有効期限が切れました。もう一度ログインしてください。</string>
+    <string name="core_session_not_found">セッションが見つかりません</string>
+    <string name="core_records_empty">記録一覧が空です</string>
+    <string name="core_play_session_start_failed">サーバーのプレイセッションを開始できませんでした</string>
+    <string name="core_play_session_heartbeat_failed">サーバーのプレイセッションを更新できませんでした</string>
+    <string name="core_play_session_finish_failed">サーバーのプレイセッションを終了できませんでした</string>
+    <string name="core_play_time_upload_failed">プレイ時間をアップロードできませんでした</string>
+    <string name="core_play_time_fetch_failed">プレイ時間を取得できませんでした</string>
+    <string name="core_play_time_leaderboard_failed">プレイ時間ランキングを取得できませんでした</string>
+    <string name="core_play_time_rank_failed">自分のプレイ時間順位を取得できませんでした</string>
+
+    <string name="core_try_again_later">しばらくしてからもう一度お試しください</string>
+    <string name="core_update_check_failed">更新の確認に失敗しました：%1$s</string>
+    <string name="core_diagnostics_package">Rinne 診断パッケージ</string>
+    <string name="core_export_diagnostics_package">Rinne 診断パッケージをエクスポート</string>
+</resources>

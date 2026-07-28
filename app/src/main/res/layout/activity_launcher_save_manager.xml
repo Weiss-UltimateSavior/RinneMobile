@@ -26,7 +26,7 @@
                 android:id="@+id/saveManagerTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="存档管理"
+                android:text="@string/game_save_manager_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -37,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="导出与覆盖导入均使用 ZIP 压缩包。"
+                android:text="@string/game_save_zip_description"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -46,7 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="游戏"
+                android:text="@string/game_common_game"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -63,7 +63,7 @@
                     android:layout_width="0dp"
                     style="@style/LauncherShortSecondaryActionButton"
                     android:layout_weight="1"
-                    android:text="导出"
+                    android:text="@string/game_common_export"
                     />
 
                 <TextView
@@ -72,7 +72,7 @@
                     style="@style/LauncherShortActionButton"
                     android:layout_marginStart="7dp"
                     android:layout_weight="1"
-                    android:text="覆盖导入"
+                    android:text="@string/game_save_overwrite_import"
                     />
             </LinearLayout>
         </LinearLayout>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_game_not_found">Game not found</string>
+    <string name="core_game_session_create_failed">Could not create a game session. Try again later.</string>
+    <string name="core_launch_request_sent">Launch request sent</string>
+    <string name="core_emulator_launch_failed">Launch failed: the emulator was not found or rejected the selected launch target</string>
+    <string name="core_current_game">Current game</string>
+    <string name="core_active_game_title">A game is already running</string>
+    <string name="core_active_game_message">A game is already running: %1$s</string>
+    <string name="core_active_game_dialog_message">%1$s is still running. Save your progress, then close it normally or remove it from Recents before launching another game.</string>
+    <string name="core_got_it">Got it</string>
+    <string name="core_game_directory_permission_lost">The game directory is unavailable. Its SAF permission may have expired; bind the directory again.</string>
+    <string name="core_gamehub_local_id_required">Edit the game in Game Center and import its GameHub localGameId first.</string>
+    <string name="core_emulator_package_required">Edit the game in Game Center and enter an emulator package name first.</string>
+    <string name="core_ppsspp_required">PPSSPP must be installed to launch PSP games.</string>
+    <string name="core_rpgm_module_disabled">The RPGM module is disabled. Enable it on the Module Compatibility page and try again.</string>
+    <string name="core_renpy_module_disabled">The Ren’Py module is disabled. Enable it on the Module Compatibility page and try again.</string>
+    <string name="core_godot_module_disabled">The Godot module is disabled. Enable it on the Module Compatibility page and try again.</string>
+    <string name="core_untitled_game">Untitled game</string>
+
+    <string name="core_backup_empty">The backup is empty</string>
+    <string name="core_backup_invalid">This is not a valid YukiHub backup</string>
+    <string name="core_backup_file_unavailable">The backup file is unavailable</string>
+    <string name="core_backup_declared_too_large">The local backup is too large (declared size: %1$d bytes; maximum: %2$d bytes)</string>
+    <string name="core_backup_too_large">The local backup is too large (maximum: %1$d bytes)</string>
+    <string name="core_sync_conflict">A sync conflict was detected. Open Sync Center to resolve it.</string>
+    <string name="core_sync_failed">Sync failed</string>
+    <string name="core_sync_complete">Sync complete</string>
+    <string name="core_sync_cancelled">Sync cancelled</string>
+    <string name="core_sync_uploaded">Local changes uploaded</string>
+    <string name="core_sync_downloaded">Cloud changes downloaded</string>
+    <string name="core_sync_merged">Sync data merged</string>
+    <string name="core_sync_up_to_date">Cloud and local data are up to date</string>
+    <string name="core_webdav_not_configured">WebDAV is not configured</string>
+    <string name="core_webdav_client_init_failed">Could not initialize the WebDAV client</string>
+    <string name="core_cloud_sync_file_invalid">The cloud file is not a valid YukiHub sync file</string>
+    <string name="core_sync_first_upload">Initial upload</string>
+    <string name="core_sync_first_download">Initial cloud download</string>
+    <string name="core_sync_checking_data">Checking data</string>
+    <string name="core_sync_uploading_local">Uploading local changes</string>
+    <string name="core_sync_downloading_cloud">Downloading cloud changes</string>
+    <string name="core_unknown_error">Unknown error</string>
+    <string name="core_sync_file_invalid">This is not a valid YukiHub sync file</string>
+    <string name="core_sync_settings_save_failed">Could not save sync settings</string>
+    <string name="core_not_signed_in">Not signed in</string>
+    <string name="core_session_expired">Your session has expired. Sign in again.</string>
+    <string name="core_session_not_found">Session not found</string>
+    <string name="core_records_empty">The record list is empty</string>
+    <string name="core_play_session_start_failed">Could not start the server play session</string>
+    <string name="core_play_session_heartbeat_failed">Could not update the server play session</string>
+    <string name="core_play_session_finish_failed">Could not finish the server play session</string>
+    <string name="core_play_time_upload_failed">Could not upload play time</string>
+    <string name="core_play_time_fetch_failed">Could not retrieve play time</string>
+    <string name="core_play_time_leaderboard_failed">Could not retrieve the play-time leaderboard</string>
+    <string name="core_play_time_rank_failed">Could not retrieve your play-time rank</string>
+
+    <string name="core_try_again_later">Try again later</string>
+    <string name="core_update_check_failed">Update check failed: %1$s</string>
+    <string name="core_diagnostics_package">Rinne diagnostics package</string>
+    <string name="core_export_diagnostics_package">Export Rinne diagnostics package</string>
+</resources>

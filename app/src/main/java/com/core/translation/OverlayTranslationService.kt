@@ -33,6 +33,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.appcompat.app.AlertDialog
+import com.core.R
 import com.apps.theme.LauncherDialogFactory
 import com.core.util.AppExecutors
 import java.io.ByteArrayOutputStream
@@ -113,7 +114,7 @@ class OverlayTranslationService : Service() {
         showFloatingButton()
         // 延迟创建 MediaProjection，等待前台 Service 完全就绪。
         handler.postDelayed({ ensureMediaProjection() }, PROJECTION_INIT_DELAY_MS)
-        Toast.makeText(this, "悬浮翻译已开启", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.translation_overlay_enabled, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
@@ -133,25 +134,25 @@ class OverlayTranslationService : Service() {
         projectionReady = false
         captureThread?.quitSafely()
         captureThread = null
-        Toast.makeText(this, "悬浮翻译已关闭", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.translation_overlay_disabled, Toast.LENGTH_SHORT).show()
     }
 
     private fun startForegroundCompat() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "智能翻译",
+                getString(R.string.translation_title),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "悬浮翻译服务运行中"
+                description = getString(R.string.translation_service_running)
                 setShowBadge(false)
             }
             val nm = getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(channel)
         }
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("智能翻译")
-            .setContentText("悬浮翻译服务运行中")
+            .setContentTitle(getString(R.string.translation_title))
+            .setContentText(getString(R.string.translation_service_running))
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
@@ -421,9 +422,9 @@ class OverlayTranslationService : Service() {
         val dialogContext = ContextThemeWrapper(this, com.core.R.style.Theme_YukiHub_Launcher)
         val dialog = LauncherDialogFactory.showOverlayConfirm(
             dialogContext,
-            "关闭悬浮翻译",
-            "确定关闭悬浮翻译吗？",
-            "关闭",
+            getString(R.string.translation_close_overlay_title),
+            getString(R.string.translation_close_overlay_message),
+            getString(R.string.translation_close),
             {
                 TranslationConfigStore.setEnabled(this, false)
                 stopSelf()
@@ -459,13 +460,13 @@ class OverlayTranslationService : Service() {
      */
     private fun triggerTranslation() {
         if (isTranslating) {
-            showResultCard(false, "正在翻译中，请稍候")
+            showResultCard(false, getString(R.string.translation_already_in_progress))
             return
         }
         if (!projectionReady || mediaProjection == null) {
             ensureMediaProjection()
             if (!projectionReady || mediaProjection == null) {
-                showResultCard(false, "截屏权限已失效，请回到智能翻译设置页重新授权截屏权限")
+                showResultCard(false, getString(R.string.translation_capture_permission_expired))
                 return
             }
             // 刚重建 projection，等待系统推送第一帧
@@ -512,7 +513,7 @@ class OverlayTranslationService : Service() {
             if (jpegBytes == null) {
                 handler.post {
                     isTranslating = false
-                    showResultCard(false, "截图失败，可能是截屏权限已失效，请重新授权")
+                    showResultCard(false, getString(R.string.translation_capture_failed))
                 }
                 return@runOnSingle
             }
@@ -612,7 +613,7 @@ class OverlayTranslationService : Service() {
             )
         }
         val text = TextView(this).apply {
-            text = "正在翻译..."
+            text = getString(R.string.translation_translating)
             setTextColor(Color.WHITE)
             textSize = 12f
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
@@ -647,7 +648,10 @@ class OverlayTranslationService : Service() {
             setPadding(dp(20), dp(14), dp(20), dp(14))
         }
         val titleView = TextView(this).apply {
-            this.text = if (success) "翻译结果（点击关闭）" else "翻译失败（点击关闭）"
+            this.text = getString(
+                if (success) R.string.translation_result_tap_to_close
+                else R.string.translation_failed_tap_to_close
+            )
             // 成功时标题色跟随主题色调，失败时固定红色
             setTextColor(if (success) com.apps.theme.LauncherTheme.primary(this@OverlayTranslationService) else Color.parseColor("#FF6B6B"))
             textSize = 11f

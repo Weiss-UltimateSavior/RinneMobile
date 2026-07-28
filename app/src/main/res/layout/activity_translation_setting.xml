@@ -26,7 +26,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="智能翻译"
+                android:text="@string/translation_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="开启后屏幕上会出现悬浮按钮，游玩 Galgame 时点击该按钮会自动截取当前画面并调用多模态 AI 模型翻译图中的对话。"
+                android:text="@string/translation_summary"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -52,7 +52,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="启用悬浮翻译"
+                    android:text="@string/translation_enable_overlay"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="API 配置"
+                android:text="@string/translation_api_configuration"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -77,28 +77,28 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:lineSpacingExtra="2dp"
-                android:text="配置兼容 OpenAI 的多模态模型地址、模型名称与 API Key。"
+                android:text="@string/translation_api_summary"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
             <EditText
                 android:id="@+id/translationBaseUrlInput"
                 style="@style/LauncherFormInput"
-                android:hint="API 地址 (HTTPS)"
+                android:hint="@string/translation_api_address_hint"
                 android:inputType="textUri"
                 android:singleLine="true" />
 
             <EditText
                 android:id="@+id/translationModelInput"
                 style="@style/LauncherFormInput"
-                android:hint="模型名称 (如 gpt-4o-mini)"
+                android:hint="@string/translation_model_hint"
                 android:inputType="text"
                 android:singleLine="true" />
 
             <EditText
                 android:id="@+id/translationApiKeyInput"
                 style="@style/LauncherFormInput"
-                android:hint="API Key (留空表示不修改)"
+                android:hint="@string/translation_api_key_hint"
                 android:inputType="textPassword"
                 android:singleLine="true" />
 
@@ -108,13 +108,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="41dp"
                 android:layout_marginTop="14dp"
-                android:text="测试链接" />
+                android:text="@string/translation_test_connection" />
 
             <TextView
                 android:id="@+id/translationSaveButton"
                 style="@style/LauncherLongActionButton"
                 android:layout_marginTop="9dp"
-                android:text="保存配置" />
+                android:text="@string/settings_save_configuration" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -128,7 +128,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="悬浮窗权限"
+                    android:text="@string/translation_overlay_permission"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -137,7 +137,7 @@
                     android:id="@+id/translationOverlayStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="未授权"
+                    android:text="@string/translation_not_authorized"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="12sp" />
 
@@ -150,7 +150,7 @@
                     android:textColor="@color/launcher_primary_color"
                     android:textSize="12sp"
                     android:textStyle="bold"
-                    android:text="授权" />
+                    android:text="@string/translation_authorize" />
             </LinearLayout>
 
             <LinearLayout
@@ -165,7 +165,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="截屏权限"
+                    android:text="@string/translation_screen_capture_permission"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -174,7 +174,7 @@
                     android:id="@+id/translationProjectionStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="未授权"
+                    android:text="@string/translation_not_authorized"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="12sp" />
             </LinearLayout>

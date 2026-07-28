@@ -77,14 +77,16 @@ public final class LauncherGameActionController {
     private void showGameActionMenu(Game game) {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle(GameMetadataFormatter.safeTitle(game)));
-        addAction(root, "游戏详情", dialog, () -> showGameDetailDialog(game));
+        root.addView(createDialogTitle(GameMetadataFormatter.safeTitle(context(), game)));
+        addAction(root, context().getString(R.string.game_action_details), dialog, () -> showGameDetailDialog(game));
         if (includeEditAction) {
-            addAction(root, "编辑游戏", dialog, () -> host.editGame(game));
+            addAction(root, context().getString(R.string.game_action_edit), dialog, () -> host.editGame(game));
         }
-        addAction(root, "游戏状态", dialog, () -> showPlayStatusDialog(game));
-        addAction(root, game.favorite ? "取消收藏" : "添加收藏", dialog, () -> toggleFavorite(game));
-        addAction(root, GamePasswordLock.hasPassword(game) ? "取消密码" : "密码锁定", dialog,
+        addAction(root, context().getString(R.string.game_action_status), dialog, () -> showPlayStatusDialog(game));
+        addAction(root, context().getString(game.favorite
+                ? R.string.game_action_favorite_remove : R.string.game_action_favorite_add), dialog, () -> toggleFavorite(game));
+        addAction(root, context().getString(GamePasswordLock.hasPassword(game)
+                ? R.string.game_action_password_remove : R.string.game_action_password_lock), dialog,
                 () -> {
                     if (GamePasswordLock.hasPassword(game)) {
                         GamePasswordLock.clearPassword(fragment, game, null);
@@ -92,7 +94,7 @@ public final class LauncherGameActionController {
                         GamePasswordLock.setPassword(fragment, game, null);
                     }
                 });
-        addAction(root, "更多选项", dialog, () -> showMoreOptionsDialog(game));
+        addAction(root, context().getString(R.string.game_action_more), dialog, () -> showMoreOptionsDialog(game));
         root.addView(createDialogCancelButton(dialog));
         setDialogContent(dialog, root, 300);
     }
@@ -116,7 +118,11 @@ public final class LauncherGameActionController {
     }
 
     private void showPlayStatusDialog(Game game) {
-        String[] labels = {"未玩", "在玩", "玩过"};
+        String[] labels = {
+                context().getString(R.string.game_status_unplayed),
+                context().getString(R.string.game_status_playing),
+                context().getString(R.string.game_status_completed)
+        };
         String[] values = {"unplayed", "playing", "completed"};
         int checkedIndex = -1;
         for (int i = 0; i < values.length; i++) {
@@ -127,7 +133,7 @@ public final class LauncherGameActionController {
         }
         LauncherDialogFactory.showSingleChoice(
                 context(),
-                "设置游玩状态",
+                context().getString(R.string.game_action_set_status),
                 labels,
                 checkedIndex,
                 index -> updateGameStatus(game, values[index])
@@ -142,35 +148,36 @@ public final class LauncherGameActionController {
         Dialog dialog = new Dialog(context());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("修改游玩时长"));
+        root.addView(createDialogTitle(context().getString(R.string.game_action_edit_duration)));
 
-        TextView info = bodyText("当前总时长：" + TimeFormatUtil.playTime(game.totalPlayTime)
-                + "\n最近游玩：" + (game.lastPlayedAt > 0
-                ? TimeFormatUtil.date(game.lastPlayedAt) : "无"), true);
+        TextView info = bodyText(context().getString(R.string.game_action_current_duration,
+                TimeFormatUtil.playTime(game.totalPlayTime), game.lastPlayedAt > 0
+                        ? TimeFormatUtil.date(game.lastPlayedAt)
+                        : context().getString(R.string.game_action_none)), true);
         addWithTopMargin(root, info, 13);
 
-        TextView totalLabel = label("设置新的总时长");
+        TextView totalLabel = label(context().getString(R.string.game_action_set_total_duration));
         addWithTopMargin(root, totalLabel, 12);
-        EditText totalInput = durationInput("例如 3h 20m / 200m / 7200s / 2.5h");
+        EditText totalInput = durationInput(context().getString(R.string.game_action_total_duration_hint));
         addWithTopMargin(root, totalInput, 5);
 
-        TextView addLabel = label("追加游玩时长");
+        TextView addLabel = label(context().getString(R.string.game_action_add_duration));
         addWithTopMargin(root, addLabel, 10);
-        EditText addInput = durationInput("例如 30m / 1h30m / 0.5h");
+        EditText addInput = durationInput(context().getString(R.string.game_action_add_duration_hint));
         addWithTopMargin(root, addInput, 5);
 
-        TextView hint = bodyText("可填 d/h/m/s 单位组合，纯数字视为分钟", true);
+        TextView hint = bodyText(context().getString(R.string.game_action_duration_units_hint), true);
         hint.setTextSize(11);
         addWithTopMargin(root, hint, 7);
 
         LinearLayout buttons = new LinearLayout(context());
         buttons.setOrientation(LinearLayout.HORIZONTAL);
-        TextView cancel = button("取消", false);
+        TextView cancel = button(context().getString(R.string.game_common_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
         LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
         cancelParams.setMargins(0, 0, dp(5), 0);
         buttons.addView(cancel, cancelParams);
-        TextView save = button("保存", true);
+        TextView save = button(context().getString(R.string.game_common_save), true);
         LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
         saveParams.setMargins(dp(5), 0, 0, 0);
         buttons.addView(save, saveParams);
@@ -180,7 +187,7 @@ public final class LauncherGameActionController {
             Long totalMinutes = GameMetadataFormatter.parseDuration(totalInput.getText().toString());
             Long addMinutes = GameMetadataFormatter.parseDuration(addInput.getText().toString());
             if (totalMinutes == null && addMinutes == null) {
-                Toast.makeText(context(), "请输入有效时长", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context(), R.string.game_action_invalid_duration, Toast.LENGTH_SHORT).show();
                 return;
             }
             dialog.dismiss();
@@ -231,7 +238,7 @@ public final class LauncherGameActionController {
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
                 if (failedFinal) {
-                    Toast.makeText(context(), "修改失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context(), R.string.game_action_edit_failed, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (result != null) host.updateGame(result);
@@ -243,15 +250,20 @@ public final class LauncherGameActionController {
     private void showGameDetailDialog(Game game) {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle(GameMetadataFormatter.safeTitle(game)));
+        root.addView(createDialogTitle(GameMetadataFormatter.safeTitle(context(), game)));
         StringBuilder text = new StringBuilder();
-        text.append("状态：").append(GameMetadataFormatter.playStatusText(game.playStatus));
-        text.append("\n引擎：").append(GameMetadataFormatter.engineText(game.engine));
-        text.append("\n总时长：").append(TimeFormatUtil.playTime(game.totalPlayTime));
-        text.append("\n最近游玩：").append(game.lastPlayedAt > 0
-                ? TimeFormatUtil.date(game.lastPlayedAt) : "未游玩");
-        if (!TextUtils.isEmpty(game.emulatorPackage)) text.append("\n模拟器：").append(game.emulatorPackage);
-        text.append("\n\n路径：").append(game.rootUri == null ? "" : Uri.decode(game.rootUri));
+        text.append(context().getString(R.string.game_detail_format,
+                GameMetadataFormatter.playStatusText(context(), game.playStatus),
+                GameMetadataFormatter.engineText(context(), game.engine),
+                TimeFormatUtil.playTime(game.totalPlayTime),
+                game.lastPlayedAt > 0 ? TimeFormatUtil.date(game.lastPlayedAt)
+                        : context().getString(R.string.game_status_never_played)));
+        if (!TextUtils.isEmpty(game.emulatorPackage)) {
+            text.append("\n").append(context().getString(
+                    R.string.game_detail_emulator, game.emulatorPackage));
+        }
+        text.append("\n\n").append(context().getString(R.string.game_detail_path,
+                game.rootUri == null ? "" : Uri.decode(game.rootUri)));
         TextView info = bodyText(text.toString(), false);
         addWithTopMargin(root, info, 13);
         root.addView(createDialogCancelButton(dialog));
@@ -261,21 +273,21 @@ public final class LauncherGameActionController {
     private void showMoreOptionsDialog(Game game) {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("更多选项"));
-        addMoreOption(root, dialog, "修改时长", false, () -> showEditPlayTimeDialog(game));
-        addMoreOption(root, dialog, "添加到桌面", false,
+        root.addView(createDialogTitle(context().getString(R.string.game_action_more)));
+        addMoreOption(root, dialog, context().getString(R.string.game_action_edit_duration), false, () -> showEditPlayTimeDialog(game));
+        addMoreOption(root, dialog, context().getString(R.string.game_action_pin_shortcut), false,
                 () -> PinnedGameShortcut.requestPinShortcut(context(), game));
-        addMoreOption(root, dialog, "重新匹配 VNDB 元数据", false,
+        addMoreOption(root, dialog, context().getString(R.string.game_action_rematch_vndb), false,
                 () -> rematchMetadata(game));
-        addMoreOption(root, dialog, "自定义搜索 VNDB", false,
+        addMoreOption(root, dialog, context().getString(R.string.game_action_custom_vndb), false,
                 () -> LauncherCustomVndbSearchDialog.show(fragment, game, () -> host.reloadGame(game.id)));
-        addMoreOption(root, dialog, "同步元数据封面到卡片", false,
+        addMoreOption(root, dialog, context().getString(R.string.game_action_sync_cover), false,
                 () -> syncMetadataToCard(game));
         // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
         if (game.engine == EngineType.ONS) {
-            addMoreOption(root, dialog, "ONS 引擎设置", false, () -> openOnsGameSettings(game));
+            addMoreOption(root, dialog, context().getString(R.string.game_action_ons_settings), false, () -> openOnsGameSettings(game));
         }
-        addMoreOption(root, dialog, "删除游戏", true, () -> confirmDeleteGame(game));
+        addMoreOption(root, dialog, context().getString(R.string.game_action_delete), true, () -> confirmDeleteGame(game));
         root.addView(createDialogCancelButton(dialog));
         setDialogContent(dialog, root, 320);
     }
@@ -289,7 +301,7 @@ public final class LauncherGameActionController {
             }
             context().startActivity(intent);
         } catch (Throwable ignored) {
-            Toast.makeText(context(), "无法打开 ONS 引擎设置", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context(), R.string.game_action_ons_open_failed, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -316,26 +328,30 @@ public final class LauncherGameActionController {
     }
 
     private void rematchMetadata(Game game) {
-        Toast.makeText(context(), "正在搜索 VNDB...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context(), R.string.game_vndb_searching, Toast.LENGTH_SHORT).show();
         LauncherMetadataBridge.fetchAndSaveMetadataAsync(context(), game, success -> {
             Activity activity = fragment.getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
-                Toast.makeText(context(), success ? "元数据已更新" : "未找到匹配的元数据", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context(), success
+                        ? R.string.game_metadata_updated : R.string.game_metadata_not_found,
+                        Toast.LENGTH_SHORT).show();
                 if (success) host.reloadGame(game.id);
             });
         });
     }
 
     private void syncMetadataToCard(Game game) {
-        Toast.makeText(context(), "正在同步封面...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context(), R.string.game_cover_syncing, Toast.LENGTH_SHORT).show();
         LauncherMetadataBridge.syncCoverToGameAsync(context(), game, success -> {
             Activity activity = fragment.getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
-                Toast.makeText(context(), success ? "封面已同步" : "无可用封面", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context(), success
+                        ? R.string.game_cover_synced : R.string.game_cover_unavailable,
+                        Toast.LENGTH_SHORT).show();
                 if (success) host.reloadGame(game.id);
             });
         });
@@ -344,20 +360,20 @@ public final class LauncherGameActionController {
     private void confirmDeleteGame(Game game) {
         AlertDialog dialog = createLauncherDialog();
         LinearLayout root = createDialogRoot();
-        root.addView(createDialogTitle("删除游戏"));
-        TextView message = bodyText("要删除「" + GameMetadataFormatter.safeTitle(game)
-                + "」吗？此操作仅移除游戏库不进行实际删除。", true);
+        root.addView(createDialogTitle(context().getString(R.string.game_action_delete)));
+        TextView message = bodyText(context().getString(
+                R.string.game_delete_message, GameMetadataFormatter.safeTitle(context(), game)), true);
         message.setGravity(Gravity.CENTER);
         addWithTopMargin(root, message, 13);
 
         LinearLayout buttons = new LinearLayout(context());
         buttons.setOrientation(LinearLayout.HORIZONTAL);
-        TextView cancel = button("取消", false);
+        TextView cancel = button(context().getString(R.string.game_common_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
         LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
         cancelParams.setMargins(0, 0, dp(5), 0);
         buttons.addView(cancel, cancelParams);
-        TextView delete = button("移除", false);
+        TextView delete = button(context().getString(R.string.game_common_remove), false);
         LauncherTheme.dangerButton(delete);
         delete.setOnClickListener(view -> {
             dialog.dismiss();
@@ -386,10 +402,10 @@ public final class LauncherGameActionController {
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
                 if (failedFinal) {
-                    Toast.makeText(context(), "删除失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context(), R.string.game_delete_failed, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Toast.makeText(context(), "已删除", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context(), R.string.game_deleted, Toast.LENGTH_SHORT).show();
                 host.removeGame(game.id);
             });
         });
@@ -427,7 +443,7 @@ public final class LauncherGameActionController {
             activity.runOnUiThread(() -> {
                 if (!fragment.isAdded()) return;
                 if (failedFinal) {
-                    Toast.makeText(context(), "操作失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context(), R.string.game_operation_failed, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (message != null) Toast.makeText(context(), message, Toast.LENGTH_SHORT).show();
@@ -467,7 +483,7 @@ public final class LauncherGameActionController {
     }
 
     private TextView createDialogCancelButton(Dialog dialog) {
-        TextView cancel = button("取消", false);
+        TextView cancel = button(context().getString(R.string.game_common_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(36));

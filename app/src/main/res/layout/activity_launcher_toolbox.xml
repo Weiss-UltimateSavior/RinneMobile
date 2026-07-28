@@ -26,7 +26,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="工具箱"
+                android:text="@string/settings_toolbox_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -59,12 +59,12 @@
 
                     <ImageView
                         style="@style/LauncherToolboxIcon"
-                        android:contentDescription="盖世模拟器"
+                        android:contentDescription="@string/settings_tool_gaishi"
                         android:src="@drawable/launcher_tool_icon_gaishi" />
 
                     <TextView
                         style="@style/LauncherToolboxTitle"
-                        android:text="盖世模拟器" />
+                        android:text="@string/settings_tool_gaishi" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -172,6 +172,6 @@
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="25dp"
-        android:text="返回"
+        android:text="@string/settings_back"
         />
 </FrameLayout>

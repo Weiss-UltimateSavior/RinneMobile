@@ -130,9 +130,9 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
             binding.getRoot().setFixedCardHeight(fixedCardHeight);
             binding.getRoot().setBackgroundResource(
                     selected ? R.drawable.launcher_game_card_selected : R.drawable.launcher_game_card);
-            binding.padGameTitle.setText(safeTitle(game));
-            binding.padGamePlayStatus.setText(playStatus(game));
-            binding.padGameInitial.setText(initial(game.title));
+            binding.padGameTitle.setText(safeTitle(game, binding.getRoot().getContext()));
+            binding.padGamePlayStatus.setText(playStatus(game, binding.getRoot().getContext()));
+            binding.padGameInitial.setText(initial(game.title, binding.getRoot().getContext()));
             applyFavoriteAppearance(game.favorite);
             binding.padGameInitial.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
             bindCover(game);
@@ -197,8 +197,10 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
         return a.equals(b);
     }
 
-    private String safeTitle(Game game) {
-        if (game == null || game.title == null || game.title.trim().isEmpty()) return "未命名游戏";
+    private String safeTitle(Game game, android.content.Context context) {
+        if (game == null || game.title == null || game.title.trim().isEmpty()) {
+            return context.getString(R.string.pad_untitled_game);
+        }
         return game.title.trim();
     }
 
@@ -211,15 +213,15 @@ public class PadGameCardAdapter extends RecyclerView.Adapter<PadGameCardAdapter.
         return "";
     }
 
-    private String playStatus(Game game) {
-        if (game == null || game.totalPlayTime <= 0L) return "未游玩";
+    private String playStatus(Game game, android.content.Context context) {
+        if (game == null || game.totalPlayTime <= 0L) return context.getString(R.string.pad_not_played);
         return TimeFormatUtil.playTime(game.totalPlayTime);
     }
 
-    private String initial(String title) {
-        if (title == null) return "游";
+    private String initial(String title, android.content.Context context) {
+        if (title == null) return context.getString(R.string.pad_game_fallback_initial);
         String trimmed = title.trim();
-        if (trimmed.isEmpty()) return "游";
+        if (trimmed.isEmpty()) return context.getString(R.string.pad_game_fallback_initial);
         int end = trimmed.offsetByCodePoints(0, 1);
         return trimmed.substring(0, end);
     }

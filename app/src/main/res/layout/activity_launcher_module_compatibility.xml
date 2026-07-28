@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="模块兼容"
+                android:text="@string/module_compatibility_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="Rinne所兼容的第三方插件生态"
+                android:text="@string/module_compatibility_summary"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -64,7 +64,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="RPGM 模块"
+                        android:text="@string/module_rpgm_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -76,7 +76,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="未安装 - 提供 RPGM 游戏所需环境"
+                        android:text="@string/module_rpgm_not_installed"
                         android:textColor="@color/launcher_danger_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -88,7 +88,7 @@
                     android:layout_marginStart="10dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
-                    android:contentDescription="RPGM 模块"
+                    android:contentDescription="@string/module_rpgm_name"
                     android:focusable="true"
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_module_rpgm" />
@@ -119,7 +119,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="RenPy 模块"
+                        android:text="@string/module_renpy_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -131,7 +131,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="未安装 - 提供 RenPy 游戏所需环境"
+                        android:text="@string/module_renpy_not_installed"
                         android:textColor="@color/launcher_danger_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -143,7 +143,7 @@
                     android:layout_marginStart="10dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
-                    android:contentDescription="RenPy 模块"
+                    android:contentDescription="@string/module_renpy_name"
                     android:focusable="true"
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_module_rpgm" />
@@ -174,7 +174,7 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="Godot 模块"
+                        android:text="@string/module_godot_name"
                         android:textColor="@color/launcher_text_color"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -186,7 +186,7 @@
                         android:layout_marginTop="4dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="未安装 - 提供 Godot 游戏所需环境"
+                        android:text="@string/module_godot_not_installed"
                         android:textColor="@color/launcher_danger_color"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -198,7 +198,7 @@
                     android:layout_marginStart="10dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
-                    android:contentDescription="Godot 模块"
+                    android:contentDescription="@string/module_godot_name"
                     android:focusable="true"
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_module_rpgm" />

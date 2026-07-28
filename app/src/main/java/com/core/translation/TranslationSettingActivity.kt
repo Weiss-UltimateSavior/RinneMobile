@@ -49,7 +49,7 @@ class TranslationSettingActivity : AppCompatActivity() {
             } else {
                 // 用户拒绝截屏授权，回滚开关状态
                 setEnabledSwitchChecked(false)
-                Toast.makeText(this, "未授予截屏权限，已关闭悬浮翻译", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.translation_capture_denied_disabled, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -100,7 +100,10 @@ class TranslationSettingActivity : AppCompatActivity() {
         binding.translationEnabledSwitch.isChecked = config.enabled
         binding.translationBaseUrlInput.setText(config.baseUrl)
         binding.translationModelInput.setText(config.model)
-        binding.translationApiKeyInput.hint = if (config.hasApiKey) "已保存（留空表示不修改）" else "API Key"
+        binding.translationApiKeyInput.hint = getString(
+            if (config.hasApiKey) R.string.translation_api_key_saved_hint
+            else R.string.translation_api_key
+        )
     }
 
     private fun bindActions() {
@@ -148,11 +151,11 @@ class TranslationSettingActivity : AppCompatActivity() {
         try {
             TranslationConfigStore.save(this, baseUrl, model, apiKey, replaceKey)
             binding.translationApiKeyInput.setText("")
-            binding.translationApiKeyInput.hint = "已保存（留空表示不修改）"
-            Toast.makeText(this, "配置已保存", Toast.LENGTH_SHORT).show()
+            binding.translationApiKeyInput.setHint(R.string.translation_api_key_saved_hint)
+            Toast.makeText(this, R.string.translation_configuration_saved, Toast.LENGTH_SHORT).show()
             renderConfig()
         } catch (e: Exception) {
-            Toast.makeText(this, e.message ?: "保存失败", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.translation_save_failed, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -171,22 +174,29 @@ class TranslationSettingActivity : AppCompatActivity() {
         val effectiveModel = model.takeIf { it.isNotEmpty() }
             ?: TranslationConfigStore.get(this).model
         if (effectiveUrl.isEmpty() || effectiveModel.isEmpty()) {
-            LauncherDialogFactory.showInfo(this, "测试失败", "请先填写 API 地址和模型名称")
+            LauncherDialogFactory.showInfo(this, getString(R.string.translation_test_failed),
+                getString(R.string.translation_enter_api_and_model))
             return
         }
         if (!TranslationConfigStore.get(this).hasApiKey) {
-            LauncherDialogFactory.showInfo(this, "测试失败", "请先保存 API Key")
+            LauncherDialogFactory.showInfo(this, getString(R.string.translation_test_failed),
+                getString(R.string.translation_save_api_key_first))
             return
         }
         // 校验 API 地址格式（复用保存配置时的校验逻辑）
         try {
             TranslationConfigStore.validateBaseUrl(effectiveUrl)
         } catch (e: Exception) {
-            LauncherDialogFactory.showInfo(this, "测试失败", e.message ?: "API 地址格式不正确")
+            LauncherDialogFactory.showInfo(this, getString(R.string.translation_test_failed),
+                getString(R.string.translation_invalid_api_address))
             return
         }
 
-        val loadingDialog = LauncherDialogFactory.showLoading(this, "正在测试", "发送测试图片到模型...")
+        val loadingDialog = LauncherDialogFactory.showLoading(
+            this,
+            getString(R.string.translation_testing),
+            getString(R.string.translation_sending_test_image)
+        )
         binding.translationTestButton.isEnabled = false
         AppExecutors.runOnSingle {
             val result = VisionTranslationClient.testVision(this, effectiveUrl, effectiveModel)
@@ -196,13 +206,13 @@ class TranslationSettingActivity : AppCompatActivity() {
                 if (result.success) {
                     LauncherDialogFactory.showInfo(
                         this,
-                        "测试成功",
-                        "模型支持图像识别。\n\n模型回复：\n${result.text}"
+                        getString(R.string.translation_test_success),
+                        getString(R.string.translation_test_success_message, result.text)
                     )
                 } else {
                     LauncherDialogFactory.showInfo(
                         this,
-                        "测试失败",
+                        getString(R.string.translation_test_failed),
                         result.text
                     )
                 }
@@ -212,19 +222,19 @@ class TranslationSettingActivity : AppCompatActivity() {
 
     private fun refreshPermissionStatus() {
         if (hasOverlayPermission()) {
-            binding.translationOverlayStatus.text = "已授权"
+            binding.translationOverlayStatus.setText(R.string.translation_authorized)
             binding.translationOverlayStatus.setTextColor(LauncherTheme.primary(this))
             binding.translationOverlayButton.visibility = View.GONE
         } else {
-            binding.translationOverlayStatus.text = "未授权"
+            binding.translationOverlayStatus.setText(R.string.translation_not_authorized)
             binding.translationOverlayStatus.setTextColor(getColor(R.color.launcher_text_muted_color))
             binding.translationOverlayButton.visibility = View.VISIBLE
         }
         if (OverlayTranslationService.projectionData != null) {
-            binding.translationProjectionStatus.text = "已授权"
+            binding.translationProjectionStatus.setText(R.string.translation_authorized)
             binding.translationProjectionStatus.setTextColor(LauncherTheme.primary(this))
         } else {
-            binding.translationProjectionStatus.text = "未授权（开启开关时申请）"
+            binding.translationProjectionStatus.setText(R.string.translation_authorize_when_enabled)
             binding.translationProjectionStatus.setTextColor(getColor(R.color.launcher_text_muted_color))
         }
     }
@@ -246,7 +256,7 @@ class TranslationSettingActivity : AppCompatActivity() {
             )
             startActivity(intent)
         } else {
-            Toast.makeText(this, "悬浮窗权限已授权", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.translation_overlay_already_authorized, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -259,11 +269,11 @@ class TranslationSettingActivity : AppCompatActivity() {
     private fun tryStartServiceIfReady(): Boolean {
         val config = TranslationConfigStore.get(this)
         if (!config.isReady()) {
-            Toast.makeText(this, "请先填写 API 配置", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.translation_enter_api_configuration, Toast.LENGTH_SHORT).show()
             return false
         }
         if (!hasOverlayPermission()) {
-            Toast.makeText(this, "请先授权悬浮窗权限", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.translation_authorize_overlay_first, Toast.LENGTH_SHORT).show()
             requestOverlayPermission()
             // 系统授权页返回后会接着申请截屏权限，开关在这段流程中应保持开启。
             return true

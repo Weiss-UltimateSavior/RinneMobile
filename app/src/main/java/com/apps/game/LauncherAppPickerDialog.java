@@ -72,10 +72,10 @@ final class LauncherAppPickerDialog {
                 loading.setVisibility(View.GONE);
                 list.setVisibility(View.VISIBLE);
                 if (items.isEmpty()) {
-                    hint.setText("没有找到可启动的应用");
+                    hint.setText(R.string.game_app_picker_empty);
                     return;
                 }
-                hint.setText("共 " + items.size() + " 个可启动应用，可搜索应用名或包名");
+                hint.setText(activity.getString(R.string.game_app_picker_count, items.size()));
                 Adapter adapter = new Adapter(items, item -> {
                     if (callback != null) callback.onPackageSelected(item.packageName);
                     dialog.dismiss();
@@ -85,7 +85,8 @@ final class LauncherAppPickerDialog {
                     @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
                     @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                         adapter.filter(s == null ? "" : s.toString());
-                        hint.setText("共 " + items.size() + " 个应用，当前显示 " + adapter.getItemCount() + " 个");
+                        hint.setText(activity.getString(R.string.game_app_picker_filtered_count,
+                                items.size(), adapter.getItemCount()));
                     }
                     @Override public void afterTextChanged(android.text.Editable s) { }
                 });

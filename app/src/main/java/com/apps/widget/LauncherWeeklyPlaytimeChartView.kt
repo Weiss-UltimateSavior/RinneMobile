@@ -42,7 +42,12 @@ class LauncherWeeklyPlaytimeChartView @JvmOverloads constructor(
         labelPaint.color = LauncherTheme.textMuted(context)
         if (maxDuration == 0L) {
             labelPaint.textAlign = Paint.Align.CENTER
-            canvas.drawText("近 7 日暂无实际游玩记录", width / 2f, (top + bottom) / 2f, labelPaint)
+            canvas.drawText(
+                context.getString(com.core.R.string.home_weekly_no_playtime),
+                width / 2f,
+                (top + bottom) / 2f,
+                labelPaint
+            )
             drawDayLabels(canvas, horizontal, bottom, chartWidth)
             return
         }

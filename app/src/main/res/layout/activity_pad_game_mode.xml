@@ -70,7 +70,7 @@
                     android:id="@+id/navGameIcon"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:contentDescription="首页"
+                    android:contentDescription="@string/core_home"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_nav_home" />
             </LinearLayout>
@@ -128,7 +128,7 @@
                     android:id="@+id/navManageIcon"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:contentDescription="游戏"
+                    android:contentDescription="@string/core_games"
                     android:scaleType="fitCenter"
                     android:src="@drawable/launcher_nav_game" />
             </LinearLayout>

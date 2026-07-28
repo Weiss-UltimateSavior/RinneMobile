@@ -152,7 +152,7 @@ public class LocalAgentActivity extends AppCompatActivity {
         String text = binding.agentInput.getText() == null ? "" : binding.agentInput.getText().toString().trim();
         if (text.isEmpty()) return;
         if (text.length() > 4000) {
-            binding.agentInput.setError("单次输入不能超过 4000 个字符");
+            binding.agentInput.setError(getString(R.string.social_agent_input_too_long));
             return;
         }
         binding.agentInput.setText("");
@@ -166,7 +166,8 @@ public class LocalAgentActivity extends AppCompatActivity {
         adapter.notifyItemRangeInserted(messages.size() - 2, 2);
         updateEmptyState();
         scrollToEnd();
-        setWorkbenchStatus("正在规划任务", "分析指令并选择本地工具", "02");
+        setWorkbenchStatus(getString(R.string.social_agent_planning),
+                getString(R.string.social_agent_planning_detail), "02");
         renderRunning(true);
         runtime.send(text, new LocalAgentRuntime.Callback() {
             @Override public void onTextDelta(String delta) {
@@ -192,17 +193,21 @@ public class LocalAgentActivity extends AppCompatActivity {
             }
             @Override public void onToolStarted(String name) {
                 if (!unavailable()) {
-                    setWorkbenchStatus("正在执行本地操作", name, "03");
+                    setWorkbenchStatus(getString(R.string.social_agent_executing), name, "03");
                 }
             }
             @Override public void onToolFinished(String name, boolean success) {
-                if (!unavailable()) setWorkbenchStatus(success ? "本地操作已完成" : "本地操作未完成",
-                        success ? "正在整理结果" : "正在分析失败原因", "04");
+                if (!unavailable()) setWorkbenchStatus(
+                        getString(success ? R.string.social_agent_operation_complete
+                                : R.string.social_agent_operation_incomplete),
+                        getString(success ? R.string.social_agent_preparing_result
+                                : R.string.social_agent_analyzing_failure), "04");
             }
             @Override public void onApprovalRequired(LocalAgentRuntime.ApprovalRequest request,
                                                      LocalAgentRuntime.ApprovalResponder responder) {
                 if (unavailable()) { responder.resolve(false); return; }
-                setWorkbenchStatus("等待人工确认", "确认后才能继续当前任务", "05");
+                setWorkbenchStatus(getString(R.string.social_agent_waiting_confirmation),
+                        getString(R.string.social_agent_confirmation_detail), "05");
                 activeApprovalDialog = LauncherDialogFactory.showLongMessageConfirm(
                         LocalAgentActivity.this, request.title, request.preview, request.confirmText,
                         () -> { activeApprovalDialog = null; responder.resolve(true); },
@@ -210,7 +215,8 @@ public class LocalAgentActivity extends AppCompatActivity {
             }
             @Override public void onCriticalWarning(String title, String message) {
                 if (!unavailable()) LauncherDialogFactory.showLongMessageConfirm(
-                        LocalAgentActivity.this, title, message, "知道了", () -> { }, () -> { });
+                        LocalAgentActivity.this, title, message,
+                        getString(R.string.social_action_got_it), () -> { }, () -> { });
             }
             @Override public void onComplete(String finalText) {
                 if (unavailable()) return;
@@ -229,7 +235,8 @@ public class LocalAgentActivity extends AppCompatActivity {
                 reasoningMessage = null;
                 pendingUserMessage = null;
                 renderRunning(false);
-                setWorkbenchStatus("任务已完成", "结果与修改记录已保存在本机", "06");
+                setWorkbenchStatus(getString(R.string.social_agent_task_complete),
+                        getString(R.string.social_agent_task_complete_detail), "06");
                 updateEmptyState();
             }
             @Override public void onError(String message) {
@@ -237,8 +244,9 @@ public class LocalAgentActivity extends AppCompatActivity {
                 dismissApprovalDialog();
                 removePendingUiMessages();
                 renderRunning(false);
-                setWorkbenchStatus("任务未完成", message, "!");
-                LauncherDialogFactory.showInfo(LocalAgentActivity.this, "智能体未完成", message);
+                setWorkbenchStatus(getString(R.string.social_agent_task_incomplete), message, "!");
+                LauncherDialogFactory.showInfo(LocalAgentActivity.this,
+                        getString(R.string.social_agent_incomplete_title), message);
             }
         });
     }
@@ -249,7 +257,8 @@ public class LocalAgentActivity extends AppCompatActivity {
         binding.agentSend.setEnabled(historyLoaded && !clearingHistory);
         binding.agentSend.setAlpha(1f);
         binding.agentSend.setRotation(running ? 45f : 0f);
-        binding.agentSend.setContentDescription(running ? "停止任务" : "执行任务");
+        binding.agentSend.setContentDescription(getString(running
+                ? R.string.social_agent_stop_task : R.string.social_agent_run_task));
         // loadHistory 异步回调中 setEnabled(true) 会触发 EditText 自动获焦并弹起 IME。
         // 用 userTouchedInput 区分"用户主动点击"与"系统自动获焦"——只有用户未主动操作时
         // 才清除焦点并隐藏 IME，避免影响用户已主动唤起的输入状态。
@@ -270,7 +279,8 @@ public class LocalAgentActivity extends AppCompatActivity {
             List<AgentConversationRepository.Message> loaded = null;
             String loadError = null;
             try { loaded = repository.recent(100); }
-            catch (Throwable error) { loadError = error.getMessage() == null ? "本地会话读取失败" : error.getMessage(); }
+            catch (Throwable error) { loadError = error.getMessage() == null
+                    ? getString(R.string.social_agent_session_load_failed) : error.getMessage(); }
             List<AgentConversationRepository.Message> delivered = loaded;
             String deliveredError = loadError;
             RxMainScheduler.post(() -> {
@@ -293,18 +303,20 @@ public class LocalAgentActivity extends AppCompatActivity {
 
     private void confirmClearHistory() {
         if (runtime.isRunning()) {
-            Toast.makeText(this, "请先停止当前任务", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.social_agent_stop_first, Toast.LENGTH_SHORT).show();
             return;
         }
-        LauncherDialogFactory.showConfirm(this, "清空本地会话", "只会删除智能体本地消息，不影响游戏库和角色聊天。",
-                "清空", () -> {
+        LauncherDialogFactory.showConfirm(this, getString(R.string.social_agent_clear_session),
+                getString(R.string.social_agent_clear_session_message),
+                getString(R.string.social_action_clear), () -> {
                     clearingHistory = true;
                     renderRunning(false);
                     AppExecutors.runOnIo(() -> {
                         try {
                             repository.clear();
                         } catch (Throwable error) {
-                            String message = error.getMessage() == null ? "清空本地会话失败" : error.getMessage();
+                            String message = error.getMessage() == null
+                                    ? getString(R.string.social_agent_clear_failed) : error.getMessage();
                             RxMainScheduler.post(() -> {
                                 if (!unavailable()) Toast.makeText(this, message, Toast.LENGTH_LONG).show();
                             });
@@ -319,11 +331,12 @@ public class LocalAgentActivity extends AppCompatActivity {
         AppExecutors.runOnIo(() -> {
             String value;
             try { value = AgentSnapshotStore.recentDisplay(this, 20); }
-            catch (Throwable error) { value = "读取修改记录失败。"; }
+            catch (Throwable error) { value = getString(R.string.social_agent_read_mutations_failed); }
             String delivered = value;
             RxMainScheduler.post(() -> {
                 if (!unavailable()) LauncherDialogFactory.showLongMessageConfirm(
-                        this, "修改记录与快照", delivered, "知道了", () -> { }, () -> { });
+                        this, getString(R.string.social_agent_mutations_title), delivered,
+                        getString(R.string.social_action_got_it), () -> { }, () -> { });
             });
         });
     }
@@ -340,24 +353,28 @@ public class LocalAgentActivity extends AppCompatActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(18), dp(22), dp(15));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        TextView title = text("模型 API 配置", 16, true);
+        TextView title = text(getString(R.string.social_agent_api_config), 16, true);
         root.addView(title);
-        TextView note = text("配置仅保存在本机。对话和必要的游戏信息会发送给所选模型服务。API Key 使用 Android Keystore 加密。", 11, false);
+        TextView note = text(getString(R.string.social_agent_api_note), 11, false);
         note.setTextColor(LauncherTheme.textMuted(this));
         LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(9), 0, 0); root.addView(note, noteLp);
-        EditText baseUrl = input(root, "API 地址", "https://api.example.com/v1",
+        EditText baseUrl = input(root, getString(R.string.social_agent_api_address), "https://api.example.com/v1",
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         baseUrl.setText(config.baseUrl);
-        EditText model = input(root, "模型名称", "支持工具调用的模型", InputType.TYPE_CLASS_TEXT);
+        EditText model = input(root, getString(R.string.social_model_name),
+                getString(R.string.social_agent_model_support_hint), InputType.TYPE_CLASS_TEXT);
         model.setText(config.model);
-        EditText apiKey = input(root, "API Key", config.hasApiKey ? "已保存；留空保持不变" : "请输入 API Key",
+        EditText apiKey = input(root, getString(R.string.social_api_key),
+                config.hasApiKey ? getString(R.string.social_agent_api_key_saved_hint)
+                        : getString(R.string.social_agent_api_key_hint),
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        EditText temperature = input(root, "温度", "0.0 - 2.0", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        EditText temperature = input(root, getString(R.string.social_temperature), "0.0 - 2.0",
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         temperature.setText(String.valueOf(config.temperature));
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
-        TextView cancel = text("取消", 13, true); LauncherTheme.secondaryButton(cancel); cancel.setGravity(Gravity.CENTER);
-        TextView save = text("保存", 13, true); LauncherTheme.primaryButton(save); save.setGravity(Gravity.CENTER);
+        TextView cancel = text(getString(R.string.social_action_cancel), 13, true); LauncherTheme.secondaryButton(cancel); cancel.setGravity(Gravity.CENTER);
+        TextView save = text(getString(R.string.social_action_save), 13, true); LauncherTheme.primaryButton(save); save.setGravity(Gravity.CENTER);
         cancel.setOnClickListener(view -> dialog.dismiss());
         save.setOnClickListener(view -> {
             try {
@@ -367,9 +384,10 @@ public class LocalAgentActivity extends AppCompatActivity {
                         config.toolCallLimit, config.taskPlanEnabled, config.permissionMode);
                 dialog.dismiss();
                 renderConfigState();
-                Toast.makeText(this, "智能体模型配置已保存", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.social_agent_config_saved, Toast.LENGTH_SHORT).show();
             } catch (Throwable error) {
-                Toast.makeText(this, error.getMessage() == null ? "配置保存失败" : error.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, error.getMessage() == null
+                        ? getString(R.string.social_agent_config_save_failed) : error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(36), 1f));
@@ -383,8 +401,12 @@ public class LocalAgentActivity extends AppCompatActivity {
     }
 
     private void showFeatureMenu() {
-        String[] items = {"API 配置", "修改记录", "清空会话", "执行设置"};
-        LauncherDialogFactory.showStandardActionChoices(this, "智能体功能", items, index -> {
+        String[] items = {getString(R.string.social_agent_api_menu),
+                getString(R.string.social_agent_mutation_log),
+                getString(R.string.social_agent_clear_menu),
+                getString(R.string.social_agent_execution_settings)};
+        LauncherDialogFactory.showStandardActionChoices(this,
+                getString(R.string.social_agent_features), items, index -> {
             if (index == 0) showConfigDialog();
             else if (index == 1) showSnapshotHistory();
             else if (index == 2) confirmClearHistory();
@@ -405,33 +427,35 @@ public class LocalAgentActivity extends AppCompatActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(22), dp(18), dp(22), dp(15));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        root.addView(text("智能体执行设置", 16, true));
-        TextView note = text("这些设置只控制任务执行方式，不会修改模型 API 配置。", 11, false);
+        root.addView(text(getString(R.string.social_agent_execution_title), 16, true));
+        TextView note = text(getString(R.string.social_agent_execution_note), 11, false);
         note.setTextColor(LauncherTheme.textMuted(this));
         LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(8), 0, 0); root.addView(note, noteLp);
 
-        EditText toolCallLimit = input(root, "最大工具调用次数", "1 - 50", InputType.TYPE_CLASS_NUMBER);
+        EditText toolCallLimit = input(root, getString(R.string.social_agent_tool_limit),
+                "1 - 50", InputType.TYPE_CLASS_NUMBER);
         toolCallLimit.setText(String.valueOf(config.toolCallLimit));
-        EditText contextBudget = input(root, "上下文大小（K 字符）", "16 - 1024", InputType.TYPE_CLASS_NUMBER);
+        EditText contextBudget = input(root, getString(R.string.social_agent_context_budget),
+                "16 - 1024", InputType.TYPE_CLASS_NUMBER);
         contextBudget.setText(String.valueOf(config.contextBudgetKb));
-        TextView contextNote = text("默认 72K。超过预算或模型服务报告窗口不足时，必须确认压缩后才能继续。", 10, false);
+        TextView contextNote = text(getString(R.string.social_agent_context_note), 10, false);
         contextNote.setTextColor(LauncherTheme.textMuted(this));
         LinearLayout.LayoutParams contextNoteLp = wrap(); contextNoteLp.setMargins(0, dp(5), 0, 0);
         root.addView(contextNote, contextNoteLp);
 
-        SwitchCompat taskPlan = settingSwitch("生成任务计划与检查清单", config.taskPlanEnabled);
+        SwitchCompat taskPlan = settingSwitch(getString(R.string.social_agent_task_plan), config.taskPlanEnabled);
         LinearLayout.LayoutParams planLp = wrap(); planLp.setMargins(0, dp(10), 0, 0); root.addView(taskPlan, planLp);
-        SwitchCompat fullPermission = settingSwitch("完全权限模式", config.isFullPermission());
+        SwitchCompat fullPermission = settingSwitch(getString(R.string.social_agent_full_permission), config.isFullPermission());
         LinearLayout.LayoutParams permissionLp = wrap(); permissionLp.setMargins(0, dp(4), 0, 0); root.addView(fullPermission, permissionLp);
 
-        TextView warning = text("开启完全权限后，目录访问、文件修改和 MCP 操作将不再弹窗确认。路径隔离、修改快照、工具白名单与审计仍然启用。", 10, false);
+        TextView warning = text(getString(R.string.social_agent_permission_warning), 10, false);
         warning.setTextColor(LauncherTheme.textMuted(this));
         LinearLayout.LayoutParams warningLp = wrap(); warningLp.setMargins(0, dp(5), 0, 0); root.addView(warning, warningLp);
 
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
-        TextView cancel = text("取消", 13, true); LauncherTheme.secondaryButton(cancel); cancel.setGravity(Gravity.CENTER);
-        TextView save = text("保存", 13, true); LauncherTheme.primaryButton(save); save.setGravity(Gravity.CENTER);
+        TextView cancel = text(getString(R.string.social_action_cancel), 13, true); LauncherTheme.secondaryButton(cancel); cancel.setGravity(Gravity.CENTER);
+        TextView save = text(getString(R.string.social_action_save), 13, true); LauncherTheme.primaryButton(save); save.setGravity(Gravity.CENTER);
         cancel.setOnClickListener(view -> dialog.dismiss());
         save.setOnClickListener(view -> {
             try {
@@ -441,9 +465,10 @@ public class LocalAgentActivity extends AppCompatActivity {
                         taskPlan.isChecked(), fullPermission.isChecked());
                 dialog.dismiss();
                 renderConfigState();
-                Toast.makeText(this, "智能体执行设置已保存", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.social_agent_settings_saved, Toast.LENGTH_SHORT).show();
             } catch (Throwable error) {
-                Toast.makeText(this, error.getMessage() == null ? "设置保存失败" : error.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, error.getMessage() == null
+                        ? getString(R.string.social_agent_settings_save_failed) : error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(36), 1f));
@@ -484,10 +509,14 @@ public class LocalAgentActivity extends AppCompatActivity {
 
     private void renderConfigState() {
         AgentConfigStore.Config config = AgentConfigStore.get(this);
-        setWorkbenchStatus(config.isReady() ? "工作台待命" : "需要配置模型",
-                config.isReady() ? "当前模型 · " + config.model + " · "
-                        + (config.isFullPermission() ? "完全权限" : "受限权限")
-                        : "点击右上角设置模型 API", "01");
+        setWorkbenchStatus(
+                getString(config.isReady() ? R.string.social_agent_ready : R.string.social_agent_need_model),
+                config.isReady()
+                        ? getString(R.string.social_agent_current_model, config.model,
+                                getString(config.isFullPermission()
+                                        ? R.string.social_agent_full_permission_label
+                                        : R.string.social_agent_restricted_permission_label))
+                        : getString(R.string.social_agent_configure_api), "01");
     }
 
     private void bindInsets() {

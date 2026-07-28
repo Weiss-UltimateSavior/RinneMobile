@@ -82,7 +82,8 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     private void onEmailSubscriptionClick() {
         if (emailSubscriptionUpdating) return;
         if (!LauncherAuthBridge.isLoggedIn(this)) {
-            showResultDialog("需要登录", "登录后才能管理邮件订阅");
+            showResultDialog(getString(R.string.social_login_required),
+                    getString(R.string.social_subscription_login_required));
             return;
         }
         boolean subscribed = getSharedPreferences(PREFS_NAME, 0).getBoolean("email_subscribe", false);
@@ -96,9 +97,9 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     private void showEmailSubscriptionConfirmDialog() {
         LauncherDialogFactory.showConfirm(
                 this,
-                "开启邮件订阅",
-                "开启后，管理员可向你的注册邮箱发送系统通知和广播邮件。",
-                "开启订阅",
+                getString(R.string.social_enable_subscription),
+                getString(R.string.social_enable_subscription_message),
+                getString(R.string.social_enable_subscription),
                 () -> updateEmailSubscription(true)
         );
     }
@@ -115,7 +116,8 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                 saveEmailSubscription(actualSubscribed);
                 renderChip(binding.chipEmailSubscribe, actualSubscribed);
                 Toast.makeText(LauncherAccountSettingsActivity.this,
-                        actualSubscribed ? "已开启邮件订阅" : "已取消邮件订阅", Toast.LENGTH_SHORT).show();
+                        actualSubscribed ? R.string.social_subscription_enabled
+                                : R.string.social_subscription_disabled, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -123,7 +125,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                 if (isFinishing()) return;
                 emailSubscriptionUpdating = false;
                 binding.rowEmailSubscribe.setEnabled(true);
-                showResultDialog("邮件订阅更新失败", message);
+                showResultDialog(getString(R.string.social_subscription_update_failed), message);
             }
         });
     }
@@ -162,9 +164,9 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     private void showRealtimePlaytimeConfirmDialog() {
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "实时游玩时间",
-                "此功能启用将实时上传游玩详细信息，确定要使用吗？",
-                "确定开启",
+                getString(R.string.social_realtime_play_time),
+                getString(R.string.social_realtime_play_time_message),
+                getString(R.string.social_confirm_enable),
                 () -> {
                     getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("realtime_playtime", true).apply();
                     renderChip(binding.chipRealtimePlaytime, true);
@@ -175,9 +177,9 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     private void showSyncConfirmDialog() {
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                "配置同步",
-                "是否上传当前配置到云端？开启后将在每晚12点自动备份。",
-                "确定上传",
+                getString(R.string.social_config_sync),
+                getString(R.string.social_config_sync_message),
+                getString(R.string.social_confirm_upload),
                 this::enableSyncAndUpload
         );
     }
@@ -189,7 +191,8 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
         LauncherSyncScheduler.updateSchedule(this);
 
         // 显示加载弹窗
-        loadingDialog = showLoadingDialog("正在上传配置...", "请不要关闭应用及网络，否则可能导致配置出错");
+        loadingDialog = showLoadingDialog(getString(R.string.social_uploading_config),
+                getString(R.string.social_uploading_config_note));
 
         // 导出并上传
         String settingsJson = LauncherUserData.exportSettingsJson(this);
@@ -201,14 +204,16 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                 if (playData == null || playData.trim().isEmpty()) {
                     // 导出失败，仅配置上传成功
                     dismissLoading();
-                    showResultDialog("部分上传失败", "配置已上传，但本地数据导出失败，游玩记录未能上传");
+                    showResultDialog(getString(R.string.social_partial_upload_failed),
+                            getString(R.string.social_export_failed));
                     return;
                 }
                 LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playData, new PlayDataCallback() {
                     @Override
                     public void onSuccess(String playData) {
                         dismissLoading();
-                        showResultDialog("上传成功", "配置及游玩记录已同步到云端");
+                        showResultDialog(getString(R.string.social_upload_success),
+                                getString(R.string.social_upload_success_all));
                     }
 
                     @Override
@@ -217,10 +222,12 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                         // 服务端对未变化的游玩数据会以 USER_NOT_FOUND 返回；
                         // 前一步配置上传已成功，故将其视为无需重复上传。
                         if (isUnchangedPlayDataError(message)) {
-                            showResultDialog("上传成功", "配置已上传，游玩记录没有变化，无需重复上传");
+                            showResultDialog(getString(R.string.social_upload_success),
+                                    getString(R.string.social_upload_no_changes));
                             return;
                         }
-                        showResultDialog("部分上传失败", "配置已上传，游玩记录上传失败：" + message);
+                        showResultDialog(getString(R.string.social_partial_upload_failed),
+                                getString(R.string.social_play_record_upload_failed, message));
                     }
                 });
             }
@@ -228,7 +235,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
             @Override
             public void onError(String message) {
                 dismissLoading();
-                showResultDialog("上传失败", message);
+                showResultDialog(getString(R.string.social_upload_failed), message);
             }
         });
     }
@@ -260,7 +267,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void renderChip(android.widget.TextView chip, boolean enabled) {
-        chip.setText(enabled ? "关闭" : "开启");
+        chip.setText(enabled ? R.string.social_action_disable : R.string.social_action_enable);
         LauncherTheme.chip(chip, enabled);
     }
 

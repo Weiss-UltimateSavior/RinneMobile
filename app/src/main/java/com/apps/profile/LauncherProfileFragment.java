@@ -105,7 +105,7 @@ public class LauncherProfileFragment extends Fragment {
         binding.profileAvatar.setOnClickListener(v -> showChangeAvatarDialog());
         binding.profileInfoRow.setOnClickListener(v -> {
             if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
-                Toast.makeText(requireContext(), "当前未登录", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), R.string.profile_not_logged_in, Toast.LENGTH_SHORT).show();
                 return;
             }
             Intent intent = new Intent(requireContext(), LauncherProfileEditActivity.class);
@@ -128,9 +128,12 @@ public class LauncherProfileFragment extends Fragment {
                 LauncherMotion.applyActivityOpen(requireActivity());
                 return;
             }
-            LauncherDialogFactory.showConfirm(requireContext(), "模块功能权限",
-                    "模块功能需要获取应用列表权限。当前未获得权限，无法进入模块兼容页面。",
-                    "确定", () -> Toast.makeText(requireContext(), "未获得应用列表权限", Toast.LENGTH_SHORT).show());
+            LauncherDialogFactory.showConfirm(requireContext(),
+                    getString(R.string.profile_module_permission_title),
+                    getString(R.string.profile_module_permission_message),
+                    getString(R.string.settings_confirm),
+                    () -> Toast.makeText(requireContext(),
+                            R.string.profile_app_list_permission_missing, Toast.LENGTH_SHORT).show());
         });
         binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
@@ -189,11 +192,12 @@ public class LauncherProfileFragment extends Fragment {
         if (LauncherAuthBridge.isLoggedIn(requireContext())) {
             String nickname = LauncherAuthBridge.getNickname(requireContext());
             String email = LauncherAuthBridge.getEmail(requireContext());
-            binding.profileNickname.setText(nickname != null && !nickname.isEmpty() ? nickname : "在线用户");
+            binding.profileNickname.setText(nickname != null && !nickname.isEmpty()
+                    ? nickname : getString(R.string.profile_online_user));
             binding.profileEmail.setText(email != null ? email : "");
             binding.profileEmail.setVisibility(email != null && !email.isEmpty() ? View.VISIBLE : View.GONE);
         } else {
-            binding.profileNickname.setText("本地用户");
+            binding.profileNickname.setText(R.string.profile_local_user);
             binding.profileEmail.setVisibility(View.GONE);
         }
     }
@@ -201,7 +205,7 @@ public class LauncherProfileFragment extends Fragment {
     private void refreshPlayTimeRank() {
         if (binding == null || !isAdded()) return;
         if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
-            binding.profilePlaytimeRankValue.setText("登录后可查看");
+            binding.profilePlaytimeRankValue.setText(R.string.profile_sign_in_to_view);
             binding.profilePlaytimeTotalValue.setText("--");
             return;
         }
@@ -209,13 +213,15 @@ public class LauncherProfileFragment extends Fragment {
         LauncherAuthBridge.fetchMyPlayTimeRank(requireContext(), new MyRankCallback() {
             @Override public void onSuccess(MyRank rank) {
                 if (binding == null || !isAdded()) return;
-                binding.profilePlaytimeRankValue.setText(rank.rank > 0 ? "全站第 " + rank.rank + " 名" : "暂无游玩记录");
+                binding.profilePlaytimeRankValue.setText(rank.rank > 0
+                        ? getString(R.string.profile_site_rank, rank.rank)
+                        : getString(R.string.profile_no_play_records));
                 binding.profilePlaytimeTotalValue.setText(TimeFormatUtil.playTime(rank.totalDurationMs));
             }
 
             @Override public void onError(String message) {
                 if (binding == null || !isAdded()) return;
-                binding.profilePlaytimeRankValue.setText("排名暂不可用");
+                binding.profilePlaytimeRankValue.setText(R.string.profile_rank_unavailable);
                 binding.profilePlaytimeTotalValue.setText("--");
             }
         });
@@ -224,11 +230,11 @@ public class LauncherProfileFragment extends Fragment {
     private void renderPlayTimeRankLoading() {
         if (binding == null) return;
         if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
-            binding.profilePlaytimeRankValue.setText("登录后可查看");
+            binding.profilePlaytimeRankValue.setText(R.string.profile_sign_in_to_view);
             binding.profilePlaytimeTotalValue.setText("--");
             return;
         }
-        binding.profilePlaytimeRankValue.setText("加载中…");
+        binding.profilePlaytimeRankValue.setText(R.string.settings_loading);
         binding.profilePlaytimeTotalValue.setText("--");
     }
 
@@ -263,14 +269,14 @@ public class LauncherProfileFragment extends Fragment {
 
     private void showCloudRestoreConfirmDialog() {
         if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
-            Toast.makeText(requireContext(), "当前未登录", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.profile_not_logged_in, Toast.LENGTH_SHORT).show();
             return;
         }
         LauncherDialogFactory.showStandardConfirm(
                 requireContext(),
-                "配置恢复",
-                "将从云端下载配置并覆盖当前设置，确定恢复吗？",
-                "确定恢复",
+                getString(R.string.profile_restore_configuration),
+                getString(R.string.profile_restore_configuration_message),
+                getString(R.string.profile_confirm_restore),
                 this::performCloudRestore
         );
     }
@@ -285,8 +291,9 @@ public class LauncherProfileFragment extends Fragment {
         window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
         View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_launcher_confirm, null);
         window.setContentView(view);
-        ((TextView) view.findViewById(R.id.dialogTitle)).setText("全站排行榜");
-        ((TextView) view.findViewById(R.id.dialogMessage)).setText("是否查看全站游玩时长排行榜？");
+        ((TextView) view.findViewById(R.id.dialogTitle)).setText(R.string.profile_site_leaderboard);
+        ((TextView) view.findViewById(R.id.dialogMessage)).setText(
+                R.string.profile_site_leaderboard_message);
         TextView cancel = view.findViewById(R.id.dialogBtnCancel);
         TextView confirm = view.findViewById(R.id.dialogBtnConfirm);
         LauncherTheme.dialogButtons(cancel, confirm);
@@ -299,7 +306,8 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void performCloudRestore() {
-        loadingDialog = showLoadingDialog("正在恢复配置...", "请不要关闭应用及网络，否则可能导致配置出错");
+        loadingDialog = showLoadingDialog(getString(R.string.profile_restoring_configuration),
+                getString(R.string.profile_restore_in_progress_message));
 
         LauncherAuthBridge.fetchConfig(requireContext(), new ConfigCallback() {
             @Override
@@ -314,9 +322,13 @@ public class LauncherProfileFragment extends Fragment {
                         dismissLoadingDialog();
                         if (settingsOk && playOk) {
                             new ViewModelProvider(requireActivity()).get(LauncherViewModel.class).refresh();
-                            showResultDialog("恢复成功", "配置已恢复，即将重启生效");
+                            showResultDialog(getString(R.string.profile_restore_success),
+                                    getString(R.string.profile_restore_success_message));
                         } else {
-                            showResultDialog("部分恢复失败", settingsOk ? "设置已恢复，游玩记录部分导入失败" : "设置恢复失败");
+                            showResultDialog(getString(R.string.profile_partial_restore_failed),
+                                    getString(settingsOk
+                                            ? R.string.profile_play_records_partial_import_failed
+                                            : R.string.profile_settings_restore_failed));
                         }
                     }
 
@@ -325,7 +337,11 @@ public class LauncherProfileFragment extends Fragment {
                         // 仅恢复设置
                         boolean ok = LauncherUserData.importSettingsFromJson(requireContext(), configJson);
                         dismissLoadingDialog();
-                        showResultDialog(ok ? "部分恢复成功" : "恢复失败", ok ? "设置已恢复，游玩记录获取失败：" + message : message);
+                        showResultDialog(getString(ok
+                                        ? R.string.profile_partial_restore_success
+                                        : R.string.profile_restore_failed),
+                                ok ? getString(R.string.profile_play_records_fetch_failed, message)
+                                        : message);
                     }
                 });
             }
@@ -333,7 +349,7 @@ public class LauncherProfileFragment extends Fragment {
             @Override
             public void onError(String message) {
                 dismissLoadingDialog();
-                showResultDialog("恢复失败", message);
+                showResultDialog(getString(R.string.profile_restore_failed), message);
             }
         });
     }
@@ -360,7 +376,7 @@ public class LauncherProfileFragment extends Fragment {
 
     private void showLogoutDialog() {
         if (!LauncherAuthBridge.isLoggedIn(requireContext())) {
-            Toast.makeText(requireContext(), "当前未登录", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.profile_not_logged_in, Toast.LENGTH_SHORT).show();
             return;
         }
         AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
@@ -378,7 +394,7 @@ public class LauncherProfileFragment extends Fragment {
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
-        title.setText("退出登录");
+        title.setText(R.string.profile_logout);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
         title.setTextSize(16);
@@ -387,7 +403,9 @@ public class LauncherProfileFragment extends Fragment {
 
         String nickname = LauncherAuthBridge.getNickname(requireContext());
         TextView message = new TextView(requireContext());
-        message.setText("确定退出当前账户" + (nickname != null && !nickname.isEmpty() ? "「" + nickname + "」" : "") + "吗？");
+        message.setText(nickname != null && !nickname.isEmpty()
+                ? getString(R.string.profile_logout_named_message, nickname)
+                : getString(R.string.profile_logout_message));
         message.setGravity(android.view.Gravity.CENTER);
         message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
         message.setTextSize(12);
@@ -399,7 +417,7 @@ public class LauncherProfileFragment extends Fragment {
         String savedEmail = LauncherAuthBridge.getEmail(requireContext());
 
         TextView confirm = new TextView(requireContext());
-        confirm.setText("确定退出");
+        confirm.setText(R.string.profile_confirm_logout);
         confirm.setGravity(android.view.Gravity.CENTER);
         LauncherTheme.dangerButton(confirm);
         confirm.setOnClickListener(v -> {
@@ -411,7 +429,7 @@ public class LauncherProfileFragment extends Fragment {
         root.addView(confirm, confirmLp);
 
         TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
+        cancel.setText(R.string.settings_cancel);
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
         cancel.setTextSize(13);
@@ -433,7 +451,7 @@ public class LauncherProfileFragment extends Fragment {
             requireContext().getSharedPreferences("yukihub_prefs", 0)
                     .edit().putString("auth_saved_email", savedEmail).apply();
         }
-        Toast.makeText(requireContext(), "已退出登录", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), R.string.profile_logged_out, Toast.LENGTH_SHORT).show();
         // 返回登录页
         if (binding == null) return;
         getParentFragmentManager()
@@ -451,9 +469,9 @@ public class LauncherProfileFragment extends Fragment {
     private void showChangeCoverDialog() {
         LauncherDialogFactory.showStandardConfirm(
                 requireContext(),
-                "更换背景",
-                "是否从图库选择新的背景图片？",
-                "确定",
+                getString(R.string.profile_change_background),
+                getString(R.string.profile_choose_background_message),
+                getString(R.string.settings_confirm),
                 () -> coverPickerLauncher.launch(
                         new PickVisualMediaRequest.Builder()
                                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
@@ -464,9 +482,9 @@ public class LauncherProfileFragment extends Fragment {
     private void showChangeAvatarDialog() {
         LauncherDialogFactory.showStandardConfirm(
                 requireContext(),
-                "修改头像",
-                "是否从图库选择新头像？",
-                "确定",
+                getString(R.string.profile_change_avatar),
+                getString(R.string.profile_choose_avatar_message),
+                getString(R.string.settings_confirm),
                 () -> avatarPickerLauncher.launch(
                         new PickVisualMediaRequest.Builder()
                                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
@@ -499,7 +517,8 @@ public class LauncherProfileFragment extends Fragment {
             getActivity().runOnUiThread(() -> {
                 if (!isAdded()) return;
                 if (!success) {
-                    Toast.makeText(requireContext(), "图片保存失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), R.string.profile_image_save_failed,
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
                 requireContext().getSharedPreferences(PREFS_NAME, 0)
@@ -508,7 +527,8 @@ public class LauncherProfileFragment extends Fragment {
                     syncAvatarToHome(savedUri);
                 }
                 onDone.run();
-                Toast.makeText(requireContext(), "图片已更新", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), R.string.profile_image_updated,
+                        Toast.LENGTH_SHORT).show();
             });
         });
     }

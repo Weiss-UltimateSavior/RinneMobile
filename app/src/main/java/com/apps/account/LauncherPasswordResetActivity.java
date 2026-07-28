@@ -52,16 +52,16 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
     private void sendVerificationCode() {
         String email = textOf(binding.resetEmail);
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.resetEmail.setError("请输入正确的注册邮箱");
+            binding.resetEmail.setError(getString(R.string.social_error_registered_email));
             return;
         }
         binding.resetSendCode.setEnabled(false);
-        binding.resetSendCode.setText("发送中...");
+        binding.resetSendCode.setText(R.string.social_action_sending);
         LauncherAuthBridge.sendPasswordResetCode(this, email, new SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;
-                Toast.makeText(LauncherPasswordResetActivity.this, "验证码已发送，请查收邮箱", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LauncherPasswordResetActivity.this, R.string.social_verification_sent, Toast.LENGTH_SHORT).show();
                 startVerificationCodeCountdown();
             }
 
@@ -69,8 +69,8 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
             public void onError(String message) {
                 if (isFinishing()) return;
                 binding.resetSendCode.setEnabled(true);
-                binding.resetSendCode.setText("获取验证码");
-                showResultDialog("验证码发送失败", message);
+                binding.resetSendCode.setText(R.string.social_action_get_code);
+                showResultDialog(getString(R.string.social_verification_failed), message);
             }
         });
     }
@@ -81,28 +81,28 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         String password = textOf(binding.resetPassword);
         String confirmPassword = textOf(binding.resetConfirmPassword);
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.resetEmail.setError("请输入正确的注册邮箱");
+            binding.resetEmail.setError(getString(R.string.social_error_registered_email));
             return;
         }
         if (!code.matches("\\d{6}")) {
-            binding.resetVerificationCode.setError("请输入 6 位邮箱验证码");
+            binding.resetVerificationCode.setError(getString(R.string.social_error_verification_code));
             return;
         }
         if (password.length() < 6) {
-            binding.resetPassword.setError("密码至少 6 位");
+            binding.resetPassword.setError(getString(R.string.social_error_password_min));
             return;
         }
         if (!password.equals(confirmPassword)) {
-            binding.resetConfirmPassword.setError("两次密码不一致");
+            binding.resetConfirmPassword.setError(getString(R.string.social_error_password_mismatch));
             return;
         }
         binding.resetSubmit.setEnabled(false);
-        binding.resetSubmit.setText("重置中...");
+        binding.resetSubmit.setText(R.string.social_resetting_password);
         LauncherAuthBridge.resetPassword(this, email, code, password, new SimpleCallback() {
             @Override
             public void onSuccess() {
                 if (isFinishing()) return;
-                Toast.makeText(LauncherPasswordResetActivity.this, "密码已重置，请使用新密码登录", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LauncherPasswordResetActivity.this, R.string.social_password_reset_success, Toast.LENGTH_SHORT).show();
                 setResult(RESULT_OK);
                 LauncherMotion.finish(LauncherPasswordResetActivity.this);
             }
@@ -111,8 +111,8 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
             public void onError(String message) {
                 if (isFinishing()) return;
                 binding.resetSubmit.setEnabled(true);
-                binding.resetSubmit.setText("重置密码");
-                showResultDialog("密码重置失败", message);
+                binding.resetSubmit.setText(R.string.social_reset_password);
+                showResultDialog(getString(R.string.social_password_reset_failed), message);
             }
         });
     }
@@ -123,13 +123,14 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
             @Override
             public void onTick(long millisUntilFinished) {
                 binding.resetSendCode.setEnabled(false);
-                binding.resetSendCode.setText((millisUntilFinished + 999L) / 1000L + " 秒后重试");
+                binding.resetSendCode.setText(getString(R.string.social_action_retry_seconds,
+                        (millisUntilFinished + 999L) / 1000L));
             }
 
             @Override
             public void onFinish() {
                 binding.resetSendCode.setEnabled(true);
-                binding.resetSendCode.setText("获取验证码");
+                binding.resetSendCode.setText(R.string.social_action_get_code);
             }
         }.start();
     }
@@ -162,7 +163,7 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         messageLp.setMargins(0, dp(13), 0, 0);
         root.addView(messageView, messageLp);
         TextView confirm = new TextView(this);
-        confirm.setText("知道了");
+        confirm.setText(R.string.social_action_got_it);
         confirm.setGravity(android.view.Gravity.CENTER);
         LauncherTheme.primaryButton(confirm);
         confirm.setOnClickListener(view -> dialog.dismiss());

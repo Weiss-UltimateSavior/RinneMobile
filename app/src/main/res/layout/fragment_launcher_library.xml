@@ -25,7 +25,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="游戏库"
+                android:text="@string/game_library_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="@dimen/launcher_library_title_text_size"
                 android:textStyle="bold" />
@@ -35,7 +35,7 @@
                 android:layout_width="@dimen/launcher_library_toolbar_button_width"
                 android:layout_height="@dimen/launcher_library_toolbar_button_height"
                 android:layout_marginEnd="@dimen/launcher_library_sync_button_margin_end"
-                android:contentDescription="同步"
+                android:contentDescription="@string/game_library_sync"
                 android:scaleType="centerInside"
                 android:src="@drawable/launcher_library_action_sync" />
 
@@ -44,7 +44,7 @@
                 android:layout_width="@dimen/launcher_library_toolbar_button_width"
                 android:layout_height="@dimen/launcher_library_toolbar_button_height"
                 android:layout_marginEnd="@dimen/launcher_library_collapse_button_margin_end"
-                android:contentDescription="分类"
+                android:contentDescription="@string/game_library_category"
                 android:scaleType="centerInside"
                 android:src="@drawable/launcher_library_action_category" />
 
@@ -52,7 +52,7 @@
                 android:id="@+id/librarySearchButton"
                 android:layout_width="@dimen/launcher_library_toolbar_button_width"
                 android:layout_height="@dimen/launcher_library_toolbar_button_height"
-                android:contentDescription="搜索"
+                android:contentDescription="@string/game_common_search"
                 android:scaleType="centerInside"
                 android:src="@drawable/launcher_library_action_search" />
         </LinearLayout>
@@ -63,7 +63,7 @@
             android:layout_height="@dimen/launcher_library_search_height"
             android:layout_marginTop="@dimen/launcher_library_search_margin_top"
             android:background="@drawable/launcher_white_card"
-            android:hint="输入游戏名称"
+            android:hint="@string/game_name_hint"
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:maxLines="1"
@@ -113,7 +113,7 @@
                 android:layout_height="@dimen/launcher_library_empty_height"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="还没有游戏"
+                android:text="@string/game_empty"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="@dimen/launcher_library_empty_text_size"
                 android:visibility="gone" />

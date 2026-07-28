@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherTheme
 import com.core.launcherbridge.LauncherOnsGameSettingsBridge
@@ -243,6 +244,13 @@ internal object ScriptEngineLaunchers {
             intent.putExtra("themeColorCard", LauncherTheme.card(context))
             intent.putExtra("themeColorText", LauncherTheme.text(context))
             intent.putExtra("themeColorTextMuted", LauncherTheme.textMuted(context))
+            val appLocales = AppCompatDelegate.getApplicationLocales()
+            val languageTag = if (!appLocales.isEmpty) {
+                appLocales[0]?.toLanguageTag()
+            } else {
+                context.resources.configuration.locales[0].toLanguageTag()
+            }
+            intent.putExtra("uiLanguageTag", languageTag)
         } catch (error: Throwable) {
             Log.w(TAG, "appendThemeColors failed", error)
         }

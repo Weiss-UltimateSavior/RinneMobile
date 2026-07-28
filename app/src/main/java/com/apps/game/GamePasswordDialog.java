@@ -75,7 +75,8 @@ public final class GamePasswordDialog {
 
         // 标题
         TextView title = new TextView(context);
-        title.setText(mode == MODE_SET ? "设置密码" : "输入密码");
+        title.setText(mode == MODE_SET
+                ? R.string.game_password_set_title : R.string.game_password_enter_title);
         title.setGravity(Gravity.CENTER);
         title.setTextColor(LauncherTheme.text(context));
         title.setTextSize(16);
@@ -188,7 +189,7 @@ public final class GamePasswordDialog {
 
         // 取消按钮
         TextView cancelBtn = new TextView(context);
-        cancelBtn.setText("取消");
+        cancelBtn.setText(R.string.game_common_cancel);
         cancelBtn.setGravity(Gravity.CENTER);
         cancelBtn.setTextSize(13);
         cancelBtn.setTypeface(null, Typeface.BOLD);
@@ -228,7 +229,7 @@ public final class GamePasswordDialog {
             if (!firstInputDone[0]) {
                 firstInput[0] = entered;
                 firstInputDone[0] = true;
-                hint.setText("请再次输入以确认");
+                hint.setText(R.string.game_password_confirm_again);
             } else {
                 if (entered.equals(firstInput[0])) {
                     try {
@@ -236,14 +237,14 @@ public final class GamePasswordDialog {
                         dialog.dismiss();
                         if (setListener != null) setListener.onPasswordSet(hashed);
                     } catch (IllegalStateException e) {
-                        hint.setText("密码加密失败，无法保存");
+                        hint.setText(R.string.game_password_encrypt_save_failed);
                         shakeError(hint);
-                        Toast.makeText(context, "密码加密失败", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.game_password_encrypt_failed, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     firstInputDone[0] = false;
                     firstInput[0] = "";
-                    hint.setText("两次输入不一致，请重新设置");
+                    hint.setText(R.string.game_password_mismatch);
                     shakeError(hint);
                 }
             }
@@ -254,14 +255,14 @@ public final class GamePasswordDialog {
                     dialog.dismiss();
                     if (verifySuccess != null) verifySuccess.run();
                 } else {
-                    hint.setText("密码错误，请重新输入");
+                    hint.setText(R.string.game_password_wrong_retry);
                     shakeError(hint);
-                    Toast.makeText(context, "密码错误", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.game_password_wrong, Toast.LENGTH_SHORT).show();
                 }
             } catch (IllegalStateException e) {
-                hint.setText("密码加密失败，无法验证");
+                hint.setText(R.string.game_password_encrypt_verify_failed);
                 shakeError(hint);
-                Toast.makeText(context, "密码加密失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.game_password_encrypt_failed, Toast.LENGTH_SHORT).show();
             }
         }
     }

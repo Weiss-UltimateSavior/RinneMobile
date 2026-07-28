@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="engine_game_loading">Game loading</string>
+    <string name="engine_starting_game">Starting game</string>
+    <string name="engine_preparing_game">Please wait while the game content is prepared</string>
+    <string name="engine_krkr_initialization_failed">Failed to initialize the KRKR engine</string>
+    <string name="engine_launch_failed">Failed to start</string>
+    <string name="engine_return_and_retry">Go back and try again</string>
+    <string name="engine_another_game_running">Another game is running. Save and exit it before starting a new game.</string>
+
+    <string name="engine_tyrano_empty_game_directory">Tyrano failed to start: the game folder is empty</string>
+    <string name="engine_tyrano_unwritable_save_directory">Tyrano failed to start: the save folder is not writable</string>
+    <string name="engine_tyrano_entry_not_found">Tyrano failed to start: index.html or app.asar was not found</string>
+    <string name="engine_tyrano_asar_unreadable">Tyrano failed to start: app.asar could not be read</string>
+    <string name="engine_tyrano_server_failed">Tyrano failed to start: the local server could not be started</string>
+    <string name="engine_return_to_title">Return to title</string>
+    <string name="engine_return_to_title_message">Return to the title screen? Make sure your progress is saved.</string>
+    <string name="engine_confirm">Confirm</string>
+    <string name="engine_ok">OK</string>
+    <string name="engine_yes">Yes</string>
+    <string name="engine_no">No</string>
+    <string name="engine_prompt">Notice</string>
+    <string name="engine_error">Error</string>
+    <string name="engine_exit_game">Exit game</string>
+    <string name="engine_exit_game_message">Exit the current game?</string>
+    <string name="engine_cancel">Cancel</string>
+</resources>

@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
+import com.core.R
 import com.core.databinding.ItemLocalAgentEventBinding
 import com.core.util.TimeFormatUtil
 import kotlin.math.max
@@ -59,19 +60,32 @@ class LocalAgentMessageAdapter(
                 binding.agentReasoningScroll.scrollY + binding.agentReasoningScroll.height + holder.dp(24) >=
                 binding.agentReasoningScroll.getChildAt(0).height
             binding.agentReasoningContainer.background = null
-            binding.agentReasoningState.text = if (message.name == "streaming") "思考中…" else "已完成 · 可滑动查看"
+            binding.agentReasoningState.text = binding.root.context.getString(
+                if (message.name == "streaming") R.string.social_agent_thinking
+                else R.string.social_agent_reasoning_complete
+            )
             binding.agentReasoningState.setTextColor(LauncherTheme.textMuted(holder.itemView.context))
-            binding.agentReasoningContent.text = if (message.content.isEmpty()) "正在分析…" else message.content
+            binding.agentReasoningContent.text = if (message.content.isEmpty()) {
+                binding.root.context.getString(R.string.social_agent_analyzing)
+            } else {
+                message.content
+            }
             binding.agentReasoningContent.setTextColor(LauncherTheme.textMuted(holder.itemView.context))
             if (follow && message.name == "streaming") {
                 binding.agentReasoningScroll.post { binding.agentReasoningScroll.fullScroll(View.FOCUS_DOWN) }
             }
         }
-        binding.agentEventTitle.text = if (tool) "本地操作" else "智能体"
+        binding.agentEventTitle.text = binding.root.context.getString(
+            if (tool) R.string.social_agent_local_operation else R.string.social_agent_name
+        )
         var meta = TimeFormatUtil.clock(message.createdAt)
         if (tool && message.name.isNotEmpty()) meta += "  ·  ${message.name}"
         binding.agentEventMeta.text = meta
-        binding.agentEventContent.text = if (message.content.isEmpty() && !user && !tool) "正在生成结果…" else message.content
+        binding.agentEventContent.text = if (message.content.isEmpty() && !user && !tool) {
+            binding.root.context.getString(R.string.social_agent_generating_result)
+        } else {
+            message.content
+        }
         binding.agentEventContent.maxWidth = max(
             holder.dp(220), holder.itemView.resources.displayMetrics.widthPixels - holder.dp(100)
         )

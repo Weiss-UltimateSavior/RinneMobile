@@ -113,11 +113,15 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         boolean configured = LauncherSyncBridge.isConfigured(this);
         long last = LauncherSyncBridge.lastSyncTime(this);
         StringBuilder sb = new StringBuilder();
-        sb.append("游戏状态：").append(configured ? "已配置" : "未配置");
+        sb.append(getString(R.string.sync_game_status,
+                getString(configured ? R.string.sync_configured : R.string.sync_not_configured)));
         if (configured) {
-            sb.append("\n上次同步：");
-            sb.append(last > 0 ? DateFormat.format("yyyy-MM-dd HH:mm", last) : "尚未同步");
-            if (LauncherSyncBridge.isAutoSyncEnabled(this)) sb.append("（自动同步已开启）");
+            sb.append("\n").append(getString(R.string.sync_last_sync,
+                    last > 0 ? DateFormat.format("yyyy-MM-dd HH:mm", last)
+                            : getString(R.string.sync_never_synced)));
+            if (LauncherSyncBridge.isAutoSyncEnabled(this)) {
+                sb.append(getString(R.string.sync_auto_enabled_suffix));
+            }
         }
         binding.syncStatusText.setText(sb.toString());
     }
@@ -128,11 +132,11 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         String pass = binding.syncPasswordInput.getText().toString();
         boolean auto = binding.syncAutoSwitch.isChecked();
         if (url.isEmpty() || user.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(this, "请填写完整配置", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.sync_complete_configuration_required, Toast.LENGTH_SHORT).show();
             return;
         }
         LauncherSyncBridge.saveConfig(this, url, user, pass, auto);
-        Toast.makeText(this, "配置已保存", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.sync_configuration_saved, Toast.LENGTH_SHORT).show();
         renderStatus();
     }
 
@@ -141,16 +145,17 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         String user = binding.syncUserInput.getText().toString().trim();
         String pass = binding.syncPasswordInput.getText().toString();
         if (url.isEmpty() || user.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(this, "请填写完整配置", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.sync_complete_configuration_required, Toast.LENGTH_SHORT).show();
             return;
         }
         // 先临时保存再测试，避免 Bridge 内部使用旧配置
         LauncherSyncBridge.saveConfig(this, url, user, pass, binding.syncAutoSwitch.isChecked());
-        Toast.makeText(this, "正在测试连接...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.sync_testing_connection, Toast.LENGTH_SHORT).show();
         AppExecutors.runOnSingle(() -> {
             boolean ok = LauncherSyncBridge.testConnection(this);
             runOnUiThread(() -> {
-                Toast.makeText(this, ok ? "连接成功" : "连接失败，请检查配置", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, ok ? R.string.sync_connection_success
+                        : R.string.sync_connection_failed, Toast.LENGTH_SHORT).show();
                 renderStatus();
             });
         });
@@ -158,7 +163,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
 
     private void syncNow() {
         if (!LauncherSyncBridge.isConfigured(this)) {
-            Toast.makeText(this, "请先填写并保存 WebDAV 配置", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.sync_save_webdav_first, Toast.LENGTH_SHORT).show();
             return;
         }
         // 保存当前输入的配置再同步
@@ -167,7 +172,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         String pass = binding.syncPasswordInput.getText().toString();
         LauncherSyncBridge.saveConfig(this, url, user, pass, binding.syncAutoSwitch.isChecked());
 
-        Toast.makeText(this, "正在同步...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.sync_in_progress, Toast.LENGTH_SHORT).show();
         LauncherSyncBridge.syncNow(this, new LauncherSyncBridge.Callback() {
             @Override public void onStart() {}
             @Override public void onProgress(String item, boolean changed) {}
@@ -188,15 +193,15 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     private void showImportConfirmDialog() {
         LauncherDialogFactory.showLongMessageConfirm(
                 this,
-                "本地导入",
-                "将从备份文件（.ykbak 或 .json）导入个人资料、游戏库、游玩记录和元数据。\n\n导入策略：\n- 游戏按 rootUri 去重合并\n- 游玩记录按 session_uuid 去重\n- 图片只恢复 URI/URL，不复制图片文件\n\n是否继续？",
-                "选择文件",
+                getString(R.string.sync_local_import_title),
+                getString(R.string.sync_local_import_message),
+                getString(R.string.sync_choose_file),
                 () -> backupOpenLauncher.launch(new String[]{"application/octet-stream", "application/json", "text/*", "*/*"})
         );
     }
 
     private void exportLocalBackup(Uri uri) {
-        Toast.makeText(this, "正在导出备份...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.sync_exporting_backup, Toast.LENGTH_SHORT).show();
         AppExecutors.runOnSingle(() -> {
             try {
                 LauncherSyncBridge.GzipBackup backup = LauncherSyncBridge.exportLocalBackupAsGzip(this);
@@ -205,13 +210,17 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
                     out.write(backup.bytes);
                     out.flush();
                 }
-                runOnUiThread(() -> Toast.makeText(this, "备份完成：" + (backup.bytes.length / 1024) + "KB（压缩后，原始 " + (backup.originalSize / 1024) + "KB）", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this,
+                        getString(R.string.sync_backup_completed,
+                                backup.bytes.length / 1024, backup.originalSize / 1024),
+                        Toast.LENGTH_LONG).show());
             } catch (Error error) {
                 // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
                 throw error;
             } catch (Exception e) {
                 Log.e("YukiHub", "export backup failed", e);
-                runOnUiThread(() -> Toast.makeText(this, "备份失败：" + e.getMessage(), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(this,
+                        getString(R.string.sync_backup_failed, e.getMessage()), Toast.LENGTH_LONG).show());
             }
         });
     }
@@ -219,13 +228,13 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     private void importLocalBackup(Uri uri) {
         if (importInProgress) return;
         importInProgress = true;
-        Toast.makeText(this, "正在导入备份...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.sync_importing_backup, Toast.LENGTH_SHORT).show();
         AppExecutors.runOnSingle(() -> {
             try {
                 LauncherSyncBridge.importLocalBackupFromUri(this, uri);
                 runOnUiThread(() -> {
                     importInProgress = false;
-                    Toast.makeText(this, "导入完成", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.sync_import_completed, Toast.LENGTH_LONG).show();
                 });
             } catch (Error error) {
                 // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
@@ -234,7 +243,8 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
                 Log.e("YukiHub", "import backup failed", e);
                 runOnUiThread(() -> {
                     importInProgress = false;
-                    Toast.makeText(this, "导入失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.sync_import_failed, e.getMessage()),
+                            Toast.LENGTH_LONG).show();
                 });
             }
         });

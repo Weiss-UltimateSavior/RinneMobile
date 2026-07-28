@@ -14,7 +14,7 @@
         android:paddingTop="13dp"
         android:paddingEnd="20dp"
         android:paddingBottom="13dp"
-        android:text="占位"
+        android:text="@string/core_placeholder"
         android:textColor="@color/launcher_text_muted_color"
         android:textSize="14sp"
         android:textStyle="bold" />

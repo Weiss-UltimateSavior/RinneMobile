@@ -2,6 +2,7 @@ package com.apps.game;
 
 import android.content.Context;
 
+import com.core.R;
 import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.model.Game;
 
@@ -85,25 +86,31 @@ public final class GameCategoryBuilder {
         }
 
         if (favoriteCount > 0) {
-            cats.add(new CategoryOption("收藏", CATEGORY_FAVORITE));
+            cats.add(new CategoryOption(appContext.getString(R.string.game_category_favorite),
+                    CATEGORY_FAVORITE));
         }
         if (recentCount > 0) {
-            cats.add(new CategoryOption("最近游玩", CATEGORY_RECENT));
+            cats.add(new CategoryOption(appContext.getString(R.string.game_category_recent),
+                    CATEGORY_RECENT));
         }
         if (playingCount > 0) {
-            cats.add(new CategoryOption("在玩", CATEGORY_PLAYING));
+            cats.add(new CategoryOption(appContext.getString(R.string.game_status_playing),
+                    CATEGORY_PLAYING));
         }
         if (completedCount > 0) {
-            cats.add(new CategoryOption("玩过", CATEGORY_COMPLETED));
+            cats.add(new CategoryOption(appContext.getString(R.string.game_status_completed),
+                    CATEGORY_COMPLETED));
         }
         if (unplayedCount > 0) {
-            cats.add(new CategoryOption("未玩", CATEGORY_UNPLAYED));
+            cats.add(new CategoryOption(appContext.getString(R.string.game_status_unplayed),
+                    CATEGORY_UNPLAYED));
         }
 
         for (Map.Entry<String, Integer> entry : developerCounts.entrySet()) {
             if (entry.getValue() > 0) {
                 cats.add(new CategoryOption(
-                        "开发商 · " + entry.getKey() + " (" + entry.getValue() + ")",
+                        appContext.getString(R.string.game_category_developer,
+                                entry.getKey(), entry.getValue()),
                         CATEGORY_DEVELOPER_PREFIX + entry.getKey()
                 ));
             }

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.util.Base64
 import android.util.Log
+import com.core.R
 import com.core.net.HttpClient
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -54,15 +55,16 @@ object VisionTranslationClient {
     fun translate(context: Context, jpegBytes: ByteArray, prompt: String = TranslationConfigStore.DEFAULT_PROMPT): Result {
         val config = TranslationConfigStore.get(context)
         if (!config.isReady()) {
-            return Result.failure("翻译功能未配置完整，请在设置页填写 API 地址、模型和 Key")
+            return Result.failure(context.getString(R.string.translation_configuration_incomplete))
         }
         val apiKey = try {
             TranslationConfigStore.getApiKey(context)
         } catch (e: Exception) {
-            return Result.failure("API Key 读取失败：${e.message ?: "未知错误"}")
+            return Result.failure(context.getString(R.string.translation_api_key_read_failed,
+                e.message ?: context.getString(R.string.settings_unknown)))
         }
         if (apiKey.isEmpty()) {
-            return Result.failure("API Key 为空，请重新配置")
+            return Result.failure(context.getString(R.string.translation_api_key_empty_reconfigure))
         }
 
         val baseUrl = TranslationConfigStore.chatCompletionsUrl(config.baseUrl)
@@ -81,7 +83,7 @@ object VisionTranslationClient {
 
         // 上游 API 间歇性返回 500（Internal server error），重试 2 次提升成功率
         val maxRetries = 3
-        var lastError: String = "未知错误"
+        var lastError: String = context.getString(R.string.settings_unknown)
         for (attempt in 1..maxRetries) {
             try {
                 val requestStartedAt = System.nanoTime()
@@ -90,7 +92,7 @@ object VisionTranslationClient {
                     val elapsedMs = (System.nanoTime() - requestStartedAt) / 1_000_000L
                     Log.i(TAG, "response: attempt=$attempt code=${response.code} bodyLen=${body.length} elapsedMs=$elapsedMs")
                     if (!response.isSuccessful) {
-                        lastError = formatHttpError(response.code, body)
+                        lastError = formatHttpError(context, response.code, body)
                         if (response.code in 500..599 && attempt < maxRetries) {
                             Log.w(TAG, "server error, retrying (attempt=$attempt/$maxRetries)")
                             Thread.sleep(800L * attempt)
@@ -98,11 +100,12 @@ object VisionTranslationClient {
                         }
                         return Result.failure(lastError)
                     }
-                    return parseTranslation(body)
+                    return parseTranslation(context, body)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "translate request failed (attempt=$attempt)", e)
-                lastError = "网络请求失败：${e.message ?: "未知错误"}"
+                lastError = context.getString(R.string.translation_network_request_failed,
+                    e.message ?: context.getString(R.string.settings_unknown))
                 if (attempt < maxRetries) {
                     Thread.sleep(800L * attempt)
                 }
@@ -117,21 +120,23 @@ object VisionTranslationClient {
      * 常见 500 错误原因：模型不支持 vision（多模态图片输入）。
      * 例如 mimo-v2.5-free 等纯文本模型收到 image_url 会触发 Internal server error。
      */
-    private fun formatHttpError(code: Int, body: String): String {
+    private fun formatHttpError(context: Context, code: Int, body: String): String {
         val base = "HTTP $code"
         val detail = extractErrorMessage(body) ?: ""
         return when (code) {
             500, 502, 503 -> {
                 if (detail.isNotEmpty()) {
-                    "服务器错误($code)：$detail\n\n请检查模型是否支持 vision（如 gpt-4o-mini、gemini-flash），纯文本模型无法处理图片。"
+                    context.getString(R.string.translation_server_error_with_detail, code, detail)
                 } else {
-                    "服务器错误($code)，请检查模型是否支持图片输入"
+                    context.getString(R.string.translation_server_error, code)
                 }
             }
-            401, 403 -> "认证失败($code)：API Key 无效或无权限 $detail"
-            429 -> "请求过于频繁($code)，请稍后再试 $detail"
-            400 -> "请求格式错误($code)：$detail\n可能是模型不支持图片输入"
-            else -> if (detail.isNotEmpty()) "$base：$detail" else base
+            401, 403 -> context.getString(R.string.translation_authentication_failed, code, detail)
+            429 -> context.getString(R.string.translation_too_many_requests, code, detail)
+            400 -> context.getString(R.string.translation_bad_request, code, detail)
+            else -> if (detail.isNotEmpty()) {
+                context.getString(R.string.translation_http_error_detail, base, detail)
+            } else base
         }
     }
 
@@ -179,22 +184,25 @@ object VisionTranslationClient {
         }.toString()
     }
 
-    private fun parseTranslation(body: String): Result {
+    private fun parseTranslation(context: Context, body: String): Result {
         return try {
             val json = JSONObject(body)
             val choices = json.optJSONArray("choices")
             if (choices == null || choices.length() == 0) {
-                return Result.failure("响应中无 choices 字段")
+                return Result.failure(context.getString(R.string.translation_missing_choices))
             }
             val message = choices.getJSONObject(0).optJSONObject("message")
             if (message == null) {
-                return Result.failure("响应中无 message 字段")
+                return Result.failure(context.getString(R.string.translation_missing_message))
             }
             val content = message.optString("content", "")
-            if (content.isEmpty()) return Result.failure("译文内容为空")
+            if (content.isEmpty()) {
+                return Result.failure(context.getString(R.string.translation_empty_result))
+            }
             Result.success(content.trim())
         } catch (e: Exception) {
-            Result.failure("解析响应失败：${e.message ?: "未知错误"}")
+            Result.failure(context.getString(R.string.translation_parse_response_failed,
+                e.message ?: context.getString(R.string.settings_unknown)))
         }
     }
 
@@ -228,15 +236,16 @@ object VisionTranslationClient {
         val effectiveUrl = baseUrl.takeIf { it.trim().isNotEmpty() } ?: config.baseUrl
         val effectiveModel = model.takeIf { it.trim().isNotEmpty() } ?: config.model
         if (effectiveUrl.trim().isEmpty() || effectiveModel.trim().isEmpty()) {
-            return Result.failure("请先填写 API 地址和模型名称")
+            return Result.failure(context.getString(R.string.translation_enter_api_and_model))
         }
         val apiKey = try {
             TranslationConfigStore.getApiKey(context)
         } catch (e: Exception) {
-            return Result.failure("API Key 读取失败：${e.message ?: "未知错误"}")
+            return Result.failure(context.getString(R.string.translation_api_key_read_failed,
+                e.message ?: context.getString(R.string.settings_unknown)))
         }
         if (apiKey.isEmpty()) {
-            return Result.failure("API Key 为空，请先保存配置")
+            return Result.failure(context.getString(R.string.translation_save_api_key_first))
         }
 
         val fullUrl = TranslationConfigStore.chatCompletionsUrl(effectiveUrl)
@@ -265,9 +274,9 @@ object VisionTranslationClient {
                 val elapsedMs = (System.nanoTime() - requestStartedAt) / 1_000_000L
                 Log.i(TAG, "testVision response: code=${response.code} bodyLen=${body.length} elapsedMs=$elapsedMs")
                 if (!response.isSuccessful) {
-                    return Result.failure(formatHttpError(response.code, body))
+                    return Result.failure(formatHttpError(context, response.code, body))
                 }
-                val parseResult = parseTranslation(body)
+                val parseResult = parseTranslation(context, body)
                 if (parseResult.success) {
                     Result.success(parseResult.text)
                 } else {
@@ -276,7 +285,8 @@ object VisionTranslationClient {
             }
         } catch (e: Exception) {
             Log.e(TAG, "testVision request failed", e)
-            Result.failure("网络请求失败：${e.message ?: "未知错误"}")
+            Result.failure(context.getString(R.string.translation_network_request_failed,
+                e.message ?: context.getString(R.string.settings_unknown)))
         }
     }
 

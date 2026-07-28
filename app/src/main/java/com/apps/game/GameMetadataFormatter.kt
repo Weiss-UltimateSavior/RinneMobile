@@ -1,6 +1,8 @@
 package com.apps.game
 
+import android.content.Context
 import android.text.TextUtils
+import com.core.R
 import com.core.model.EngineType
 import com.core.model.Game
 import java.util.Locale
@@ -17,10 +19,19 @@ object GameMetadataFormatter {
     /** 返回可读的游玩状态文本（未玩/在玩/玩过），null 或未知值统一返回"未玩"。 */
     @JvmStatic
     fun playStatusText(status: String?): String = when (status) {
-        "playing" -> "在玩"
-        "completed" -> "玩过"
-        else -> "未玩"
+        "playing" -> "Playing"
+        "completed" -> "Completed"
+        else -> "Not started"
     }
+
+    @JvmStatic
+    fun playStatusText(context: Context, status: String?): String = context.getString(
+        when (status) {
+            "playing" -> R.string.game_status_playing
+            "completed" -> R.string.game_status_completed
+            else -> R.string.game_status_unplayed
+        }
+    )
 
     /** 返回可读的引擎名称；null 或未知值返回"未知"。 */
     @JvmStatic
@@ -33,8 +44,16 @@ object GameMetadataFormatter {
         EngineType.GAMEHUB -> "GameHub"
         EngineType.PSP -> "PSP"
         EngineType.NINTENDO_3DS -> "3DS"
-        else -> "未知"
+        else -> "Unknown"
     }
+
+    @JvmStatic
+    fun engineText(context: Context, engine: EngineType?): String =
+        if (engine == null || engine == EngineType.UNKNOWN) {
+            context.getString(R.string.game_common_unknown)
+        } else {
+            engineText(engine)
+        }
 
     /**
      * 解析时长字符串为分钟数。
@@ -100,7 +119,15 @@ object GameMetadataFormatter {
     /** 返回游戏标题；空或缺失时返回"未命名游戏"。 */
     @JvmStatic
     fun safeTitle(game: Game?): String {
-        if (game == null || TextUtils.isEmpty(game.title)) return "未命名游戏"
+        if (game == null || TextUtils.isEmpty(game.title)) return "Game"
+        return game.title!!.trim { it <= ' ' }
+    }
+
+    @JvmStatic
+    fun safeTitle(context: Context, game: Game?): String {
+        if (game == null || TextUtils.isEmpty(game.title)) {
+            return context.getString(R.string.game_unnamed)
+        }
         return game.title!!.trim { it <= ' ' }
     }
 }

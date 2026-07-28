@@ -38,7 +38,11 @@ class LauncherChatMessageAdapter(
             holder.bubble.layoutParams = this
         }
         holder.bubble.background = LauncherTheme.chatBubble(holder.bubble.context, outgoing)
-        holder.author.text = if (message.senderType == "admin") "管理员 · ${message.senderName}" else message.senderName
+        holder.author.text = if (message.senderType == "admin") {
+            holder.author.context.getString(R.string.social_admin_author, message.senderName)
+        } else {
+            message.senderName
+        }
         holder.time.text = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(message.createdAt))
         holder.pinned.visibility = if (message.pinned) View.VISIBLE else View.GONE
         holder.content.text = message.content

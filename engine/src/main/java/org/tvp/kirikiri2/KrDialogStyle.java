@@ -15,6 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import bridge.KrPathUtils;
+import com.core.engine.EngineUiText;
 
 /**
  * 统一弹窗样式 — KRKR / Artemis 共用。
@@ -236,7 +237,7 @@ public final class KrDialogStyle {
     private static void addTitle(LinearLayout card, String text, Colors c) {
         Context context = card.getContext();
         TextView view = new TextView(context);
-        view.setText(text);
+        view.setText(EngineUiText.localizeCommonDialogText(context, text));
         view.setTextColor(c.text);
         view.setTextSize(TITLE_TEXT_SP);
         view.setTypeface(null, Typeface.BOLD);
@@ -292,7 +293,7 @@ public final class KrDialogStyle {
             final int index = i;
             boolean isPrimary = (i == 0);
             TextView btn = new TextView(context);
-            btn.setText(texts[i]);
+            btn.setText(EngineUiText.localizeCommonDialogText(context, texts[i]));
             btn.setGravity(Gravity.CENTER);
             btn.setTextSize(BUTTON_TEXT_SP);
             btn.setTypeface(null, Typeface.BOLD);

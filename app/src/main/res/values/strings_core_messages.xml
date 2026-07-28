@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_game_not_found">游戏不存在</string>
+    <string name="core_game_session_create_failed">无法创建游戏会话，请稍后重试</string>
+    <string name="core_launch_request_sent">启动请求已发送</string>
+    <string name="core_emulator_launch_failed">启动失败：未找到该模拟器，或该模拟器不接受当前启动目标</string>
+    <string name="core_current_game">当前游戏</string>
+    <string name="core_active_game_title">已有游戏正在运行</string>
+    <string name="core_active_game_message">已有游戏正在运行：%1$s</string>
+    <string name="core_active_game_dialog_message">《%1$s》仍在运行。请先保存进度，并在最近任务中手动划掉或正常退出该游戏后再启动其他游戏。</string>
+    <string name="core_got_it">知道了</string>
+    <string name="core_game_directory_permission_lost">游戏目录访问失败：SAF 权限可能已失效，请重新绑定目录。</string>
+    <string name="core_gamehub_local_id_required">请先在游戏中心编辑游戏，导入 GameHub localGameId。</string>
+    <string name="core_emulator_package_required">请先在游戏中心编辑游戏，填写模拟器包名。</string>
+    <string name="core_ppsspp_required">启动 PSP 游戏需要安装 PPSSPP 模拟器。</string>
+    <string name="core_rpgm_module_disabled">RPGM 模块未启用，请在「模块兼容」页面启用后再试。</string>
+    <string name="core_renpy_module_disabled">RenPy 模块未启用，请在「模块兼容」页面启用后再试。</string>
+    <string name="core_godot_module_disabled">Godot 模块未启用，请在「模块兼容」页面启用后再试。</string>
+    <string name="core_untitled_game">未命名游戏</string>
+
+    <string name="core_backup_empty">备份内容为空</string>
+    <string name="core_backup_invalid">不是有效的 YukiHub 备份</string>
+    <string name="core_backup_file_unavailable">备份文件不可用</string>
+    <string name="core_backup_declared_too_large">本地备份文件过大（文件声明 %1$d 字节，最大允许 %2$d 字节）</string>
+    <string name="core_backup_too_large">本地备份文件过大（最大允许 %1$d 字节）</string>
+    <string name="core_sync_conflict">检测到同步冲突，请打开同步中心处理</string>
+    <string name="core_sync_failed">同步失败</string>
+    <string name="core_sync_complete">同步完成</string>
+    <string name="core_sync_cancelled">同步已取消</string>
+    <string name="core_sync_uploaded">已上传本地修改</string>
+    <string name="core_sync_downloaded">已下载云端修改</string>
+    <string name="core_sync_merged">已合并同步数据</string>
+    <string name="core_sync_up_to_date">云端与本地已是最新</string>
+    <string name="core_webdav_not_configured">WebDAV 未配置</string>
+    <string name="core_webdav_client_init_failed">WebDAV 客户端初始化失败</string>
+    <string name="core_cloud_sync_file_invalid">云端文件不是有效的 YukiHub 同步文件</string>
+    <string name="core_sync_first_upload">首次上传</string>
+    <string name="core_sync_first_download">首次下载云端数据</string>
+    <string name="core_sync_checking_data">数据检查</string>
+    <string name="core_sync_uploading_local">上传本地修改</string>
+    <string name="core_sync_downloading_cloud">下载云端修改</string>
+    <string name="core_unknown_error">未知错误</string>
+    <string name="core_sync_file_invalid">不是有效的 YukiHub 同步文件</string>
+    <string name="core_sync_settings_save_failed">同步设置保存失败</string>
+    <string name="core_not_signed_in">未登录</string>
+    <string name="core_session_expired">登录已过期，请重新登录</string>
+    <string name="core_session_not_found">会话不存在</string>
+    <string name="core_records_empty">记录列表为空</string>
+    <string name="core_play_session_start_failed">启动服务端游玩会话失败</string>
+    <string name="core_play_session_heartbeat_failed">服务端游玩心跳失败</string>
+    <string name="core_play_session_finish_failed">结束服务端游玩会话失败</string>
+    <string name="core_play_time_upload_failed">上传游玩时长失败</string>
+    <string name="core_play_time_fetch_failed">获取游玩时长失败</string>
+    <string name="core_play_time_leaderboard_failed">获取游玩时长排行榜失败</string>
+    <string name="core_play_time_rank_failed">获取我的游玩时长排名失败</string>
+
+    <string name="core_try_again_later">请稍后重试</string>
+    <string name="core_update_check_failed">检查更新失败：%1$s</string>
+    <string name="core_diagnostics_package">Rinne 诊断包</string>
+    <string name="core_export_diagnostics_package">导出 Rinne 诊断包</string>
+</resources>

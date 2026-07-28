@@ -3,6 +3,7 @@ package com.core.launcherbridge
 import android.content.Context
 import android.content.res.AssetFileDescriptor
 import android.net.Uri
+import com.core.R
 import com.core.sync.SyncManager
 import com.core.util.RxMainScheduler
 import org.json.JSONObject
@@ -62,9 +63,9 @@ object LauncherSyncBridge {
     @Throws(Exception::class)
     fun importLocalBackup(context: Context?, snapshot: JSONObject?) {
         if (context == null) throw Exception("上下文不可用")
-        if (snapshot == null) throw Exception("备份内容为空")
+        if (snapshot == null) throw Exception(context.getString(R.string.core_backup_empty))
         if ("YukiHub" != snapshot.optString("app", "")) {
-            throw Exception("不是有效的 YukiHub 备份")
+            throw Exception(context.getString(R.string.core_backup_invalid))
         }
         SyncManager(context.applicationContext).importSnapshotFromLocalBackup(snapshot)
     }
@@ -96,7 +97,7 @@ object LauncherSyncBridge {
     @Throws(Exception::class)
     fun importLocalBackupFromBytes(context: Context?, bytes: ByteArray?): JSONObject {
         if (context == null) throw Exception("上下文不可用")
-        if (bytes == null || bytes.isEmpty()) throw Exception("备份内容为空")
+        if (bytes == null || bytes.isEmpty()) throw Exception(context.getString(R.string.core_backup_empty))
         // 本地备份解压上限与导出端 MAX_LOCAL_BACKUP_BYTES 一致（32MB），避免 16-32MB 备份无法导入
         val text = SyncManager.decompressIfGzip(bytes, SyncManager.MAX_LOCAL_BACKUP_BYTES)
         val root = JSONObject(text)
@@ -120,7 +121,7 @@ object LauncherSyncBridge {
     @Throws(Exception::class)
     fun importLocalBackupFromUri(context: Context?, uri: Uri?): JSONObject {
         if (context == null) throw Exception("上下文不可用")
-        if (uri == null) throw Exception("备份文件不可用")
+        if (uri == null) throw Exception(context.getString(R.string.core_backup_file_unavailable))
         val bytes = readBytesFromUri(context, uri)
         return importLocalBackupFromBytes(context, bytes)
     }
@@ -176,7 +177,11 @@ object LauncherSyncBridge {
             // Some document providers cannot report a length; the stream limit below remains authoritative.
         }
         if (declaredLength > MAX_LOCAL_BACKUP_BYTES) {
-            throw Exception("本地备份文件过大（文件声明 $declaredLength 字节，最大允许 $MAX_LOCAL_BACKUP_BYTES 字节）")
+            throw Exception(context.getString(
+                R.string.core_backup_declared_too_large,
+                declaredLength,
+                MAX_LOCAL_BACKUP_BYTES,
+            ))
         }
         val input: InputStream = context.contentResolver.openInputStream(uri)
             ?: throw Exception("openInputStream failed")
@@ -188,7 +193,10 @@ object LauncherSyncBridge {
             while (stream.read(buf).also { len = it } != -1) {
                 total += len
                 if (total > MAX_LOCAL_BACKUP_BYTES) {
-                    throw Exception("本地备份文件过大（最大允许 $MAX_LOCAL_BACKUP_BYTES 字节）")
+                    throw Exception(context.getString(
+                        R.string.core_backup_too_large,
+                        MAX_LOCAL_BACKUP_BYTES,
+                    ))
                 }
                 bos.write(buf, 0, len)
             }
@@ -225,16 +233,20 @@ object LauncherSyncBridge {
             }
 
             override fun onConflict(conflict: SyncManager.Conflict): Int {
-                post { callback?.onError("检测到同步冲突，请打开同步中心处理") }
+                post { callback?.onError(context.getString(R.string.core_sync_conflict)) }
                 return SyncManager.RESOLVE_CANCEL
             }
 
             override fun onSyncComplete(result: SyncManager.SyncResult) {
-                post { callback?.onComplete(summary(result)) }
+                post { callback?.onComplete(summary(context, result)) }
             }
 
             override fun onError(error: String) {
-                post { callback?.onError(if (error.isBlank()) "同步失败" else error) }
+                post {
+                    callback?.onError(
+                        if (error.isBlank()) context.getString(R.string.core_sync_failed) else error
+                    )
+                }
             }
         })
     }
@@ -243,14 +255,14 @@ object LauncherSyncBridge {
         if (runnable != null) RxMainScheduler.post(runnable)
     }
 
-    private fun summary(result: SyncManager.SyncResult?): String {
-        if (result == null) return "同步完成"
-        if (result.cancelled) return "同步已取消"
-        if (result.uploaded) return "已上传本地修改"
-        if (result.downloaded) return "已下载云端修改"
-        if (result.merged) return "已合并同步数据"
-        if (result.noChanges) return "云端与本地已是最新"
-        return "同步完成"
+    private fun summary(context: Context, result: SyncManager.SyncResult?): String {
+        if (result == null) return context.getString(R.string.core_sync_complete)
+        if (result.cancelled) return context.getString(R.string.core_sync_cancelled)
+        if (result.uploaded) return context.getString(R.string.core_sync_uploaded)
+        if (result.downloaded) return context.getString(R.string.core_sync_downloaded)
+        if (result.merged) return context.getString(R.string.core_sync_merged)
+        if (result.noChanges) return context.getString(R.string.core_sync_up_to_date)
+        return context.getString(R.string.core_sync_complete)
     }
 
     interface Callback {

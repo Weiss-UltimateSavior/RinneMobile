@@ -1,6 +1,7 @@
 package com.core.launcherbridge
 
 import android.content.Context
+import com.core.R
 import com.core.util.AppExecutors
 import org.json.JSONArray
 import org.json.JSONObject
@@ -34,8 +35,12 @@ object LauncherUpdateBridge {
                 postToMain { callback?.onResult(info, current, newer) }
             } catch (t: Throwable) {
                 postToMain {
-                    val msg = if (t.message.isNullOrBlank()) "请稍后重试" else t.message!!
-                    callback?.onError("检查更新失败：$msg")
+                    val msg = if (t.message.isNullOrBlank()) {
+                        context.getString(R.string.core_try_again_later)
+                    } else {
+                        t.message!!
+                    }
+                    callback?.onError(context.getString(R.string.core_update_check_failed, msg))
                 }
             }
         }

@@ -117,12 +117,12 @@ public class LauncherAccountFragment extends Fragment {
         binding.labelConfirmPassword.setVisibility(View.GONE);
         binding.inputConfirmPassword.setVisibility(View.GONE);
         binding.loginOptions.setVisibility(View.VISIBLE);
-        binding.accountTitle.setText("欢迎回来");
-        binding.btnSubmit.setText("登录");
-        binding.switchHint.setText("还没有账户？");
-        binding.switchMode.setText("注册");
+        binding.accountTitle.setText(R.string.social_account_title);
+        binding.btnSubmit.setText(R.string.social_login);
+        binding.switchHint.setText(R.string.social_no_account);
+        binding.switchMode.setText(R.string.social_register);
         // 登录模式下使用邮箱登录
-        binding.inputEmail.setHint("请输入邮箱");
+        binding.inputEmail.setHint(R.string.social_email_hint);
         binding.inputEmail.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         // 自动填充上次登录的邮箱
         String savedEmail = requireContext().getSharedPreferences("yukihub_prefs", 0)
@@ -137,33 +137,33 @@ public class LauncherAccountFragment extends Fragment {
         String password = binding.inputPassword.getText() == null ? "" : binding.inputPassword.getText().toString().trim();
 
         if (email.isEmpty()) {
-            binding.inputEmail.setError("请输入邮箱");
+            binding.inputEmail.setError(getString(R.string.social_error_email_required));
             return;
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.inputEmail.setError("邮箱格式不正确");
+            binding.inputEmail.setError(getString(R.string.social_error_email_invalid));
             return;
         }
         if (password.isEmpty()) {
-            binding.inputPassword.setError("请输入密码");
+            binding.inputPassword.setError(getString(R.string.social_error_password_required));
             return;
         }
         if (password.length() < 6) {
-            binding.inputPassword.setError("密码至少 6 位");
+            binding.inputPassword.setError(getString(R.string.social_error_password_min));
             return;
         }
 
         binding.btnSubmit.setEnabled(false);
-        binding.btnSubmit.setText("登录中...");
+        binding.btnSubmit.setText(R.string.social_logging_in);
 
         LauncherAuthBridge.login(requireContext(), email, password, new AuthCallback() {
             @Override
             public void onSuccess(String token) {
                 if (binding != null) {
                     binding.btnSubmit.setEnabled(true);
-                    binding.btnSubmit.setText("登录");
+                    binding.btnSubmit.setText(R.string.social_login);
                 }
-                Toast.makeText(requireContext(), "登录成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), R.string.social_login_success, Toast.LENGTH_SHORT).show();
                 navigateToProfile();
             }
 
@@ -171,9 +171,9 @@ public class LauncherAccountFragment extends Fragment {
             public void onError(String message) {
                 if (binding != null) {
                     binding.btnSubmit.setEnabled(true);
-                    binding.btnSubmit.setText("登录");
+                    binding.btnSubmit.setText(R.string.social_login);
                 }
-                showAuthResultDialog("登录失败", message);
+                showAuthResultDialog(getString(R.string.social_login_failed), message);
             }
         });
     }
@@ -227,7 +227,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(msgView, msgLp);
 
         TextView okBtn = new TextView(requireContext());
-        okBtn.setText("知道了");
+        okBtn.setText(R.string.social_action_got_it);
         okBtn.setGravity(android.view.Gravity.CENTER);
         LauncherTheme.primaryButton(okBtn);
         okBtn.setOnClickListener(v -> dialog.dismiss());
@@ -255,7 +255,7 @@ public class LauncherAccountFragment extends Fragment {
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
-        title.setText("QQ群聊");
+        title.setText(R.string.social_qq_group);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
         title.setTextSize(dialogTitleTextSp());
@@ -263,7 +263,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView msg = new TextView(requireContext());
-        msg.setText("将跳转到QQ加入交流群，是否继续？");
+        msg.setText(R.string.social_open_qq_message);
         msg.setGravity(android.view.Gravity.CENTER);
         msg.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
         msg.setTextSize(dialogMessageTextSp());
@@ -272,7 +272,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(msg, msgLp);
 
         TextView confirm = new TextView(requireContext());
-        confirm.setText("跳转");
+        confirm.setText(R.string.social_action_open);
         confirm.setGravity(android.view.Gravity.CENTER);
         LauncherTheme.primaryButton(confirm);
         confirm.setOnClickListener(v -> {
@@ -284,7 +284,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(confirm, confirmLp);
 
         TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
+        cancel.setText(R.string.social_action_cancel);
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
         cancel.setTextSize(dialogActionTextSp());
@@ -315,7 +315,7 @@ public class LauncherAccountFragment extends Fragment {
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = new TextView(requireContext());
-        title.setText("官网首页");
+        title.setText(R.string.social_official_site);
         title.setGravity(android.view.Gravity.CENTER);
         title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
         title.setTextSize(dialogTitleTextSp());
@@ -323,7 +323,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView msg = new TextView(requireContext());
-        msg.setText("将跳转到GitHub仓库页面，是否继续？");
+        msg.setText(R.string.social_open_github_message);
         msg.setGravity(android.view.Gravity.CENTER);
         msg.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
         msg.setTextSize(dialogMessageTextSp());
@@ -332,7 +332,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(msg, msgLp);
 
         TextView confirm = new TextView(requireContext());
-        confirm.setText("跳转");
+        confirm.setText(R.string.social_action_open);
         confirm.setGravity(android.view.Gravity.CENTER);
         LauncherTheme.primaryButton(confirm);
         confirm.setOnClickListener(v -> {
@@ -344,7 +344,7 @@ public class LauncherAccountFragment extends Fragment {
         root.addView(confirm, confirmLp);
 
         TextView cancel = new TextView(requireContext());
-        cancel.setText("取消");
+        cancel.setText(R.string.social_action_cancel);
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setTextColor(LauncherTheme.primary(requireContext()));
         cancel.setTextSize(dialogActionTextSp());
@@ -362,7 +362,7 @@ public class LauncherAccountFragment extends Fragment {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (Throwable t) {
-            Toast.makeText(requireContext(), "无法打开链接", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.social_cannot_open_link, Toast.LENGTH_SHORT).show();
         }
     }
 

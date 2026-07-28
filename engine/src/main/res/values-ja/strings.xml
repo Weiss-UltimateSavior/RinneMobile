@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="engine_game_loading">ゲームを読み込み中</string>
+    <string name="engine_starting_game">ゲームを起動しています</string>
+    <string name="engine_preparing_game">ゲームデータを準備しています。しばらくお待ちください</string>
+    <string name="engine_krkr_initialization_failed">KRKR エンジンの初期化に失敗しました</string>
+    <string name="engine_launch_failed">起動に失敗しました</string>
+    <string name="engine_return_and_retry">戻ってからもう一度お試しください</string>
+    <string name="engine_another_game_running">別のゲームが実行中です。セーブして終了してから、新しいゲームを起動してください。</string>
+
+    <string name="engine_tyrano_empty_game_directory">Tyrano の起動に失敗しました：ゲームフォルダーが空です</string>
+    <string name="engine_tyrano_unwritable_save_directory">Tyrano の起動に失敗しました：セーブフォルダーに書き込めません</string>
+    <string name="engine_tyrano_entry_not_found">Tyrano の起動に失敗しました：index.html または app.asar が見つかりません</string>
+    <string name="engine_tyrano_asar_unreadable">Tyrano の起動に失敗しました：app.asar を読み込めません</string>
+    <string name="engine_tyrano_server_failed">Tyrano の起動に失敗しました：ローカルサーバーを起動できません</string>
+    <string name="engine_return_to_title">タイトルへ戻る</string>
+    <string name="engine_return_to_title_message">タイトル画面に戻りますか？（ゲームの進行状況を保存してください。）</string>
+    <string name="engine_confirm">決定</string>
+    <string name="engine_ok">OK</string>
+    <string name="engine_yes">はい</string>
+    <string name="engine_no">いいえ</string>
+    <string name="engine_prompt">お知らせ</string>
+    <string name="engine_error">エラー</string>
+    <string name="engine_exit_game">ゲームを終了</string>
+    <string name="engine_exit_game_message">現在のゲームを終了しますか？</string>
+    <string name="engine_cancel">キャンセル</string>
+</resources>

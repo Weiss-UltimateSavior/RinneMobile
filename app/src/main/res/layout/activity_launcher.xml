@@ -68,7 +68,7 @@
                 android:id="@+id/navHomeIcon"
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:contentDescription="首页"
+                android:contentDescription="@string/core_home"
                 android:scaleType="fitCenter"
                 android:src="@drawable/launcher_nav_home" />
 
@@ -77,7 +77,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="首页"
+                android:text="@string/core_home"
                 android:textColor="@color/launcher_primary_color"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -98,7 +98,7 @@
                 android:id="@+id/navSavingsIcon"
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:contentDescription="游戏"
+                android:contentDescription="@string/core_games"
                 android:scaleType="fitCenter"
                 android:src="@drawable/launcher_nav_game" />
 
@@ -107,7 +107,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="游戏"
+                android:text="@string/core_games"
                 android:textColor="@color/launcher_nav_muted_color"
                 android:textSize="10sp" />
             </LinearLayout>
@@ -165,7 +165,7 @@
                 android:id="@+id/navCardsIcon"
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:contentDescription="管理"
+                android:contentDescription="@string/core_manage"
                 android:scaleType="fitCenter"
                 android:src="@drawable/launcher_nav_manage" />
 
@@ -174,7 +174,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="管理"
+                android:text="@string/core_manage"
                 android:textColor="@color/launcher_nav_muted_color"
                 android:textSize="10sp" />
             </LinearLayout>
@@ -194,7 +194,7 @@
                 android:id="@+id/navAccountIcon"
                 android:layout_width="23dp"
                 android:layout_height="23dp"
-                android:contentDescription="账户"
+                android:contentDescription="@string/core_account"
                 android:scaleType="fitCenter"
                 android:src="@drawable/launcher_nav_account" />
 
@@ -203,7 +203,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="账户"
+                android:text="@string/core_account"
                 android:textColor="@color/launcher_nav_muted_color"
                 android:textSize="10sp" />
             </LinearLayout>

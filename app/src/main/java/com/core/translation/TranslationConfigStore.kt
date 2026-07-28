@@ -123,7 +123,9 @@ object TranslationConfigStore {
             String(cipher.doFinal(encrypted), StandardCharsets.UTF_8)
         } catch (e: Exception) {
             prefs(context).edit().remove(KEY_SECRET).apply()
-            throw IllegalStateException("API Key 无法解密，请重新保存", e)
+            throw IllegalStateException(
+                context.getString(com.core.R.string.translation_api_key_decrypt_failed), e
+            )
         }
     }
 

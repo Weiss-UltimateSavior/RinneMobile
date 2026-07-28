@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="启动游戏"
+        android:text="@string/settings_dialog_default_title"
         android:textColor="@color/launcher_text_color"
         android:textSize="16sp"
         android:textStyle="bold" />
@@ -40,7 +40,7 @@
             android:layout_marginEnd="7dp"
             android:background="@drawable/launcher_dialog_btn_cancel"
             android:gravity="center"
-            android:text="取消"
+            android:text="@string/settings_cancel"
             android:textColor="@color/launcher_primary_color"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -53,7 +53,7 @@
             android:layout_marginStart="7dp"
             android:background="@drawable/launcher_filter_chip_selected"
             android:gravity="center"
-            android:text="确定"
+            android:text="@string/settings_confirm"
             android:textColor="@color/launcher_on_primary_color"
             android:textSize="13sp"
             android:textStyle="bold" />

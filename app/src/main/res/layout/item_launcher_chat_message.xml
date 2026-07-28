@@ -40,7 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:text="置顶消息"
+            android:text="@string/social_pinned_message"
             android:textColor="@color/launcher_primary_color"
             android:textSize="10sp"
             android:textStyle="bold"

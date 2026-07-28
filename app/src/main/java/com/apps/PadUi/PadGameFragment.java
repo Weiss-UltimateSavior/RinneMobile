@@ -392,7 +392,8 @@ public class PadGameFragment extends Fragment {
         boolean hasGames = !pageGames.isEmpty();
         binding.padGameRecycler.setVisibility(hasGames ? View.VISIBLE : View.GONE);
         binding.padGameEmpty.setVisibility(hasGames ? View.GONE : View.VISIBLE);
-        binding.padGameEmpty.setText(allGames.isEmpty() ? "还没有游戏" : "没有匹配的游戏");
+        binding.padGameEmpty.setText(allGames.isEmpty()
+                ? R.string.pad_no_games : R.string.pad_no_matching_games);
         binding.padGameNextPage.setVisibility(
                 hasGames && currentPage + 1 < totalPages ? View.VISIBLE : View.GONE);
     }
@@ -496,8 +497,9 @@ public class PadGameFragment extends Fragment {
     }
 
     private void confirmLaunchGame(Game game) {
-        PadDialogFactory.showConfirm(requireContext(), "启动游戏",
-                "确定启动「" + safeTitle(game) + "」吗？", "确定", () -> {
+        PadDialogFactory.showConfirm(requireContext(), getString(R.string.pad_launch_game),
+                getString(R.string.pad_launch_game_message, safeTitle(game)),
+                getString(R.string.core_confirm), () -> {
             com.apps.game.GamePasswordLock.interceptLaunch(PadGameFragment.this, game, () -> {
                 if (sessionController != null) sessionController.launchGameDirectly(PadGameFragment.this, game);
             });
@@ -505,7 +507,9 @@ public class PadGameFragment extends Fragment {
     }
 
     private String safeTitle(Game game) {
-        if (game == null || game.title == null || game.title.trim().isEmpty()) return "未命名游戏";
+        if (game == null || game.title == null || game.title.trim().isEmpty()) {
+            return getString(R.string.pad_untitled_game);
+        }
         return game.title.trim();
     }
 
@@ -582,16 +586,16 @@ public class PadGameFragment extends Fragment {
         }
         String profileName = appPrefs().getString(KEY_PROFILE_NAME, "");
         if (profileName != null && !profileName.trim().isEmpty()) return profileName.trim();
-        return "本地玩家";
+        return getString(R.string.home_local_player);
     }
 
     private String accountMode() {
-        if (!LauncherAuthBridge.isLoggedIn(requireContext())) return "本地模式";
+        if (!LauncherAuthBridge.isLoggedIn(requireContext())) return getString(R.string.home_local_mode);
         String status = appPrefs().getString(KEY_AUTH_STATUS, "");
-        if (AUTH_STATUS_ONLINE.equals(status)) return "在线模式";
-        if (AUTH_STATUS_SYNCING.equals(status)) return "在线模式 · 同步中";
-        if (AUTH_STATUS_EXPIRED.equals(status)) return "在线模式 · 登录过期";
-        return "在线模式";
+        if (AUTH_STATUS_ONLINE.equals(status)) return getString(R.string.pad_online_mode);
+        if (AUTH_STATUS_SYNCING.equals(status)) return getString(R.string.pad_online_syncing);
+        if (AUTH_STATUS_EXPIRED.equals(status)) return getString(R.string.pad_online_expired);
+        return getString(R.string.pad_online_mode);
     }
 
     private int dp(int value) {

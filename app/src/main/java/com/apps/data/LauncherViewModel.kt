@@ -278,9 +278,9 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private fun emptyState(loading: Boolean): LauncherState = LauncherState(
         selectedItem = NavItem.HOME,
-        accountName = "本地玩家",
-        accountMode = "本地模式",
-        syncStatus = "WebDAV 状态读取中",
+        accountName = getApplication<Application>().getString(com.core.R.string.home_local_player),
+        accountMode = getApplication<Application>().getString(com.core.R.string.home_local_mode),
+        syncStatus = getApplication<Application>().getString(com.core.R.string.repo_webdav_loading),
         gameCount = 0,
         totalPlayTime = "0s",
         todayPlayTime = "0s",

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.Toast;
+import com.core.engine.R;
 
 public class ArtemisActivity extends NativeActivity {
     public void DownloadExpansionFiles(String value) {
@@ -140,7 +141,7 @@ public class ArtemisActivity extends NativeActivity {
         String oldPath = old.getStringExtra("path");
         String newPath = intent.getStringExtra("path");
         if (oldPath == null || oldPath.equals(newPath) || newPath == null) return;
-        Toast.makeText(this, "已有游戏在运行，请先存档并退出游戏后再启动新游戏", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.engine_another_game_running), Toast.LENGTH_SHORT).show();
     }
 
     @Override

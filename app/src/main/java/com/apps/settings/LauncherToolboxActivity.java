@@ -51,7 +51,8 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         binding.toolTermux.setOnClickListener(view -> confirmOpenExternalTool("termux", TERMUX_URL));
         binding.toolShizuku.setOnClickListener(view -> confirmOpenExternalTool("shizuku", SHIZUKU_URL));
         binding.toolWinlator.setOnClickListener(view -> confirmOpenExternalTool("winlator", WINLATOR_URL));
-        binding.toolGaishi.setOnClickListener(view -> confirmOpenExternalTool("盖世模拟器", GAISHI_URL));
+        binding.toolGaishi.setOnClickListener(view ->
+                confirmOpenExternalTool(getString(R.string.settings_tool_gaishi), GAISHI_URL));
         binding.toolPpsspp.setOnClickListener(view -> confirmOpenExternalTool("PPSSPP", PPSSPP_URL));
         binding.toolLunabox.setOnClickListener(view -> confirmOpenExternalTool("LunaBox", LUNABOX_URL));
         binding.toolAzahar.setOnClickListener(view -> confirmOpenExternalTool("AzaharPlus", AZAHARPLUS_URL));
@@ -61,9 +62,9 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     private void confirmOpenExternalTool(String name, String url) {
         LauncherDialogFactory.showConfirm(
                 this,
-                "跳转下载",
-                "即将跳转到浏览器下载 " + name + "，是否继续？",
-                "确定",
+                getString(R.string.settings_open_download_title),
+                getString(R.string.settings_open_download_message, name),
+                getString(R.string.settings_confirm),
                 () -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
     }
 

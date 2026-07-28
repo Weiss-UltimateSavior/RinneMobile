@@ -28,7 +28,6 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class ResourceStationActivity extends AppCompatActivity {
     private static final String DEFAULT_URL = "https://www.kungal.com";
-    private static final String DEFAULT_TITLE = "资讯站";
 
     private WebView webView;
 
@@ -108,7 +107,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         openExternalButton.setOnClickListener(view -> {
             String current = webView == null ? null : webView.getUrl();
             if (current == null || current.trim().isEmpty()) {
-                Toast.makeText(this, "当前没有可打开的地址", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, com.core.R.string.settings_no_address_to_open, Toast.LENGTH_SHORT).show();
                 return;
             }
             openExternalUri(Uri.parse(current));
@@ -120,7 +119,9 @@ public class ResourceStationActivity extends AppCompatActivity {
 
         TextView title = new TextView(this);
         String titleText = getIntent().getStringExtra("resource_title");
-        if (titleText == null || titleText.trim().isEmpty()) titleText = DEFAULT_TITLE;
+        if (titleText == null || titleText.trim().isEmpty()) {
+            titleText = getString(com.core.R.string.settings_resource_station_title);
+        }
         title.setText(titleText);
         title.setTextColor(ContextCompat.getColor(this, com.core.R.color.launcher_text_color));
         title.setTextSize(15);
@@ -224,7 +225,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "没有可打开该链接的应用", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, com.core.R.string.settings_no_app_for_link, Toast.LENGTH_SHORT).show();
         }
     }
 

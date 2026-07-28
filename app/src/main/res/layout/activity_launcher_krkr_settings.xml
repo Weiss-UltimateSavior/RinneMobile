@@ -26,7 +26,7 @@
                 android:id="@+id/krkrSectionTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="引擎设置"
+                android:text="@string/settings_engine_title"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -37,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingExtra="3dp"
-                android:text="Rinne 默认使用统一存档管理目录，便于统一管理；存在旧存档的游戏关闭统一存档，会发生不可预料的bug。"
+                android:text="@string/settings_engine_summary"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -51,7 +51,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="KR 引擎版本"
+                    android:text="@string/settings_kr_engine_version"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -66,7 +66,7 @@
                     android:gravity="center_vertical"
                     android:maxLines="1"
                     android:padding="9dp"
-                    android:text="自动"
+                    android:text="@string/settings_auto"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -84,7 +84,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="KRKR 统一存档目录"
+                    android:text="@string/settings_krkr_unified_save"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -108,7 +108,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="Artemis 统一存档目录"
+                    android:text="@string/settings_artemis_unified_save"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -132,7 +132,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="Tyrano 统一存档目录"
+                    android:text="@string/settings_tyrano_unified_save"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -156,7 +156,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="Tyrano 允许外部网络资源"
+                    android:text="@string/settings_tyrano_external_resources"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -179,7 +179,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="ONS 统一存档目录"
+                    android:text="@string/settings_ons_unified_save"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -194,7 +194,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="ONScripter 显示与兼容性"
+                android:text="@string/settings_ons_display_compatibility"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -204,7 +204,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:lineSpacingExtra="2dp"
-                android:text="以下设置在下次启动 ONS 游戏时生效。锐化会增加 GPU 负载，遇到画面异常请关闭。"
+                android:text="@string/settings_ons_display_summary"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="11sp" />
 
@@ -212,7 +212,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="文本编码"
+                android:text="@string/settings_text_encoding"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -234,7 +234,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="拉伸全屏"
+                    android:text="@string/settings_stretch_fullscreen"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -257,7 +257,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="允许绘制到刘海/挖孔区域"
+                    android:text="@string/settings_draw_in_cutout"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -280,7 +280,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="禁用游戏内视频"
+                    android:text="@string/settings_disable_ingame_video"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -303,7 +303,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:lineSpacingExtra="2dp"
-                    android:text="启用图像锐化"
+                    android:text="@string/settings_enable_sharpening"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -318,7 +318,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
-                android:text="锐化值（仅启用锐化时生效）"
+                android:text="@string/settings_sharpening_value"
                 android:textColor="@color/launcher_text_color"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -326,7 +326,7 @@
             <com.apps.widget.LauncherEditText
                 android:id="@+id/onsSharpnessValueInput"
                 style="@style/LauncherFormInput"
-                android:hint="默认 2"
+                android:hint="@string/settings_default_two"
                 android:inputType="numberDecimal"
                 android:singleLine="true" />
 
@@ -334,7 +334,7 @@
                 android:id="@+id/btnNativeKrkr"
                 style="@style/LauncherLongActionButton"
                 android:layout_marginTop="20dp"
-                android:text="进入原生 KRKR"
+                android:text="@string/settings_open_native_krkr"
                 />
 
             <LinearLayout
@@ -346,14 +346,14 @@
                 <TextView
                     android:id="@+id/btnSave"
                     style="@style/LauncherLongActionButton"
-                    android:text="保存"
+                    android:text="@string/settings_save"
                     />
 
                 <TextView
                     android:id="@+id/btnCancel"
                     style="@style/LauncherLongActionButton"
                     android:layout_marginTop="9dp"
-                    android:text="取消"
+                    android:text="@string/settings_cancel"
                     />
             </LinearLayout>
         </LinearLayout>

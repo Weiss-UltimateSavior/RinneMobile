@@ -30,7 +30,8 @@ class LauncherRecentAdapter : RecyclerView.Adapter<LauncherRecentAdapter.Holder>
         holder.icon.text = item.iconText
         holder.title.text = item.title
         holder.meta.text = item.timeAndDuration
-        holder.status.text = item.status
+        holder.status.text = LauncherRepository.launchTypeLabel(holder.itemView.context, item.launchType)
+            .ifEmpty { holder.itemView.context.getString(R.string.repo_played) }
         LauncherTheme.textPrimary(holder.icon)
         LauncherTheme.textPrimary(holder.status)
     }

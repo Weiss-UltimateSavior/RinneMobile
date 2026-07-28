@@ -22,9 +22,6 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherMetadataSourceActivity extends AppCompatActivity {
-    private static final String[] METADATA_SOURCE_LABELS = {
-            "VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"
-    };
     private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
     private ActivityLauncherMetadataSourceBinding binding;
     private int selectedMetadataSourceIndex;
@@ -97,31 +94,43 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
 
         String token = binding.tokenInput.getText().toString().trim();
         if ((pos == 1 || pos == 2) && token.isEmpty()) {
-            Toast.makeText(this, "选择 Bangumi 时需要填写 Token", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.settings_bangumi_token_required, Toast.LENGTH_SHORT).show();
             return;
         }
         LauncherMetadataBridge.setMetadataSource(this, source);
         LauncherMetadataBridge.setBangumiToken(this, token);
-        Toast.makeText(this, "已保存资料源：" + LauncherMetadataBridge.sourceLabel(source), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.settings_metadata_source_saved,
+                metadataSourceLabels()[selectedMetadataSourceIndex]), Toast.LENGTH_SHORT).show();
         finish();
     }
 
     private void showMetadataSourcePicker() {
-        com.apps.theme.LauncherDialogFactory.showSingleChoice(this, "选择资料源",
-                METADATA_SOURCE_LABELS, selectedMetadataSourceIndex, this::setMetadataSourceSelection);
+        com.apps.theme.LauncherDialogFactory.showSingleChoice(this,
+                getString(R.string.settings_choose_metadata_source),
+                metadataSourceLabels(), selectedMetadataSourceIndex, this::setMetadataSourceSelection);
     }
 
     private void setMetadataSourceSelection(int index) {
-        selectedMetadataSourceIndex = index >= 0 && index < METADATA_SOURCE_LABELS.length ? index : 0;
-        binding.sourceText.setText(METADATA_SOURCE_LABELS[selectedMetadataSourceIndex]);
+        String[] labels = metadataSourceLabels();
+        selectedMetadataSourceIndex = index >= 0 && index < labels.length ? index : 0;
+        binding.sourceText.setText(labels[selectedMetadataSourceIndex]);
     }
 
     private void openTokenUrl() {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://next.bgm.tv/demo/access-token/create")));
         } catch (Throwable t) {
-            Toast.makeText(this, "无法打开链接", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.settings_cannot_open_link, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String[] metadataSourceLabels() {
+        return new String[]{
+                getString(R.string.settings_metadata_vndb_default),
+                getString(R.string.settings_metadata_bangumi_token),
+                getString(R.string.settings_metadata_bangumi_mirror_token),
+                getString(R.string.settings_metadata_ymgal_public)
+        };
     }
 
     private void configureEdgeToEdgeWindow() {

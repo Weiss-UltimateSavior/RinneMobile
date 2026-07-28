@@ -39,16 +39,12 @@ public class PadSettingsActivity extends AppCompatActivity {
     private enum Section { GENERAL, THEME, METADATA, ACCOUNT }
 
     private static final String ACCOUNT_SETTINGS_PREFS = "launcher_account_settings";
-    private static final String THEME_DEFAULT_LABEL = "清新绿意（默认）";
-    private static final String THEME_RINNE_LABEL = "园神凛弥（风格）";
-    private static final String THEME_ANRI_LABEL = "鹰仓杏璃（风格）";
-    private static final String THEME_XINHAITIAN_LABEL = "心海天（风格）";
-    private static final String THEME_NATSUME_LABEL = "四季夏目（风格）";
-    private static final String[] ENGINE_VERSION_LABELS = {"自动", "1.3.9", "1.3.4", "1.2.6"};
+    private static final String THEME_DEFAULT_LABEL = LauncherActivity.THEME_STYLE_DEFAULT;
+    private static final String THEME_RINNE_LABEL = LauncherActivity.THEME_STYLE_RINNE;
+    private static final String THEME_ANRI_LABEL = LauncherActivity.THEME_STYLE_ANRI;
+    private static final String THEME_XINHAITIAN_LABEL = LauncherActivity.THEME_STYLE_XINHAITIAN;
+    private static final String THEME_NATSUME_LABEL = LauncherActivity.THEME_STYLE_NATSUME;
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
-    private static final String[] METADATA_SOURCE_LABELS = {
-            "VNDB（默认）", "Bangumi（需要 Token）", "Bangumi 镜像（需要 Token）", "月幕 Gal（公开 API）"
-    };
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
     private static final String STATE_ONS_ENCODING_INDEX = "ons_encoding_index";
@@ -179,17 +175,18 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void showEngineVersionPicker() {
-        PadDialogFactory.showSingleChoice(this, "选择 KR 引擎版本", ENGINE_VERSION_LABELS,
+        PadDialogFactory.showSingleChoice(this, getString(R.string.pad_select_kr_version), engineVersionLabels(),
                 selectedEngineVersionIndex, this::setEngineVersionSelection);
     }
 
     private void setEngineVersionSelection(int index) {
-        selectedEngineVersionIndex = index >= 0 && index < ENGINE_VERSION_LABELS.length ? index : 0;
-        binding.padEngineVersionText.setText(ENGINE_VERSION_LABELS[selectedEngineVersionIndex]);
+        String[] labels = engineVersionLabels();
+        selectedEngineVersionIndex = index >= 0 && index < labels.length ? index : 0;
+        binding.padEngineVersionText.setText(labels[selectedEngineVersionIndex]);
     }
 
     private void showOnsEncodingPicker() {
-        PadDialogFactory.showSingleChoice(this, "ONS 文本编码", ONS_ENCODING_LABELS,
+        PadDialogFactory.showSingleChoice(this, getString(R.string.pad_select_ons_encoding), ONS_ENCODING_LABELS,
                 selectedOnsEncodingIndex, this::setOnsEncodingSelection);
     }
 
@@ -207,13 +204,27 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void showMetadataSourcePicker() {
-        PadDialogFactory.showSingleChoice(this, "选择资料源", METADATA_SOURCE_LABELS,
+        PadDialogFactory.showSingleChoice(this, getString(R.string.pad_select_metadata_source), metadataSourceLabels(),
                 selectedMetadataSourceIndex, this::setMetadataSourceSelection);
     }
 
     private void setMetadataSourceSelection(int index) {
-        selectedMetadataSourceIndex = index >= 0 && index < METADATA_SOURCE_LABELS.length ? index : 0;
-        binding.padMetadataSourceText.setText(METADATA_SOURCE_LABELS[selectedMetadataSourceIndex]);
+        String[] labels = metadataSourceLabels();
+        selectedMetadataSourceIndex = index >= 0 && index < labels.length ? index : 0;
+        binding.padMetadataSourceText.setText(labels[selectedMetadataSourceIndex]);
+    }
+
+    private String[] engineVersionLabels() {
+        return new String[] {getString(R.string.settings_auto), "1.3.9", "1.3.4", "1.2.6"};
+    }
+
+    private String[] metadataSourceLabels() {
+        return new String[] {
+                getString(R.string.settings_metadata_vndb_default),
+                getString(R.string.pad_metadata_bangumi),
+                getString(R.string.pad_metadata_bangumi_mirror),
+                getString(R.string.pad_metadata_ymgal)
+        };
     }
 
     private void restoreSelectedTheme() {
@@ -251,13 +262,14 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padSettingsMetadataActionList.setVisibility(showMetadata ? View.VISIBLE : View.GONE);
         binding.padSettingsAccountActionList.setVisibility(showAccount ? View.VISIBLE : View.GONE);
         binding.padSettingsActionScroll.scrollTo(0, 0);
-        binding.padSettingsPageTitle.setText(showTheme ? "主题设置"
-                : showMetadata ? "封面设置" : showAccount ? "账号设置" : "引擎设置");
+        binding.padSettingsPageTitle.setText(showTheme ? R.string.pad_theme_settings
+                : showMetadata ? R.string.settings_cover_title
+                : showAccount ? R.string.settings_account_title : R.string.settings_engine_title);
         binding.padSettingsPageDescription.setText(showTheme
-                ? "选择 Launcher 的主题风格与动态背景"
-                : showMetadata ? "选择游戏信息与封面获取的资料源"
-                : showAccount ? "管理云端同步、资料显示与账户功能偏好"
-                : "Rinne 默认使用统一存档管理目录，便于统一管理；存在旧存档的游戏关闭统一存档，会发生不可预料的bug。");
+                ? getString(R.string.pad_theme_page_summary)
+                : showMetadata ? getString(R.string.settings_metadata_summary)
+                : showAccount ? getString(R.string.pad_account_page_summary)
+                : getString(R.string.settings_engine_summary));
         if (showAccount) {
             renderAllAccountChips();
             refreshEmailSubscription();
@@ -414,7 +426,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void renderParticleToggle() {
-        binding.padParticleToggleState.setText("设置");
+        binding.padParticleToggleState.setText(R.string.pad_particle_settings);
         LauncherTheme.chip(binding.padParticleToggleState, true);
     }
 
@@ -428,7 +440,7 @@ public class PadSettingsActivity extends AppCompatActivity {
                 LauncherActivity.PARTICLE_STYLE_CONSTELLATION,
                 LauncherActivity.PARTICLE_STYLE_RIPPLES
         };
-        String[] labels = {"漂浮光点", "斜向雨滴", "星星粒子", "按键瀑布", "萤火虫", "星座连线", "涟漪扩散", "关闭动态粒子"};
+        String[] labels = getResources().getStringArray(R.array.pad_particle_style_labels);
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
         String selectedStyle = LauncherActivity.getLauncherParticleStyle(this);
         int checkedIndex = styles.length; // 关闭位置 = 7
@@ -440,19 +452,19 @@ public class PadSettingsActivity extends AppCompatActivity {
                 }
             }
         }
-        PadDialogFactory.showSingleChoice(this, "动态粒子样式", labels, checkedIndex, index -> {
+        PadDialogFactory.showSingleChoice(this, getString(R.string.pad_particle_style_title), labels, checkedIndex, index -> {
             if (index >= styles.length) {
                 LauncherActivity.setLauncherParticlesEnabled(this, false);
                 renderParticles();
                 renderParticleToggle();
-                Toast.makeText(this, "已关闭动态粒子", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.pad_particles_disabled, Toast.LENGTH_SHORT).show();
                 return;
             }
             LauncherActivity.setLauncherParticleStyle(this, styles[index]);
             LauncherActivity.setLauncherParticlesEnabled(this, true);
             renderParticles();
             renderParticleToggle();
-            Toast.makeText(this, "已应用" + labels[index] + "效果", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.pad_particle_applied, labels[index]), Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -461,19 +473,19 @@ public class PadSettingsActivity extends AppCompatActivity {
         final String message;
         if (THEME_RINNE_LABEL.equals(selectedTheme)) {
             style = LauncherActivity.THEME_STYLE_RINNE;
-            message = "已应用园神凛弥风格";
+            message = getString(R.string.pad_theme_rinne_applied);
         } else if (THEME_ANRI_LABEL.equals(selectedTheme)) {
             style = LauncherActivity.THEME_STYLE_ANRI;
-            message = "已应用鹰仓杏璃风格";
+            message = getString(R.string.pad_theme_anri_applied);
         } else if (THEME_XINHAITIAN_LABEL.equals(selectedTheme)) {
             style = LauncherActivity.THEME_STYLE_XINHAITIAN;
-            message = "已应用心海天风格";
+            message = getString(R.string.pad_theme_xinhaitian_applied);
         } else if (THEME_NATSUME_LABEL.equals(selectedTheme)) {
             style = LauncherActivity.THEME_STYLE_NATSUME;
-            message = "已应用四季夏目风格";
+            message = getString(R.string.pad_theme_natsume_applied);
         } else {
             style = LauncherActivity.THEME_STYLE_DEFAULT;
-            message = "已恢复默认主题";
+            message = getString(R.string.pad_theme_default_restored);
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         LauncherMotion.recreateWithToneOverlay(this,
@@ -501,8 +513,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         onsSettings.save(this);
         LauncherKrkrBridge.setTyranoScopedSaveDir(this, binding.padTyranoScopedSwitch.isChecked());
         LauncherKrkrBridge.setTyranoExternalNetworkEnabled(this, binding.padTyranoExternalNetworkSwitch.isChecked());
-        Toast.makeText(this, "引擎设置已保存："
-                + LauncherKrkrBridge.engineVersionLabel(version), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.pad_engine_saved,
+                LauncherKrkrBridge.engineVersionLabel(version)), Toast.LENGTH_SHORT).show();
         finish();
     }
 
@@ -510,7 +522,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         try {
             startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(this));
         } catch (Throwable throwable) {
-            Toast.makeText(this, "无法进入原生 KRKR", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.pad_native_krkr_failed, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -523,12 +535,12 @@ public class PadSettingsActivity extends AppCompatActivity {
 
         String token = binding.padMetadataTokenInput.getText().toString().trim();
         if ((position == 1 || position == 2) && token.isEmpty()) {
-            Toast.makeText(this, "选择 Bangumi 时需要填写 Token", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.pad_bangumi_token_required, Toast.LENGTH_SHORT).show();
             return;
         }
         LauncherMetadataBridge.setMetadataSource(this, source);
         LauncherMetadataBridge.setBangumiToken(this, token);
-        Toast.makeText(this, "已保存资料源：" + LauncherMetadataBridge.sourceLabel(source),
+        Toast.makeText(this, getString(R.string.pad_metadata_saved, LauncherMetadataBridge.sourceLabel(source)),
                 Toast.LENGTH_SHORT).show();
         finish();
     }
@@ -538,7 +550,7 @@ public class PadSettingsActivity extends AppCompatActivity {
             startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse("https://next.bgm.tv/demo/access-token/create")));
         } catch (Throwable throwable) {
-            Toast.makeText(this, "无法打开链接", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -550,8 +562,8 @@ public class PadSettingsActivity extends AppCompatActivity {
             LauncherSyncScheduler.updateSchedule(this);
             return;
         }
-        showAccountConfirmDialog("配置同步", "是否上传当前配置到云端？开启后将在每晚12点自动备份。",
-                "确定上传", this::enableSyncAndUpload);
+        showAccountConfirmDialog(getString(R.string.pad_config_sync), getString(R.string.pad_config_sync_message),
+                getString(R.string.pad_confirm_upload), this::enableSyncAndUpload);
     }
 
     private void onRealtimePlaytimeClick() {
@@ -561,8 +573,9 @@ public class PadSettingsActivity extends AppCompatActivity {
             renderAccountChip(binding.padChipRealtimePlaytime, false);
             return;
         }
-        showAccountConfirmDialog("实时游玩时间", "此功能启用将实时上传游玩详细信息，确定要使用吗？",
-                "确定开启", () -> {
+        showAccountConfirmDialog(getString(R.string.pad_realtime_playtime),
+                getString(R.string.pad_realtime_playtime_message),
+                getString(R.string.pad_confirm_enable), () -> {
                     getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
                             .putBoolean("realtime_playtime", true).apply();
                     renderAccountChip(binding.padChipRealtimePlaytime, true);
@@ -589,7 +602,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void onEmailSubscriptionClick() {
         if (emailSubscriptionUpdating) return;
         if (!LauncherAuthBridge.isLoggedIn(this)) {
-            showAccountResult("需要登录", "登录后才能管理邮件订阅");
+            showAccountResult(getString(R.string.pad_login_required), getString(R.string.pad_login_for_email));
             return;
         }
         boolean subscribed = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE)
@@ -598,9 +611,9 @@ public class PadSettingsActivity extends AppCompatActivity {
             updateEmailSubscription(false);
             return;
         }
-        showAccountConfirmDialog("开启邮件订阅",
-                "开启后，管理员可向你的注册邮箱发送系统通知和广播邮件。",
-                "开启订阅", () -> updateEmailSubscription(true));
+        showAccountConfirmDialog(getString(R.string.pad_enable_email),
+                getString(R.string.pad_enable_email_message),
+                getString(R.string.pad_enable_subscription), () -> updateEmailSubscription(true));
     }
 
     private void updateEmailSubscription(boolean subscribed) {
@@ -616,7 +629,7 @@ public class PadSettingsActivity extends AppCompatActivity {
                         saveEmailSubscription(actualSubscribed);
                         renderAccountChip(binding.padChipEmailSubscribe, actualSubscribed);
                         Toast.makeText(PadSettingsActivity.this,
-                                actualSubscribed ? "已开启邮件订阅" : "已取消邮件订阅",
+                                actualSubscribed ? R.string.pad_email_enabled : R.string.pad_email_disabled,
                                 Toast.LENGTH_SHORT).show();
                     }
 
@@ -625,7 +638,7 @@ public class PadSettingsActivity extends AppCompatActivity {
                         if (isFinishing()) return;
                         emailSubscriptionUpdating = false;
                         binding.padRowEmailSubscribe.setEnabled(true);
-                        showAccountResult("邮件订阅更新失败", message);
+                        showAccountResult(getString(R.string.pad_email_update_failed), message);
                     }
                 });
     }
@@ -650,7 +663,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void renderAccountChip(TextView chip, boolean enabled) {
-        chip.setText(enabled ? "关闭" : "开启");
+        chip.setText(enabled ? R.string.pad_disable : R.string.pad_enable);
         if (enabled) {
             LauncherTheme.primaryButton(chip);
         } else {
@@ -668,7 +681,9 @@ public class PadSettingsActivity extends AppCompatActivity {
                 .putBoolean("sync_config", true).apply();
         renderAccountChip(binding.padChipSyncConfig, true);
         LauncherSyncScheduler.updateSchedule(this);
-        accountLoadingDialog = showAccountLoading("正在上传配置...", "请不要关闭应用及网络，否则可能导致配置出错");
+        accountLoadingDialog = showAccountLoading(
+                getString(R.string.pad_uploading_config),
+                getString(R.string.pad_uploading_config_hint));
         String settingsJson = LauncherUserData.exportSettingsJson(this);
         LauncherAuthBridge.uploadConfig(this, settingsJson, new ConfigCallback() {
             @Override
@@ -676,7 +691,8 @@ public class PadSettingsActivity extends AppCompatActivity {
                 String playData = LauncherUserData.exportCloudPlayData(PadSettingsActivity.this);
                 if (playData == null || playData.trim().isEmpty()) {
                     dismissAccountLoading();
-                    showAccountResult("部分上传失败", "配置已上传，但本地数据导出失败，游玩记录未能上传");
+                    showAccountResult(getString(R.string.pad_partial_upload_failed),
+                            getString(R.string.pad_local_export_failed));
                     return;
                 }
                 LauncherAuthBridge.uploadPlayData(PadSettingsActivity.this, playData,
@@ -684,13 +700,15 @@ public class PadSettingsActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess(String playData) {
                                 dismissAccountLoading();
-                                showAccountResult("上传成功", "配置及游玩记录已同步到云端");
+                                showAccountResult(getString(R.string.pad_upload_success),
+                                        getString(R.string.pad_upload_success_message));
                             }
 
                             @Override
                             public void onError(String message) {
                                 dismissAccountLoading();
-                                showAccountResult("部分上传失败", "配置已上传，游玩记录上传失败：" + message);
+                                showAccountResult(getString(R.string.pad_partial_upload_failed),
+                                        getString(R.string.pad_playdata_upload_failed, message));
                             }
                         });
             }
@@ -698,7 +716,7 @@ public class PadSettingsActivity extends AppCompatActivity {
             @Override
             public void onError(String message) {
                 dismissAccountLoading();
-                showAccountResult("上传失败", message);
+                showAccountResult(getString(R.string.pad_upload_failed), message);
             }
         });
     }

@@ -48,7 +48,7 @@
                     android:id="@+id/padAvatarImage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:contentDescription="用户头像"
+                    android:contentDescription="@string/home_user_avatar"
                     android:scaleType="centerCrop"
                     android:visibility="gone" />
             </FrameLayout>
@@ -65,7 +65,7 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="本地玩家"
+                    android:text="@string/home_local_player"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -75,7 +75,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="本地模式"
+                    android:text="@string/home_local_mode"
                     android:textColor="@color/launcher_text_muted_color"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -91,7 +91,7 @@
                 android:layout_width="250dp"
                 android:layout_height="40dp"
                 android:layout_marginTop="0dp"
-                android:hint="输入游戏名称"
+                android:hint="@string/pad_search_game_hint"
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:maxLines="1" />
@@ -102,7 +102,7 @@
                 android:layout_height="26dp"
                 android:layout_marginStart="10dp"
                 android:clickable="true"
-                android:contentDescription="搜索"
+                android:contentDescription="@string/pad_search"
                 android:focusable="true"
                 android:src="@drawable/launcher_pad_search_icon" />
         </LinearLayout>
@@ -131,7 +131,7 @@
                 android:layout_gravity="start|center_vertical"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:contentDescription="设置"
+                android:contentDescription="@string/home_settings"
                 android:elevation="4dp"
                 android:focusable="true"
                 android:padding="9dp"
@@ -145,7 +145,7 @@
                 android:layout_gravity="end|center_vertical"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:contentDescription="下一页"
+                android:contentDescription="@string/pad_next_page"
                 android:elevation="4dp"
                 android:focusable="true"
                 android:padding="7dp"
@@ -159,7 +159,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="还没有游戏"
+                android:text="@string/pad_no_games"
                 android:textColor="@color/launcher_text_muted_color"
                 android:textSize="14sp"
                 android:visibility="gone" />
@@ -170,7 +170,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="正在加载游戏..."
+                android:text="@string/pad_loading_games"
                 android:textColor="@color/launcher_primary_color"
                 android:textSize="13sp" />
 

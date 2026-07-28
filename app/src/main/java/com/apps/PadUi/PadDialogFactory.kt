@@ -86,7 +86,7 @@ object PadDialogFactory {
         root.addView(title(context, title))
         root.addView(message(context, message), topMargin(context, 13))
 
-        val acknowledge = button(context, "知道了", true)
+        val acknowledge = button(context, context.getString(R.string.pad_acknowledge), true)
         acknowledge.setOnClickListener { dialog.dismiss() }
         root.addView(acknowledge, fixedHeightTopMargin(context, 11, 36))
         setContent(dialog, root, WIDTH_COMPACT_DP)
@@ -237,7 +237,7 @@ object PadDialogFactory {
 
         val actions = LinearLayout(context)
         actions.orientation = LinearLayout.HORIZONTAL
-        val cancel = button(context, "取消", false)
+        val cancel = button(context, context.getString(R.string.core_cancel), false)
         cancel.setOnClickListener { dialog.dismiss() }
         actions.addView(cancel, LinearLayout.LayoutParams(0, dp(context, 38), 1f))
 
@@ -354,7 +354,8 @@ object PadDialogFactory {
         return view
     }
 
-    private fun cancelButton(context: Context): TextView = button(context, "取消", false)
+    private fun cancelButton(context: Context): TextView =
+        button(context, context.getString(R.string.core_cancel), false)
 
     private fun styleInlineAction(view: TextView) {
         view.gravity = android.view.Gravity.CENTER

@@ -68,6 +68,11 @@ class LauncherActivity : AppCompatActivity() {
         })
         configureEdgeToEdgeWindow()
 
+        if (savedInstanceState != null || launcherSplashShownInProcess) {
+            showLauncherContent()
+            return
+        }
+        launcherSplashShownInProcess = true
         // Android 12+ replaces a legacy window background with the system icon splash.
         // Draw the wallpaper as real Activity content so it is also visible on Honor/MagicOS.
         setContentView(R.layout.activity_launcher_splash)
@@ -224,7 +229,7 @@ class LauncherActivity : AppCompatActivity() {
                 root.setBackgroundResource(R.drawable.launcher_dialog_bg)
 
                 val title = TextView(this)
-                title.text = "需要文件访问权限"
+                title.setText(R.string.core_file_access_title)
                 title.gravity = android.view.Gravity.CENTER
                 title.setSingleLine(true)
                 title.ellipsize = android.text.TextUtils.TruncateAt.END
@@ -234,7 +239,7 @@ class LauncherActivity : AppCompatActivity() {
                 root.addView(title, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
 
                 val info = TextView(this)
-                info.text = "应用需要完全访问文件夹的权限来读取和管理游戏文件。请在系统页面允许\"管理所有文件\"。"
+                info.setText(R.string.core_file_access_message)
                 info.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color))
                 info.textSize = 12f
                 info.setLineSpacing(dp(4).toFloat(), 1f)
@@ -243,7 +248,7 @@ class LauncherActivity : AppCompatActivity() {
                 root.addView(info, infoLp)
 
                 val goBtn = TextView(this)
-                goBtn.text = "前往"
+                goBtn.setText(R.string.core_go)
                 goBtn.gravity = android.view.Gravity.CENTER
                 goBtn.textSize = 13f
                 goBtn.setTypeface(null, android.graphics.Typeface.BOLD)
@@ -262,7 +267,7 @@ class LauncherActivity : AppCompatActivity() {
                 root.addView(goBtn, goLp)
 
                 val cancelBtn = TextView(this)
-                cancelBtn.text = "取消"
+                cancelBtn.setText(R.string.core_cancel)
                 cancelBtn.gravity = android.view.Gravity.CENTER
                 cancelBtn.setTextColor(LauncherTheme.primary(this))
                 cancelBtn.textSize = 13f
@@ -348,10 +353,10 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun placeholderTitle(navItem: LauncherViewModel.NavItem): String {
-        if (navItem == LauncherViewModel.NavItem.LIBRARY) return "游戏库"
-        if (navItem == LauncherViewModel.NavItem.MANAGE) return "管理"
-        if (navItem == LauncherViewModel.NavItem.ACCOUNT) return "账户占位"
-        return "首页"
+        if (navItem == LauncherViewModel.NavItem.LIBRARY) return getString(R.string.core_game_library)
+        if (navItem == LauncherViewModel.NavItem.MANAGE) return getString(R.string.core_manage)
+        if (navItem == LauncherViewModel.NavItem.ACCOUNT) return getString(R.string.core_account_placeholder)
+        return getString(R.string.core_home)
     }
 
     private fun renderSelectedNav(selectedItem: LauncherViewModel.NavItem?) {
@@ -474,9 +479,9 @@ class LauncherActivity : AppCompatActivity() {
     private fun confirmOpenPadGameModeActivity() {
         LauncherDialogFactory.showConfirm(
             this,
-            "横屏游戏模式",
-            "要进入横屏游戏沉浸模式吗？",
-            "确定",
+            getString(R.string.core_landscape_mode_title),
+            getString(R.string.core_landscape_mode_message),
+            getString(R.string.core_confirm),
             Runnable { openPadGameModeActivity() }
         )
     }
@@ -506,6 +511,9 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     companion object {
+        @Volatile
+        private var launcherSplashShownInProcess = false
+
         private const val SPLASH_MIN_DISPLAY_MS = 400L
         const val EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login"
         const val EXTRA_PINNED_GAME_ID = "pinned_game_id"

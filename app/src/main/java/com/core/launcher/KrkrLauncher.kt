@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.system.Os
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.documentfile.provider.DocumentFile
 import com.akira.tyranoemu.remote.Kirikiroid126
 import com.akira.tyranoemu.remote.Kirikiroid134
@@ -156,7 +157,7 @@ internal object KrkrLauncher {
         )
         if (rootPath.isNullOrEmpty()) return rootUri
         val target = launchTarget?.trim().orEmpty()
-        if (target.isEmpty() || target == "[游戏目录]" || target.equals("DIR", ignoreCase = true)) {
+        if (isDirectoryTarget(target)) {
             return rootPath
         }
         if (target.equals("XP3_FIRST", ignoreCase = true)) {
@@ -175,6 +176,27 @@ internal object KrkrLauncher {
             target.endsWith(".xp3") || target.endsWith(".tjs") ||
             target.endsWith(".exe") || target.endsWith(".dll")
         ) targetFile.absolutePath else rootPath
+    }
+
+    /**
+     * Directory selection is an engine protocol value. Accept translated labels written by the
+     * affected builds, plus bracketed display placeholders, before resolving an XP3 path.
+     */
+    private fun isDirectoryTarget(target: String): Boolean {
+        if (target.isEmpty() || target.equals("DIR", ignoreCase = true)) return true
+        if (
+            target == "[游戏目录]"
+            || target == "[Game folder]"
+            || target == "[Game directory]"
+            || target == "[ゲームフォルダー]"
+            || target == "[ゲームディレクトリ]"
+        ) {
+            return true
+        }
+        return target.length >= 2
+            && target.startsWith("[")
+            && target.endsWith("]")
+            && !target.endsWith(".xp3]", ignoreCase = true)
     }
 
     @JvmStatic
@@ -339,6 +361,13 @@ internal object KrkrLauncher {
             intent.putExtra("themeColorCard", LauncherTheme.card(context))
             intent.putExtra("themeColorText", LauncherTheme.text(context))
             intent.putExtra("themeColorTextMuted", LauncherTheme.textMuted(context))
+            val appLocales = AppCompatDelegate.getApplicationLocales()
+            val languageTag = if (!appLocales.isEmpty) {
+                appLocales[0]?.toLanguageTag()
+            } else {
+                context.resources.configuration.locales[0].toLanguageTag()
+            }
+            intent.putExtra("uiLanguageTag", languageTag)
         } catch (error: Throwable) {
             logWarn("appendThemeColors failed", error)
         }

@@ -75,9 +75,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private val syncDialogFactory = object : GameSyncController.DialogFactory {
         override fun showSyncConfirmDialog(onConfirm: Runnable) {
             PadDialogFactory.showStandardConfirm(
-                requireContext(), "同步数据",
-                "全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？",
-                "确定同步", onConfirm
+                requireContext(), getString(com.core.R.string.pad_sync_data),
+                getString(com.core.R.string.pad_sync_all_message),
+                getString(com.core.R.string.pad_confirm_sync), onConfirm
             )
         }
 
@@ -85,8 +85,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             createPadSyncLoadingDialog(title, hint)
 
         override fun showSyncResultDialog(synced: Int, failed: Int) {
-            val message = "同步完成 $synced 个" + if (failed > 0) "\n失败 $failed 个" else ""
-            PadDialogFactory.showInfo(requireContext(), "同步完成", message)
+            val message = getString(com.core.R.string.pad_sync_complete_count, synced) +
+                if (failed > 0) getString(com.core.R.string.pad_sync_failed_count, failed) else ""
+            PadDialogFactory.showInfo(requireContext(), getString(com.core.R.string.pad_sync_complete), message)
         }
     }
 
@@ -117,7 +118,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         applyPadContentSpacing()
         applySystemBarInsets()
         LauncherTheme.applyPrimaryTone(binding.root)
-        binding.libraryTitle.text = "游戏仓库"
+        binding.libraryTitle.setText(com.core.R.string.pad_game_repository)
         pageSize = GRID_COLUMNS * (if (isTabletLayout()) 2 else 1)
         setupSearchAndCategories()
         sessionController = GameSessionController(
@@ -170,10 +171,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             if (!Environment.isExternalStorageManager()) {
                 val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
                 val root = GameActionMenuFactory.createDialogRoot(requireContext())
-                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), "需要文件访问权限"))
+                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), getString(com.core.R.string.core_file_access_title)))
 
                 val info = TextView(requireContext())
-                info.text = "应用需要完全访问文件夹的权限来读取游戏文件。请在系统页面允许\"管理所有文件\"。"
+                info.setText(com.core.R.string.pad_file_access_message)
                 info.setTextColor(
                     ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color)
                 )
@@ -187,7 +188,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
                 root.addView(
                     GameActionMenuFactory.createDialogButton(
-                        requireContext(), "前往", true,
+                        requireContext(), getString(com.core.R.string.core_go), true,
                         Runnable {
                             try {
                                 startActivity(
@@ -401,7 +402,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             b.libraryRecycler.post { updateAdaptiveCardHeight() }
             scheduleLoadUntilViewportFilled()
         }
-        b.libraryEmpty.text = if (lc.allGames.isEmpty()) "还没有游戏" else "没有匹配的游戏"
+        b.libraryEmpty.setText(
+            if (lc.allGames.isEmpty()) com.core.R.string.pad_no_games
+            else com.core.R.string.pad_no_matching_games
+        )
         b.libraryEmpty.visibility = if (hasGames) View.GONE else View.VISIBLE
     }
 
@@ -449,8 +453,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun confirmLaunchGame(game: Game?) {
         if (game == null) return
         PadDialogFactory.showConfirm(
-            requireContext(), "启动游戏",
-            "确定启动「${GameMetadataFormatter.safeTitle(game)}」吗？", "确定"
+            requireContext(), getString(com.core.R.string.pad_launch_game),
+            getString(com.core.R.string.pad_launch_game_message, GameMetadataFormatter.safeTitle(game)),
+            getString(com.core.R.string.core_confirm)
         ) {
             GamePasswordLock.interceptLaunch(this@PadManageFragment, game) {
                 sessionController?.launchGameDirectly(this@PadManageFragment, game)
@@ -507,22 +512,24 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         if (game == null) return
         val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
         val root = GameActionMenuFactory.createDialogRoot(requireContext())
-        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), "更多选项"))
+        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), getString(com.core.R.string.pad_more_options)))
 
-        val favoriteLabel = if (game.favorite) "取消收藏" else "添加收藏"
+        val favoriteLabel = getString(
+            if (game.favorite) com.core.R.string.pad_remove_favorite else com.core.R.string.pad_add_favorite
+        )
         val options: MutableList<Array<String>> = ArrayList()
         options.add(arrayOf(favoriteLabel, "favorite"))
-        options.add(arrayOf("重新匹配 VNDB 元数据", "rematch"))
-        options.add(arrayOf("自定义搜索 VNDB", "custom_vndb"))
-        options.add(arrayOf("同步元数据封面到卡片", "sync"))
+        options.add(arrayOf(getString(com.core.R.string.pad_rematch_vndb), "rematch"))
+        options.add(arrayOf(getString(com.core.R.string.pad_custom_search_vndb), "custom_vndb"))
+        options.add(arrayOf(getString(com.core.R.string.pad_sync_cover), "sync"))
         // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
         val isOns = game.engine == EngineType.ONS
         if (isOns) {
-            options.add(arrayOf("ONS 引擎设置", "ons_settings"))
+            options.add(arrayOf(getString(com.core.R.string.pad_ons_settings), "ons_settings"))
         }
         val hasPassword = GamePasswordLock.hasPassword(game)
-        options.add(arrayOf(if (hasPassword) "取消密码" else "密码锁定", "password"))
-        options.add(arrayOf("删除游戏", "delete"))
+        options.add(arrayOf(getString(if (hasPassword) com.core.R.string.pad_remove_password else com.core.R.string.pad_password_lock), "password"))
+        options.add(arrayOf(getString(com.core.R.string.pad_delete_game), "delete"))
 
         for (opt in options) {
             val option = TextView(requireContext())
@@ -565,7 +572,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
         } catch (ignored: Throwable) {
-            Toast.makeText(requireContext(), "无法打开 ONS 引擎设置", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), com.core.R.string.pad_cannot_open_ons_settings, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -595,9 +602,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun confirmDeleteGame(game: Game?) {
         if (game == null) return
         PadDialogFactory.showDangerConfirm(
-            requireContext(), "删除游戏",
-            "要删除「${GameMetadataFormatter.safeTitle(game)}」吗？此操作仅移除游戏库不进行实际删除。",
-            "移除"
+            requireContext(), getString(com.core.R.string.pad_delete_game),
+            getString(com.core.R.string.pad_delete_game_message, GameMetadataFormatter.safeTitle(game)),
+            getString(com.core.R.string.pad_remove)
         ) { deleteGame(game) }
     }
 
@@ -614,11 +621,11 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             mainQueue.post {
                 if (!isAdded || view == null) return@post
                 if (!deleted) {
-                    Toast.makeText(app, "删除失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(app, com.core.R.string.pad_delete_failed, Toast.LENGTH_SHORT).show()
                     return@post
                 }
                 removeSingleGame(game.id)
-                Toast.makeText(app, "已删除", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, com.core.R.string.pad_deleted, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -665,7 +672,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
         val progressText = TextView(requireContext())
         progressText.tag = "sync_progress"
-        progressText.text = "0/0 已完成"
+        progressText.text = getString(com.core.R.string.pad_progress_complete, 0, 0)
         progressText.gravity = Gravity.CENTER
         progressText.setTextColor(
             ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color)
@@ -725,7 +732,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun renderCategories() {
         val b = _binding ?: return
         b.libraryCategoryRow.removeAllViews()
-        addCategoryChip("全部", "")
+        addCategoryChip(getString(com.core.R.string.pad_all), "")
         for (category in categories) {
             addCategoryChip(category.label, category.value)
         }

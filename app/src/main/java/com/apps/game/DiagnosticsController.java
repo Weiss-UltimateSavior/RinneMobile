@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
 import com.apps.theme.LauncherMotion;
+import com.core.R;
 import com.core.launcherbridge.LauncherDiagnosticsBridge;
 import com.core.util.DevLogger;
 
@@ -31,8 +32,9 @@ public final class DiagnosticsController {
     }
 
     public void showDiagnosticsPrivacyDialog() {
-        String message = "导出的日志可能包含设备信息、游戏路径、运行异常、WebView 或引擎输出等诊断内容。请先自行确认日志内容，再发送给反馈渠道。";
-        host.showConfirmDialog("日志诊断", message, "继续", this::showDiagnosticsOptions);
+        String message = host.getString(R.string.game_diagnostics_warning);
+        host.showConfirmDialog(host.getString(R.string.game_diagnostics_title), message,
+                host.getString(R.string.game_common_continue), this::showDiagnosticsOptions);
     }
 
     private void showDiagnosticsOptions() {
@@ -50,12 +52,14 @@ public final class DiagnosticsController {
         root.setPadding(host.dp(22), host.dp(20), host.dp(22), host.dp(16));
         root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
 
-        TextView title = host.createDialogTitle("日志诊断");
+        TextView title = host.createDialogTitle(host.getString(R.string.game_diagnostics_title));
         root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView info = new TextView(host.requireContext());
-        info.setText("日志状态：" + (LauncherDiagnosticsBridge.isLogEnabled() ? "已开启" : "已关闭")
-                + " · 当前大小：" + DevLogger.formatSize(LauncherDiagnosticsBridge.logSize()));
+        info.setText(host.getString(R.string.game_diagnostics_status,
+                host.getString(LauncherDiagnosticsBridge.isLogEnabled()
+                        ? R.string.game_diagnostics_enabled : R.string.game_diagnostics_disabled),
+                DevLogger.formatSize(LauncherDiagnosticsBridge.logSize())));
         info.setGravity(android.view.Gravity.CENTER);
         info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
         host.setResponsiveTextSize(info, 12);
@@ -63,9 +67,13 @@ public final class DiagnosticsController {
         infoLp.setMargins(0, host.dp(11), 0, 0);
         root.addView(info, infoLp);
 
-        host.addFeedbackOption(root, LauncherDiagnosticsBridge.isLogEnabled() ? "关闭日志" : "开启日志", dialog, this::toggleDiagnosticLog);
-        host.addFeedbackOption(root, "清空日志", dialog, this::confirmClearDiagnosticLog);
-        host.addFeedbackOption(root, "导出 Rinne 诊断包", dialog, this::exportDiagnosticLog);
+        host.addFeedbackOption(root, host.getString(LauncherDiagnosticsBridge.isLogEnabled()
+                ? R.string.game_diagnostics_disable : R.string.game_diagnostics_enable),
+                dialog, this::toggleDiagnosticLog);
+        host.addFeedbackOption(root, host.getString(R.string.game_diagnostics_clear),
+                dialog, this::confirmClearDiagnosticLog);
+        host.addFeedbackOption(root, host.getString(R.string.game_diagnostics_export),
+                dialog, this::exportDiagnosticLog);
 
         TextView cancel = host.createDialogCancelButton(dialog);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
@@ -78,24 +86,31 @@ public final class DiagnosticsController {
     private void exportDiagnosticLog() {
         try {
             if (!LauncherDiagnosticsBridge.exportLog(host.requireContext())) {
-                Toast.makeText(host.requireContext(), "暂无日志文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(host.requireContext(), R.string.game_diagnostics_empty, Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Log.e(TAG, "exportLog failed", e);
-            Toast.makeText(host.requireContext(), "导出失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(host.requireContext(), host.getString(
+                    R.string.game_diagnostics_export_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
         }
     }
 
     private void toggleDiagnosticLog() {
         boolean next = !LauncherDiagnosticsBridge.isLogEnabled();
         LauncherDiagnosticsBridge.setLogEnabled(host.requireContext(), next);
-        Toast.makeText(host.requireContext(), next ? "日志已开启" : "日志已关闭", Toast.LENGTH_SHORT).show();
+        Toast.makeText(host.requireContext(), next
+                ? R.string.game_diagnostics_enabled : R.string.game_diagnostics_disabled,
+                Toast.LENGTH_SHORT).show();
     }
 
     private void confirmClearDiagnosticLog() {
-        host.showConfirmDialog("清空日志", "确定清空当前诊断日志吗？此操作不会删除游戏数据。", "清空", () -> {
+        host.showConfirmDialog(host.getString(R.string.game_diagnostics_clear),
+                host.getString(R.string.game_diagnostics_clear_message),
+                host.getString(R.string.game_diagnostics_clear), () -> {
             boolean success = LauncherDiagnosticsBridge.clearLog();
-            Toast.makeText(host.requireContext(), success ? "日志已清空" : "清空失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(host.requireContext(), success
+                    ? R.string.game_diagnostics_cleared : R.string.game_diagnostics_clear_failed,
+                    Toast.LENGTH_SHORT).show();
         });
     }
 }

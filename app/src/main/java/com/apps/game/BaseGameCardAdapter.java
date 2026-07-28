@@ -109,8 +109,10 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
         void bind(Game game, boolean selected) {
             if (game == null) return;
             applyLayout(binding);
-            String gameTitle = title(game);
-            String playStatus = game.totalPlayTime <= 0L ? "未游玩" : TimeFormatUtil.playTime(game.totalPlayTime);
+            String gameTitle = title(binding.getRoot(), game);
+            String playStatus = game.totalPlayTime <= 0L
+                    ? binding.getRoot().getContext().getString(R.string.game_status_never_played)
+                    : TimeFormatUtil.playTime(game.totalPlayTime);
             binding.getRoot().setBackgroundResource(posterStyle ? android.R.color.transparent
                     : (selected ? R.drawable.launcher_game_card_selected : R.drawable.launcher_game_card));
             binding.launcherGameTitle.setText(gameTitle);
@@ -118,7 +120,7 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
             binding.launcherGamePosterTitle.setText(posterTitle(gameTitle));
             binding.launcherGamePosterStatus.setText(playStatus);
             applyCardPresentation();
-            binding.launcherGameInitial.setText(initial(game.title));
+            binding.launcherGameInitial.setText(initial(binding.getRoot(), game.title));
             applyFavoriteAppearance(game.favorite);
             binding.launcherGameInitial.setTextColor(LauncherTheme.text(binding.getRoot().getContext()));
             bindCover(game);
@@ -215,7 +217,10 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
                 && a.favorite == b.favorite && eq(a.coverPersistUri, b.coverPersistUri) && eq(a.coverUri, b.coverUri);
     }
     private static boolean eq(String a, String b) { return a == null ? b == null : a.equals(b); }
-    private static String title(Game game) { return game.title == null || game.title.trim().isEmpty() ? "未命名游戏" : game.title.trim(); }
+    private static String title(View view, Game game) {
+        return game.title == null || game.title.trim().isEmpty()
+                ? view.getContext().getString(R.string.game_unnamed) : game.title.trim();
+    }
     private static String posterTitle(String value) {
         final int maxCharacters = 10;
         if (value == null || value.isEmpty()) return value;
@@ -223,7 +228,13 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
         if (count <= maxCharacters) return value;
         return value.substring(0, value.offsetByCodePoints(0, maxCharacters)) + "...";
     }
-    private static String initial(String title) { if (title == null || title.trim().isEmpty()) return "游"; String value = title.trim(); return value.substring(0, value.offsetByCodePoints(0, 1)); }
+    private static String initial(View view, String title) {
+        if (title == null || title.trim().isEmpty()) {
+            return view.getContext().getString(R.string.game_default_initial);
+        }
+        String value = title.trim();
+        return value.substring(0, value.offsetByCodePoints(0, 1));
+    }
     protected static int dp(View view, int value) { return Math.round(value * view.getResources().getDisplayMetrics().density); }
     protected static void compactText(ItemLauncherGameCardBinding binding) {
         binding.launcherGameTextOverlay.setPadding(dp(binding.getRoot(), 8), dp(binding.getRoot(), 2), dp(binding.getRoot(), 8), dp(binding.getRoot(), 2));

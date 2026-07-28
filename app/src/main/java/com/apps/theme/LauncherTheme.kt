@@ -684,7 +684,9 @@ object LauncherTheme {
         root.setBackgroundResource(R.drawable.launcher_dialog_bg)
 
         val title = TextView(context)
-        title.text = if (hasUpdate) "发现新版本" else "检查更新"
+        title.text = context.getString(
+            if (hasUpdate) R.string.theme_update_available else R.string.theme_check_for_updates
+        )
         title.gravity = Gravity.CENTER
         title.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_color))
         title.textSize = 16f
@@ -709,7 +711,7 @@ object LauncherTheme {
             root.addView(message, msgLp)
 
             val btn = TextView(context)
-            btn.text = "知道了"
+            btn.text = context.getString(R.string.settings_got_it)
             btn.gravity = Gravity.CENTER
             btn.setTextColor(primary(context))
             btn.textSize = 13f
@@ -720,13 +722,17 @@ object LauncherTheme {
         } else if (hasUpdate && info != null) {
             val message = TextView(context)
             val sb = StringBuilder()
-            sb.append("当前版本：").append(emptyOr(currentVersion, "未知")).append("\n")
-            sb.append("最新版本：").append(emptyOr(info.tagName, info.version)).append("\n\n")
+            val unknown = context.getString(R.string.settings_unknown)
+            sb.append(context.getString(R.string.theme_current_version,
+                emptyOr(currentVersion, unknown))).append("\n")
+            sb.append(context.getString(R.string.theme_latest_version,
+                emptyOr(info.tagName, info.version))).append("\n\n")
             val body = trimUpdateBody(info.body, 1600)
             if (body != null && body.trim { it <= ' ' }.isNotEmpty()) {
-                sb.append("更新内容：\n").append(body.trim { it <= ' ' })
+                sb.append(context.getString(R.string.theme_release_notes)).append("\n")
+                    .append(body.trim { it <= ' ' })
             } else {
-                sb.append("发现新的 GitHub Release，可前往发布页查看详情。")
+                sb.append(context.getString(R.string.theme_new_release_summary))
             }
             message.text = sb.toString()
             message.gravity = Gravity.CENTER
@@ -737,11 +743,11 @@ object LauncherTheme {
             msgLp.setMargins(0, dp(context, 11), 0, 0)
             root.addView(message, msgLp)
 
-            addDialogOption(root, "前往下载", dialog, { openUrl(context, emptyOr(info.apkUrl, info.releaseUrl)) }, optionLp)
-            addDialogOption(root, "发布页", dialog, { openUrl(context, emptyOr(info.releaseUrl, "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test")) }, optionLp)
+            addDialogOption(root, context.getString(R.string.theme_go_to_download), dialog, { openUrl(context, emptyOr(info.apkUrl, info.releaseUrl)) }, optionLp)
+            addDialogOption(root, context.getString(R.string.theme_release_page), dialog, { openUrl(context, emptyOr(info.releaseUrl, "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test")) }, optionLp)
 
             val cancel = TextView(context)
-            cancel.text = "稍后"
+            cancel.text = context.getString(R.string.theme_later)
             cancel.gravity = Gravity.CENTER
             cancel.setTextColor(primary(context))
             cancel.textSize = 13f
@@ -751,7 +757,8 @@ object LauncherTheme {
             root.addView(cancel, cancelLp)
         } else {
             val message = TextView(context)
-            message.text = "已是最新版本：" + emptyOr(currentVersion, "未知")
+            message.text = context.getString(R.string.theme_already_latest,
+                emptyOr(currentVersion, context.getString(R.string.settings_unknown)))
             message.gravity = Gravity.CENTER
             message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
             message.textSize = 12f
@@ -761,7 +768,7 @@ object LauncherTheme {
             root.addView(message, msgLp)
 
             val btn = TextView(context)
-            btn.text = "知道了"
+            btn.text = context.getString(R.string.settings_got_it)
             btn.gravity = Gravity.CENTER
             btn.setTextColor(primary(context))
             btn.textSize = 13f

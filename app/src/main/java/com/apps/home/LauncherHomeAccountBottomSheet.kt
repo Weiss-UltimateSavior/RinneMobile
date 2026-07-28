@@ -1,0 +1,102 @@
+package com.apps.home
+
+import android.app.Dialog
+import android.graphics.drawable.GradientDrawable
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.fragment.app.FragmentManager
+import com.apps.theme.LauncherTheme
+import com.core.R
+import com.core.databinding.ItemLauncherManageBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+
+/** 首页右上角设置按钮显示的功能抽屉。 */
+class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val context = requireContext()
+        val dialog = BottomSheetDialog(context, theme)
+        val contentView = LayoutInflater.from(context)
+            .inflate(R.layout.sheet_launcher_home_account, null, false)
+        val density = resources.displayMetrics.density
+        val sheetHeight = (409f * density).toInt()
+        val radius = 24f * density
+
+        val list = contentView.findViewById<LinearLayout>(R.id.homeAccountSheetList)
+        val actions = listOf(
+            SheetAction("A", context.getString(R.string.app_settings_title), ACTION_APP_SETTINGS),
+            SheetAction("T", context.getString(R.string.launcher_settings_action_theme), ACTION_THEME),
+            SheetAction("C", context.getString(R.string.launcher_settings_action_tone), ACTION_TONE),
+            SheetAction("U", context.getString(R.string.launcher_settings_action_update), ACTION_UPDATE),
+            SheetAction("F", context.getString(R.string.launcher_settings_action_feedback), ACTION_FEEDBACK),
+            SheetAction("D", context.getString(R.string.launcher_settings_action_disclaimer), ACTION_DISCLAIMER)
+        )
+        actions.forEach { action ->
+            val itemBinding = ItemLauncherManageBinding.inflate(
+                LayoutInflater.from(context),
+                list,
+                false
+            )
+            itemBinding.manageItemIcon.text = action.icon
+            itemBinding.manageItemTitle.text = action.title
+            itemBinding.root.setOnClickListener {
+                dismiss()
+                parentFragmentManager.setFragmentResult(
+                    REQUEST_KEY,
+                    Bundle().apply { putString(RESULT_ACTION, action.id) }
+                )
+            }
+            LauncherTheme.applyPrimaryTone(itemBinding.root)
+            LauncherTheme.styleManageRow(itemBinding.root)
+            list.addView(itemBinding.root)
+        }
+
+        dialog.setContentView(contentView)
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<View>(
+                com.google.android.material.R.id.design_bottom_sheet
+            ) ?: return@setOnShowListener
+            bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = sheetHeight
+            }
+            bottomSheet.background = GradientDrawable().apply {
+                setColor(LauncherTheme.bg(context))
+                cornerRadii = floatArrayOf(radius, radius, radius, radius, 0f, 0f, 0f, 0f)
+            }
+            BottomSheetBehavior.from(bottomSheet).apply {
+                peekHeight = sheetHeight
+                skipCollapsed = true
+                state = BottomSheetBehavior.STATE_EXPANDED
+            }
+            bottomSheet.visibility = View.VISIBLE
+            bottomSheet.requestLayout()
+        }
+        return dialog
+    }
+
+    private data class SheetAction(val icon: String, val title: String, val id: String)
+
+    companion object {
+        const val REQUEST_KEY = "launcher_home_settings_sheet_result"
+        const val RESULT_ACTION = "action"
+        const val ACTION_APP_SETTINGS = "app_settings"
+        const val ACTION_THEME = "theme"
+        const val ACTION_TONE = "tone"
+        const val ACTION_UPDATE = "update"
+        const val ACTION_FEEDBACK = "feedback"
+        const val ACTION_DISCLAIMER = "disclaimer"
+
+        private const val TAG = "launcher_home_settings_sheet"
+
+        fun show(manager: FragmentManager) {
+            if (manager.isStateSaved || manager.findFragmentByTag(TAG) != null) return
+            LauncherHomeAccountBottomSheet().show(manager, TAG)
+        }
+    }
+}
