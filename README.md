@@ -1,7 +1,7 @@
 # Rinne Mobile
 
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxhdpi/ic_launcher.png" alt="YukiHub" width="120" />
+  <img src="screenshots/home-index.jpg" alt="RinneMobile" width="280" />
 </p>
 
 <p align="center">
@@ -11,15 +11,13 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white" alt="Android" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="GPL-3.0" />
-  <img src="https://img.shields.io/github/downloads/xm486/YukiHub/total?logo=github" alt="Downloads">
-  <img src="https://img.shields.io/github/v/release/xm486/YukiHub?logo=github&color=green" alt="最新版本">
 </p>
 
-一款面向 Android 平台的 Galgame / 视觉小说管理与启动工具，适用于管理本地游戏、安卓应用、模拟器游戏入口、外部程序快捷方式及游玩记录。
+一款面向 Android 平台的 Galgame / 视觉小说管理与启动工具，集成主流游戏引擎支持，适用于管理游玩本地游戏、安卓应用、游戏入口、外部程序快捷方式及游玩记录。
 
-它的目标是把“游戏库管理、快捷启动、数据同步、资料查询”整合到一个统一的移动界面中。
+目标是把“游戏库管理、快捷启动、数据同步、资料查询、游戏引擎支持”整合到一个统一的移动管理中心。
 
-这是一个 YukiHub 重构 开发 的分支版本，使用更加现代化的技术栈，正在全力向kotlin迁移。
+这是一个 YukiHub 重构 开发 的版本，使用更加现代化的技术栈与MVVM架构，目前正在三次重构向kotlin迁移。
 
 > 本项目采用 **GPL-3.0** 开源协议。
 
