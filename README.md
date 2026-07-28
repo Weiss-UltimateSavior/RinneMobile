@@ -1,7 +1,7 @@
 # Rinne Mobile
 
 <p align="center">
-  <img src="screenshots/home-index.jpg" alt="RinneMobile" width="280" />
+  <img src="screenshots/home-index.png" alt="RinneMobile" width="280" />
 </p>
 
 <p align="center">
