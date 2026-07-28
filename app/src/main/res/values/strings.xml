@@ -9,6 +9,10 @@
     <string name="app_settings_title">应用设置</string>
     <string name="app_language_label">应用语言</string>
     <string name="app_language_dialog_title">选择应用语言</string>
+    <string name="app_start_page_label">启动页面</string>
+    <string name="app_start_page_dialog_title">选择启动页面</string>
+    <string name="app_start_page_portrait">竖屏首页</string>
+    <string name="app_start_page_landscape">横屏首页</string>
     <string name="app_splash_image_label">启动图片</string>
     <string name="app_splash_image_default">默认启动图片</string>
     <string name="app_splash_image_custom">已使用自定义启动图片</string>

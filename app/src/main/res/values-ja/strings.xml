@@ -9,6 +9,10 @@
     <string name="app_settings_title">アプリ設定</string>
     <string name="app_language_label">アプリの言語</string>
     <string name="app_language_dialog_title">アプリの言語を選択</string>
+    <string name="app_start_page_label">起動ページ</string>
+    <string name="app_start_page_dialog_title">起動ページを選択</string>
+    <string name="app_start_page_portrait">縦画面ホーム</string>
+    <string name="app_start_page_landscape">横画面ホーム</string>
     <string name="app_splash_image_label">起動画像</string>
     <string name="app_splash_image_default">標準の起動画像</string>
     <string name="app_splash_image_custom">カスタム起動画像を使用中</string>

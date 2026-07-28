@@ -53,6 +53,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
+                    android:text="@string/app_start_page_label"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/appStartPageText"
+                    style="@style/LauncherSelectableField"
+                    android:text="@string/app_start_page_portrait" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
                     android:text="@string/app_splash_image_label"
                     android:textColor="@color/launcher_text_color"
                     android:textSize="12sp"

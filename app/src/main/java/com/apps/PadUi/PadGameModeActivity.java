@@ -1,6 +1,7 @@
 package com.apps.PadUi;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -120,7 +121,12 @@ public class PadGameModeActivity extends AppCompatActivity {
                 getString(R.string.pad_portrait_mode_title),
                 getString(R.string.pad_portrait_mode_message),
                 getString(R.string.core_confirm),
-                this::finish
+                () -> {
+                    Intent intent = new Intent(this, LauncherActivity.class);
+                    intent.putExtra(LauncherActivity.EXTRA_FORCE_PORTRAIT_HOME, true);
+                    startActivity(intent);
+                    finish();
+                }
         );
     }
 

@@ -102,6 +102,12 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun showLauncherContent() {
         if (isFinishing || isDestroyed) return
+        val forcePortraitHome = intent?.getBooleanExtra(EXTRA_FORCE_PORTRAIT_HOME, false) == true
+        if (isLandscapeStartupPage(this) && !forcePortraitHome) {
+            startActivity(Intent(this, PadGameModeActivity::class.java))
+            finish()
+            return
+        }
 
         binding = ActivityLauncherBinding.inflate(layoutInflater)
         val b = binding!!
@@ -517,10 +523,12 @@ class LauncherActivity : AppCompatActivity() {
         private const val SPLASH_MIN_DISPLAY_MS = 2_000L
         const val EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login"
         const val EXTRA_PINNED_GAME_ID = "pinned_game_id"
+        const val EXTRA_FORCE_PORTRAIT_HOME = "force_portrait_home"
         const val ACTION_LAUNCH_PINNED_GAME = "com.core.action.LAUNCH_PINNED_GAME"
         // Keep shortcuts pinned before the package refactor working after an app update.
         private const val LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME"
         const val APP_PREFS = "yukihub_prefs"
+        private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
         const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
@@ -698,6 +706,19 @@ class LauncherActivity : AppCompatActivity() {
         @JvmStatic
         fun hasCustomSplashImage(context: android.content.Context): Boolean =
             customSplashImageFile(context).isFile
+
+        @JvmStatic
+        fun isLandscapeStartupPage(context: android.content.Context): Boolean =
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_START_LANDSCAPE_PAGE, false)
+
+        @JvmStatic
+        fun setLandscapeStartupPage(context: android.content.Context, enabled: Boolean) {
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_START_LANDSCAPE_PAGE, enabled)
+                .apply()
+        }
 
         @JvmStatic
         fun applyCustomSplashImage(context: android.content.Context, imageView: ImageView?) {

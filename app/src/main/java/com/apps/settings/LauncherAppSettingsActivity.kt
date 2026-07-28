@@ -45,6 +45,8 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         LauncherTheme.applyPrimaryTone(binding.root)
         binding.appLanguageText.text = languageLabels()[currentLanguageIndex()]
         binding.appLanguageText.setOnClickListener { showLanguagePicker() }
+        renderStartPageState()
+        binding.appStartPageText.setOnClickListener { showStartPagePicker() }
         renderSplashImageState()
         binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
     }
@@ -72,6 +74,22 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
             getString(R.string.app_splash_image_confirm_action),
         ) {
             splashImagePicker.launch("image/*")
+        }
+    }
+
+    private fun showStartPagePicker() {
+        val labels: Array<CharSequence> = arrayOf(
+            getString(R.string.app_start_page_portrait),
+            getString(R.string.app_start_page_landscape),
+        )
+        LauncherDialogFactory.showSingleChoice(
+            this,
+            getString(R.string.app_start_page_dialog_title),
+            labels,
+            if (LauncherActivity.isLandscapeStartupPage(this)) 1 else 0,
+        ) { index ->
+            LauncherActivity.setLandscapeStartupPage(this, index == 1)
+            renderStartPageState()
         }
     }
 
@@ -116,6 +134,16 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
                 R.string.app_splash_image_custom
             } else {
                 R.string.app_splash_image_default
+            }
+        )
+    }
+
+    private fun renderStartPageState() {
+        binding.appStartPageText.setText(
+            if (LauncherActivity.isLandscapeStartupPage(this)) {
+                R.string.app_start_page_landscape
+            } else {
+                R.string.app_start_page_portrait
             }
         )
     }
