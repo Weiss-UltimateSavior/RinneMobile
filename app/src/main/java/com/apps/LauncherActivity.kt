@@ -42,6 +42,7 @@ import com.core.launcherbridge.LauncherGameLaunchBridge
 import com.core.launcherbridge.LauncherUpdateBridge
 import com.core.util.Disposable
 import com.core.util.RxMainQueue
+import java.io.File
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -54,9 +55,7 @@ class LauncherActivity : AppCompatActivity() {
 
     /**
      * Splash 首帧绘制完成后再保留的最低展示时长，用于品牌曝光与状态栏图标色阶过渡。
-     * 原先的 1500ms 固定延时自 onCreate 起算，包含了 view inflation 与首帧排版时间，
-     * 实际曝光远超 1.5s；改由 [android.view.ViewTreeObserver.OnPreDrawListener]
-     * 触发后再计时，避免冷启动期间的强制空等。
+     * 计时从首帧绘制完成后开始，保证用户选择的启动图能完整停留两秒。
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_YukiHub_Launcher)
@@ -76,6 +75,7 @@ class LauncherActivity : AppCompatActivity() {
         // Android 12+ replaces a legacy window background with the system icon splash.
         // Draw the wallpaper as real Activity content so it is also visible on Honor/MagicOS.
         setContentView(R.layout.activity_launcher_splash)
+        applyCustomSplashImage(this, findViewById(R.id.launcherSplashImage))
         scheduleLauncherContent()
     }
 
@@ -84,7 +84,7 @@ class LauncherActivity : AppCompatActivity() {
      * 取代原先自 onCreate 起算的固定 1500ms 延时。
      *
      * 触发顺序：`setContentView` → 首次 measure/layout → OnPreDrawListener 回调 →
-     * 短暂品牌曝光 → [showLauncherContent]。
+     * 两秒品牌曝光 → [showLauncherContent]。
      */
     private fun scheduleLauncherContent() {
         val content = findViewById<View>(android.R.id.content)
@@ -514,13 +514,14 @@ class LauncherActivity : AppCompatActivity() {
         @Volatile
         private var launcherSplashShownInProcess = false
 
-        private const val SPLASH_MIN_DISPLAY_MS = 400L
+        private const val SPLASH_MIN_DISPLAY_MS = 2_000L
         const val EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login"
         const val EXTRA_PINNED_GAME_ID = "pinned_game_id"
         const val ACTION_LAUNCH_PINNED_GAME = "com.core.action.LAUNCH_PINNED_GAME"
         // Keep shortcuts pinned before the package refactor working after an app update.
         private const val LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME"
         const val APP_PREFS = "yukihub_prefs"
+        private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
         const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
         const val KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style"
@@ -687,6 +688,27 @@ class LauncherActivity : AppCompatActivity() {
                 Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
             configuration.uiMode = (configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or targetNightMode
             return base.createConfigurationContext(configuration)
+        }
+
+        /** The image is kept in private storage so it remains available after URI grants expire. */
+        @JvmStatic
+        fun customSplashImageFile(context: android.content.Context): File =
+            File(context.applicationContext.filesDir, CUSTOM_SPLASH_IMAGE_FILE)
+
+        @JvmStatic
+        fun hasCustomSplashImage(context: android.content.Context): Boolean =
+            customSplashImageFile(context).isFile
+
+        @JvmStatic
+        fun applyCustomSplashImage(context: android.content.Context, imageView: ImageView?) {
+            if (imageView == null) return
+            val imageFile = customSplashImageFile(context)
+            if (!imageFile.isFile) return
+            try {
+                imageView.setImageURI(Uri.fromFile(imageFile))
+            } catch (_: Throwable) {
+                // Keep the XML default splash image when a custom file cannot be decoded.
+            }
         }
     }
 }

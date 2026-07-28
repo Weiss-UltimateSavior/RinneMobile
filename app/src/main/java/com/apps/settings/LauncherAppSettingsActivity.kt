@@ -2,23 +2,36 @@ package com.apps.settings
 
 import android.content.Context
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.lifecycleScope
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
 import com.core.databinding.ActivityLauncherAppSettingsBinding
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** 应用设置页面；具体设置项将在后续功能中添加。 */
 class LauncherAppSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLauncherAppSettingsBinding
+    private val splashImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) saveSplashImage(uri)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         LauncherActivity.applySavedToneMode(this)
@@ -32,6 +45,8 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         LauncherTheme.applyPrimaryTone(binding.root)
         binding.appLanguageText.text = languageLabels()[currentLanguageIndex()]
         binding.appLanguageText.setOnClickListener { showLanguagePicker() }
+        renderSplashImageState()
+        binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
     }
 
     private fun showLanguagePicker() {
@@ -47,6 +62,62 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
                 LocaleListCompat.forLanguageTags(languageTag)
             )
         }
+    }
+
+    private fun showSplashImageConfirmDialog() {
+        LauncherDialogFactory.showStandardConfirm(
+            this,
+            getString(R.string.app_splash_image_confirm_title),
+            getString(R.string.app_splash_image_confirm_message),
+            getString(R.string.app_splash_image_confirm_action),
+        ) {
+            splashImagePicker.launch("image/*")
+        }
+    }
+
+    private fun saveSplashImage(uri: Uri) {
+        lifecycleScope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                val destination = LauncherActivity.customSplashImageFile(this@LauncherAppSettingsActivity)
+                val pending = File(destination.parentFile, "${destination.name}.pending")
+                try {
+                    contentResolver.openInputStream(uri)?.use { input ->
+                        pending.outputStream().use { output -> input.copyTo(output) }
+                    } ?: return@withContext false
+                    try {
+                        Files.move(
+                            pending.toPath(),
+                            destination.toPath(),
+                            StandardCopyOption.ATOMIC_MOVE,
+                            StandardCopyOption.REPLACE_EXISTING,
+                        )
+                    } catch (_: Throwable) {
+                        Files.move(pending.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                    true
+                } catch (_: Throwable) {
+                    false
+                } finally {
+                    if (pending.exists()) pending.delete()
+                }
+            }
+            if (saved) {
+                renderSplashImageState()
+                Toast.makeText(this@LauncherAppSettingsActivity, R.string.app_splash_image_updated, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@LauncherAppSettingsActivity, R.string.app_splash_image_save_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun renderSplashImageState() {
+        binding.appSplashImageText.setText(
+            if (LauncherActivity.hasCustomSplashImage(this)) {
+                R.string.app_splash_image_custom
+            } else {
+                R.string.app_splash_image_default
+            }
+        )
     }
 
     private fun languageLabels(): Array<CharSequence> = arrayOf(

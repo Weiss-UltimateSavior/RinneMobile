@@ -9,6 +9,14 @@
     <string name="app_settings_title">アプリ設定</string>
     <string name="app_language_label">アプリの言語</string>
     <string name="app_language_dialog_title">アプリの言語を選択</string>
+    <string name="app_splash_image_label">起動画像</string>
+    <string name="app_splash_image_default">標準の起動画像</string>
+    <string name="app_splash_image_custom">カスタム起動画像を使用中</string>
+    <string name="app_splash_image_confirm_title">起動画像を変更</string>
+    <string name="app_splash_image_confirm_message">アプリ起動時の背景として表示する画像を選択します。</string>
+    <string name="app_splash_image_confirm_action">画像を選択</string>
+    <string name="app_splash_image_updated">起動画像を更新しました</string>
+    <string name="app_splash_image_save_failed">選択した画像を保存できません</string>
     <string name="language_simplified_chinese">简体中文</string>
     <string name="language_english">English</string>
     <string name="language_japanese">日本語</string>

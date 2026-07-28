@@ -48,6 +48,20 @@
                     android:id="@+id/appLanguageText"
                     style="@style/LauncherSelectableField"
                     android:text="@string/language_simplified_chinese" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/app_splash_image_label"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/appSplashImageText"
+                    style="@style/LauncherSelectableField"
+                    android:text="@string/app_splash_image_default" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

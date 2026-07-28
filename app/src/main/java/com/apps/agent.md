@@ -21,6 +21,15 @@
 - 已存在的 Java 文件可在原文件内继续修改；只有大规模重构时才迁移到 Kotlin
 - 新增 Kotlin 业务文件放在与职责对应的 `com.core.*` 子包下；UI 页面放在 `com.apps.*` 对应子包。
 
+### 页面三语与本地化
+
+- 页面中所有用户可见文案必须资源化：XML 使用 `@string/...`，Kotlin/Java 使用当前页面或传入 `Context` 的 `getString()`；禁止在 Activity、Fragment、Adapter、Dialog、Toast、加载页或引擎壳层硬编码中文、英文或日文。
+- 每个新增或修改的用户可见字符串，必须同时维护 `res/values/strings.xml`、`res/values-en/strings.xml` 与 `res/values-ja/strings.xml` 中的同名 key。简中、英文、日文缺任一项，视为页面未完成。
+- 页面展示的动态文字保存语义原值（状态、类型、资源 key、枚举或原始数据），在绑定/渲染时按当前 `Context` 解析为三语文案；不得在 Repository、ViewModel、单例或 Adapter 数据中缓存已经翻译的字符串，以保证切换语言后立即刷新。
+- 跨进程或内置引擎页面必须通过 `Intent` 明确传递当前语言 tag，并在目标进程基于该 tag 创建本地化 Context 后读取资源；不得依赖旧页面、Application Context 或进程启动时缓存的 Locale。
+- 数据库字段、Intent extra key、偏好设置 key、网络协议、游戏目录标记和引擎类型等机器可读值保持稳定原文，不得翻译；只在 UI 层为其提供本地化展示名称。
+- 语言切换完成后，当前可见页面、列表项、在线状态、加载遮罩和弹窗都应重新读取资源并刷新；验证时至少检查简中、英文、日文三种语言，以及页面旋转或重建后的显示。
+
 ### Kotlin 代码风格
 
 - 工具类 / 桥接类使用 `object` + `@JvmStatic` 暴露入口给 Java 调用方；常量使用 `const val`；包内可见方法使用 `internal`。
