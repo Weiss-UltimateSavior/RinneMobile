@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
@@ -336,6 +337,9 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleMaterialSwitch(binding.padOnsSharpnessSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padTyranoScopedSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padTyranoExternalNetworkSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.padChipSyncConfig);
+        LauncherTheme.styleMaterialSwitch(binding.padChipRealtimePlaytime);
+        LauncherTheme.styleMaterialSwitch(binding.padChipEmailSubscribe);
         LauncherTheme.formInputs(binding.padOnsSharpnessValueInput);
         PadDialogFactory.secondaryInlineAction(binding.padNativeKrkrButton);
         PadDialogFactory.secondaryInlineAction(binding.padKrkrCancelButton);
@@ -662,13 +666,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         return "realtime_playtime".equals(key);
     }
 
-    private void renderAccountChip(TextView chip, boolean enabled) {
-        chip.setText(enabled ? R.string.pad_disable : R.string.pad_enable);
-        if (enabled) {
-            LauncherTheme.primaryButton(chip);
-        } else {
-            LauncherTheme.secondaryButton(chip);
-        }
+    private void renderAccountChip(SwitchCompat chip, boolean enabled) {
+        chip.setChecked(enabled);
     }
 
     private void showAccountConfirmDialog(String title, String message, String confirmText,

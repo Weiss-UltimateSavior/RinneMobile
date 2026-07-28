@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import com.apps.UserData.LauncherUserData;
@@ -49,6 +50,9 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
         LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
+        LauncherTheme.styleMaterialSwitch(binding.chipSyncConfig);
+        LauncherTheme.styleMaterialSwitch(binding.chipRealtimePlaytime);
+        LauncherTheme.styleMaterialSwitch(binding.chipEmailSubscribe);
 
         bindActions();
         renderAllChips();
@@ -266,9 +270,8 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
         renderChip(binding.chipEmailSubscribe, prefs.getBoolean("email_subscribe", getDefault("email_subscribe")));
     }
 
-    private void renderChip(android.widget.TextView chip, boolean enabled) {
-        chip.setText(enabled ? R.string.social_action_disable : R.string.social_action_enable);
-        LauncherTheme.chip(chip, enabled);
+    private void renderChip(SwitchCompat chip, boolean enabled) {
+        chip.setChecked(enabled);
     }
 
     private boolean getDefault(String key) {

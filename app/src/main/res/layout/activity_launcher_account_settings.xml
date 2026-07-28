@@ -47,13 +47,14 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <TextView
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/chipSyncConfig"
-                    android:layout_width="52dp"
-                    android:layout_height="31dp"
-                    android:gravity="center"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:layout_width="49dp"
+                    android:layout_height="29dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:padding="0dp"
+                    android:showText="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -71,13 +72,14 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <TextView
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/chipRealtimePlaytime"
-                    android:layout_width="52dp"
-                    android:layout_height="31dp"
-                    android:gravity="center"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:layout_width="49dp"
+                    android:layout_height="29dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:padding="0dp"
+                    android:showText="false" />
             </LinearLayout>
 
             <LinearLayout
@@ -95,13 +97,14 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <TextView
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/chipEmailSubscribe"
-                    android:layout_width="52dp"
-                    android:layout_height="31dp"
-                    android:gravity="center"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:layout_width="49dp"
+                    android:layout_height="29dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:padding="0dp"
+                    android:showText="false" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

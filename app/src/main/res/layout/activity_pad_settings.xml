@@ -943,13 +943,14 @@
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/padChipSyncConfig"
-                        android:layout_width="52dp"
-                        android:layout_height="30dp"
-                        android:gravity="center"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:layout_width="49dp"
+                        android:layout_height="29dp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:padding="0dp"
+                        android:showText="false" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -974,13 +975,14 @@
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/padChipRealtimePlaytime"
-                        android:layout_width="52dp"
-                        android:layout_height="30dp"
-                        android:gravity="center"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:layout_width="49dp"
+                        android:layout_height="29dp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:padding="0dp"
+                        android:showText="false" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -1004,13 +1006,14 @@
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/padChipEmailSubscribe"
-                        android:layout_width="52dp"
-                        android:layout_height="30dp"
-                        android:gravity="center"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:layout_width="49dp"
+                        android:layout_height="29dp"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:padding="0dp"
+                        android:showText="false" />
                 </LinearLayout>
             </LinearLayout>
                 </LinearLayout>
