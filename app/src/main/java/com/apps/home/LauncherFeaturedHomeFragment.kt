@@ -98,7 +98,7 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
                 ).apply { topMargin = dp(5) }
                 gravity = Gravity.CENTER
                 setTextColor(LauncherTheme.text(requireContext()))
-                textSize = 10.66f
+                textSize = 12.66f
             }
             // 内层容器统一内容宽度，保证图标与不同长度的文字作为整体居中对称。
             if (icon != null) action.removeView(icon)
