@@ -86,7 +86,7 @@ class TranslationSettingActivity : AppCompatActivity() {
 
     private fun initViews() {
         LauncherTheme.applyPrimaryTone(binding.translationSettingRoot)
-        LauncherTheme.styleSwitch(binding.translationEnabledSwitch)
+        LauncherTheme.styleMaterialSwitch(binding.translationEnabledSwitch)
         LauncherTheme.formInputs(binding.translationBaseUrlInput, binding.translationModelInput, binding.translationApiKeyInput)
         // 显式应用主题色按钮样式（applyPrimaryTone 按 id 白名单匹配，自定义 id 不会被处理）
         LauncherTheme.primaryButton(binding.translationSaveButton)

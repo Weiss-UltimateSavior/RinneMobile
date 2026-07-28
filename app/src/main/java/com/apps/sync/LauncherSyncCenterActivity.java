@@ -90,7 +90,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
-        LauncherTheme.styleSwitch(binding.syncAutoSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.syncAutoSwitch);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.formInputs(binding.syncServerInput, binding.syncUserInput, binding.syncPasswordInput);
         LauncherTheme.shortActionButton(binding.btnTest);

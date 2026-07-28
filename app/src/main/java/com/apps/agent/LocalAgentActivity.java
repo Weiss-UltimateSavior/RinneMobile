@@ -461,7 +461,7 @@ public class LocalAgentActivity extends AppCompatActivity {
         SwitchCompat view = new SwitchCompat(this);
         view.setText(label); view.setTextSize(12); view.setTextColor(LauncherTheme.text(this));
         view.setGravity(Gravity.CENTER_VERTICAL); view.setChecked(checked);
-        LauncherTheme.styleSwitch(view);
+        LauncherTheme.styleMaterialSwitch(view);
         return view;
     }
 

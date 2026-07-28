@@ -112,15 +112,15 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     }
 
     private void applyThemeTone() {
-        LauncherTheme.styleSwitch(binding.krScopedSwitch);
-        LauncherTheme.styleSwitch(binding.artemisScopedSwitch);
-        LauncherTheme.styleSwitch(binding.onsScopedSwitch);
-        LauncherTheme.styleSwitch(binding.onsStretchSwitch);
-        LauncherTheme.styleSwitch(binding.onsCutoutSwitch);
-        LauncherTheme.styleSwitch(binding.onsDisableVideoSwitch);
-        LauncherTheme.styleSwitch(binding.onsSharpnessSwitch);
-        LauncherTheme.styleSwitch(binding.tyranoScopedSwitch);
-        LauncherTheme.styleSwitch(binding.tyranoExternalNetworkSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.krScopedSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.artemisScopedSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.onsScopedSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.onsStretchSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.onsCutoutSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.onsDisableVideoSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.onsSharpnessSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.tyranoScopedSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.tyranoExternalNetworkSwitch);
         LauncherTheme.formInputs(binding.onsSharpnessValueInput);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.longActionButton(binding.btnNativeKrkr);
