@@ -49,6 +49,8 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         binding.appStartPageText.setOnClickListener { showStartPagePicker() }
         renderHomeStyleState()
         binding.appHomeStyleText.setOnClickListener { showHomeStylePicker() }
+        renderNavigationStyleState()
+        binding.appNavigationStyleText.setOnClickListener { showNavigationStylePicker() }
         renderSplashImageState()
         binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
     }
@@ -108,6 +110,23 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         ) { index ->
             LauncherActivity.setFeaturedHomeStyle(this, index == 1)
             // 返回首页时由 LauncherActivity.onResume() 立即替换对应 Fragment，无需重启应用。
+            finish()
+        }
+    }
+
+    private fun showNavigationStylePicker() {
+        val labels: Array<CharSequence> = arrayOf(
+            getString(R.string.app_navigation_style_default),
+            getString(R.string.app_navigation_style_pill),
+        )
+        LauncherDialogFactory.showSingleChoice(
+            this,
+            getString(R.string.app_navigation_style_dialog_title),
+            labels,
+            if (LauncherActivity.isPillNavigationStyle(this)) 1 else 0,
+        ) { index ->
+            LauncherActivity.setPillNavigationStyle(this, index == 1)
+            // 返回 Launcher 后 onResume() 会立即切换可见导航栏，无需重启。
             finish()
         }
     }
@@ -173,6 +192,16 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
                 R.string.app_home_style_featured
             } else {
                 R.string.app_home_style_default
+            }
+        )
+    }
+
+    private fun renderNavigationStyleState() {
+        binding.appNavigationStyleText.setText(
+            if (LauncherActivity.isPillNavigationStyle(this)) {
+                R.string.app_navigation_style_pill
+            } else {
+                R.string.app_navigation_style_default
             }
         )
     }

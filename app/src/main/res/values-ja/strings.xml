@@ -17,6 +17,10 @@
     <string name="app_home_style_dialog_title">ホームスタイルを選択</string>
     <string name="app_home_style_default">標準ホーム</string>
     <string name="app_home_style_featured">おすすめカードホーム</string>
+    <string name="app_navigation_style_label">ナビゲーションスタイル</string>
+    <string name="app_navigation_style_dialog_title">ナビゲーションスタイルを選択</string>
+    <string name="app_navigation_style_default">標準ナビゲーション</string>
+    <string name="app_navigation_style_pill">フローティングピルナビ</string>
     <string name="home_featured_games">おすすめゲーム</string>
     <string name="home_quick_features">クイック機能</string>
     <string name="home_featured_empty">表示するゲームはまだありません</string>

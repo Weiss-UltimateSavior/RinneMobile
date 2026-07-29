@@ -9,9 +9,8 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
-        android:layout_marginBottom="@dimen/launcher_bottom_nav_height"
         android:overScrollMode="never"
-        android:paddingBottom="0dp"
+        android:paddingBottom="@dimen/launcher_nav_overlay_scroll_bottom_padding"
         android:scrollbars="none">
 
         <LinearLayout

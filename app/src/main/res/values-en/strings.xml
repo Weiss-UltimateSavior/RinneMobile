@@ -17,6 +17,10 @@
     <string name="app_home_style_dialog_title">Choose Home Style</string>
     <string name="app_home_style_default">Default Home</string>
     <string name="app_home_style_featured">Featured Card Home</string>
+    <string name="app_navigation_style_label">Navigation Style</string>
+    <string name="app_navigation_style_dialog_title">Choose Navigation Style</string>
+    <string name="app_navigation_style_default">Default Navigation</string>
+    <string name="app_navigation_style_pill">Floating Pill Navigation</string>
     <string name="home_featured_games">Featured Games</string>
     <string name="home_quick_features">Quick Actions</string>
     <string name="home_featured_empty">No games to display yet</string>

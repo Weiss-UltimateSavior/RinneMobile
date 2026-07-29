@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.InsetDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -318,6 +319,26 @@ class LauncherActivity : AppCompatActivity() {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             LauncherMotion.runAfterPulse(b.navLaunchCenterCircle, Runnable { confirmOpenPadGameModeActivity() })
         }
+        b.navPillHome.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.HOME)
+        }
+        b.navPillLibrary.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.LIBRARY)
+        }
+        b.navPillManage.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.MANAGE)
+        }
+        b.navPillAccount.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.ACCOUNT)
+        }
+        b.navPillLaunchCenter.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            LauncherMotion.runAfterPulse(b.navPillLaunchCenter, Runnable { confirmOpenPadGameModeActivity() })
+        }
     }
 
     private fun observeState() {
@@ -380,6 +401,16 @@ class LauncherActivity : AppCompatActivity() {
         val b = binding ?: return
         val navItem = selectedItem ?: LauncherViewModel.NavItem.HOME
         applyLauncherThemeTone()
+        if (isPillNavigationStyle(this)) {
+            b.bottomNav.visibility = View.GONE
+            b.bottomNavShadow.visibility = View.GONE
+            b.bottomNavPill.visibility = View.VISIBLE
+            renderPillNav(navItem)
+            return
+        }
+        b.bottomNav.visibility = View.VISIBLE
+        b.bottomNavShadow.visibility = View.VISIBLE
+        b.bottomNavPill.visibility = View.GONE
         setNavSelected(
             b.navHome,
             b.navHomeIcon,
@@ -407,6 +438,19 @@ class LauncherActivity : AppCompatActivity() {
         moveNavIndicator(navItem)
     }
 
+    private fun renderPillNav(navItem: LauncherViewModel.NavItem) {
+        val b = binding ?: return
+        setPillNavSelected(b.navPillHome, b.navPillHomeIcon, b.navPillHomeLabel,
+            navItem == LauncherViewModel.NavItem.HOME)
+        setPillNavSelected(b.navPillLibrary, b.navPillLibraryIcon, b.navPillLibraryLabel,
+            navItem == LauncherViewModel.NavItem.LIBRARY)
+        setPillNavSelected(b.navPillManage, b.navPillManageIcon, b.navPillManageLabel,
+            navItem == LauncherViewModel.NavItem.MANAGE)
+        setPillNavSelected(b.navPillAccount, b.navPillAccountIcon, b.navPillAccountLabel,
+            navItem == LauncherViewModel.NavItem.ACCOUNT)
+        b.navPillLaunchCenterIcon.setColorFilter(LauncherTheme.primary(this))
+    }
+
     private fun setNavSelected(container: LinearLayout, icon: ImageView, label: TextView, selected: Boolean) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected)
         // 选中项始终使用当前主题主色；未选中项在浅色、深色模式下统一使用灰色。
@@ -414,6 +458,30 @@ class LauncherActivity : AppCompatActivity() {
         icon.setColorFilter(color)
         label.setTextColor(color)
         label.setTypeface(null, android.graphics.Typeface.BOLD)
+    }
+
+    private fun setPillNavSelected(
+        container: LinearLayout,
+        icon: ImageView,
+        label: TextView,
+        selected: Boolean
+    ) {
+        (container.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+            params.weight = if (selected) 1.55f else 0.8625f
+            params.height = dp(if (selected) 44 else 45)
+            params.marginStart = 0
+            params.marginEnd = 0
+            container.layoutParams = params
+        }
+        container.background = if (selected) {
+            InsetDrawable(LauncherTheme.selectedChip(this), dp(4), 0, dp(6), 0)
+        } else {
+            null
+        }
+        val color = if (selected) LauncherTheme.onPrimary(this) else LauncherTheme.textMuted(this)
+        icon.setColorFilter(color)
+        label.setTextColor(color)
+        label.visibility = if (selected) View.VISIBLE else View.GONE
     }
 
     private fun moveNavIndicator(navItem: LauncherViewModel.NavItem) {
@@ -485,6 +553,40 @@ class LauncherActivity : AppCompatActivity() {
         } else {
             b.navLaunchCenterImage.setColorFilter(Color.WHITE)
         }
+        applyCenterLogoScale(b.navLaunchCenterText, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme)
+        b.navPillLaunchCenterIcon.apply {
+            when {
+                rinneTheme -> setImageResource(R.drawable.launcher_theme_rinne_def)
+                anriTheme -> setImageResource(R.drawable.launcher_theme_anri_def)
+                xinhaitianTheme -> setImageResource(R.drawable.launcher_theme_xinhaitian_def)
+                natsumeTheme -> setImageResource(R.drawable.launcher_theme_natsume_def)
+                else -> setImageResource(R.drawable.launcher_game_center_default)
+            }
+            setColorFilter(LauncherTheme.primary(this@LauncherActivity))
+        }
+        applyCenterLogoScale(b.navPillLaunchCenterIcon, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme)
+    }
+
+    /**
+     * 主题 Logo 的 PNG 透明边距并不一致；按默认游戏中心 Logo 的可视范围校正缩放。
+     * 每个主题只使用一个缩放比例，避免为补偿画布留白而拉伸图案本身。
+     */
+    private fun applyCenterLogoScale(
+        logo: ImageView,
+        rinneTheme: Boolean,
+        anriTheme: Boolean,
+        xinhaitianTheme: Boolean,
+        natsumeTheme: Boolean
+    ) {
+        val scale = when {
+            rinneTheme -> 1.09f
+            anriTheme -> 1.29f
+            xinhaitianTheme -> 1.14f
+            natsumeTheme -> 1.02f
+            else -> 1f
+        }
+        logo.scaleX = scale
+        logo.scaleY = scale
     }
 
     private fun openPadGameModeActivity() {
@@ -541,6 +643,7 @@ class LauncherActivity : AppCompatActivity() {
         const val APP_PREFS = "yukihub_prefs"
         private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
         private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
+        private const val KEY_PILL_NAVIGATION_STYLE = "launcher_pill_navigation_style"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
         const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
@@ -742,6 +845,19 @@ class LauncherActivity : AppCompatActivity() {
             context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
                 .edit()
                 .putBoolean(KEY_FEATURED_HOME_STYLE, enabled)
+                .apply()
+        }
+
+        @JvmStatic
+        fun isPillNavigationStyle(context: android.content.Context): Boolean =
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_PILL_NAVIGATION_STYLE, false)
+
+        @JvmStatic
+        fun setPillNavigationStyle(context: android.content.Context, enabled: Boolean) {
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_PILL_NAVIGATION_STYLE, enabled)
                 .apply()
         }
 
