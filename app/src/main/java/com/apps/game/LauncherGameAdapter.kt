@@ -8,16 +8,24 @@ import com.core.databinding.ItemLauncherGameCardBinding
 import com.apps.widget.LauncherTabletPortraitScaler
 
 /** Portrait card policy; data, selection and bindings are shared with Pad. */
-class LauncherGameAdapter : BaseGameCardAdapter(
-    { b, h -> applyPortraitLayout(b, h) },
+class LauncherGameAdapter @JvmOverloads constructor(
+    applyPortraitScaling: Boolean = true,
+) : BaseGameCardAdapter(
+    { b, h -> applyPortraitLayout(b, h, applyPortraitScaling) },
     false
 ) {
     interface OnGameCardListener : BaseGameCardAdapter.OnGameCardListener
 
     companion object {
-        private fun applyPortraitLayout(binding: ItemLauncherGameCardBinding?, fixedHeightPx: Int) {
+        private fun applyPortraitLayout(
+            binding: ItemLauncherGameCardBinding?,
+            fixedHeightPx: Int,
+            applyPortraitScaling: Boolean,
+        ) {
             if (binding == null) return
-            LauncherTabletPortraitScaler.apply(binding.root)
+            if (applyPortraitScaling) {
+                LauncherTabletPortraitScaler.apply(binding.root)
+            }
             if (fixedHeightPx <= 0) return
 
             binding.root.layoutParams?.let { card ->

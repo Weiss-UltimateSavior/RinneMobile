@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="true"
+    android:clipToPadding="true">
+
+    <include layout="@layout/fragment_launcher_home" />
+
+    <FrameLayout
+        android:id="@+id/hdHomeDetailContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/launcher_chat_option_bg"
+        android:clipChildren="true"
+        android:clipToOutline="true"
+        android:visibility="gone" />
+</FrameLayout>

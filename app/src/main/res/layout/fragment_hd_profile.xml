@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ScrollView
+            android:id="@+id/profileScroll"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="7dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:background="@drawable/launcher_hd_profile_header_bg"
+                    android:clipToOutline="true">
+
+                    <ImageView
+                        android:id="@+id/profileBgImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:alpha="0.65"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/launcher_home_stats_bg" />
+
+                    <ImageView
+                        android:id="@+id/actionChangeCover"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="end|top"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/launcher_white_card"
+                        android:clickable="true"
+                        android:contentDescription="@string/profile_change_cover"
+                        android:focusable="true"
+                        android:padding="5dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/launcher_profile_top_star" />
+
+                    <LinearLayout
+                        android:id="@+id/profileHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:padding="24dp">
+
+                        <ImageView
+                            android:id="@+id/profileAvatar"
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
+                            android:background="@drawable/launcher_avatar"
+                            android:clipToOutline="true"
+                            android:contentDescription="@null"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/launcher_default_avatar" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/profileNickname"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/profile_local_user"
+                                android:textColor="@color/launcher_text_color"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/profileEmail"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="5dp"
+                                android:text=""
+                                android:textColor="@color/launcher_text_color"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/launcher_white_card"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/profile_last_seven_days_playtime"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <com.apps.widget.LauncherWeeklyPlaytimeChartView
+                        android:id="@+id/profileWeeklyPlaytimeChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="126dp"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/profilePlaytimeRankCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_playtime_rank"
+                            android:textColor="@color/launcher_text_color"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/profilePlaytimeRankValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/settings_loading"
+                            android:textColor="@color/launcher_text_muted_color"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/profilePlaytimeTotalIcon"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="@string/profile_leaderboard"
+                        android:padding="5dp"
+                        android:src="@drawable/launcher_ic_leaderboard" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_total_time"
+                            android:textColor="@color/launcher_text_muted_color"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/profilePlaytimeTotalValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="--"
+                            android:textColor="@color/launcher_text_color"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/profileActionList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/chatRoomRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_action_chatroom" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/profile_social_chat" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/moduleCompatibilityRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_module" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/module_compatibility_title" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/profileInfoRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_profile" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/profile_edit_title" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/accountSettingsRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_account" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/settings_account_title" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/cloudRestoreRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_restore" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/profile_restore_configuration" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/translationRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_translation" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/translation_title" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/logoutRow"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_logout" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/profile_logout" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/hdProfileDetailContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="7dp"
+            android:layout_weight="2"
+            android:background="@drawable/launcher_chat_option_bg"
+            android:clipChildren="true"
+            android:clipToOutline="true" />
+    </LinearLayout>
+</FrameLayout>

@@ -59,6 +59,12 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         }
         renderSplashImageState()
         binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
+        LauncherTheme.styleMaterialSwitch(binding.appHdModeStartupSwitch)
+        binding.appHdModeStartupSwitch.isChecked = LauncherActivity.isHdModeStartupEnabled(this)
+        binding.appHdModeStartupSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked == LauncherActivity.isHdModeStartupEnabled(this)) return@setOnCheckedChangeListener
+            LauncherActivity.setHdModeStartupEnabled(this, checked)
+        }
     }
 
     private fun showLanguagePicker() {

@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class LauncherRepository {
     private static final String APP_PREFS = "yukihub_prefs";
-    private static final int RECENT_ITEM_LIMIT = 5;
+    private static final int RECENT_ITEM_LIMIT = 18;
     private static final int RECENT_TITLE_MAX_CODE_POINTS = 19;
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_AUTH_ACCESS_TOKEN = "auth_access_token";

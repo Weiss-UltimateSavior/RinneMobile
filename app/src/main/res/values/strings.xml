@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="hd_mode_title">大屏模式</string>
+    <string name="hd_mode_placeholder">功能即将推出</string>
+    <string name="hd_mode_nav_a">A</string>
+    <string name="hd_mode_nav_b">B</string>
+    <string name="hd_mode_nav_c">C</string>
+    <string name="hd_mode_nav_d">D</string>
+    <string name="hd_mode_nav_e">E</string>
     <string name="app_name">Rinne Mobile</string>
     <string name="game_center">游戏中心</string>
     <string name="launcher_action_save_slot">存档点</string>
@@ -22,6 +29,7 @@
     <string name="app_navigation_style_default">默认导航栏</string>
     <string name="app_navigation_style_pill">悬浮胶囊导航</string>
     <string name="app_follow_system_tone">跟随系统自动色调</string>
+    <string name="app_hd_mode_startup">平板启动模式</string>
     <string name="home_featured_games">精选游戏</string>
     <string name="home_quick_features">快捷功能</string>
     <string name="home_featured_empty">暂时没有可展示的游戏</string>

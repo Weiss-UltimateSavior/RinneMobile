@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="hd_mode_title">HD Mode</string>
+    <string name="hd_mode_placeholder">Features coming soon</string>
+    <string name="hd_mode_nav_a">A</string>
+    <string name="hd_mode_nav_b">B</string>
+    <string name="hd_mode_nav_c">C</string>
+    <string name="hd_mode_nav_d">D</string>
+    <string name="hd_mode_nav_e">E</string>
     <string name="app_name">Rinne Mobile</string>
     <string name="game_center">Game Center</string>
     <string name="launcher_action_save_slot">Save Manager</string>
@@ -22,6 +29,7 @@
     <string name="app_navigation_style_default">Default Navigation</string>
     <string name="app_navigation_style_pill">Floating Pill Navigation</string>
     <string name="app_follow_system_tone">Follow System Theme</string>
+    <string name="app_hd_mode_startup">Tablet Startup Mode</string>
     <string name="home_featured_games">Featured Games</string>
     <string name="home_quick_features">Quick Actions</string>
     <string name="home_featured_empty">No games to display yet</string>

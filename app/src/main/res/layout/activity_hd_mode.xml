@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_bg">
+
+    <com.apps.theme.LauncherParticleView
+        android:id="@+id/hdLauncherParticleView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no" />
+
+    <FrameLayout
+        android:id="@+id/hdModeContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="20dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="18dp">
+
+        <LinearLayout
+            android:id="@+id/hdNavigationRail"
+            android:layout_width="76dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/launcher_white_card"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
+
+            <ImageView
+                android:id="@+id/hdNavA"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/core_home"
+                android:gravity="center"
+                android:padding="5dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_nav_home" />
+
+            <ImageView
+                android:id="@+id/hdNavB"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/game_library_title"
+                android:gravity="center"
+                android:padding="5dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_nav_game" />
+
+            <ImageView
+                android:id="@+id/hdNavC"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/game_manage_title"
+                android:gravity="center"
+                android:padding="5dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_nav_manage" />
+
+            <ImageView
+                android:id="@+id/hdNavD"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/social_account_title"
+                android:gravity="center"
+                android:padding="5dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_nav_account" />
+
+            <ImageView
+                android:id="@+id/hdNavE"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/home_settings"
+                android:gravity="center"
+                android:padding="5dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_nav_settings" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/hdFragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="90dp"
+            android:background="@drawable/launcher_white_card"
+            android:clipChildren="true"
+            android:clipToOutline="true"
+            android:clipToPadding="true"
+            android:padding="12dp" />
+    </FrameLayout>
+</FrameLayout>

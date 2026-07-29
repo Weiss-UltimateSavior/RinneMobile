@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/libraryContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:orientation="vertical"
+        android:paddingStart="8dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/libraryTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/game_library_title"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/librarySyncButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="@string/game_library_sync"
+                android:padding="4dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_library_action_sync" />
+
+            <ImageView
+                android:id="@+id/libraryCollapseButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="@string/game_library_category"
+                android:padding="4dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_library_action_category" />
+
+            <ImageView
+                android:id="@+id/librarySearchButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/game_common_search"
+                android:padding="4dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/launcher_library_action_search" />
+        </LinearLayout>
+
+        <com.apps.widget.LauncherEditText
+            android:id="@+id/librarySearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/launcher_white_card"
+            android:hint="@string/game_name_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="@color/launcher_text_color"
+            android:textColorHint="@color/launcher_text_muted_color"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <HorizontalScrollView
+            android:id="@+id/libraryCategoryScroll"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="4dp"
+            android:fillViewport="false"
+            android:overScrollMode="never"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/libraryCategoryRow"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="4dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/libraryRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="0dp"
+                android:scrollbars="none"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/libraryEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/game_empty"
+                android:textColor="@color/launcher_text_muted_color"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

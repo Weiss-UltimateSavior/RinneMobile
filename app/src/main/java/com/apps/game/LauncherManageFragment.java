@@ -106,11 +106,27 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
         return binding.getRoot();
     }
 
+    protected boolean usePortraitManageScaler() {
+        return true;
+    }
+
+    protected boolean applyManageSystemBarInsets() {
+        return true;
+    }
+
+    protected final void bindManageRoot(@NonNull View root) {
+        binding = FragmentLauncherManageBinding.bind(root);
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        applyTabletPortraitLayout();
-        applySystemBarInsets();
+        if (usePortraitManageScaler()) {
+            applyTabletPortraitLayout();
+        }
+        if (applyManageSystemBarInsets()) {
+            applySystemBarInsets();
+        }
 
         // 创建 Controllers
         diagnosticsController = new DiagnosticsController(this);
@@ -119,6 +135,8 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
             public void onExportLocalBackup() { localBackupController.exportLocalBackupToFile(); }
             @Override
             public void onConfirmImportLocalBackup() { localBackupController.confirmImportLocalBackup(); }
+            @Override
+            public void openSyncCenter() { LauncherManageFragment.this.openSyncCenter(); }
         });
         localBackupController = new LocalBackupController(this, backupOpenLauncher, backupCreateLauncher);
         xp3TargetResolver = new Xp3TargetResolver(this);
@@ -170,15 +188,28 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
     private void bindActions() {
         binding.actionAddDirectory.setOnClickListener(view -> scanDirectoryController.confirmAddDirectory());
         binding.actionScanGame.setOnClickListener(view -> scanDirectoryController.scanConfiguredDirectories());
-        binding.actionAddGame.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherAddGameActivity.class)));
+        binding.actionAddGame.setOnClickListener(view -> openAddGame());
         binding.actionCloudSync.setOnClickListener(view -> syncSettingsController.showSyncOptions());
         binding.actionCrossSync.setOnClickListener(view -> externalImportController.showExternalImportDialog());
         binding.actionDiagnostics.setOnClickListener(view -> diagnosticsController.showDiagnosticsPrivacyDialog());
-        binding.actionMetadataSource.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherMetadataSourceActivity.class)));
-        binding.actionKrkrSettings.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherKrkrSettingsActivity.class)));
+        binding.actionMetadataSource.setOnClickListener(view -> openMetadataSource());
+        binding.actionKrkrSettings.setOnClickListener(view -> openKrkrSettings());
+    }
+
+    protected void openAddGame() {
+        startActivity(new Intent(requireContext(), LauncherAddGameActivity.class));
+    }
+
+    protected void openMetadataSource() {
+        startActivity(new Intent(requireContext(), LauncherMetadataSourceActivity.class));
+    }
+
+    protected void openKrkrSettings() {
+        startActivity(new Intent(requireContext(), LauncherKrkrSettingsActivity.class));
+    }
+
+    protected void openSyncCenter() {
+        startActivity(new Intent(requireContext(), com.apps.sync.LauncherSyncCenterActivity.class));
     }
 
     private void applyThemeTone() {
@@ -192,7 +223,9 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
     // ==================== 平板竖屏缩放 ====================
 
     private float tabletPortraitScale() {
-        return LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot());
+        return usePortraitManageScaler()
+                ? LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot())
+                : 1f;
     }
 
     private void applyTabletPortraitLayout() {

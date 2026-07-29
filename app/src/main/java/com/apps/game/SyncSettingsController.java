@@ -1,6 +1,5 @@
 package com.apps.game;
 
-import android.content.Intent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
@@ -10,7 +9,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
-import com.apps.sync.LauncherSyncCenterActivity;
 import com.apps.theme.LauncherMotion;
 import com.core.R;
 import com.core.launcherbridge.LauncherSyncBridge;
@@ -28,6 +26,7 @@ public final class SyncSettingsController {
     public interface BackupActions {
         void onExportLocalBackup();
         void onConfirmImportLocalBackup();
+        void openSyncCenter();
     }
 
     private final ManageHost host;
@@ -66,8 +65,8 @@ public final class SyncSettingsController {
         root.addView(info, infoLp);
 
         host.addFeedbackOption(root, host.getString(R.string.game_sync_now), dialog, this::syncNow);
-        host.addFeedbackOption(root, host.getString(R.string.game_sync_open_center), dialog, () ->
-                host.startActivity(new Intent(host.requireContext(), LauncherSyncCenterActivity.class)));
+        host.addFeedbackOption(root, host.getString(R.string.game_sync_open_center), dialog,
+                backupActions::openSyncCenter);
         host.addFeedbackOption(root, host.getString(R.string.game_sync_export_backup),
                 dialog, backupActions::onExportLocalBackup);
         host.addFeedbackOption(root, host.getString(R.string.game_sync_import_backup),
@@ -97,7 +96,7 @@ public final class SyncSettingsController {
                     host.getString(R.string.game_sync_not_logged_in),
                     host.getString(R.string.game_sync_login_first),
                     host.getString(R.string.game_common_open),
-                    () -> host.startActivity(new Intent(host.requireContext(), LauncherSyncCenterActivity.class))
+                    backupActions::openSyncCenter
             );
             return;
         }

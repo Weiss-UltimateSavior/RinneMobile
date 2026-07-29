@@ -1,0 +1,283 @@
+package com.apps.HDModel
+
+import android.app.Activity
+import android.content.Context
+import android.content.SharedPreferences
+import android.graphics.Color
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.view.WindowManager
+import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.apps.LauncherActivity
+import com.apps.data.LauncherViewModel
+import com.apps.theme.LauncherTheme
+import com.core.R
+import com.core.databinding.ActivityHdModeBinding
+
+/** 大屏横屏模式的基础外壳；侧边导航功能将在后续逐项接入。 */
+class HdModeActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityHdModeBinding
+    private lateinit var launcherViewModel: LauncherViewModel
+    private var selectedNavItem = HdNavItem.HOME
+    private var appliedThemeStyle = LauncherActivity.THEME_STYLE_DEFAULT
+    private val launcherPreferenceListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            when (key) {
+                LauncherActivity.KEY_LAUNCHER_THEME_STYLE ->
+                    binding.root.post { recreateIfThemeStyleChanged() }
+                LauncherActivity.KEY_LAUNCHER_PARTICLES_ENABLED,
+                LauncherActivity.KEY_LAUNCHER_PARTICLE_STYLE ->
+                    binding.root.post { renderParticles() }
+            }
+        }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase))
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        LauncherActivity.applySavedToneMode(this)
+        super.onCreate(savedInstanceState)
+        configureLandscapeWindow()
+        binding = ActivityHdModeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        launcherViewModel = ViewModelProvider(this)[LauncherViewModel::class.java]
+        selectedNavItem = savedInstanceState?.getString(STATE_SELECTED_NAV)
+            ?.let { value -> HdNavItem.entries.firstOrNull { it.name == value } }
+            ?: HdNavItem.HOME
+        appliedThemeStyle = LauncherActivity.getLauncherThemeStyle(this)
+        applySystemBarInsets()
+        applyTheme()
+        renderParticles()
+        binding.hdNavA.setOnClickListener { showHomeFragment() }
+        binding.hdNavB.setOnClickListener { showGameLibraryFragment() }
+        binding.hdNavC.setOnClickListener { showManageFragment() }
+        binding.hdNavD.setOnClickListener { showAccountFragment() }
+        binding.hdNavE.setOnClickListener { showSettingsFragment() }
+        if (savedInstanceState == null) {
+            launcherViewModel.refresh()
+            showHomeFragment()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (recreateIfThemeStyleChanged()) return
+        renderParticles()
+        if (::launcherViewModel.isInitialized) launcherViewModel.refreshStats()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        getSharedPreferences(LauncherActivity.APP_PREFS, MODE_PRIVATE)
+            .registerOnSharedPreferenceChangeListener(launcherPreferenceListener)
+    }
+
+    override fun onStop() {
+        getSharedPreferences(LauncherActivity.APP_PREFS, MODE_PRIVATE)
+            .unregisterOnSharedPreferenceChangeListener(launcherPreferenceListener)
+        super.onStop()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_SELECTED_NAV, selectedNavItem.name)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun configureLandscapeWindow() {
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        val background = ContextCompat.getColor(this, R.color.launcher_bg_color)
+        window.statusBarColor = background
+        window.navigationBarColor = background
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+            if (!LauncherActivity.isLauncherDarkMode(this)) {
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            } else {
+                0
+            }
+    }
+
+    private fun applySystemBarInsets() {
+        val content = binding.hdModeContent
+        val left = content.paddingLeft
+        val top = content.paddingTop
+        val right = content.paddingRight
+        val bottom = content.paddingBottom
+        binding.root.setOnApplyWindowInsetsListener { _, insets ->
+            content.setPadding(
+                left + insets.systemWindowInsetLeft,
+                top + insets.systemWindowInsetTop,
+                right + insets.systemWindowInsetRight,
+                bottom + insets.systemWindowInsetBottom,
+            )
+            insets
+        }
+        binding.root.requestApplyInsets()
+    }
+
+    private fun applyTheme() {
+        LauncherTheme.applyPrimaryTone(binding.root)
+        styleNavigationIcon(binding.hdNavA, selectedNavItem == HdNavItem.HOME)
+        styleNavigationIcon(binding.hdNavB, selectedNavItem == HdNavItem.LIBRARY)
+        styleNavigationIcon(binding.hdNavC, selectedNavItem == HdNavItem.MANAGE)
+        styleNavigationIcon(binding.hdNavD, selectedNavItem == HdNavItem.ACCOUNT)
+        styleNavigationIcon(binding.hdNavE, selectedNavItem == HdNavItem.SETTINGS)
+    }
+
+    private fun styleNavigationIcon(icon: ImageView, selected: Boolean) {
+        icon.background = null
+        icon.setColorFilter(if (selected) LauncherTheme.primary(this) else Color.GRAY)
+    }
+
+    private fun showHomeFragment() {
+        if (::launcherViewModel.isInitialized) launcherViewModel.refreshStats()
+        showRootFragment(HdNavItem.HOME, HdHomeFragment(), "hd_home")
+    }
+
+    private fun showGameLibraryFragment() {
+        showRootFragment(HdNavItem.LIBRARY, HdGameLibraryFragment(), "hd_game_library")
+    }
+
+    private fun showManageFragment() {
+        showRootFragment(HdNavItem.MANAGE, HdManageFragment(), "hd_manage")
+    }
+
+    private fun showAccountFragment() {
+        showRootFragment(HdNavItem.ACCOUNT, HdAccountFragment(), "hd_account")
+    }
+
+    private fun showSettingsFragment() {
+        showRootFragment(HdNavItem.SETTINGS, HdSettingsFragment(), "hd_settings")
+    }
+
+    internal fun showSaveManagerFragment() {
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+                R.anim.launcher_fragment_enter_back,
+                R.anim.launcher_fragment_exit_back,
+            )
+            .replace(R.id.hdFragmentContainer, HdSaveManagerFragment(), "hd_save_manager")
+            .commit()
+    }
+
+    private fun showRootFragment(item: HdNavItem, fragment: Fragment, tag: String) {
+        val current = supportFragmentManager.findFragmentById(R.id.hdFragmentContainer)
+        if (selectedNavItem == item && current?.tag == tag) {
+            applyTheme()
+            return
+        }
+        val toRight = item.ordinal >= selectedNavItem.ordinal
+        selectNavigation(item)
+        val enter = if (toRight) {
+            R.anim.launcher_fragment_enter
+        } else {
+            R.anim.launcher_fragment_enter_back
+        }
+        val exit = if (toRight) {
+            R.anim.launcher_fragment_exit
+        } else {
+            R.anim.launcher_fragment_exit_back
+        }
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(enter, exit, enter, exit)
+            .replace(R.id.hdFragmentContainer, fragment, tag)
+            .commit()
+    }
+
+    internal fun showProfileDetail(id: String, intent: android.content.Intent): Boolean {
+        val profile = supportFragmentManager
+            .findFragmentById(R.id.hdFragmentContainer) as? HdProfileFragment
+            ?: return false
+        profile.showEmbeddedActivity(id, intent)
+        return true
+    }
+
+    override fun finishFromChild(child: Activity) {
+        val owner = currentEmbeddedOwner()
+        if (owner != null) {
+            owner.closeEmbeddedActivity(child)
+            binding.root.post { recreateIfThemeStyleChanged() }
+            return
+        }
+        super.finishFromChild(child)
+    }
+
+    @Deprecated("Deprecated in Android")
+    override fun onBackPressed() {
+        if (currentEmbeddedOwner()?.closeEmbeddedActivity() == true) return
+        super.onBackPressed()
+    }
+
+    private fun currentEmbeddedOwner(): HdEmbeddedActivityOwner? =
+        supportFragmentManager.findFragmentById(R.id.hdFragmentContainer)
+            as? HdEmbeddedActivityOwner
+
+    private fun selectNavigation(item: HdNavItem) {
+        selectedNavItem = item
+        applyTheme()
+    }
+
+    private fun recreateIfThemeStyleChanged(): Boolean {
+        val currentStyle = LauncherActivity.getLauncherThemeStyle(this)
+        if (currentStyle == appliedThemeStyle) return false
+        appliedThemeStyle = currentStyle
+        recreate()
+        return true
+    }
+
+    private fun renderParticles() {
+        val enabled = LauncherActivity.isLauncherParticlesEnabled(this)
+        binding.hdLauncherParticleView.visibility = if (enabled) View.VISIBLE else View.GONE
+        binding.hdLauncherParticleView.setParticleStyle(
+            LauncherActivity.getLauncherParticleStyle(this),
+        )
+        binding.hdLauncherParticleView.setParticlesEnabled(enabled)
+    }
+
+    internal fun refreshNavigationChrome() {
+        binding.hdNavigationRail.translationZ = 0f
+        binding.hdNavigationRail.visibility = View.VISIBLE
+        binding.hdNavigationRail.alpha = 1f
+        listOf(
+            binding.hdNavA,
+            binding.hdNavB,
+            binding.hdNavC,
+            binding.hdNavD,
+            binding.hdNavE,
+        ).forEach {
+            it.visibility = View.VISIBLE
+            it.alpha = 1f
+        }
+        applyTheme()
+        binding.hdNavigationRail.invalidate()
+    }
+
+    private enum class HdNavItem {
+        HOME,
+        LIBRARY,
+        MANAGE,
+        ACCOUNT,
+        SETTINGS,
+    }
+
+    companion object {
+        private const val STATE_SELECTED_NAV = "hd_selected_nav"
+    }
+}

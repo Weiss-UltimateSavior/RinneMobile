@@ -96,7 +96,9 @@ open class LauncherHomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val currentBinding = requireNotNull(binding)
-        LauncherTabletPortraitScaler.apply(currentBinding.root)
+        if (usePortraitTabletScaler()) {
+            LauncherTabletPortraitScaler.apply(currentBinding.root)
+        }
         viewModel = ViewModelProvider(requireActivity()).get(LauncherViewModel::class.java)
         sessionController = GameSessionController(
             requireContext(),
@@ -112,7 +114,9 @@ open class LauncherHomeFragment : Fragment() {
             }
         )
 
-        applySystemBarInsets()
+        if (applyHomeSystemBarInsets()) {
+            applySystemBarInsets()
+        }
         setupRecentList()
         currentBinding.launcherAvatarContainer.clipToOutline = true
         renderAvatar()
@@ -208,6 +212,12 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     protected open fun onHomeLayoutReady() = Unit
+
+    /** HD 首页沿用业务逻辑，但不使用竖屏平板缩放器。 */
+    protected open fun usePortraitTabletScaler(): Boolean = true
+
+    /** 嵌入横屏 HD 容器时由外层 Activity 统一处理安全区。 */
+    protected open fun applyHomeSystemBarInsets(): Boolean = true
 
     protected open fun applyIconTone() {
         val currentBinding = binding ?: return
@@ -418,6 +428,11 @@ open class LauncherHomeFragment : Fragment() {
 
     protected open fun recentItemLayoutRes(): Int = com.core.R.layout.item_launcher_recent
 
+    /** 默认首页保持五条单列动态；HD 首页可覆盖为多列海报网格。 */
+    protected open fun recentDisplayLimit(): Int = 5
+
+    protected open fun recentGridColumns(): Int = 1
+
     protected open fun bindRecentItem(itemView: View, item: LauncherRepository.RecentItem) {
         val icon: TextView = itemView.findViewById(com.core.R.id.recentIcon)
         val title: TextView = itemView.findViewById(com.core.R.id.recentTitle)
@@ -442,13 +457,28 @@ open class LauncherHomeFragment : Fragment() {
         currentBinding.recentList.visibility = View.VISIBLE
         currentBinding.recentList.removeAllViews()
         val inflater = LayoutInflater.from(requireContext())
-        for (item in items) {
+        val columns = recentGridColumns().coerceAtLeast(1)
+        val visibleItems = items.take(recentDisplayLimit().coerceAtLeast(0))
+        var currentRow: LinearLayout? = null
+        for ((index, item) in visibleItems.withIndex()) {
+            if (columns > 1 && index % columns == 0) {
+                currentRow = LinearLayout(requireContext()).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    )
+                }
+                currentBinding.recentList.addView(currentRow)
+            }
             val itemView = inflater.inflate(
                 recentItemLayoutRes(),
                 currentBinding.recentList,
                 false
             )
-            LauncherTabletPortraitScaler.apply(itemView)
+            if (usePortraitTabletScaler()) {
+                LauncherTabletPortraitScaler.apply(itemView)
+            }
             bindRecentItem(itemView, item)
             LauncherTheme.applyPrimaryTone(itemView)
             itemView.setOnClickListener { confirmLaunchRecentGame(item) }
@@ -456,7 +486,27 @@ open class LauncherHomeFragment : Fragment() {
                 confirmDeleteRecentItem(item)
                 true
             }
-            currentBinding.recentList.addView(itemView)
+            if (columns == 1) {
+                currentBinding.recentList.addView(itemView)
+            } else {
+                itemView.layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f,
+                ).apply {
+                    setMargins(dp(5), dp(2), dp(5), dp(3))
+                }
+                currentRow?.addView(itemView)
+            }
+        }
+        if (columns > 1 && visibleItems.isNotEmpty()) {
+            val missing = (columns - visibleItems.size % columns) % columns
+            repeat(missing) {
+                currentRow?.addView(
+                    View(requireContext()),
+                    LinearLayout.LayoutParams(0, 0, 1f),
+                )
+            }
         }
     }
 
@@ -712,7 +762,7 @@ open class LauncherHomeFragment : Fragment() {
         startLauncherActivity(Intent(requireContext(), LauncherDisclaimerActivity::class.java))
     }
 
-    private fun startLauncherActivity(intent: Intent) {
+    protected open fun startLauncherActivity(intent: Intent) {
         startActivity(intent)
         LauncherMotion.applyActivityOpen(requireActivity())
     }

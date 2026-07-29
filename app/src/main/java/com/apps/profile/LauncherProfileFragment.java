@@ -96,11 +96,35 @@ public class LauncherProfileFragment extends Fragment {
         return binding.getRoot();
     }
 
+    protected final void bindProfileRoot(@NonNull View root) {
+        binding = FragmentLauncherProfileBinding.bind(root);
+    }
+
+    protected boolean usePortraitProfileScaler() {
+        return true;
+    }
+
+    protected boolean applyProfileSystemBarInsets() {
+        return true;
+    }
+
+    protected int profileFragmentContainerId() {
+        return R.id.launcherFragmentContainer;
+    }
+
+    protected Fragment createAccountFragment() {
+        return new LauncherAccountFragment();
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        LauncherTabletPortraitScaler.apply(binding.getRoot());
-        applySystemBarInsets();
+        if (usePortraitProfileScaler()) {
+            LauncherTabletPortraitScaler.apply(binding.getRoot());
+        }
+        if (applyProfileSystemBarInsets()) {
+            applySystemBarInsets();
+        }
         applyThemeTone();
         binding.actionChangeCover.setOnClickListener(v -> showChangeCoverDialog());
         binding.profileAvatar.setOnClickListener(v -> showChangeAvatarDialog());
@@ -109,24 +133,13 @@ public class LauncherProfileFragment extends Fragment {
                 Toast.makeText(requireContext(), R.string.profile_not_logged_in, Toast.LENGTH_SHORT).show();
                 return;
             }
-            Intent intent = new Intent(requireContext(), LauncherProfileEditActivity.class);
-            startActivity(intent);
-            LauncherMotion.applyActivityOpen(requireActivity());
+            openProfileEdit();
         });
-        binding.accountSettingsRow.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), LauncherAccountSettingsActivity.class);
-            startActivity(intent);
-            LauncherMotion.applyActivityOpen(requireActivity());
-        });
-        binding.chatRoomRow.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), LauncherChatSelectActivity.class);
-            startActivity(intent);
-            LauncherMotion.applyActivityOpen(requireActivity());
-        });
+        binding.accountSettingsRow.setOnClickListener(v -> openAccountSettings());
+        binding.chatRoomRow.setOnClickListener(v -> openChatRoom());
         binding.moduleCompatibilityRow.setOnClickListener(v -> {
             if (hasApplicationListPermission()) {
-                startActivity(new Intent(requireContext(), LauncherModuleCompatibilityActivity.class));
-                LauncherMotion.applyActivityOpen(requireActivity());
+                openModuleCompatibility();
                 return;
             }
             LauncherDialogFactory.showConfirm(requireContext(),
@@ -138,14 +151,40 @@ public class LauncherProfileFragment extends Fragment {
         });
         binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
-        binding.translationRow.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), TranslationSettingActivity.class);
-            startActivity(intent);
-            LauncherMotion.applyActivityOpen(requireActivity());
-        });
+        binding.translationRow.setOnClickListener(v -> openTranslationSettings());
         binding.profilePlaytimeRankCard.setOnClickListener(v -> showLeaderboardConfirmDialog());
         renderUserInfo();
         renderPlayTimeRankLoading();
+    }
+
+    protected void openProfileEdit() {
+        startActivity(new Intent(requireContext(), LauncherProfileEditActivity.class));
+        LauncherMotion.applyActivityOpen(requireActivity());
+    }
+
+    protected void openAccountSettings() {
+        startActivity(new Intent(requireContext(), LauncherAccountSettingsActivity.class));
+        LauncherMotion.applyActivityOpen(requireActivity());
+    }
+
+    protected void openChatRoom() {
+        startActivity(new Intent(requireContext(), LauncherChatSelectActivity.class));
+        LauncherMotion.applyActivityOpen(requireActivity());
+    }
+
+    protected void openModuleCompatibility() {
+        startActivity(new Intent(requireContext(), LauncherModuleCompatibilityActivity.class));
+        LauncherMotion.applyActivityOpen(requireActivity());
+    }
+
+    protected void openTranslationSettings() {
+        startActivity(new Intent(requireContext(), TranslationSettingActivity.class));
+        LauncherMotion.applyActivityOpen(requireActivity());
+    }
+
+    protected void openLeaderboard() {
+        startActivity(new Intent(requireContext(), LauncherLeaderboardActivity.class));
+        LauncherMotion.applyActivityOpen(requireActivity());
     }
 
     private boolean hasApplicationListPermission() {
@@ -301,8 +340,7 @@ public class LauncherProfileFragment extends Fragment {
         cancel.setOnClickListener(v -> dialog.dismiss());
         confirm.setOnClickListener(v -> {
             dialog.dismiss();
-            startActivity(new Intent(requireContext(), LauncherLeaderboardActivity.class));
-            LauncherMotion.applyActivityOpen(requireActivity());
+            openLeaderboard();
         });
     }
 
@@ -463,7 +501,7 @@ public class LauncherProfileFragment extends Fragment {
                         R.anim.launcher_fragment_enter,
                         R.anim.launcher_fragment_exit
                 )
-                .replace(R.id.launcherFragmentContainer, new LauncherAccountFragment(), "launcher_ACCOUNT")
+                .replace(profileFragmentContainerId(), createAccountFragment(), "launcher_ACCOUNT")
                 .commit();
     }
 
@@ -605,16 +643,22 @@ public class LauncherProfileFragment extends Fragment {
 
     private void applyProfileBgImage() {
         if (binding == null) return;
+        applyDefaultProfileBgImage();
         String customUri = requireContext().getSharedPreferences(PREFS_NAME, 0)
                 .getString(KEY_CUSTOM_COVER, null);
-        if (customUri != null) {
-            try {
-                binding.profileBgImage.setImageURI(Uri.parse(customUri));
-            } catch (SecurityException e) {
-                binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg);
-            }
+        if (customUri == null) return;
+
+        Uri uri = Uri.parse(customUri);
+        if (!isReadableImageUri(uri)) {
+            requireContext().getSharedPreferences(PREFS_NAME, 0)
+                    .edit().remove(KEY_CUSTOM_COVER).apply();
             return;
         }
+
+        binding.profileBgImage.setImageURI(uri);
+    }
+
+    private void applyDefaultProfileBgImage() {
         if (LauncherActivity.isRinneTheme(requireContext())) {
             binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_rinne_bg);
         } else if (LauncherActivity.isAnriTheme(requireContext())) {
@@ -625,6 +669,18 @@ public class LauncherProfileFragment extends Fragment {
             binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_natsume_bg);
         } else {
             binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg);
+        }
+    }
+
+    private boolean isReadableImageUri(@NonNull Uri uri) {
+        if ("file".equals(uri.getScheme())) {
+            String path = uri.getPath();
+            return path != null && new File(path).isFile();
+        }
+        try (InputStream ignored = requireContext().getContentResolver().openInputStream(uri)) {
+            return ignored != null;
+        } catch (Exception e) {
+            return false;
         }
     }
 

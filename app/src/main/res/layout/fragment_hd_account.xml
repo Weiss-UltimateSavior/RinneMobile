@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ScrollView
+            android:id="@+id/accountScroll"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="7dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:id="@+id/accountLogo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rinne Mobile"
+                    android:textColor="@color/launcher_primary_color"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/accountTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/social_account_title"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="41dp"
+                    android:layout_marginTop="28dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/btnGoogle"
+                        style="@style/LauncherShortSecondaryActionButton"
+                        android:layout_width="0dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="@string/social_qq_group" />
+
+                    <TextView
+                        android:id="@+id/btnFacebook"
+                        style="@style/LauncherShortSecondaryActionButton"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:text="@string/social_official_site" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/launcher_chat_option_bg"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                <LinearLayout
+                    android:id="@+id/accountForm"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/labelName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/social_nickname"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <com.apps.widget.LauncherEditText
+                        android:id="@+id/inputName"
+                        style="@style/LauncherFormInput"
+                        android:layout_marginTop="5dp"
+                        android:hint="@string/social_nickname_hint"
+                        android:inputType="textPersonName"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/social_email"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <com.apps.widget.LauncherEditText
+                        android:id="@+id/inputEmail"
+                        style="@style/LauncherFormInput"
+                        android:layout_marginTop="5dp"
+                        android:hint="@string/social_email_hint"
+                        android:inputType="textEmailAddress" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="13dp"
+                        android:text="@string/social_password"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <com.apps.widget.LauncherEditText
+                        android:id="@+id/inputPassword"
+                        style="@style/LauncherFormInput"
+                        android:layout_marginTop="5dp"
+                        android:hint="@string/social_password_hint"
+                        android:inputType="textPassword" />
+
+                    <TextView
+                        android:id="@+id/labelConfirmPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="13dp"
+                        android:text="@string/social_confirm_password"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <com.apps.widget.LauncherEditText
+                        android:id="@+id/inputConfirmPassword"
+                        style="@style/LauncherFormInput"
+                        android:layout_marginTop="5dp"
+                        android:hint="@string/social_confirm_password_hint"
+                        android:inputType="textPassword"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/loginOptions"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="7dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <CheckBox
+                            android:id="@+id/checkRemember"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:buttonTint="@color/launcher_primary_color"
+                            android:checked="true"
+                            android:gravity="center_vertical"
+                            android:text="@string/social_remember_me"
+                            android:textColor="@color/launcher_text_muted_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/forgotPassword"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:text="@string/social_forgot_password"
+                            android:textColor="@color/launcher_primary_color"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <Space
+                    android:tag="account_submit_spacer"
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp" />
+
+                <TextView
+                    android:id="@+id/btnSubmit"
+                    style="@style/LauncherLongActionButton"
+                    android:text="@string/social_login" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/switchHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/social_no_account"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/switchMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/social_register"
+                        android:textColor="@color/launcher_primary_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/hdAccountDetailContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="7dp"
+            android:layout_weight="2"
+            android:background="@drawable/launcher_chat_option_bg"
+            android:clipChildren="true"
+            android:clipToOutline="true" />
+    </LinearLayout>
+</FrameLayout>

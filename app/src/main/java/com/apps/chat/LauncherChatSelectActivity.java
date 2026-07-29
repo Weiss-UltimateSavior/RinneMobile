@@ -92,6 +92,10 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
         } else {
             intent = new Intent(this, LauncherPublicChatActivity.class);
         }
+        openChatDestination(intent);
+    }
+
+    protected void openChatDestination(Intent intent) {
         startActivity(intent);
         LauncherMotion.applyActivityOpen(this);
     }

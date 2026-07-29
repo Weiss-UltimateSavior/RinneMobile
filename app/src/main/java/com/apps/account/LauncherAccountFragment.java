@@ -36,12 +36,36 @@ public class LauncherAccountFragment extends Fragment {
         return binding.getRoot();
     }
 
+    protected final void bindAccountRoot(@NonNull View root) {
+        binding = FragmentLauncherAccountBinding.bind(root);
+    }
+
+    protected boolean usePortraitAccountScaler() {
+        return true;
+    }
+
+    protected boolean applyAccountSystemBarInsets() {
+        return true;
+    }
+
+    protected int accountFragmentContainerId() {
+        return R.id.launcherFragmentContainer;
+    }
+
+    protected Fragment createProfileFragment() {
+        return new LauncherProfileFragment();
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        LauncherTabletPortraitScaler.apply(binding.getRoot());
-        collapseTabletSubmitSpacer();
-        applySystemBarInsets();
+        if (usePortraitAccountScaler()) {
+            LauncherTabletPortraitScaler.apply(binding.getRoot());
+            collapseTabletSubmitSpacer();
+        }
+        if (applyAccountSystemBarInsets()) {
+            applySystemBarInsets();
+        }
         bindActions();
         renderMode();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
@@ -101,13 +125,19 @@ public class LauncherAccountFragment extends Fragment {
     }
 
     private void bindActions() {
-        binding.switchMode.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherRegisterActivity.class)));
+        binding.switchMode.setOnClickListener(view -> openRegister());
         binding.btnSubmit.setOnClickListener(view -> performLogin());
         binding.btnGoogle.setOnClickListener(view -> showQQGroupDialog());
         binding.btnFacebook.setOnClickListener(view -> showGitHubDialog());
-        binding.forgotPassword.setOnClickListener(view ->
-                startActivity(new Intent(requireContext(), LauncherPasswordResetActivity.class)));
+        binding.forgotPassword.setOnClickListener(view -> openPasswordReset());
+    }
+
+    protected void openRegister() {
+        startActivity(new Intent(requireContext(), LauncherRegisterActivity.class));
+    }
+
+    protected void openPasswordReset() {
+        startActivity(new Intent(requireContext(), LauncherPasswordResetActivity.class));
     }
 
     private void renderMode() {
@@ -178,7 +208,7 @@ public class LauncherAccountFragment extends Fragment {
         });
     }
 
-    private void navigateToProfile() {
+    protected void navigateToProfile() {
         if (binding == null) return;
         getParentFragmentManager()
                 .beginTransaction()
@@ -188,7 +218,7 @@ public class LauncherAccountFragment extends Fragment {
                         R.anim.launcher_fragment_enter,
                         R.anim.launcher_fragment_exit
                 )
-                .replace(R.id.launcherFragmentContainer, new LauncherProfileFragment(), "launcher_ACCOUNT_PROFILE")
+                .replace(accountFragmentContainerId(), createProfileFragment(), "launcher_ACCOUNT_PROFILE")
                 .commit();
     }
 
@@ -395,10 +425,14 @@ public class LauncherAccountFragment extends Fragment {
     }
 
     private float scaledSp(float baseSp) {
-        return baseSp * LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot());
+        return usePortraitAccountScaler()
+                ? baseSp * LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot())
+                : baseSp;
     }
 
     private int dp(int value) {
-        return LauncherTabletPortraitScaler.dp(requireContext(), value);
+        return usePortraitAccountScaler()
+                ? LauncherTabletPortraitScaler.dp(requireContext(), value)
+                : (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

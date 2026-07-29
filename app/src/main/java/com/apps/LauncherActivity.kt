@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.apps.PadUi.PadGameModeActivity
+import com.apps.HDModel.HdModeActivity
 import com.apps.account.LauncherAccountFragment
 import com.apps.data.LauncherViewModel
 import com.apps.game.GameSessionController
@@ -105,6 +106,11 @@ class LauncherActivity : AppCompatActivity() {
     private fun showLauncherContent() {
         if (isFinishing || isDestroyed) return
         val forcePortraitHome = intent?.getBooleanExtra(EXTRA_FORCE_PORTRAIT_HOME, false) == true
+        if (isHdModeStartupEnabled(this) && !forcePortraitHome) {
+            startActivity(Intent(this, HdModeActivity::class.java))
+            finish()
+            return
+        }
         if (isLandscapeStartupPage(this) && !forcePortraitHome) {
             startActivity(Intent(this, PadGameModeActivity::class.java))
             finish()
@@ -660,6 +666,7 @@ class LauncherActivity : AppCompatActivity() {
         private const val LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME"
         const val APP_PREFS = "yukihub_prefs"
         private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
+        private const val KEY_HD_MODE_STARTUP = "launcher_hd_mode_startup"
         private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
         private const val KEY_PILL_NAVIGATION_STYLE = "launcher_pill_navigation_style"
         private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
@@ -882,6 +889,20 @@ class LauncherActivity : AppCompatActivity() {
             context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
                 .edit()
                 .putBoolean(KEY_START_LANDSCAPE_PAGE, enabled)
+                .apply()
+        }
+
+        /** 是否在应用启动时直接进入大屏横屏模式。 */
+        @JvmStatic
+        fun isHdModeStartupEnabled(context: android.content.Context): Boolean =
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_HD_MODE_STARTUP, false)
+
+        @JvmStatic
+        fun setHdModeStartupEnabled(context: android.content.Context, enabled: Boolean) {
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_HD_MODE_STARTUP, enabled)
                 .apply()
         }
 

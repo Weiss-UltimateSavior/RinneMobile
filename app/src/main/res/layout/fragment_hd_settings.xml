@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="7dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/app_settings_title"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/hdSettingsActionList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/hdSettingsApp"
+                        style="@style/LauncherManageItem">
+
+                        <TextView
+                            style="@style/LauncherManageIcon"
+                            android:text="A" />
+
+                        <TextView
+                            style="@style/LauncherManageTitle"
+                            android:text="@string/app_settings_title" />
+
+                        <ImageView
+                            style="@style/LauncherManageArrowIcon"
+                            android:contentDescription="@null"
+                            android:src="@drawable/launcher_manage_arrow" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/hdSettingsTheme"
+                        style="@style/LauncherManageItem">
+
+                        <TextView
+                            style="@style/LauncherManageIcon"
+                            android:text="T" />
+
+                        <TextView
+                            style="@style/LauncherManageTitle"
+                            android:text="@string/launcher_settings_action_theme" />
+
+                        <ImageView
+                            style="@style/LauncherManageArrowIcon"
+                            android:contentDescription="@null"
+                            android:src="@drawable/launcher_manage_arrow" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/hdSettingsTone"
+                        style="@style/LauncherManageItem">
+
+                        <TextView
+                            style="@style/LauncherManageIcon"
+                            android:text="C" />
+
+                        <TextView
+                            style="@style/LauncherManageTitle"
+                            android:text="@string/launcher_settings_action_tone" />
+
+                        <ImageView
+                            style="@style/LauncherManageArrowIcon"
+                            android:contentDescription="@null"
+                            android:src="@drawable/launcher_manage_arrow" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/hdSettingsUpdate"
+                        style="@style/LauncherManageItem">
+
+                        <TextView
+                            style="@style/LauncherManageIcon"
+                            android:text="U" />
+
+                        <TextView
+                            style="@style/LauncherManageTitle"
+                            android:text="@string/launcher_settings_action_update" />
+
+                        <ImageView
+                            style="@style/LauncherManageArrowIcon"
+                            android:contentDescription="@null"
+                            android:src="@drawable/launcher_manage_arrow" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/hdSettingsFeedback"
+                        style="@style/LauncherManageItem">
+
+                        <TextView
+                            style="@style/LauncherManageIcon"
+                            android:text="F" />
+
+                        <TextView
+                            style="@style/LauncherManageTitle"
+                            android:text="@string/launcher_settings_action_feedback" />
+
+                        <ImageView
+                            style="@style/LauncherManageArrowIcon"
+                            android:contentDescription="@null"
+                            android:src="@drawable/launcher_manage_arrow" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/hdSettingsDisclaimer"
+                        style="@style/LauncherManageItem">
+
+                        <TextView
+                            style="@style/LauncherManageIcon"
+                            android:text="D" />
+
+                        <TextView
+                            style="@style/LauncherManageTitle"
+                            android:text="@string/launcher_settings_action_disclaimer" />
+
+                        <ImageView
+                            style="@style/LauncherManageArrowIcon"
+                            android:contentDescription="@null"
+                            android:src="@drawable/launcher_manage_arrow" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/hdSettingsDetailContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="7dp"
+            android:layout_weight="2"
+            android:background="@drawable/launcher_chat_option_bg"
+            android:clipChildren="true"
+            android:clipToOutline="true" />
+    </LinearLayout>
+</FrameLayout>

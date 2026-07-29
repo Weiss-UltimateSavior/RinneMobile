@@ -120,9 +120,15 @@ open class LauncherLibraryFragment : Fragment(),
         return LauncherTabletPortraitScaler.libraryGridColumns(resources)
     }
 
+    protected open fun getPosterGridColumns(): Int = 3
+
     private fun getActiveGridColumns(): Int {
         // 参考样式以三列海报为核心；原横向卡片继续沿用设备自适应列数。
-        return if (posterGridStyle) 3 else Math.max(1, getGridColumns())
+        return if (posterGridStyle) {
+            Math.max(1, getPosterGridColumns())
+        } else {
+            Math.max(1, getGridColumns())
+        }
     }
 
     override fun getPageSize(): Int {
@@ -145,6 +151,20 @@ open class LauncherLibraryFragment : Fragment(),
         return getString(R.string.game_library_title)
     }
 
+    protected open fun usePortraitLibraryScaler(): Boolean = true
+
+    protected open fun applyLibrarySystemBarInsets(): Boolean = true
+
+    protected open fun createLibraryAdapter(): LauncherGameAdapter = LauncherGameAdapter()
+
+    protected open fun getPosterStylePreferenceKey(): String = KEY_POSTER_GRID_STYLE
+
+    protected open fun areCategoriesCollapsedByDefault(): Boolean = true
+
+    protected fun bindLibraryRoot(root: View) {
+        _binding = FragmentLauncherLibraryBinding.bind(root)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -156,13 +176,20 @@ open class LauncherLibraryFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        LauncherTabletPortraitScaler.apply(binding.root)
-        applySystemBarInsets()
+        if (usePortraitLibraryScaler()) {
+            LauncherTabletPortraitScaler.apply(binding.root)
+        }
+        if (applyLibrarySystemBarInsets()) {
+            applySystemBarInsets()
+        }
         LauncherTheme.applyPrimaryTone(binding.root)
         binding.libraryTitle.text = getLibraryTitle()
         posterGridStyle = requireContext().applicationContext
             .getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_POSTER_GRID_STYLE, false)
+            .getBoolean(getPosterStylePreferenceKey(), false)
+        categoriesCollapsed = areCategoriesCollapsedByDefault()
+        binding.libraryCategoryScroll.visibility =
+            if (categoriesCollapsed) View.GONE else View.VISIBLE
         setupSearchAndCategories()
         sessionController = GameSessionController(requireContext(), mainQueue, object : GameSessionController.Listener {
             override fun reloadGame(gameId: Long) { reloadSingleGame(gameId) }
@@ -268,7 +295,7 @@ open class LauncherLibraryFragment : Fragment(),
     }
 
     private fun setupRecycler() {
-        val gameAdapter = LauncherGameAdapter()
+        val gameAdapter = createLibraryAdapter()
         gameAdapter.setPosterStyle(posterGridStyle)
         gameAdapter.setOnGameCardListener(object : LauncherGameAdapter.OnGameCardListener {
             override fun onGameClick(game: Game?) {
@@ -575,19 +602,10 @@ open class LauncherLibraryFragment : Fragment(),
         posterGridStyle = !posterGridStyle
         requireContext().applicationContext
             .getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
-            .edit().putBoolean(KEY_POSTER_GRID_STYLE, posterGridStyle).apply()
-        adapter?.setPosterStyle(posterGridStyle)
-        gridLayoutManager?.spanCount = getActiveGridColumns()
+            .edit().putBoolean(getPosterStylePreferenceKey(), posterGridStyle).apply()
         val currentBinding = _binding
         if (currentBinding != null) {
-            currentBinding.libraryRecycler.scrollToPosition(0)
-            currentBinding.libraryRecycler.post {
-                if (posterGridStyle) {
-                    currentBinding.libraryRecycler.invalidateItemDecorations()
-                } else if (usesTabletPortraitCardSizing()) {
-                    updateTabletPortraitCardHeight()
-                }
-            }
+            applyPosterStyleWhenRecyclerIsIdle(currentBinding, posterGridStyle)
         }
         Toast.makeText(
             requireContext(),
@@ -595,6 +613,34 @@ open class LauncherLibraryFragment : Fragment(),
                 R.string.game_library_switched_poster else R.string.game_library_switched_horizontal),
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun applyPosterStyleWhenRecyclerIsIdle(
+        currentBinding: FragmentLauncherLibraryBinding,
+        posterStyle: Boolean,
+    ) {
+        val recyclerView = currentBinding.libraryRecycler
+        recyclerView.post {
+            if (_binding !== currentBinding || posterGridStyle != posterStyle) return@post
+            if (recyclerView.isComputingLayout) {
+                applyPosterStyleWhenRecyclerIsIdle(currentBinding, posterStyle)
+                return@post
+            }
+            recyclerView.stopScroll()
+            recyclerView.itemAnimator?.endAnimations()
+            gridLayoutManager?.spanCount = getActiveGridColumns()
+            adapter?.setPosterStyle(posterStyle)
+            recyclerView.recycledViewPool.clear()
+            recyclerView.scrollToPosition(0)
+            recyclerView.invalidateItemDecorations()
+            recyclerView.post {
+                if (_binding !== currentBinding || posterGridStyle != posterStyle) return@post
+                when {
+                    !posterStyle && usesHorizontalPaging() -> updateFixedGridCardHeight()
+                    !posterStyle && usesTabletPortraitCardSizing() -> updateTabletPortraitCardHeight()
+                }
+            }
+        }
     }
 
     private fun loadGames() {
@@ -1117,7 +1163,9 @@ open class LauncherLibraryFragment : Fragment(),
             0
         )
         binding.libraryCategoryRow.addView(chip, lp)
-        LauncherTabletPortraitScaler.apply(chip)
+        if (usePortraitLibraryScaler()) {
+            LauncherTabletPortraitScaler.apply(chip)
+        }
     }
 
     private fun renderToolbarButtonState() {

@@ -27,6 +27,7 @@ import com.apps.LauncherActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class ResourceStationActivity extends AppCompatActivity {
+    public static final String EXTRA_HD_EMBEDDED = "resource_hd_embedded";
     private static final String DEFAULT_URL = "https://www.kungal.com";
 
     private WebView webView;
@@ -38,7 +39,12 @@ public class ResourceStationActivity extends AppCompatActivity {
         configureImmersiveStatusBar();
 
         webView = new WebView(this);
-        webView.setBackgroundColor(ContextCompat.getColor(this, com.core.R.color.launcher_bg_color));
+        if (getIntent().getBooleanExtra(EXTRA_HD_EMBEDDED, false)) {
+            webView.setBackgroundResource(com.core.R.drawable.launcher_resource_webview_hd_bg);
+            webView.setClipToOutline(true);
+        } else {
+            webView.setBackgroundColor(ContextCompat.getColor(this, com.core.R.color.launcher_bg_color));
+        }
         FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
