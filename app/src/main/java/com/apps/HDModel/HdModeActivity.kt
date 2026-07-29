@@ -219,6 +219,15 @@ class HdModeActivity : AppCompatActivity() {
         super.finishFromChild(child)
     }
 
+    /**
+     * 嵌入到 LocalActivityManager 中的 Activity 无法收到 Activity Result 回调，
+     * 因此由本 Activity 把请求转发给当前持有嵌入 Activity 的 [HdEmbeddedActivityOwner]，
+     * 让宿主 Fragment 使用自身的 ActivityResultRegistry 启动系统图片选择器。
+     */
+    fun launchSplashImagePicker(callback: (android.net.Uri?) -> Unit): Boolean {
+        return currentEmbeddedOwner()?.launchSplashImagePicker(callback) ?: false
+    }
+
     @Deprecated("Deprecated in Android")
     override fun onBackPressed() {
         if (currentEmbeddedOwner()?.closeEmbeddedActivity() == true) return

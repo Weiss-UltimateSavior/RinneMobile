@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.apps.LauncherActivity
 import com.apps.account.LauncherDisclaimerActivity
@@ -28,6 +29,26 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
     private var localActivityManager: LocalActivityManager? = null
     private var embeddedActivityId: String? = null
+
+    /**
+     * 嵌入的 [LauncherAppSettingsActivity] 无法接收 Activity Result 回调，
+     * 因此由本 Fragment 使用自身的 ActivityResultRegistry 启动系统图片选择器，
+     * 把选中的 Uri 通过 [pendingSplashImageCallback] 回传给发起请求的嵌入 Activity。
+     */
+    private var pendingSplashImageCallback: ((Uri?) -> Unit)? = null
+    private val splashImagePicker =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val callback = pendingSplashImageCallback
+            pendingSplashImageCallback = null
+            callback?.invoke(uri)
+        }
+
+    override fun launchSplashImagePicker(callback: (Uri?) -> Unit): Boolean {
+        if (!isAdded) return false
+        pendingSplashImageCallback = callback
+        splashImagePicker.launch("image/*")
+        return true
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -89,6 +110,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
         localActivityManager = null
         detailContainer = null
         embeddedActivityId = null
+        pendingSplashImageCallback = null
         super.onDestroyView()
     }
 

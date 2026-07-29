@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
+import com.apps.HDModel.HdModeActivity
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
@@ -83,14 +84,31 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
     }
 
     private fun showSplashImageConfirmDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogFactory.showStandardActionChoices(
             this,
-            getString(R.string.app_splash_image_confirm_title),
-            getString(R.string.app_splash_image_confirm_message),
-            getString(R.string.app_splash_image_confirm_action),
-        ) {
-            splashImagePicker.launch("image/*")
+            getString(R.string.app_splash_image_label),
+            arrayOf(
+                getString(R.string.app_splash_image_restore_default),
+                getString(R.string.app_splash_image_change),
+            ),
+        ) { index ->
+            when (index) {
+                0 -> restoreDefaultSplashImage()
+                1 -> launchSplashImagePicker()
+            }
         }
+    }
+
+    private fun launchSplashImagePicker() {
+        // 嵌入到 HdModeActivity 时，LocalActivityManager 不会把 Activity Result 回调
+        // 派发回本 Activity，因此需要委托给宿主 Fragment 启动图片选择器。
+        val host = parent as? HdModeActivity
+        if (host != null && host.launchSplashImagePicker { uri -> onPicked(uri) }) return
+        splashImagePicker.launch("image/*")
+    }
+
+    private fun onPicked(uri: Uri?) {
+        if (uri != null) saveSplashImage(uri)
     }
 
     private fun showStartPagePicker() {
@@ -186,6 +204,22 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
                 R.string.app_splash_image_default
             }
         )
+    }
+
+    private fun restoreDefaultSplashImage() {
+        lifecycleScope.launch {
+            val deleted = withContext(Dispatchers.IO) {
+                LauncherActivity.customSplashImageFile(this@LauncherAppSettingsActivity).delete()
+            }
+            if (deleted) {
+                renderSplashImageState()
+                Toast.makeText(
+                    this@LauncherAppSettingsActivity,
+                    R.string.app_splash_image_restored,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
     }
 
     private fun renderStartPageState() {
