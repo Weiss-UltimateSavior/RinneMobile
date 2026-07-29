@@ -61,6 +61,7 @@
     <string name="pad_metadata_bangumi_mirror">Bangumi ミラー（Token 必須）</string>
     <string name="pad_metadata_ymgal">月幕 Gal（公開 API）</string>
     <string name="pad_theme_page_summary">Launcher のテーマと動く背景を選択します</string>
+    <string name="pad_app_settings_summary">アプリの言語、起動ページ、ホームの動作を設定します</string>
     <string name="pad_account_page_summary">クラウド同期、プロフィール表示、アカウント設定を管理します</string>
     <string name="pad_particle_settings">設定</string>
     <string-array name="pad_particle_style_labels">

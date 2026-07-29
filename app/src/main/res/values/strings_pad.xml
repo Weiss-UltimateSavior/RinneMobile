@@ -61,6 +61,7 @@
     <string name="pad_metadata_bangumi_mirror">Bangumi 镜像（需要 Token）</string>
     <string name="pad_metadata_ymgal">月幕 Gal（公开 API）</string>
     <string name="pad_theme_page_summary">选择 Launcher 的主题风格与动态背景</string>
+    <string name="pad_app_settings_summary">设置应用语言、启动页面与首页行为</string>
     <string name="pad_account_page_summary">管理云端同步、资料显示与账户功能偏好</string>
     <string name="pad_particle_settings">设置</string>
     <string-array name="pad_particle_style_labels">

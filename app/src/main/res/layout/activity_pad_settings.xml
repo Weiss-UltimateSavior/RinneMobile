@@ -38,6 +38,15 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/padSettingsSidebarApplication"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:gravity="center"
+                android:text="@string/app_settings_title"
+                android:textColor="@color/launcher_text_color"
+                android:textSize="14sp" />
+
+            <TextView
                 android:id="@+id/padSettingsSidebarTheme"
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
@@ -449,6 +458,137 @@
                         android:text="@string/settings_save"
                         android:textSize="13sp"
                         android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/padSettingsApplicationActionList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_language_label"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padAppLanguageText"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="11dp"
+                    android:paddingEnd="11dp"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/app_start_page_label"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padAppStartPageText"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="11dp"
+                    android:paddingEnd="11dp"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/app_home_style_label"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padAppHomeStyleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="11dp"
+                    android:paddingEnd="11dp"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/app_navigation_style_label"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padAppNavigationStyleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="11dp"
+                    android:paddingEnd="11dp"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/app_follow_system_tone"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/padFollowSystemToneSwitch"
+                        android:layout_width="49dp"
+                        android:layout_height="29dp"
+                        android:padding="0dp" />
                 </LinearLayout>
             </LinearLayout>
 

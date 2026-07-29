@@ -15,8 +15,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.os.LocaleListCompat;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
@@ -37,7 +39,7 @@ import com.core.ons.OnsSettings;
 
 /** 横屏设置页，仅提供与 Pad 游戏模式一致的设置入口布局。 */
 public class PadSettingsActivity extends AppCompatActivity {
-    private enum Section { GENERAL, THEME, METADATA, ACCOUNT }
+    private enum Section { GENERAL, APPLICATION, THEME, METADATA, ACCOUNT }
 
     private static final String ACCOUNT_SETTINGS_PREFS = "launcher_account_settings";
     private static final String THEME_DEFAULT_LABEL = LauncherActivity.THEME_STYLE_DEFAULT;
@@ -49,6 +51,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
     private static final String STATE_ONS_ENCODING_INDEX = "ons_encoding_index";
+    private static final String[] LANGUAGE_TAGS = {"zh-CN", "en", "ja"};
 
     private ActivityPadSettingsBinding binding;
     private Section currentSection = Section.GENERAL;
@@ -102,6 +105,7 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void bindActions() {
         binding.padSettingsSidebarGeneral.setOnClickListener(view -> selectSection(Section.GENERAL));
+        binding.padSettingsSidebarApplication.setOnClickListener(view -> selectSection(Section.APPLICATION));
         binding.padSettingsSidebarTheme.setOnClickListener(view -> selectSection(Section.THEME));
         binding.padSettingsSidebarMetadata.setOnClickListener(view -> selectSection(Section.METADATA));
         binding.padSettingsSidebarAccount.setOnClickListener(view -> selectSection(Section.ACCOUNT));
@@ -125,6 +129,17 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padEngineVersionText.setOnClickListener(view -> showEngineVersionPicker());
         binding.padOnsEncodingText.setOnClickListener(view -> showOnsEncodingPicker());
         binding.padMetadataSourceText.setOnClickListener(view -> showMetadataSourcePicker());
+        binding.padAppLanguageText.setOnClickListener(view -> showLanguagePicker());
+        binding.padAppStartPageText.setOnClickListener(view -> showStartPagePicker());
+        binding.padAppHomeStyleText.setOnClickListener(view -> showHomeStylePicker());
+        binding.padAppNavigationStyleText.setOnClickListener(view -> showNavigationStylePicker());
+        LauncherTheme.styleMaterialSwitch(binding.padFollowSystemToneSwitch);
+        binding.padFollowSystemToneSwitch.setChecked(LauncherActivity.isFollowingSystemTone(this));
+        binding.padFollowSystemToneSwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (checked != LauncherActivity.isFollowingSystemTone(this)) {
+                LauncherActivity.setFollowingSystemTone(this, checked);
+            }
+        });
         binding.padRowSyncConfig.setOnClickListener(view -> onSyncConfigClick());
         binding.padRowRealtimePlaytime.setOnClickListener(view -> onRealtimePlaytimeClick());
         binding.padRowEmailSubscribe.setOnClickListener(view -> onEmailSubscriptionClick());
@@ -228,6 +243,82 @@ public class PadSettingsActivity extends AppCompatActivity {
         };
     }
 
+    private void showLanguagePicker() {
+        String[] labels = languageLabels();
+        PadDialogFactory.showSingleChoice(this, getString(R.string.app_language_dialog_title), labels,
+                currentLanguageIndex(), index -> {
+                    int safeIndex = index >= 0 && index < LANGUAGE_TAGS.length ? index : 0;
+                    AppCompatDelegate.setApplicationLocales(
+                            LocaleListCompat.forLanguageTags(LANGUAGE_TAGS[safeIndex]));
+                });
+    }
+
+    private void showStartPagePicker() {
+        String[] labels = {
+                getString(R.string.app_start_page_portrait),
+                getString(R.string.app_start_page_landscape)
+        };
+        PadDialogFactory.showSingleChoice(this, getString(R.string.app_start_page_dialog_title), labels,
+                LauncherActivity.isLandscapeStartupPage(this) ? 1 : 0, index -> {
+                    LauncherActivity.setLandscapeStartupPage(this, index == 1);
+                    renderApplicationSettings();
+                });
+    }
+
+    private void showHomeStylePicker() {
+        String[] labels = {
+                getString(R.string.app_home_style_default),
+                getString(R.string.app_home_style_featured)
+        };
+        PadDialogFactory.showSingleChoice(this, getString(R.string.app_home_style_dialog_title), labels,
+                LauncherActivity.isFeaturedHomeStyle(this) ? 1 : 0, index -> {
+                    LauncherActivity.setFeaturedHomeStyle(this, index == 1);
+                    finish();
+                });
+    }
+
+    private void showNavigationStylePicker() {
+        String[] labels = {
+                getString(R.string.app_navigation_style_default),
+                getString(R.string.app_navigation_style_pill)
+        };
+        PadDialogFactory.showSingleChoice(this, getString(R.string.app_navigation_style_dialog_title), labels,
+                LauncherActivity.isPillNavigationStyle(this) ? 1 : 0, index -> {
+                    LauncherActivity.setPillNavigationStyle(this, index == 1);
+                    finish();
+                });
+    }
+
+    private void renderApplicationSettings() {
+        if (binding == null) return;
+        binding.padAppLanguageText.setText(languageLabels()[currentLanguageIndex()]);
+        binding.padAppStartPageText.setText(LauncherActivity.isLandscapeStartupPage(this)
+                ? R.string.app_start_page_landscape : R.string.app_start_page_portrait);
+        binding.padAppHomeStyleText.setText(LauncherActivity.isFeaturedHomeStyle(this)
+                ? R.string.app_home_style_featured : R.string.app_home_style_default);
+        binding.padAppNavigationStyleText.setText(LauncherActivity.isPillNavigationStyle(this)
+                ? R.string.app_navigation_style_pill : R.string.app_navigation_style_default);
+        binding.padFollowSystemToneSwitch.setChecked(LauncherActivity.isFollowingSystemTone(this));
+    }
+
+    private String[] languageLabels() {
+        return new String[] {
+                getString(R.string.language_simplified_chinese),
+                getString(R.string.language_english),
+                getString(R.string.language_japanese)
+        };
+    }
+
+    private int currentLanguageIndex() {
+        LocaleListCompat appLocales = AppCompatDelegate.getApplicationLocales();
+        String language = !appLocales.isEmpty() && appLocales.get(0) != null
+                ? appLocales.get(0).getLanguage()
+                : getResources().getConfiguration().getLocales().get(0).getLanguage();
+        if ("en".equals(language)) return 1;
+        if ("ja".equals(language)) return 2;
+        return 0;
+    }
+
     private void restoreSelectedTheme() {
         String style = LauncherActivity.getLauncherThemeStyle(this);
         if (LauncherActivity.THEME_STYLE_RINNE.equals(style)) {
@@ -255,18 +346,23 @@ public class PadSettingsActivity extends AppCompatActivity {
         }
         currentSection = section;
         boolean showTheme = section == Section.THEME;
+        boolean showApplication = section == Section.APPLICATION;
         boolean showMetadata = section == Section.METADATA;
         boolean showAccount = section == Section.ACCOUNT;
         binding.padSettingsGeneralActionList.setVisibility(
                 section == Section.GENERAL ? View.VISIBLE : View.GONE);
+        binding.padSettingsApplicationActionList.setVisibility(showApplication ? View.VISIBLE : View.GONE);
         binding.padSettingsThemeActionList.setVisibility(showTheme ? View.VISIBLE : View.GONE);
         binding.padSettingsMetadataActionList.setVisibility(showMetadata ? View.VISIBLE : View.GONE);
         binding.padSettingsAccountActionList.setVisibility(showAccount ? View.VISIBLE : View.GONE);
         binding.padSettingsActionScroll.scrollTo(0, 0);
-        binding.padSettingsPageTitle.setText(showTheme ? R.string.pad_theme_settings
+        binding.padSettingsPageTitle.setText(showApplication ? R.string.app_settings_title
+                : showTheme ? R.string.pad_theme_settings
                 : showMetadata ? R.string.settings_cover_title
                 : showAccount ? R.string.settings_account_title : R.string.settings_engine_title);
-        binding.padSettingsPageDescription.setText(showTheme
+        binding.padSettingsPageDescription.setText(showApplication
+                ? getString(R.string.pad_app_settings_summary)
+                : showTheme
                 ? getString(R.string.pad_theme_page_summary)
                 : showMetadata ? getString(R.string.settings_metadata_summary)
                 : showAccount ? getString(R.string.pad_account_page_summary)
@@ -323,6 +419,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         if (binding == null) return;
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         styleSidebarItem(binding.padSettingsSidebarGeneral, currentSection == Section.GENERAL);
+        styleSidebarItem(binding.padSettingsSidebarApplication, currentSection == Section.APPLICATION);
         styleSidebarItem(binding.padSettingsSidebarTheme, currentSection == Section.THEME);
         styleSidebarItem(binding.padSettingsSidebarMetadata, currentSection == Section.METADATA);
         styleSidebarItem(binding.padSettingsSidebarAccount, currentSection == Section.ACCOUNT);
@@ -337,6 +434,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.styleMaterialSwitch(binding.padOnsSharpnessSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padTyranoScopedSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padTyranoExternalNetworkSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.padFollowSystemToneSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padChipSyncConfig);
         LauncherTheme.styleMaterialSwitch(binding.padChipRealtimePlaytime);
         LauncherTheme.styleMaterialSwitch(binding.padChipEmailSubscribe);
@@ -350,6 +448,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         applyThemeMenuTone();
         renderThemeSelection();
         renderParticleToggle();
+        renderApplicationSettings();
     }
 
     private void styleSidebarItem(TextView item, boolean selected) {

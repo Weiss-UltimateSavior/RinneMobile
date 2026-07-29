@@ -61,6 +61,7 @@
     <string name="pad_metadata_bangumi_mirror">Bangumi Mirror (Token required)</string>
     <string name="pad_metadata_ymgal">YueMu Gal (Public API)</string>
     <string name="pad_theme_page_summary">Choose the Launcher theme and animated background</string>
+    <string name="pad_app_settings_summary">Configure app language, startup page, and home behavior</string>
     <string name="pad_account_page_summary">Manage cloud sync, profile display, and account preferences</string>
     <string name="pad_particle_settings">Configure</string>
     <string-array name="pad_particle_style_labels">
