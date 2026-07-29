@@ -79,11 +79,14 @@ object UiScaleUtil {
         if (base == null) return null
         val fontScale = getFontScale(base)
         val uiScale = getUiScale(base)
-        val config = Configuration(base.resources.configuration)
+        // 这里只构造增量覆盖配置。复制整份 Configuration 会把创建 Context 时的
+        // uiMode、locale、orientation 等系统字段一并固定，导致后续系统深浅色变化
+        // 无法传入 Application 与 Activity。
+        val config = Configuration()
         config.fontScale = fontScale
         // 通过修改 densityDpi 实现全局 UI 缩放
         if (uiScale != 1.0f) {
-            config.densityDpi = (config.densityDpi * uiScale).toInt()
+            config.densityDpi = (base.resources.configuration.densityDpi * uiScale).toInt()
         }
         return base.createConfigurationContext(config)
     }

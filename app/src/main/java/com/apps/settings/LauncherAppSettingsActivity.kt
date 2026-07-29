@@ -51,6 +51,12 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         binding.appHomeStyleText.setOnClickListener { showHomeStylePicker() }
         renderNavigationStyleState()
         binding.appNavigationStyleText.setOnClickListener { showNavigationStylePicker() }
+        LauncherTheme.styleMaterialSwitch(binding.appFollowSystemToneSwitch)
+        binding.appFollowSystemToneSwitch.isChecked = LauncherActivity.isFollowingSystemTone(this)
+        binding.appFollowSystemToneSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked == LauncherActivity.isFollowingSystemTone(this)) return@setOnCheckedChangeListener
+            LauncherActivity.setFollowingSystemTone(this, checked)
+        }
         renderSplashImageState()
         binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
     }

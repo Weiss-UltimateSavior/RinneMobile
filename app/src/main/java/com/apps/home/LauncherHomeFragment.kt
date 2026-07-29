@@ -379,6 +379,7 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     private fun confirmToggleTone() {
+        if (LauncherActivity.isFollowingSystemTone(requireContext())) return
         val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
         val nextTone = getString(
             if (darkMode) com.core.R.string.home_light_mode else com.core.R.string.home_dark_mode

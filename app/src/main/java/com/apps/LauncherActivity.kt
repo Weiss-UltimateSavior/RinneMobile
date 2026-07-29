@@ -138,6 +138,7 @@ class LauncherActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        synchronizeToneModeFromPreferences()
         val controller = pinnedGameSessionController
         if (controller != null && controller.hasActiveSession()) {
             controller.finishDirectPlaySessionIfNeeded(this)
@@ -150,6 +151,23 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
         viewModel?.refreshStats()
+    }
+
+    /**
+     * 设置页返回时同步本 Activity 的局部 night mode。
+     * 局部模式优先级高于 AppCompat 的全局默认值，因此自动色调切换后必须在此处刷新。
+     *
+     */
+    private fun synchronizeToneModeFromPreferences() {
+        val desiredMode = if (isFollowingSystemTone(this)) {
+            AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        } else if (isLauncherDarkMode(this)) {
+            AppCompatDelegate.MODE_NIGHT_YES
+        } else {
+            AppCompatDelegate.MODE_NIGHT_NO
+        }
+        if (delegate.localNightMode == desiredMode) return
+        delegate.setLocalNightMode(desiredMode)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -644,6 +662,7 @@ class LauncherActivity : AppCompatActivity() {
         private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
         private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
         private const val KEY_PILL_NAVIGATION_STYLE = "launcher_pill_navigation_style"
+        private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
         const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
@@ -676,6 +695,7 @@ class LauncherActivity : AppCompatActivity() {
 
         @JvmStatic
         fun setLauncherDarkMode(context: android.content.Context, darkMode: Boolean) {
+            if (isFollowingSystemTone(context)) return
             context.applicationContext
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .edit()
@@ -690,9 +710,36 @@ class LauncherActivity : AppCompatActivity() {
 
         @JvmStatic
         fun isLauncherDarkMode(context: android.content.Context): Boolean {
+            if (isFollowingSystemTone(context)) {
+                return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                    Configuration.UI_MODE_NIGHT_YES
+            }
             return context.applicationContext
                 .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
                 .getBoolean(KEY_LAUNCHER_DARK_MODE, false)
+        }
+
+        /** 是否由系统夜间模式自动决定 Launcher 的深浅色。 */
+        @JvmStatic
+        fun isFollowingSystemTone(context: android.content.Context): Boolean =
+            context.applicationContext
+                .getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+                .getBoolean(KEY_FOLLOW_SYSTEM_TONE, false)
+
+        /**
+         * 设置 Launcher 色调来源。开启后全局及后续 Activity 均跟随系统；关闭后恢复已保存的手动色调。
+         */
+        @JvmStatic
+        fun setFollowingSystemTone(context: android.content.Context, enabled: Boolean) {
+            val appContext = context.applicationContext
+            val preferences = appContext.getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+            preferences.edit().putBoolean(KEY_FOLLOW_SYSTEM_TONE, enabled).apply()
+            val manualDarkMode = preferences.getBoolean(KEY_LAUNCHER_DARK_MODE, false)
+            AppCompatDelegate.setDefaultNightMode(
+                if (enabled) AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                else if (manualDarkMode) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
         }
 
         @JvmStatic
@@ -799,13 +846,16 @@ class LauncherActivity : AppCompatActivity() {
         fun applySavedToneMode(activity: AppCompatActivity?) {
             if (activity == null) return
             activity.delegate.setLocalNightMode(
-                if (isLauncherDarkMode(activity)) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+                if (isFollowingSystemTone(activity)) AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                else if (isLauncherDarkMode(activity)) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
             )
         }
 
         @JvmStatic
         fun wrapLauncherUiMode(base: android.content.Context?): android.content.Context? {
             if (base == null) return null
+            if (isFollowingSystemTone(base)) return base
             val configuration = Configuration(base.resources.configuration)
             val targetNightMode = if (isLauncherDarkMode(base))
                 Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO

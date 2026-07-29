@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.FragmentManager
+import com.apps.LauncherActivity
 import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ItemLauncherManageBinding
@@ -24,18 +25,21 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
         val contentView = LayoutInflater.from(context)
             .inflate(R.layout.sheet_launcher_home_account, null, false)
         val density = resources.displayMetrics.density
-        val sheetHeight = (409f * density).toInt()
         val radius = 24f * density
 
         val list = contentView.findViewById<LinearLayout>(R.id.homeAccountSheetList)
-        val actions = listOf(
-            SheetAction("A", context.getString(R.string.app_settings_title), ACTION_APP_SETTINGS),
-            SheetAction("T", context.getString(R.string.launcher_settings_action_theme), ACTION_THEME),
-            SheetAction("C", context.getString(R.string.launcher_settings_action_tone), ACTION_TONE),
-            SheetAction("U", context.getString(R.string.launcher_settings_action_update), ACTION_UPDATE),
-            SheetAction("F", context.getString(R.string.launcher_settings_action_feedback), ACTION_FEEDBACK),
-            SheetAction("D", context.getString(R.string.launcher_settings_action_disclaimer), ACTION_DISCLAIMER)
-        )
+        val followsSystemTone = LauncherActivity.isFollowingSystemTone(context)
+        val actions = buildList {
+            add(SheetAction("A", context.getString(R.string.app_settings_title), ACTION_APP_SETTINGS))
+            add(SheetAction("T", context.getString(R.string.launcher_settings_action_theme), ACTION_THEME))
+            if (!followsSystemTone) {
+                add(SheetAction("C", context.getString(R.string.launcher_settings_action_tone), ACTION_TONE))
+            }
+            add(SheetAction("U", context.getString(R.string.launcher_settings_action_update), ACTION_UPDATE))
+            add(SheetAction("F", context.getString(R.string.launcher_settings_action_feedback), ACTION_FEEDBACK))
+            add(SheetAction("D", context.getString(R.string.launcher_settings_action_disclaimer), ACTION_DISCLAIMER))
+        }
+        val sheetHeight = ((if (followsSystemTone) 347f else 409f) * density).toInt()
         actions.forEach { action ->
             val itemBinding = ItemLauncherManageBinding.inflate(
                 LayoutInflater.from(context),

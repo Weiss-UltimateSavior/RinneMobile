@@ -21,6 +21,7 @@
     <string name="app_navigation_style_dialog_title">ナビゲーションスタイルを選択</string>
     <string name="app_navigation_style_default">標準ナビゲーション</string>
     <string name="app_navigation_style_pill">フローティングピルナビ</string>
+    <string name="app_follow_system_tone">システムの色調に従う</string>
     <string name="home_featured_games">おすすめゲーム</string>
     <string name="home_quick_features">クイック機能</string>
     <string name="home_featured_empty">表示するゲームはまだありません</string>
