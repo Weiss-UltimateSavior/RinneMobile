@@ -61,7 +61,9 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
         val primary = LauncherTheme.primary(requireContext())
         grid.columnCount = 4
         grid.rowCount = 1
-        grid.layoutParams = grid.layoutParams.apply { height = dp(70) }
+        grid.layoutParams = grid.layoutParams.apply {
+            height = LinearLayout.LayoutParams.WRAP_CONTENT
+        }
         for (index in 0 until grid.childCount) {
             val action = grid.getChildAt(index) as? LinearLayout ?: continue
             action.orientation = LinearLayout.VERTICAL
@@ -69,9 +71,10 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
             // 默认首页的整行卡片背景在第二套首页中拆为独立的图标容器，文字保持在容器下方。
             action.background = null
             action.setPadding(0, dp(2), 0, 0)
+            action.minimumHeight = dp(70)
             val params = (action.layoutParams as GridLayout.LayoutParams).apply {
                 width = 0
-                height = dp(70)
+                height = GridLayout.LayoutParams.WRAP_CONTENT
                 columnSpec = GridLayout.spec(index, 1f)
                 rowSpec = GridLayout.spec(0)
                 setMargins(if (index == 0) 0 else dp(4), 0, if (index == 3) 0 else dp(4), 0)
@@ -83,7 +86,10 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
             val content = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER_HORIZONTAL
-                layoutParams = LinearLayout.LayoutParams(dp(58), LinearLayout.LayoutParams.WRAP_CONTENT)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
             }
             icon?.apply {
                 layoutParams = LinearLayout.LayoutParams(dp(49), dp(49))
@@ -100,7 +106,7 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
                 setTextColor(LauncherTheme.text(requireContext()))
                 textSize = 12.66f
             }
-            // 内层容器统一内容宽度，保证图标与不同长度的文字作为整体居中对称。
+            // 文字使用完整的按钮列宽，容器高度随字体度量和换行结果增长，避免被固定尺寸裁切。
             if (icon != null) action.removeView(icon)
             if (label != null) action.removeView(label)
             icon?.let(content::addView)
