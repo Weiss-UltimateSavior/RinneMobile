@@ -24,6 +24,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <View
+        android:id="@+id/bottomNavShadow"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/launcher_bottom_nav_height"
+        android:alpha="0.55"
+        android:background="@drawable/launcher_bottom_bar_shadow"
+        android:translationY="-1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <FrameLayout
         android:id="@+id/bottomNav"
         android:layout_width="0dp"
