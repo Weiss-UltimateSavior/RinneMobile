@@ -12,6 +12,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import com.apps.LauncherActivity
 import com.apps.data.LauncherViewModel
@@ -174,6 +175,7 @@ class HdModeActivity : AppCompatActivity() {
                 R.anim.launcher_fragment_exit_back,
             )
             .replace(R.id.hdFragmentContainer, HdSaveManagerFragment(), "hd_save_manager")
+            .addToBackStack(null)
             .commit()
     }
 
@@ -182,6 +184,12 @@ class HdModeActivity : AppCompatActivity() {
         if (selectedNavItem == item && current?.tag == tag) {
             applyTheme()
             return
+        }
+        // 切换主栏目时清空详情页回退栈（例如 HdSaveManagerFragment），避免回退时进入残留的详情页。
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStackImmediate(
+                null, FragmentManager.POP_BACK_STACK_INCLUSIVE,
+            )
         }
         val toRight = item.ordinal >= selectedNavItem.ordinal
         selectNavigation(item)
