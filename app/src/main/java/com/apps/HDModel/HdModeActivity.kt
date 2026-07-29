@@ -146,7 +146,10 @@ class HdModeActivity : AppCompatActivity() {
     }
 
     private fun showHomeFragment() {
-        if (::launcherViewModel.isInitialized) launcherViewModel.refreshStats()
+        // 仅在真正切换到首页栏目时刷新统计，避免重复点击首页导航按钮触发动态列表刷新。
+        if (selectedNavItem != HdNavItem.HOME && ::launcherViewModel.isInitialized) {
+            launcherViewModel.refreshStats()
+        }
         showRootFragment(HdNavItem.HOME, HdHomeFragment(), "hd_home")
     }
 
@@ -181,7 +184,18 @@ class HdModeActivity : AppCompatActivity() {
 
     private fun showRootFragment(item: HdNavItem, fragment: Fragment, tag: String) {
         val current = supportFragmentManager.findFragmentById(R.id.hdFragmentContainer)
-        if (selectedNavItem == item && current?.tag == tag) {
+        // 重复点击已选中栏目时不重建页面，避免视觉闪屏。
+        // 注意 current?.tag 可能不等于 tag：账户栏目会在 onResume 内部通过
+        // navigateToProfile() 将自身替换为 HdProfileFragment（tag = "launcher_ACCOUNT_PROFILE"），
+        // 首页也可能堆叠 HdSaveManagerFragment 等详情页，因此只要 selectedNavItem 相同就提前返回。
+        // 但首次启动时容器中还没有任何 fragment（current == null），必须正常创建。
+        if (selectedNavItem == item && current != null) {
+            // 若有详情页堆叠（如 HdSaveManagerFragment），弹出回到根 Fragment。
+            if (supportFragmentManager.backStackEntryCount > 0) {
+                supportFragmentManager.popBackStackImmediate(
+                    null, FragmentManager.POP_BACK_STACK_INCLUSIVE,
+                )
+            }
             applyTheme()
             return
         }
