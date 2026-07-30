@@ -8,6 +8,16 @@ import android.widget.Toast;
 import com.core.engine.R;
 
 public class ArtemisActivity extends NativeActivity {
+    static {
+        System.loadLibrary("artemis_audio_bridge");
+    }
+
+    /** 暂停所有 Artemis 音频流。返回 true 表示成功找到并调用了 native 暂停入口。 */
+    public native boolean nativePauseAllSound();
+
+    /** 恢复所有 Artemis 音频流。返回 true 表示成功找到并调用了 native 恢复入口。 */
+    public native boolean nativeResumeAllSound();
+
     public void DownloadExpansionFiles(String value) {
     }
 

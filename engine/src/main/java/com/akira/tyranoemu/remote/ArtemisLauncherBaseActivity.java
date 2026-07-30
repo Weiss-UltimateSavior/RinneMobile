@@ -40,6 +40,13 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
     public final void onResume() {
         super.onResume();
         setRequestedOrientation(getIntent().getIntExtra("orientation", 6));
+        nativeResumeAllSound();
+    }
+
+    @Override
+    protected void onPause() {
+        nativePauseAllSound();
+        super.onPause();
     }
 
     @Override
