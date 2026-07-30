@@ -13,8 +13,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.media.AudioTrack;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import java.lang.reflect.Field;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -35,6 +37,10 @@ public class KR2Activity extends Cocos2dxActivity {
     static ActivityManager mAcitivityManager = null;
     static Debug.MemoryInfo mDbgMemoryInfo = new Debug.MemoryInfo();
     SharedPreferences Sp;
+    /** True only when this Activity paused SDL playback, so a user/game pause is never undone. */
+    private boolean sdlAudioPausedForBackground;
+    /** Fallback for devices on which AudioTrack.pause() rejects the current stream state. */
+    private boolean sdlAudioMutedForBackground;
 
     public static KR2Activity GetInstance() { return sInstance; }
     public static KR2Activity getInstance() { return sInstance; }
@@ -319,7 +325,65 @@ public class KR2Activity extends Cocos2dxActivity {
         return gl;
     }
 
-    @Override public void onResume() { super.onResume(); doSetSystemUiVisibility(); }
+    @Override public void onPause() {
+        // KRKR's native player writes through SDL's static AudioTrack. Cocos pauses the GL/native
+        // thread in super.onPause(), but that does not reliably stop already-buffered audio.
+        pauseSdlAudioForBackground();
+        super.onPause();
+    }
+
+    @Override public void onResume() {
+        super.onResume();
+        resumeSdlAudioAfterBackground();
+        doSetSystemUiVisibility();
+    }
+
+    private AudioTrack getSdlAudioTrack() {
+        try {
+            Field field = Class.forName("org.libsdl.app.SDLAudioManager").getDeclaredField("mAudioTrack");
+            field.setAccessible(true);
+            Object value = field.get(null);
+            return value instanceof AudioTrack ? (AudioTrack) value : null;
+        } catch (Throwable error) {
+            android.util.Log.w("KR2Activity", "Unable to access SDL AudioTrack", error);
+            return null;
+        }
+    }
+
+    private void pauseSdlAudioForBackground() {
+        sdlAudioPausedForBackground = false;
+        sdlAudioMutedForBackground = false;
+        AudioTrack track = getSdlAudioTrack();
+        if (track == null || track.getPlayState() != AudioTrack.PLAYSTATE_PLAYING) return;
+        try {
+            track.pause();
+            sdlAudioPausedForBackground = true;
+        } catch (Throwable pauseError) {
+            // Keep a silent fallback for vendor AudioTrack implementations that reject pause().
+            try {
+                track.setVolume(0.0f);
+                sdlAudioMutedForBackground = true;
+            } catch (Throwable volumeError) {
+                android.util.Log.w("KR2Activity", "Unable to pause SDL audio for background", volumeError);
+            }
+        }
+    }
+
+    private void resumeSdlAudioAfterBackground() {
+        if (!sdlAudioPausedForBackground && !sdlAudioMutedForBackground) return;
+        AudioTrack track = getSdlAudioTrack();
+        try {
+            if (track != null) {
+                if (sdlAudioPausedForBackground) track.play();
+                if (sdlAudioMutedForBackground) track.setVolume(1.0f);
+            }
+        } catch (Throwable error) {
+            android.util.Log.w("KR2Activity", "Unable to resume SDL audio after background", error);
+        } finally {
+            sdlAudioPausedForBackground = false;
+            sdlAudioMutedForBackground = false;
+        }
+    }
     @Override public void onDestroy() {
         try {
             android.util.Log.i("KR2Activity", "destroy KR2Activity");
