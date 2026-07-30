@@ -315,6 +315,7 @@ object LauncherScanBridge {
         EngineType.ARTEMIS -> "internal.artemis"
         EngineType.PSP -> "org.ppsspp.ppsspp"
         EngineType.NINTENDO_3DS -> "io.github.azaharplus.android"
+        EngineType.NINTENDO_SWITCH -> "dev.eden.eden_emulator"
         // 没有子类型的旧版/未来扫描结果保留保守的 RPG XP 回退。
         EngineType.RPGMAKER -> "internal.rpgmxp"
         EngineType.RENPY -> "internal.renpy"

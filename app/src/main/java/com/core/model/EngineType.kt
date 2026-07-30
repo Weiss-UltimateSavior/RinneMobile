@@ -10,6 +10,7 @@ enum class EngineType(val displayName: String) {
     GAMEHUB("GameHub"),
     PSP("PSP"),
     NINTENDO_3DS("Nintendo 3DS"),
+    NINTENDO_SWITCH("Nintendo Switch"),
     RPGMAKER("RPG Maker"),
     RENPY("Ren'Py"),
     GODOT("Godot"),

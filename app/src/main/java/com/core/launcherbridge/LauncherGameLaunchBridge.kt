@@ -319,6 +319,8 @@ object LauncherGameLaunchBridge {
         if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return "internal.ons"
         if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return "internal.tyrano"
         if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return "org.ppsspp.ppsspp"
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android"
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator"
         if (game.engine == EngineType.ARTEMIS && emulatorPackage.isEmpty()) return "internal.artemis"
         return emulatorPackage
     }
@@ -334,6 +336,8 @@ object LauncherGameLaunchBridge {
         EngineType.TYRANO -> "internal.tyrano"
         EngineType.ARTEMIS -> "internal.artemis"
         EngineType.PSP -> "org.ppsspp.ppsspp"
+        EngineType.NINTENDO_3DS -> "io.github.azaharplus.android"
+        EngineType.NINTENDO_SWITCH -> "dev.eden.eden_emulator"
         EngineType.RPGMAKER -> "internal." + rpgMakerSubtype.ifBlank { "rpgmxp" }
         EngineType.RENPY -> "internal." + renpySubtype.ifBlank { "renpy" }
         EngineType.GODOT -> "internal." + godotSubtype.ifBlank { "godot4" }

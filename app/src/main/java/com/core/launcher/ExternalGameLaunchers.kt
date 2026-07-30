@@ -34,6 +34,7 @@ internal object ExternalGameLaunchers {
         ) { ArtemisLauncher.buildIntent(it, packageName, rootUri, launchTarget) })
         addBuiltIn(PspStrategy)
         addBuiltIn(CitraStrategy)
+        addBuiltIn(EdenStrategy)
         addBuiltIn(GameHubStrategy)
         addBuiltIn(WinlatorStrategy)
         addBuiltIn(ExternalRpgMakerPluginStrategy())
@@ -156,7 +157,33 @@ internal object ExternalGameLaunchers {
 
         override fun launch(context: Context, request: LaunchRequest): Boolean {
             if (!HandheldLaunchers.isCitraInstalled(context)) return false
-            return start(context, HandheldLaunchers.buildCitraIntent(context, request.rootUri, request.launchTarget))
+            return start(context, HandheldLaunchers.buildCitraIntent(
+                context, resolveSelectedDocumentUri(context, request.rootUri, request.launchTarget), request.launchTarget,
+            ))
+        }
+    }
+
+    private object EdenStrategy : BaseStrategy(EngineType.NINTENDO_SWITCH) {
+        override fun supports(request: LaunchRequest): Boolean =
+            request.packageName.equals("dev.eden.eden_emulator", true)
+
+        override fun launch(context: Context, request: LaunchRequest): Boolean {
+            if (!HandheldLaunchers.isEdenInstalled(context)) return false
+            return start(context, HandheldLaunchers.buildEdenIntent(
+                context, resolveSelectedDocumentUri(context, request.rootUri, request.launchTarget), request.launchTarget,
+            ))
+        }
+    }
+
+    /** A scanner result can be either the ROM itself or a SAF tree plus a relative ROM target. */
+    private fun resolveSelectedDocumentUri(context: Context, rootUri: String?, launchTarget: String?): String? {
+        if (rootUri.isNullOrBlank() || launchTarget.isNullOrBlank() || launchTarget == "[游戏目录]") return rootUri
+        return try {
+            var current = DocumentFile.fromTreeUri(context, Uri.parse(rootUri))
+            launchTarget.split('/').filter(String::isNotEmpty).forEach { current = current?.findFile(it) }
+            current?.takeIf { it.isFile }?.uri?.toString() ?: rootUri
+        } catch (_: Throwable) {
+            rootUri
         }
     }
 

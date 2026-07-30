@@ -163,6 +163,10 @@ object GameScanner {
                         addN3dsFileResult(report, seenUris, child, name)
                         continue
                     }
+                    if (isNintendoSwitchFile(lowerName)) {
+                        addNintendoSwitchFileResult(report, seenUris, child, name)
+                        continue
+                    }
                     if (lowerName.endsWith(".desktop")) {
                         addDesktopResult(report, seenUris, stripDesktopSuffix(name), child.uri.toString(), name, "")
                     }
@@ -175,12 +179,13 @@ object GameScanner {
                 val childFiles = child.listFiles() ?: emptyArray<DocumentFile>()
                 val pspDirectory = tryAddPspDirectory(child, childFiles, report, seenUris)
                 val n3dsDirectory = tryAddN3dsDirectory(child, childFiles, report, seenUris)
+                val switchDirectory = tryAddNintendoSwitchDirectory(child, childFiles, report, seenUris)
                 val desktopDirectory = tryAddDesktopDirectory(child, childFiles, report, seenUris)
 
                 val childName = safeName(child).lowercase(Locale.ROOT)
                 val internalAssetDir = isInternalAssetDir(childName)
 
-                var gameDirectoryMatched = pspDirectory || n3dsDirectory || desktopDirectory
+                var gameDirectoryMatched = pspDirectory || n3dsDirectory || switchDirectory || desktopDirectory
                 if (!internalAssetDir && !gameDirectoryMatched) {
                     val detected = EngineDetector.detect(child, 2, childFiles)
                     if (detected.confidence > 0) {
@@ -406,6 +411,64 @@ object GameScanner {
             lowerName.endsWith(".cxi") || lowerName.endsWith(".zcxi") || lowerName.endsWith(".cia") ||
             lowerName.endsWith(".zcia") || lowerName.endsWith(".3dsx") || lowerName.endsWith(".z3dsx")
     }
+
+    /** ROM formats accepted by Eden's exported ACTION_VIEW entry point. */
+    private fun isNintendoSwitchFile(lowerName: String?): Boolean {
+        if (lowerName == null) return false
+        return lowerName.endsWith(".xci") || lowerName.endsWith(".nsp") ||
+            lowerName.endsWith(".nca") || lowerName.endsWith(".nro")
+    }
+
+    private fun addNintendoSwitchFileResult(
+        report: ScanReport?, seenUris: MutableSet<String>?, file: DocumentFile?, fileName: String
+    ): Boolean = addNintendoSwitchFileResultWithCover(
+        report, seenUris, stripExtension(fileName), file?.uri?.toString(), fileName, ""
+    )
+
+    private fun tryAddNintendoSwitchDirectory(
+        dir: DocumentFile?, files: Array<DocumentFile>?, report: ScanReport?, seenUris: MutableSet<String>?
+    ): Boolean {
+        if (dir == null || report == null || files.isNullOrEmpty()) return false
+        return try {
+            val roms = files.filter { it.isFile && isNintendoSwitchFile(safeName(it).lowercase(Locale.ROOT)) }
+            if (roms.isEmpty()) return false
+            val coverUri = findBestImage(files)?.uri?.toString().orEmpty()
+            if (roms.size == 1) {
+                val rom = roms.single()
+                addNintendoSwitchFileResultWithCover(
+                    report, seenUris, safeName(dir), rom.uri.toString(), safeName(rom), coverUri
+                )
+            } else {
+                roms.fold(false) { added, rom ->
+                    added or addNintendoSwitchFileResultWithCover(
+                        report, seenUris, stripExtension(safeName(rom)), rom.uri.toString(), safeName(rom), coverUri
+                    )
+                }
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "tryAddNintendoSwitchDirectory failed uri=${safeUri(dir)}", t)
+            false
+        }
+    }
+
+    private fun addNintendoSwitchFileResultWithCover(
+        report: ScanReport?, seenUris: MutableSet<String>?, title: String?, resultUri: String?,
+        launchTarget: String, coverUri: String
+    ): Boolean {
+        if (report == null || resultUri == null || !markSeen(seenUris, resultUri)) return false
+        report.addResult(ScanResult(
+            title = title?.takeIf { it.isNotBlank() } ?: "未命名Switch游戏",
+            uri = resultUri,
+            engine = EngineType.NINTENDO_SWITCH,
+            confidence = 95,
+            launchTarget = launchTarget,
+            coverUri = coverUri,
+        ))
+        return true
+    }
+
+    private fun stripExtension(fileName: String): String =
+        fileName.substringBeforeLast('.', fileName)
 
     private fun addN3dsFileResult(
         report: ScanReport?,

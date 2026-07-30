@@ -6,13 +6,15 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 
-/** PSP 与 Nintendo 3DS 外部模拟器的 Intent 构建和可用性探测。 */
+/** 掌机外部模拟器的 Intent 构建和可用性探测。 */
 internal object HandheldLaunchers {
     private const val TAG = "EmulatorLauncher"
     private const val PPSSPP_PACKAGE = "org.ppsspp.ppsspp"
     private const val PPSSPP_ACTIVITY = "org.ppsspp.ppsspp.PpssppActivity"
     private const val AZAHAR_PACKAGE = "io.github.azaharplus.android"
     private const val CITRA_ACTIVITY = "org.citra.citra_emu.activities.EmulationActivity"
+    private const val EDEN_PACKAGE = "dev.eden.eden_emulator"
+    private const val EDEN_ACTIVITY = "org.yuzu.yuzu_emu.activities.EmulationActivity"
     private val citraPackages = arrayOf(
         AZAHAR_PACKAGE,
         "io.github.azaharplus.android.debug",
@@ -85,6 +87,23 @@ internal object HandheldLaunchers {
     @JvmStatic
     fun isCitraInstalled(context: Context): Boolean =
         citraPackages.any { isPackageInstalled(context.packageManager, it) }
+
+    /** Eden accepts ACTION_VIEW with a readable content URI and application/octet-stream MIME type. */
+    @JvmStatic
+    fun buildEdenIntent(context: Context?, gameUri: String?, launchTarget: String?): Intent {
+        require(context != null && !gameUri.isNullOrBlank()) { "Nintendo Switch game URI is empty" }
+        val uri = normalizedGameUri(gameUri)
+        return Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/octet-stream")
+            setClassName(EDEN_PACKAGE, EDEN_ACTIVITY)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            Log.i(TAG, "Built Eden intent uri=$uri")
+        }
+    }
+
+    @JvmStatic
+    fun isEdenInstalled(context: Context): Boolean =
+        isPackageInstalled(context.packageManager, EDEN_PACKAGE)
 
     @JvmStatic
     fun ppssppDownloadIntent(): Intent = Intent(

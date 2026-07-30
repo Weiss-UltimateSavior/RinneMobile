@@ -44,6 +44,7 @@ object GameMetadataFormatter {
         EngineType.GAMEHUB -> "GameHub"
         EngineType.PSP -> "PSP"
         EngineType.NINTENDO_3DS -> "3DS"
+        EngineType.NINTENDO_SWITCH -> "Switch"
         else -> "Unknown"
     }
 

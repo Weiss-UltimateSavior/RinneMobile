@@ -71,6 +71,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             new EngineOption(EngineType.GAMEHUB, "GameHub", null),
             new EngineOption(EngineType.PSP, "PSP", null),
             new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
+            new EngineOption(EngineType.NINTENDO_SWITCH, "Nintendo Switch (Eden)", null),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
@@ -512,6 +513,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         if (option.engine == EngineType.ARTEMIS) return "internal.artemis";
         if (option.engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (option.engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
+        if (option.engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator";
         if (option.engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
         return "";
     }

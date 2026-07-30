@@ -166,7 +166,9 @@ final class LauncherLaunchTargetPicker {
         if (lowerName.endsWith(".xp3") || lowerName.endsWith(".pfs")
                 || lowerName.endsWith(".iso") || lowerName.endsWith(".cso")
                 || lowerName.endsWith(".chd") || lowerName.endsWith(".elf")
-                || lowerName.endsWith(".pbp") || lowerName.endsWith(".desktop")
+                || lowerName.endsWith(".pbp") || lowerName.endsWith(".xci")
+                || lowerName.endsWith(".nsp") || lowerName.endsWith(".nca")
+                || lowerName.endsWith(".nro") || lowerName.endsWith(".desktop")
                 || lowerName.endsWith(".exe") || isRenpyFile(lowerName)) return true;
         return lowerName.equals("0.txt") || lowerName.equals("00.txt")
                 || lowerName.equals("nscript.dat") || lowerName.equals("nscr_sec.dat")

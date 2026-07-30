@@ -86,6 +86,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             new EngineOption(EngineType.GAMEHUB, "GameHub", null),
             new EngineOption(EngineType.PSP, "PSP", null),
             new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
+            new EngineOption(EngineType.NINTENDO_SWITCH, "Nintendo Switch (Eden)", null),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
             new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
@@ -429,6 +430,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (engine == EngineType.ARTEMIS) return "internal.artemis";
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
+        if (engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator";
         if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
         // RPG Maker 默认走 RPGXP（Ruby 1.8）：老 RGSS1 语法（如 ?(...) 三元运算符）在 1.8 下才兼容，
         // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。

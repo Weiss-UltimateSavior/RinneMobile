@@ -104,6 +104,8 @@ object EngineDetector {
             score(r, EngineType.PSP, 95, s.firstPspFile!!)
         } else if (s.firstN3dsFile != null) {
             score(r, EngineType.NINTENDO_3DS, 95, s.firstN3dsFile!!)
+        } else if (s.firstNintendoSwitchFile != null) {
+            score(r, EngineType.NINTENDO_SWITCH, 95, s.firstNintendoSwitchFile!!)
         }
         // RPG Maker (RGSS) 识别：归档形式优先于散文件形式。
         // rgss3a → VX Ace(RGSS3)；rgss2a → VX(RGSS2)；rgssad → XP(RGSS1)。
@@ -221,6 +223,7 @@ object EngineDetector {
         var hasElectronPak = false
         var firstPspFile: String? = null
         var firstN3dsFile: String? = null
+        var firstNintendoSwitchFile: String? = null
         // RPG Maker (RGSS) 检测字段。
         var firstRgssad: String? = null
         var firstRgss2a: String? = null
@@ -334,6 +337,11 @@ object EngineDetector {
                 lower.endsWith(".zcia") || lower.endsWith(".3dsx") || lower.endsWith(".z3dsx")
             ) {
                 if (s.firstN3dsFile == null) s.firstN3dsFile = originalRel
+            }
+            if (lower.endsWith(".xci") || lower.endsWith(".nsp") || lower.endsWith(".nca") ||
+                lower.endsWith(".nro")
+            ) {
+                if (s.firstNintendoSwitchFile == null) s.firstNintendoSwitchFile = originalRel
             }
             // RPG Maker (RGSS) 归档与数据文件检测。
             if (lower == "game.ini") s.hasGameIni = true
