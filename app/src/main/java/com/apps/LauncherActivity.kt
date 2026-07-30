@@ -70,7 +70,7 @@ class LauncherActivity : AppCompatActivity() {
         })
         configureEdgeToEdgeWindow()
 
-        if (savedInstanceState != null || launcherSplashShownInProcess) {
+        if (savedInstanceState != null || launcherSplashShownInProcess || !isSplashImageEnabled(this)) {
             showLauncherContent()
             return
         }
@@ -669,6 +669,7 @@ class LauncherActivity : AppCompatActivity() {
         private const val KEY_HD_MODE_STARTUP = "launcher_hd_mode_startup"
         private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
         private const val KEY_PILL_NAVIGATION_STYLE = "launcher_pill_navigation_style"
+        private const val KEY_SPLASH_ENABLED = "launcher_splash_enabled"
         private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
@@ -878,6 +879,20 @@ class LauncherActivity : AppCompatActivity() {
         @JvmStatic
         fun hasCustomSplashImage(context: android.content.Context): Boolean =
             customSplashImageFile(context).isFile
+
+        /** 是否在应用启动时显示启动图片。 */
+        @JvmStatic
+        fun isSplashImageEnabled(context: android.content.Context): Boolean =
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_SPLASH_ENABLED, true)
+
+        @JvmStatic
+        fun setSplashImageEnabled(context: android.content.Context, enabled: Boolean) {
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_SPLASH_ENABLED, enabled)
+                .apply()
+        }
 
         @JvmStatic
         fun isLandscapeStartupPage(context: android.content.Context): Boolean =

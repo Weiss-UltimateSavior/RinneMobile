@@ -60,6 +60,12 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         }
         renderSplashImageState()
         binding.appSplashImageText.setOnClickListener { showSplashImageConfirmDialog() }
+        LauncherTheme.styleMaterialSwitch(binding.appSplashImageSwitch)
+        binding.appSplashImageSwitch.isChecked = LauncherActivity.isSplashImageEnabled(this)
+        binding.appSplashImageSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked == LauncherActivity.isSplashImageEnabled(this)) return@setOnCheckedChangeListener
+            LauncherActivity.setSplashImageEnabled(this, checked)
+        }
         LauncherTheme.styleMaterialSwitch(binding.appHdModeStartupSwitch)
         binding.appHdModeStartupSwitch.isChecked = LauncherActivity.isHdModeStartupEnabled(this)
         binding.appHdModeStartupSwitch.setOnCheckedChangeListener { _, checked ->

@@ -41,6 +41,7 @@
     <string name="app_splash_image_updated">Startup image updated</string>
     <string name="app_splash_image_save_failed">Could not save the selected image</string>
     <string name="app_splash_image_restored">Restored to default startup image</string>
+    <string name="app_splash_image_switch">Startup Image</string>
     <string name="language_simplified_chinese">简体中文</string>
     <string name="language_english">English</string>
     <string name="language_japanese">日本語</string>
