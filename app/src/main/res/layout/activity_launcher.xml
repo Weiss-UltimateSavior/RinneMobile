@@ -27,7 +27,7 @@
     <View
         android:id="@+id/bottomNavShadow"
         android:layout_width="0dp"
-        android:layout_height="@dimen/launcher_bottom_nav_height"
+        android:layout_height="@dimen/launcher_default_nav_height"
         android:alpha="0.55"
         android:background="@drawable/launcher_bottom_bar_shadow"
         android:translationY="-0.5dp"
@@ -38,7 +38,7 @@
     <FrameLayout
         android:id="@+id/bottomNav"
         android:layout_width="0dp"
-        android:layout_height="@dimen/launcher_bottom_nav_height"
+        android:layout_height="@dimen/launcher_default_nav_height"
         android:background="@drawable/launcher_bottom_bar"
         android:clickable="true"
         android:focusable="true"

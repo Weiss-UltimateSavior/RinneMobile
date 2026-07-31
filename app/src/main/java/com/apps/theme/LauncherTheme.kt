@@ -169,35 +169,15 @@ object LauncherTheme {
         return drawable
     }
 
-    /**
-     * 导航栏中间按钮专用：circle 背景外包裹 3dp 软渐变阴影环。
-     * 用多层同心圆递进透明度模拟高斯模糊，四周均匀可见。
-     */
+    /** Navigation launch button with a 3dp, 60%-opaque ring in the active primary tone. */
     @JvmStatic
     fun circleWithSoftShadow(context: Context): Drawable {
-        val total = dp(context, 3f)
-        val i1 = total / 3
-        val i2 = total * 2 / 3
-
-        val s0 = GradientDrawable()
-        s0.shape = GradientDrawable.OVAL
-        s0.setColor(Color.argb(5, 0, 0, 0))
-
-        val s1 = GradientDrawable()
-        s1.shape = GradientDrawable.OVAL
-        s1.setColor(Color.argb(12, 0, 0, 0))
-
-        val s2 = GradientDrawable()
-        s2.shape = GradientDrawable.OVAL
-        s2.setColor(Color.argb(22, 0, 0, 0))
-
-        val main = circle(context)
-
-        val layers = LayerDrawable(arrayOf<Drawable>(s0, s1, s2, main))
-        layers.setLayerInset(1, i1, i1, i1, i1)
-        layers.setLayerInset(2, i2, i2, i2, i2)
-        layers.setLayerInset(3, total, total, total, total)
-        return layers
+        val ring = circle(context, ColorUtils.setAlphaComponent(primary(context), 0x99))
+        val center = circle(context)
+        val inset = dp(context, 3f)
+        return LayerDrawable(arrayOf<Drawable>(ring, center)).apply {
+            setLayerInset(1, inset, inset, inset, inset)
+        }
     }
 
     /** Circle with card background color, matching the white-card style of manage rows. */
