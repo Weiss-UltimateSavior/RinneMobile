@@ -38,7 +38,7 @@ public final class ScanDirectoryController {
 
     /** 扫描请求回调，由外部（如 Xp3TargetResolver）实现。 */
     public interface OnScanRequestedListener {
-        void onScanRequested(List<String> roots, int depth);
+        void onScanRequested(List<String> roots, int depth, boolean fullRefresh);
     }
 
     private static final String KEY_SCAN_ROOT_URIS = "scan_root_uris";
@@ -144,6 +144,23 @@ public final class ScanDirectoryController {
         };
         int currentDepth = scanDepth();
         int[] depthValues = {1, 2, 3, 4, LauncherScanBridge.SCAN_ALL_LEVELS, LauncherScanBridge.SCAN_UNTIL_GAME_MATCH};
+        final boolean[] fullRefresh = {false};
+
+        TextView scanMode = new TextView(host.requireContext());
+        scanMode.setText(host.getString(R.string.game_scan_mode_quick));
+        scanMode.setGravity(android.view.Gravity.CENTER);
+        host.setResponsiveTextSize(scanMode, 12);
+        scanMode.setTypeface(null, android.graphics.Typeface.BOLD);
+        LauncherTheme.menuItem(scanMode);
+        scanMode.setOnClickListener(view -> {
+            fullRefresh[0] = !fullRefresh[0];
+            scanMode.setText(host.getString(fullRefresh[0]
+                    ? R.string.game_scan_mode_full : R.string.game_scan_mode_quick));
+        });
+        LinearLayout.LayoutParams modeLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
+        modeLp.setMargins(0, host.dp(11), 0, 0);
+        root.addView(scanMode, modeLp);
 
         for (int i = 0; i < depthLabels.length; i++) {
             final int depth = depthValues[i];
@@ -160,7 +177,7 @@ public final class ScanDirectoryController {
             option.setOnClickListener(v -> {
                 dialog.dismiss();
                 saveScanDepth(depth);
-                scanListener.onScanRequested(roots, depth);
+                scanListener.onScanRequested(roots, depth, fullRefresh[0]);
             });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
             lp.setMargins(0, host.dp(11), 0, 0);

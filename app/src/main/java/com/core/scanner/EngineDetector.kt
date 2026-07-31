@@ -259,6 +259,10 @@ object EngineDetector {
         }
         if (files == null || files.isEmpty()) return
 
+        // Phase 1 is deliberately flat: collect the direct-entry signatures first.  SAF
+        // directory listings are expensive, so do not walk candidate subdirectories until a
+        // root-level signal says that their contents can affect a detection result.
+        val childDirectories = ArrayList<DirectoryFeatureCandidate>()
         for (f in files) {
             if (f == null) continue
             val lower = safeLowerName(f)
@@ -293,9 +297,7 @@ object EngineDetector {
                 if (lower == "movie") s.hasMovieDir = true
                 if (lower == "font") s.hasFontDir = true
                 if (lower == "others") s.hasOthersDir = true
-                if (level < maxLevel && shouldDescendForFeature(lower)) {
-                    collectFeatures(f, rel, originalRel, level + 1, maxLevel, s, null)
-                }
+                childDirectories.add(DirectoryFeatureCandidate(f, lower, rel, originalRel))
                 continue
             }
             if (!file) continue
@@ -364,13 +366,41 @@ object EngineDetector {
             if (lower == "project.godot") s.hasProjectGodot = true
             if (lower.endsWith(".pck") && s.firstPck == null) s.firstPck = originalRel
         }
+
+        // Phase 2 only expands directories whose contents can complete a plausible signature.
+        // `resources` remains a candidate on its own because Electron games commonly keep the
+        // sole app.asar under resources/ with no useful root-level file beside it.
+        if (level < maxLevel) {
+            for (candidate in childDirectories) {
+                if (!shouldDescendForFeature(candidate.lowerName, s)) continue
+                collectFeatures(
+                    candidate.file, candidate.relativeName, candidate.originalName,
+                    level + 1, maxLevel, s, null
+                )
+            }
+        }
     }
 
-    private fun shouldDescendForFeature(lowerName: String?): Boolean {
+    private data class DirectoryFeatureCandidate(
+        val file: DocumentFile,
+        val lowerName: String,
+        val relativeName: String,
+        val originalName: String
+    )
+
+    private fun shouldDescendForFeature(lowerName: String?, state: FeatureState): Boolean {
         if (lowerName == null) return false
-        return lowerName == "resources" || lowerName == "app" || lowerName == "tyrano"
-            || lowerName == "data" || lowerName == "scenario" || lowerName == "system"
-            || lowerName == "game"
+        return when (lowerName) {
+            // Electron packages require looking under resources/app(.asar).
+            "resources" -> true
+            "app" -> state.hasResourcesDir
+            // These are only useful to complete an HTML Tyrano signature.
+            "tyrano", "data" -> state.hasIndex
+            // Artemis and Ren'Py/RPG Maker use these as explicit root signatures.
+            "system" -> state.hasSystemIni
+            "game" -> state.hasRenpyDir || state.hasGameDir
+            else -> false
+        }
     }
 
     private fun safeName(file: DocumentFile?): String {

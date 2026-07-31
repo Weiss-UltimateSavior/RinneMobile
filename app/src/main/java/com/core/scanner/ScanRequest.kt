@@ -1,8 +1,11 @@
 package com.core.scanner
 
 import android.os.SystemClock
+import android.os.CancellationSignal
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Controls one scan batch. A request may be shared across multiple roots so cancellation,
@@ -21,24 +24,61 @@ class ScanRequest private constructor(builder: Builder) {
     val maxDepth: Int = builder.maxDepth
     val maxNodes: Int = builder.maxNodes
     val deadlineAtElapsedMs: Long = builder.deadlineAtElapsedMs
+    val stallTimeoutMs: Long = builder.stallTimeoutMs
+    val isCacheEnabled: Boolean = builder.useCache
     private val cancelled: AtomicBoolean = builder.cancelled ?: AtomicBoolean(false)
+    private val forcedDeadline = AtomicBoolean(false)
     private val progressListener: ProgressListener? = builder.progressListener
+    private val lastProgressAtElapsedMs = AtomicLong(SystemClock.elapsedRealtime())
+    private val activeSignals = ConcurrentHashMap.newKeySet<CancellationSignal>()
 
     /** Shared by every root scanned with this request, so maxNodes is a batch-wide limit. */
     private val _visitedNodes: AtomicInteger = AtomicInteger()
 
     val isCancelled: Boolean get() = cancelled.get()
-    fun cancel() { cancelled.set(true) }
+    fun cancel() {
+        cancelled.set(true)
+        cancelActiveSignals()
+    }
     val visitedNodes: Int get() = _visitedNodes.get()
 
     val isDeadlineReached: Boolean
-        get() = deadlineAtElapsedMs > 0 && SystemClock.elapsedRealtime() >= deadlineAtElapsedMs
+        get() {
+            if (forcedDeadline.get()) return true
+            val now = SystemClock.elapsedRealtime()
+            return (deadlineAtElapsedMs > 0 && now >= deadlineAtElapsedMs) ||
+                (stallTimeoutMs > 0 && now - lastProgressAtElapsedMs.get() >= stallTimeoutMs)
+        }
 
     val isNodeLimitReached: Boolean
         get() = maxNodes > 0 && _visitedNodes.get() >= maxNodes
 
     @JvmName("getProgressListener")
     internal fun getProgressListener(): ProgressListener? = progressListener
+
+    internal fun markProgress() {
+        lastProgressAtElapsedMs.set(SystemClock.elapsedRealtime())
+    }
+
+    internal fun markDeadlineReached() {
+        forcedDeadline.set(true)
+        cancelActiveSignals()
+    }
+
+    internal fun createCancellationSignal(): CancellationSignal {
+        val signal = CancellationSignal()
+        activeSignals.add(signal)
+        if (isCancelled || isDeadlineReached) signal.cancel()
+        return signal
+    }
+
+    internal fun releaseCancellationSignal(signal: CancellationSignal) {
+        activeSignals.remove(signal)
+    }
+
+    private fun cancelActiveSignals() {
+        for (signal in activeSignals) runCatching { signal.cancel() }
+    }
 
     /** Returns the global visited count after acquiring a slot, or 0 when the limit is full. */
     @JvmName("tryAcquireNode")
@@ -66,6 +106,8 @@ class ScanRequest private constructor(builder: Builder) {
     class Builder(internal val maxDepth: Int) {
         internal var maxNodes: Int = DEFAULT_MAX_NODES
         internal var deadlineAtElapsedMs: Long = 0
+        internal var stallTimeoutMs: Long = DEFAULT_STALL_TIMEOUT_MS
+        internal var useCache: Boolean = true
         internal var cancelled: AtomicBoolean? = null
         internal var progressListener: ProgressListener? = null
 
@@ -79,6 +121,8 @@ class ScanRequest private constructor(builder: Builder) {
         }
 
         fun setDeadlineAtElapsedMs(value: Long): Builder { deadlineAtElapsedMs = value; return this }
+        fun setStallTimeoutMs(value: Long): Builder { stallTimeoutMs = value; return this }
+        fun setUseCache(value: Boolean): Builder { useCache = value; return this }
         fun setCancellationFlag(value: AtomicBoolean?): Builder { cancelled = value; return this }
         fun setProgressListener(value: ProgressListener?): Builder { progressListener = value; return this }
 
@@ -86,13 +130,22 @@ class ScanRequest private constructor(builder: Builder) {
     }
 
     companion object {
-        const val DEFAULT_MAX_NODES: Int = 10_000
-        const val DEFAULT_DEADLINE_MS: Long = 2L * 60L * 1000L
+        const val DEFAULT_MAX_NODES: Int = 50_000
+        const val DEFAULT_DEADLINE_MS: Long = 5L * 60L * 1000L
+        const val DEFAULT_STALL_TIMEOUT_MS: Long = 60L * 1000L
 
         @JvmStatic
         fun defaults(maxDepth: Int): ScanRequest = Builder(maxDepth)
             .setMaxNodes(DEFAULT_MAX_NODES)
             .setDeadlineAfterMs(DEFAULT_DEADLINE_MS)
+            .build()
+
+        @JvmStatic
+        fun defaults(maxDepth: Int, useCache: Boolean): ScanRequest = Builder(maxDepth)
+            .setMaxNodes(DEFAULT_MAX_NODES)
+            .setDeadlineAfterMs(DEFAULT_DEADLINE_MS)
+            .setStallTimeoutMs(DEFAULT_STALL_TIMEOUT_MS)
+            .setUseCache(useCache)
             .build()
     }
 }

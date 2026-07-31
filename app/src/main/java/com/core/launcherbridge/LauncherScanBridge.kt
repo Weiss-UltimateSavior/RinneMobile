@@ -115,6 +115,9 @@ object LauncherScanBridge {
         if (context == null || roots.isNullOrEmpty()) return batch
         val appContext = context.applicationContext
         val safeRequest = request ?: ScanRequest.defaults(2)
+        // A request may wait behind other single-queue work before discovery starts. Do not
+        // count that queueing time as a stalled storage scan.
+        safeRequest.markProgress()
         val initialVisitedNodes = safeRequest.visitedNodes
         for (root in roots) {
             if (root.isBlank()) continue

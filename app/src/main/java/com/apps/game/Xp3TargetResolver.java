@@ -37,12 +37,12 @@ public final class Xp3TargetResolver {
         this.host = host;
     }
 
-    public void executeScan(List<String> roots, int depth) {
-        scanAndResolveXp3Targets(roots, depth);
+    public void executeScan(List<String> roots, int depth, boolean fullRefresh) {
+        scanAndResolveXp3Targets(roots, depth, fullRefresh);
     }
 
-    private void scanAndResolveXp3Targets(List<String> roots, int depth) {
-        ScanRequest request = ScanRequest.defaults(depth);
+    private void scanAndResolveXp3Targets(List<String> roots, int depth, boolean fullRefresh) {
+        ScanRequest request = ScanRequest.defaults(depth, !fullRefresh);
         activeScanRequest = request;
         scanLoadingDialog = showScanLoadingDialog();
         scanLoadingDialog.setCancelable(true);

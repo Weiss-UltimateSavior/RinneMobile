@@ -34,16 +34,19 @@ class ScanReport {
     val isPartial: Boolean get() = _stopReason != StopReason.COMPLETED
 
     @JvmName("addResult")
+    @Synchronized
     internal fun addResult(result: ScanResult?) {
         if (result != null) _results.add(result)
     }
 
     @JvmName("addError")
+    @Synchronized
     internal fun addError(error: String?) {
         if (error != null && error.trim().isNotEmpty()) _errors.add(error)
     }
 
     @JvmName("tryVisit")
+    @Synchronized
     internal fun tryVisit(request: ScanRequest, currentUri: String?): Boolean {
         if (request.isCancelled) {
             _stopReason = StopReason.CANCELLED
@@ -58,6 +61,7 @@ class ScanReport {
             _stopReason = StopReason.NODE_LIMIT
             return false
         }
+        request.markProgress()
         _visitedNodes++
         val listener = request.getProgressListener()
         listener?.onProgress(globalVisitedNodes, _results.size, currentUri ?: "")
@@ -65,6 +69,7 @@ class ScanReport {
     }
 
     @JvmName("shouldStop")
+    @Synchronized
     internal fun shouldStop(request: ScanRequest): Boolean = !tryCheck(request)
 
     private fun tryCheck(request: ScanRequest): Boolean {
@@ -80,6 +85,7 @@ class ScanReport {
     }
 
     @JvmName("setStopReason")
+    @Synchronized
     internal fun setStopReason(reason: StopReason?) {
         if (reason != null) _stopReason = reason
     }
