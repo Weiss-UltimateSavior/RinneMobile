@@ -29,6 +29,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.apps.UserData.LauncherUserData;
+import com.apps.LauncherNavigationMetricsKt;
 import com.core.R;
 import com.core.databinding.FragmentLauncherProfileBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
@@ -197,6 +198,7 @@ public class LauncherProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        LauncherNavigationMetricsKt.refreshNavigationOverlayInsets(this);
         refreshProfileRankFromServer();
     }
 
@@ -602,7 +604,7 @@ public class LauncherProfileFragment extends Fragment {
                     originalLeft,
                     originalTop,
                     originalRight,
-                    originalBottom
+                    LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, originalBottom)
             );
             currentBinding.profileHeader.setPadding(
                     originalHeaderLeft,

@@ -28,6 +28,7 @@ import com.core.databinding.FragmentLauncherManageBinding;
 import com.core.util.RxMainQueue;
 
 import com.apps.settings.LauncherKrkrSettingsActivity;
+import com.apps.LauncherNavigationMetricsKt;
 import com.apps.settings.LauncherMetadataSourceActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
@@ -164,6 +165,12 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
         binding = null;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        LauncherNavigationMetricsKt.refreshNavigationOverlayInsets(this);
+    }
+
     // ==================== UI 布局 ====================
 
     private void applySystemBarInsets() {
@@ -178,7 +185,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
                     originalLeft,
                     originalTop + insets.getSystemWindowInsetTop(),
                     originalRight,
-                    originalBottom
+                    LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, originalBottom)
             );
             return insets;
         });

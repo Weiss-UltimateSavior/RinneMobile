@@ -34,7 +34,8 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.core.R
-import com.apps.LauncherActivity
+import com.apps.navigationOverlayBottomPadding
+import com.apps.refreshNavigationOverlayInsets
 import com.apps.settings.LauncherCustomVndbSearchDialog
 import com.apps.settings.LauncherKrkrSettingsActivity
 import com.apps.theme.LauncherDialogFactory
@@ -204,6 +205,7 @@ open class LauncherLibraryFragment : Fragment(),
 
     override fun onResume() {
         super.onResume()
+        refreshNavigationOverlayInsets()
         checkStoragePermission()
         if (sessionController?.hasActiveSession() == true) {
             sessionController?.finishDirectPlaySessionIfNeeded(this)
@@ -289,6 +291,7 @@ open class LauncherLibraryFragment : Fragment(),
                 originalRight,
                 originalBottom
             )
+            applyNavigationOverlayPadding()
             insets
         }
         currentBinding.root.requestApplyInsets()
@@ -324,16 +327,7 @@ open class LauncherLibraryFragment : Fragment(),
         binding.libraryRecycler.layoutManager = layoutManager
         binding.libraryRecycler.adapter = gameAdapter
         binding.libraryRecycler.setHasFixedSize(true)
-        var bottomPadding = resources.getDimensionPixelSize(com.core.R.dimen.launcher_library_recycler_bottom_padding)
-        if (activity is LauncherActivity) {
-            bottomPadding += resources.getDimensionPixelSize(com.core.R.dimen.launcher_bottom_nav_height)
-        }
-        binding.libraryRecycler.setPadding(
-            binding.libraryRecycler.paddingLeft,
-            binding.libraryRecycler.paddingTop,
-            binding.libraryRecycler.paddingRight,
-            bottomPadding
-        )
+        applyNavigationOverlayPadding()
         binding.libraryRecycler.setItemViewCacheSize(20)
         val pool = RecyclerView.RecycledViewPool()
         pool.setMaxRecycledViews(0, 30)
@@ -385,6 +379,19 @@ open class LauncherLibraryFragment : Fragment(),
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) { }
         })
+    }
+
+    private fun applyNavigationOverlayPadding() {
+        if (usesHorizontalPaging()) return
+        val currentBinding = _binding ?: return
+        val fallback = resources.getDimensionPixelSize(com.core.R.dimen.launcher_library_recycler_bottom_padding)
+        val bottomPadding = navigationOverlayBottomPadding(fallback)
+        currentBinding.libraryRecycler.setPadding(
+            currentBinding.libraryRecycler.paddingLeft,
+            currentBinding.libraryRecycler.paddingTop,
+            currentBinding.libraryRecycler.paddingRight,
+            bottomPadding,
+        )
     }
 
     private fun updateFixedGridCardHeight() {

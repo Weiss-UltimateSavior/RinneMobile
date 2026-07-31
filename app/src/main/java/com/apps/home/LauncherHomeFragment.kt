@@ -24,6 +24,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.apps.LauncherActivity
+import com.apps.navigationOverlayBottomPadding
+import com.apps.refreshNavigationOverlayInsets
 import com.apps.account.LauncherDisclaimerActivity
 import com.apps.agent.LocalAgentActivity
 import com.apps.data.LauncherRepository
@@ -131,6 +133,7 @@ open class LauncherHomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         val currentBinding = binding ?: return
+        refreshNavigationOverlayInsets()
         applyThemeStyle()
         LauncherTheme.applyPrimaryTone(currentBinding.root)
         applyIconTone()
@@ -165,7 +168,7 @@ open class LauncherHomeFragment : Fragment() {
                 originalLeft,
                 originalTop + insets.systemWindowInsetTop,
                 originalRight,
-                originalBottom
+                navigationOverlayBottomPadding(originalBottom)
             )
             insets
         }

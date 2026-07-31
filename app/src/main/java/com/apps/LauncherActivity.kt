@@ -753,8 +753,6 @@ class LauncherActivity : AppCompatActivity() {
         private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
         private const val KEY_HD_MODE_STARTUP = "launcher_hd_mode_startup"
         private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
-        private const val KEY_PILL_NAVIGATION_STYLE = "launcher_pill_navigation_style"
-        private const val KEY_CARD_NAVIGATION_STYLE = "launcher_card_navigation_style"
         private const val KEY_SPLASH_ENABLED = "launcher_splash_enabled"
         private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
@@ -1022,28 +1020,26 @@ class LauncherActivity : AppCompatActivity() {
 
         @JvmStatic
         fun isPillNavigationStyle(context: android.content.Context): Boolean =
-            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
-                .getBoolean(KEY_PILL_NAVIGATION_STYLE, false)
+            LauncherNavigationMetrics.isPillStyle(context)
 
         @JvmStatic
         fun setPillNavigationStyle(context: android.content.Context, enabled: Boolean) {
-            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
-                .edit()
-                .putBoolean(KEY_PILL_NAVIGATION_STYLE, enabled)
-                .apply()
+            LauncherNavigationMetrics.setPillStyle(context, enabled)
         }
 
         @JvmStatic
         fun isCardNavigationStyle(context: android.content.Context): Boolean =
-            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
-                .getBoolean(KEY_CARD_NAVIGATION_STYLE, false)
+            LauncherNavigationMetrics.isCardStyle(context)
 
         @JvmStatic
         fun setCardNavigationStyle(context: android.content.Context, enabled: Boolean) {
-            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
-                .edit()
-                .putBoolean(KEY_CARD_NAVIGATION_STYLE, enabled)
-                .apply()
+            LauncherNavigationMetrics.setCardStyle(context, enabled)
+        }
+
+        /** Returns the bottom clearance required by the active phone navigation variant. */
+        @JvmStatic
+        fun getNavigationOverlayBottomPadding(context: android.content.Context): Int {
+            return LauncherNavigationMetrics.overlayBottomPadding(context)
         }
 
         @JvmStatic

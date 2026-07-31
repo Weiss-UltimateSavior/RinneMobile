@@ -22,6 +22,7 @@ import com.core.databinding.FragmentLauncherAccountBinding;
 import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.profile.LauncherProfileFragment;
+import com.apps.LauncherNavigationMetricsKt;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -79,6 +80,7 @@ public class LauncherAccountFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        LauncherNavigationMetricsKt.refreshNavigationOverlayInsets(this);
         // 如果已登录，直接跳转到个人信息页
         if (LauncherAuthBridge.isLoggedIn(requireContext())) {
             navigateToProfile();
@@ -106,7 +108,7 @@ public class LauncherAccountFragment extends Fragment {
                     originalLeft,
                     originalTop + insets.getSystemWindowInsetTop(),
                     originalRight,
-                    originalBottom
+                    LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, originalBottom)
             );
             return insets;
         });
