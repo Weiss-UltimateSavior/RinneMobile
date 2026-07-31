@@ -59,7 +59,11 @@ internal object NodeEngineDetector {
     private fun shouldDescend(name: String, state: FeatureState): Boolean = when (name) {
         "resources" -> true
         "app" -> "resources" in state.directories
-        "tyrano", "data" -> state.hasIndex
+        "tyrano" -> state.hasIndex
+        "data" -> EngineFeatureTraversal.shouldDescendIntoData(
+            hasIndex = state.hasIndex,
+            hasGameIni = state.hasGameIni
+        )
         "system" -> state.hasSystemIni
         "game" -> true
         else -> false

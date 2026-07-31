@@ -394,8 +394,13 @@ object EngineDetector {
             // Electron packages require looking under resources/app(.asar).
             "resources" -> true
             "app" -> state.hasResourcesDir
-            // These are only useful to complete an HTML Tyrano signature.
-            "tyrano", "data" -> state.hasIndex
+            // Tyrano is HTML-specific. Data/ is also the unpacked RGSS database
+            // directory used by RPG Maker XP/VX/VX Ace.
+            "tyrano" -> state.hasIndex
+            "data" -> EngineFeatureTraversal.shouldDescendIntoData(
+                hasIndex = state.hasIndex,
+                hasGameIni = state.hasGameIni
+            )
             // Artemis and Ren'Py/RPG Maker use these as explicit root signatures.
             "system" -> state.hasSystemIni
             "game" -> state.hasRenpyDir || state.hasGameDir
