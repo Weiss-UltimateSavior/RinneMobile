@@ -28,6 +28,7 @@
     <string name="app_navigation_style_dialog_title">Choose Navigation Style</string>
     <string name="app_navigation_style_default">Default Navigation</string>
     <string name="app_navigation_style_pill">Floating Pill Navigation</string>
+    <string name="app_navigation_style_card">Minimal Line</string>
     <string name="app_follow_system_tone">Follow System Theme</string>
     <string name="app_hd_mode_startup">Tablet Startup Mode</string>
     <string name="home_featured_games">Featured Games</string>

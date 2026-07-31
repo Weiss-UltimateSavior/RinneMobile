@@ -32,6 +32,7 @@
     <dimen name="launcher_library_footer_height">29dp</dimen>
     <dimen name="launcher_library_footer_text_size">12sp</dimen>
     <dimen name="launcher_bottom_nav_height">85dp</dimen>
+    <dimen name="launcher_card_nav_height">75dp</dimen>
 
     <!-- 固定卡片高度仅在平板竖屏开启；基础值兼容横屏共享逻辑 -->
     <dimen name="launcher_library_card_text_overlay_height">41dp</dimen>

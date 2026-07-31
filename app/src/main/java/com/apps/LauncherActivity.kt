@@ -363,6 +363,22 @@ class LauncherActivity : AppCompatActivity() {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             LauncherMotion.runAfterPulse(b.navPillLaunchCenter, Runnable { confirmOpenPadGameModeActivity() })
         }
+        b.navCardHome.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.HOME)
+        }
+        b.navCardLibrary.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.LIBRARY)
+        }
+        b.navCardManage.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.MANAGE)
+        }
+        b.navCardAccount.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel?.selectNavItem(LauncherViewModel.NavItem.ACCOUNT)
+        }
     }
 
     private fun observeState() {
@@ -425,16 +441,29 @@ class LauncherActivity : AppCompatActivity() {
         val b = binding ?: return
         val navItem = selectedItem ?: LauncherViewModel.NavItem.HOME
         applyLauncherThemeTone()
+        if (isCardNavigationStyle(this)) {
+            b.bottomNav.visibility = View.GONE
+            b.bottomNavShadow.visibility = View.GONE
+            b.bottomNavPill.visibility = View.GONE
+            b.bottomNavCardShadow.visibility = View.VISIBLE
+            b.bottomNavCard.visibility = View.VISIBLE
+            renderCardNav(navItem)
+            return
+        }
         if (isPillNavigationStyle(this)) {
             b.bottomNav.visibility = View.GONE
             b.bottomNavShadow.visibility = View.GONE
             b.bottomNavPill.visibility = View.VISIBLE
+            b.bottomNavCardShadow.visibility = View.GONE
+            b.bottomNavCard.visibility = View.GONE
             renderPillNav(navItem)
             return
         }
         b.bottomNav.visibility = View.VISIBLE
         b.bottomNavShadow.visibility = View.VISIBLE
         b.bottomNavPill.visibility = View.GONE
+        b.bottomNavCardShadow.visibility = View.GONE
+        b.bottomNavCard.visibility = View.GONE
         setNavSelected(
             b.navHome,
             b.navHomeIcon,
@@ -475,6 +504,19 @@ class LauncherActivity : AppCompatActivity() {
         b.navPillLaunchCenterIcon.setColorFilter(LauncherTheme.primary(this))
     }
 
+    private fun renderCardNav(navItem: LauncherViewModel.NavItem) {
+        val b = binding ?: return
+        setCardNavSelected(b.navCardHomeIcon, b.navCardHomeLabel,
+            navItem == LauncherViewModel.NavItem.HOME)
+        setCardNavSelected(b.navCardLibraryIcon, b.navCardLibraryLabel,
+            navItem == LauncherViewModel.NavItem.LIBRARY)
+        setCardNavSelected(b.navCardManageIcon, b.navCardManageLabel,
+            navItem == LauncherViewModel.NavItem.MANAGE)
+        setCardNavSelected(b.navCardAccountIcon, b.navCardAccountLabel,
+            navItem == LauncherViewModel.NavItem.ACCOUNT)
+        moveCardNavIndicator(navItem)
+    }
+
     private fun setNavSelected(container: LinearLayout, icon: ImageView, label: TextView, selected: Boolean) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected)
         // 选中项始终使用当前主题主色；未选中项在浅色、深色模式下统一使用灰色。
@@ -506,6 +548,41 @@ class LauncherActivity : AppCompatActivity() {
         icon.setColorFilter(color)
         label.setTextColor(color)
         label.visibility = if (selected) View.VISIBLE else View.GONE
+    }
+
+    private fun setCardNavSelected(
+        icon: ImageView,
+        label: TextView,
+        selected: Boolean
+    ) {
+        val color = if (selected) LauncherTheme.primary(this) else LauncherTheme.textMuted(this)
+        icon.setColorFilter(color)
+        label.setTextColor(color)
+        label.visibility = if (selected) View.VISIBLE else View.GONE
+    }
+
+    private fun moveCardNavIndicator(navItem: LauncherViewModel.NavItem) {
+        val b = binding ?: return
+        val target = cardNavTarget(navItem) ?: return
+        if (!b.cardNavItems.isLaidOut || target.width <= 0) {
+            b.cardNavItems.post { moveCardNavIndicator(navItem) }
+            return
+        }
+        val indicatorWidth = (target.width * 0.72f).toInt()
+        val left = target.left + (target.width - indicatorWidth) / 2
+        val params = b.cardNavSelectionIndicator.layoutParams as FrameLayout.LayoutParams
+        if (params.width != indicatorWidth) {
+            params.width = indicatorWidth
+            b.cardNavSelectionIndicator.layoutParams = params
+        }
+        b.cardNavSelectionIndicator.background = LauncherTheme.solidPrimary(this, 2f)
+        b.cardNavSelectionIndicator.animate().cancel()
+        b.cardNavSelectionIndicator.animate()
+            .translationX(left.toFloat())
+            .setDuration(220L)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .withLayer()
+            .start()
     }
 
     private fun moveNavIndicator(navItem: LauncherViewModel.NavItem) {
@@ -546,6 +623,14 @@ class LauncherActivity : AppCompatActivity() {
         if (navItem == LauncherViewModel.NavItem.MANAGE) return b.navCards
         if (navItem == LauncherViewModel.NavItem.ACCOUNT) return b.navAccount
         return b.navHome
+    }
+
+    private fun cardNavTarget(navItem: LauncherViewModel.NavItem): View? {
+        val b = binding ?: return null
+        if (navItem == LauncherViewModel.NavItem.LIBRARY) return b.navCardLibrary
+        if (navItem == LauncherViewModel.NavItem.MANAGE) return b.navCardManage
+        if (navItem == LauncherViewModel.NavItem.ACCOUNT) return b.navCardAccount
+        return b.navCardHome
     }
 
     private fun applyLauncherThemeTone() {
@@ -669,6 +754,7 @@ class LauncherActivity : AppCompatActivity() {
         private const val KEY_HD_MODE_STARTUP = "launcher_hd_mode_startup"
         private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
         private const val KEY_PILL_NAVIGATION_STYLE = "launcher_pill_navigation_style"
+        private const val KEY_CARD_NAVIGATION_STYLE = "launcher_card_navigation_style"
         private const val KEY_SPLASH_ENABLED = "launcher_splash_enabled"
         private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
         private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
@@ -944,6 +1030,19 @@ class LauncherActivity : AppCompatActivity() {
             context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
                 .edit()
                 .putBoolean(KEY_PILL_NAVIGATION_STYLE, enabled)
+                .apply()
+        }
+
+        @JvmStatic
+        fun isCardNavigationStyle(context: android.content.Context): Boolean =
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .getBoolean(KEY_CARD_NAVIGATION_STYLE, false)
+
+        @JvmStatic
+        fun setCardNavigationStyle(context: android.content.Context, enabled: Boolean) {
+            context.getSharedPreferences(APP_PREFS, MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_CARD_NAVIGATION_STYLE, enabled)
                 .apply()
         }
 

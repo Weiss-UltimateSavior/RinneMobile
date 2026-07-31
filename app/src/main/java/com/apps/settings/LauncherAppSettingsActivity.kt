@@ -154,14 +154,20 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         val labels: Array<CharSequence> = arrayOf(
             getString(R.string.app_navigation_style_default),
             getString(R.string.app_navigation_style_pill),
+            getString(R.string.app_navigation_style_card),
         )
         LauncherDialogFactory.showSingleChoice(
             this,
             getString(R.string.app_navigation_style_dialog_title),
             labels,
-            if (LauncherActivity.isPillNavigationStyle(this)) 1 else 0,
+            when {
+                LauncherActivity.isCardNavigationStyle(this) -> 2
+                LauncherActivity.isPillNavigationStyle(this) -> 1
+                else -> 0
+            },
         ) { index ->
             LauncherActivity.setPillNavigationStyle(this, index == 1)
+            LauncherActivity.setCardNavigationStyle(this, index == 2)
             // 返回 Launcher 后 onResume() 会立即切换可见导航栏，无需重启。
             finish()
         }
@@ -250,10 +256,10 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
 
     private fun renderNavigationStyleState() {
         binding.appNavigationStyleText.setText(
-            if (LauncherActivity.isPillNavigationStyle(this)) {
-                R.string.app_navigation_style_pill
-            } else {
-                R.string.app_navigation_style_default
+            when {
+                LauncherActivity.isCardNavigationStyle(this) -> R.string.app_navigation_style_card
+                LauncherActivity.isPillNavigationStyle(this) -> R.string.app_navigation_style_pill
+                else -> R.string.app_navigation_style_default
             }
         )
     }

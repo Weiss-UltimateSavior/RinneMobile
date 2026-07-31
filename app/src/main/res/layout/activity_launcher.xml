@@ -382,4 +382,162 @@
             </LinearLayout>
         </LinearLayout>
     </FrameLayout>
+
+    <View
+        android:id="@+id/bottomNavCardShadow"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/launcher_card_nav_height"
+        android:alpha="0.55"
+        android:background="@drawable/launcher_bottom_bar_shadow"
+        android:importantForAccessibility="no"
+        android:translationY="-0.5dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/bottomNavCard"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/launcher_card_nav_height"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/launcher_nav_card_bar">
+
+            <View
+                android:id="@+id/cardNavSelectionIndicator"
+                android:layout_width="0dp"
+                android:layout_height="3dp"
+                android:layout_gravity="top|start"
+                android:importantForAccessibility="no" />
+
+            <LinearLayout
+                android:id="@+id/cardNavItems"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp">
+
+                <LinearLayout
+                    android:id="@+id/navCardHome"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/navCardHomeIcon"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:contentDescription="@string/core_home"
+                        android:src="@drawable/launcher_nav_home" />
+
+                    <TextView
+                        android:id="@+id/navCardHomeLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/core_home"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navCardLibrary"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/navCardLibraryIcon"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:contentDescription="@string/core_games"
+                        android:src="@drawable/launcher_nav_game" />
+
+                    <TextView
+                        android:id="@+id/navCardLibraryLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/core_games"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navCardManage"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/navCardManageIcon"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:contentDescription="@string/core_manage"
+                        android:src="@drawable/launcher_nav_manage" />
+
+                    <TextView
+                        android:id="@+id/navCardManageLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/core_manage"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navCardAccount"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/navCardAccountIcon"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:contentDescription="@string/core_account"
+                        android:src="@drawable/launcher_nav_account" />
+
+                    <TextView
+                        android:id="@+id/navCardAccountLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/core_account"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

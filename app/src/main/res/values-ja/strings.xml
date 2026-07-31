@@ -28,6 +28,7 @@
     <string name="app_navigation_style_dialog_title">ナビゲーションスタイルを選択</string>
     <string name="app_navigation_style_default">標準ナビゲーション</string>
     <string name="app_navigation_style_pill">フローティングピルナビ</string>
+    <string name="app_navigation_style_card">ミニマルライン</string>
     <string name="app_follow_system_tone">システムの色調に従う</string>
     <string name="app_hd_mode_startup">タブレット起動モード</string>
     <string name="home_featured_games">おすすめゲーム</string>
