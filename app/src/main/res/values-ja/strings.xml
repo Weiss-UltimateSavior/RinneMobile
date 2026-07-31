@@ -26,7 +26,7 @@
     <string name="app_home_style_featured">おすすめカードホーム</string>
     <string name="app_navigation_style_label">ナビゲーションスタイル</string>
     <string name="app_navigation_style_dialog_title">ナビゲーションスタイルを選択</string>
-    <string name="app_navigation_style_default">標準ナビゲーション</string>
+    <string name="app_navigation_style_default">クラシックナビゲーション</string>
     <string name="app_navigation_style_pill">フローティングピルナビ</string>
     <string name="app_navigation_style_card">ミニマルライン</string>
     <string name="app_navigation_style_liquid_glass">リキッドガラスナビ</string>

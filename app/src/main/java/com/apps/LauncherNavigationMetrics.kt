@@ -44,9 +44,19 @@ object LauncherNavigationMetrics {
     }
 
     @JvmStatic
-    fun isLiquidGlassStyle(context: Context): Boolean =
-        context.getSharedPreferences(LauncherActivity.APP_PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_LIQUID_GLASS_NAVIGATION_STYLE, false)
+    fun isLiquidGlassStyle(context: Context): Boolean {
+        val preferences = context.getSharedPreferences(
+            LauncherActivity.APP_PREFS,
+            Context.MODE_PRIVATE,
+        )
+        if (preferences.contains(KEY_LIQUID_GLASS_NAVIGATION_STYLE)) {
+            return preferences.getBoolean(KEY_LIQUID_GLASS_NAVIGATION_STYLE, false)
+        }
+        // Preserve an existing pill/card choice from builds released before liquid glass.
+        // With no navigation preference at all, liquid glass is the new default.
+        return !preferences.getBoolean(KEY_PILL_NAVIGATION_STYLE, false) &&
+            !preferences.getBoolean(KEY_CARD_NAVIGATION_STYLE, false)
+    }
 
     @JvmStatic
     fun setLiquidGlassStyle(context: Context, enabled: Boolean) {

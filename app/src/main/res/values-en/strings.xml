@@ -26,7 +26,7 @@
     <string name="app_home_style_featured">Featured Card Home</string>
     <string name="app_navigation_style_label">Navigation Style</string>
     <string name="app_navigation_style_dialog_title">Choose Navigation Style</string>
-    <string name="app_navigation_style_default">Default Navigation</string>
+    <string name="app_navigation_style_default">Classic Navigation</string>
     <string name="app_navigation_style_pill">Floating Pill Navigation</string>
     <string name="app_navigation_style_card">Minimal Line</string>
     <string name="app_navigation_style_liquid_glass">Liquid Glass Navigation</string>

@@ -12,6 +12,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -61,6 +62,8 @@ class LauncherActivity : AppCompatActivity() {
     private var pinnedGameSessionController: GameSessionController? = null
     private val liquidGlassSelectedIndex = mutableIntStateOf(0)
     private val liquidGlassPrimaryColor = mutableIntStateOf(Color.TRANSPARENT)
+    private val liquidGlassBackgroundColor = mutableIntStateOf(Color.TRANSPARENT)
+    private val liquidGlassLandscapeIcon = mutableIntStateOf(R.drawable.launcher_game_center_default)
     private val liquidGlassDarkMode = mutableStateOf(false)
     private var appliedNavigationStyle = LauncherNavigationMetrics.Style.DEFAULT
 
@@ -131,35 +134,41 @@ class LauncherActivity : AppCompatActivity() {
         if (appliedNavigationStyle == LauncherNavigationMetrics.Style.LIQUID_GLASS) {
             refreshLiquidGlassThemeState()
             hideXmlNavigation(b)
-            val composeRoot = ComposeView(this).apply {
+            val composeBackground = ComposeView(this).apply {
+                setViewCompositionStrategy(
+                    ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
+                )
+                setContent {
+                    LauncherComposeBackground(liquidGlassBackgroundColor.intValue)
+                }
+            }
+            val xmlRoot = b.root as ViewGroup
+            xmlRoot.removeView(b.launcherParticleView)
+            xmlRoot.removeView(b.launcherFragmentContainer)
+            val backdropHost = FrameLayout(this).apply {
+                addView(composeBackground, matchParentLayoutParams())
+                addView(b.launcherParticleView, matchParentLayoutParams())
+                addView(b.launcherFragmentContainer, matchParentLayoutParams())
+            }
+            val composeNavigation = ComposeView(this).apply {
                 setViewCompositionStrategy(
                     ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
                 )
                 setContent {
                     LauncherLiquidGlassHost(
-                        launcherRoot = b.root,
+                        launcherRoot = backdropHost,
                         selectedIndex = liquidGlassSelectedIndex.intValue,
                         darkMode = liquidGlassDarkMode.value,
                         primaryColor = liquidGlassPrimaryColor.intValue,
+                        landscapeIcon = liquidGlassLandscapeIcon.intValue,
                         onItemClick = ::onLiquidGlassNavigationItemClick,
+                        onLandscapeClick = ::onLiquidGlassLandscapeClick,
                     )
                 }
             }
             val host = FrameLayout(this).apply {
-                addView(
-                    b.root,
-                    FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                    ),
-                )
-                addView(
-                    composeRoot,
-                    FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                    ),
-                )
+                addView(backdropHost, matchParentLayoutParams())
+                addView(composeNavigation, matchParentLayoutParams())
             }
             setContentView(host)
         } else {
@@ -440,13 +449,20 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun onLiquidGlassNavigationItemClick(index: Int) {
-        binding?.root?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        binding?.launcherFragmentContainer
+            ?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         when (index) {
             0 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.HOME)
             1 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.LIBRARY)
             2 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.MANAGE)
             3 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.ACCOUNT)
         }
+    }
+
+    private fun onLiquidGlassLandscapeClick() {
+        binding?.launcherFragmentContainer
+            ?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        confirmOpenPadGameModeActivity()
     }
 
     private fun observeState() {
@@ -765,8 +781,21 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun refreshLiquidGlassThemeState() {
         liquidGlassPrimaryColor.intValue = LauncherTheme.primary(this)
+        liquidGlassBackgroundColor.intValue = LauncherTheme.bg(this)
+        liquidGlassLandscapeIcon.intValue = when {
+            isRinneTheme(this) -> R.drawable.launcher_theme_rinne_def
+            isAnriTheme(this) -> R.drawable.launcher_theme_anri_def
+            isXinhaitianTheme(this) -> R.drawable.launcher_theme_xinhaitian_def
+            isNatsumeTheme(this) -> R.drawable.launcher_theme_natsume_def
+            else -> R.drawable.launcher_game_center_default
+        }
         liquidGlassDarkMode.value = isLauncherDarkMode()
     }
+
+    private fun matchParentLayoutParams() = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT,
+    )
 
     /**
      * 主题 Logo 的 PNG 透明边距并不一致；按默认游戏中心 Logo 的可视范围校正缩放。

@@ -26,7 +26,7 @@
     <string name="app_home_style_featured">精选卡片首页</string>
     <string name="app_navigation_style_label">导航样式</string>
     <string name="app_navigation_style_dialog_title">选择导航样式</string>
-    <string name="app_navigation_style_default">默认导航栏</string>
+    <string name="app_navigation_style_default">经典导航栏</string>
     <string name="app_navigation_style_pill">悬浮胶囊导航</string>
     <string name="app_navigation_style_card">简约线条</string>
     <string name="app_navigation_style_liquid_glass">流体玻璃导航</string>

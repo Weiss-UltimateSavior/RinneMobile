@@ -6,6 +6,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,6 +71,15 @@ private val liquidGlassNavItems = listOf(
     LiquidGlassNavItem(R.drawable.launcher_nav_account, R.string.core_account),
 )
 
+@Composable
+fun LauncherComposeBackground(backgroundColor: Int) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color(backgroundColor)),
+    )
+}
+
 /**
  * Hosts the existing View launcher as a recorded Backdrop and draws the optional glass navigation
  * above it. This keeps the rest of the launcher on its established XML/View implementation.
@@ -79,20 +90,83 @@ fun LauncherLiquidGlassHost(
     selectedIndex: Int,
     darkMode: Boolean,
     primaryColor: Int,
+    @DrawableRes landscapeIcon: Int,
     onItemClick: (Int) -> Unit,
+    onLandscapeClick: () -> Unit,
 ) {
     val backdrop = remember(launcherRoot) { AndroidViewBackdrop(launcherRoot) }
 
     Box(Modifier.fillMaxSize()) {
-        LiquidGlassBottomNavigation(
-            selectedIndex = selectedIndex,
-            backdrop = backdrop,
-            darkMode = darkMode,
-            primaryColor = Color(primaryColor),
-            onItemClick = onItemClick,
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LiquidGlassBottomNavigation(
+                selectedIndex = selectedIndex,
+                backdrop = backdrop,
+                darkMode = darkMode,
+                primaryColor = Color(primaryColor),
+                onItemClick = onItemClick,
+                modifier = Modifier.weight(1f),
+            )
+            LiquidGlassLandscapeButton(
+                backdrop = backdrop,
+                darkMode = darkMode,
+                primaryColor = Color(primaryColor),
+                icon = landscapeIcon,
+                onClick = onLandscapeClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LiquidGlassLandscapeButton(
+    backdrop: Backdrop,
+    darkMode: Boolean,
+    primaryColor: Color,
+    @DrawableRes icon: Int,
+    onClick: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val surfaceColor = if (darkMode) Color(0xFF171919) else Color.White
+
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { CircleShape },
+                effects = {
+                    vibrancy()
+                    blur(with(density) { 8.dp.toPx() })
+                    lens(
+                        with(density) { 18.dp.toPx() },
+                        with(density) { 22.dp.toPx() },
+                    )
+                },
+                highlight = { Highlight.Default.copy(alpha = 0.78f) },
+                shadow = { Shadow.Default.copy(alpha = 0.8f) },
+                onDrawSurface = { drawRect(surfaceColor.copy(alpha = 0.44f)) },
+            )
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = stringResource(R.string.core_landscape_mode_title),
+            modifier = Modifier.size(29.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(primaryColor),
         )
     }
 }
@@ -238,7 +312,7 @@ private fun LiquidGlassBottomNavigation(
                     }
                     .drawBackdrop(
                         backdrop = backdrop,
-                        shape = { RoundedCornerShape(18.dp) },
+                        shape = { shape },
                         effects = {
                             vibrancy()
                             blur(with(density) { 9.dp.toPx() })
