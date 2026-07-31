@@ -87,7 +87,7 @@
             android:name="com.apps.LauncherActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.YukiHub.Splash"
+            android:theme="@style/Theme.YukiHub.Launcher"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

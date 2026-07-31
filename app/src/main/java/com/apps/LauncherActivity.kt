@@ -952,10 +952,38 @@ class LauncherActivity : AppCompatActivity() {
             if (imageView == null) return
             val imageFile = customSplashImageFile(context)
             if (!imageFile.isFile) return
+            // 隐藏 ImageView 避免 setContentView 后先显示 XML 默认启动图，
+            // 待自定义图片解码成功后再设为 VISIBLE，消除"默认图→自定义图"的视觉切换。
+            imageView.visibility = View.INVISIBLE
             try {
                 imageView.setImageURI(Uri.fromFile(imageFile))
+                if (imageView.drawable != null) {
+                    imageView.visibility = View.VISIBLE
+                } else {
+                    // 异步解码：等待 drawable 就绪后再显示，500ms 超时后回退默认图
+                    val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                    val preDraw = object : android.view.ViewTreeObserver.OnPreDrawListener {
+                        override fun onPreDraw(): Boolean {
+                            if (imageView.drawable != null) {
+                                imageView.viewTreeObserver.removeOnPreDrawListener(this)
+                                handler.removeCallbacksAndMessages(null)
+                                imageView.visibility = View.VISIBLE
+                                return true
+                            }
+                            return false
+                        }
+                    }
+                    imageView.viewTreeObserver.addOnPreDrawListener(preDraw)
+                    handler.postDelayed({
+                        if (imageView.visibility != View.VISIBLE) {
+                            imageView.viewTreeObserver.removeOnPreDrawListener(preDraw)
+                            imageView.visibility = View.VISIBLE
+                        }
+                    }, 500)
+                }
             } catch (_: Throwable) {
-                // Keep the XML default splash image when a custom file cannot be decoded.
+                // 解码失败时恢复显示默认启动图
+                imageView.visibility = View.VISIBLE
             }
         }
     }
