@@ -280,11 +280,15 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void showNavigationStylePicker() {
         String[] labels = {
                 getString(R.string.app_navigation_style_default),
-                getString(R.string.app_navigation_style_pill)
+                getString(R.string.app_navigation_style_pill),
+                getString(R.string.app_navigation_style_card),
+                getString(R.string.app_navigation_style_liquid_glass)
         };
         PadDialogFactory.showSingleChoice(this, getString(R.string.app_navigation_style_dialog_title), labels,
-                LauncherActivity.isPillNavigationStyle(this) ? 1 : 0, index -> {
+                currentNavigationStyleIndex(), index -> {
                     LauncherActivity.setPillNavigationStyle(this, index == 1);
+                    LauncherActivity.setCardNavigationStyle(this, index == 2);
+                    LauncherActivity.setLiquidGlassNavigationStyle(this, index == 3);
                     finish();
                 });
     }
@@ -296,9 +300,23 @@ public class PadSettingsActivity extends AppCompatActivity {
                 ? R.string.app_start_page_landscape : R.string.app_start_page_portrait);
         binding.padAppHomeStyleText.setText(LauncherActivity.isFeaturedHomeStyle(this)
                 ? R.string.app_home_style_featured : R.string.app_home_style_default);
-        binding.padAppNavigationStyleText.setText(LauncherActivity.isPillNavigationStyle(this)
-                ? R.string.app_navigation_style_pill : R.string.app_navigation_style_default);
+        int navigationLabel = R.string.app_navigation_style_default;
+        if (LauncherActivity.isLiquidGlassNavigationStyle(this)) {
+            navigationLabel = R.string.app_navigation_style_liquid_glass;
+        } else if (LauncherActivity.isCardNavigationStyle(this)) {
+            navigationLabel = R.string.app_navigation_style_card;
+        } else if (LauncherActivity.isPillNavigationStyle(this)) {
+            navigationLabel = R.string.app_navigation_style_pill;
+        }
+        binding.padAppNavigationStyleText.setText(navigationLabel);
         binding.padFollowSystemToneSwitch.setChecked(LauncherActivity.isFollowingSystemTone(this));
+    }
+
+    private int currentNavigationStyleIndex() {
+        if (LauncherActivity.isLiquidGlassNavigationStyle(this)) return 3;
+        if (LauncherActivity.isCardNavigationStyle(this)) return 2;
+        if (LauncherActivity.isPillNavigationStyle(this)) return 1;
+        return 0;
     }
 
     private String[] languageLabels() {

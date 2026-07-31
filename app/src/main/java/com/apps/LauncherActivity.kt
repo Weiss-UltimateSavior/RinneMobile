@@ -22,6 +22,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -55,6 +59,10 @@ class LauncherActivity : AppCompatActivity() {
     private var navIndicatorReady = false
     private var splashDelay: Disposable? = null
     private var pinnedGameSessionController: GameSessionController? = null
+    private val liquidGlassSelectedIndex = mutableIntStateOf(0)
+    private val liquidGlassPrimaryColor = mutableIntStateOf(Color.TRANSPARENT)
+    private val liquidGlassDarkMode = mutableStateOf(false)
+    private var appliedNavigationStyle = LauncherNavigationMetrics.Style.DEFAULT
 
     /**
      * Splash 首帧绘制完成后再保留的最低展示时长，用于品牌曝光与状态栏图标色阶过渡。
@@ -119,7 +127,44 @@ class LauncherActivity : AppCompatActivity() {
 
         binding = ActivityLauncherBinding.inflate(layoutInflater)
         val b = binding!!
-        setContentView(b.root)
+        appliedNavigationStyle = LauncherNavigationMetrics.currentStyle(this)
+        if (appliedNavigationStyle == LauncherNavigationMetrics.Style.LIQUID_GLASS) {
+            refreshLiquidGlassThemeState()
+            hideXmlNavigation(b)
+            val composeRoot = ComposeView(this).apply {
+                setViewCompositionStrategy(
+                    ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
+                )
+                setContent {
+                    LauncherLiquidGlassHost(
+                        launcherRoot = b.root,
+                        selectedIndex = liquidGlassSelectedIndex.intValue,
+                        darkMode = liquidGlassDarkMode.value,
+                        primaryColor = liquidGlassPrimaryColor.intValue,
+                        onItemClick = ::onLiquidGlassNavigationItemClick,
+                    )
+                }
+            }
+            val host = FrameLayout(this).apply {
+                addView(
+                    b.root,
+                    FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+                addView(
+                    composeRoot,
+                    FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+            }
+            setContentView(host)
+        } else {
+            setContentView(b.root)
+        }
 
         viewModel = ViewModelProvider(this).get(LauncherViewModel::class.java)
 
@@ -145,6 +190,7 @@ class LauncherActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         synchronizeToneModeFromPreferences()
+        if (recreateIfLiquidGlassModeChanged()) return
         val controller = pinnedGameSessionController
         if (controller != null && controller.hasActiveSession()) {
             controller.finishDirectPlaySessionIfNeeded(this)
@@ -157,6 +203,18 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
         viewModel?.refreshStats()
+    }
+
+    private fun recreateIfLiquidGlassModeChanged(): Boolean {
+        if (binding == null) return false
+        val currentStyle = LauncherNavigationMetrics.currentStyle(this)
+        val hostChanged =
+            (currentStyle == LauncherNavigationMetrics.Style.LIQUID_GLASS) !=
+                (appliedNavigationStyle == LauncherNavigationMetrics.Style.LIQUID_GLASS)
+        appliedNavigationStyle = currentStyle
+        if (!hostChanged) return false
+        recreate()
+        return true
     }
 
     /**
@@ -381,6 +439,16 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
+    private fun onLiquidGlassNavigationItemClick(index: Int) {
+        binding?.root?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        when (index) {
+            0 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.HOME)
+            1 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.LIBRARY)
+            2 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.MANAGE)
+            3 -> viewModel?.selectNavItem(LauncherViewModel.NavItem.ACCOUNT)
+        }
+    }
+
     private fun observeState() {
         val vm = viewModel ?: return
         vm.getLauncherState().observe(this) { state ->
@@ -441,6 +509,16 @@ class LauncherActivity : AppCompatActivity() {
         val b = binding ?: return
         val navItem = selectedItem ?: LauncherViewModel.NavItem.HOME
         applyLauncherThemeTone()
+        if (isLiquidGlassNavigationStyle(this)) {
+            hideXmlNavigation(b)
+            liquidGlassSelectedIndex.intValue = when (navItem) {
+                LauncherViewModel.NavItem.HOME -> 0
+                LauncherViewModel.NavItem.LIBRARY -> 1
+                LauncherViewModel.NavItem.MANAGE -> 2
+                LauncherViewModel.NavItem.ACCOUNT -> 3
+            }
+            return
+        }
         if (isCardNavigationStyle(this)) {
             b.bottomNav.visibility = View.GONE
             b.bottomNavShadow.visibility = View.GONE
@@ -489,6 +567,14 @@ class LauncherActivity : AppCompatActivity() {
             navItem == LauncherViewModel.NavItem.ACCOUNT
         )
         moveNavIndicator(navItem)
+    }
+
+    private fun hideXmlNavigation(b: ActivityLauncherBinding) {
+        b.bottomNav.visibility = View.GONE
+        b.bottomNavShadow.visibility = View.GONE
+        b.bottomNavPill.visibility = View.GONE
+        b.bottomNavCard.visibility = View.GONE
+        b.bottomNavCardShadow.visibility = View.GONE
     }
 
     private fun renderPillNav(navItem: LauncherViewModel.NavItem) {
@@ -635,6 +721,7 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun applyLauncherThemeTone() {
         val b = binding ?: return
+        refreshLiquidGlassThemeState()
         b.navLaunchCenterCircle.background = LauncherTheme.circleWithSoftShadow(this)
         val rinneTheme = isRinneTheme(this)
         val anriTheme = isAnriTheme(this)
@@ -674,6 +761,11 @@ class LauncherActivity : AppCompatActivity() {
             setColorFilter(LauncherTheme.primary(this@LauncherActivity))
         }
         applyCenterLogoScale(b.navPillLaunchCenterIcon, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme)
+    }
+
+    private fun refreshLiquidGlassThemeState() {
+        liquidGlassPrimaryColor.intValue = LauncherTheme.primary(this)
+        liquidGlassDarkMode.value = isLauncherDarkMode()
     }
 
     /**
@@ -1034,6 +1126,15 @@ class LauncherActivity : AppCompatActivity() {
         @JvmStatic
         fun setCardNavigationStyle(context: android.content.Context, enabled: Boolean) {
             LauncherNavigationMetrics.setCardStyle(context, enabled)
+        }
+
+        @JvmStatic
+        fun isLiquidGlassNavigationStyle(context: android.content.Context): Boolean =
+            LauncherNavigationMetrics.isLiquidGlassStyle(context)
+
+        @JvmStatic
+        fun setLiquidGlassNavigationStyle(context: android.content.Context, enabled: Boolean) {
+            LauncherNavigationMetrics.setLiquidGlassStyle(context, enabled)
         }
 
         /** Returns the bottom clearance required by the active phone navigation variant. */

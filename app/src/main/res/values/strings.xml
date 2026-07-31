@@ -29,6 +29,7 @@
     <string name="app_navigation_style_default">默认导航栏</string>
     <string name="app_navigation_style_pill">悬浮胶囊导航</string>
     <string name="app_navigation_style_card">简约线条</string>
+    <string name="app_navigation_style_liquid_glass">流体玻璃导航</string>
     <string name="app_follow_system_tone">跟随系统自动色调</string>
     <string name="app_hd_mode_startup">平板启动模式</string>
     <string name="home_featured_games">精选游戏</string>

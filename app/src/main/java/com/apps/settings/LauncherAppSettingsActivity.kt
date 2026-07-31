@@ -155,12 +155,14 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
             getString(R.string.app_navigation_style_default),
             getString(R.string.app_navigation_style_pill),
             getString(R.string.app_navigation_style_card),
+            getString(R.string.app_navigation_style_liquid_glass),
         )
         LauncherDialogFactory.showSingleChoice(
             this,
             getString(R.string.app_navigation_style_dialog_title),
             labels,
             when {
+                LauncherActivity.isLiquidGlassNavigationStyle(this) -> 3
                 LauncherActivity.isCardNavigationStyle(this) -> 2
                 LauncherActivity.isPillNavigationStyle(this) -> 1
                 else -> 0
@@ -168,7 +170,8 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         ) { index ->
             LauncherActivity.setPillNavigationStyle(this, index == 1)
             LauncherActivity.setCardNavigationStyle(this, index == 2)
-            // 返回 Launcher 后 onResume() 会立即切换可见导航栏，无需重启。
+            LauncherActivity.setLiquidGlassNavigationStyle(this, index == 3)
+            // 返回 Launcher 后由 onResume() 切换导航；进入或离开 Compose 玻璃宿主时重建页面。
             finish()
         }
     }
@@ -257,6 +260,7 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
     private fun renderNavigationStyleState() {
         binding.appNavigationStyleText.setText(
             when {
+                LauncherActivity.isLiquidGlassNavigationStyle(this) -> R.string.app_navigation_style_liquid_glass
                 LauncherActivity.isCardNavigationStyle(this) -> R.string.app_navigation_style_card
                 LauncherActivity.isPillNavigationStyle(this) -> R.string.app_navigation_style_pill
                 else -> R.string.app_navigation_style_default

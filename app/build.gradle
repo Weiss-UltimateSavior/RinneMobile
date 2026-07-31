@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -56,6 +57,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        compose true
     }
 
     packaging {
@@ -95,6 +97,9 @@ dependencies {
     implementation 'com.github.Dimezis:BlurView:version-3.2.0'
     implementation libs.coroutines.android
     implementation libs.kotlin.stdlib
+    implementation libs.compose.foundation
+    implementation libs.compose.ui
+    implementation 'io.github.kyant0:backdrop:1.0.2'
     testImplementation libs.junit
     // JVM unit tests exercise the same org.json parsing used on Android.
     testImplementation 'org.json:json:20240303'
