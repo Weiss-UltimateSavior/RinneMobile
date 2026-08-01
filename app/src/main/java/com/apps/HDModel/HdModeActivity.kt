@@ -19,6 +19,8 @@ import com.apps.data.LauncherViewModel
 import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ActivityHdModeBinding
+import com.core.launcherbridge.LauncherUpdateBridge
+import com.core.util.RxMainScheduler
 
 /** 大屏横屏模式的基础外壳；侧边导航功能将在后续逐项接入。 */
 class HdModeActivity : AppCompatActivity() {
@@ -64,6 +66,40 @@ class HdModeActivity : AppCompatActivity() {
             launcherViewModel.refresh()
             showHomeFragment()
         }
+        scheduleAutoUpdateCheck()
+    }
+
+    /**
+     * 与 LauncherActivity.scheduleAutoUpdateCheck 等价：启动后延迟静默检查更新，
+     * 仅在有新版本时弹窗提示，失败静默处理。
+     */
+    private fun scheduleAutoUpdateCheck() {
+        RxMainScheduler.postDelayed(Runnable {
+            if (!isFinishing && !isDestroyed) {
+                LauncherUpdateBridge.checkUpdate(this, object : LauncherUpdateBridge.Callback {
+                    override fun onResult(
+                        info: LauncherUpdateBridge.UpdateInfo?,
+                        currentVersion: String,
+                        hasUpdate: Boolean,
+                    ) {
+                        if (isFinishing || isDestroyed) return
+                        if (hasUpdate) {
+                            LauncherTheme.showUpdateResultDialog(
+                                this@HdModeActivity,
+                                info,
+                                currentVersion,
+                                true,
+                                null,
+                            )
+                        }
+                    }
+
+                    override fun onError(message: String) {
+                        // 静默失败，不打扰用户
+                    }
+                })
+            }
+        }, 2000)
     }
 
     override fun onResume() {
