@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.apps.LauncherActivity
+import com.apps.LauncherThemeStyle
 import com.apps.navigationOverlayBottomPadding
 import com.apps.refreshNavigationOverlayInsets
 import com.apps.account.LauncherDisclaimerActivity
@@ -244,21 +245,16 @@ open class LauncherHomeFragment : Fragment() {
 
     private fun applyThemeStyle() {
         val currentBinding = binding ?: return
-        if (LauncherActivity.isRinneTheme(requireContext())) {
-            currentBinding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_rinne_bg)
-            currentBinding.homeStatsScrim.background = LauncherTheme.statsScrim(requireContext())
-        } else if (LauncherActivity.isAnriTheme(requireContext())) {
-            currentBinding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_bg_anri)
-            currentBinding.homeStatsScrim.background = LauncherTheme.statsScrim(requireContext())
-        } else if (LauncherActivity.isXinhaitianTheme(requireContext())) {
-            currentBinding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_xinhaitian_bg)
-            currentBinding.homeStatsScrim.background = LauncherTheme.statsScrim(requireContext())
-        } else if (LauncherActivity.isNatsumeTheme(requireContext())) {
-            currentBinding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_natsume_bg)
-            currentBinding.homeStatsScrim.background = LauncherTheme.statsScrim(requireContext())
-        } else {
-            currentBinding.homeStatsImage.setImageResource(com.core.R.drawable.launcher_home_stats_bg)
+        currentBinding.homeStatsImage.setImageResource(LauncherThemeStyle.homeStatsImageRes(requireContext()))
+        // default 主题 scrim 用 launcher_home_stats_scrim 资源,其他主题用 statsScrim。
+        val isDefault = !LauncherActivity.isRinneTheme(requireContext())
+            && !LauncherActivity.isAnriTheme(requireContext())
+            && !LauncherActivity.isXinhaitianTheme(requireContext())
+            && !LauncherActivity.isNatsumeTheme(requireContext())
+        if (isDefault) {
             currentBinding.homeStatsScrim.setBackgroundResource(com.core.R.drawable.launcher_home_stats_scrim)
+        } else {
+            currentBinding.homeStatsScrim.background = LauncherTheme.statsScrim(requireContext())
         }
     }
 

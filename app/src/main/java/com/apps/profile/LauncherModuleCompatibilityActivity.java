@@ -1,5 +1,6 @@
 package com.apps.profile;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -29,6 +31,25 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     private static final String RENPY_INSTALL_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RenPyPlugin-8.5.0-1.01.00.apk";
     private static final String GODOT_INSTALL_URL = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/Godot.4.3-Plugin-1.00.60.apk";
 
+    /** 各模块的静态差异：名称/详情资源、安装页 URL、用于弹窗标题的简称。 */
+    private enum ModuleType {
+        RPGM(R.string.module_rpgm_name, R.string.module_rpgm_detail, RPGM_INSTALL_URL, "RPGM"),
+        RENPY(R.string.module_renpy_name, R.string.module_renpy_detail, RENPY_INSTALL_URL, "RenPy"),
+        GODOT(R.string.module_godot_name, R.string.module_godot_detail, GODOT_INSTALL_URL, "Godot");
+
+        final int nameRes;
+        final int detailRes;
+        final String installUrl;
+        final String shortName;
+
+        ModuleType(int nameRes, int detailRes, String installUrl, String shortName) {
+            this.nameRes = nameRes;
+            this.detailRes = detailRes;
+            this.installUrl = installUrl;
+            this.shortName = shortName;
+        }
+    }
+
     private ActivityLauncherModuleCompatibilityBinding binding;
     private boolean rpgmModuleInstalled;
     private boolean renpyModuleInstalled;
@@ -48,30 +69,26 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         LauncherTabletPortraitScaler.applyActivityContent(this);
         applySystemBarInsets();
         LauncherTheme.applyPrimaryTone(binding.getRoot());
-        binding.moduleRpgmRow.setOnClickListener(view -> openRpgmModule());
-        binding.moduleRenpyRow.setOnClickListener(view -> openRenpyModule());
-        binding.moduleGodotRow.setOnClickListener(view -> openGodotModule());
-        // 长按列表项：弹窗提醒跳转浏览器下载。
-        binding.moduleRpgmRow.setOnLongClickListener(view -> { promptDownload("RPGM", this::openRpgmInstallPage); return true; });
-        binding.moduleRenpyRow.setOnLongClickListener(view -> { promptDownload("RenPy", this::openRenpyInstallPage); return true; });
-        binding.moduleGodotRow.setOnLongClickListener(view -> { promptDownload("Godot", this::openGodotInstallPage); return true; });
-        // 右侧图标：已安装时点击切换启用/禁用；未安装时点击等价于行点击（前往安装）。
-        binding.moduleRpgmIcon.setOnClickListener(view -> handleRpgmIconClick());
-        binding.moduleRenpyIcon.setOnClickListener(view -> handleRenpyIconClick());
-        binding.moduleGodotIcon.setOnClickListener(view -> handleGodotIconClick());
+        for (ModuleType module : ModuleType.values()) {
+            // 行点击：已安装提示状态，未安装前往安装页。
+            getModuleRowView(module).setOnClickListener(view -> openModule(module));
+            // 长按列表项：弹窗提醒跳转浏览器下载。
+            getModuleRowView(module).setOnLongClickListener(view -> {
+                promptDownload(module);
+                return true;
+            });
+            // 右侧图标：已安装时点击切换启用/禁用；未安装时点击等价于行点击（前往安装）。
+            getModuleIconView(module).setOnClickListener(view -> handleModuleIconClick(module));
+        }
         refreshInstalledModules();
     }
 
     private void refreshInstalledModules() {
-        binding.moduleRpgmRow.setEnabled(false);
-        binding.moduleRenpyRow.setEnabled(false);
-        binding.moduleGodotRow.setEnabled(false);
-        binding.moduleRpgmRow.setAlpha(1f);
-        binding.moduleRenpyRow.setAlpha(1f);
-        binding.moduleGodotRow.setAlpha(1f);
-        binding.moduleRpgmIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
-        binding.moduleRenpyIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
-        binding.moduleGodotIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
+        for (ModuleType module : ModuleType.values()) {
+            getModuleRowView(module).setEnabled(false);
+            getModuleRowView(module).setAlpha(1f);
+            getModuleIconView(module).setImageTintList(ColorStateList.valueOf(LauncherTheme.textMuted(this)));
+        }
         AppExecutors.runOnIo(() -> {
             boolean rpgmInstalled = LauncherModuleBridge.isRpgMakerModuleInstalled(this);
             boolean renpyInstalled = LauncherModuleBridge.isRenPyModuleInstalled(this);
@@ -87,23 +104,103 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
                 rpgmModuleEnabled = rpgmEnabled;
                 renpyModuleEnabled = renpyEnabled;
                 godotModuleEnabled = godotEnabled;
-                binding.moduleRpgmRow.setEnabled(true);
-                binding.moduleRenpyRow.setEnabled(true);
-                binding.moduleGodotRow.setEnabled(true);
-                binding.moduleRpgmRow.setAlpha(1f);
-                binding.moduleRenpyRow.setAlpha(1f);
-                binding.moduleGodotRow.setAlpha(1f);
-                applyModuleIconTint(binding.moduleRpgmIcon, rpgmInstalled, rpgmEnabled);
-                applyModuleIconTint(binding.moduleRenpyIcon, renpyInstalled, renpyEnabled);
-                applyModuleIconTint(binding.moduleGodotIcon, godotInstalled, godotEnabled);
-                updateModuleDescription(binding.moduleRpgmDescription, rpgmInstalled, rpgmEnabled,
-                        R.string.module_rpgm_detail);
-                updateModuleDescription(binding.moduleRenpyDescription, renpyInstalled, renpyEnabled,
-                        R.string.module_renpy_detail);
-                updateModuleDescription(binding.moduleGodotDescription, godotInstalled, godotEnabled,
-                        R.string.module_godot_detail);
+                for (ModuleType module : ModuleType.values()) {
+                    getModuleRowView(module).setEnabled(true);
+                    getModuleRowView(module).setAlpha(1f);
+                    boolean installed = isModuleInstalled(module);
+                    boolean enabled = isModuleEnabled(module);
+                    applyModuleIconTint(getModuleIconView(module), installed, enabled);
+                    updateModuleDescription(getModuleDescriptionView(module), installed, enabled,
+                            module.detailRes);
+                }
             });
         });
+    }
+
+    // ----- 模块状态 / 视图 helper（统一封装三个模块的差异） -----
+
+    private boolean isModuleInstalled(ModuleType module) {
+        switch (module) {
+            case RPGM:
+                return rpgmModuleInstalled;
+            case RENPY:
+                return renpyModuleInstalled;
+            case GODOT:
+                return godotModuleInstalled;
+            default:
+                throw new IllegalArgumentException("Unknown module: " + module);
+        }
+    }
+
+    private boolean isModuleEnabled(ModuleType module) {
+        switch (module) {
+            case RPGM:
+                return rpgmModuleEnabled;
+            case RENPY:
+                return renpyModuleEnabled;
+            case GODOT:
+                return godotModuleEnabled;
+            default:
+                throw new IllegalArgumentException("Unknown module: " + module);
+        }
+    }
+
+    private void setModuleEnabled(ModuleType module, boolean enabled) {
+        switch (module) {
+            case RPGM:
+                LauncherModuleBridge.setRpgMakerModuleEnabled(this, enabled);
+                rpgmModuleEnabled = enabled;
+                break;
+            case RENPY:
+                LauncherModuleBridge.setRenPyModuleEnabled(this, enabled);
+                renpyModuleEnabled = enabled;
+                break;
+            case GODOT:
+                LauncherModuleBridge.setGodotModuleEnabled(this, enabled);
+                godotModuleEnabled = enabled;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown module: " + module);
+        }
+    }
+
+    private View getModuleRowView(ModuleType module) {
+        switch (module) {
+            case RPGM:
+                return binding.moduleRpgmRow;
+            case RENPY:
+                return binding.moduleRenpyRow;
+            case GODOT:
+                return binding.moduleGodotRow;
+            default:
+                throw new IllegalArgumentException("Unknown module: " + module);
+        }
+    }
+
+    private ImageView getModuleIconView(ModuleType module) {
+        switch (module) {
+            case RPGM:
+                return binding.moduleRpgmIcon;
+            case RENPY:
+                return binding.moduleRenpyIcon;
+            case GODOT:
+                return binding.moduleGodotIcon;
+            default:
+                throw new IllegalArgumentException("Unknown module: " + module);
+        }
+    }
+
+    private TextView getModuleDescriptionView(ModuleType module) {
+        switch (module) {
+            case RPGM:
+                return binding.moduleRpgmDescription;
+            case RENPY:
+                return binding.moduleRenpyDescription;
+            case GODOT:
+                return binding.moduleGodotDescription;
+            default:
+                throw new IllegalArgumentException("Unknown module: " + module);
+        }
     }
 
     /**
@@ -114,7 +211,7 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
      *   <li>已安装 + 未启用 → textMuted 灰，表示「关闭」状态</li>
      * </ul>
      */
-    private void applyModuleIconTint(android.widget.ImageView icon, boolean installed, boolean enabled) {
+    private void applyModuleIconTint(ImageView icon, boolean installed, boolean enabled) {
         int color;
         if (!installed) {
             color = LauncherTheme.danger(this);
@@ -154,23 +251,23 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
 
     // ----- 长按：跳转浏览器下载 -----
 
-    private void promptDownload(String moduleName, Runnable openInstallPage) {
+    private void promptDownload(ModuleType module) {
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                getString(R.string.module_download_title, moduleName),
+                getString(R.string.module_download_title, module.shortName),
                 getString(R.string.module_download_message),
                 getString(R.string.theme_go_to_download),
-                openInstallPage);
+                () -> openInstallPage(module.installUrl));
     }
 
     // ----- 行点击 -----
 
-    private void openRpgmModule() {
-        if (rpgmModuleInstalled) {
+    private void openModule(ModuleType module) {
+        if (isModuleInstalled(module)) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    getString(R.string.module_rpgm_name),
-                    rpgmModuleEnabled
+                    getString(module.nameRes),
+                    isModuleEnabled(module)
                             ? getString(R.string.module_installed_enabled_hint)
                             : getString(R.string.module_installed_disabled_hint),
                     getString(R.string.settings_got_it),
@@ -179,176 +276,55 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
         }
         LauncherDialogFactory.showStandardConfirm(
                 this,
-                getString(R.string.module_install_title, "RPGM"),
+                getString(R.string.module_install_title, module.shortName),
                 getString(R.string.module_install_message),
                 getString(R.string.module_go_to_install),
-                this::openRpgmInstallPage);
-    }
-
-    private void openRenpyModule() {
-        if (renpyModuleInstalled) {
-            LauncherDialogFactory.showStandardConfirm(
-                    this,
-                    getString(R.string.module_renpy_name),
-                    renpyModuleEnabled
-                            ? getString(R.string.module_installed_enabled_hint)
-                            : getString(R.string.module_installed_disabled_hint),
-                    getString(R.string.settings_got_it),
-                    null);
-            return;
-        }
-        LauncherDialogFactory.showStandardConfirm(
-                this,
-                getString(R.string.module_install_title, "RenPy"),
-                getString(R.string.module_install_message),
-                getString(R.string.module_go_to_install),
-                this::openRenpyInstallPage);
-    }
-
-    private void openGodotModule() {
-        if (godotModuleInstalled) {
-            LauncherDialogFactory.showStandardConfirm(
-                    this,
-                    getString(R.string.module_godot_name),
-                    godotModuleEnabled
-                            ? getString(R.string.module_installed_enabled_hint)
-                            : getString(R.string.module_installed_disabled_hint),
-                    getString(R.string.settings_got_it),
-                    null);
-            return;
-        }
-        LauncherDialogFactory.showStandardConfirm(
-                this,
-                getString(R.string.module_install_title, "Godot"),
-                getString(R.string.module_install_message),
-                getString(R.string.module_go_to_install),
-                this::openGodotInstallPage);
+                () -> openInstallPage(module.installUrl));
     }
 
     // ----- 图标点击：启停切换 -----
 
-    private void handleRpgmIconClick() {
-        if (!rpgmModuleInstalled) {
-            openRpgmModule();
+    private void handleModuleIconClick(ModuleType module) {
+        if (!isModuleInstalled(module)) {
+            openModule(module);
             return;
         }
-        if (rpgmModuleEnabled) {
+        if (isModuleEnabled(module)) {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    getString(R.string.module_disable_title, "RPGM"),
-                    getString(R.string.module_disable_message, "RPGM"),
+                    getString(R.string.module_disable_title, module.shortName),
+                    getString(R.string.module_disable_message, module.shortName),
                     getString(R.string.module_disable),
                     () -> {
-                        LauncherModuleBridge.setRpgMakerModuleEnabled(this, false);
-                        rpgmModuleEnabled = false;
-                        applyModuleIconTint(binding.moduleRpgmIcon, rpgmModuleInstalled, rpgmModuleEnabled);
-                        updateModuleDescription(binding.moduleRpgmDescription, rpgmModuleInstalled, rpgmModuleEnabled,
-                                R.string.module_rpgm_detail);
+                        setModuleEnabled(module, false);
+                        applyModuleIconTint(getModuleIconView(module), isModuleInstalled(module), isModuleEnabled(module));
+                        updateModuleDescription(getModuleDescriptionView(module), isModuleInstalled(module), isModuleEnabled(module),
+                                module.detailRes);
                     });
         } else {
             LauncherDialogFactory.showStandardConfirm(
                     this,
-                    getString(R.string.module_enable_title, "RPGM"),
-                    getString(R.string.module_enable_message, "RPGM"),
+                    getString(R.string.module_enable_title, module.shortName),
+                    getString(R.string.module_enable_message, module.shortName),
                     getString(R.string.module_enable),
                     () -> {
-                        LauncherModuleBridge.setRpgMakerModuleEnabled(this, true);
-                        rpgmModuleEnabled = true;
-                        applyModuleIconTint(binding.moduleRpgmIcon, rpgmModuleInstalled, rpgmModuleEnabled);
-                        updateModuleDescription(binding.moduleRpgmDescription, rpgmModuleInstalled, rpgmModuleEnabled,
-                                R.string.module_rpgm_detail);
-                    });
-        }
-    }
-
-    private void handleRenpyIconClick() {
-        if (!renpyModuleInstalled) {
-            openRenpyModule();
-            return;
-        }
-        if (renpyModuleEnabled) {
-            LauncherDialogFactory.showStandardConfirm(
-                    this,
-                    getString(R.string.module_disable_title, "RenPy"),
-                    getString(R.string.module_disable_message, "RenPy"),
-                    getString(R.string.module_disable),
-                    () -> {
-                        LauncherModuleBridge.setRenPyModuleEnabled(this, false);
-                        renpyModuleEnabled = false;
-                        applyModuleIconTint(binding.moduleRenpyIcon, renpyModuleInstalled, renpyModuleEnabled);
-                        updateModuleDescription(binding.moduleRenpyDescription, renpyModuleInstalled, renpyModuleEnabled,
-                                R.string.module_renpy_detail);
-                    });
-        } else {
-            LauncherDialogFactory.showStandardConfirm(
-                    this,
-                    getString(R.string.module_enable_title, "RenPy"),
-                    getString(R.string.module_enable_message, "RenPy"),
-                    getString(R.string.module_enable),
-                    () -> {
-                        LauncherModuleBridge.setRenPyModuleEnabled(this, true);
-                        renpyModuleEnabled = true;
-                        applyModuleIconTint(binding.moduleRenpyIcon, renpyModuleInstalled, renpyModuleEnabled);
-                        updateModuleDescription(binding.moduleRenpyDescription, renpyModuleInstalled, renpyModuleEnabled,
-                                R.string.module_renpy_detail);
-                    });
-        }
-    }
-
-    private void handleGodotIconClick() {
-        if (!godotModuleInstalled) {
-            openGodotModule();
-            return;
-        }
-        if (godotModuleEnabled) {
-            LauncherDialogFactory.showStandardConfirm(
-                    this,
-                    getString(R.string.module_disable_title, "Godot"),
-                    getString(R.string.module_disable_message, "Godot"),
-                    getString(R.string.module_disable),
-                    () -> {
-                        LauncherModuleBridge.setGodotModuleEnabled(this, false);
-                        godotModuleEnabled = false;
-                        applyModuleIconTint(binding.moduleGodotIcon, godotModuleInstalled, godotModuleEnabled);
-                        updateModuleDescription(binding.moduleGodotDescription, godotModuleInstalled, godotModuleEnabled,
-                                R.string.module_godot_detail);
-                    });
-        } else {
-            LauncherDialogFactory.showStandardConfirm(
-                    this,
-                    getString(R.string.module_enable_title, "Godot"),
-                    getString(R.string.module_enable_message, "Godot"),
-                    getString(R.string.module_enable),
-                    () -> {
-                        LauncherModuleBridge.setGodotModuleEnabled(this, true);
-                        godotModuleEnabled = true;
-                        applyModuleIconTint(binding.moduleGodotIcon, godotModuleInstalled, godotModuleEnabled);
-                        updateModuleDescription(binding.moduleGodotDescription, godotModuleInstalled, godotModuleEnabled,
-                                R.string.module_godot_detail);
+                        setModuleEnabled(module, true);
+                        applyModuleIconTint(getModuleIconView(module), isModuleInstalled(module), isModuleEnabled(module));
+                        updateModuleDescription(getModuleDescriptionView(module), isModuleInstalled(module), isModuleEnabled(module),
+                                module.detailRes);
                     });
         }
     }
 
     // ----- 安装页跳转 -----
 
-    private void openRpgmInstallPage() {
-        openInstallPage(RPGM_INSTALL_URL);
-    }
-
-    private void openRenpyInstallPage() {
-        openInstallPage(RENPY_INSTALL_URL);
-    }
-
-    private void openGodotInstallPage() {
-        openInstallPage(GODOT_INSTALL_URL);
-    }
-
     private void openInstallPage(String installUrl) {
         try {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(installUrl));
             browserIntent.addCategory(Intent.CATEGORY_BROWSABLE);
             startActivity(browserIntent);
-        } catch (Throwable ignored) {
+        } catch (ActivityNotFoundException | SecurityException e) {
+            // 受限设备/异常浏览器组件下 startActivity 可能抛 SecurityException，统一兜底为失败弹窗
             LauncherDialogFactory.showInfo(this,
                     getString(R.string.module_cannot_open_browser),
                     getString(R.string.module_try_again_later));

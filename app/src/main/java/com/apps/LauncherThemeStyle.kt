@@ -74,4 +74,16 @@ object LauncherThemeStyle {
         if (isNatsume(context)) return NATSUME_PRIMARY_COLOR
         return ContextCompat.getColor(LauncherUiMode.wrap(context)!!, R.color.launcher_primary_color)
     }
+
+    /** Returns the home/profile stats background image resource for the current theme style. */
+    @JvmStatic
+    fun homeStatsImageRes(context: Context): Int {
+        return when {
+            isRinne(context) -> R.drawable.launcher_home_stats_rinne_bg
+            isAnri(context) -> R.drawable.launcher_home_stats_bg_anri
+            isXinhaitian(context) -> R.drawable.launcher_home_stats_xinhaitian_bg
+            isNatsume(context) -> R.drawable.launcher_home_stats_natsume_bg
+            else -> R.drawable.launcher_home_stats_bg
+        }
+    }
 }

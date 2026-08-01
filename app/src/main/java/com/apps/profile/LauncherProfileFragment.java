@@ -10,11 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,12 +20,13 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.apps.UserData.LauncherUserData;
 import com.apps.LauncherNavigationMetricsKt;
+import com.apps.LauncherPreferences;
+import com.apps.LauncherThemeStyle;
 import com.core.R;
 import com.core.databinding.FragmentLauncherProfileBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
@@ -45,8 +42,11 @@ import com.core.util.SafeImageLoader;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Calendar;
 import java.util.Map;
 import com.apps.LauncherActivity;
@@ -324,26 +324,12 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showLeaderboardConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_launcher_confirm, null);
-        window.setContentView(view);
-        ((TextView) view.findViewById(R.id.dialogTitle)).setText(R.string.profile_site_leaderboard);
-        ((TextView) view.findViewById(R.id.dialogMessage)).setText(
-                R.string.profile_site_leaderboard_message);
-        TextView cancel = view.findViewById(R.id.dialogBtnCancel);
-        TextView confirm = view.findViewById(R.id.dialogBtnConfirm);
-        LauncherTheme.dialogButtons(cancel, confirm);
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            openLeaderboard();
-        });
+        LauncherDialogFactory.showConfirm(
+                requireContext(),
+                getString(R.string.profile_site_leaderboard),
+                getString(R.string.profile_site_leaderboard_message),
+                getString(R.string.settings_confirm),
+                () -> openLeaderboard());
     }
 
     private void performCloudRestore() {
@@ -420,68 +406,16 @@ public class LauncherProfileFragment extends Fragment {
             Toast.makeText(requireContext(), R.string.profile_not_logged_in, Toast.LENGTH_SHORT).show();
             return;
         }
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(R.string.profile_logout);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        String nickname = LauncherAuthBridge.getNickname(requireContext());
-        TextView message = new TextView(requireContext());
-        message.setText(nickname != null && !nickname.isEmpty()
-                ? getString(R.string.profile_logout_named_message, nickname)
-                : getString(R.string.profile_logout_message));
-        message.setGravity(android.view.Gravity.CENTER);
-        message.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        message.setTextSize(12);
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, msgLp);
-
-        // 保存邮箱用于下次自动填充登录
-        String savedEmail = LauncherAuthBridge.getEmail(requireContext());
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText(R.string.profile_confirm_logout);
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.dangerButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            performLogout(savedEmail);
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText(R.string.settings_cancel);
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        final String nickname = LauncherAuthBridge.getNickname(requireContext());
+        final String savedEmail = LauncherAuthBridge.getEmail(requireContext());
+        LauncherDialogFactory.showDangerConfirm(
+                requireContext(),
+                getString(R.string.profile_logout),
+                nickname != null && !nickname.isEmpty()
+                        ? getString(R.string.profile_logout_named_message, nickname)
+                        : getString(R.string.profile_logout_message),
+                getString(R.string.profile_confirm_logout),
+                () -> performLogout(savedEmail));
     }
 
     private void performLogout(String savedEmail) {
@@ -489,7 +423,7 @@ public class LauncherProfileFragment extends Fragment {
         LauncherAuthBridge.clearToken(requireContext());
         // 保留邮箱到登录页输入框的缓存
         if (savedEmail != null && !savedEmail.trim().isEmpty()) {
-            requireContext().getSharedPreferences("yukihub_prefs", 0)
+            requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
                     .edit().putString("auth_saved_email", savedEmail).apply();
         }
         Toast.makeText(requireContext(), R.string.profile_logged_out, Toast.LENGTH_SHORT).show();
@@ -542,15 +476,38 @@ public class LauncherProfileFragment extends Fragment {
     private void copyImageToInternal(Uri sourceUri, String fileName, String prefsKey, Runnable onDone, boolean syncToHome) {
         AppExecutors.runOnIo(() -> {
             File outFile = new File(requireContext().getFilesDir(), fileName);
+            // 先写临时文件，成功后再原子替换正式文件，避免复制失败时破坏旧头像/封面
+            File tempFile = new File(outFile.getParentFile(), fileName + ".tmp");
             boolean ok = false;
             try (InputStream in = requireContext().getContentResolver().openInputStream(sourceUri);
-                 OutputStream out = new FileOutputStream(outFile)) {
-                byte[] buffer = new byte[8192];
-                int n;
-                while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
-                ok = true;
-            } catch (Exception e) {
+                 OutputStream out = new FileOutputStream(tempFile)) {
+                if (in == null) {
+                    Log.w("LauncherProfile", "copyImageToInternal openInputStream null: " + fileName);
+                } else {
+                    byte[] buffer = new byte[8192];
+                    int n;
+                    while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
+                    ok = true;
+                }
+            } catch (IOException | SecurityException e) {
+                // openInputStream/复制/close 可能抛 IOException 或权限缺失 SecurityException；
+                // 进入 catch 即视为失败，恢复 ok=false，由调用方展示“图片保存失败”提示。
                 Log.w("LauncherProfile", "copyImageToInternal failed: " + fileName, e);
+                ok = false;
+            }
+            // 用 Files.move 原子替换正式文件；失败时旧文件不受影响，仅清理临时文件
+            if (ok) {
+                try {
+                    Files.move(tempFile.toPath(), outFile.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING,
+                            StandardCopyOption.ATOMIC_MOVE);
+                } catch (IOException e) {
+                    Log.w("LauncherProfile", "copyImageToInternal move failed: " + fileName, e);
+                    ok = false;
+                }
+            }
+            if (!ok && tempFile.exists()) {
+                tempFile.delete();
             }
             final boolean success = ok;
             final String savedUri = Uri.fromFile(outFile).toString();
@@ -582,10 +539,6 @@ public class LauncherProfileFragment extends Fragment {
         }
         super.onDestroyView();
         binding = null;
-    }
-
-    private int dp(int value) {
-        return (int) (value * requireContext().getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void applySystemBarInsets() {
@@ -661,17 +614,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void applyDefaultProfileBgImage() {
-        if (LauncherActivity.isRinneTheme(requireContext())) {
-            binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_rinne_bg);
-        } else if (LauncherActivity.isAnriTheme(requireContext())) {
-            binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg_anri);
-        } else if (LauncherActivity.isXinhaitianTheme(requireContext())) {
-            binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_xinhaitian_bg);
-        } else if (LauncherActivity.isNatsumeTheme(requireContext())) {
-            binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_natsume_bg);
-        } else {
-            binding.profileBgImage.setImageResource(R.drawable.launcher_home_stats_bg);
-        }
+        binding.profileBgImage.setImageResource(LauncherThemeStyle.homeStatsImageRes(requireContext()));
     }
 
     private boolean isReadableImageUri(@NonNull Uri uri) {
@@ -681,7 +624,8 @@ public class LauncherProfileFragment extends Fragment {
         }
         try (InputStream ignored = requireContext().getContentResolver().openInputStream(uri)) {
             return ignored != null;
-        } catch (Exception e) {
+        } catch (IOException | SecurityException e) {
+            // 授权过期或权限缺失时返回 false，让调用方清除失效 URI 并回退默认背景。
             return false;
         }
     }
@@ -700,7 +644,7 @@ public class LauncherProfileFragment extends Fragment {
             return;
         }
         // 再检查主页头像
-        String homeAvatar = requireContext().getSharedPreferences("yukihub_prefs", 0)
+        String homeAvatar = requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
                 .getString("profile_avatar", null);
         if (homeAvatar != null && !homeAvatar.trim().isEmpty()) {
             try {
@@ -716,7 +660,7 @@ public class LauncherProfileFragment extends Fragment {
 
     private void syncAvatarToHome(String avatarUri) {
         // 将个人页头像同步到主页的 SharedPreferences
-        requireContext().getSharedPreferences("yukihub_prefs", 0)
+        requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
                 .edit().putString("profile_avatar", avatarUri).apply();
     }
 }
