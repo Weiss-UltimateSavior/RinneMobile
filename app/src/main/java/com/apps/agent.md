@@ -252,6 +252,7 @@ git diff --check
 
 - 禁止捕获 `Throwable`，除非处于明确的进程边界、回滚清理或日志兜底点，且必须说明原因；不得吞掉 `CancellationException`、`InterruptedException`、`Error` 等不可恢复信号。
 - 只捕获可预期的具体异常；失败必须返回给调用方、显示合适的用户提示或写入 `DevLogger`。允许忽略的异常必须在紧邻 catch 处说明为何可安全忽略。
+- 收窄异常时需分析具体 API 的实际异常契约，不能只看 catch 语法是否通过：受检异常之外，确认方法是否可能返回 null、抛出 `SecurityException`/`IllegalArgumentException` 等运行时异常。例如 `ContentResolver.openInputStream()` 可能返回 null 或抛 `SecurityException`（`content://` 授权过期），只捕获 `IOException` 会导致后台线程 NPE 或未捕获异常崩溃。对可能返回 null 的流必须显式判空，对可预期的运行时异常应一并捕获（`catch (IOException | SecurityException e)`），并在 catch 处说明失败兜底行为（提示用户、清除失效配置、回退默认值）。
 - 不使用 `!!` 作为常规控制流。可空值优先使用 `?.`、`?:`、提前返回或 `requireNotNull`（仅用于违反内部不变量的情形）。
 - 时间展示统一复用 `TimeFormatUtil`；网络协议或导入格式解析可使用专用 `SimpleDateFormat`，但须显式指定 `Locale` 与格式来源。不要在 UI 中重复实现通用展示格式。
 - 用户可见文本优先放入资源；日志不得包含 access token、API key、密码或完整的私有路径。涉及外部输入、文件与 URI 时先校验可读性、边界和编码。
