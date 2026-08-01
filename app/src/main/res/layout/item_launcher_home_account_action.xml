@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/homeAccountSheetActionRoot"
+    style="@style/LauncherManageItem">
+
+    <ImageView
+        android:id="@+id/homeAccountSheetActionIcon"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:contentDescription="@null"
+        android:scaleType="centerInside" />
+
+    <TextView
+        android:id="@+id/homeAccountSheetActionTitle"
+        style="@style/LauncherManageTitle" />
+
+    <ImageView
+        android:id="@+id/homeAccountSheetActionArrow"
+        style="@style/LauncherManageArrowIcon"
+        android:contentDescription="@null"
+        android:src="@drawable/launcher_manage_arrow" />
+</LinearLayout>

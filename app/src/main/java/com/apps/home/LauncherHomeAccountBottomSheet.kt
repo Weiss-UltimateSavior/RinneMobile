@@ -11,7 +11,7 @@ import androidx.fragment.app.FragmentManager
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherTheme
 import com.core.R
-import com.core.databinding.ItemLauncherManageBinding
+import com.core.databinding.ItemLauncherHomeAccountActionBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -30,24 +30,48 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
         val list = contentView.findViewById<LinearLayout>(R.id.homeAccountSheetList)
         val followsSystemTone = LauncherActivity.isFollowingSystemTone(context)
         val actions = buildList {
-            add(SheetAction("A", context.getString(R.string.app_settings_title), ACTION_APP_SETTINGS))
-            add(SheetAction("T", context.getString(R.string.launcher_settings_action_theme), ACTION_THEME))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_app_settings,
+                context.getString(R.string.app_settings_title),
+                ACTION_APP_SETTINGS,
+            ))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_theme,
+                context.getString(R.string.launcher_settings_action_theme),
+                ACTION_THEME,
+            ))
             if (!followsSystemTone) {
-                add(SheetAction("C", context.getString(R.string.launcher_settings_action_tone), ACTION_TONE))
+                add(SheetAction(
+                    R.drawable.launcher_home_sheet_tone,
+                    context.getString(R.string.launcher_settings_action_tone),
+                    ACTION_TONE,
+                ))
             }
-            add(SheetAction("U", context.getString(R.string.launcher_settings_action_update), ACTION_UPDATE))
-            add(SheetAction("F", context.getString(R.string.launcher_settings_action_feedback), ACTION_FEEDBACK))
-            add(SheetAction("D", context.getString(R.string.launcher_settings_action_disclaimer), ACTION_DISCLAIMER))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_update,
+                context.getString(R.string.launcher_settings_action_update),
+                ACTION_UPDATE,
+            ))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_feedback,
+                context.getString(R.string.launcher_settings_action_feedback),
+                ACTION_FEEDBACK,
+            ))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_disclaimer,
+                context.getString(R.string.launcher_settings_action_disclaimer),
+                ACTION_DISCLAIMER,
+            ))
         }
         val sheetHeight = ((if (followsSystemTone) 347f else 409f) * density).toInt()
         actions.forEach { action ->
-            val itemBinding = ItemLauncherManageBinding.inflate(
+            val itemBinding = ItemLauncherHomeAccountActionBinding.inflate(
                 LayoutInflater.from(context),
                 list,
                 false
             )
-            itemBinding.manageItemIcon.text = action.icon
-            itemBinding.manageItemTitle.text = action.title
+            itemBinding.homeAccountSheetActionIcon.setImageResource(action.iconRes)
+            itemBinding.homeAccountSheetActionTitle.text = action.title
             itemBinding.root.setOnClickListener {
                 dismiss()
                 parentFragmentManager.setFragmentResult(
@@ -84,7 +108,11 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
         return dialog
     }
 
-    private data class SheetAction(val icon: String, val title: String, val id: String)
+    private data class SheetAction(
+        val iconRes: Int,
+        val title: String,
+        val id: String,
+    )
 
     companion object {
         const val REQUEST_KEY = "launcher_home_settings_sheet_result"
