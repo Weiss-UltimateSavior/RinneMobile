@@ -29,8 +29,8 @@ import com.apps.game.GameSessionController
 import com.apps.game.LauncherLibraryFragment
 import com.apps.game.LauncherManageFragment
 import com.apps.game.PinnedGameShortcut
-import com.apps.home.LauncherFeaturedHomeFragment
-import com.apps.home.LauncherHomeFragment
+import com.apps.home.HomeStyle
+import com.apps.home.LauncherHomeFragmentFactory
 import com.apps.home.LauncherPlaceholderFragment
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
@@ -397,13 +397,10 @@ class LauncherActivity : AppCompatActivity() {
         if (binding == null) return
         val navItem = selectedItem ?: LauncherViewModel.NavItem.HOME
         val currentFragment = supportFragmentManager.findFragmentById(R.id.launcherFragmentContainer)
-        val expectedHomeFragment = if (LauncherPreferences.isFeaturedHomeStyle(this)) {
-            LauncherFeaturedHomeFragment::class.java
-        } else {
-            LauncherHomeFragment::class.java
-        }
+        val homeStyle = LauncherPreferences.getHomeStyle(this)
         if (navRenderer.currentNavItem == navItem && currentFragment != null &&
-            (navItem != LauncherViewModel.NavItem.HOME || currentFragment.javaClass == expectedHomeFragment)) {
+            (navItem != LauncherViewModel.NavItem.HOME ||
+                LauncherHomeFragmentFactory.matches(currentFragment, homeStyle))) {
             return
         }
 
@@ -412,8 +409,7 @@ class LauncherActivity : AppCompatActivity() {
         val toRight = navItem.ordinal >= fromIndex
         navRenderer.currentNavItem = navItem
         val fragment: Fragment = when (navItem) {
-            LauncherViewModel.NavItem.HOME ->
-                if (LauncherPreferences.isFeaturedHomeStyle(this)) LauncherFeaturedHomeFragment() else LauncherHomeFragment()
+            LauncherViewModel.NavItem.HOME -> LauncherHomeFragmentFactory.create(homeStyle)
             LauncherViewModel.NavItem.LIBRARY -> LauncherLibraryFragment()
             LauncherViewModel.NavItem.MANAGE -> LauncherManageFragment()
             LauncherViewModel.NavItem.ACCOUNT -> LauncherAccountFragment()
@@ -595,12 +591,12 @@ class LauncherActivity : AppCompatActivity() {
             LauncherPreferences.setHdModeStartupEnabled(context, enabled)
 
         @JvmStatic
-        fun isFeaturedHomeStyle(context: android.content.Context): Boolean =
-            LauncherPreferences.isFeaturedHomeStyle(context)
+        fun getHomeStyle(context: android.content.Context): HomeStyle =
+            LauncherPreferences.getHomeStyle(context)
 
         @JvmStatic
-        fun setFeaturedHomeStyle(context: android.content.Context, enabled: Boolean) =
-            LauncherPreferences.setFeaturedHomeStyle(context, enabled)
+        fun setHomeStyle(context: android.content.Context, style: HomeStyle) =
+            LauncherPreferences.setHomeStyle(context, style)
 
         @JvmStatic
         fun applySavedToneMode(activity: androidx.appcompat.app.AppCompatActivity?) =

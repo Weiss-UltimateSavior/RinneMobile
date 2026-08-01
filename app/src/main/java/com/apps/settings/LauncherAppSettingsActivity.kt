@@ -16,6 +16,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
 import com.apps.HDModel.HdModeActivity
 import com.apps.LauncherActivity
+import com.apps.home.HomeStyle
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -165,17 +166,15 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
     }
 
     private fun showHomeStylePicker() {
-        val labels: Array<CharSequence> = arrayOf(
-            getString(R.string.app_home_style_default),
-            getString(R.string.app_home_style_featured),
-        )
+        val styles = HomeStyle.entries.toTypedArray()
+        val labels = Array<CharSequence>(styles.size) { getString(styles[it].labelResId) }
         LauncherDialogFactory.showSingleChoice(
             this,
             getString(R.string.app_home_style_dialog_title),
             labels,
-            if (LauncherActivity.isFeaturedHomeStyle(this)) 1 else 0,
+            styles.indexOf(LauncherActivity.getHomeStyle(this)).coerceAtLeast(0),
         ) { index ->
-            LauncherActivity.setFeaturedHomeStyle(this, index == 1)
+            LauncherActivity.setHomeStyle(this, styles[index])
             // 返回首页时由 LauncherActivity.onResume() 立即替换对应 Fragment，无需重启应用。
             finish()
         }
@@ -361,13 +360,7 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
     }
 
     private fun renderHomeStyleState() {
-        binding.appHomeStyleText.setText(
-            if (LauncherActivity.isFeaturedHomeStyle(this)) {
-                R.string.app_home_style_featured
-            } else {
-                R.string.app_home_style_default
-            }
-        )
+        binding.appHomeStyleText.setText(LauncherActivity.getHomeStyle(this).labelResId)
     }
 
     private fun renderNavigationStyleState() {

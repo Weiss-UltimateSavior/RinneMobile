@@ -3,6 +3,7 @@ package com.apps
 import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import com.apps.home.HomeStyle
 
 /**
  * Launcher 偏好设置集中托管对象。
@@ -18,7 +19,8 @@ object LauncherPreferences {
     private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
     private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
     private const val KEY_HD_MODE_STARTUP = "launcher_hd_mode_startup"
-    private const val KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
+    private const val KEY_HOME_STYLE = "launcher_home_style"
+    private const val LEGACY_KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
     const val KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled"
     const val KEY_LAUNCHER_PARTICLE_STYLE = "launcher_particle_style"
     const val PARTICLE_STYLE_FLOATING = "floating"
@@ -106,15 +108,31 @@ object LauncherPreferences {
     }
 
     @JvmStatic
-    fun isFeaturedHomeStyle(context: Context): Boolean =
-        context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_FEATURED_HOME_STYLE, false)
+    fun getHomeStyle(context: Context): HomeStyle {
+        val preferences = context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        if (preferences.contains(KEY_HOME_STYLE)) {
+            return HomeStyle.fromStorage(preferences.getString(KEY_HOME_STYLE, null))
+        }
+
+        // Migrate the former Boolean preference without changing existing users' selection.
+        val migratedStyle = if (preferences.getBoolean(LEGACY_KEY_FEATURED_HOME_STYLE, false)) {
+            HomeStyle.FEATURED
+        } else {
+            HomeStyle.DEFAULT
+        }
+        preferences.edit()
+            .putString(KEY_HOME_STYLE, migratedStyle.storageValue)
+            .remove(LEGACY_KEY_FEATURED_HOME_STYLE)
+            .apply()
+        return migratedStyle
+    }
 
     @JvmStatic
-    fun setFeaturedHomeStyle(context: Context, enabled: Boolean) {
+    fun setHomeStyle(context: Context, style: HomeStyle) {
         context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean(KEY_FEATURED_HOME_STYLE, enabled)
+            .putString(KEY_HOME_STYLE, style.storageValue)
+            .remove(LEGACY_KEY_FEATURED_HOME_STYLE)
             .apply()
     }
 

@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 
 import com.apps.LauncherActivity;
+import com.apps.home.HomeStyle;
 import com.apps.theme.LauncherMotion;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherTheme;
@@ -266,13 +267,17 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void showHomeStylePicker() {
-        String[] labels = {
-                getString(R.string.app_home_style_default),
-                getString(R.string.app_home_style_featured)
-        };
+        HomeStyle[] styles = HomeStyle.values();
+        String[] labels = new String[styles.length];
+        int selectedIndex = 0;
+        HomeStyle selectedStyle = LauncherActivity.getHomeStyle(this);
+        for (int i = 0; i < styles.length; i++) {
+            labels[i] = getString(styles[i].getLabelResId());
+            if (styles[i] == selectedStyle) selectedIndex = i;
+        }
         PadDialogFactory.showSingleChoice(this, getString(R.string.app_home_style_dialog_title), labels,
-                LauncherActivity.isFeaturedHomeStyle(this) ? 1 : 0, index -> {
-                    LauncherActivity.setFeaturedHomeStyle(this, index == 1);
+                selectedIndex, index -> {
+                    LauncherActivity.setHomeStyle(this, styles[index]);
                     finish();
                 });
     }
@@ -298,8 +303,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padAppLanguageText.setText(languageLabels()[currentLanguageIndex()]);
         binding.padAppStartPageText.setText(LauncherActivity.isLandscapeStartupPage(this)
                 ? R.string.app_start_page_landscape : R.string.app_start_page_portrait);
-        binding.padAppHomeStyleText.setText(LauncherActivity.isFeaturedHomeStyle(this)
-                ? R.string.app_home_style_featured : R.string.app_home_style_default);
+        binding.padAppHomeStyleText.setText(LauncherActivity.getHomeStyle(this).getLabelResId());
         int navigationLabel = R.string.app_navigation_style_default;
         if (LauncherActivity.isLiquidGlassNavigationStyle(this)) {
             navigationLabel = R.string.app_navigation_style_liquid_glass;

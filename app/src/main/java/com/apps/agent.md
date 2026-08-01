@@ -129,6 +129,19 @@
 
 ## 4. 竖屏 Launcher 组件
 
+### 首页风格切换
+
+- 首页风格的唯一类型定义是 `com.apps.home.HomeStyle`。新增风格必须增加枚举项，并为其声明稳定的 `storageValue` 与 `labelResId`；禁止重新使用 Boolean、数组下标、枚举 `ordinal` 或可本地化文案作为持久化值。
+- `storageValue` 属于持久化协议，发布后不得随类名、产品文案或枚举名称调整。未知或已下线的存储值必须通过 `HomeStyle.fromStorage()` 安全回退到 `DEFAULT`，不得导致启动崩溃。
+- 首页风格统一由 `LauncherPreferences.getHomeStyle()` / `setHomeStyle()` 读写。偏好使用字符串键 `launcher_home_style`；历史键迁移在 `LauncherPreferences` 内集中完成，UI、Fragment 和 Activity 不得自行读取、写入或迁移首页风格偏好。
+- 旧偏好迁移必须保留用户原选择，并在写入新值后删除旧键。新增后续迁移时继续采用“读取旧值 → 转换为 `HomeStyle` → 写入稳定字符串 → 删除旧键”的单向迁移，不保留两套状态并行写入。
+- `LauncherHomeFragmentFactory` 是 `HomeStyle` 到具体首页 Fragment 的唯一映射点，同时负责 Fragment 创建与当前类型匹配。`LauncherActivity`、设置页和导航代码不得出现 `if (featured)`、`when (homeStyle)` 或直接构造具体首页 Fragment 的平行映射。
+- `LauncherActivity.showFragment()` 在一次渲染中只读取一次 `HomeStyle`，并将同一值同时用于 `matches()` 和 `create()`，避免偏好在判断与创建之间发生不一致。首页类型匹配使用精确 `javaClass`，不能使用 `is LauncherHomeFragment`，因为风格 Fragment 可以继承默认首页。
+- 普通设置页使用 `HomeStyle.entries`，Java/Pad 存量页面使用 `HomeStyle.values()` 动态生成选项和选中索引；显示文案统一读取枚举的 `labelResId`。禁止硬编码两项数组、`index == 1` 或基于具体风格名称推导选择状态。
+- `HomeStyle` 当前只控制竖屏 Launcher 首页。`HdHomeFragment` 有独立的横屏布局规则；除非需求明确要求 HD 同步切换，否则不得仅因共享偏好而替换 HD 首页。
+- 风格差异仅限局部排列、item 布局、图标色等表现时，优先继承 `LauncherHomeFragment` 并覆盖现有扩展点：`recentItemLayoutRes()`、`recentDisplayLimit()`、`recentGridColumns()`、`bindRecentItem()`、`onHomeLayoutReady()`、`applyIconTone()`。当页面结构和交互已明显分叉时，应提取共享业务基类并使用独立 XML，不要持续在运行时拆装默认布局。
+- 新增首页风格必须同时完成：三语字符串资源、`HomeStyle` 枚举项、具体 Fragment、`LauncherHomeFragmentFactory` 映射、普通设置页和 Pad 设置页选项验证，以及冷启动、设置页返回即时切换、进程重建和未知存储值回退验证。
+
 ### 操作按钮
 
 | 场景 | XML style | 运行时主题方法 | 固定规格 |
