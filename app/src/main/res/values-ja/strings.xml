@@ -30,6 +30,14 @@
     <string name="app_navigation_style_pill">フローティングピルナビ</string>
     <string name="app_navigation_style_card">ミニマルライン</string>
     <string name="app_navigation_style_liquid_glass">リキッドガラスナビ</string>
+    <string name="app_portrait_background_label">縦画面の背景</string>
+    <string name="app_portrait_background_solid">テーマの単色背景</string>
+    <string name="app_portrait_background_custom">カスタム画像を使用中</string>
+    <string name="app_portrait_background_restore_solid">テーマの単色背景に戻す</string>
+    <string name="app_portrait_background_choose_image">ギャラリーから画像を選択</string>
+    <string name="app_portrait_background_updated">縦画面の背景画像を更新しました</string>
+    <string name="app_portrait_background_save_failed">選択した背景画像を保存できません</string>
+    <string name="app_portrait_background_restored">テーマの単色背景に戻しました</string>
     <string name="app_follow_system_tone">システムの色調に従う</string>
     <string name="app_hd_mode_startup">タブレット起動モード</string>
     <string name="home_featured_games">おすすめゲーム</string>

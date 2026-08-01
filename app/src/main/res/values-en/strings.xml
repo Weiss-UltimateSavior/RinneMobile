@@ -30,6 +30,14 @@
     <string name="app_navigation_style_pill">Floating Pill Navigation</string>
     <string name="app_navigation_style_card">Minimal Line</string>
     <string name="app_navigation_style_liquid_glass">Liquid Glass Navigation</string>
+    <string name="app_portrait_background_label">Portrait Background</string>
+    <string name="app_portrait_background_solid">Theme solid color</string>
+    <string name="app_portrait_background_custom">Custom image in use</string>
+    <string name="app_portrait_background_restore_solid">Restore Theme Solid Color</string>
+    <string name="app_portrait_background_choose_image">Choose Image from Gallery</string>
+    <string name="app_portrait_background_updated">Portrait background updated</string>
+    <string name="app_portrait_background_save_failed">Could not save the selected background image</string>
+    <string name="app_portrait_background_restored">Restored the theme solid background</string>
     <string name="app_follow_system_tone">Follow System Theme</string>
     <string name="app_hd_mode_startup">Tablet Startup Mode</string>
     <string name="home_featured_games">Featured Games</string>

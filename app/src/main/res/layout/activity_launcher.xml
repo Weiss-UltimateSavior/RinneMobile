@@ -5,6 +5,19 @@
     android:layout_height="match_parent"
     android:background="@drawable/launcher_bg">
 
+    <ImageView
+        android:id="@+id/launcherPortraitBackgroundImage"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.apps.theme.LauncherParticleView
         android:id="@+id/launcherParticleView"
         android:layout_width="0dp"

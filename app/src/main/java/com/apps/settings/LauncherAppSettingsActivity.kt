@@ -1,6 +1,7 @@
 package com.apps.settings
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -33,6 +34,9 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
     private val splashImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) saveSplashImage(uri)
     }
+    private val portraitBackgroundPicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) savePortraitBackground(uri)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         LauncherActivity.applySavedToneMode(this)
@@ -52,6 +56,8 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         binding.appHomeStyleText.setOnClickListener { showHomeStylePicker() }
         renderNavigationStyleState()
         binding.appNavigationStyleText.setOnClickListener { showNavigationStylePicker() }
+        renderPortraitBackgroundState()
+        binding.appPortraitBackgroundText.setOnClickListener { showPortraitBackgroundChoices() }
         LauncherTheme.styleMaterialSwitch(binding.appFollowSystemToneSwitch)
         binding.appFollowSystemToneSwitch.isChecked = LauncherActivity.isFollowingSystemTone(this)
         binding.appFollowSystemToneSwitch.setOnCheckedChangeListener { _, checked ->
@@ -105,12 +111,37 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun showPortraitBackgroundChoices() {
+        LauncherDialogFactory.showStandardActionChoices(
+            this,
+            getString(R.string.app_portrait_background_label),
+            arrayOf(
+                getString(R.string.app_portrait_background_restore_solid),
+                getString(R.string.app_portrait_background_choose_image),
+            ),
+        ) { index ->
+            when (index) {
+                0 -> restoreSolidPortraitBackground()
+                1 -> launchPortraitBackgroundPicker()
+            }
+        }
+    }
+
     private fun launchSplashImagePicker() {
         // 嵌入到 HdModeActivity 时，LocalActivityManager 不会把 Activity Result 回调
         // 派发回本 Activity，因此需要委托给宿主 Fragment 启动图片选择器。
         val host = parent as? HdModeActivity
         if (host != null && host.launchSplashImagePicker { uri -> onPicked(uri) }) return
         splashImagePicker.launch("image/*")
+    }
+
+    private fun launchPortraitBackgroundPicker() {
+        // LocalActivityManager cannot deliver Activity Result callbacks to an embedded Activity.
+        val host = parent as? HdModeActivity
+        if (host != null && host.launchSplashImagePicker { uri ->
+                if (uri != null) savePortraitBackground(uri)
+            }) return
+        portraitBackgroundPicker.launch("image/*")
     }
 
     private fun onPicked(uri: Uri?) {
@@ -207,6 +238,88 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
                 Toast.makeText(this@LauncherAppSettingsActivity, R.string.app_splash_image_updated, Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this@LauncherAppSettingsActivity, R.string.app_splash_image_save_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun savePortraitBackground(uri: Uri) {
+        lifecycleScope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                val destination = LauncherActivity.customPortraitBackgroundFile(
+                    this@LauncherAppSettingsActivity,
+                )
+                copyUriAtomically(uri, destination)
+            }
+            if (saved) {
+                LauncherActivity.invalidateCustomPortraitBackground(this@LauncherAppSettingsActivity)
+                renderPortraitBackgroundState()
+                Toast.makeText(
+                    this@LauncherAppSettingsActivity,
+                    R.string.app_portrait_background_updated,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@LauncherAppSettingsActivity,
+                    R.string.app_portrait_background_save_failed,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
+    }
+
+    private fun copyUriAtomically(uri: Uri, destination: File): Boolean {
+        val pending = File(destination.parentFile, "${destination.name}.pending")
+        return try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                pending.outputStream().use { output -> input.copyTo(output) }
+            } ?: return false
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(pending.absolutePath, bounds)
+            val pixels = bounds.outWidth.toLong() * bounds.outHeight.toLong()
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0 || pixels > 100_000_000L) {
+                return false
+            }
+            try {
+                Files.move(
+                    pending.toPath(),
+                    destination.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING,
+                )
+            } catch (_: Throwable) {
+                Files.move(pending.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
+            true
+        } catch (_: Throwable) {
+            false
+        } finally {
+            if (pending.exists()) pending.delete()
+        }
+    }
+
+    private fun renderPortraitBackgroundState() {
+        binding.appPortraitBackgroundText.setText(
+            if (LauncherActivity.hasCustomPortraitBackground(this)) {
+                R.string.app_portrait_background_custom
+            } else {
+                R.string.app_portrait_background_solid
+            },
+        )
+    }
+
+    private fun restoreSolidPortraitBackground() {
+        lifecycleScope.launch {
+            val file = LauncherActivity.customPortraitBackgroundFile(this@LauncherAppSettingsActivity)
+            val restored = withContext(Dispatchers.IO) { !file.exists() || file.delete() }
+            if (restored) {
+                LauncherActivity.invalidateCustomPortraitBackground(this@LauncherAppSettingsActivity)
+                renderPortraitBackgroundState()
+                Toast.makeText(
+                    this@LauncherAppSettingsActivity,
+                    R.string.app_portrait_background_restored,
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
         }
     }

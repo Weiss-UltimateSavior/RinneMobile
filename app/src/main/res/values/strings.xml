@@ -30,6 +30,14 @@
     <string name="app_navigation_style_pill">悬浮胶囊导航</string>
     <string name="app_navigation_style_card">简约线条</string>
     <string name="app_navigation_style_liquid_glass">流体玻璃导航</string>
+    <string name="app_portrait_background_label">竖屏背景</string>
+    <string name="app_portrait_background_solid">主题纯色背景</string>
+    <string name="app_portrait_background_custom">已使用自定义图片</string>
+    <string name="app_portrait_background_restore_solid">恢复主题纯色背景</string>
+    <string name="app_portrait_background_choose_image">从图库选择图片</string>
+    <string name="app_portrait_background_updated">竖屏背景图片已更新</string>
+    <string name="app_portrait_background_save_failed">无法保存所选背景图片</string>
+    <string name="app_portrait_background_restored">已恢复主题纯色背景</string>
     <string name="app_follow_system_tone">跟随系统自动色调</string>
     <string name="app_hd_mode_startup">平板启动模式</string>
     <string name="home_featured_games">精选游戏</string>

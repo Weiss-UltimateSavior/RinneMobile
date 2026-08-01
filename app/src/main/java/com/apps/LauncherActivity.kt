@@ -136,10 +136,12 @@ class LauncherActivity : AppCompatActivity() {
                 }
             }
             val xmlRoot = b.root as ViewGroup
+            xmlRoot.removeView(b.launcherPortraitBackgroundImage)
             xmlRoot.removeView(b.launcherParticleView)
             xmlRoot.removeView(b.launcherFragmentContainer)
             val backdropHost = FrameLayout(this).apply {
                 addView(composeBackground, matchParentLayoutParams())
+                addView(b.launcherPortraitBackgroundImage, matchParentLayoutParams())
                 addView(b.launcherParticleView, matchParentLayoutParams())
                 addView(b.launcherFragmentContainer, matchParentLayoutParams())
             }
@@ -170,6 +172,7 @@ class LauncherActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this).get(LauncherViewModel::class.java)
 
+        renderPortraitBackground()
         renderParticles()
         requestStoragePermissionIfNeeded()
         bindActions()
@@ -199,6 +202,7 @@ class LauncherActivity : AppCompatActivity() {
         }
         if (binding != null) {
             navRenderer.renderSelectedNav(navRenderer.currentNavItem)
+            renderPortraitBackground()
             renderParticles()
             if (navRenderer.currentNavItem == LauncherViewModel.NavItem.HOME) {
                 showFragment(LauncherViewModel.NavItem.HOME)
@@ -456,6 +460,10 @@ class LauncherActivity : AppCompatActivity() {
         b.launcherParticleView.setParticlesEnabled(enabled)
     }
 
+    private fun renderPortraitBackground() {
+        LauncherPortraitBackground.apply(this, binding?.launcherPortraitBackgroundImage)
+    }
+
     private fun matchParentLayoutParams() = FrameLayout.LayoutParams(
         FrameLayout.LayoutParams.MATCH_PARENT,
         FrameLayout.LayoutParams.MATCH_PARENT,
@@ -621,6 +629,18 @@ class LauncherActivity : AppCompatActivity() {
         @JvmStatic
         fun applyCustomSplashImage(context: android.content.Context, imageView: android.widget.ImageView?) =
             LauncherSplash.applyCustomSplashImage(context, imageView)
+
+        @JvmStatic
+        fun customPortraitBackgroundFile(context: android.content.Context): java.io.File =
+            LauncherPortraitBackground.customImageFile(context)
+
+        @JvmStatic
+        fun hasCustomPortraitBackground(context: android.content.Context): Boolean =
+            LauncherPortraitBackground.hasCustomImage(context)
+
+        @JvmStatic
+        fun invalidateCustomPortraitBackground(context: android.content.Context) =
+            LauncherPortraitBackground.invalidate(context)
 
         @JvmStatic
         fun isPillNavigationStyle(context: android.content.Context): Boolean =
