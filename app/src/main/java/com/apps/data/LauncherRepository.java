@@ -21,6 +21,8 @@ import java.util.Map;
 
 public class LauncherRepository {
     private static final String APP_PREFS = "yukihub_prefs";
+    /** Maximum number of non-recycled favorite cards rendered by SquareGrid Home. */
+    public static final int FAVORITE_ITEM_LIMIT = 30;
     private static final int RECENT_ITEM_LIMIT = 18;
     private static final int RECENT_TITLE_MAX_CODE_POINTS = 19;
     private static final String KEY_PROFILE_NAME = "profile_name";
@@ -40,7 +42,15 @@ public class LauncherRepository {
     }
 
     public LauncherSnapshot loadSnapshot() {
-        StatsSnapshot stats = loadStatsSnapshot();
+        return loadSnapshot(false);
+    }
+
+    public LauncherSnapshot loadSnapshot(boolean includeFavorites) {
+        List<Game> games = LauncherRepositoryBridge.getAllGames(appContext);
+        StatsSnapshot stats = loadStatsSnapshot(games);
+        List<FavoriteItem> favoriteItems = includeFavorites
+                ? loadFavoriteItems(games)
+                : new ArrayList<>();
         return new LauncherSnapshot(
                 stats.accountName,
                 stats.accountMode,
@@ -48,12 +58,42 @@ public class LauncherRepository {
                 stats.gameCount,
                 stats.totalPlayTime,
                 stats.todayPlayTime,
+                favoriteItems,
                 loadRecentItems()
         );
     }
 
-    public StatsSnapshot loadStatsSnapshot() {
+    public HomeListsSnapshot loadHomeListsSnapshot() {
         List<Game> games = LauncherRepositoryBridge.getAllGames(appContext);
+        return new HomeListsSnapshot(loadFavoriteItems(games), loadRecentItems());
+    }
+
+    private List<FavoriteItem> loadFavoriteItems(List<Game> games) {
+        List<FavoriteItem> favoriteItems = new ArrayList<>();
+        for (Game game : games) {
+            if (game == null || !game.favorite) continue;
+            String fullTitle = game.title == null || game.title.trim().isEmpty()
+                    ? textContext().getString(R.string.pad_untitled_game)
+                    : game.title.trim();
+            String coverUri = game.coverPersistUri != null && !game.coverPersistUri.trim().isEmpty()
+                    ? game.coverPersistUri : game.coverUri;
+            favoriteItems.add(new FavoriteItem(
+                    ellipsizeByCodePoint(fullTitle, RECENT_TITLE_MAX_CODE_POINTS),
+                    TimeFormatUtil.playTime(Math.max(0L, game.totalPlayTime)),
+                    firstTitleChar(fullTitle),
+                    coverUri,
+                    game.id
+            ));
+            if (favoriteItems.size() >= FAVORITE_ITEM_LIMIT) break;
+        }
+        return favoriteItems;
+    }
+
+    public StatsSnapshot loadStatsSnapshot() {
+        return loadStatsSnapshot(LauncherRepositoryBridge.getAllGames(appContext));
+    }
+
+    private StatsSnapshot loadStatsSnapshot(List<Game> games) {
         long totalPlayTime = 0L;
         for (Game game : games) {
             if (game != null) totalPlayTime += Math.max(0L, game.totalPlayTime);
@@ -100,7 +140,8 @@ public class LauncherRepository {
                 : activity.gameTitle.trim();
         String title = ellipsizeByCodePoint(fullTitle, RECENT_TITLE_MAX_CODE_POINTS);
         String dateTime = formatRecentTime(activity.endTime);
-        String time = dateTime + " · " + TimeFormatUtil.playTime(activity.duration);
+        String duration = TimeFormatUtil.playTime(activity.duration);
+        String time = dateTime + " · " + duration;
         String status = launchTypeLabel(appContext, activity.launchType);
         if (status.isEmpty()) status = textContext().getString(R.string.repo_played);
         String coverUri = game == null ? "" : (game.coverPersistUri != null && !game.coverPersistUri.trim().isEmpty()
@@ -109,6 +150,7 @@ public class LauncherRepository {
                 title,
                 time,
                 dateTime,
+                duration,
                 status,
                 firstTitleChar(fullTitle),
                 coverUri,
@@ -244,6 +286,7 @@ public class LauncherRepository {
     }
 
     public static final class LauncherSnapshot extends StatsSnapshot {
+        public final List<FavoriteItem> favoriteItems;
         public final List<RecentItem> recentItems;
 
         LauncherSnapshot(
@@ -253,10 +296,38 @@ public class LauncherRepository {
                 int gameCount,
                 String totalPlayTime,
                 String todayPlayTime,
+                List<FavoriteItem> favoriteItems,
                 List<RecentItem> recentItems
         ) {
             super(accountName, accountMode, syncStatus, gameCount, totalPlayTime, todayPlayTime);
+            this.favoriteItems = favoriteItems;
             this.recentItems = recentItems;
+        }
+    }
+
+    static final class HomeListsSnapshot {
+        public final List<FavoriteItem> favoriteItems;
+        public final List<RecentItem> recentItems;
+
+        HomeListsSnapshot(List<FavoriteItem> favoriteItems, List<RecentItem> recentItems) {
+            this.favoriteItems = favoriteItems;
+            this.recentItems = recentItems;
+        }
+    }
+
+    public static final class FavoriteItem {
+        public final String title;
+        public final String playTime;
+        public final String iconText;
+        public final String coverUri;
+        public final long gameId;
+
+        FavoriteItem(String title, String playTime, String iconText, String coverUri, long gameId) {
+            this.title = title;
+            this.playTime = playTime;
+            this.iconText = iconText;
+            this.coverUri = coverUri;
+            this.gameId = gameId;
         }
     }
 
@@ -264,6 +335,7 @@ public class LauncherRepository {
         public final String title;
         public final String timeAndDuration;
         public final String dateTime;
+        public final String duration;
         public final String status;
         public final String iconText;
         public final String coverUri;
@@ -275,6 +347,7 @@ public class LauncherRepository {
                 String title,
                 String timeAndDuration,
                 String dateTime,
+                String duration,
                 String status,
                 String iconText,
                 String coverUri,
@@ -285,6 +358,7 @@ public class LauncherRepository {
             this.title = title;
             this.timeAndDuration = timeAndDuration;
             this.dateTime = dateTime;
+            this.duration = duration;
             this.status = status;
             this.iconText = iconText;
             this.coverUri = coverUri;

@@ -44,6 +44,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val gameCount: Int,
         val totalPlayTime: String,
         val todayPlayTime: String,
+        val favoriteItems: List<LauncherRepository.FavoriteItem>,
         val recentItems: List<LauncherRepository.RecentItem>,
         val isLoading: Boolean,
         val isRecentRefreshing: Boolean
@@ -64,8 +65,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     private val visibleRecentRefreshToken = AtomicInteger()
 
     @Volatile private var selectedItem: NavItem = NavItem.HOME
-    @Volatile private var recentItemsLoadStarted = false
-    @Volatile private var recentItemsLoaded = false
 
     /** Java 调用方通过 [getLauncherState] 观察；返回类型为 LiveData 以隐藏可变性。 */
     fun getLauncherState(): LiveData<LauncherState> = launcherState
@@ -80,13 +79,22 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         launcherState.value = current.copy(selectedItem = selectedItem)
     }
 
-    fun refresh() {
+    /**
+     * 加载完整首页快照。只有明确展示收藏列表的调用方才传入 [includeFavorites]；
+     * 默认关闭，避免普通首页与 HD 首页承担无用的收藏映射开销。
+     */
+    @JvmOverloads
+    fun refresh(includeFavorites: Boolean = false) {
         val statsToken = statsRefreshToken.incrementAndGet()
         val recentToken = recentRefreshToken.incrementAndGet()
         val mutationVersion = dataMutationVersion.get()
         viewModelScope.launch {
             val snapshot = try {
-                withContext(Dispatchers.IO) { repositoryMutex.withLock { repository.loadSnapshot() } }
+                withContext(Dispatchers.IO) {
+                    repositoryMutex.withLock {
+                        repository.loadSnapshot(includeFavorites)
+                    }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -110,6 +118,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 gameCount = if (updateStats) snapshot.gameCount else current.gameCount,
                 totalPlayTime = if (updateStats) snapshot.totalPlayTime else current.totalPlayTime,
                 todayPlayTime = if (updateStats) snapshot.todayPlayTime else current.todayPlayTime,
+                favoriteItems = if (updateRecent && includeFavorites) {
+                    ArrayList(snapshot.favoriteItems)
+                } else {
+                    current.favoriteItems
+                },
                 recentItems = if (updateRecent) ArrayList(snapshot.recentItems) else current.recentItems,
                 isLoading = false,
                 isRecentRefreshing = if (updateRecent) false else current.isRecentRefreshing
@@ -147,37 +160,38 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun refreshRecentItemsIfNeeded() {
-        val shouldRefresh: Boolean
-        synchronized(this) {
-            shouldRefresh = !recentItemsLoaded && !recentItemsLoadStarted
-            if (shouldRefresh) recentItemsLoadStarted = true
-        }
-        if (shouldRefresh) refreshRecentItems(showRefreshing = false)
-    }
-
     /**
      * 拉取最近游戏记录。`showRefreshing=true` 时会先把状态切到 refreshing，
      * 并把当前 token 记录到 [visibleRecentRefreshToken]；后续若有新 token 进入，
      * 旧请求不会清除 refreshing 标志，避免 UI 抖动。
      *
-     * `@JvmOverloads` 让 Java 调用方仍可用无参重载 `refreshRecentItems()`，
-     * 与原 Java 实现的两个 public 方法签名兼容。
+     * 只有明确展示收藏列表的调用方才传入 `includeFavorites=true`。
+     * `@JvmOverloads` 保留既有无参和单 Boolean（`showRefreshing`）重载，
+     * 使 Java/Kotlin 旧调用保持兼容。
      */
     @JvmOverloads
-    fun refreshRecentItems(showRefreshing: Boolean = false) {
+    fun refreshRecentItems(
+        showRefreshing: Boolean = false,
+        includeFavorites: Boolean = false,
+    ) {
         val token = recentRefreshToken.incrementAndGet()
         val mutationVersion = dataMutationVersion.get()
-        synchronized(this) {
-            recentItemsLoadStarted = true
-        }
         if (showRefreshing) {
             setRecentRefreshing(true)
             visibleRecentRefreshToken.set(token)
         }
         viewModelScope.launch {
-            val recentItems: List<LauncherRepository.RecentItem>? = try {
-                withContext(Dispatchers.IO) { repositoryMutex.withLock { repository.loadRecentItems() } }
+            val loadedLists: Pair<List<LauncherRepository.FavoriteItem>?, List<LauncherRepository.RecentItem>>? = try {
+                withContext(Dispatchers.IO) {
+                    repositoryMutex.withLock {
+                        if (includeFavorites) {
+                            val lists = repository.loadHomeListsSnapshot()
+                            Pair(lists.favoriteItems, lists.recentItems)
+                        } else {
+                            Pair(null, repository.loadRecentItems())
+                        }
+                    }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -186,13 +200,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             }
             if (recentRefreshToken.get() != token || dataMutationVersion.get() != mutationVersion) return@launch
             val current = currentState()
-            synchronized(this@LauncherViewModel) {
-                recentItemsLoaded = true
-                recentItemsLoadStarted = false
-            }
             val keepRefreshing = current.isRecentRefreshing && visibleRecentRefreshToken.get() > token
-            if (recentItems != null) {
+            if (loadedLists != null) {
+                val (favoriteItems, recentItems) = loadedLists
                 launcherState.value = current.copy(
+                    favoriteItems = favoriteItems?.let(::ArrayList) ?: current.favoriteItems,
                     recentItems = ArrayList(recentItems),
                     isLoading = false,
                     isRecentRefreshing = keepRefreshing
@@ -249,10 +261,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 if (deleteCommitVersion.get() != commitVersion) return@launch
                 val (snapshot, recentItems) = statsAndRecent
                 val current = currentState()
-                synchronized(this@LauncherViewModel) {
-                    recentItemsLoaded = true
-                    recentItemsLoadStarted = false
-                }
                 launcherState.value = current.copy(
                     recentItems = ArrayList(recentItems),
                     gameCount = snapshot.gameCount,
@@ -262,9 +270,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 )
             } else {
                 // 删除失败/记录不存在同样要收束已被本次删除作废的下拉刷新状态。
-                synchronized(this@LauncherViewModel) {
-                    recentItemsLoadStarted = false
-                }
                 val current = currentState()
                 if (current.isRecentRefreshing) {
                     launcherState.value = current.copy(isRecentRefreshing = false)
@@ -284,6 +289,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         gameCount = 0,
         totalPlayTime = "0s",
         todayPlayTime = "0s",
+        favoriteItems = Collections.emptyList(),
         recentItems = Collections.emptyList(),
         isLoading = loading,
         isRecentRefreshing = false

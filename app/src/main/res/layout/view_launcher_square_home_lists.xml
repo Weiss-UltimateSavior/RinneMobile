@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/home_square_favorites"
+        android:textColor="@color/launcher_text_color"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/squareFavoriteEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:layout_marginTop="11dp"
+        android:background="@drawable/launcher_white_card"
+        android:gravity="center"
+        android:text="@string/home_square_favorites_empty"
+        android:textColor="@color/launcher_text_muted_color"
+        android:textSize="13sp" />
+
+    <HorizontalScrollView
+        android:id="@+id/squareFavoriteScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="11dp"
+        android:clipToPadding="false"
+        android:fillViewport="false"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/squareFavoriteList"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:text="@string/home_square_play_records"
+        android:textColor="@color/launcher_text_color"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/squareRecentEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:layout_marginTop="11dp"
+        android:background="@drawable/launcher_white_card"
+        android:gravity="center"
+        android:text="@string/home_no_recent_activity"
+        android:textColor="@color/launcher_text_muted_color"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:id="@+id/squareRecentGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:orientation="vertical"
+        android:visibility="gone" />
+</LinearLayout>

@@ -7,9 +7,11 @@ import com.core.R
 enum class HomeStyle(
     val storageValue: String,
     @StringRes val labelResId: Int,
+    val needsFavorites: Boolean = false,
 ) {
     DEFAULT("default", R.string.app_home_style_default),
     FEATURED("featured", R.string.app_home_style_featured),
+    SQUARE_GRID("square_grid", R.string.app_home_style_square_grid, needsFavorites = true),
     ;
 
     companion object {

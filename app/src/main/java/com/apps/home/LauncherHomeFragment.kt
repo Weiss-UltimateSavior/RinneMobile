@@ -5,12 +5,9 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
-import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -18,8 +15,6 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -142,7 +137,7 @@ open class LauncherHomeFragment : Fragment() {
         if (sessionController?.hasActiveSession() == true) {
             sessionController?.finishDirectPlaySessionIfNeeded(this)
         } else {
-            viewModel.refreshRecentItems()
+            viewModel.refreshRecentItems(includeFavorites = includeFavoriteItems())
         }
     }
 
@@ -211,7 +206,10 @@ open class LauncherHomeFragment : Fragment() {
         }
         currentBinding.recentRefresh.setOnRefreshListener {
             viewModel.refreshStats()
-            viewModel.refreshRecentItems(true)
+            viewModel.refreshRecentItems(
+                showRefreshing = true,
+                includeFavorites = includeFavoriteItems(),
+            )
         }
     }
 
@@ -258,133 +256,41 @@ open class LauncherHomeFragment : Fragment() {
         }
     }
 
-    private fun showResourceStationDialog() {
-        val dialog = AlertDialog.Builder(requireContext()).create()
-        dialog.show()
-        LauncherMotion.applyDialogMotion(dialog)
-
-        val window: Window = dialog.window ?: return
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT)
-
-        val root = LinearLayout(requireContext())
-        root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(22), dp(20), dp(22), dp(16))
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg)
-
-        val title = TextView(requireContext())
-        title.setText(com.core.R.string.home_resource_station)
-        title.gravity = android.view.Gravity.CENTER
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color))
-        title.textSize = 16f
-        title.setTypeface(null, android.graphics.Typeface.BOLD)
-        root.addView(
-            title,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+    protected fun showResourceStationDialog() {
+        val resourceOptions = arrayOf(
+            getString(com.core.R.string.home_resource_aggregated_search) to "https://searchgal.top",
+            getString(com.core.R.string.home_resource_kungal) to "https://www.kungal.com",
+            getString(com.core.R.string.home_resource_shinnku) to "https://www.shinnku.com/",
+            getString(com.core.R.string.home_resource_touch_gal) to "https://www.touchgal.ink/",
         )
-
-        addResourceOption(root, getString(com.core.R.string.home_resource_aggregated_search), "https://searchgal.top", dialog)
-        addResourceOption(root, getString(com.core.R.string.home_resource_kungal), "https://www.kungal.com", dialog)
-        addResourceOption(root, getString(com.core.R.string.home_resource_shinnku), "https://www.shinnku.com/", dialog)
-        addResourceOption(root, "Touch Gal", "https://www.touchgal.ink/", dialog)
-
-        val cancel = TextView(requireContext())
-        cancel.setText(com.core.R.string.core_cancel)
-        cancel.gravity = android.view.Gravity.CENTER
-        cancel.setTextColor(LauncherTheme.primary(requireContext()))
-        cancel.textSize = 13f
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD)
-        cancel.background = LauncherTheme.cancelChip(requireContext())
-        cancel.setOnClickListener { dialog.dismiss() }
-        val cancelLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36))
-        cancelLp.setMargins(0, dp(9), 0, 0)
-        root.addView(cancel, cancelLp)
-
-        window.setContentView(root)
-    }
-
-    private fun addResourceOption(root: LinearLayout, label: String?, url: String?, dialog: AlertDialog) {
-        val option = TextView(requireContext())
-        option.text = label
-        option.gravity = android.view.Gravity.CENTER
-        option.isSingleLine = true
-        option.textSize = 13f
-        option.setTypeface(null, android.graphics.Typeface.BOLD)
-        LauncherTheme.menuItem(option)
-        option.setOnClickListener {
-            dialog.dismiss()
+        LauncherDialogFactory.showStandardActionChoices(
+            requireContext(),
+            getString(com.core.R.string.home_resource_station),
+            Array<CharSequence>(resourceOptions.size) { resourceOptions[it].first },
+        ) { index ->
+            val resource = resourceOptions.getOrNull(index) ?: return@showStandardActionChoices
             val intent = Intent(requireContext(), ResourceStationActivity::class.java)
-            intent.putExtra("resource_url", url)
-            intent.putExtra("resource_title", label)
+            intent.putExtra("resource_url", resource.second)
+            intent.putExtra("resource_title", resource.first)
             startLauncherActivity(intent)
         }
-        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36))
-        lp.setMargins(0, dp(11), 0, 0)
-        root.addView(option, lp)
     }
 
     private fun showFeedbackOptions() {
-        val dialog = AlertDialog.Builder(requireContext()).create()
-        dialog.show()
-        LauncherMotion.applyDialogMotion(dialog)
-
-        val window: Window = dialog.window ?: return
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT)
-
-        val root = LinearLayout(requireContext())
-        root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(22), dp(20), dp(22), dp(16))
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg)
-
-        val title = TextView(requireContext())
-        title.setText(com.core.R.string.home_feedback)
-        title.gravity = Gravity.CENTER
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color))
-        title.textSize = 16f
-        title.setTypeface(null, android.graphics.Typeface.BOLD)
-        root.addView(
-            title,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        val feedbackOptions = arrayOf(
+            getString(com.core.R.string.home_github_repository) to
+                "https://github.com/Weiss-UltimateSavior/RinneMobile",
+            getString(com.core.R.string.home_qq_group) to
+                "https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info",
         )
-
-        addFeedbackOption(root, getString(com.core.R.string.home_github_repository), dialog) {
-            openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile")
+        LauncherDialogFactory.showStandardActionChoices(
+            requireContext(),
+            getString(com.core.R.string.home_feedback),
+            Array<CharSequence>(feedbackOptions.size) { feedbackOptions[it].first },
+        ) { index ->
+            val url = feedbackOptions.getOrNull(index)?.second ?: return@showStandardActionChoices
+            openExternalUrl(url)
         }
-        addFeedbackOption(root, getString(com.core.R.string.home_qq_group), dialog) {
-            openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info")
-        }
-
-        val cancel = TextView(requireContext())
-        cancel.setText(com.core.R.string.core_cancel)
-        cancel.gravity = Gravity.CENTER
-        cancel.setTextColor(LauncherTheme.primary(requireContext()))
-        cancel.textSize = 13f
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD)
-        cancel.background = LauncherTheme.cancelChip(requireContext())
-        cancel.setOnClickListener { dialog.dismiss() }
-        val cancelLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36))
-        cancelLp.setMargins(0, dp(9), 0, 0)
-        root.addView(cancel, cancelLp)
-
-        window.setContentView(root)
-    }
-
-    private fun addFeedbackOption(root: LinearLayout, label: String?, dialog: AlertDialog, action: Runnable) {
-        val option = TextView(requireContext())
-        option.text = label
-        option.gravity = Gravity.CENTER
-        option.isSingleLine = true
-        option.textSize = 13f
-        option.setTypeface(null, android.graphics.Typeface.BOLD)
-        LauncherTheme.menuItem(option)
-        option.setOnClickListener {
-            dialog.dismiss()
-            action.run()
-        }
-        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36))
-        lp.setMargins(0, dp(11), 0, 0)
-        root.addView(option, lp)
     }
 
     private fun confirmToggleTone() {
@@ -421,8 +327,12 @@ open class LauncherHomeFragment : Fragment() {
             currentBinding.tvGameCount.text = state.gameCount.toString()
             currentBinding.tvTotalPlayTime.text = state.totalPlayTime
             currentBinding.tvTodayPlayTime.text = state.todayPlayTime
-            renderRecentItems(state.recentItems)
+            renderHomeLists(state)
         }
+    }
+
+    protected open fun renderHomeLists(state: LauncherViewModel.LauncherState) {
+        renderRecentItems(state.recentItems)
     }
 
     protected open fun recentItemLayoutRes(): Int = com.core.R.layout.item_launcher_recent
@@ -431,6 +341,9 @@ open class LauncherHomeFragment : Fragment() {
     protected open fun recentDisplayLimit(): Int = 5
 
     protected open fun recentGridColumns(): Int = 1
+
+    /** Base home does not load favorites; variants opt in with HomeStyle.X.needsFavorites. */
+    protected open fun includeFavoriteItems(): Boolean = false
 
     protected open fun bindRecentItem(itemView: View, item: LauncherRepository.RecentItem) {
         val icon: TextView = itemView.findViewById(com.core.R.id.recentIcon)
@@ -509,19 +422,23 @@ open class LauncherHomeFragment : Fragment() {
         }
     }
 
-    private fun confirmLaunchRecentGame(item: LauncherRepository.RecentItem) {
+    protected fun confirmLaunchRecentGame(item: LauncherRepository.RecentItem) {
+        confirmLaunchGame(item.gameId, item.title)
+    }
+
+    protected fun confirmLaunchGame(gameId: Long, title: String?) {
         if (!isAdded || binding == null) return
-        val displayTitle = if (item.title == null || item.title.trim { it <= ' ' }.isEmpty()) {
+        val displayTitle = if (title == null || title.trim { it <= ' ' }.isEmpty()) {
             getString(com.core.R.string.home_this_game)
         } else {
-            item.title
+            title
         }
         LauncherDialogFactory.showConfirm(
             requireContext(),
             getString(com.core.R.string.home_open_game),
             getString(com.core.R.string.home_open_game_message, displayTitle),
             getString(com.core.R.string.home_open_game)
-        ) { launchRecentGame(item.gameId) }
+        ) { launchRecentGame(gameId) }
     }
 
     private fun launchRecentGame(gameId: Long) {
@@ -550,7 +467,7 @@ open class LauncherHomeFragment : Fragment() {
         }
     }
 
-    private fun confirmDeleteRecentItem(item: LauncherRepository.RecentItem) {
+    protected fun confirmDeleteRecentItem(item: LauncherRepository.RecentItem) {
         if (!isAdded || binding == null) return
         val displayTitle = if (item.title == null || item.title.trim { it <= ' ' }.isEmpty()) {
             getString(com.core.R.string.home_this_activity)
@@ -568,7 +485,7 @@ open class LauncherHomeFragment : Fragment() {
     private fun refreshPlayStats() {
         if (!::viewModel.isInitialized) return
         viewModel.refreshStats()
-        viewModel.refreshRecentItems()
+        viewModel.refreshRecentItems(includeFavorites = includeFavoriteItems())
     }
 
     private fun showChangeAvatarDialog() {
@@ -729,7 +646,7 @@ open class LauncherHomeFragment : Fragment() {
     private fun prefs(): SharedPreferences =
         requireContext().applicationContext.getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
 
-    private fun dp(value: Int): Int {
+    protected open fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density + 0.5f).toInt()
     }
 

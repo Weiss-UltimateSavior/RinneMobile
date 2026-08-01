@@ -115,8 +115,6 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
         }
     }
 
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
     private companion object {
         val actionIconIds = intArrayOf(
             com.core.R.id.actionSaveSlotIcon,

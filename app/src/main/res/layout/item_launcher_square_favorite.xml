@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="151dp"
+    android:layout_height="151dp"
+    android:background="@drawable/launcher_white_card"
+    android:clipToOutline="true"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingStart="0dp"
+    android:paddingTop="0dp"
+    android:paddingEnd="0dp"
+    android:paddingBottom="0dp">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="98dp"
+        android:background="@drawable/launcher_square_favorite_cover_bg"
+        android:clipToOutline="false">
+
+        <ImageView
+            android:id="@+id/squareFavoriteCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/squareFavoriteInitial"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/pad_game_fallback_initial"
+            android:textColor="@color/launcher_primary_color"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/squareFavoriteTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingStart="11dp"
+        android:paddingEnd="11dp"
+        android:textColor="@color/launcher_text_color"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/squareFavoritePlayTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:paddingStart="11dp"
+        android:paddingEnd="11dp"
+        android:paddingBottom="7dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/launcher_text_muted_color"
+        android:textSize="11sp" />
+</LinearLayout>

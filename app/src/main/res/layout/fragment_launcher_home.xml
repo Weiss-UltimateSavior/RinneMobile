@@ -355,37 +355,53 @@
                 </LinearLayout>
             </GridLayout>
 
+            <!-- Style-specific list section; header, stats and quick actions must remain outside. -->
             <LinearLayout
+                android:id="@+id/homeRecentSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/launcher_home_recent_section_margin_top"
                 android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_recent_activity"
-                    android:textColor="@color/launcher_text_color"
-                    android:textSize="@dimen/launcher_home_recent_title_text_size"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/recentEmpty"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/launcher_home_recent_empty_height"
-                    android:layout_marginTop="@dimen/launcher_home_recent_content_margin_top"
-                    android:background="@drawable/launcher_white_card"
-                    android:gravity="center"
-                    android:text="@string/home_no_recent_activity"
-                    android:textColor="@color/launcher_text_muted_color"
-                    android:textSize="@dimen/launcher_home_recent_text_size" />
-
+                <!-- Keep the default list views attached so ViewBinding references never become stale. -->
                 <LinearLayout
-                    android:id="@+id/recentList"
+                    android:id="@+id/homeDefaultRecentContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/launcher_home_recent_content_margin_top"
-                    android:orientation="vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_recent_activity"
+                        android:textColor="@color/launcher_text_color"
+                        android:textSize="@dimen/launcher_home_recent_title_text_size"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/recentEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/launcher_home_recent_empty_height"
+                        android:layout_marginTop="@dimen/launcher_home_recent_content_margin_top"
+                        android:background="@drawable/launcher_white_card"
+                        android:gravity="center"
+                        android:text="@string/home_no_recent_activity"
+                        android:textColor="@color/launcher_text_muted_color"
+                        android:textSize="@dimen/launcher_home_recent_text_size" />
+
+                    <LinearLayout
+                        android:id="@+id/recentList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/launcher_home_recent_content_margin_top"
+                        android:orientation="vertical"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <FrameLayout
+                    android:id="@+id/homeSquareListsHost"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>

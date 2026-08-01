@@ -64,8 +64,8 @@ class LauncherActivity : AppCompatActivity() {
         LauncherUiMode.applySavedToneMode(this)
         super.onCreate(savedInstanceState)
         pinnedGameSessionController = GameSessionController(this, RxMainQueue(), object : GameSessionController.Listener {
-            override fun reloadGame(gameId: Long) { viewModel?.refresh() }
-            override fun reloadAllGames() { viewModel?.refresh() }
+            override fun reloadGame(gameId: Long) { refreshLauncherSnapshot() }
+            override fun reloadAllGames() { refreshLauncherSnapshot() }
         })
         configureEdgeToEdgeWindow()
 
@@ -180,7 +180,7 @@ class LauncherActivity : AppCompatActivity() {
         // onResume may already have run while the splash screen was visible. Load the
         // complete state here so a process/activity recreation cannot leave the home
         // stats card displaying LauncherState's default zero values until pull-to-refresh.
-        viewModel?.refresh()
+        refreshLauncherSnapshot()
         scheduleAutoUpdateCheck()
         openAccountLoginIfRequested(intent)
         launchPinnedGameIfRequested(intent)
@@ -190,6 +190,13 @@ class LauncherActivity : AppCompatActivity() {
         splashDelay?.let { if (!it.isDisposed()) it.dispose() }
         pinnedGameSessionController?.cleanup()
         super.onDestroy()
+    }
+
+    /** Only the portrait SquareGrid home consumes favorite cards. */
+    private fun refreshLauncherSnapshot() {
+        viewModel?.refresh(
+            includeFavorites = LauncherPreferences.getHomeStyle(this).needsFavorites,
+        )
     }
 
     override fun onResume() {

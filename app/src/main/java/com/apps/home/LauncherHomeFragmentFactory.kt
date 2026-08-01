@@ -15,6 +15,10 @@ object LauncherHomeFragmentFactory {
             LauncherFeaturedHomeFragment::class.java,
             ::LauncherFeaturedHomeFragment,
         )
+        HomeStyle.SQUARE_GRID -> FragmentSpec(
+            LauncherSquareGridHomeFragment::class.java,
+            ::LauncherSquareGridHomeFragment,
+        )
     }
 
     fun create(style: HomeStyle): Fragment = spec(style).create()

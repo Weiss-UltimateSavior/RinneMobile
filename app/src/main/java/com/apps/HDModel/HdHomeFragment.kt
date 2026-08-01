@@ -228,6 +228,4 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         action.getChildAt(1).visibility = View.GONE
     }
 
-    private fun dp(value: Int): Int =
-        (value * resources.displayMetrics.density + 0.5f).toInt()
 }

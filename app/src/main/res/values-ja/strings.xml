@@ -24,6 +24,7 @@
     <string name="app_home_style_dialog_title">ホームスタイルを選択</string>
     <string name="app_home_style_default">標準ホーム</string>
     <string name="app_home_style_featured">おすすめカードホーム</string>
+    <string name="app_home_style_square_grid">スクエアグリッドホーム</string>
     <string name="app_navigation_style_label">ナビゲーションスタイル</string>
     <string name="app_navigation_style_dialog_title">ナビゲーションスタイルを選択</string>
     <string name="app_navigation_style_default">クラシックナビゲーション</string>
@@ -43,6 +44,10 @@
     <string name="home_featured_games">おすすめゲーム</string>
     <string name="home_quick_features">クイック機能</string>
     <string name="home_featured_empty">表示するゲームはまだありません</string>
+    <string name="home_square_favorites">お気に入りゲーム</string>
+    <string name="home_square_favorites_empty">お気に入りゲームはまだありません</string>
+    <string name="home_square_play_records">プレイ履歴</string>
+    <string name="home_square_more_settings">その他の設定</string>
     <string name="app_splash_image_label">起動画像</string>
     <string name="app_splash_image_default">標準の起動画像</string>
     <string name="app_splash_image_custom">カスタム起動画像を使用中</string>
