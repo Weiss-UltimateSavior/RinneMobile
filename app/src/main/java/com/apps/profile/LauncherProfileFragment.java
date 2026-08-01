@@ -23,7 +23,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.apps.UserData.LauncherUserData;
+import com.core.userdata.LauncherUserData;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.LauncherPreferences;
 import com.apps.LauncherThemeStyle;
@@ -60,7 +60,7 @@ import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.AvatarCropActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.core.translation.TranslationSettingActivity;
+import com.apps.translation.TranslationSettingActivity;
 
 public class LauncherProfileFragment extends Fragment {
     private static final String PREFS_NAME = "launcher_profile_prefs";

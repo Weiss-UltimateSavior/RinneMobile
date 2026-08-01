@@ -41,7 +41,7 @@
     </queries>
 
     <application
-        android:name=".CoreApp"
+        android:name="com.apps.LauncherApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -419,7 +419,7 @@
             android:exported="false" />
 
         <activity
-            android:name="com.core.translation.TranslationSettingActivity"
+            android:name="com.apps.translation.TranslationSettingActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.YukiHub.Launcher"

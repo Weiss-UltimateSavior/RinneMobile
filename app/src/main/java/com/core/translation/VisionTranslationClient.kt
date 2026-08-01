@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
  * 多模态视觉翻译客户端。
  *
  * 构造 OpenAI 兼容的 vision 请求（content 数组含 text + image_url），
- * 发送 JPEG 字节流并解析返回的译文文本。不依赖现有 [com.apps.agent.OpenAiCompatibleAgentClient]，
+ * 发送 JPEG 字节流并解析返回的译文文本。不依赖本地智能体聊天客户端，
  * 避免污染纯文本 Agent 流程。
  */
 object VisionTranslationClient {

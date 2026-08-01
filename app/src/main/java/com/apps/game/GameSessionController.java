@@ -7,7 +7,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.apps.UserData.LauncherUserData;
+import com.core.userdata.LauncherUserData;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.core.launcherbridge.PlaySession;

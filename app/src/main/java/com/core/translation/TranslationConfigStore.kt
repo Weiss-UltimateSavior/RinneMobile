@@ -16,7 +16,7 @@ import javax.crypto.spec.GCMParameterSpec
 /**
  * 智能翻译功能的本地配置存储。
  *
- * 复用 [com.apps.agent.AgentConfigStore] 的 AndroidKeyStore + AES/GCM 加密范式，
+ * 复用本地智能体配置的 AndroidKeyStore + AES/GCM 加密范式，
  * 但使用独立的 SharedPreferences 与 KeyStore alias，避免污染 Agent 配置。
  * 所有字段仅存储于本地，不进入云同步。
  */

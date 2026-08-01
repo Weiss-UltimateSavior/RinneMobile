@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.apps.UserData.LauncherUserData
+import com.core.userdata.LauncherUserData
 import com.core.launcherbridge.LauncherAuthBridge
 import com.core.launcherbridge.ConfigCallback
 import com.core.launcherbridge.PlayDataCallback

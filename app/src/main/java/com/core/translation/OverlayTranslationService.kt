@@ -32,9 +32,8 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import androidx.appcompat.app.AlertDialog
 import com.core.R
-import com.apps.theme.LauncherDialogFactory
+import com.core.launcher.LauncherUiBridge
 import com.core.util.AppExecutors
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -60,7 +59,7 @@ class OverlayTranslationService : Service() {
 
         /**
          * 缓存 MediaProjection 授权结果，避免每次截图都弹授权框。
-         * 由 [TranslationSettingActivity] 在授权回调中写入。
+         * 由翻译设置页在授权回调中写入。
          */
         @Volatile
         var projectionData: Intent? = null
@@ -81,7 +80,7 @@ class OverlayTranslationService : Service() {
     @Volatile private var latestImage: Image? = null
     private var isTranslating = false
     private var projectionReady = false
-    private var closeConfirmDialog: AlertDialog? = null
+    private var closeConfirmShowing = false
     private lateinit var themePreferences: SharedPreferences
     private val themePreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "launcher_theme_style") {
@@ -303,7 +302,7 @@ class OverlayTranslationService : Service() {
     private fun createFloatingButton(): View {
         val size = dp(35)
         // 跟随主题色调：取主题 primary 色，叠加 80% 不透明度（与原 #CC18B978 视觉一致）
-        val primaryColor = com.apps.theme.LauncherTheme.primary(this)
+        val primaryColor = LauncherUiBridge.primaryColor(this)
         val buttonColor = (0xCC shl 24) or (primaryColor and 0x00FFFFFF)
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -320,29 +319,11 @@ class OverlayTranslationService : Service() {
             scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
             adjustViewBounds = true
             layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
-            setImageResource(currentThemeLogoRes())
+            setImageResource(LauncherUiBridge.themeLogoRes(this@OverlayTranslationService))
             setColorFilter(Color.WHITE)
         }
         container.addView(icon)
         return container
-    }
-
-    /**
-     * 返回当前主题对应的 Logo 图标资源，与主页底部导航栏中间按钮保持一致。
-     */
-    private fun currentThemeLogoRes(): Int {
-        return when {
-            com.apps.LauncherActivity.isRinneTheme(this) ->
-                com.core.R.drawable.launcher_theme_rinne_def
-            com.apps.LauncherActivity.isAnriTheme(this) ->
-                com.core.R.drawable.launcher_theme_anri_def
-            com.apps.LauncherActivity.isXinhaitianTheme(this) ->
-                com.core.R.drawable.launcher_theme_xinhaitian_def
-            com.apps.LauncherActivity.isNatsumeTheme(this) ->
-                com.core.R.drawable.launcher_theme_natsume_def
-            else ->
-                com.core.R.drawable.launcher_game_center_default
-        }
     }
 
     private fun createOverlayParams(): WindowManager.LayoutParams {
@@ -417,22 +398,23 @@ class OverlayTranslationService : Service() {
     }
 
     private fun showDisableTranslationConfirm() {
-        if (closeConfirmDialog?.isShowing == true) return
+        if (closeConfirmShowing) return
+        closeConfirmShowing = true
         // Service 上下文不继承 Activity 的 AppCompat 主题；统一 Launcher 弹窗需要显式包装主题。
         val dialogContext = ContextThemeWrapper(this, com.core.R.style.Theme_YukiHub_Launcher)
-        val dialog = LauncherDialogFactory.showOverlayConfirm(
+        val shown = LauncherUiBridge.showOverlayConfirm(
             dialogContext,
             getString(R.string.translation_close_overlay_title),
             getString(R.string.translation_close_overlay_message),
             getString(R.string.translation_close),
+            overlayWindowType(),
             {
                 TranslationConfigStore.setEnabled(this, false)
                 stopSelf()
             },
-            overlayWindowType()
+            { closeConfirmShowing = false }
         )
-        dialog.setOnDismissListener { closeConfirmDialog = null }
-        closeConfirmDialog = dialog
+        if (!shown) closeConfirmShowing = false
     }
 
     private fun overlayWindowType(): Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -608,7 +590,7 @@ class OverlayTranslationService : Service() {
         val progress = ProgressBar(this).apply {
             layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
             indeterminateDrawable?.setColorFilter(
-                com.apps.theme.LauncherTheme.primary(this@OverlayTranslationService),
+                LauncherUiBridge.primaryColor(this@OverlayTranslationService),
                 PorterDuff.Mode.SRC_IN
             )
         }
@@ -653,7 +635,7 @@ class OverlayTranslationService : Service() {
                 else R.string.translation_failed_tap_to_close
             )
             // 成功时标题色跟随主题色调，失败时固定红色
-            setTextColor(if (success) com.apps.theme.LauncherTheme.primary(this@OverlayTranslationService) else Color.parseColor("#FF6B6B"))
+            setTextColor(if (success) LauncherUiBridge.primaryColor(this@OverlayTranslationService) else Color.parseColor("#FF6B6B"))
             textSize = 11f
         }
         val msgView = TextView(this).apply {

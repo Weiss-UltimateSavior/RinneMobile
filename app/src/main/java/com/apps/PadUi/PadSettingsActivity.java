@@ -25,7 +25,7 @@ import com.apps.home.HomeStyle;
 import com.apps.theme.LauncherMotion;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherTheme;
-import com.apps.UserData.LauncherUserData;
+import com.core.userdata.LauncherUserData;
 import com.core.R;
 import com.core.databinding.ActivityPadSettingsBinding;
 import com.core.launcherbridge.ConfigCallback;

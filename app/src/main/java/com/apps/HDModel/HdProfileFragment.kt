@@ -1,13 +1,16 @@
 package com.apps.HDModel
 
+import android.Manifest
 import android.app.LocalActivityManager
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.apps.account.LauncherAccountSettingsActivity
 import com.apps.leaderboard.LauncherLeaderboardActivity
@@ -15,7 +18,7 @@ import com.apps.profile.LauncherModuleCompatibilityActivity
 import com.apps.profile.LauncherProfileEditActivity
 import com.apps.profile.LauncherProfileFragment
 import com.core.R
-import com.core.translation.TranslationSettingActivity
+import com.apps.translation.TranslationSettingActivity
 
 /** HD 个人页：复用账户资料业务，以双栏内容适配大屏容器。 */
 @Suppress("DEPRECATION")
@@ -23,6 +26,22 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
     private var localActivityManager: LocalActivityManager? = null
     private var embeddedActivityId: String? = null
+    private var pendingProjectionCallback: ((resultCode: Int, data: Intent?) -> Unit)? = null
+    private var pendingNotificationPermissionCallback: ((Boolean) -> Unit)? = null
+
+    private val projectionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val callback = pendingProjectionCallback
+            pendingProjectionCallback = null
+            callback?.invoke(result.resultCode, result.data)
+        }
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            val callback = pendingNotificationPermissionCallback
+            pendingNotificationPermissionCallback = null
+            callback?.invoke(granted)
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,6 +82,8 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
         localActivityManager = null
         detailContainer = null
         embeddedActivityId = null
+        pendingProjectionCallback = null
+        pendingNotificationPermissionCallback = null
         super.onDestroyView()
     }
 
@@ -99,6 +120,22 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
 
     override fun openLeaderboard() {
         showEmbeddedActivity("hd_leaderboard", LauncherLeaderboardActivity::class.java)
+    }
+
+    override fun launchTranslationProjection(callback: (resultCode: Int, data: Intent?) -> Unit): Boolean {
+        if (!isAdded) return false
+        val mediaProjectionManager = requireContext()
+            .getSystemService(Context.MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
+        pendingProjectionCallback = callback
+        projectionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+        return true
+    }
+
+    override fun requestTranslationNotificationPermission(callback: (Boolean) -> Unit): Boolean {
+        if (!isAdded) return false
+        pendingNotificationPermissionCallback = callback
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        return true
     }
 
     private fun showEmbeddedActivity(id: String, activityClass: Class<*>) {

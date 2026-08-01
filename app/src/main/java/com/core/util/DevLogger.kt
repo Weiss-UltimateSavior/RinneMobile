@@ -152,6 +152,15 @@ object DevLogger {
     fun getLogSize(): Long = logcatFile?.let { if (it.exists()) it.length() else 0L } ?: 0L
 
     @JvmStatic
+    fun w(tag: String, message: String, throwable: Throwable? = null) {
+        if (throwable == null) {
+            Log.w(tag, message)
+        } else {
+            Log.w(tag, message, throwable)
+        }
+    }
+
+    @JvmStatic
     fun clearLog(): Boolean {
         return try {
             stopCapture()

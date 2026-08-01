@@ -11,10 +11,10 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.theme.LauncherTheme
 import com.core.R
+import com.core.agent.store.AgentConversationRepository
 import com.core.databinding.ItemLocalAgentEventBinding
 import com.core.util.TimeFormatUtil
 import kotlin.math.max
-import kotlin.math.roundToInt
 
 /** Left/right message flow used by the independent agent workbench. */
 class LocalAgentMessageAdapter(
@@ -103,6 +103,6 @@ class LocalAgentMessageAdapter(
     override fun getItemCount(): Int = messages.size
 
     class Holder(val binding: ItemLocalAgentEventBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun dp(value: Int): Int = (value * itemView.resources.displayMetrics.density).roundToInt()
+        fun dp(value: Int): Int = Math.round(value * itemView.resources.displayMetrics.density)
     }
 }

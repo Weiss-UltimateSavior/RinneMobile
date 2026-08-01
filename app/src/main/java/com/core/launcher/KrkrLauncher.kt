@@ -5,13 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import android.system.Os
 import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.documentfile.provider.DocumentFile
 import com.akira.tyranoemu.remote.Kirikiroid126
 import com.akira.tyranoemu.remote.Kirikiroid134
 import com.akira.tyranoemu.remote.Kirikiroid139
-import com.apps.LauncherActivity
-import com.apps.theme.LauncherTheme
 import org.tvp.kirikiri2.KR2Activity
 import java.io.File
 import java.io.FileInputStream
@@ -353,21 +350,7 @@ internal object KrkrLauncher {
 
     private fun appendThemeColors(intent: Intent, context: Context) {
         try {
-            val primary = LauncherTheme.primary(context)
-            intent.putExtra("primaryColor", primary)
-            intent.putExtra("darkMode", LauncherActivity.isLauncherDarkMode(context))
-            intent.putExtra("themeColorPrimary", primary)
-            intent.putExtra("themeColorOnPrimary", LauncherTheme.onPrimary(context))
-            intent.putExtra("themeColorCard", LauncherTheme.card(context))
-            intent.putExtra("themeColorText", LauncherTheme.text(context))
-            intent.putExtra("themeColorTextMuted", LauncherTheme.textMuted(context))
-            val appLocales = AppCompatDelegate.getApplicationLocales()
-            val languageTag = if (!appLocales.isEmpty) {
-                appLocales[0]?.toLanguageTag()
-            } else {
-                context.resources.configuration.locales[0].toLanguageTag()
-            }
-            intent.putExtra("uiLanguageTag", languageTag)
+            LauncherUiBridge.appendEngineThemeExtras(intent, context)
         } catch (error: Throwable) {
             logWarn("appendThemeColors failed", error)
         }

@@ -2,6 +2,7 @@ package com.apps.HDModel
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
@@ -284,6 +285,14 @@ class HdModeActivity : AppCompatActivity() {
      */
     fun launchSplashImagePicker(callback: (android.net.Uri?) -> Unit): Boolean {
         return currentEmbeddedOwner()?.launchSplashImagePicker(callback) ?: false
+    }
+
+    fun launchTranslationProjection(callback: (resultCode: Int, data: Intent?) -> Unit): Boolean {
+        return currentEmbeddedOwner()?.launchTranslationProjection(callback) ?: false
+    }
+
+    fun requestTranslationNotificationPermission(callback: (Boolean) -> Unit): Boolean {
+        return currentEmbeddedOwner()?.requestTranslationNotificationPermission(callback) ?: false
     }
 
     @Deprecated("Deprecated in Android")

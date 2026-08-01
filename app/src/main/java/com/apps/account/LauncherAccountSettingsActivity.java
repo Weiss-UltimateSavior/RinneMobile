@@ -18,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
-import com.apps.UserData.LauncherUserData;
+import com.core.userdata.LauncherUserData;
 import com.core.R;
 import com.core.databinding.ActivityLauncherAccountSettingsBinding;
 import com.core.launcherbridge.ConfigCallback;

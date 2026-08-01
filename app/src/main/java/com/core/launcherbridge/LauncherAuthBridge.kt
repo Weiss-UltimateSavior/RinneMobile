@@ -2,7 +2,7 @@ package com.core.launcherbridge
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.apps.UserData.LauncherUserData
+import com.core.userdata.LauncherUserData
 import com.core.util.AppExecutors
 import com.core.util.RxMainScheduler
 import org.json.JSONObject
