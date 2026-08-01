@@ -19,12 +19,12 @@ object LauncherNavigationMetrics {
 
     @JvmStatic
     fun isPillStyle(context: Context): Boolean =
-        context.getSharedPreferences(LauncherActivity.APP_PREFS, Context.MODE_PRIVATE)
+        context.getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_PILL_NAVIGATION_STYLE, false)
 
     @JvmStatic
     fun setPillStyle(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(LauncherActivity.APP_PREFS, Context.MODE_PRIVATE)
+        context.getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_PILL_NAVIGATION_STYLE, enabled)
             .apply()
@@ -32,12 +32,12 @@ object LauncherNavigationMetrics {
 
     @JvmStatic
     fun isCardStyle(context: Context): Boolean =
-        context.getSharedPreferences(LauncherActivity.APP_PREFS, Context.MODE_PRIVATE)
+        context.getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_CARD_NAVIGATION_STYLE, false)
 
     @JvmStatic
     fun setCardStyle(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(LauncherActivity.APP_PREFS, Context.MODE_PRIVATE)
+        context.getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_CARD_NAVIGATION_STYLE, enabled)
             .apply()
@@ -46,7 +46,7 @@ object LauncherNavigationMetrics {
     @JvmStatic
     fun isLiquidGlassStyle(context: Context): Boolean {
         val preferences = context.getSharedPreferences(
-            LauncherActivity.APP_PREFS,
+            LauncherPreferences.APP_PREFS,
             Context.MODE_PRIVATE,
         )
         if (preferences.contains(KEY_LIQUID_GLASS_NAVIGATION_STYLE)) {
@@ -60,7 +60,7 @@ object LauncherNavigationMetrics {
 
     @JvmStatic
     fun setLiquidGlassStyle(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(LauncherActivity.APP_PREFS, Context.MODE_PRIVATE)
+        context.getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_LIQUID_GLASS_NAVIGATION_STYLE, enabled)
             .apply()

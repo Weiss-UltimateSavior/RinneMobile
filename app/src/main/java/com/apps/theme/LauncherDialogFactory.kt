@@ -324,6 +324,35 @@ object LauncherDialogFactory {
         setContent(dialog, root, WIDTH_COMPACT_DP)
     }
 
+    /** Android 11+ 全文件访问权限引导对话框，GO 按钮由调用方处理跳转。 */
+    @JvmStatic
+    fun showStoragePermissionRequest(
+        context: Context,
+        onGo: Runnable,
+        onCancel: Runnable,
+    ) {
+        val dialog = open(context, WIDTH_FORM_DP)
+        val root = root(context, false)
+        root.addView(standardTitle(context, context.getString(R.string.core_file_access_title)))
+        root.addView(standardMessage(context, context.getString(R.string.core_file_access_message)), topMargin(context, 13))
+
+        val goBtn = button(context, context.getString(R.string.core_go), true)
+        goBtn.setOnClickListener {
+            dialog.dismiss()
+            onGo.run()
+        }
+        root.addView(goBtn, fixedHeightTopMargin(context, 9, 38))
+
+        val cancelBtn = cancelButton(context)
+        cancelBtn.setOnClickListener {
+            dialog.dismiss()
+            onCancel.run()
+        }
+        root.addView(cancelBtn, fixedHeightTopMargin(context, 9, 38))
+
+        setContent(dialog, root, WIDTH_FORM_DP)
+    }
+
     private fun open(context: Context, widthDp: Int): AlertDialog {
         return open(context, widthDp, true)
     }
