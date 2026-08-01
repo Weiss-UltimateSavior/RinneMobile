@@ -42,29 +42,14 @@
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>页面主题1</b></td>
-      <td align="center"><b>页面主题2</b></td>
-      <td align="center"><b>页面主题3</b></td>
+      <td align="center"><b>页面样式1</b></td>
+      <td align="center"><b>页面样式2</b></td>
+      <td align="center"><b>页面样式3</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/竖屏主题1.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏主题2.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏主题3.jpg" width="280" /></td>
-    </tr>
-  </table>
-</p>
-
-<p align="center">
-  <table align="center">
-    <tr>
-      <td align="center"><b>主题菜单</b></td>
-      <td align="center"><b>粒子背景</b></td>
-      <td align="center"><b>深色模式</b></td>
-    </tr>
-    <tr>
-      <td><img src="screenshots/竖屏主题菜单.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏粒子菜单.jpg" width="280" /></td>
-      <td><img src="screenshots/深色模式.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏样式1.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏样式2.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏样式3.jpg" width="280" /></td>
     </tr>
   </table>
 </p>
@@ -72,29 +57,14 @@
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>游戏仓库</b></td>
-      <td align="center"><b>管理设置</b></td>
-      <td align="center"><b>个人中心</b></td>
+      <td align="center"><b>竖屏仓库</b></td>
+      <td align="center"><b>竖屏个人</b></td>
+      <td align="center"><b>竖屏管理</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/竖屏游戏页.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏设置页.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏个人页.jpg" width="280" /></td>
-    </tr>
-  </table>
-</p>
-
-<p align="center">
-  <table align="center">
-    <tr>
-      <td align="center"><b>部分设置</b></td>
-      <td align="center"><b>部分设置</b></td>
-      <td align="center"><b>部分设置</b></td>
-    </tr>
-    <tr>
-      <td><img src="screenshots/竖屏游戏管理1.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏游戏管理2.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏游戏管理3.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏仓库.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏个人.jpg" width="280" /></td>
+      <td><img src="screenshots/竖屏管理.jpg" width="280" /></td>
     </tr>
   </table>
 </p>
@@ -102,14 +72,52 @@
 <p align="center">
   <table align="center">
     <tr>
-      <td align="center"><b>部分设置</b></td>
-      <td align="center"><b>部分设置</b></td>
-      <td align="center"><b>部分设置</b></td>
+      <td align="center"><b>功能展示1</b></td>
+      <td align="center"><b>功能展示2</b></td>
+      <td align="center"><b>功能展示3</b></td>
     </tr>
     <tr>
-      <td><img src="screenshots/竖屏功能1.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏功能2.jpg" width="280" /></td>
-      <td><img src="screenshots/竖屏功能3.jpg" width="280" /></td>
+      <td><img src="screenshots/功能展示1.jpg" width="280" /></td>
+      <td><img src="screenshots/功能展示2.jpg" width="280" /></td>
+      <td><img src="screenshots/功能展示3.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><b>功能展示4</b></td>
+      <td align="center"><b>功能展示5</b></td>
+      <td align="center"><b>功能展示6</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/功能展示4.jpg" width="280" /></td>
+      <td><img src="screenshots/功能展示5.jpg" width="280" /></td>
+      <td><img src="screenshots/功能展示6.jpg" width="280" /></td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td><img src="screenshots/hd首页1.png" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/hd游戏.png" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/hd管理4.png" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/hd智能2.png" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/hd账户5.png" width="960" /></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/hd设置6.png" width="960" /></td>
     </tr>
   </table>
 </p>
