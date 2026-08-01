@@ -7,6 +7,7 @@
 ## 1. 通用原则
 
 - 保持 `LauncherActivity.wrapLauncherUiMode()`、`LauncherTheme` 与 `LauncherMotion` 的既有主题/动效链路。
+- 主题/色调/偏好等全局静态 API 的主源已落在独立 `object`（`LauncherPreferences`、`LauncherThemeStyle`、`LauncherUiMode`、`LauncherSplash`、`LauncherNavigationMetrics`）；`LauncherActivity` 的 companion 仅保留 `@JvmStatic` 委托方法与兼容常量，供既有 Java/Kotlin 调用方零修改。新增静态 API 直接写入对应 object，不再向 `LauncherActivity` companion 添加实现。
 - 新增普通 Activity/Fragment 使用 ViewBinding；Fragment 在 `onDestroyView()` 解除 listener 并置空 binding。
 - 不以静态颜色或静态圆角 drawable 覆盖运行时主题。优先调用 `LauncherTheme`。
 - 修改 UI 时只调整用户指定的层级，不顺带改动引擎启动、存档、账户同步或列表数据流。
@@ -169,6 +170,7 @@
 - 统一外壳为主题 card 色、20dp 圆角、透明 Window 和 `LauncherMotion.applyDialogMotion()`。
 - Factory 内部会做竖屏平板缩放；不要在 `PadUi` 调用它。
 - 确认回调必须先 `dismiss()` 再执行业务操作。
+- Activity 内不得手写对话框 View 树（手拼 `LinearLayout`/`TextView`/`Button`）；权限引导、确认等弹窗一律走 `LauncherDialogFactory` 的 `show*()` API，复用 `root()`/`standardTitle()`/`standardMessage()`/`button()` 等 helper 保持外壳统一，避免在 Activity 中堆积 70+ 行内联对话框代码。新增弹窗类型优先扩展 Factory，不要回退到 Activity 内联实现。
 - 含输入法、动态进度、复杂列表或不可控长文本的弹窗不能硬迁移到普通 API；先提供有明确生命周期的专用模板，再迁移。
 
 ## 6. PadUi 横屏规范
@@ -258,6 +260,10 @@ git diff --check
 
 - 一个类/文件只保留一个主要职责。页面拆分为 UI 绑定与渲染、状态/事件协调、业务操作；Repository 拆分为查询、写入、迁移或外部源适配等明确职责。
 - 单文件超过约 500 行、或同时包含 UI、线程调度、I/O 和领域规则时，应在下一次相关功能改动中拆分。优先提取可独立测试的 Controller、Use Case、Formatter 或数据源，不改变对外行为。
+- **Activity 的 companion 不得承担全局静态职责**：偏好读写、主题判断、UI 模式包装、Splash 资源、导航样式等与 Activity 实例无关的静态能力，必须放在独立 `object`（参考 `LauncherPreferences`、`LauncherThemeStyle`、`LauncherUiMode`、`LauncherSplash`、`LauncherNavRenderer`）。`LauncherActivity` 的 companion 只作为兼容委托层保留既有 `@JvmStatic` 签名，不得新增实现；新增调用方直接引用对应 object，不经 companion 转发。Activity 实例逻辑（生命周期、路由、装配）与渲染/状态管理应分离，导航渲染等大块 UI 逻辑抽成持有 Activity 的协调类，避免单 Activity 文件膨胀。
+- **object 间禁止循环依赖**：低层工具 object（`LauncherNavigationMetrics`、`LauncherPreferences` 等）不得反向依赖高层 `LauncherActivity`。SharedPreferences 名等共享常量统一以 `LauncherPreferences.APP_PREFS` 为单一来源，不通过 `LauncherActivity.APP_PREFS` 回跳，避免形成模块级循环引用。新 object 只依赖同层或更底层的 object/`Context`。
+- **常量委托的约束**：`const val` 无法委托到另一 object 的属性，大规模重构时可在兼容层保留字面量副本并注明主源；`@JvmField val` 可用 `@JvmField val X = LauncherY.X` 形式委托以保持单一来源。重构时优先保留 `@JvmStatic` 委托方法签名与 `@JvmField`/`const val` 常量名不变，让既有调用方零修改、分步迁移，降低回归风险。
+- **持有 Activity 的渲染/协调类**：导航渲染、Splash 等 UI 协调类需要访问 Activity 状态时可持有 Activity 引用，但须满足：生命周期严格被 Activity 包裹（在 `onCreate`/`showLauncherContent` 等创建，Activity 销毁即释放）；对 Activity 私有字段的访问通过 `internal` getter 暴露（如 `internal val launcherBinding`），不直接改为 `public`；`lateinit` 字段必须在访问前用 `binding != null` 等守卫保证已初始化，避免在 splash 等异步阶段触发未初始化访问。
 - 新增公共 API 需有 KDoc/Javadoc：说明用途、线程要求、可空约定、失败方式及 Java 互操作约束（若适用）。不要为显而易见的私有实现添加噪声注释。
 - 保持 import 分组和格式化一致；不引入与文件现有语言无关的 Java/Kotlin 互操作包装。新业务类优先 Kotlin，Java 文件仅维护既有实现或确有互操作必要的代码。
 
