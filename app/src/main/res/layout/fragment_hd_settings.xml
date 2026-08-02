@@ -45,9 +45,12 @@
                         android:id="@+id/hdSettingsApp"
                         style="@style/LauncherManageItem">
 
-                        <TextView
-                            style="@style/LauncherManageIcon"
-                            android:text="A" />
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/launcher_home_sheet_app_settings" />
 
                         <TextView
                             style="@style/LauncherManageTitle"
@@ -63,9 +66,12 @@
                         android:id="@+id/hdSettingsTheme"
                         style="@style/LauncherManageItem">
 
-                        <TextView
-                            style="@style/LauncherManageIcon"
-                            android:text="T" />
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/launcher_home_sheet_theme" />
 
                         <TextView
                             style="@style/LauncherManageTitle"
@@ -81,9 +87,12 @@
                         android:id="@+id/hdSettingsTone"
                         style="@style/LauncherManageItem">
 
-                        <TextView
-                            style="@style/LauncherManageIcon"
-                            android:text="C" />
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/launcher_home_sheet_tone" />
 
                         <TextView
                             style="@style/LauncherManageTitle"
@@ -99,9 +108,12 @@
                         android:id="@+id/hdSettingsUpdate"
                         style="@style/LauncherManageItem">
 
-                        <TextView
-                            style="@style/LauncherManageIcon"
-                            android:text="U" />
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/launcher_home_sheet_update" />
 
                         <TextView
                             style="@style/LauncherManageTitle"
@@ -117,9 +129,12 @@
                         android:id="@+id/hdSettingsFeedback"
                         style="@style/LauncherManageItem">
 
-                        <TextView
-                            style="@style/LauncherManageIcon"
-                            android:text="F" />
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/launcher_home_sheet_feedback" />
 
                         <TextView
                             style="@style/LauncherManageTitle"
@@ -135,9 +150,12 @@
                         android:id="@+id/hdSettingsDisclaimer"
                         style="@style/LauncherManageItem">
 
-                        <TextView
-                            style="@style/LauncherManageIcon"
-                            android:text="D" />
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/launcher_home_sheet_disclaimer" />
 
                         <TextView
                             style="@style/LauncherManageTitle"
