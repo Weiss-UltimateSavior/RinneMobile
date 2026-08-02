@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.apps.LauncherActivity;
+import com.apps.LauncherThemeStyle;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
@@ -166,10 +167,10 @@ public class PadGameModeActivity extends AppCompatActivity {
         if (binding == null) return;
         binding.navLaunchCenterCircle.setBackground(LauncherTheme.circleWithSoftShadow(this));
         String style = LauncherActivity.getLauncherThemeStyle(this);
-        boolean rinneTheme = LauncherActivity.THEME_STYLE_RINNE.equals(style);
-        boolean anriTheme = LauncherActivity.THEME_STYLE_ANRI.equals(style);
-        boolean xinhaitianTheme = LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style);
-        boolean natsumeTheme = LauncherActivity.THEME_STYLE_NATSUME.equals(style);
+        boolean rinneTheme = LauncherThemeStyle.THEME_STYLE_RINNE.equals(style);
+        boolean anriTheme = LauncherThemeStyle.THEME_STYLE_ANRI.equals(style);
+        boolean xinhaitianTheme = LauncherThemeStyle.THEME_STYLE_XINHAITIAN.equals(style);
+        boolean natsumeTheme = LauncherThemeStyle.THEME_STYLE_NATSUME.equals(style);
         boolean themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme;
         binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
         binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);

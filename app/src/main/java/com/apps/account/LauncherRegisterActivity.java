@@ -87,7 +87,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
             binding.getRoot().getWindowVisibleDisplayFrame(visibleFrame);
             int rootHeight = binding.getRoot().getRootView().getHeight();
             int hiddenBottom = Math.max(0, rootHeight - visibleFrame.bottom);
-            int keyboardThreshold = Math.max(dp(120), rootHeight / 5);
+            int keyboardThreshold = Math.max(LauncherTheme.dp(this, 120), rootHeight / 5);
             layoutKeyboardInset = hiddenBottom > keyboardThreshold ? hiddenBottom : 0;
             applyRegisterScrollPadding();
             if (layoutKeyboardInset > 0) {
@@ -130,7 +130,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         if (input == null || !input.hasFocus() || binding == null) return;
         input.post(() -> {
             if (!input.hasFocus() || binding == null) return;
-            Rect rect = new Rect(0, 0, input.getWidth(), input.getHeight() + dp(24));
+            Rect rect = new Rect(0, 0, input.getWidth(), input.getHeight() + LauncherTheme.dp(this, 24));
             input.requestRectangleOnScreen(rect, true);
         });
     }
@@ -281,18 +281,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     }
 
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) {
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this, true);
     }
 
     private void applySavedToneMode() {
@@ -304,7 +293,4 @@ public class LauncherRegisterActivity extends AppCompatActivity {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

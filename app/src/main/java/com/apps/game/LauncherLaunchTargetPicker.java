@@ -49,11 +49,15 @@ final class LauncherLaunchTargetPicker {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(activity, 270), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(LauncherTheme.dp(activity, 270), WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(activity, 22), dp(activity, 20), dp(activity, 22), dp(activity, 16));
+        root.setPadding(
+                LauncherTheme.dp(activity, 22),
+                LauncherTheme.dp(activity, 20),
+                LauncherTheme.dp(activity, 22),
+                LauncherTheme.dp(activity, 16));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
 
         TextView title = text(activity, activity.getString(R.string.game_launch_choose_file), 16, true);
@@ -64,7 +68,7 @@ final class LauncherLaunchTargetPicker {
         status.setTextColor(ContextCompat.getColor(activity, R.color.launcher_text_muted_color));
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        statusParams.setMargins(0, dp(activity, 13), 0, 0);
+        statusParams.setMargins(0, LauncherTheme.dp(activity, 13), 0, 0);
         root.addView(status, statusParams);
         window.setContentView(root);
 
@@ -87,8 +91,8 @@ final class LauncherLaunchTargetPicker {
                         item.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
                         item.setBackground(LauncherTheme.cancelChip(activity));
                         LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT, dp(activity, 38));
-                        itemParams.setMargins(0, dp(activity, 7), 0, 0);
+                                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(activity, 38));
+                        itemParams.setMargins(0, LauncherTheme.dp(activity, 7), 0, 0);
                         item.setOnClickListener(view -> {
                             if (callback != null) callback.onTargetSelected(target.value);
                             dialog.dismiss();
@@ -96,10 +100,11 @@ final class LauncherLaunchTargetPicker {
                         list.addView(item, itemParams);
                     }
                     scroll.addView(list);
-                    int listHeight = dp(activity, 7) + targets.size() * (dp(activity, 38) + dp(activity, 7));
+                    int listHeight = LauncherTheme.dp(activity, 7)
+                            + targets.size() * (LauncherTheme.dp(activity, 38) + LauncherTheme.dp(activity, 7));
                     LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT, Math.min(listHeight, dp(activity, 280)));
-                    scrollParams.setMargins(0, dp(activity, 7), 0, 0);
+                            LinearLayout.LayoutParams.MATCH_PARENT, Math.min(listHeight, LauncherTheme.dp(activity, 280)));
+                    scrollParams.setMargins(0, LauncherTheme.dp(activity, 7), 0, 0);
                     root.addView(scroll, scrollParams);
                 }
                 TextView cancel = text(activity,
@@ -107,8 +112,8 @@ final class LauncherLaunchTargetPicker {
                 cancel.setTextColor(LauncherTheme.primary(activity));
                 cancel.setBackground(LauncherTheme.cancelChip(activity));
                 LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(activity, 36));
-                cancelParams.setMargins(0, dp(activity, 9), 0, 0);
+                        LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(activity, 36));
+                cancelParams.setMargins(0, LauncherTheme.dp(activity, 9), 0, 0);
                 cancel.setOnClickListener(view -> dialog.dismiss());
                 root.addView(cancel, cancelParams);
             });
@@ -197,10 +202,6 @@ final class LauncherLaunchTargetPicker {
         view.setTextSize(sizeSp);
         if (bold) view.setTypeface(null, android.graphics.Typeface.BOLD);
         return view;
-    }
-
-    private static int dp(Context context, int value) {
-        return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 
     private static final class Target {

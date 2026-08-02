@@ -14,11 +14,13 @@ import androidx.core.content.ContextCompat;
 import com.core.R;
 import com.core.databinding.ActivityLauncherThemeMenuBinding;
 import com.apps.LauncherActivity;
+import com.apps.LauncherPreferences;
+import com.apps.LauncherThemeStyle;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherThemeMenuActivity extends AppCompatActivity {
     private ActivityLauncherThemeMenuBinding binding;
-    private String selectedTheme = LauncherActivity.THEME_STYLE_DEFAULT;
+    private String selectedTheme = LauncherThemeStyle.THEME_STYLE_DEFAULT;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,11 +60,11 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        binding.freshThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_DEFAULT));
-        binding.nightThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_RINNE));
-        binding.pinkThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_ANRI));
-        binding.xinhaitianThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_XINHAITIAN));
-        binding.natsumeThemeRow.setOnClickListener(view -> selectTheme(LauncherActivity.THEME_STYLE_NATSUME));
+        binding.freshThemeRow.setOnClickListener(view -> selectTheme(LauncherThemeStyle.THEME_STYLE_DEFAULT));
+        binding.nightThemeRow.setOnClickListener(view -> selectTheme(LauncherThemeStyle.THEME_STYLE_RINNE));
+        binding.pinkThemeRow.setOnClickListener(view -> selectTheme(LauncherThemeStyle.THEME_STYLE_ANRI));
+        binding.xinhaitianThemeRow.setOnClickListener(view -> selectTheme(LauncherThemeStyle.THEME_STYLE_XINHAITIAN));
+        binding.natsumeThemeRow.setOnClickListener(view -> selectTheme(LauncherThemeStyle.THEME_STYLE_NATSUME));
         binding.particleToggleRow.setOnClickListener(view -> showParticleStyleDialog());
         binding.themeMenuApply.setOnClickListener(view -> applySelectedTheme());
     }
@@ -73,13 +75,13 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
                 LauncherTheme.primary(this)
         ));
         binding.freshThemeIcon.setClipToOutline(true);
-        binding.rinneThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.RINNE_PRIMARY_COLOR));
+        binding.rinneThemeLogo.setBackground(LauncherTheme.circle(this, LauncherThemeStyle.RINNE_PRIMARY_COLOR));
         binding.rinneThemeLogo.setClipToOutline(true);
-        binding.anriThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.ANRI_PRIMARY_COLOR));
+        binding.anriThemeLogo.setBackground(LauncherTheme.circle(this, LauncherThemeStyle.ANRI_PRIMARY_COLOR));
         binding.anriThemeLogo.setClipToOutline(true);
         binding.xinhaitianThemeLogo.setBackground(LauncherTheme.xinhaitianCircle(this));
         binding.xinhaitianThemeLogo.setClipToOutline(true);
-        binding.natsumeThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.NATSUME_PRIMARY_COLOR));
+        binding.natsumeThemeLogo.setBackground(LauncherTheme.circle(this, LauncherThemeStyle.NATSUME_PRIMARY_COLOR));
         binding.natsumeThemeLogo.setClipToOutline(true);
         binding.particleToggleIcon.setBackground(LauncherTheme.circle(this));
     }
@@ -90,11 +92,11 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     }
 
     private void renderSelection() {
-        boolean freshSelected = LauncherActivity.THEME_STYLE_DEFAULT.equals(selectedTheme);
-        boolean nightSelected = LauncherActivity.THEME_STYLE_RINNE.equals(selectedTheme);
-        boolean pinkSelected = LauncherActivity.THEME_STYLE_ANRI.equals(selectedTheme);
-        boolean xinhaitianSelected = LauncherActivity.THEME_STYLE_XINHAITIAN.equals(selectedTheme);
-        boolean natsumeSelected = LauncherActivity.THEME_STYLE_NATSUME.equals(selectedTheme);
+        boolean freshSelected = LauncherThemeStyle.THEME_STYLE_DEFAULT.equals(selectedTheme);
+        boolean nightSelected = LauncherThemeStyle.THEME_STYLE_RINNE.equals(selectedTheme);
+        boolean pinkSelected = LauncherThemeStyle.THEME_STYLE_ANRI.equals(selectedTheme);
+        boolean xinhaitianSelected = LauncherThemeStyle.THEME_STYLE_XINHAITIAN.equals(selectedTheme);
+        boolean natsumeSelected = LauncherThemeStyle.THEME_STYLE_NATSUME.equals(selectedTheme);
 
         binding.freshThemeRow.setBackgroundResource(freshSelected
                 ? 0
@@ -125,20 +127,20 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     }
 
     private void applySelectedTheme() {
-        if (LauncherActivity.THEME_STYLE_RINNE.equals(selectedTheme)) {
-            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_RINNE);
+        if (LauncherThemeStyle.THEME_STYLE_RINNE.equals(selectedTheme)) {
+            LauncherThemeStyle.setThemeStyle(this, LauncherThemeStyle.THEME_STYLE_RINNE);
             Toast.makeText(this, R.string.theme_rinne_applied, Toast.LENGTH_SHORT).show();
-        } else if (LauncherActivity.THEME_STYLE_ANRI.equals(selectedTheme)) {
-            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_ANRI);
+        } else if (LauncherThemeStyle.THEME_STYLE_ANRI.equals(selectedTheme)) {
+            LauncherThemeStyle.setThemeStyle(this, LauncherThemeStyle.THEME_STYLE_ANRI);
             Toast.makeText(this, R.string.theme_anri_applied, Toast.LENGTH_SHORT).show();
-        } else if (LauncherActivity.THEME_STYLE_XINHAITIAN.equals(selectedTheme)) {
-            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_XINHAITIAN);
+        } else if (LauncherThemeStyle.THEME_STYLE_XINHAITIAN.equals(selectedTheme)) {
+            LauncherThemeStyle.setThemeStyle(this, LauncherThemeStyle.THEME_STYLE_XINHAITIAN);
             Toast.makeText(this, R.string.theme_xinhaitian_applied, Toast.LENGTH_SHORT).show();
-        } else if (LauncherActivity.THEME_STYLE_NATSUME.equals(selectedTheme)) {
-            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_NATSUME);
+        } else if (LauncherThemeStyle.THEME_STYLE_NATSUME.equals(selectedTheme)) {
+            LauncherThemeStyle.setThemeStyle(this, LauncherThemeStyle.THEME_STYLE_NATSUME);
             Toast.makeText(this, R.string.theme_natsume_applied, Toast.LENGTH_SHORT).show();
-        } else if (LauncherActivity.THEME_STYLE_DEFAULT.equals(selectedTheme)) {
-            LauncherActivity.setLauncherThemeStyle(this, LauncherActivity.THEME_STYLE_DEFAULT);
+        } else if (LauncherThemeStyle.THEME_STYLE_DEFAULT.equals(selectedTheme)) {
+            LauncherThemeStyle.setThemeStyle(this, LauncherThemeStyle.THEME_STYLE_DEFAULT);
             Toast.makeText(this, R.string.theme_default_restored, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, getString(R.string.theme_not_available, selectedTheme),
@@ -152,13 +154,13 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
         String selectedStyle = LauncherActivity.getLauncherParticleStyle(this);
         String[] styles = {
-                LauncherActivity.PARTICLE_STYLE_FLOATING,
-                LauncherActivity.PARTICLE_STYLE_RAIN,
-                LauncherActivity.PARTICLE_STYLE_STAR,
-                LauncherActivity.PARTICLE_STYLE_SAKURA,
-                LauncherActivity.PARTICLE_STYLE_FIREFLIES,
-                LauncherActivity.PARTICLE_STYLE_CONSTELLATION,
-                LauncherActivity.PARTICLE_STYLE_RIPPLES
+                LauncherPreferences.PARTICLE_STYLE_FLOATING,
+                LauncherPreferences.PARTICLE_STYLE_RAIN,
+                LauncherPreferences.PARTICLE_STYLE_STAR,
+                LauncherPreferences.PARTICLE_STYLE_SAKURA,
+                LauncherPreferences.PARTICLE_STYLE_FIREFLIES,
+                LauncherPreferences.PARTICLE_STYLE_CONSTELLATION,
+                LauncherPreferences.PARTICLE_STYLE_RIPPLES
         };
         String[] labels = {
                 getString(R.string.theme_particle_floating),

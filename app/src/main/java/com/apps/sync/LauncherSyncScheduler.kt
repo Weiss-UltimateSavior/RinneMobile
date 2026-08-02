@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.apps.LauncherPreferences
 import com.core.userdata.LauncherUserData
 import com.core.launcherbridge.LauncherAuthBridge
 import com.core.launcherbridge.ConfigCallback
@@ -15,13 +16,11 @@ import java.util.Calendar
 /** Schedules the nightly Launcher configuration and play-data backup. */
 object LauncherSyncScheduler {
     private const val TAG = "LauncherSync"
-    private const val PREFS_NAME = "launcher_account_settings"
     private const val KEY_SYNC_CONFIG = "sync_config"
-    private const val ACTION_SYNC_BACKUP = "com.apps.ACTION_SYNC_BACKUP"
 
     @JvmStatic
     fun updateSchedule(context: Context) {
-        val enabled = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val enabled = context.getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_SYNC_CONFIG, false)
         if (enabled && LauncherAuthBridge.isLoggedIn(context)) scheduleNextBackup(context) else cancelSchedule(context)
     }
@@ -61,7 +60,7 @@ object LauncherSyncScheduler {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         return PendingIntent.getBroadcast(
-            context, 0, Intent(context, LauncherSyncReceiver::class.java).setAction(ACTION_SYNC_BACKUP), flags
+            context, 0, Intent(context, LauncherSyncReceiver::class.java).setAction(LauncherSyncReceiver.ACTION_SYNC_BACKUP), flags
         )
     }
 
@@ -69,7 +68,7 @@ object LauncherSyncScheduler {
     @JvmStatic
     fun performBackup(context: Context) {
         if (!LauncherAuthBridge.isLoggedIn(context)) return
-        if (!context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getBoolean(KEY_SYNC_CONFIG, false)) return
+        if (!context.getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, Context.MODE_PRIVATE).getBoolean(KEY_SYNC_CONFIG, false)) return
 
         LauncherUserData.exportSettingsJson(context)?.let { settingsJson ->
             LauncherAuthBridge.uploadConfig(context, settingsJson, object : ConfigCallback {

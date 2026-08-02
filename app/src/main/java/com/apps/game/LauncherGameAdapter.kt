@@ -3,6 +3,7 @@ package com.apps.game
 import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
+import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ItemLauncherGameCardBinding
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -55,7 +56,7 @@ class LauncherGameAdapter @JvmOverloads constructor(
             return try {
                 view.resources.getDimensionPixelSize(resId)
             } catch (_: Resources.NotFoundException) {
-                BaseGameCardAdapter.dp(view, fallbackDp)
+                LauncherTheme.dp(view.context, fallbackDp)
             }
         }
     }

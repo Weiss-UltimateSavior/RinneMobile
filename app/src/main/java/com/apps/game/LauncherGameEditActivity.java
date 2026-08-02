@@ -33,7 +33,6 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import rikka.shizuku.Shizuku;
 
@@ -60,27 +59,6 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     private EngineOption currentEngineOption;
     private EngineOption[] engineOptions;
 
-    private EngineOption[] createEngineOptions() {
-        return new EngineOption[]{
-            new EngineOption(EngineType.AUTO, getString(R.string.game_engine_auto), null),
-            new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
-            new EngineOption(EngineType.ONS, "ONScripter", null),
-            new EngineOption(EngineType.TYRANO, "Tyrano", null),
-            new EngineOption(EngineType.ARTEMIS, "Artemis", null),
-            new EngineOption(EngineType.WINLATOR, "Winlator", null),
-            new EngineOption(EngineType.GAMEHUB, "GameHub", null),
-            new EngineOption(EngineType.PSP, "PSP", null),
-            new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
-            new EngineOption(EngineType.NINTENDO_SWITCH, "Nintendo Switch (Eden)", null),
-            new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
-            new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
-            new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
-            new EngineOption(EngineType.RPGMAKER, getString(R.string.game_engine_rpgmaker_mkxp), "mkxp-z"),
-            new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
-            new EngineOption(EngineType.GODOT, getString(R.string.game_engine_godot_auto), "godot4"),
-            new EngineOption(EngineType.UNKNOWN, getString(R.string.game_common_unknown), null)
-        };
-    }
     private Game game;
     private Uri selectedCoverUri;
     private Uri selectedGameDirectoryUri;
@@ -133,7 +111,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         configureEdgeToEdgeWindow();
         binding = ActivityLauncherGameEditBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        engineOptions = createEngineOptions();
+        engineOptions = EngineOptionCatalog.create(this, true);
         LauncherTabletPortraitScaler.applyActivityContent(this);
         bindViews();
         restoreTransientState(savedInstanceState);
@@ -246,9 +224,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                     binding.editDescription.setText(game.description);
                 }
                 if (!restoreEngineSelection) {
-                    currentEngineOption = findEngineOption(game.engine, game.emulatorPackage);
+                    currentEngineOption = EnginePackageResolver.findOption(
+                            engineOptions,
+                            game.engine,
+                            game.emulatorPackage);
                     binding.editEngineText.setText(currentEngineOption.label);
-                    lastEngineDefaultPackage = defaultEmulatorPackageForOption(currentEngineOption);
+                    lastEngineDefaultPackage = EnginePackageResolver.forOption(currentEngineOption);
                 }
                 if (!restoreDirectorySelection && game.rootUri != null && game.rootUri.startsWith("content://")) {
                     selectedGameDirectoryUri = Uri.parse(game.rootUri);
@@ -448,31 +429,6 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 getString(R.string.game_gamehub_no_shortcut_help));
     }
 
-    private EngineOption findEngineOption(EngineType engine, String emulatorPackage) {
-        if (engine == null) return engineOptions[0];
-        String pkg = emulatorPackage == null ? "" : emulatorPackage.trim().toLowerCase(Locale.ROOT);
-        EngineOption fallback = null;
-        for (EngineOption opt : engineOptions) {
-            if (opt.engine != engine) continue;
-            if (engine == EngineType.RPGMAKER || engine == EngineType.RENPY
-                    || engine == EngineType.GODOT) {
-                if (opt.rpgMakerSubtype == null || opt.rpgMakerSubtype.isEmpty()) {
-                    if (fallback == null) fallback = opt;
-                    continue;
-                }
-                String alias = "internal." + opt.rpgMakerSubtype;
-                if (alias.equals(pkg) || ("internal." + opt.rpgMakerSubtype.replace("-", ""))
-                        .equals(pkg.replace("-", ""))) {
-                    return opt;
-                }
-                if (fallback == null) fallback = opt;
-            } else {
-                return opt;
-            }
-        }
-        return fallback != null ? fallback : engineOptions[0];
-    }
-
     private EngineOption selectedEngineOption() {
         return currentEngineOption != null ? currentEngineOption : engineOptions[0];
     }
@@ -496,26 +452,9 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         engineChanged = true;
         binding.editEngineText.setText(currentEngineOption.label);
         // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
-        String nextDefault = defaultEmulatorPackageForOption(currentEngineOption);
+        String nextDefault = EnginePackageResolver.forOption(currentEngineOption);
         binding.editEmulator.setText(nextDefault);
         lastEngineDefaultPackage = nextDefault;
-    }
-
-    private String defaultEmulatorPackageForOption(EngineOption option) {
-        if (option == null) return "";
-        if ((option.engine == EngineType.RPGMAKER || option.engine == EngineType.RENPY
-                    || option.engine == EngineType.GODOT)
-                && option.rpgMakerSubtype != null
-                && !option.rpgMakerSubtype.isEmpty()) return "internal." + option.rpgMakerSubtype;
-        if (option.engine == EngineType.KIRIKIRI) return "internal.krkr";
-        if (option.engine == EngineType.ONS) return "internal.ons";
-        if (option.engine == EngineType.TYRANO) return "internal.tyrano";
-        if (option.engine == EngineType.ARTEMIS) return "internal.artemis";
-        if (option.engine == EngineType.PSP) return "org.ppsspp.ppsspp";
-        if (option.engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
-        if (option.engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator";
-        if (option.engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
-        return "";
     }
 
     private int selectedEngineOptionIndex() {
@@ -527,24 +466,6 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private int boundedEngineOptionIndex(int index) {
         return index >= 0 && index < engineOptions.length ? index : 0;
-    }
-
-    private static final class EngineOption {
-        final EngineType engine;
-        final String label;
-        /** 仅 RPGMAKER 用：rpgmxp / rpgmvx / rpgmvxace / mkxp-z；null 表示非 RPGMAKER。 */
-        final String rpgMakerSubtype;
-
-        EngineOption(EngineType engine, String label, String rpgMakerSubtype) {
-            this.engine = engine;
-            this.label = label;
-            this.rpgMakerSubtype = rpgMakerSubtype;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
     }
 
     private void applySystemBarInsets() {
@@ -560,15 +481,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     }
 
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

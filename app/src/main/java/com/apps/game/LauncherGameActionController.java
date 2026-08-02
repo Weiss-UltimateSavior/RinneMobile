@@ -112,8 +112,8 @@ public final class LauncherGameActionController {
             action.run();
         });
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        params.setMargins(0, dp(10), 0, 0);
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context(), 36));
+        params.setMargins(0, LauncherTheme.dp(context(), 10), 0, 0);
         root.addView(option, params);
     }
 
@@ -174,12 +174,12 @@ public final class LauncherGameActionController {
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         TextView cancel = button(context().getString(R.string.game_common_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        cancelParams.setMargins(0, 0, dp(5), 0);
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, LauncherTheme.dp(context(), 38), 1f);
+        cancelParams.setMargins(0, 0, LauncherTheme.dp(context(), 5), 0);
         buttons.addView(cancel, cancelParams);
         TextView save = button(context().getString(R.string.game_common_save), true);
-        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        saveParams.setMargins(dp(5), 0, 0, 0);
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(0, LauncherTheme.dp(context(), 38), 1f);
+        saveParams.setMargins(LauncherTheme.dp(context(), 5), 0, 0, 0);
         buttons.addView(save, saveParams);
         addWithTopMargin(root, buttons, 12);
 
@@ -201,7 +201,7 @@ public final class LauncherGameActionController {
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-            window.setLayout(dp(340), WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setLayout(LauncherTheme.dp(context(), 340), WindowManager.LayoutParams.WRAP_CONTENT);
         }
         totalInput.requestFocus();
         totalInput.post(() -> {
@@ -318,8 +318,8 @@ public final class LauncherGameActionController {
             action.run();
         });
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(38));
-        params.setMargins(0, dp(11), 0, 0);
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context(), 38));
+        params.setMargins(0, LauncherTheme.dp(context(), 11), 0, 0);
         root.addView(option, params);
     }
 
@@ -370,8 +370,8 @@ public final class LauncherGameActionController {
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         TextView cancel = button(context().getString(R.string.game_common_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        cancelParams.setMargins(0, 0, dp(5), 0);
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, LauncherTheme.dp(context(), 38), 1f);
+        cancelParams.setMargins(0, 0, LauncherTheme.dp(context(), 5), 0);
         buttons.addView(cancel, cancelParams);
         TextView delete = button(context().getString(R.string.game_common_remove), false);
         LauncherTheme.dangerButton(delete);
@@ -379,8 +379,8 @@ public final class LauncherGameActionController {
             dialog.dismiss();
             deleteGame(game);
         });
-        LinearLayout.LayoutParams deleteParams = new LinearLayout.LayoutParams(0, dp(38), 1f);
-        deleteParams.setMargins(dp(5), 0, 0, 0);
+        LinearLayout.LayoutParams deleteParams = new LinearLayout.LayoutParams(0, LauncherTheme.dp(context(), 38), 1f);
+        deleteParams.setMargins(LauncherTheme.dp(context(), 5), 0, 0, 0);
         buttons.addView(delete, deleteParams);
         addWithTopMargin(root, buttons, 13);
         setDialogContent(dialog, root, 320);
@@ -465,7 +465,11 @@ public final class LauncherGameActionController {
     private LinearLayout createDialogRoot() {
         LinearLayout root = new LinearLayout(context());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(18), dp(22), dp(15));
+        root.setPadding(
+                LauncherTheme.dp(context(), 22),
+                LauncherTheme.dp(context(), 18),
+                LauncherTheme.dp(context(), 22),
+                LauncherTheme.dp(context(), 15));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
         return root;
     }
@@ -486,8 +490,8 @@ public final class LauncherGameActionController {
         TextView cancel = button(context().getString(R.string.game_common_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        params.setMargins(0, dp(9), 0, 0);
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context(), 36));
+        params.setMargins(0, LauncherTheme.dp(context(), 9), 0, 0);
         cancel.setLayoutParams(params);
         return cancel;
     }
@@ -517,7 +521,7 @@ public final class LauncherGameActionController {
         view.setTextColor(ContextCompat.getColor(context(), muted
                 ? R.color.launcher_text_muted_color : R.color.launcher_text_color));
         view.setTextSize(12);
-        view.setLineSpacing(dp(4), 1f);
+        view.setLineSpacing(LauncherTheme.dp(context(), 4), 1f);
         return view;
     }
 
@@ -528,7 +532,11 @@ public final class LauncherGameActionController {
         input.setTextColor(ContextCompat.getColor(context(), R.color.launcher_text_color));
         input.setHintTextColor(ContextCompat.getColor(context(), R.color.launcher_input_hint_color));
         input.setTextSize(13);
-        input.setPadding(dp(13), dp(8), dp(13), dp(8));
+        input.setPadding(
+                LauncherTheme.dp(context(), 13),
+                LauncherTheme.dp(context(), 8),
+                LauncherTheme.dp(context(), 13),
+                LauncherTheme.dp(context(), 8));
         input.setBackground(LauncherTheme.cancelChip(context()));
         LauncherTheme.styleTextInput(input);
         return input;
@@ -537,7 +545,7 @@ public final class LauncherGameActionController {
     private void addWithTopMargin(LinearLayout root, View child, int marginDp) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dp(marginDp), 0, 0);
+        params.setMargins(0, LauncherTheme.dp(context(), marginDp), 0, 0);
         root.addView(child, params);
     }
 
@@ -545,10 +553,6 @@ public final class LauncherGameActionController {
         Window window = dialog.getWindow();
         if (window == null) return;
         window.setContentView(content);
-        window.setLayout(dp(widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
-    }
-
-    private int dp(int value) {
-        return (int) (value * context().getResources().getDisplayMetrics().density + 0.5f);
+        window.setLayout(LauncherTheme.dp(context(), widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
     }
 }

@@ -2,6 +2,7 @@ package com.apps.PadUi
 
 import android.view.ViewGroup
 import com.apps.game.BaseGameCardAdapter
+import com.apps.theme.LauncherTheme
 import com.core.databinding.ItemLauncherGameCardBinding
 import kotlin.math.max
 import kotlin.math.min
@@ -21,7 +22,13 @@ class PadManageGameAdapter : BaseGameCardAdapter(::applyPadLayout, true) {
                 }
             }
             val overlay = binding.launcherGameTextOverlay.layoutParams
-            val height = min(fixedHeightPx, max(dp(binding.root, 35), min(dp(binding.root, 38), fixedHeightPx / 4)))
+            val height = min(
+                fixedHeightPx,
+                max(
+                    LauncherTheme.dp(binding.root.context, 35),
+                    min(LauncherTheme.dp(binding.root.context, 38), fixedHeightPx / 4),
+                ),
+            )
             if (overlay.height != height) {
                 overlay.height = height
                 binding.launcherGameTextOverlay.layoutParams = overlay

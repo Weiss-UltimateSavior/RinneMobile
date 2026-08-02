@@ -53,7 +53,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import rikka.shizuku.Shizuku;
 import com.apps.LauncherActivity;
@@ -75,26 +74,6 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     private EngineOption selectedEngineOption;
     private EngineOption[] engineOptions;
 
-    private EngineOption[] createEngineOptions() {
-        return new EngineOption[]{
-            new EngineOption(EngineType.AUTO, getString(R.string.game_engine_auto), null),
-            new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
-            new EngineOption(EngineType.ONS, "ONScripter", null),
-            new EngineOption(EngineType.TYRANO, "Tyrano", null),
-            new EngineOption(EngineType.ARTEMIS, "Artemis", null),
-            new EngineOption(EngineType.WINLATOR, "Winlator", null),
-            new EngineOption(EngineType.GAMEHUB, "GameHub", null),
-            new EngineOption(EngineType.PSP, "PSP", null),
-            new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
-            new EngineOption(EngineType.NINTENDO_SWITCH, "Nintendo Switch (Eden)", null),
-            new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
-            new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
-            new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
-            new EngineOption(EngineType.RPGMAKER, getString(R.string.game_engine_rpgmaker_mkxp), "mkxp-z"),
-            new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
-            new EngineOption(EngineType.GODOT, getString(R.string.game_engine_godot_auto), "godot4")
-        };
-    }
     private Uri gameDirUri;
     private Uri coverUri;
     private String lastEngineDefaultPackage = "";
@@ -137,7 +116,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         configureEdgeToEdgeWindow();
         binding = ActivityLauncherAddGameBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        engineOptions = createEngineOptions();
+        engineOptions = EngineOptionCatalog.create(this, false);
         LauncherTabletPortraitScaler.applyActivityContent(this);
 
         bindViews();
@@ -230,7 +209,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         selectedEngineOption = engineOptions[boundedEngineOptionIndex(index)];
         binding.addGameEngineText.setText(selectedEngineOption.label);
         // 切换引擎时无条件重置为该引擎的默认包名，覆盖用户手动输入或列表选择的值。
-        String nextDefault = defaultEmulatorPackageForOption(selectedEngineOption);
+        String nextDefault = EnginePackageResolver.forOption(selectedEngineOption);
         binding.addGameEmulatorInput.setText(nextDefault);
         lastEngineDefaultPackage = nextDefault;
     }
@@ -386,7 +365,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                     && !userRpgSubtype.isEmpty()) {
                 emulatorFallback = "internal." + userRpgSubtype;
             } else {
-                emulatorFallback = defaultEmulatorPackageForDetected(finalEngine, detected);
+                emulatorFallback = EnginePackageResolver.forDetection(finalEngine, detected);
             }
             game.emulatorPackage = textOrDefault(selectedEmulator, emulatorFallback);
             game.description = selectedDescription;
@@ -423,76 +402,13 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         return selectedEngineOption != null ? selectedEngineOption.engine : EngineType.AUTO;
     }
 
-    private String defaultEmulatorPackage(EngineType engine) {
-        if (engine == EngineType.KIRIKIRI) return "internal.krkr";
-        if (engine == EngineType.ONS) return "internal.ons";
-        if (engine == EngineType.TYRANO) return "internal.tyrano";
-        if (engine == EngineType.ARTEMIS) return "internal.artemis";
-        if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
-        if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
-        if (engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator";
-        if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
-        // RPG Maker 默认走 RPGXP（Ruby 1.8）：老 RGSS1 语法（如 ?(...) 三元运算符）在 1.8 下才兼容，
-        // buildLaunchIntent 会在 rpgmxp 时自动传 useRuby18=true 加载 libmkxp18.so。
-        // 检测到具体子类型时由 defaultEmulatorPackageForDetected 覆盖为更精确的别名。
-        if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
-        if (engine == EngineType.RENPY) return "internal.renpy";
-        if (engine == EngineType.GODOT) return "internal.godot";
-        return "";
-    }
-
-    /**
-     * 当扫描器给出 RPG Maker 子引擎（rpgmxp/rpgmvx/rpgmvxace/mkxp-z）时，
-     * 使用 {@code internal.<subtype>} 作为默认 packageName，覆盖通用默认。
-     * 这样无需用户手动调整 binding.addGameEmulatorInput 即可调用对应的 mkxp native 库。
-     */
-    private String defaultEmulatorPackageForDetected(EngineType engine, LauncherScanBridge.DetectionResult detected) {
-        String fallback = defaultEmulatorPackage(engine);
-        if (detected == null) return fallback;
-        if (engine == EngineType.RPGMAKER) {
-            String subtype = detected.rpgMakerSubtype;
-            if (subtype == null || subtype.trim().isEmpty()) return fallback;
-            return "internal." + subtype.trim();
-        }
-        if (engine == EngineType.RENPY) {
-            String subtype = detected.renpySubtype;
-            if (subtype == null || subtype.trim().isEmpty()) return fallback;
-            return "internal." + subtype.trim();
-        }
-        if (engine == EngineType.GODOT) {
-            String subtype = detected.godotSubtype;
-            if (subtype == null || subtype.trim().isEmpty()) return fallback;
-            return "internal." + subtype.trim();
-        }
-        return fallback;
-    }
-
-    /**
-     * 根据当前选择的 EngineOption 推算默认 packageName。
-     * 用于选择器回调：当用户选 RPG Maker 子引擎或 Ren'Py 时，
-     * 返回 {@code internal.<subtype>}；其他引擎回退到 {@link #defaultEmulatorPackage}。
-     */
-    private String defaultEmulatorPackageForOption(EngineOption opt) {
-        if (opt == null) return "";
-        if (opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()
-                && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY
-                    || opt.engine == EngineType.GODOT)) {
-            return "internal." + opt.rpgMakerSubtype;
-        }
-        return defaultEmulatorPackage(opt.engine);
-    }
-
     /**
      * 取当前选择的 EngineOption 的子引擎标识（RPG Maker 或 Ren'Py）。
      * 仅当选中的引擎有 subtype 且非空时返回，否则返回空串。
      * 必须在 UI 线程调用（读取选择状态）。
      */
     private String selectedRpgMakerSubtype() {
-        if (selectedEngineOption == null) return "";
-        if (selectedEngineOption.engine != EngineType.RPGMAKER
-                && selectedEngineOption.engine != EngineType.RENPY
-                && selectedEngineOption.engine != EngineType.GODOT) return "";
-        return selectedEngineOption.rpgMakerSubtype == null ? "" : selectedEngineOption.rpgMakerSubtype;
+        return EnginePackageResolver.subtypeForOption(selectedEngineOption);
     }
 
     private String copyCoverToInternalStorage(Uri uri) {
@@ -589,40 +505,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         LauncherAppPickerDialog.show(this, target::setText);
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density);
-    }
-
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) {
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-        window.getDecorView().setSystemUiVisibility(flags);
-    }
-
-    private static final class EngineOption {
-        final EngineType engine;
-        final String label;
-        /** 仅 RPGMAKER 用：rpgmxp / rpgmvx / rpgmvxace / mkxp-z；null 表示非 RPGMAKER。 */
-        final String rpgMakerSubtype;
-
-        EngineOption(EngineType engine, String label, String rpgMakerSubtype) {
-            this.engine = engine;
-            this.label = label;
-            this.rpgMakerSubtype = rpgMakerSubtype;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

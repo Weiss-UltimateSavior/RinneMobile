@@ -417,5 +417,5 @@ object PadDialogFactory {
     }
 
     private fun dp(context: Context, value: Int): Int =
-        (value * context.resources.displayMetrics.density + 0.5f).toInt()
+        LauncherTheme.dp(context, value)
 }

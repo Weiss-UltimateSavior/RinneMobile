@@ -16,6 +16,7 @@ import com.core.R;
 import com.core.databinding.FragmentLauncherAccountBinding;
 import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.apps.LauncherPreferences;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.theme.LauncherDialogFactory;
@@ -152,7 +153,7 @@ public class LauncherAccountFragment extends Fragment {
         binding.inputEmail.setHint(R.string.social_email_hint);
         binding.inputEmail.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         // 自动填充上次登录的邮箱
-        String savedEmail = requireContext().getSharedPreferences("yukihub_prefs", 0)
+        String savedEmail = requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
                 .getString("auth_saved_email", "");
         if (savedEmail != null && !savedEmail.trim().isEmpty()) {
             binding.inputEmail.setText(savedEmail);

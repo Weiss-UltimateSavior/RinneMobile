@@ -26,6 +26,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import com.apps.LauncherActivity
+import com.apps.LauncherThemeStyle
 import com.core.R
 import com.core.launcherbridge.LauncherUpdateBridge
 import kotlin.math.max
@@ -203,8 +204,8 @@ object LauncherTheme {
         val drawable = GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
             intArrayOf(
-                LauncherActivity.XINHAITIAN_PRIMARY_COLOR,
-                LauncherActivity.XINHAITIAN_ACCENT_COLOR
+                LauncherThemeStyle.XINHAITIAN_PRIMARY_COLOR,
+                LauncherThemeStyle.XINHAITIAN_ACCENT_COLOR
             )
         )
         drawable.shape = if (oval) GradientDrawable.OVAL else GradientDrawable.RECTANGLE

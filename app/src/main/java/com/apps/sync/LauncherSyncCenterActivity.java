@@ -218,7 +218,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
                 // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
                 throw error;
             } catch (Exception e) {
-                Log.e("YukiHub", "export backup failed", e);
+                Log.e("LauncherSync", "export backup failed", e);
                 runOnUiThread(() -> Toast.makeText(this,
                         getString(R.string.sync_backup_failed, e.getMessage()), Toast.LENGTH_LONG).show());
             }
@@ -240,7 +240,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
                 // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
                 throw error;
             } catch (Exception e) {
-                Log.e("YukiHub", "import backup failed", e);
+                Log.e("LauncherSync", "import backup failed", e);
                 runOnUiThread(() -> {
                     importInProgress = false;
                     Toast.makeText(this, getString(R.string.sync_import_failed, e.getMessage()),

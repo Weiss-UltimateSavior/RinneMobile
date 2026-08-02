@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import com.apps.LauncherPreferences;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge.RecentActivity;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 public class LauncherRepository {
-    private static final String APP_PREFS = "yukihub_prefs";
     /** Maximum number of non-recycled favorite cards rendered by SquareGrid Home. */
     public static final int FAVORITE_ITEM_LIMIT = 30;
     private static final int RECENT_ITEM_LIMIT = 18;
@@ -38,7 +38,7 @@ public class LauncherRepository {
 
     public LauncherRepository(Context context) {
         appContext = context.getApplicationContext();
-        appPrefs = appContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
+        appPrefs = appContext.getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE);
     }
 
     public LauncherSnapshot loadSnapshot() {

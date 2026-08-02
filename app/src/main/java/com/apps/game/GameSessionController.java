@@ -17,6 +17,8 @@ import com.core.util.RxMainQueue;
 
 import java.util.Locale;
 
+import com.apps.LauncherPreferences;
+
 /**
  * 游戏会话控制器：管理本地 session 与服务端 session 的启动、心跳、收尾。
  *
@@ -149,7 +151,7 @@ public final class GameSessionController {
     private void startServerPlaySession(Game game, long localSessionId) {
         if (game == null || localSessionId <= 0L) return;
         if (!LauncherAuthBridge.isLoggedIn(appContext)) return;
-        SharedPreferences prefs = appContext.getSharedPreferences("launcher_account_settings", Context.MODE_PRIVATE);
+        SharedPreferences prefs = appContext.getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, Context.MODE_PRIVATE);
         if (!prefs.getBoolean("realtime_playtime", true)) return;
         String deviceId = LauncherUserData.getRealtimePlaytimeDeviceId(appContext);
         LauncherAuthBridge.startPlayTimeSession(appContext, game.id, GameMetadataFormatter.safeTitle(game), deviceId,

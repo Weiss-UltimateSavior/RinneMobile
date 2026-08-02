@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.apps.LauncherActivity;
+import com.apps.LauncherPreferences;
 import com.apps.game.LauncherGameActionController;
 import com.apps.game.LauncherGameEditActivity;
 import com.apps.game.GameSessionController;
@@ -513,7 +514,6 @@ public class PadGameFragment extends Fragment {
         return game.title.trim();
     }
 
-    private static final String APP_PREFS = "yukihub_prefs";
     private static final String KEY_PROFILE_AVATAR = "profile_avatar";
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_AUTH_STATUS = "auth_status";
@@ -523,7 +523,7 @@ public class PadGameFragment extends Fragment {
 
     private SharedPreferences appPrefs() {
         return requireContext().getApplicationContext()
-                .getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
+                .getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE);
     }
 
     /** 渲染头像：优先主页头像，其次个人页头像，都没有则显示首字母。 */
@@ -532,7 +532,7 @@ public class PadGameFragment extends Fragment {
         String avatar = appPrefs().getString(KEY_PROFILE_AVATAR, "");
         if (avatar == null || avatar.trim().isEmpty()) {
             String profileAvatar = requireContext()
-                    .getSharedPreferences("launcher_profile_prefs", 0)
+                    .getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                     .getString("custom_avatar_uri", "");
             if (profileAvatar != null && !profileAvatar.trim().isEmpty()) {
                 avatar = profileAvatar;

@@ -20,6 +20,7 @@ import com.core.R;
 import com.core.databinding.FragmentLauncherManageBinding;
 import com.core.util.RxMainQueue;
 
+import com.apps.LauncherPreferences;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.settings.LauncherMetadataSourceActivity;
@@ -33,8 +34,6 @@ import com.apps.widget.LauncherTabletPortraitScaler;
  * LocalBackupController / ScanDirectoryController / Xp3TargetResolver / ExternalImportController。
  */
 public class LauncherManageFragment extends Fragment implements ManageHost {
-    private static final String APP_PREFS = "yukihub_prefs";
-
     private FragmentLauncherManageBinding binding;
     private final RxMainQueue mainQueue = new RxMainQueue();
     private boolean importInProgress;
@@ -239,10 +238,9 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
 
     @Override
     public int dp(int value) {
-        return (int) (value
-                * getResources().getDisplayMetrics().density
-                * tabletPortraitScale()
-                + 0.5f);
+        return Math.round(value
+                * requireContext().getResources().getDisplayMetrics().density
+                * tabletPortraitScale());
     }
 
     // ==================== ManageHost 实现 ====================
@@ -260,7 +258,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
 
     @Override
     public SharedPreferences getPrefs() {
-        return requireContext().getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE);
+        return requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, android.content.Context.MODE_PRIVATE);
     }
 
     @Override

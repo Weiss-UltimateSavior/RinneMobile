@@ -60,12 +60,12 @@ public final class GamePasswordDialog {
 
         boolean landscape = context.getResources().getDisplayMetrics().widthPixels
                 > context.getResources().getDisplayMetrics().heightPixels;
-        int padH = dp(context, landscape ? 20 : 24);
-        int padV = dp(context, landscape ? 16 : 28);
-        int btnSize = dp(context, landscape ? 42 : 56);
-        int btnSpacing = dp(context, landscape ? 4 : 6);
-        int sectionGap = dp(context, landscape ? 8 : 16);
-        int keypadTop = dp(context, landscape ? 12 : 24);
+        int padH = LauncherTheme.dp(context, landscape ? 20 : 24);
+        int padV = LauncherTheme.dp(context, landscape ? 16 : 28);
+        int btnSize = LauncherTheme.dp(context, landscape ? 42 : 56);
+        int btnSpacing = LauncherTheme.dp(context, landscape ? 4 : 6);
+        int sectionGap = LauncherTheme.dp(context, landscape ? 8 : 16);
+        int keypadTop = LauncherTheme.dp(context, landscape ? 12 : 24);
 
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -91,7 +91,7 @@ public final class GamePasswordDialog {
         hint.setTextSize(11);
         LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hintLp.topMargin = dp(context, landscape ? 8 : 12);
+        hintLp.topMargin = LauncherTheme.dp(context, landscape ? 8 : 12);
         root.addView(hint, hintLp);
 
         // 密码圆点指示器
@@ -102,8 +102,8 @@ public final class GamePasswordDialog {
         LinearLayout.LayoutParams dotsRowLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         dotsRowLp.topMargin = sectionGap;
-        int dotSize = dp(context, 12);
-        int dotSpacing = dp(context, 10);
+        int dotSize = LauncherTheme.dp(context, 12);
+        int dotSpacing = LauncherTheme.dp(context, 10);
         for (int i = 0; i < PASSWORD_LENGTH; i++) {
             View dot = new View(context);
             GradientDrawable dotBg = new GradientDrawable();
@@ -195,8 +195,8 @@ public final class GamePasswordDialog {
         cancelBtn.setTypeface(null, Typeface.BOLD);
         cancelBtn.setTextColor(LauncherTheme.primary(context));
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 38));
-        cancelLp.topMargin = dp(context, landscape ? 12 : 20);
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 38));
+        cancelLp.topMargin = LauncherTheme.dp(context, landscape ? 12 : 20);
         cancelBtn.setBackground(LauncherTheme.cancelChip(context));
         cancelBtn.setOnClickListener(v -> dialog.dismiss());
         root.addView(cancelBtn, cancelLp);
@@ -216,7 +216,7 @@ public final class GamePasswordDialog {
             } else {
                 dialogHeight = WindowManager.LayoutParams.WRAP_CONTENT;
             }
-            window.setLayout(dp(context, 280), dialogHeight);
+            window.setLayout(LauncherTheme.dp(context, 280), dialogHeight);
         }
     }
 
@@ -302,7 +302,4 @@ public final class GamePasswordDialog {
         }
     }
 
-    private static int dp(Context context, int value) {
-        return (int) (value * context.getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

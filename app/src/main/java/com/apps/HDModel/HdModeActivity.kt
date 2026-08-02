@@ -16,6 +16,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import com.apps.LauncherActivity
+import com.apps.LauncherPreferences
+import com.apps.LauncherThemeStyle
 import com.apps.data.LauncherViewModel
 import com.apps.theme.LauncherTheme
 import com.core.R
@@ -28,14 +30,14 @@ class HdModeActivity : AppCompatActivity() {
     private lateinit var binding: ActivityHdModeBinding
     private lateinit var launcherViewModel: LauncherViewModel
     private var selectedNavItem = HdNavItem.HOME
-    private var appliedThemeStyle = LauncherActivity.THEME_STYLE_DEFAULT
+    private var appliedThemeStyle = LauncherThemeStyle.THEME_STYLE_DEFAULT
     private val launcherPreferenceListener =
         SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             when (key) {
-                LauncherActivity.KEY_LAUNCHER_THEME_STYLE ->
+                LauncherThemeStyle.KEY_LAUNCHER_THEME_STYLE ->
                     binding.root.post { recreateIfThemeStyleChanged() }
-                LauncherActivity.KEY_LAUNCHER_PARTICLES_ENABLED,
-                LauncherActivity.KEY_LAUNCHER_PARTICLE_STYLE ->
+                LauncherPreferences.KEY_LAUNCHER_PARTICLES_ENABLED,
+                LauncherPreferences.KEY_LAUNCHER_PARTICLE_STYLE ->
                     binding.root.post { renderParticles() }
             }
         }
@@ -112,12 +114,12 @@ class HdModeActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        getSharedPreferences(LauncherActivity.APP_PREFS, MODE_PRIVATE)
+        getSharedPreferences(LauncherPreferences.APP_PREFS, MODE_PRIVATE)
             .registerOnSharedPreferenceChangeListener(launcherPreferenceListener)
     }
 
     override fun onStop() {
-        getSharedPreferences(LauncherActivity.APP_PREFS, MODE_PRIVATE)
+        getSharedPreferences(LauncherPreferences.APP_PREFS, MODE_PRIVATE)
             .unregisterOnSharedPreferenceChangeListener(launcherPreferenceListener)
         super.onStop()
     }

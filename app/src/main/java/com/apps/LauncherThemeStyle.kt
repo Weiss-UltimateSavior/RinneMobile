@@ -7,7 +7,7 @@ import com.core.R
 
 object LauncherThemeStyle {
 
-    private const val KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style"
+    const val KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style"
     const val THEME_STYLE_DEFAULT = "default"
     const val THEME_STYLE_RINNE = "rinne"
     const val THEME_STYLE_ANRI = "anri"

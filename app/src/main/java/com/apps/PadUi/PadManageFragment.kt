@@ -690,7 +690,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     }
 
     private fun dp(value: Int): Int {
-        return (value * resources.displayMetrics.density + 0.5f).toInt()
+        return LauncherTheme.dp(requireContext(), value)
     }
 
     // ===== GameListController.Listener =====

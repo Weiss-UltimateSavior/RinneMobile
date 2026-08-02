@@ -1,6 +1,7 @@
 package com.apps.theme;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -13,7 +14,9 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import java.util.Random;
-import com.apps.LauncherActivity;
+import com.apps.LauncherPreferences;
+import com.apps.LauncherThemeStyle;
+import com.core.R;
 
 public class LauncherParticleView extends View {
     private static final int PARTICLE_COUNT = 56;
@@ -21,7 +24,7 @@ public class LauncherParticleView extends View {
     private static final int RIPPLES_ACTIVE_COUNT = 8;
     private static final long FRAME_DELAY_MS = 16L;
     private static final float MAX_FRAME_SECONDS = 0.04f;
-    private static final int[] COLORS = {
+    private static final int[] FALLBACK_COLORS = {
             Color.rgb(34, 216, 142),
             Color.rgb(74, 144, 226),
             Color.rgb(255, 184, 76),
@@ -32,13 +35,14 @@ public class LauncherParticleView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Random random = new Random(20260704L);
     private final Particle[] particles = new Particle[PARTICLE_COUNT];
-    private final RadialGradient[] fireflyShaders = new RadialGradient[COLORS.length];
+    private int[] particleColors = FALLBACK_COLORS;
+    private RadialGradient[] fireflyShaders = new RadialGradient[FALLBACK_COLORS.length];
     private final Path shapePath = new Path();
     private String fireflyShaderTheme = "";
     private long lastFrameTime;
     private boolean running;
     private boolean particlesEnabled = true;
-    private String particleStyle = LauncherActivity.PARTICLE_STYLE_FLOATING;
+    private String particleStyle = LauncherPreferences.PARTICLE_STYLE_FLOATING;
     private String activeThemeStyle = "";
     private final Runnable frameRunnable = new Runnable() {
         @Override
@@ -65,9 +69,25 @@ public class LauncherParticleView extends View {
     }
 
     private void init() {
+        particleColors = loadParticlePalette();
+        fireflyShaders = new RadialGradient[particleColors.length];
         setWillNotDraw(false);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         paint.setStyle(Paint.Style.FILL);
+    }
+
+    private int[] loadParticlePalette() {
+        TypedArray array = getResources().obtainTypedArray(R.array.launcher_particle_palette);
+        try {
+            if (array.length() <= 0) return FALLBACK_COLORS;
+            int[] colors = new int[array.length()];
+            for (int i = 0; i < array.length(); i++) {
+                colors[i] = array.getColor(i, FALLBACK_COLORS[i % FALLBACK_COLORS.length]);
+            }
+            return colors;
+        } finally {
+            array.recycle();
+        }
     }
 
     @Override
@@ -199,19 +219,19 @@ public class LauncherParticleView extends View {
     }
 
     public void setParticleStyle(String style) {
-        String safeStyle = LauncherActivity.PARTICLE_STYLE_RAIN.equals(style)
-                ? LauncherActivity.PARTICLE_STYLE_RAIN
-                : LauncherActivity.PARTICLE_STYLE_STAR.equals(style)
-                ? LauncherActivity.PARTICLE_STYLE_STAR
-                : LauncherActivity.PARTICLE_STYLE_SAKURA.equals(style)
-                ? LauncherActivity.PARTICLE_STYLE_SAKURA
-                : LauncherActivity.PARTICLE_STYLE_FIREFLIES.equals(style)
-                ? LauncherActivity.PARTICLE_STYLE_FIREFLIES
-                : LauncherActivity.PARTICLE_STYLE_CONSTELLATION.equals(style)
-                ? LauncherActivity.PARTICLE_STYLE_CONSTELLATION
-                : LauncherActivity.PARTICLE_STYLE_RIPPLES.equals(style)
-                ? LauncherActivity.PARTICLE_STYLE_RIPPLES
-                : LauncherActivity.PARTICLE_STYLE_FLOATING;
+        String safeStyle = LauncherPreferences.PARTICLE_STYLE_RAIN.equals(style)
+                ? LauncherPreferences.PARTICLE_STYLE_RAIN
+                : LauncherPreferences.PARTICLE_STYLE_STAR.equals(style)
+                ? LauncherPreferences.PARTICLE_STYLE_STAR
+                : LauncherPreferences.PARTICLE_STYLE_SAKURA.equals(style)
+                ? LauncherPreferences.PARTICLE_STYLE_SAKURA
+                : LauncherPreferences.PARTICLE_STYLE_FIREFLIES.equals(style)
+                ? LauncherPreferences.PARTICLE_STYLE_FIREFLIES
+                : LauncherPreferences.PARTICLE_STYLE_CONSTELLATION.equals(style)
+                ? LauncherPreferences.PARTICLE_STYLE_CONSTELLATION
+                : LauncherPreferences.PARTICLE_STYLE_RIPPLES.equals(style)
+                ? LauncherPreferences.PARTICLE_STYLE_RIPPLES
+                : LauncherPreferences.PARTICLE_STYLE_FLOATING;
         if (safeStyle.equals(particleStyle)) return;
         particleStyle = safeStyle;
         if (getWidth() > 0 && getHeight() > 0) {
@@ -293,7 +313,7 @@ public class LauncherParticleView extends View {
             particle.speedX = dp((random.nextFloat() - 0.5f) * 10f);
             particle.speedY = -dp(7f + random.nextFloat() * 18f);
         }
-        particle.colorIndex = random.nextInt(COLORS.length);
+        particle.colorIndex = random.nextInt(particleColors.length);
         particle.color = particleColor(particle.colorIndex);
         if (!isSakuraStyle() && !isConstellationStyle() && !isFirefliesStyle()
                 && !isRipplesStyle()) {
@@ -303,7 +323,7 @@ public class LauncherParticleView extends View {
     }
 
     private void syncThemeColors() {
-        String style = LauncherActivity.getLauncherThemeStyle(getContext());
+        String style = LauncherThemeStyle.getThemeStyle(getContext());
         if (style.equals(activeThemeStyle)) return;
         activeThemeStyle = style;
         for (int i = 0; i < fireflyShaders.length; i++) fireflyShaders[i] = null; // 清理 shader 缓存
@@ -314,27 +334,27 @@ public class LauncherParticleView extends View {
     }
 
     private boolean isRainStyle() {
-        return LauncherActivity.PARTICLE_STYLE_RAIN.equals(particleStyle);
+        return LauncherPreferences.PARTICLE_STYLE_RAIN.equals(particleStyle);
     }
 
     private boolean isStarStyle() {
-        return LauncherActivity.PARTICLE_STYLE_STAR.equals(particleStyle);
+        return LauncherPreferences.PARTICLE_STYLE_STAR.equals(particleStyle);
     }
 
     private boolean isSakuraStyle() {
-        return LauncherActivity.PARTICLE_STYLE_SAKURA.equals(particleStyle);
+        return LauncherPreferences.PARTICLE_STYLE_SAKURA.equals(particleStyle);
     }
 
     private boolean isFirefliesStyle() {
-        return LauncherActivity.PARTICLE_STYLE_FIREFLIES.equals(particleStyle);
+        return LauncherPreferences.PARTICLE_STYLE_FIREFLIES.equals(particleStyle);
     }
 
     private boolean isConstellationStyle() {
-        return LauncherActivity.PARTICLE_STYLE_CONSTELLATION.equals(particleStyle);
+        return LauncherPreferences.PARTICLE_STYLE_CONSTELLATION.equals(particleStyle);
     }
 
     private boolean isRipplesStyle() {
-        return LauncherActivity.PARTICLE_STYLE_RIPPLES.equals(particleStyle);
+        return LauncherPreferences.PARTICLE_STYLE_RIPPLES.equals(particleStyle);
     }
 
     private int starAlpha(Particle particle, long nowNanos) {
@@ -345,21 +365,21 @@ public class LauncherParticleView extends View {
     }
 
     private int particleColor(int index) {
-        boolean rinneTheme = LauncherActivity.isRinneTheme(getContext());
-        boolean anriTheme = LauncherActivity.isAnriTheme(getContext());
-        boolean xinhaitianTheme = LauncherActivity.isXinhaitianTheme(getContext());
-        boolean natsumeTheme = LauncherActivity.isNatsumeTheme(getContext());
+        boolean rinneTheme = LauncherThemeStyle.isRinne(getContext());
+        boolean anriTheme = LauncherThemeStyle.isAnri(getContext());
+        boolean xinhaitianTheme = LauncherThemeStyle.isXinhaitian(getContext());
+        boolean natsumeTheme = LauncherThemeStyle.isNatsume(getContext());
         if (!rinneTheme && !anriTheme && !xinhaitianTheme && !natsumeTheme) {
-            return COLORS[Math.abs(index) % COLORS.length];
+            return particleColors[Math.abs(index) % particleColors.length];
         }
-        int baseColor = rinneTheme ? LauncherActivity.RINNE_PRIMARY_COLOR
-                : anriTheme ? LauncherActivity.ANRI_PRIMARY_COLOR
-                : xinhaitianTheme ? LauncherActivity.XINHAITIAN_PRIMARY_COLOR
-                : LauncherActivity.NATSUME_PRIMARY_COLOR;
+        int baseColor = rinneTheme ? LauncherThemeStyle.RINNE_PRIMARY_COLOR
+                : anriTheme ? LauncherThemeStyle.ANRI_PRIMARY_COLOR
+                : xinhaitianTheme ? LauncherThemeStyle.XINHAITIAN_PRIMARY_COLOR
+                : LauncherThemeStyle.NATSUME_PRIMARY_COLOR;
         float[] hsv = new float[3];
         Color.colorToHSV(baseColor, hsv);
         hsv[1] = Math.max(0.22f, hsv[1] - 0.08f);
-        hsv[2] = Math.min(1f, hsv[2] * (0.86f + (Math.abs(index) % COLORS.length) * 0.04f));
+        hsv[2] = Math.min(1f, hsv[2] * (0.86f + (Math.abs(index) % particleColors.length) * 0.04f));
         return Color.HSVToColor(hsv);
     }
 
@@ -421,7 +441,7 @@ public class LauncherParticleView extends View {
             particle.rippleProgress = 0f;
             particle.x = random.nextFloat() * width;
             particle.y = random.nextFloat() * height;
-            particle.colorIndex = random.nextInt(COLORS.length);
+            particle.colorIndex = random.nextInt(particleColors.length);
             particle.color = particleColor(particle.colorIndex);
         }
     }

@@ -31,6 +31,13 @@
     <color name="launcher_accent_orange_color">#F4B36A</color>
     <color name="launcher_accent_pink_color">#FF7BA5</color>
     <color name="launcher_accent_purple_color">#D8A9C9</color>
+    <array name="launcher_particle_palette">
+        <item>#22D88E</item>
+        <item>#4A90E2</item>
+        <item>#FFB84C</item>
+        <item>#FF6484</item>
+        <item>#9672FF</item>
+    </array>
     <color name="launcher_rank_gold_color">#D6A300</color>
     <color name="launcher_rank_silver_color">#8A98A3</color>
     <color name="launcher_rank_bronze_color">#B36B3C</color>

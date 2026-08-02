@@ -26,6 +26,7 @@ import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.PlayDataCallback;
 import com.core.launcherbridge.SubscriptionCallback;
 import com.apps.LauncherActivity;
+import com.apps.LauncherPreferences;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
@@ -33,8 +34,6 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherAccountSettingsActivity extends AppCompatActivity {
-    private static final String PREFS_NAME = "launcher_account_settings";
-
     private ActivityLauncherAccountSettingsBinding binding;
     private AlertDialog loadingDialog;
     private boolean emailSubscriptionUpdating;
@@ -90,7 +89,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                     getString(R.string.social_subscription_login_required));
             return;
         }
-        boolean subscribed = getSharedPreferences(PREFS_NAME, 0).getBoolean("email_subscribe", false);
+        boolean subscribed = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).getBoolean("email_subscribe", false);
         if (subscribed) {
             updateEmailSubscription(false);
         } else {
@@ -135,11 +134,11 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void saveEmailSubscription(boolean subscribed) {
-        getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("email_subscribe", subscribed).apply();
+        getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).edit().putBoolean("email_subscribe", subscribed).apply();
     }
 
     private void onSyncConfigClick() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0);
         boolean currentEnabled = prefs.getBoolean("sync_config", false);
         if (currentEnabled) {
             // 关闭：直接关闭并取消定时备份
@@ -153,7 +152,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void onRealtimePlaytimeClick() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0);
         boolean currentEnabled = prefs.getBoolean("realtime_playtime", getDefault("realtime_playtime"));
         if (currentEnabled) {
             // 关闭：直接关闭
@@ -172,7 +171,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
                 getString(R.string.social_realtime_play_time_message),
                 getString(R.string.social_confirm_enable),
                 () -> {
-                    getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("realtime_playtime", true).apply();
+                    getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).edit().putBoolean("realtime_playtime", true).apply();
                     renderChip(binding.chipRealtimePlaytime, true);
                 }
         );
@@ -190,7 +189,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
 
     private void enableSyncAndUpload() {
         // 先开启开关
-        getSharedPreferences(PREFS_NAME, 0).edit().putBoolean("sync_config", true).apply();
+        getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).edit().putBoolean("sync_config", true).apply();
         renderChip(binding.chipSyncConfig, true);
         LauncherSyncScheduler.updateSchedule(this);
 
@@ -264,7 +263,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void renderAllChips() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0);
         renderChip(binding.chipSyncConfig, prefs.getBoolean("sync_config", getDefault("sync_config")));
         renderChip(binding.chipRealtimePlaytime, prefs.getBoolean("realtime_playtime", getDefault("realtime_playtime")));
         renderChip(binding.chipEmailSubscribe, prefs.getBoolean("email_subscribe", getDefault("email_subscribe")));
@@ -302,17 +301,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) {
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {
@@ -324,7 +313,4 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

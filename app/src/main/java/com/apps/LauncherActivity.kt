@@ -489,36 +489,6 @@ class LauncherActivity : AppCompatActivity() {
         private const val LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME"
         private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
 
-        // ===== 兼容常量：保留原 public 常量以维持外部调用方零修改，主源已迁移至各 object =====
-        const val APP_PREFS = "yukihub_prefs"
-        const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
-        const val KEY_LAUNCHER_THEME_STYLE = "launcher_theme_style"
-        const val KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled"
-        const val KEY_LAUNCHER_PARTICLE_STYLE = "launcher_particle_style"
-        const val PARTICLE_STYLE_FLOATING = "floating"
-        const val PARTICLE_STYLE_RAIN = "rain"
-        const val PARTICLE_STYLE_STAR = "star"
-        const val PARTICLE_STYLE_SAKURA = "sakura"
-        const val PARTICLE_STYLE_FIREFLIES = "fireflies"
-        const val PARTICLE_STYLE_CONSTELLATION = "constellation"
-        const val PARTICLE_STYLE_RIPPLES = "ripples"
-        const val THEME_STYLE_DEFAULT = "default"
-        const val THEME_STYLE_RINNE = "rinne"
-        const val THEME_STYLE_ANRI = "anri"
-        const val THEME_STYLE_XINHAITIAN = "xinhaitian"
-        const val THEME_STYLE_NATSUME = "natsume"
-
-        @JvmField
-        val RINNE_PRIMARY_COLOR: Int = Color.rgb(216, 169, 201)
-        @JvmField
-        val ANRI_PRIMARY_COLOR: Int = Color.rgb(77, 53, 89)
-        @JvmField
-        val XINHAITIAN_PRIMARY_COLOR: Int = Color.rgb(122, 131, 203)
-        @JvmField
-        val XINHAITIAN_ACCENT_COLOR: Int = Color.rgb(237, 173, 201)
-        @JvmField
-        val NATSUME_PRIMARY_COLOR: Int = Color.rgb(197, 57, 58)
-
         // ===== 委托方法：实现已迁移至各 object，此处仅保留签名以兼容现有调用方 =====
 
         @JvmStatic

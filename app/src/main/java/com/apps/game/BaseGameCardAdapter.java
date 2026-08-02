@@ -137,7 +137,7 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
                     binding.launcherGameCoverFrame.setLayoutParams(cover);
                 }
                 ViewGroup.LayoutParams root = binding.getRoot().getLayoutParams();
-                int normalHeight = fixedCardHeight > 0 ? fixedCardHeight : dp(binding.getRoot(), 144);
+                int normalHeight = fixedCardHeight > 0 ? fixedCardHeight : LauncherTheme.dp(binding.getRoot().getContext(), 144);
                 if (root.height != normalHeight) {
                     root.height = normalHeight;
                     binding.getRoot().setLayoutParams(root);
@@ -151,7 +151,7 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
                 int coverHeight = Math.round(width * 1.42f);
                 // 标题（15sp）和游玩时间（12sp）实际只需约 35dp；保留 40dp，
                 // 避免此前 64dp 的空白被视觉上误认为卡片之间的巨大间距。
-                int infoHeight = dp(binding.getRoot(), 40);
+                int infoHeight = LauncherTheme.dp(binding.getRoot().getContext(), 40);
                 ViewGroup.LayoutParams cover = binding.launcherGameCoverFrame.getLayoutParams();
                 if (cover.height != coverHeight) {
                     cover.height = coverHeight;
@@ -235,12 +235,15 @@ public abstract class BaseGameCardAdapter extends RecyclerView.Adapter<BaseGameC
         String value = title.trim();
         return value.substring(0, value.offsetByCodePoints(0, 1));
     }
-    protected static int dp(View view, int value) { return Math.round(value * view.getResources().getDisplayMetrics().density); }
     protected static void compactText(ItemLauncherGameCardBinding binding) {
-        binding.launcherGameTextOverlay.setPadding(dp(binding.getRoot(), 8), dp(binding.getRoot(), 2), dp(binding.getRoot(), 8), dp(binding.getRoot(), 2));
+        binding.launcherGameTextOverlay.setPadding(
+                LauncherTheme.dp(binding.getRoot().getContext(), 8),
+                LauncherTheme.dp(binding.getRoot().getContext(), 2),
+                LauncherTheme.dp(binding.getRoot().getContext(), 8),
+                LauncherTheme.dp(binding.getRoot().getContext(), 2));
         binding.launcherGameTitle.setSingleLine(true); binding.launcherGameTitle.setMaxLines(1); binding.launcherGameTitle.setEllipsize(TextUtils.TruncateAt.END); binding.launcherGameTitle.setIncludeFontPadding(false);
         binding.launcherGamePlayStatus.setSingleLine(true); binding.launcherGamePlayStatus.setMaxLines(1); binding.launcherGamePlayStatus.setEllipsize(TextUtils.TruncateAt.END); binding.launcherGamePlayStatus.setIncludeFontPadding(false);
-        setMargins(binding.launcherGameTitle, 0, 0, 0, dp(binding.getRoot(), 1));
+        setMargins(binding.launcherGameTitle, 0, 0, 0, LauncherTheme.dp(binding.getRoot().getContext(), 1));
         setMargins(binding.launcherGamePlayStatus, 0, 0, 0, 0);
     }
     private static void setMargins(View view, int left, int top, int right, int bottom) {

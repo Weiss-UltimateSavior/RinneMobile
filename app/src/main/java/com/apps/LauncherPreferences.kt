@@ -15,6 +15,8 @@ import com.apps.home.HomeStyle
 object LauncherPreferences {
 
     const val APP_PREFS = "yukihub_prefs"
+    const val ACCOUNT_SETTINGS_PREFS = "launcher_account_settings"
+    const val PROFILE_PREFS = "launcher_profile_prefs"
     const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
     private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
     private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"

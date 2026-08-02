@@ -21,6 +21,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 
 import com.apps.LauncherActivity;
+import com.apps.LauncherPreferences;
+import com.apps.LauncherThemeStyle;
 import com.apps.home.HomeStyle;
 import com.apps.theme.LauncherMotion;
 import com.apps.sync.LauncherSyncScheduler;
@@ -42,12 +44,11 @@ import com.core.ons.OnsSettings;
 public class PadSettingsActivity extends AppCompatActivity {
     private enum Section { GENERAL, APPLICATION, THEME, METADATA, ACCOUNT }
 
-    private static final String ACCOUNT_SETTINGS_PREFS = "launcher_account_settings";
-    private static final String THEME_DEFAULT_LABEL = LauncherActivity.THEME_STYLE_DEFAULT;
-    private static final String THEME_RINNE_LABEL = LauncherActivity.THEME_STYLE_RINNE;
-    private static final String THEME_ANRI_LABEL = LauncherActivity.THEME_STYLE_ANRI;
-    private static final String THEME_XINHAITIAN_LABEL = LauncherActivity.THEME_STYLE_XINHAITIAN;
-    private static final String THEME_NATSUME_LABEL = LauncherActivity.THEME_STYLE_NATSUME;
+    private static final String THEME_DEFAULT_LABEL = LauncherThemeStyle.THEME_STYLE_DEFAULT;
+    private static final String THEME_RINNE_LABEL = LauncherThemeStyle.THEME_STYLE_RINNE;
+    private static final String THEME_ANRI_LABEL = LauncherThemeStyle.THEME_STYLE_ANRI;
+    private static final String THEME_XINHAITIAN_LABEL = LauncherThemeStyle.THEME_STYLE_XINHAITIAN;
+    private static final String THEME_NATSUME_LABEL = LauncherThemeStyle.THEME_STYLE_NATSUME;
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
@@ -343,13 +344,13 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void restoreSelectedTheme() {
         String style = LauncherActivity.getLauncherThemeStyle(this);
-        if (LauncherActivity.THEME_STYLE_RINNE.equals(style)) {
+        if (LauncherThemeStyle.THEME_STYLE_RINNE.equals(style)) {
             selectedTheme = THEME_RINNE_LABEL;
-        } else if (LauncherActivity.THEME_STYLE_ANRI.equals(style)) {
+        } else if (LauncherThemeStyle.THEME_STYLE_ANRI.equals(style)) {
             selectedTheme = THEME_ANRI_LABEL;
-        } else if (LauncherActivity.THEME_STYLE_XINHAITIAN.equals(style)) {
+        } else if (LauncherThemeStyle.THEME_STYLE_XINHAITIAN.equals(style)) {
             selectedTheme = THEME_XINHAITIAN_LABEL;
-        } else if (LauncherActivity.THEME_STYLE_NATSUME.equals(style)) {
+        } else if (LauncherThemeStyle.THEME_STYLE_NATSUME.equals(style)) {
             selectedTheme = THEME_NATSUME_LABEL;
         } else {
             selectedTheme = THEME_DEFAULT_LABEL;
@@ -499,14 +500,14 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padFreshThemeIcon.setBackground(LauncherTheme.circle(this, LauncherTheme.primary(this)));
         binding.padFreshThemeIcon.setClipToOutline(true);
         binding.padRinneThemeLogo.setBackground(
-                LauncherTheme.circle(this, LauncherActivity.RINNE_PRIMARY_COLOR));
+                LauncherTheme.circle(this, LauncherThemeStyle.RINNE_PRIMARY_COLOR));
         binding.padRinneThemeLogo.setClipToOutline(true);
         binding.padAnriThemeLogo.setBackground(
-                LauncherTheme.circle(this, LauncherActivity.ANRI_PRIMARY_COLOR));
+                LauncherTheme.circle(this, LauncherThemeStyle.ANRI_PRIMARY_COLOR));
         binding.padAnriThemeLogo.setClipToOutline(true);
         binding.padXinhaitianThemeLogo.setBackground(LauncherTheme.xinhaitianCircle(this));
         binding.padXinhaitianThemeLogo.setClipToOutline(true);
-        binding.padNatsumeThemeLogo.setBackground(LauncherTheme.circle(this, LauncherActivity.NATSUME_PRIMARY_COLOR));
+        binding.padNatsumeThemeLogo.setBackground(LauncherTheme.circle(this, LauncherThemeStyle.NATSUME_PRIMARY_COLOR));
         binding.padNatsumeThemeLogo.setClipToOutline(true);
         binding.padParticleToggleIcon.setBackground(LauncherTheme.circle(this));
         binding.padParticleToggleIcon.setTextColor(LauncherTheme.onPrimary(this));
@@ -557,13 +558,13 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void showParticleStyleDialog() {
         String[] styles = {
-                LauncherActivity.PARTICLE_STYLE_FLOATING,
-                LauncherActivity.PARTICLE_STYLE_RAIN,
-                LauncherActivity.PARTICLE_STYLE_STAR,
-                LauncherActivity.PARTICLE_STYLE_SAKURA,
-                LauncherActivity.PARTICLE_STYLE_FIREFLIES,
-                LauncherActivity.PARTICLE_STYLE_CONSTELLATION,
-                LauncherActivity.PARTICLE_STYLE_RIPPLES
+                LauncherPreferences.PARTICLE_STYLE_FLOATING,
+                LauncherPreferences.PARTICLE_STYLE_RAIN,
+                LauncherPreferences.PARTICLE_STYLE_STAR,
+                LauncherPreferences.PARTICLE_STYLE_SAKURA,
+                LauncherPreferences.PARTICLE_STYLE_FIREFLIES,
+                LauncherPreferences.PARTICLE_STYLE_CONSTELLATION,
+                LauncherPreferences.PARTICLE_STYLE_RIPPLES
         };
         String[] labels = getResources().getStringArray(R.array.pad_particle_style_labels);
         boolean enabled = LauncherActivity.isLauncherParticlesEnabled(this);
@@ -597,19 +598,19 @@ public class PadSettingsActivity extends AppCompatActivity {
         final String style;
         final String message;
         if (THEME_RINNE_LABEL.equals(selectedTheme)) {
-            style = LauncherActivity.THEME_STYLE_RINNE;
+            style = LauncherThemeStyle.THEME_STYLE_RINNE;
             message = getString(R.string.pad_theme_rinne_applied);
         } else if (THEME_ANRI_LABEL.equals(selectedTheme)) {
-            style = LauncherActivity.THEME_STYLE_ANRI;
+            style = LauncherThemeStyle.THEME_STYLE_ANRI;
             message = getString(R.string.pad_theme_anri_applied);
         } else if (THEME_XINHAITIAN_LABEL.equals(selectedTheme)) {
-            style = LauncherActivity.THEME_STYLE_XINHAITIAN;
+            style = LauncherThemeStyle.THEME_STYLE_XINHAITIAN;
             message = getString(R.string.pad_theme_xinhaitian_applied);
         } else if (THEME_NATSUME_LABEL.equals(selectedTheme)) {
-            style = LauncherActivity.THEME_STYLE_NATSUME;
+            style = LauncherThemeStyle.THEME_STYLE_NATSUME;
             message = getString(R.string.pad_theme_natsume_applied);
         } else {
-            style = LauncherActivity.THEME_STYLE_DEFAULT;
+            style = LauncherThemeStyle.THEME_STYLE_DEFAULT;
             message = getString(R.string.pad_theme_default_restored);
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
@@ -680,7 +681,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void onSyncConfigClick() {
-        SharedPreferences prefs = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
         if (prefs.getBoolean("sync_config", false)) {
             prefs.edit().putBoolean("sync_config", false).apply();
             renderAccountChip(binding.padChipSyncConfig, false);
@@ -692,7 +693,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void onRealtimePlaytimeClick() {
-        SharedPreferences prefs = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
         if (prefs.getBoolean("realtime_playtime", accountDefault("realtime_playtime"))) {
             prefs.edit().putBoolean("realtime_playtime", false).apply();
             renderAccountChip(binding.padChipRealtimePlaytime, false);
@@ -701,7 +702,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         showAccountConfirmDialog(getString(R.string.pad_realtime_playtime),
                 getString(R.string.pad_realtime_playtime_message),
                 getString(R.string.pad_confirm_enable), () -> {
-                    getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
+                    getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
                             .putBoolean("realtime_playtime", true).apply();
                     renderAccountChip(binding.padChipRealtimePlaytime, true);
                 });
@@ -730,7 +731,7 @@ public class PadSettingsActivity extends AppCompatActivity {
             showAccountResult(getString(R.string.pad_login_required), getString(R.string.pad_login_for_email));
             return;
         }
-        boolean subscribed = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE)
+        boolean subscribed = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE)
                 .getBoolean("email_subscribe", false);
         if (subscribed) {
             updateEmailSubscription(false);
@@ -769,12 +770,12 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void saveEmailSubscription(boolean subscribed) {
-        getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
+        getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
                 .putBoolean("email_subscribe", subscribed).apply();
     }
 
     private void renderAllAccountChips() {
-        SharedPreferences prefs = getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE);
         renderAccountChip(binding.padChipSyncConfig,
                 prefs.getBoolean("sync_config", accountDefault("sync_config")));
         renderAccountChip(binding.padChipRealtimePlaytime,
@@ -797,7 +798,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void enableSyncAndUpload() {
-        getSharedPreferences(ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
+        getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, MODE_PRIVATE).edit()
                 .putBoolean("sync_config", true).apply();
         renderAccountChip(binding.padChipSyncConfig, true);
         LauncherSyncScheduler.updateSchedule(this);

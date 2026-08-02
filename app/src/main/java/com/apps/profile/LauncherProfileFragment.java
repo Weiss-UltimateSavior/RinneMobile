@@ -63,7 +63,6 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 import com.apps.translation.TranslationSettingActivity;
 
 public class LauncherProfileFragment extends Fragment {
-    private static final String PREFS_NAME = "launcher_profile_prefs";
     private static final String KEY_CUSTOM_COVER = "custom_cover_uri";
     private static final String KEY_CUSTOM_AVATAR = "custom_avatar_uri";
 
@@ -519,7 +518,7 @@ public class LauncherProfileFragment extends Fragment {
                             Toast.LENGTH_SHORT).show();
                     return;
                 }
-                requireContext().getSharedPreferences(PREFS_NAME, 0)
+                requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                         .edit().putString(prefsKey, savedUri).apply();
                 if (syncToHome) {
                     syncAvatarToHome(savedUri);
@@ -599,13 +598,13 @@ public class LauncherProfileFragment extends Fragment {
     private void applyProfileBgImage() {
         if (binding == null) return;
         applyDefaultProfileBgImage();
-        String customUri = requireContext().getSharedPreferences(PREFS_NAME, 0)
+        String customUri = requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                 .getString(KEY_CUSTOM_COVER, null);
         if (customUri == null) return;
 
         Uri uri = Uri.parse(customUri);
         if (!isReadableImageUri(uri)) {
-            requireContext().getSharedPreferences(PREFS_NAME, 0)
+            requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                     .edit().remove(KEY_CUSTOM_COVER).apply();
             return;
         }
@@ -633,7 +632,7 @@ public class LauncherProfileFragment extends Fragment {
     private void applyAvatarImage() {
         if (binding == null) return;
         // 先检查个人页面自定义头像
-        String customAvatarUri = requireContext().getSharedPreferences(PREFS_NAME, 0)
+        String customAvatarUri = requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                 .getString(KEY_CUSTOM_AVATAR, null);
         if (customAvatarUri != null) {
             try {

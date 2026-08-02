@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.apps.LauncherActivity
+import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
 import com.apps.navigationOverlayBottomPadding
 import com.apps.refreshNavigationOverlayInsets
@@ -535,10 +536,10 @@ open class LauncherHomeFragment : Fragment() {
                     StandardCopyOption.ATOMIC_MOVE,
                     StandardCopyOption.REPLACE_EXISTING
                 )
-                val homeCommitted = app.getSharedPreferences(APP_PREFS, 0)
+                val homeCommitted = app.getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
                     .edit().putString(KEY_PROFILE_AVATAR, savedUri).commit()
                 if (homeCommitted) {
-                    val profileCommitted = app.getSharedPreferences("launcher_profile_prefs", 0)
+                    val profileCommitted = app.getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                         .edit().putString("custom_avatar_uri", savedUri).commit()
                     SafeImageLoader.invalidateUri(savedUri)
                     if (!profileCommitted) {
@@ -573,7 +574,7 @@ open class LauncherHomeFragment : Fragment() {
         // 优先使用主页头像，再检查个人页头像
         var avatar = prefs().getString(KEY_PROFILE_AVATAR, "")
         if (avatar == null || avatar.trim { it <= ' ' }.isEmpty()) {
-            val profileAvatar = requireContext().getSharedPreferences("launcher_profile_prefs", 0)
+            val profileAvatar = requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                 .getString("custom_avatar_uri", "")
             if (profileAvatar != null && profileAvatar.trim { it <= ' ' }.isNotEmpty()) {
                 avatar = profileAvatar
@@ -644,7 +645,7 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     private fun prefs(): SharedPreferences =
-        requireContext().applicationContext.getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
+        requireContext().applicationContext.getSharedPreferences(LauncherPreferences.APP_PREFS, android.content.Context.MODE_PRIVATE)
 
     protected open fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density + 0.5f).toInt()
@@ -692,7 +693,6 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     companion object {
-        private const val APP_PREFS = "yukihub_prefs"
         private const val KEY_PROFILE_AVATAR = "profile_avatar"
     }
 }
