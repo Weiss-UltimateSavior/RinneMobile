@@ -356,6 +356,241 @@
 
 **方案**：设立 `com.core.CorePreferences` object（偏好名/键，注明主源在 `LauncherPreferences`）；引擎包名下沉 `com.core.launcher.EnginePackages`。
 
+### 阶段 12：2026-08-03 阶段 4 手写弹窗清零整改记录
+
+> 本轮依据阶段 4（4.1-4.7）执行：3 agent 并行修改 + 交叉核对 + 编译验证（`./gradlew :app:compileDebugJavaWithJavac :app:compileDebugKotlin` ✅ + `git diff --check` ✅ + 分层 0 命中 ✅）。
+
+#### 12.1 已修复项
+
+| 子项 | 文件 | 结果 |
+|------|------|------|
+| 4.1 | chat/LauncherAiChatActivity showCustomLlmDialog 95 行手拼 | ✅ 抽为 AgentLlmConfigDialog.java（透明 window + launcher_dialog_bg + applyPrimaryTone + 宽度兜底 288dp），Activity -196 行 |
+| 4.2 | chat/LauncherAiChatActivity showMoreMenu PopupWindow | ✅ 固定 dp(119) 改屏幕兜底 min(119dp, screen-48dp)；Color.TRANSPARENT 纯遮罩语义保留并注释 |
+| 4.3 | game/LauncherLaunchTargetPicker AlertDialog 手拼 | ✅ 迁移 LauncherDialogFactory（showLoading + showSingleChoice + showInfo）；API/调用方零改动 |
+| 4.5 | theme/LauncherDialogFactory showScanDepthChoices ●/○ 拼接 | ✅ 改用 compactChoice 选中态 |
+| 4.7 | game/ExternalImportPreviewDialog 裸 dp(300) | ✅ 改 LauncherDialogFactory.dialogWidthPx(ctx, 300) 兜底（W2' 上下文修正：原记 PadDialogFactory 为误记，ExternalImportPreviewDialog 在 LauncherActivity 手机端调用，应走竖屏工厂 32dp 边距 + 平板竖屏缩放） |
+| 4.4 | widget/AvatarCropActivity buildRoot 外壳 | ✅ 标题改 LauncherTheme.text(this)；按钮为纯文字样式无背景，避免视觉变化未强制替换 |
+
+#### 12.2 已登记偏差 / 遗留（供后续阶段）
+
+- **P3 语言约束**：`AgentLlmConfigDialog.java` 为新增 Java 文件，违反 agent.md §2（新增 Dialog 工具类用 Kotlin）。已登记为审批偏差，随 §9.1 语言约束迁移阶段迁 Kotlin（可与 AgentConfigDialog 等一并处理）。
+- **P3/INFO**：AgentLlmConfigDialog 平板端宽度经 LauncherTabletPortraitScaler 缩放但树内 padding/行高未走全树缩放，平板视觉需实机确认。
+- **INFO**：4.2 的 LauncherMenuSheet 抽取、4.4 的 activity_avatar_crop.xml+ViewBinding、4.6 的 LauncherDialogParts 共享基件未执行（工程量大，3 个专用 Dialog 手拼重复：AgentConfigDialog / LauncherCustomVndbSearchDialog / ExternalImportPreviewDialog），建议与 §9.1 语言约束迁移（3 文件迁 Kotlin）合并执行，一并抽共享表单基件。
+
+#### 12.3 阶段 4 收尾审查整改记录（W1'–W3'，2026-08-03）
+
+> 阶段 4 落地后多轮交叉审核发现的 WARNING 修复归档。3 agent 并行修改 + 交叉核对 + 编译验证（`./gradlew :app:assembleDebug` ✅ + `git diff --check` ✅ + 分层 0 命中 ✅）。
+
+| 轮次 | WARNING | 修复内容 |
+|------|---------|---------|
+| W1' | `LauncherAiChatActivity.java:18,23` unused import（`AlertDialog`/`RecyclerView`） | ✅ 删除，连带清理 6 个 unused import（`Window`/`WindowManager`/`EditText`/`ContextCompat`/`LlmConfigCallback`/`LlmConfig`/`Locale`/`URISyntaxException`） |
+| W2' | `AgentLlmConfigDialog.java` 新建 Java 违反 §2 语言约束 | 维持 Java，已登记 P3 偏差（见 §12.2） |
+| W3' | `AgentLlmConfigDialog.java:245-250` `dialogWidthPx` 私有副本 | ✅ 删除本地副本，`LauncherDialogFactory.dialogWidthPx` 提升为 `@JvmStatic fun` 公开 API + KDoc（公式位级等价，行为零变更） |
+| W4' | `GameWorkspaceGateway.java:402` `catch (IOException ignored)` 遗漏 `SecurityException`；`LauncherScanBridge.kt:269` 遗漏 `IllegalArgumentException` | ✅ `:402` 改 `catch (IOException \| SecurityException ignored)` + 紧邻注释；`:269` 拆双 catch `IllegalArgumentException` + `SecurityException` 各带注释。连带收窄全文件 4 处 `catch (Throwable)`（`:75`/`:677`/`:788`/`:848`） |
+| W5' | `LauncherLaunchTargetPicker.java` loading cancelable true→false 行为变更 | ✅ 完全重构为 `LauncherDialogFactory.showLoading`（工厂契约 `cancelable=false`），注释说明"生命周期由本方法管理" |
+| W1'' | `GameWorkspaceGateway.java:75` `catch (SecurityException ignored)` 同模式漏补注释 | ✅ 补紧邻注释（与 `:387` 同义） |
+| W2'' | `ExternalImportPreviewDialog.java:54` 竖屏上下文调用 `PadDialogFactory.dialogWidthPx` | ✅ 改为 `LauncherDialogFactory.dialogWidthPx`（比预期更彻底——原是裸 `host.dp(300)` 无兜底，现修复为工厂 API + 紧邻注释） |
+
+**遗留 INFO（不阻塞，供后续阶段）**：
+- `AgentLlmConfigDialog.java:137` `fetchLlmConfig.onError` 仍仅 `if (dialog.isShowing())`，未补 `isFinishing()/isDestroyed()`（仅更新 dialog 内 TextView，风险低）
+- `AgentLlmConfigDialog.java:235` `catch (URISyntaxException | NumberFormatException ignored)` 缺紧邻注释
+- `AgentLlmConfigDialog.java:244` `dialogText()` 用 `ContextCompat.getColor` 直接取色（搬迁存量，随 W2' Kotlin 迁移一并整改）
+- `LauncherAiChatActivity.java:3` `import android.content.Intent;` unused（存量遗留）
+- `LauncherAiChatActivity.java:227` `private int dp(int value)` 副本仍保留（§9.10.1 已登记 18 处存量）
+- `LauncherModuleCompatibilityActivity.java:319` `new Intent(ACTION_VIEW, ...)` 绕过 `LauncherUrlOpener`（阶段 1 未覆盖，既有技术债）
+- `GameWorkspaceGateway.java:677/788/848` 三处 catch 有兜底返回值但无注释（可选补齐）
+
+#### 12.4 实机测试说明（2026-08-03 暂存区，阶段 4 + 阶段 3）
+
+> 本轮暂存区 25 文件改动（+431/-351）覆盖阶段 4（手写弹窗清零 4.1/4.2/4.3/4.4/4.5/4.7）+ 阶段 3（catch 收窄 + runOnUiThread 守卫）+ W1'–W2'' 收尾审查整改。构建已通过 `./gradlew :app:assembleDebug`，以下为实机验证清单。
+
+##### 0. 测试准备
+
+```bash
+# 构建 Debug APK
+./gradlew :app:assembleDebug
+
+# 安装到设备
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 启动 logcat 监控（关注 ClassCastException/IllegalState/NotFoundException/ActivityNotFound/SecurityException 等）
+adb logcat -c && adb logcat | grep -E "AndroidRuntime|FATAL|System\.err|DevLogger|LauncherApplication|com\.apps|com\.core"
+```
+
+**测试设备建议**：
+- 竖屏手机（Android 10+，验证弹窗宽度兜底、桥回调守卫）
+- 平板横屏（Pad/HD 模式，验证 PadDialogFactory 与 LauncherDialogFactory 上下文区分）
+- 平板竖屏（验证 `LauncherTabletPortraitScaler` 缩放）
+- 深色/浅色模式各一遍
+
+##### 1. AgentLlmConfigDialog 提取回归（P0，必测）
+
+**测试场景**：进入 AI 聊天页 → 点击右上角更多菜单 → 选择「自定义模型」
+
+**验证点**：
+- 弹窗正常弹出，宽度 288dp（`WIDTH_FORM_DP`），透明 window + `launcher_dialog_bg` 背景
+- 4 个输入框（API 端点 / API Key / 模型名 / Temperature）正常显示
+- 「读取配置」按钮：异步加载已有配置回填，loading 状态切换正常
+- 「恢复默认」按钮：清空输入并回填默认值
+- 「保存」按钮：校验通过后异步保存，成功 Toast `social_model_saved`
+- **URL 校验**：
+  - 输入 `ftp://...` → 提示 `social_error_http_only`
+  - 输入 `http://localhost:8080` → 提示 `social_error_private_endpoint`
+  - 输入 `http://192.168.1.1` → 提示 `social_error_private_endpoint`
+  - 输入 `https://api.example.com/v1` → 校验通过
+  - 输入非法 URI（如 `not a url`）→ 提示 `social_error_http_endpoint`
+- **Temperature 校验**：输入 `-1` 或 `3` → 提示 `social_temperature_error`；输入 `0.7` → 通过
+- **IME 唤起**：点击输入框后 180ms + 420ms 两次 `showSoftInput`，软键盘正常弹出
+- **快速返回**：弹窗显示中按返回键 → dismiss，无崩溃（`dialog.isShowing()` 守卫）
+- **配置生效**：保存后发送一条消息，确认使用新配置的模型/端点
+
+**阻断条件**：弹窗不弹出、输入校验失效、保存后配置未生效、IME 不弹出、返回崩溃。
+
+##### 2. LauncherLaunchTargetPicker 弹窗工厂迁移（P0，必测）
+
+**测试场景**：游戏编辑页 → 选择启动目标文件
+
+**验证点**：
+- **loading 弹窗**：显示「正在扫描」，**不可取消**（`cancelable=false`，工厂契约），扫描完成后自动 dismiss
+  - 注：若扫描耗时较长，用户无法手动关闭 loading，需确认 UX 可接受
+- **扫描成功**：弹出单选列表（`showSingleChoice`），可选择目标文件
+- **空目标**：弹出 `showInfo` 提示「未找到可启动文件」，按钮「知道了」
+- **快速返回**：扫描中按返回键 → Activity finish，loading 自动 dismiss（`isFinishing()` 守卫）
+- **多次触发**：连续点击选择目标，无崩溃（防抖 + 守卫）
+
+**阻断条件**：loading 不消失、扫描完成后弹窗不弹出、返回崩溃。
+
+##### 3. ExternalImportPreviewDialog 宽度兜底（P0，必测）
+
+**测试场景**：外部导入游戏 → 预览导入内容
+
+**验证点**：
+- **窄屏手机**（屏宽 < 332dp）：弹窗宽度 = `min(300dp, 屏宽-32dp)`，不溢出屏幕
+- **正常手机**（屏宽 ≥ 332dp）：弹窗宽度 300dp
+- **平板竖屏**：弹窗宽度走 `LauncherTabletPortraitScaler.dp` 缩放，按比例放大
+- **内容布局**：CheckBox 列表 + 文本 + 底部三按钮（取消/全选/导入）布局不错位
+- **长文本**：游戏名/路径 `singleLine + ellipsize=end`，不挤压 CheckBox
+
+**阻断条件**：弹窗溢出屏幕、内容截断、按钮不可点击。
+
+##### 4. LauncherDialogFactory.dialogWidthPx 公开 API 回归（P1）
+
+**测试场景**：触发所有走 `LauncherDialogFactory.dialogWidthPx` 的弹窗
+
+**验证点**：
+- AI 聊天 → 自定义模型弹窗（288dp）
+- 外部导入预览弹窗（300dp）
+- `LauncherDialogFactory` 内部 `open`/`setContent` 调用（确认/选择/信息等弹窗宽度正常）
+- **平板竖屏**：所有弹窗宽度走 `LauncherTabletPortraitScaler.dp` 缩放
+- **窄屏**：所有弹窗宽度走 `min(期望宽度, 屏宽-32dp)` 兜底
+
+**阻断条件**：弹窗宽度异常、平板缩放失效、窄屏溢出。
+
+##### 5. compactChoice 选中态样式（P1）
+
+**测试场景**：设置 → 扫描深度选择（`showScanDepthChoices`）
+
+**验证点**：
+- 选中项：`primary` 色 + bold
+- 未选中项：`text` 色 + normal
+- 不再出现「●/○」文本前缀
+- 切换选中态后颜色立即更新
+
+**阻断条件**：选中态颜色异常、文本前缀残留。
+
+##### 6. AvatarCropActivity 取色统一（P1）
+
+**测试场景**：头像编辑 → 裁剪页
+
+**验证点**：
+- 标题文字颜色走 `LauncherTheme.text(this)`（与页面其他文字一致）
+- 深色/浅色模式切换后颜色正确
+
+**阻断条件**：标题颜色异常、深色模式不可读。
+
+##### 7. catch 收窄回归（P1，com.core 12 文件）
+
+**测试场景**：触发各类异常路径
+
+**验证点**：
+- **AgentScanRootGateway**：扫描敏感目录（如 `/proc`）→ `SecurityException` 被捕获跳过，不崩溃
+- **GameWorkspaceGateway**：搜索文件时遇到无权限目录 → `SecurityException` 单文件失败隔离，不影响整体搜索
+  - 搜索大文件超 `MAX_SEARCH_FILE_BYTES` → 跳过该文件
+  - 搜索遇到非文本文件 → decode 失败跳过
+- **LauncherScanBridge**：
+  - 引擎探测失败 → `catch (Exception)` 兜底，返回 null
+  - SAF tree URI 非法 → `catch (IllegalArgumentException)` 单文件隔离
+  - SAF 封面目录权限失效 → `catch (SecurityException)` 单文件隔离
+- **LauncherMetadataBridge**：元数据抓取失败 → `catch (Exception)` + 注释，不崩溃
+- **LauncherCoverBridge**：封面同步失败 → `catch (Exception)`，不崩溃
+- **LauncherPublicChatBridge**：事件解析失败 → `catch (Exception)`，不崩溃
+- **GameRepository**：URI 路径归一化失败 → `catch (IllegalArgumentException)`，保留原始字符串
+- **AgentSnapshotStore**：快照损坏 → `catch (Exception)` 跳过，不影响其他快照
+- **OpenAiCompatibleAgentClient**：版本号解析失败 → `catch (NumberFormatException)`，兜底 0
+- **LocalAgentRuntime**：JSON 结果解析失败 → `catch (JSONException)`，返回兜底文案
+
+**阻断条件**：异常路径崩溃、单文件失败导致整体任务中断。
+
+##### 8. runOnUiThread 守卫回归（P1）
+
+**测试场景**：触发快速返回与异步回调
+
+**验证点**：
+- **LauncherPublicChatActivity**：进入公共聊天 → 立即按返回键 → 心跳/消息回调无崩溃（8 处 `isUiUnavailable()` 守卫）
+- **LauncherAiChatActivity**：进入 AI 聊天 → 发送消息后立即按返回键 → `loadHistory`/`sendMessage` 回调无崩溃（4 处完整守卫）
+- **TranslationSettingActivity**：翻译设置 → 测试翻译后立即按返回键 → `runOnUiThread` 守卫生效
+- **LauncherActivity**：首页 → 桌面快捷方式启动回调 → `PinnedGameShortcut.onResult` 守卫
+- **PadManageFragment**：平板游戏库 → 滚动后立即按返回键 → `post` 守卫
+- **PadGameFragment**：平板游戏页 → 卡片高度更新 → `post` 守卫
+- **LauncherLibraryFragment**：游戏库 → 搜索防抖 → `Runnable` 守卫
+
+**阻断条件**：快速返回崩溃、异步回调更新已销毁 UI。
+
+##### 9. LauncherHomeFragment catch 收窄（P2）
+
+**测试场景**：首页加载头像
+
+**验证点**：
+- 头像加载失败（如网络错误）→ `catch (RuntimeException)` 兜底，不崩溃
+- OOM 场景：`OutOfMemoryError` 不被捕获（Error 子类），向上传播（解码在 `SafeImageLoader` 内部完成）
+
+**阻断条件**：头像加载崩溃。
+
+##### 测试优先级与建议顺序
+
+1. **P0 必测**：1（AgentLlmConfigDialog）→ 2（LauncherLaunchTargetPicker）→ 3（ExternalImportPreviewDialog）
+2. **P1 重要**：4（dialogWidthPx 公开 API）→ 5（compactChoice）→ 6（AvatarCrop）→ 7（catch 收窄）→ 8（守卫回归）
+3. **P2 回归**：9（HomeFragment catch）
+
+**通过标准**：P0 全部通过 + P1 无阻断 + P2 无新增异常。logcat 无 `FATAL EXCEPTION`、无 `SecurityException` 未捕获、无 `IllegalStateException` 守卫类崩溃。
+
+##### 关键风险点（重点观察）
+
+1. **AgentLlmConfigDialog 平板缩放**：宽度走 `LauncherTabletPortraitScaler.dp` 但 padding/字号走 `LauncherTheme.dp`（不缩放），平板竖屏视觉可能不一致（§12.2 已登记 INFO）
+2. **LauncherLaunchTargetPicker loading 不可取消**：扫描期间用户无法手动关闭 loading，长扫描场景需确认 UX
+3. **ExternalImportPreviewDialog 边距变化**：从无兜底（裸 `host.dp(300)`）改为 `LauncherDialogFactory.dialogWidthPx`（32dp 边距），窄屏手机弹窗会变宽，确认内容布局自适应
+4. **catch 收窄后异常传播**：部分原 `catch (Throwable)` 改为具体异常，若漏收窄某异常类型可能导致崩溃（重点测 7 的异常路径）
+
+### 阶段 11：2026-08-03 阶段 3 异常收窄 + 守卫补齐整改记录
+
+> 本轮依据阶段 3（3.1 catch(Throwable) 收窄 / 3.2 runOnUiThread 守卫 / 9.7 CancellationException / 9.8 文件树遍历 / 9.11 守卫校准）执行，先 4 agent 并行修改、再交叉核对（发现编译错误与回归风险）、修复后最终审查通过。构建验证：`./gradlew :app:compileDebugJavaWithJavac :app:compileDebugKotlin` ✅ + `git diff --check` ✅ + 分层 `grep import com.apps com/core` 0 命中 ✅。
+
+#### 11.1 已修复项
+
+| 类别 | 项目 | 结果 |
+|------|------|------|
+| 守卫补齐（com.apps） | LauncherPublicChatActivity 8 处桥回调（loadInitial/loadStatus/loadAnnouncements/loadOlder/send×2/onAnnouncementChanged/心跳）+ AiChat 4 处 WEAK→完整守卫 + TranslationSettingActivity:196 + LauncherActivity:272(PinnedGameShortcut onResult) + LauncherLibraryFragment/PadManageFragment 防抖+post + PadGameFragment:175 post | ✅ 全部补 `isUiUnavailable()` / `isFinishing\|\|isDestroyed` / `!isAdded\|\|_binding==null` |
+| catch 收窄（com.apps） | LauncherHomeFragment:621 `catch(Throwable)` → `catch(RuntimeException)` + 注释 | ✅ |
+| 文件树遍历（com.core） | AgentScanRootGateway 7 处、GameWorkspaceGateway 7 处、OpenAiCompatibleAgentClient:320、LocalAgentRuntime:608 → 具体异常（SecurityException/IOException/IllegalArgumentException/JSONException/NumberFormatException） | ✅ 事务 rethrow（AgentScanRootGateway:215、GameWorkspaceGateway:516/519/521）与进程边界（LocalAgentRuntime:413/463）保持 Throwable 合规。GameWorkspaceGateway 3 处 catch 补紧邻注释（W1'/W1''，见 §12.3） |
+| 静默空体（com.core） | LauncherScanBridge 8 处、LauncherMetadataBridge 4 处、LauncherCoverBridge 3 处、GameRepository 3 处、AgentSnapshotStore 4 处、LauncherAuthHttpClient:175、LauncherDiagnosticsBridge:92、LauncherPublicChatBridge:130/141 → 具体异常 + 中文注释 | ✅ |
+| 审查发现修复 | ① `catch(SecurityException\|IOException)` 包 DocumentFile 方法（不抛 checked IOException）编译失败 → 去 IOException；② AgentScanRootGateway:162 空体遗漏（IDE 缓冲与磁盘不同步，perl 直改落盘）；③ LauncherCoverBridge:46 空体遗漏；④ LauncherPublicChatBridge:130 `data!!` NPE 会逃逸 OkHttp 线程断连 → `catch (e: Exception)`；⑤ AgentSnapshotStore read() 抛 IOException → `catch (e: Exception)` 保持跳过损坏快照语义；⑥ 4 处非空 Throwable 宽捕获（ScanBridge:151/173、MetadataBridge:81、PublicChatBridge:141、CoverBridge:133）收窄 | ✅ |
+
+#### 11.2 校验结论
+
+- 守卫清单校准（9.11）：LauncherSaveGameListActivity 已通过 isUiUnavailable 补齐（移出未守卫）；LauncherPublicChatActivity 实际 8 处回调已全部覆盖。
+- CancellationException（9.7）：扫描确认 com.apps 协程内 catch 均已有 `catch (e: CancellationException) { throw e }` 前置重抛（LauncherViewModel×4、LauncherAppSettingsActivity×2、LauncherHomeFragment:453），无需修改。
+- 剩余存量（阶段 3 范围外，供后续阶段）：com.core 仍存 60+ 处 `catch (_: Throwable)`（EngineDetector/External*PluginStrategy/KrkrLauncher/ScriptEngineLaunchers 等），属 9.8/9.12 后续批次。
+
 ### 阶段 10：2026-08-02 收尾审查整改记录
 
 > 本轮代码审查（W1–W6 + INFO）整改归档。BLOCKING 与 W1–W6 均已修复，随 Phase 5.3+8.1（共 51 文件）一并落地；本节记录整改结果与遗留建议。
