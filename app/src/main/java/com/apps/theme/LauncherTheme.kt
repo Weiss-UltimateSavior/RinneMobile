@@ -14,17 +14,14 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.NonNull
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -650,150 +647,6 @@ object LauncherTheme {
         context: Context, info: LauncherUpdateBridge.UpdateInfo?,
         currentVersion: String?, hasUpdate: Boolean, error: String?
     ) {
-        val dialog = AlertDialog.Builder(context).create()
-        dialog.show()
-        LauncherMotion.applyDialogMotion(dialog)
-
-        val window = dialog.window ?: return
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setLayout(dp(context, 252), WindowManager.LayoutParams.WRAP_CONTENT)
-
-        val root = LinearLayout(context)
-        root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(context, 22), dp(context, 20), dp(context, 22), dp(context, 16))
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg)
-
-        val title = TextView(context)
-        title.text = context.getString(
-            if (hasUpdate) R.string.theme_update_available else R.string.theme_check_for_updates
-        )
-        title.gravity = Gravity.CENTER
-        title.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_color))
-        title.textSize = 16f
-        title.setTypeface(null, Typeface.BOLD)
-        root.addView(title, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
-
-        val optionLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36))
-        optionLp.setMargins(0, dp(context, 11), 0, 0)
-
-        val cancelLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36))
-        cancelLp.setMargins(0, dp(context, 9), 0, 0)
-
-        if (error != null) {
-            val message = TextView(context)
-            message.text = error
-            message.gravity = Gravity.CENTER
-            message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
-            message.textSize = 12f
-            message.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
-            val msgLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            msgLp.setMargins(0, dp(context, 11), 0, 0)
-            root.addView(message, msgLp)
-
-            val btn = TextView(context)
-            btn.text = context.getString(R.string.settings_got_it)
-            btn.gravity = Gravity.CENTER
-            btn.setTextColor(primary(context))
-            btn.textSize = 13f
-            btn.setTypeface(null, Typeface.BOLD)
-            btn.background = cancelChip(context)
-            btn.setOnClickListener { dialog.dismiss() }
-            root.addView(btn, cancelLp)
-        } else if (hasUpdate && info != null) {
-            val message = TextView(context)
-            val sb = StringBuilder()
-            val unknown = context.getString(R.string.settings_unknown)
-            sb.append(context.getString(R.string.theme_current_version,
-                emptyOr(currentVersion, unknown))).append("\n")
-            sb.append(context.getString(R.string.theme_latest_version,
-                emptyOr(info.tagName, info.version))).append("\n\n")
-            val body = trimUpdateBody(info.body, 1600)
-            if (body != null && body.trim { it <= ' ' }.isNotEmpty()) {
-                sb.append(context.getString(R.string.theme_release_notes)).append("\n")
-                    .append(body.trim { it <= ' ' })
-            } else {
-                sb.append(context.getString(R.string.theme_new_release_summary))
-            }
-            message.text = sb.toString()
-            message.gravity = Gravity.CENTER
-            message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
-            message.textSize = 12f
-            message.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
-            val msgLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            msgLp.setMargins(0, dp(context, 11), 0, 0)
-            root.addView(message, msgLp)
-
-            addDialogOption(root, context.getString(R.string.theme_go_to_download), dialog, { openUrl(context, emptyOr(info.apkUrl, info.releaseUrl)) }, optionLp)
-            addDialogOption(root, context.getString(R.string.theme_release_page), dialog, { openUrl(context, emptyOr(info.releaseUrl, "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test")) }, optionLp)
-
-            val cancel = TextView(context)
-            cancel.text = context.getString(R.string.theme_later)
-            cancel.gravity = Gravity.CENTER
-            cancel.setTextColor(primary(context))
-            cancel.textSize = 13f
-            cancel.setTypeface(null, Typeface.BOLD)
-            cancel.background = cancelChip(context)
-            cancel.setOnClickListener { dialog.dismiss() }
-            root.addView(cancel, cancelLp)
-        } else {
-            val message = TextView(context)
-            message.text = context.getString(R.string.theme_already_latest,
-                emptyOr(currentVersion, context.getString(R.string.settings_unknown)))
-            message.gravity = Gravity.CENTER
-            message.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_muted_color))
-            message.textSize = 12f
-            message.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
-            val msgLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            msgLp.setMargins(0, dp(context, 11), 0, 0)
-            root.addView(message, msgLp)
-
-            val btn = TextView(context)
-            btn.text = context.getString(R.string.settings_got_it)
-            btn.gravity = Gravity.CENTER
-            btn.setTextColor(primary(context))
-            btn.textSize = 13f
-            btn.setTypeface(null, Typeface.BOLD)
-            btn.background = cancelChip(context)
-            btn.setOnClickListener { dialog.dismiss() }
-            root.addView(btn, cancelLp)
-        }
-
-        window.setContentView(root)
-    }
-
-    private fun addDialogOption(
-        root: LinearLayout, label: String,
-        dialog: AlertDialog, action: Runnable, lp: LinearLayout.LayoutParams
-    ) {
-        val option = TextView(root.context)
-        option.text = label
-        option.gravity = Gravity.CENTER
-        option.isSingleLine = true
-        option.textSize = 13f
-        option.setTypeface(null, Typeface.BOLD)
-        menuItem(option)
-        option.setOnClickListener {
-            dialog.dismiss()
-            action.run()
-        }
-        root.addView(option, lp)
-    }
-
-    private fun emptyOr(value: String?, fallback: String): String {
-        return if (value == null || value.trim { it <= ' ' }.isEmpty()) fallback else value
-    }
-
-    private fun trimUpdateBody(text: String?, max: Int): String {
-        if (text == null) return ""
-        val t = text.trim { it <= ' ' }
-        if (max <= 0 || t.length <= max) return t
-        return t.substring(0, max) + "\n..."
-    }
-
-    private fun openUrl(context: Context, url: String) {
-        try {
-            context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
-        } catch (ignored: Throwable) {
-        }
+        LauncherDialogFactory.showUpdateResult(context, info, currentVersion, hasUpdate, error)
     }
 }

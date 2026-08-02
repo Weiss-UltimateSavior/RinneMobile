@@ -37,7 +37,9 @@ import com.core.launcherbridge.LlmConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.net.URISyntaxException;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -368,52 +370,23 @@ public class LauncherAiChatActivity extends AppCompatActivity {
                 }
             }
             return null;
-        } catch (Throwable ignored) {
+        } catch (URISyntaxException | NumberFormatException ignored) {
             return getString(R.string.social_error_http_endpoint);
         }
     }
 
     private void showClearConfirmDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        TextView title = dialogText(getString(R.string.social_clear_history_title), 16, R.color.launcher_text_color);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title);
-        TextView message = dialogText(getString(R.string.social_clear_history_message), 12, R.color.launcher_text_muted_color);
-        LinearLayout.LayoutParams messageLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        messageLp.setMargins(0, dp(13), 0, 0);
-        root.addView(message, messageLp);
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        buttonsLp.setMargins(0, dp(14), 0, 0);
-        TextView cancel = dialogText(getString(R.string.social_action_cancel), 13, R.color.launcher_text_color);
-        LauncherTheme.secondaryButton(cancel);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        buttons.addView(cancel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        TextView confirm = dialogText(getString(R.string.social_action_clear), 13, R.color.launcher_on_primary_color);
-        LauncherTheme.dangerButton(confirm);
-        confirm.setOnClickListener(view -> {
-            dialog.dismiss();
+        LauncherDialogFactory.showDangerConfirm(
+                this,
+                getString(R.string.social_clear_history_title),
+                getString(R.string.social_clear_history_message),
+                getString(R.string.social_action_clear),
+                () -> {
             LauncherAiChatBridge.clearHistory(this, threadId, new LauncherAiChatBridge.Callback() {
                 @Override public void onSuccess() { if (!isFinishing()) { messages.clear(); adapter.notifyDataSetChanged(); binding.aiChatHint.setText(R.string.social_history_cleared); } }
                 @Override public void onError(String error) { if (!isFinishing()) showError(error); }
             });
         });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        confirmLp.setMargins(dp(8), 0, 0, 0);
-        buttons.addView(confirm, confirmLp);
-        root.addView(buttons, buttonsLp);
-        window.setContentView(root);
     }
 
     private TextView dialogText(String text, int size, int colorRes) {

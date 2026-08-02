@@ -1,16 +1,9 @@
 package com.apps.game;
 
 import android.util.Log;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
-
-import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherDialogFactory;
 import com.core.R;
 import com.core.launcherbridge.LauncherDiagnosticsBridge;
 import com.core.util.DevLogger;
@@ -38,49 +31,26 @@ public final class DiagnosticsController {
     }
 
     private void showDiagnosticsOptions() {
-        AlertDialog dialog = new AlertDialog.Builder(host.requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(host.dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(host.requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(host.dp(22), host.dp(20), host.dp(22), host.dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = host.createDialogTitle(host.getString(R.string.game_diagnostics_title));
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView info = new TextView(host.requireContext());
-        info.setText(host.getString(R.string.game_diagnostics_status,
-                host.getString(LauncherDiagnosticsBridge.isLogEnabled()
-                        ? R.string.game_diagnostics_enabled : R.string.game_diagnostics_disabled),
-                DevLogger.formatSize(LauncherDiagnosticsBridge.logSize())));
-        info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
-        host.setResponsiveTextSize(info, 12);
-        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, host.dp(11), 0, 0);
-        root.addView(info, infoLp);
-
-        host.addFeedbackOption(root, host.getString(LauncherDiagnosticsBridge.isLogEnabled()
-                ? R.string.game_diagnostics_disable : R.string.game_diagnostics_enable),
-                dialog, this::toggleDiagnosticLog);
-        host.addFeedbackOption(root, host.getString(R.string.game_diagnostics_clear),
-                dialog, this::confirmClearDiagnosticLog);
-        host.addFeedbackOption(root, host.getString(R.string.game_diagnostics_export),
-                dialog, this::exportDiagnosticLog);
-
-        TextView cancel = host.createDialogCancelButton(dialog);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
-        cancelLp.setMargins(0, host.dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showMessageActionChoices(
+                host.requireContext(),
+                host.getString(R.string.game_diagnostics_title),
+                host.getString(R.string.game_diagnostics_status,
+                        host.getString(LauncherDiagnosticsBridge.isLogEnabled()
+                                ? R.string.game_diagnostics_enabled : R.string.game_diagnostics_disabled),
+                        DevLogger.formatSize(LauncherDiagnosticsBridge.logSize())),
+                new CharSequence[] {
+                        host.getString(LauncherDiagnosticsBridge.isLogEnabled()
+                                ? R.string.game_diagnostics_disable : R.string.game_diagnostics_enable),
+                        host.getString(R.string.game_diagnostics_clear),
+                        host.getString(R.string.game_diagnostics_export)
+                },
+                index -> {
+                    switch (index) {
+                        case 0: toggleDiagnosticLog(); break;
+                        case 1: confirmClearDiagnosticLog(); break;
+                        case 2: exportDiagnosticLog(); break;
+                    }
+                });
     }
 
     private void exportDiagnosticLog() {

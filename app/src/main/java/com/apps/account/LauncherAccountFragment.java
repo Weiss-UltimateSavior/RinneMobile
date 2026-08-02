@@ -6,15 +6,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.core.R;
@@ -23,7 +18,7 @@ import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.LauncherNavigationMetricsKt;
-import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
@@ -226,168 +221,27 @@ public class LauncherAccountFragment extends Fragment {
 
     private void showAuthResultDialog(String title, String message) {
         if (getContext() == null) return;
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(dialogWidthDp()), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()),
-                dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView titleView = new TextView(requireContext());
-        titleView.setText(title);
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        titleView.setTextSize(dialogTitleTextSp());
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msgView = new TextView(requireContext());
-        msgView.setText(message);
-        msgView.setGravity(android.view.Gravity.CENTER);
-        msgView.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msgView.setTextSize(dialogMessageTextSp());
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msgView, msgLp);
-
-        TextView okBtn = new TextView(requireContext());
-        okBtn.setText(R.string.social_action_got_it);
-        okBtn.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(okBtn);
-        okBtn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams okLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
-        okLp.setMargins(0, dp(11), 0, 0);
-        root.addView(okBtn, okLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showInfo(requireContext(), title, message);
     }
 
     private void showQQGroupDialog() {
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(dialogWidthDp()), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()),
-                dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(R.string.social_qq_group);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(dialogTitleTextSp());
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msg = new TextView(requireContext());
-        msg.setText(R.string.social_open_qq_message);
-        msg.setGravity(android.view.Gravity.CENTER);
-        msg.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msg.setTextSize(dialogMessageTextSp());
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msg, msgLp);
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText(R.string.social_action_open);
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info");
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText(R.string.social_action_cancel);
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(dialogActionTextSp());
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                requireContext(),
+                getString(R.string.social_qq_group),
+                getString(R.string.social_open_qq_message),
+                getString(R.string.social_action_open),
+                () -> openExternalUrl("https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info")
+        );
     }
 
     private void showGitHubDialog() {
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(dialogWidthDp()), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()),
-                dp(dialogHorizontalPaddingDp()), dp(dialogVerticalPaddingDp()));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(R.string.social_official_site);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_color));
-        title.setTextSize(dialogTitleTextSp());
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView msg = new TextView(requireContext());
-        msg.setText(R.string.social_open_github_message);
-        msg.setGravity(android.view.Gravity.CENTER);
-        msg.setTextColor(ContextCompat.getColor(requireContext(), R.color.launcher_text_muted_color));
-        msg.setTextSize(dialogMessageTextSp());
-        LinearLayout.LayoutParams msgLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        msgLp.setMargins(0, dp(13), 0, 0);
-        root.addView(msg, msgLp);
-
-        TextView confirm = new TextView(requireContext());
-        confirm.setText(R.string.social_action_open);
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(v -> {
-            dialog.dismiss();
-            openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile");
-        });
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-
-        TextView cancel = new TextView(requireContext());
-        cancel.setText(R.string.social_action_cancel);
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        cancel.setTextSize(dialogActionTextSp());
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(dialogButtonHeightDp()));
-        cancelLp.setMargins(0, dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showStandardConfirm(
+                requireContext(),
+                getString(R.string.social_official_site),
+                getString(R.string.social_open_github_message),
+                getString(R.string.social_action_open),
+                () -> openExternalUrl("https://github.com/Weiss-UltimateSavior/RinneMobile")
+        );
     }
 
     private void openExternalUrl(String url) {
@@ -398,43 +252,4 @@ public class LauncherAccountFragment extends Fragment {
         }
     }
 
-    private int dialogWidthDp() {
-        return 252;
-    }
-
-    private int dialogHorizontalPaddingDp() {
-        return 22;
-    }
-
-    private int dialogVerticalPaddingDp() {
-        return 20;
-    }
-
-    private int dialogButtonHeightDp() {
-        return 36;
-    }
-
-    private float dialogTitleTextSp() {
-        return scaledSp(16f);
-    }
-
-    private float dialogMessageTextSp() {
-        return scaledSp(12f);
-    }
-
-    private float dialogActionTextSp() {
-        return scaledSp(13f);
-    }
-
-    private float scaledSp(float baseSp) {
-        return usePortraitAccountScaler()
-                ? baseSp * LauncherTabletPortraitScaler.scaleFor(binding == null ? null : binding.getRoot())
-                : baseSp;
-    }
-
-    private int dp(int value) {
-        return usePortraitAccountScaler()
-                ? LauncherTabletPortraitScaler.dp(requireContext(), value)
-                : (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

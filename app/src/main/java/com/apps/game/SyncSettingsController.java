@@ -1,15 +1,8 @@
 package com.apps.game;
 
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
-
-import com.apps.theme.LauncherMotion;
+import com.apps.theme.LauncherDialogFactory;
 import com.core.R;
 import com.core.launcherbridge.LauncherSyncBridge;
 
@@ -38,46 +31,24 @@ public final class SyncSettingsController {
     }
 
     public void showSyncOptions() {
-        AlertDialog dialog = new AlertDialog.Builder(host.requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(host.dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(host.requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(host.dp(22), host.dp(20), host.dp(22), host.dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = host.createDialogTitle(host.getString(R.string.game_sync_cloud));
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView info = new TextView(host.requireContext());
-        info.setGravity(android.view.Gravity.CENTER);
-        info.setText(syncStatusText());
-        info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
-        host.setResponsiveTextSize(info, 12);
-        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, host.dp(11), 0, 0);
-        root.addView(info, infoLp);
-
-        host.addFeedbackOption(root, host.getString(R.string.game_sync_now), dialog, this::syncNow);
-        host.addFeedbackOption(root, host.getString(R.string.game_sync_open_center), dialog,
-                backupActions::openSyncCenter);
-        host.addFeedbackOption(root, host.getString(R.string.game_sync_export_backup),
-                dialog, backupActions::onExportLocalBackup);
-        host.addFeedbackOption(root, host.getString(R.string.game_sync_import_backup),
-                dialog, backupActions::onConfirmImportLocalBackup);
-
-        TextView cancel = host.createDialogCancelButton(dialog);
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
-        cancelLp.setMargins(0, host.dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+        LauncherDialogFactory.showMessageActionChoices(
+                host.requireContext(),
+                host.getString(R.string.game_sync_cloud),
+                syncStatusText(),
+                new CharSequence[] {
+                        host.getString(R.string.game_sync_now),
+                        host.getString(R.string.game_sync_open_center),
+                        host.getString(R.string.game_sync_export_backup),
+                        host.getString(R.string.game_sync_import_backup)
+                },
+                index -> {
+                    switch (index) {
+                        case 0: syncNow(); break;
+                        case 1: backupActions.openSyncCenter(); break;
+                        case 2: backupActions.onExportLocalBackup(); break;
+                        case 3: backupActions.onConfirmImportLocalBackup(); break;
+                    }
+                });
     }
 
     private String syncStatusText() {

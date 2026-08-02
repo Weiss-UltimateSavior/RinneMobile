@@ -1,16 +1,10 @@
 package com.apps.game;
 
 import android.text.TextUtils;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 
-import com.apps.theme.LauncherMotion;
-import com.apps.theme.LauncherTheme;
+import com.apps.theme.LauncherDialogFactory;
 import com.core.R;
 import com.core.launcherbridge.LauncherScanBridge;
 import com.core.scanner.ScanReport;
@@ -44,7 +38,9 @@ public final class Xp3TargetResolver {
     private void scanAndResolveXp3Targets(List<String> roots, int depth, boolean fullRefresh) {
         ScanRequest request = ScanRequest.defaults(depth, !fullRefresh);
         activeScanRequest = request;
-        scanLoadingDialog = showScanLoadingDialog();
+        scanLoadingDialog = LauncherDialogFactory.showLoading(host.requireContext(),
+                host.getString(R.string.game_scan_scanning),
+                host.getString(R.string.game_scan_wait_hint));
         scanLoadingDialog.setCancelable(true);
         scanLoadingDialog.setCanceledOnTouchOutside(false);
         scanLoadingDialog.setButton(AlertDialog.BUTTON_NEGATIVE,
@@ -130,101 +126,27 @@ public final class Xp3TargetResolver {
     }
 
     private void showXp3TargetDialog(List<ScanResult> results, int index, ScanResult result) {
-        AlertDialog dialog = new AlertDialog.Builder(host.requireContext()).create();
-        dialog.setCancelable(false);
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(host.dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(host.requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(host.dp(22), host.dp(18), host.dp(22), host.dp(15));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(host.requireContext());
-        title.setText(R.string.game_xp3_choose_entry);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
-        host.setResponsiveTextSize(title, 16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView info = new TextView(host.requireContext());
-        info.setText(host.getString(R.string.game_xp3_multiple_files, result.title));
-        info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
-        host.setResponsiveTextSize(info, 12);
-        info.setLineSpacing(host.dp(4), 1f);
-        LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoLp.setMargins(0, host.dp(10), 0, 0);
-        root.addView(info, infoLp);
-
-        android.widget.ScrollView scroll = new android.widget.ScrollView(host.requireContext());
-        LinearLayout choices = new LinearLayout(host.requireContext());
-        choices.setOrientation(LinearLayout.VERTICAL);
-        for (String candidate : result.xp3Candidates) {
-            TextView option = new TextView(host.requireContext());
-            option.setText(candidate);
-            option.setGravity(android.view.Gravity.CENTER);
-            option.setSingleLine(true);
-            option.setEllipsize(TextUtils.TruncateAt.MIDDLE);
-            option.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
-            host.setResponsiveTextSize(option, 13);
-            option.setBackground(LauncherTheme.cancelChip(host.requireContext()));
-            option.setOnClickListener(view -> {
+        LauncherDialogFactory.showTextChoicesWithSkip(
+                host.requireContext(),
+                host.getString(R.string.game_xp3_choose_entry),
+                host.getString(R.string.game_xp3_multiple_files, result.title),
+                result.xp3Candidates,
+                host.getString(R.string.game_xp3_skip),
+                host.getString(R.string.game_xp3_cancel_scan),
+                candidate -> {
                 result.launchTarget = candidate;
-                dialog.dismiss();
                 resolveXp3Candidates(results, index + 1);
-            });
-            LinearLayout.LayoutParams optionLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(38));
-            optionLp.setMargins(0, host.dp(8), 0, 0);
-            choices.addView(option, optionLp);
-        }
-        scroll.addView(choices);
-        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                Math.min(host.dp(250), host.dp(8) + result.xp3Candidates.size() * host.dp(46)));
-        scrollLp.setMargins(0, host.dp(4), 0, 0);
-        root.addView(scroll, scrollLp);
-
-        LinearLayout buttons = new LinearLayout(host.requireContext());
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        buttons.setWeightSum(2);
-        LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
-        buttonsLp.setMargins(0, host.dp(12), 0, 0);
-
-        TextView skip = new TextView(host.requireContext());
-        skip.setText(R.string.game_xp3_skip);
-        skip.setGravity(android.view.Gravity.CENTER);
-        host.setResponsiveTextSize(skip, 13);
-        skip.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.secondaryButton(skip);
-        skip.setOnClickListener(view -> {
+        },
+                () -> {
             results.remove(index);
-            dialog.dismiss();
             resolveXp3Candidates(results, index);
-        });
-        buttons.addView(skip, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
-
-        TextView cancel = new TextView(host.requireContext());
-        cancel.setText(R.string.game_xp3_cancel_scan);
-        cancel.setGravity(android.view.Gravity.CENTER);
-        host.setResponsiveTextSize(cancel, 13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.secondaryButton(cancel);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        cancelLp.setMargins(host.dp(8), 0, 0, 0);
-        buttons.addView(cancel, cancelLp);
-        root.addView(buttons, buttonsLp);
-        window.setContentView(root);
+        },
+                () -> {});
     }
 
     private void importResolvedScanResults(List<ScanResult> results) {
-        scanLoadingDialog = host.showScanLoadingDialog(
+        scanLoadingDialog = LauncherDialogFactory.showLoading(
+                host.requireContext(),
                 host.getString(R.string.game_import_importing),
                 host.getString(R.string.game_import_writing_library));
         android.content.Context appContext = host.getAppContext();
@@ -236,11 +158,6 @@ public final class Xp3TargetResolver {
                 showScanResultDialog(stats);
             });
         });
-    }
-
-    private AlertDialog showScanLoadingDialog() {
-        return host.showScanLoadingDialog(host.getString(R.string.game_scan_scanning),
-                host.getString(R.string.game_scan_wait_hint));
     }
 
     private void dismissScanLoadingDialog() {

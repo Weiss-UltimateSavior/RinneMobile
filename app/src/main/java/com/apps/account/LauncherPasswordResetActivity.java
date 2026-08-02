@@ -6,7 +6,6 @@ import android.os.CountDownTimer;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +18,7 @@ import com.core.databinding.ActivityLauncherPasswordResetBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.SimpleCallback;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -136,41 +136,7 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
     }
 
     private void showResultDialog(String title, String message) {
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        TextView titleView = new TextView(this);
-        titleView.setText(title);
-        titleView.setGravity(android.view.Gravity.CENTER);
-        titleView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        titleView.setTextSize(16);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(titleView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        TextView messageView = new TextView(this);
-        messageView.setText(message);
-        messageView.setGravity(android.view.Gravity.CENTER);
-        messageView.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_muted_color));
-        messageView.setTextSize(12);
-        LinearLayout.LayoutParams messageLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        messageLp.setMargins(0, dp(13), 0, 0);
-        root.addView(messageView, messageLp);
-        TextView confirm = new TextView(this);
-        confirm.setText(R.string.social_action_got_it);
-        confirm.setGravity(android.view.Gravity.CENTER);
-        LauncherTheme.primaryButton(confirm);
-        confirm.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams confirmLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        confirmLp.setMargins(0, dp(11), 0, 0);
-        root.addView(confirm, confirmLp);
-        window.setContentView(root);
+        LauncherDialogFactory.showInfo(this, title, message);
     }
 
     private String textOf(TextView view) {
@@ -221,7 +187,4 @@ public class LauncherPasswordResetActivity extends AppCompatActivity {
         LauncherMotion.finish(this);
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
 }

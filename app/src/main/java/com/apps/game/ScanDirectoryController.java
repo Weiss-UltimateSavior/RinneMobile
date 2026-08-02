@@ -18,6 +18,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
@@ -112,29 +113,7 @@ public final class ScanDirectoryController {
     }
 
     public void showScanDepthDialog(List<String> roots) {
-        AlertDialog dialog = new AlertDialog.Builder(host.requireContext()).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(host.dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(host.requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(host.dp(22), host.dp(20), host.dp(22), host.dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(host.requireContext());
-        title.setText(R.string.game_scan_title);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
-        host.setResponsiveTextSize(title, 16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        String[] depthLabels = {
+        CharSequence[] depthLabels = {
                 host.getString(R.string.game_scan_shallow),
                 host.getString(R.string.game_scan_standard),
                 host.getString(R.string.game_scan_deep),
@@ -144,59 +123,19 @@ public final class ScanDirectoryController {
         };
         int currentDepth = scanDepth();
         int[] depthValues = {1, 2, 3, 4, LauncherScanBridge.SCAN_ALL_LEVELS, LauncherScanBridge.SCAN_UNTIL_GAME_MATCH};
-        final boolean[] fullRefresh = {false};
 
-        TextView scanMode = new TextView(host.requireContext());
-        scanMode.setText(host.getString(R.string.game_scan_mode_quick));
-        scanMode.setGravity(android.view.Gravity.CENTER);
-        host.setResponsiveTextSize(scanMode, 12);
-        scanMode.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.menuItem(scanMode);
-        scanMode.setOnClickListener(view -> {
-            fullRefresh[0] = !fullRefresh[0];
-            scanMode.setText(host.getString(fullRefresh[0]
-                    ? R.string.game_scan_mode_full : R.string.game_scan_mode_quick));
-        });
-        LinearLayout.LayoutParams modeLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
-        modeLp.setMargins(0, host.dp(11), 0, 0);
-        root.addView(scanMode, modeLp);
-
-        for (int i = 0; i < depthLabels.length; i++) {
-            final int depth = depthValues[i];
-            TextView option = new TextView(host.requireContext());
-            option.setText((depth == currentDepth ? "● " : "○ ") + depthLabels[i]);
-            option.setGravity(android.view.Gravity.CENTER);
-            host.setResponsiveTextSize(option, 13);
-            option.setTypeface(null, android.graphics.Typeface.BOLD);
-            if (depth == currentDepth) {
-                LauncherTheme.primaryButton(option);
-            } else {
-                LauncherTheme.menuItem(option);
-            }
-            option.setOnClickListener(v -> {
-                dialog.dismiss();
+        LauncherDialogFactory.showScanDepthChoices(
+                host.requireContext(),
+                host.getString(R.string.game_scan_title),
+                host.getString(R.string.game_scan_mode_quick),
+                host.getString(R.string.game_scan_mode_full),
+                depthLabels,
+                depthValues,
+                currentDepth,
+                (depth, fullRefresh) -> {
                 saveScanDepth(depth);
-                scanListener.onScanRequested(roots, depth, fullRefresh[0]);
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
-            lp.setMargins(0, host.dp(11), 0, 0);
-            root.addView(option, lp);
-        }
-
-        TextView cancel = new TextView(host.requireContext());
-        cancel.setText(R.string.game_common_cancel);
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(host.requireContext()));
-        host.setResponsiveTextSize(cancel, 13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(host.requireContext()));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, host.dp(36));
-        cancelLp.setMargins(0, host.dp(9), 0, 0);
-        root.addView(cancel, cancelLp);
-
-        window.setContentView(root);
+                scanListener.onScanRequested(roots, depth, fullRefresh);
+        });
     }
 
     public void saveScanDepth(int depth) {

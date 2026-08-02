@@ -2,28 +2,23 @@ package com.apps.game;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
-import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.core.R;
@@ -94,6 +89,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
                 }
             }
             runOnUiThread(() -> {
+                if (isUiUnavailable()) return;
                 binding.saveGameList.removeAllViews();
                 if (!LauncherSaveCategoryActivity.isSupportedBuiltInEngine(requestedEngine)) {
                     binding.saveGameListStatus.setText(R.string.game_save_not_internal);
@@ -183,8 +179,11 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             try {
                 int count = saveManager.exportInternalSaveToZip(game, destinationUri);
-                runOnUiThread(() -> Toast.makeText(this,
-                        getString(R.string.game_save_exported_count, count), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
+                    Toast.makeText(this,
+                            getString(R.string.game_save_exported_count, count), Toast.LENGTH_LONG).show();
+                });
             } catch (Exception error) {
                 GameDiagnostics.record(this, "save_exception", game,
                         getString(R.string.game_save_export_failed_detail,
@@ -200,8 +199,11 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             try {
                 int count = saveManager.importInternalSaveFromZip(game, sourceUri, true);
-                runOnUiThread(() -> Toast.makeText(this,
-                        getString(R.string.game_save_imported_count, count), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
+                    Toast.makeText(this,
+                            getString(R.string.game_save_imported_count, count), Toast.LENGTH_LONG).show();
+                });
             } catch (Exception error) {
                 GameDiagnostics.record(this, "save_exception", game,
                         getString(R.string.game_save_import_failed_detail,
@@ -221,83 +223,16 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     }
 
     private void showError(String title, Exception error) {
-        runOnUiThread(() -> LauncherDialogFactory.showInfo(this, title,
-                error.getMessage() == null
-                        ? getString(R.string.game_common_unknown_error) : error.getMessage()));
+        runOnUiThread(() -> {
+            if (isUiUnavailable()) return;
+            LauncherDialogFactory.showInfo(this, title,
+                    error.getMessage() == null
+                            ? getString(R.string.game_common_unknown_error) : error.getMessage());
+        });
     }
 
-    private AlertDialog createLauncherDialog() {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-        return dialog;
-    }
-
-    private LinearLayout createDialogRoot() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        LauncherTheme.applyPrimaryTone(root);
-        return root;
-    }
-
-    private TextView createDialogTitle(String text) {
-        TextView title = new TextView(this);
-        title.setText(text);
-        title.setGravity(Gravity.CENTER);
-        title.setSingleLine(true);
-        title.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
-        title.setTextSize(16);
-        title.setTypeface(null, Typeface.BOLD);
-        return title;
-    }
-
-    private TextView createDialogOption(String text) {
-        TextView option = new TextView(this);
-        option.setText(text);
-        option.setGravity(Gravity.CENTER);
-        option.setSingleLine(true);
-        option.setTextSize(13);
-        option.setTypeface(null, Typeface.BOLD);
-        LauncherTheme.menuItem(option);
-        option.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36)));
-        return option;
-    }
-
-    private TextView createDialogCancelButton(AlertDialog dialog) {
-        TextView cancel = new TextView(this);
-        cancel.setText(R.string.game_common_cancel);
-        cancel.setGravity(Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(this));
-        cancel.setTextSize(13);
-        cancel.setTypeface(null, Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(this));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        params.setMargins(0, dp(9), 0, 0);
-        cancel.setLayoutParams(params);
-        return cancel;
-    }
-
-    private void addWithTopMargin(LinearLayout root, View child, int marginDp) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dp(marginDp), 0, 0);
-        root.addView(child, params);
-    }
-
-    private void setDialogContent(AlertDialog dialog, View content, int widthDp) {
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setContentView(content);
-        window.setLayout(dp(widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
-    }
-
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
+    private boolean isUiUnavailable() {
+        return isFinishing() || isDestroyed();
     }
 
     private String buildArchiveFileName(Game game) {

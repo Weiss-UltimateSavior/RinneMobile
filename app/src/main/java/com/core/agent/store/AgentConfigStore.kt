@@ -7,6 +7,7 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import java.net.URI
 import java.nio.charset.StandardCharsets
+import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.util.Locale
 import javax.crypto.Cipher
@@ -94,7 +95,7 @@ object AgentConfigStore {
     }
 
     @JvmStatic
-    @Throws(Exception::class)
+    @Throws(GeneralSecurityException::class)
     fun save(
         context: Context,
         baseUrl: String?,
@@ -173,6 +174,7 @@ object AgentConfigStore {
     }
 
     @JvmStatic
+    @Throws(GeneralSecurityException::class)
     fun saveExecutionSettings(
         context: Context,
         toolCallLimit: Int,

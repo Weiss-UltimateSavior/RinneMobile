@@ -14,8 +14,10 @@ import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
+import com.core.launcherbridge.LauncherUpdateBridge
 
 /** Shared non-engine Launcher dialog shell. */
 object LauncherDialogFactory {
@@ -27,6 +29,14 @@ object LauncherDialogFactory {
 
     fun interface ChoiceListener {
         fun onChoice(index: Int)
+    }
+
+    fun interface ScanDepthListener {
+        fun onChoice(depth: Int, fullRefresh: Boolean)
+    }
+
+    fun interface TextChoiceListener {
+        fun onChoice(value: String)
     }
 
     @JvmStatic
@@ -54,6 +64,20 @@ object LauncherDialogFactory {
     @JvmStatic
     fun showConfirm(context: Context, title: String?, message: String?,
                     confirmText: String?, onConfirm: Runnable?) {
+        showConfirm(context, title, message, confirmText, onConfirm, null, null)
+    }
+
+    @JvmStatic
+    fun showConfirm(context: Context, title: String?, message: String?,
+                    confirmText: String?, onConfirm: Runnable?,
+                    onDismiss: Runnable?): AlertDialog {
+        return showConfirm(context, title, message, confirmText, onConfirm, null, onDismiss)
+    }
+
+    @JvmStatic
+    fun showConfirm(context: Context, title: String?, message: String?,
+                    confirmText: String?, onConfirm: Runnable?,
+                    cancelText: CharSequence?, onDismiss: Runnable?): AlertDialog {
         val dialog = open(context, WIDTH_COMPACT_DP)
         val root = LayoutInflater.from(context).inflate(R.layout.dialog_launcher_confirm, null)
         val titleView = root.findViewById<TextView>(R.id.dialogTitle)
@@ -62,6 +86,7 @@ object LauncherDialogFactory {
         val confirm = root.findViewById<TextView>(R.id.dialogBtnConfirm)
         titleView.text = title
         messageView.text = message
+        cancel.text = cancelText ?: context.getString(R.string.launcher_dialog_cancel)
         confirm.text = confirmText
         LauncherTheme.dialogButtons(cancel, confirm)
         cancel.setOnClickListener { dialog.dismiss() }
@@ -69,7 +94,11 @@ object LauncherDialogFactory {
             dialog.dismiss()
             onConfirm?.run()
         }
+        if (onDismiss != null) {
+            dialog.setOnDismissListener { onDismiss.run() }
+        }
         setContent(dialog, root, WIDTH_COMPACT_DP)
+        return dialog
     }
 
     /** Compact confirmation rendered with the standard Launcher shell in an overlay window. */
@@ -219,9 +248,51 @@ object LauncherDialogFactory {
         return dialog
     }
 
+    /**
+     * Non-cancelable loading shell with an additional progress TextView tagged as [progressTag].
+     * Sync flows update that tagged view while keeping all dialog construction inside the factory.
+     */
+    @JvmStatic
+    fun showProgressLoading(
+        context: Context,
+        title: String?,
+        progressText: String?,
+        hint: String?,
+        progressTag: String?
+    ): AlertDialog {
+        val dialog = open(context, WIDTH_STANDARD_DP, false)
+        val root = root(context, false)
+        root.addView(standardTitle(context, title))
+
+        val progress = ProgressBar(context)
+        progress.isIndeterminate = true
+        progress.indeterminateDrawable?.setColorFilter(
+            LauncherTheme.primary(context), PorterDuff.Mode.SRC_IN)
+        val progressParams = LinearLayout.LayoutParams(dp(context, 32), dp(context, 32))
+        progressParams.gravity = Gravity.CENTER_HORIZONTAL
+        progressParams.setMargins(0, dp(context, 14), 0, 0)
+        root.addView(progress, progressParams)
+
+        val progressView = standardMessage(context, progressText)
+        progressView.tag = progressTag
+        root.addView(progressView, topMargin(context, 6))
+
+        val hintView = standardMessage(context, hint)
+        hintView.textSize = 11f
+        root.addView(hintView, topMargin(context, 10))
+        setContent(dialog, root, WIDTH_STANDARD_DP)
+        return dialog
+    }
+
     @JvmStatic
     fun showActionChoices(context: Context, title: String?, choices: Array<CharSequence>?,
                           listener: ChoiceListener?) {
+        showActionChoices(context, title, choices, -1, listener)
+    }
+
+    @JvmStatic
+    fun showActionChoices(context: Context, title: String?, choices: Array<CharSequence>?,
+                          dangerIndex: Int, listener: ChoiceListener?) {
         val dialog = open(context, WIDTH_ACTION_MENU_DP)
         val root = root(context, true)
         root.addView(title(context, title))
@@ -231,7 +302,16 @@ object LauncherDialogFactory {
         if (choices != null) {
             for (i in choices.indices) {
                 val index = i
-                val option = button(context, choices[i], false)
+                val option = if (index == dangerIndex) {
+                    TextView(context).apply {
+                        text = choices[i]
+                        textSize = 13f
+                        setTypeface(null, Typeface.BOLD)
+                        LauncherTheme.dangerMenuItem(this)
+                    }
+                } else {
+                    button(context, choices[i], false)
+                }
                 option.gravity = Gravity.CENTER_VERTICAL
                 option.setPadding(dp(context, 13), 0, dp(context, 13), 0)
                 option.maxLines = 2
@@ -261,9 +341,67 @@ object LauncherDialogFactory {
     @JvmStatic
     fun showStandardActionChoices(context: Context, title: String?, choices: Array<CharSequence>?,
                                   listener: ChoiceListener?) {
+        showStandardActionChoices(context, title, choices, -1, listener)
+    }
+
+    @JvmStatic
+    fun showStandardActionChoices(context: Context, title: String?, choices: Array<CharSequence>?,
+                                  dangerIndex: Int, listener: ChoiceListener?) {
         val dialog = open(context, WIDTH_STANDARD_DP)
         val root = root(context, false)
         root.addView(standardTitle(context, title))
+        if (choices != null) {
+            for (i in choices.indices) {
+                val index = i
+                val option = TextView(context)
+                option.text = choices[i]
+                option.gravity = Gravity.CENTER
+                option.isSingleLine = true
+                option.textSize = 13f
+                option.setTypeface(null, Typeface.BOLD)
+                if (index == dangerIndex) {
+                    LauncherTheme.dangerMenuItem(option)
+                } else {
+                    LauncherTheme.menuItem(option)
+                }
+                option.setOnClickListener {
+                    dialog.dismiss()
+                    listener?.onChoice(index)
+                }
+                root.addView(option, fixedHeightTopMargin(context, 11, 36))
+            }
+        }
+        val cancel = cancelButton(context)
+        cancel.setOnClickListener { dialog.dismiss() }
+        root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
+        setContent(dialog, root, WIDTH_STANDARD_DP)
+    }
+
+    /** Standard action choices with a short explanatory message above the actions. */
+    @JvmStatic
+    fun showMessageActionChoices(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: Array<CharSequence>?,
+        listener: ChoiceListener?
+    ) {
+        showMessageActionChoices(context, title, message, choices, null, listener)
+    }
+
+    @JvmStatic
+    fun showMessageActionChoices(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: Array<CharSequence>?,
+        cancelText: CharSequence?,
+        listener: ChoiceListener?
+    ) {
+        val dialog = open(context, WIDTH_STANDARD_DP)
+        val root = root(context, false)
+        root.addView(standardTitle(context, title))
+        root.addView(standardMessage(context, message), topMargin(context, 13))
         if (choices != null) {
             for (i in choices.indices) {
                 val index = i
@@ -282,9 +420,37 @@ object LauncherDialogFactory {
             }
         }
         val cancel = cancelButton(context)
+        if (cancelText != null) {
+            cancel.text = cancelText
+        }
         cancel.setOnClickListener { dialog.dismiss() }
         root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
         setContent(dialog, root, WIDTH_STANDARD_DP)
+    }
+
+    @JvmStatic
+    fun showUpdateResult(
+        context: Context,
+        info: LauncherUpdateBridge.UpdateInfo?,
+        currentVersion: String?,
+        hasUpdate: Boolean,
+        error: String?
+    ) {
+        val title = context.getString(
+            if (hasUpdate) R.string.theme_update_available else R.string.theme_check_for_updates
+        )
+        when {
+            error != null -> showInfo(context, title, error)
+            hasUpdate && info != null -> showUpdateAvailable(context, title, info, currentVersion)
+            else -> showInfo(
+                context,
+                title,
+                context.getString(
+                    R.string.theme_already_latest,
+                    emptyOr(currentVersion, context.getString(R.string.settings_unknown))
+                )
+            )
+        }
     }
 
     /** Compact single-choice picker matching the add-game launch-target selector. */
@@ -321,6 +487,103 @@ object LauncherDialogFactory {
         val cancel = cancelButton(context)
         cancel.setOnClickListener { dialog.dismiss() }
         root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
+        setContent(dialog, root, WIDTH_COMPACT_DP)
+    }
+
+    @JvmStatic
+    fun showScanDepthChoices(
+        context: Context,
+        title: String?,
+        quickModeText: String?,
+        fullModeText: String?,
+        labels: Array<CharSequence>?,
+        depthValues: IntArray?,
+        currentDepth: Int,
+        listener: ScanDepthListener?
+    ) {
+        val dialog = open(context, WIDTH_COMPACT_DP)
+        val root = root(context, false)
+        root.addView(standardTitle(context, title))
+        val fullRefresh = booleanArrayOf(false)
+        val scanMode = button(context, quickModeText, false)
+        scanMode.setOnClickListener {
+            fullRefresh[0] = !fullRefresh[0]
+            scanMode.text = if (fullRefresh[0]) fullModeText else quickModeText
+        }
+        root.addView(scanMode, fixedHeightTopMargin(context, 11, 36))
+        val count = Math.min(labels?.size ?: 0, depthValues?.size ?: 0)
+        for (i in 0 until count) {
+            val depth = depthValues!![i]
+            val selected = depth == currentDepth
+            val option = button(
+                context,
+                (if (selected) "● " else "○ ") + labels!![i],
+                selected
+            )
+            option.setOnClickListener {
+                dialog.dismiss()
+                listener?.onChoice(depth, fullRefresh[0])
+            }
+            root.addView(option, fixedHeightTopMargin(context, 11, 36))
+        }
+        val cancel = cancelButton(context)
+        cancel.setOnClickListener { dialog.dismiss() }
+        root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
+        setContent(dialog, root, WIDTH_COMPACT_DP)
+    }
+
+    @JvmStatic
+    fun showTextChoicesWithSkip(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: List<String>?,
+        skipText: String?,
+        cancelText: String?,
+        listener: TextChoiceListener?,
+        onSkip: Runnable?,
+        onCancel: Runnable?
+    ) {
+        val dialog = open(context, WIDTH_COMPACT_DP, false)
+        val root = root(context, false)
+        root.addView(standardTitle(context, title))
+        root.addView(standardMessage(context, message), topMargin(context, 10))
+        val scroll = ScrollView(context)
+        val list = LinearLayout(context)
+        list.orientation = LinearLayout.VERTICAL
+        choices?.forEach { candidate ->
+            val option = compactChoice(context, candidate, false)
+            option.ellipsize = TextUtils.TruncateAt.MIDDLE
+            option.setOnClickListener {
+                dialog.dismiss()
+                listener?.onChoice(candidate)
+            }
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 38))
+            params.setMargins(0, dp(context, 8), 0, 0)
+            list.addView(option, params)
+        }
+        scroll.addView(list)
+        val scrollParams = topMargin(context, 4)
+        val count = choices?.size ?: 0
+        scrollParams.height = Math.min(dp(context, 250), dp(context, 8 + count * 46))
+        root.addView(scroll, scrollParams)
+        val buttons = LinearLayout(context)
+        buttons.orientation = LinearLayout.HORIZONTAL
+        val skip = button(context, skipText, false)
+        skip.setOnClickListener {
+            dialog.dismiss()
+            onSkip?.run()
+        }
+        buttons.addView(skip, LinearLayout.LayoutParams(0, dp(context, 36), 1f))
+        val cancel = button(context, cancelText, false)
+        cancel.setOnClickListener {
+            dialog.dismiss()
+            onCancel?.run()
+        }
+        val cancelParams = LinearLayout.LayoutParams(0, dp(context, 36), 1f)
+        cancelParams.setMargins(dp(context, 8), 0, 0, 0)
+        buttons.addView(cancel, cancelParams)
+        root.addView(buttons, fixedHeightTopMargin(context, 12, 36))
         setContent(dialog, root, WIDTH_COMPACT_DP)
     }
 
@@ -426,6 +689,7 @@ object LauncherDialogFactory {
         val view = message(context, value)
         view.gravity = Gravity.CENTER
         view.textSize = 12f
+        view.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
         return view
     }
 
@@ -442,6 +706,7 @@ object LauncherDialogFactory {
     private fun compactChoice(context: Context, value: CharSequence?, selected: Boolean): TextView {
         val view = TextView(context)
         view.text = value
+        view.gravity = Gravity.CENTER
         view.isSingleLine = true
         view.ellipsize = TextUtils.TruncateAt.MIDDLE
         view.textSize = 13f
@@ -484,5 +749,57 @@ object LauncherDialogFactory {
         val horizontalMargin = dp(context, 16) * 2
         val maxWidth = Math.max(0, context.resources.displayMetrics.widthPixels - horizontalMargin)
         return Math.min(desiredWidth, maxWidth)
+    }
+
+    private fun showUpdateAvailable(
+        context: Context,
+        title: String,
+        info: LauncherUpdateBridge.UpdateInfo,
+        currentVersion: String?
+    ) {
+        val unknown = context.getString(R.string.settings_unknown)
+        val body = trimUpdateBody(info.body, 1600).trim { it <= ' ' }
+        val message = StringBuilder()
+            .append(context.getString(R.string.theme_current_version, emptyOr(currentVersion, unknown)))
+            .append("\n")
+            .append(context.getString(R.string.theme_latest_version, emptyOr(info.tagName, info.version)))
+            .append("\n\n")
+            .apply {
+                if (body.isNotEmpty()) {
+                    append(context.getString(R.string.theme_release_notes)).append("\n").append(body)
+                } else {
+                    append(context.getString(R.string.theme_new_release_summary))
+                }
+            }
+            .toString()
+        showMessageActionChoices(
+            context,
+            title,
+            message,
+            arrayOf(
+                context.getString(R.string.theme_go_to_download),
+                context.getString(R.string.theme_release_page),
+            ),
+            context.getString(R.string.theme_later)
+        ) { index ->
+            val fallbackRelease = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test"
+            val url = if (index == 0) {
+                emptyOr(info.apkUrl, info.releaseUrl)
+            } else {
+                emptyOr(info.releaseUrl, fallbackRelease)
+            }
+            LauncherUrlOpener.open(context, url)
+        }
+    }
+
+    private fun emptyOr(value: String?, fallback: String): String {
+        return if (value == null || value.trim { it <= ' ' }.isEmpty()) fallback else value
+    }
+
+    private fun trimUpdateBody(text: String?, max: Int): String {
+        if (text == null) return ""
+        val trimmed = text.trim { it <= ' ' }
+        if (max <= 0 || trimmed.length <= max) return trimmed
+        return trimmed.substring(0, max) + "\n..."
     }
 }

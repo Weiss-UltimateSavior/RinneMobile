@@ -2,25 +2,18 @@ package com.apps.game;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.core.R;
@@ -31,12 +24,11 @@ import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.settings.LauncherMetadataSourceActivity;
 import com.apps.theme.LauncherDialogFactory;
-import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 /**
- * 管理页 Fragment：仅保留生命周期、UI 缩放和共享对话框构建器。
+ * 管理页 Fragment：仅保留生命周期、UI 缩放和共享确认弹窗入口。
  * 业务逻辑委托给 6 个 Controller：DiagnosticsController / SyncSettingsController /
  * LocalBackupController / ScanDirectoryController / Xp3TargetResolver / ExternalImportController。
  */
@@ -274,95 +266,6 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
     @Override
     public void showConfirmDialog(String title, String message, String confirmText, Runnable onConfirm) {
         LauncherDialogFactory.showConfirm(requireContext(), title, message, confirmText, onConfirm);
-    }
-
-    @Override
-    public TextView createDialogTitle(String text) {
-        TextView title = new TextView(requireContext());
-        title.setText(text);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        setResponsiveTextSize(title, 16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        return title;
-    }
-
-    @Override
-    public TextView createDialogCancelButton(AlertDialog dialog) {
-        TextView cancel = new TextView(requireContext());
-        cancel.setText(R.string.game_common_cancel);
-        cancel.setGravity(android.view.Gravity.CENTER);
-        cancel.setTextColor(LauncherTheme.primary(requireContext()));
-        setResponsiveTextSize(cancel, 13);
-        cancel.setTypeface(null, android.graphics.Typeface.BOLD);
-        cancel.setBackground(LauncherTheme.cancelChip(requireContext()));
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        return cancel;
-    }
-
-    @Override
-    public void addFeedbackOption(LinearLayout root, String label, AlertDialog dialog, Runnable action) {
-        TextView option = new TextView(requireContext());
-        option.setText(label);
-        option.setGravity(android.view.Gravity.CENTER);
-        option.setSingleLine(true);
-        setResponsiveTextSize(option, 13);
-        option.setTypeface(null, android.graphics.Typeface.BOLD);
-        LauncherTheme.menuItem(option);
-        option.setOnClickListener(view -> {
-            dialog.dismiss();
-            action.run();
-        });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36));
-        lp.setMargins(0, dp(11), 0, 0);
-        root.addView(option, lp);
-    }
-
-    @Override
-    public AlertDialog showScanLoadingDialog(String titleText, String hintText) {
-        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
-        dialog.setCancelable(false);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-
-        Window window = dialog.getWindow();
-        if (window == null) return dialog;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(20), dp(22), dp(16));
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg);
-
-        TextView title = new TextView(requireContext());
-        title.setText(titleText);
-        title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color));
-        setResponsiveTextSize(title, 16);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        ProgressBar progressBar = new ProgressBar(requireContext());
-        progressBar.setIndeterminate(true);
-        progressBar.getIndeterminateDrawable().setColorFilter(
-                LauncherTheme.primary(requireContext()), PorterDuff.Mode.SRC_IN);
-        LinearLayout.LayoutParams pbLp = new LinearLayout.LayoutParams(dp(32), dp(32));
-        pbLp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
-        pbLp.setMargins(0, dp(14), 0, 0);
-        root.addView(progressBar, pbLp);
-
-        TextView hint = new TextView(requireContext());
-        hint.setText(hintText);
-        hint.setGravity(android.view.Gravity.CENTER);
-        hint.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color));
-        setResponsiveTextSize(hint, 11);
-        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hintLp.setMargins(0, dp(10), 0, 0);
-        root.addView(hint, hintLp);
-
-        window.setContentView(root);
-        return dialog;
     }
 
     @Override

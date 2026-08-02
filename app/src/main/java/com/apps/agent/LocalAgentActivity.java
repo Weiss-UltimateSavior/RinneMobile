@@ -5,23 +5,16 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
@@ -34,7 +27,6 @@ import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
-import com.apps.widget.LauncherEditText;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.core.R;
 import com.core.agent.runtime.LocalAgentRuntime;
@@ -43,6 +35,7 @@ import com.core.agent.store.AgentConversationRepository;
 import com.core.agent.store.AgentSnapshotStore;
 import com.core.databinding.ActivityLocalAgentBinding;
 import com.core.util.AppExecutors;
+import com.core.util.DevLogger;
 import com.core.util.RxMainScheduler;
 
 import java.util.ArrayList;
@@ -283,8 +276,11 @@ public class LocalAgentActivity extends AppCompatActivity {
             List<AgentConversationRepository.Message> loaded = null;
             String loadError = null;
             try { loaded = repository.recent(100); }
-            catch (Throwable error) { loadError = error.getMessage() == null
-                    ? getString(R.string.social_agent_session_load_failed) : error.getMessage(); }
+            catch (RuntimeException error) {
+                DevLogger.w(TAG, "Failed to load local agent history", error);
+                loadError = error.getMessage() == null
+                    ? getString(R.string.social_agent_session_load_failed) : error.getMessage();
+            }
             List<AgentConversationRepository.Message> delivered = loaded;
             String deliveredError = loadError;
             RxMainScheduler.post(() -> {
@@ -318,9 +314,10 @@ public class LocalAgentActivity extends AppCompatActivity {
                     AppExecutors.runOnIo(() -> {
                         try {
                             repository.clear();
-                        } catch (Throwable error) {
-                            String message = error.getMessage() == null
-                                    ? getString(R.string.social_agent_clear_failed) : error.getMessage();
+	                        } catch (RuntimeException error) {
+                                DevLogger.w(TAG, "Failed to clear local agent history", error);
+	                            String message = error.getMessage() == null
+	                                    ? getString(R.string.social_agent_clear_failed) : error.getMessage();
                             RxMainScheduler.post(() -> {
                                 if (!unavailable()) Toast.makeText(this, message, Toast.LENGTH_LONG).show();
                             });
@@ -335,7 +332,10 @@ public class LocalAgentActivity extends AppCompatActivity {
         AppExecutors.runOnIo(() -> {
             String value;
             try { value = AgentSnapshotStore.recentDisplay(this, 20); }
-            catch (Throwable error) { value = getString(R.string.social_agent_read_mutations_failed); }
+            catch (Exception error) {
+                DevLogger.w(TAG, "Failed to load local agent snapshot history", error);
+                value = getString(R.string.social_agent_read_mutations_failed);
+            }
             String delivered = value;
             RxMainScheduler.post(() -> {
                 if (!unavailable()) LauncherDialogFactory.showLongMessageConfirm(
@@ -346,62 +346,7 @@ public class LocalAgentActivity extends AppCompatActivity {
     }
 
     private void showConfigDialog() {
-        AgentConfigStore.Config config = AgentConfigStore.get(this);
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(18), dp(22), dp(15));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        TextView title = text(getString(R.string.social_agent_api_config), 16, true);
-        root.addView(title);
-        TextView note = text(getString(R.string.social_agent_api_note), 11, false);
-        note.setTextColor(LauncherTheme.textMuted(this));
-        LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(9), 0, 0); root.addView(note, noteLp);
-        EditText baseUrl = input(root, getString(R.string.social_agent_api_address), "https://api.example.com/v1",
-                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        baseUrl.setText(config.baseUrl);
-        EditText model = input(root, getString(R.string.social_model_name),
-                getString(R.string.social_agent_model_support_hint), InputType.TYPE_CLASS_TEXT);
-        model.setText(config.model);
-        EditText apiKey = input(root, getString(R.string.social_api_key),
-                config.hasApiKey ? getString(R.string.social_agent_api_key_saved_hint)
-                        : getString(R.string.social_agent_api_key_hint),
-                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        EditText temperature = input(root, getString(R.string.social_temperature), "0.0 - 2.0",
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        temperature.setText(String.valueOf(config.temperature));
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        TextView cancel = text(getString(R.string.social_action_cancel), 13, true); LauncherTheme.secondaryButton(cancel); cancel.setGravity(Gravity.CENTER);
-        TextView save = text(getString(R.string.social_action_save), 13, true); LauncherTheme.primaryButton(save); save.setGravity(Gravity.CENTER);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        save.setOnClickListener(view -> {
-            try {
-                float temp = Float.parseFloat(valueOf(temperature));
-                boolean replaceKey = !valueOf(apiKey).isEmpty();
-                AgentConfigStore.save(this, valueOf(baseUrl), valueOf(model), temp, valueOf(apiKey), replaceKey,
-                        config.toolCallLimit, config.taskPlanEnabled, config.permissionMode);
-                dialog.dismiss();
-                renderConfigState();
-                Toast.makeText(this, R.string.social_agent_config_saved, Toast.LENGTH_SHORT).show();
-            } catch (Throwable error) {
-                Toast.makeText(this, error.getMessage() == null
-                        ? getString(R.string.social_agent_config_save_failed) : error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-        buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(36), 1f));
-        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, dp(36), 1f); saveLp.setMargins(dp(8), 0, 0, 0);
-        buttons.addView(save, saveLp);
-        LinearLayout.LayoutParams buttonsLp = wrap(); buttonsLp.setMargins(0, dp(12), 0, 0); root.addView(buttons, buttonsLp);
-        ScrollView scroll = new ScrollView(this); scroll.addView(root); window.setContentView(scroll);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
+        AgentConfigDialog.showApiConfig(this, this::renderConfigState);
     }
 
     private void showFeatureMenu() {
@@ -419,96 +364,7 @@ public class LocalAgentActivity extends AppCompatActivity {
     }
 
     private void showAgentSettingsDialog() {
-        AgentConfigStore.Config config = AgentConfigStore.get(this);
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(22), dp(18), dp(22), dp(15));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-        root.addView(text(getString(R.string.social_agent_execution_title), 16, true));
-        TextView note = text(getString(R.string.social_agent_execution_note), 11, false);
-        note.setTextColor(LauncherTheme.textMuted(this));
-        LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(8), 0, 0); root.addView(note, noteLp);
-
-        EditText toolCallLimit = input(root, getString(R.string.social_agent_tool_limit),
-                "1 - 50", InputType.TYPE_CLASS_NUMBER);
-        toolCallLimit.setText(String.valueOf(config.toolCallLimit));
-        EditText contextBudget = input(root, getString(R.string.social_agent_context_budget),
-                "16 - 1024", InputType.TYPE_CLASS_NUMBER);
-        contextBudget.setText(String.valueOf(config.contextBudgetKb));
-        TextView contextNote = text(getString(R.string.social_agent_context_note), 10, false);
-        contextNote.setTextColor(LauncherTheme.textMuted(this));
-        LinearLayout.LayoutParams contextNoteLp = wrap(); contextNoteLp.setMargins(0, dp(5), 0, 0);
-        root.addView(contextNote, contextNoteLp);
-
-        SwitchCompat taskPlan = settingSwitch(getString(R.string.social_agent_task_plan), config.taskPlanEnabled);
-        LinearLayout.LayoutParams planLp = wrap(); planLp.setMargins(0, dp(10), 0, 0); root.addView(taskPlan, planLp);
-        SwitchCompat fullPermission = settingSwitch(getString(R.string.social_agent_full_permission), config.isFullPermission());
-        LinearLayout.LayoutParams permissionLp = wrap(); permissionLp.setMargins(0, dp(4), 0, 0); root.addView(fullPermission, permissionLp);
-
-        TextView warning = text(getString(R.string.social_agent_permission_warning), 10, false);
-        warning.setTextColor(LauncherTheme.textMuted(this));
-        LinearLayout.LayoutParams warningLp = wrap(); warningLp.setMargins(0, dp(5), 0, 0); root.addView(warning, warningLp);
-
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        TextView cancel = text(getString(R.string.social_action_cancel), 13, true); LauncherTheme.secondaryButton(cancel); cancel.setGravity(Gravity.CENTER);
-        TextView save = text(getString(R.string.social_action_save), 13, true); LauncherTheme.primaryButton(save); save.setGravity(Gravity.CENTER);
-        cancel.setOnClickListener(view -> dialog.dismiss());
-        save.setOnClickListener(view -> {
-            try {
-                int calls = Integer.parseInt(valueOf(toolCallLimit));
-                int contextKb = Integer.parseInt(valueOf(contextBudget));
-                AgentConfigStore.saveExecutionSettings(this, calls, contextKb,
-                        taskPlan.isChecked(), fullPermission.isChecked());
-                dialog.dismiss();
-                renderConfigState();
-                Toast.makeText(this, R.string.social_agent_settings_saved, Toast.LENGTH_SHORT).show();
-            } catch (Throwable error) {
-                Toast.makeText(this, error.getMessage() == null
-                        ? getString(R.string.social_agent_settings_save_failed) : error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-        buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(36), 1f));
-        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, dp(36), 1f); saveLp.setMargins(dp(8), 0, 0, 0);
-        buttons.addView(save, saveLp);
-        LinearLayout.LayoutParams buttonsLp = wrap(); buttonsLp.setMargins(0, dp(12), 0, 0); root.addView(buttons, buttonsLp);
-
-        ScrollView scroll = new ScrollView(this); scroll.addView(root); window.setContentView(scroll);
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        window.setLayout(dp(288), WindowManager.LayoutParams.WRAP_CONTENT);
-    }
-
-    private SwitchCompat settingSwitch(String label, boolean checked) {
-        SwitchCompat view = new SwitchCompat(this);
-        view.setText(label); view.setTextSize(12); view.setTextColor(LauncherTheme.text(this));
-        view.setGravity(Gravity.CENTER_VERTICAL); view.setChecked(checked);
-        LauncherTheme.styleMaterialSwitch(view);
-        return view;
-    }
-
-    private EditText input(LinearLayout root, String label, String hint, int type) {
-        TextView labelView = text(label, 12, true);
-        LinearLayout.LayoutParams labelLp = wrap(); labelLp.setMargins(0, dp(10), 0, dp(5)); root.addView(labelView, labelLp);
-        EditText input = new LauncherEditText(this);
-        input.setSingleLine(true); input.setInputType(type); input.setHint(hint); input.setTextSize(12);
-        input.setTextColor(LauncherTheme.text(this)); input.setHintTextColor(LauncherTheme.textMuted(this));
-        input.setPadding(dp(13), 0, dp(13), 0); input.setBackground(LauncherTheme.secondaryButton(this, 20f));
-        LauncherTheme.styleTextInput(input);
-        root.addView(input, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(40)));
-        return input;
-    }
-
-    private TextView text(String value, int size, boolean bold) {
-        TextView view = new TextView(this); view.setText(value); view.setTextSize(size); view.setTextColor(LauncherTheme.text(this));
-        if (bold) view.setTypeface(null, android.graphics.Typeface.BOLD); return view;
+        AgentConfigDialog.showExecutionSettings(this, this::renderConfigState);
     }
 
     private void renderConfigState() {
@@ -661,7 +517,6 @@ public class LocalAgentActivity extends AppCompatActivity {
         window.getDecorView().setSystemUiVisibility(flags);
     }
 
-    private String valueOf(EditText view) { return view.getText() == null ? "" : view.getText().toString().trim(); }
     private boolean unavailable() { return isFinishing() || isDestroyed() || binding == null; }
     private void dismissApprovalDialog() {
         AlertDialog dialog = activeApprovalDialog;
@@ -682,7 +537,6 @@ public class LocalAgentActivity extends AppCompatActivity {
         pendingUserMessage = null;
         updateEmptyState();
     }
-    private LinearLayout.LayoutParams wrap() { return new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
     @Override protected void attachBaseContext(Context newBase) {

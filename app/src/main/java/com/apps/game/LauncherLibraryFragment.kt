@@ -79,7 +79,13 @@ open class LauncherLibraryFragment : Fragment(),
         }
 
         override fun createSyncLoadingDialog(title: String?, hint: String?): AlertDialog {
-            return createLibrarySyncLoadingDialog(title, hint)
+            return LauncherDialogFactory.showProgressLoading(
+                requireContext(),
+                title,
+                getString(R.string.game_sync_progress, 0, 0),
+                hint,
+                "sync_progress",
+            )
         }
 
         override fun showSyncResultDialog(synced: Int, failed: Int) {
@@ -109,6 +115,7 @@ open class LauncherLibraryFragment : Fragment(),
     private var posterGridStyle: Boolean = false
 
     companion object {
+        private const val TAG = "LauncherLibrary"
         private const val LIBRARY_PREFS = "launcher_library_preferences"
         private const val KEY_POSTER_GRID_STYLE = "poster_grid_style"
     }
@@ -222,44 +229,36 @@ open class LauncherLibraryFragment : Fragment(),
     private fun checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= 30) {
             if (!Environment.isExternalStorageManager()) {
-                val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
-                val root = GameActionMenuFactory.createDialogRoot(requireContext())
-                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(),
-                    getString(R.string.game_library_permission_title)))
-
-                val info = TextView(requireContext())
-                info.setText(R.string.game_library_permission_message)
-                info.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color))
-                info.textSize = 12f
-                info.setLineSpacing(dp(4).toFloat(), 1f)
-                val infoLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                infoLp.setMargins(0, dp(13), 0, 0)
-                root.addView(info, infoLp)
-
-                root.addView(GameActionMenuFactory.createDialogButton(requireContext(),
-                    getString(R.string.game_library_go), true, Runnable {
-                    try {
-                        startActivity(
-                            Intent(
-                                Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                                Uri.parse("package:" + requireContext().packageName)
-                            )
-                        )
-                    } catch (t: Throwable) {
-                        try {
-                            startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-                        } catch (ignored: Throwable) {
-                        }
-                    }
-                }, dialog))
-
-                root.addView(GameActionMenuFactory.createDialogCancelButton(requireContext(), dialog))
-
-                GameActionMenuFactory.setDialogContent(dialog, root, 288)
+                LauncherDialogFactory.showStandardConfirm(
+                    requireContext(),
+                    getString(R.string.game_library_permission_title),
+                    getString(R.string.game_library_permission_message),
+                    getString(R.string.game_library_go)
+                ) {
+                    openAllFilesAccessSettings()
+                }
             }
         } else if (Build.VERSION.SDK_INT >= 23) {
             if (requireActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1001)
+            }
+        }
+    }
+
+    private fun openAllFilesAccessSettings() {
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    Uri.parse("package:" + requireContext().packageName)
+                )
+            )
+        } catch (first: Exception) {
+            Log.w(TAG, "app-specific all files settings unavailable; falling back", first)
+            try {
+                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            } catch (second: Exception) {
+                Log.w(TAG, "all files settings unavailable", second)
             }
         }
     }
@@ -805,33 +804,12 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun confirmLaunchGame(game: Game?) {
         if (game == null) return
-        val dialog = AlertDialog.Builder(requireContext()).create()
-        dialog.show()
-        LauncherMotion.applyDialogMotion(dialog)
-
-        val window: Window = dialog.window ?: return
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setLayout(
-            dp(252),
-            WindowManager.LayoutParams.WRAP_CONTENT
-        )
-        val dialogView = LayoutInflater.from(requireContext())
-            .inflate(com.core.R.layout.dialog_launcher_confirm, null)
-        window.setContentView(dialogView)
-
-        val titleView = dialogView.findViewById<TextView>(com.core.R.id.dialogTitle)
-        val messageView = dialogView.findViewById<TextView>(com.core.R.id.dialogMessage)
-        val btnCancel = dialogView.findViewById<TextView>(com.core.R.id.dialogBtnCancel)
-        val btnConfirm = dialogView.findViewById<TextView>(com.core.R.id.dialogBtnConfirm)
-
-        titleView.setText(R.string.game_launch_title)
-        messageView.text = getString(
-            R.string.game_launch_message, GameMetadataFormatter.safeTitle(requireContext(), game))
-        LauncherTheme.dialogButtons(btnCancel, btnConfirm)
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnConfirm.setOnClickListener {
-            dialog.dismiss()
+        LauncherDialogFactory.showConfirm(
+            requireContext(),
+            getString(R.string.game_launch_title),
+            getString(R.string.game_launch_message, GameMetadataFormatter.safeTitle(requireContext(), game)),
+            getString(R.string.core_confirm),
+        ) {
             GamePasswordLock.interceptLaunch(this@LauncherLibraryFragment, game) {
                 sessionController?.launchGameDirectly(this@LauncherLibraryFragment, game)
             }
@@ -881,11 +859,6 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun showMoreOptionsDialog(game: Game?) {
         if (game == null) return
-        val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
-        val root = GameActionMenuFactory.createDialogRoot(requireContext())
-        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(),
-            getString(R.string.game_action_more)))
-
         val options = mutableListOf<Array<String>>()
         options.add(arrayOf(getString(R.string.game_action_edit_duration), "edit_play_time"))
         options.add(arrayOf(getString(R.string.game_action_pin_shortcut), "pin_shortcut"))
@@ -897,36 +870,23 @@ open class LauncherLibraryFragment : Fragment(),
             options.add(arrayOf(getString(R.string.game_action_ons_settings), "ons_settings"))
         }
         options.add(arrayOf(getString(R.string.game_action_delete), "delete"))
-        for (opt in options) {
-            val option = TextView(requireContext())
-            option.text = opt[0]
-            option.gravity = Gravity.CENTER
-            option.textSize = 13f
-            option.setTypeface(null, android.graphics.Typeface.BOLD)
-            if (opt[1] == "delete") {
-                LauncherTheme.dangerMenuItem(option)
-            } else {
-                LauncherTheme.menuItem(option)
+        val deleteIndex = options.indexOfFirst { it[1] == "delete" }
+        LauncherDialogFactory.showStandardActionChoices(
+            requireContext(),
+            getString(R.string.game_action_more),
+            options.map { it[0] as CharSequence }.toTypedArray(),
+            deleteIndex
+        ) { index ->
+            when (options[index][1]) {
+                "edit_play_time" -> GameActionMenuFactory.showEditPlayTimeDialog(this, game) { updateSingleGame(it) }
+                "pin_shortcut" -> PinnedGameShortcut.requestPinShortcut(requireContext(), game)
+                "rematch" -> syncController.rematchMetadata(game)
+                "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
+                "sync" -> syncController.syncMetadataToCard(game)
+                "ons_settings" -> openOnsGameSettings(game)
+                "delete" -> confirmDeleteGame(game)
             }
-            val action = opt[1]
-            option.setOnClickListener {
-                dialog.dismiss()
-                when (action) {
-                    "edit_play_time" -> GameActionMenuFactory.showEditPlayTimeDialog(this, game) { updateSingleGame(it) }
-                    "pin_shortcut" -> PinnedGameShortcut.requestPinShortcut(requireContext(), game)
-                    "rematch" -> syncController.rematchMetadata(game)
-                    "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
-                    "sync" -> syncController.syncMetadataToCard(game)
-                    "ons_settings" -> openOnsGameSettings(game)
-                    "delete" -> confirmDeleteGame(game)
-                }
-            }
-            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38))
-            lp.setMargins(0, dp(11), 0, 0)
-            root.addView(option, lp)
         }
-        root.addView(GameActionMenuFactory.createDialogCancelButton(requireContext(), dialog))
-        GameActionMenuFactory.setDialogContent(dialog, root, 252)
     }
 
     private fun openOnsGameSettings(game: Game) {
@@ -934,7 +894,8 @@ open class LauncherLibraryFragment : Fragment(),
             val intent = Intent(requireContext(), LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
-        } catch (ignored: Throwable) {
+        } catch (error: Exception) {
+            Log.w(TAG, "Failed to open ONS game settings", error)
             Toast.makeText(requireContext(), R.string.game_action_ons_open_failed, Toast.LENGTH_SHORT).show()
         }
     }
@@ -1030,66 +991,6 @@ open class LauncherLibraryFragment : Fragment(),
                 Toast.makeText(app, R.string.game_library_cleared, Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    /** Library 风格的同步加载对话框：包含进度文本（tag "sync_progress"），供 DialogFactory 调用。 */
-    private fun createLibrarySyncLoadingDialog(titleText: String?, hintText: String?): AlertDialog {
-        val dialog = AlertDialog.Builder(requireContext()).create()
-        dialog.setCancelable(false)
-        dialog.show()
-        LauncherMotion.applyDialogMotion(dialog)
-
-        val window = dialog.window ?: return dialog
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setLayout(dp(252), WindowManager.LayoutParams.WRAP_CONTENT)
-
-        val root = LinearLayout(requireContext())
-        root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(22), dp(20), dp(22), dp(16))
-        root.setBackgroundResource(com.core.R.drawable.launcher_dialog_bg)
-
-        val title = TextView(requireContext())
-        title.text = titleText
-        title.gravity = Gravity.CENTER
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color))
-        title.textSize = 16f
-        title.setTypeface(null, android.graphics.Typeface.BOLD)
-        root.addView(
-            title,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        )
-
-        val progressBar = android.widget.ProgressBar(requireContext())
-        progressBar.isIndeterminate = true
-        progressBar.indeterminateDrawable.setColorFilter(
-            LauncherTheme.primary(requireContext()), android.graphics.PorterDuff.Mode.SRC_IN
-        )
-        val pbLp = LinearLayout.LayoutParams(dp(32), dp(32))
-        pbLp.gravity = Gravity.CENTER_HORIZONTAL
-        pbLp.setMargins(0, dp(14), 0, 0)
-        root.addView(progressBar, pbLp)
-
-        val progressText = TextView(requireContext())
-        progressText.tag = "sync_progress"
-        progressText.text = getString(R.string.game_sync_progress, 0, 0)
-        progressText.gravity = Gravity.CENTER
-        progressText.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color))
-        progressText.textSize = 12f
-        val ptLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        ptLp.setMargins(0, dp(6), 0, 0)
-        root.addView(progressText, ptLp)
-
-        val hint = TextView(requireContext())
-        hint.text = hintText
-        hint.gravity = Gravity.CENTER
-        hint.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color))
-        hint.textSize = 11f
-        val hintLp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        hintLp.setMargins(0, dp(10), 0, 0)
-        root.addView(hint, hintLp)
-
-        window.setContentView(root)
-        return dialog
     }
 
     // ===== GameSyncController.Listener =====

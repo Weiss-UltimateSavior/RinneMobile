@@ -116,6 +116,40 @@ object PadDialogFactory {
         return dialog
     }
 
+    /** Non-cancelable Pad loading shell with a tagged progress TextView for sync updates. */
+    @JvmStatic
+    fun showProgressLoading(
+        context: Context,
+        title: String?,
+        progressText: String?,
+        hint: String?,
+        progressTag: String?
+    ): AlertDialog {
+        val dialog = open(context, WIDTH_COMPACT_DP, false)
+        val root = root(context)
+        root.addView(title(context, title))
+
+        val progress = ProgressBar(context)
+        progress.isIndeterminate = true
+        progress.indeterminateDrawable?.setColorFilter(
+            LauncherTheme.primary(context), PorterDuff.Mode.SRC_IN
+        )
+        val progressParams = LinearLayout.LayoutParams(dp(context, 32), dp(context, 32))
+        progressParams.gravity = android.view.Gravity.CENTER_HORIZONTAL
+        progressParams.setMargins(0, dp(context, 14), 0, 0)
+        root.addView(progress, progressParams)
+
+        val progressView = message(context, progressText)
+        progressView.tag = progressTag
+        root.addView(progressView, topMargin(context, 6))
+
+        val hintView = message(context, hint)
+        hintView.textSize = 11f
+        root.addView(hintView, topMargin(context, 10))
+        setContent(dialog, root, WIDTH_COMPACT_DP)
+        return dialog
+    }
+
     @JvmStatic
     fun showActionChoices(
         context: Context,

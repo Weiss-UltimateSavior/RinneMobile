@@ -82,7 +82,13 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         }
 
         override fun createSyncLoadingDialog(title: String?, hint: String?): AlertDialog =
-            createPadSyncLoadingDialog(title, hint)
+            PadDialogFactory.showProgressLoading(
+                requireContext(),
+                title,
+                getString(com.core.R.string.pad_progress_complete, 0, 0),
+                hint,
+                "sync_progress",
+            )
 
         override fun showSyncResultDialog(synced: Int, failed: Int) {
             val message = getString(com.core.R.string.pad_sync_complete_count, synced) +
@@ -169,54 +175,38 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= 30) {
             if (!Environment.isExternalStorageManager()) {
-                val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
-                val root = GameActionMenuFactory.createDialogRoot(requireContext())
-                root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), getString(com.core.R.string.core_file_access_title)))
-
-                val info = TextView(requireContext())
-                info.setText(com.core.R.string.pad_file_access_message)
-                info.setTextColor(
-                    ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color)
-                )
-                info.textSize = 12f
-                info.setLineSpacing(dp(4).toFloat(), 1f)
-                val infoLp = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                infoLp.setMargins(0, dp(13), 0, 0)
-                root.addView(info, infoLp)
-
-                root.addView(
-                    GameActionMenuFactory.createDialogButton(
-                        requireContext(), getString(com.core.R.string.core_go), true,
-                        Runnable {
-                            try {
-                                startActivity(
-                                    Intent(
-                                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                                        Uri.parse("package:" + requireContext().packageName)
-                                    )
-                                )
-                            } catch (t: Throwable) {
-                                try {
-                                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-                                } catch (ignored: Throwable) {
-                                }
-                            }
-                        },
-                        dialog
-                    )
-                )
-
-                root.addView(GameActionMenuFactory.createDialogCancelButton(requireContext(), dialog))
-
-                GameActionMenuFactory.setDialogContent(dialog, root, 288)
+                PadDialogFactory.showStandardConfirm(
+                    requireContext(),
+                    getString(com.core.R.string.core_file_access_title),
+                    getString(com.core.R.string.pad_file_access_message),
+                    getString(com.core.R.string.core_go)
+                ) {
+                    openAllFilesAccessSettings()
+                }
             }
         } else if (Build.VERSION.SDK_INT >= 23) {
             if (requireActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED
             ) {
                 requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1001)
+            }
+        }
+    }
+
+    private fun openAllFilesAccessSettings() {
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    Uri.parse("package:" + requireContext().packageName)
+                )
+            )
+        } catch (first: Exception) {
+            Log.w(TAG, "app-specific all files settings unavailable; falling back", first)
+            try {
+                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            } catch (second: Exception) {
+                Log.w(TAG, "all files settings unavailable", second)
             }
         }
     }
@@ -465,13 +455,24 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
     private fun showGameActionMenu(game: Game?) {
         if (game == null) return
-        val config = GameActionMenuFactory.ActionMenuConfig()
-        config.includeEditAction = false
-        config.includeEditPlayTimeAction = true
-        config.includeFavoriteAction = false
-        config.includePasswordAction = false
-        config.dialogWidthDp = 252
-        GameActionMenuFactory.showGameActionMenu(this, game, config, this)
+        PadDialogFactory.showActionChoices(
+            requireContext(),
+            GameMetadataFormatter.safeTitle(requireContext(), game),
+            arrayOf(
+                getString(com.core.R.string.game_action_details),
+                getString(com.core.R.string.game_action_status),
+                getString(com.core.R.string.game_action_edit_duration),
+                getString(com.core.R.string.game_action_more),
+            ),
+            -1,
+        ) { index ->
+            when (index) {
+                0 -> onShowGameDetail(game)
+                1 -> onShowPlayStatus(game)
+                2 -> onEditPlayTime(game)
+                3 -> onShowMoreOptions(game)
+            }
+        }
     }
 
     // ===== GameActionMenuFactory.ActionMenuCallbacks =====
@@ -510,10 +511,6 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
     private fun showMoreOptionsDialog(game: Game?) {
         if (game == null) return
-        val dialog = GameActionMenuFactory.createLauncherDialog(requireContext())
-        val root = GameActionMenuFactory.createDialogRoot(requireContext())
-        root.addView(GameActionMenuFactory.createDialogTitle(requireContext(), getString(com.core.R.string.pad_more_options)))
-
         val favoriteLabel = getString(
             if (game.favorite) com.core.R.string.pad_remove_favorite else com.core.R.string.pad_add_favorite
         )
@@ -531,39 +528,25 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         options.add(arrayOf(getString(if (hasPassword) com.core.R.string.pad_remove_password else com.core.R.string.pad_password_lock), "password"))
         options.add(arrayOf(getString(com.core.R.string.pad_delete_game), "delete"))
 
-        for (opt in options) {
-            val option = TextView(requireContext())
-            option.text = opt[0]
-            option.gravity = Gravity.CENTER
-            option.textSize = 13f
-            option.setTypeface(null, Typeface.BOLD)
-            if (opt[1] == "delete") {
-                LauncherTheme.dangerMenuItem(option)
-            } else {
-                LauncherTheme.menuItem(option)
-            }
-            val action = opt[1]
-            option.setOnClickListener {
-                dialog.dismiss()
-                when (action) {
-                    "favorite" -> toggleFavorite(game)
-                    "rematch" -> syncController?.rematchMetadata(game)
-                    "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
-                    "sync" -> syncController?.syncMetadataToCard(game)
-                    "ons_settings" -> openOnsGameSettings(game)
-                    "password" -> {
-                        if (hasPassword) GamePasswordLock.clearPassword(this, game, null)
-                        else GamePasswordLock.setPassword(this, game, null)
-                    }
-                    "delete" -> confirmDeleteGame(game)
+        PadDialogFactory.showActionChoices(
+            requireContext(),
+            getString(com.core.R.string.pad_more_options),
+            options.map { it[0] }.toTypedArray(),
+            options.indexOfFirst { it[1] == "delete" },
+        ) { index ->
+            when (options[index][1]) {
+                "favorite" -> toggleFavorite(game)
+                "rematch" -> syncController?.rematchMetadata(game)
+                "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
+                "sync" -> syncController?.syncMetadataToCard(game)
+                "ons_settings" -> openOnsGameSettings(game)
+                "password" -> {
+                    if (hasPassword) GamePasswordLock.clearPassword(this, game, null)
+                    else GamePasswordLock.setPassword(this, game, null)
                 }
+                "delete" -> confirmDeleteGame(game)
             }
-            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38))
-            lp.setMargins(0, dp(11), 0, 0)
-            root.addView(option, lp)
         }
-        root.addView(GameActionMenuFactory.createDialogCancelButton(requireContext(), dialog))
-        GameActionMenuFactory.setDialogContent(dialog, root, 252)
     }
 
     private fun openOnsGameSettings(game: Game) {
@@ -628,77 +611,6 @@ class PadManageFragment : Fragment(), GameListController.Listener,
                 Toast.makeText(app, com.core.R.string.pad_deleted, Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    /** Pad 风格的同步加载对话框：包含进度文本（tag "sync_progress"），供 DialogFactory 调用。 */
-    private fun createPadSyncLoadingDialog(titleText: String?, hintText: String?): AlertDialog {
-        val dialog = AlertDialog.Builder(requireContext()).create()
-        dialog.setCancelable(false)
-        dialog.show()
-        LauncherMotion.applyDialogMotion(dialog)
-
-        val window: Window = dialog.window ?: return dialog
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setLayout(
-            PadDialogFactory.dialogWidthPx(requireContext(), PadDialogFactory.WIDTH_COMPACT_DP),
-            WindowManager.LayoutParams.WRAP_CONTENT
-        )
-
-        val root = LinearLayout(requireContext())
-        root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(22), dp(20), dp(22), dp(16))
-        root.background = LauncherTheme.secondaryButton(requireContext(), 20f)
-
-        val title = TextView(requireContext())
-        title.text = titleText
-        title.gravity = Gravity.CENTER
-        title.setTextColor(ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_color))
-        title.textSize = 16f
-        title.setTypeface(null, Typeface.BOLD)
-        root.addView(
-            title,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        )
-
-        val progressBar = ProgressBar(requireContext())
-        progressBar.isIndeterminate = true
-        progressBar.indeterminateDrawable.setColorFilter(
-            LauncherTheme.primary(requireContext()), PorterDuff.Mode.SRC_IN
-        )
-        val pbLp = LinearLayout.LayoutParams(dp(32), dp(32))
-        pbLp.gravity = Gravity.CENTER_HORIZONTAL
-        pbLp.setMargins(0, dp(14), 0, 0)
-        root.addView(progressBar, pbLp)
-
-        val progressText = TextView(requireContext())
-        progressText.tag = "sync_progress"
-        progressText.text = getString(com.core.R.string.pad_progress_complete, 0, 0)
-        progressText.gravity = Gravity.CENTER
-        progressText.setTextColor(
-            ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color)
-        )
-        progressText.textSize = 12f
-        val ptLp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        ptLp.setMargins(0, dp(6), 0, 0)
-        root.addView(progressText, ptLp)
-
-        val hint = TextView(requireContext())
-        hint.text = hintText
-        hint.gravity = Gravity.CENTER
-        hint.setTextColor(
-            ContextCompat.getColor(requireContext(), com.core.R.color.launcher_text_muted_color)
-        )
-        hint.textSize = 11f
-        val hintLp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        hintLp.setMargins(0, dp(10), 0, 0)
-        root.addView(hint, hintLp)
-
-        window.setContentView(root)
-        return dialog
     }
 
     // ===== GameSyncController.Listener =====
@@ -833,6 +745,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     }
 
     companion object {
+        private const val TAG = "PadManageFragment"
         private const val GRID_COLUMNS = 6
         private const val TABLET_MIN_SMALLEST_WIDTH_DP = 600
     }
