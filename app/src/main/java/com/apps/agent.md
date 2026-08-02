@@ -7,19 +7,21 @@
 ## 1. 通用原则
 
 - 保持 `LauncherActivity.wrapLauncherUiMode()`、`LauncherTheme` 与 `LauncherMotion` 的既有主题/动效链路。
-- 主题/色调/偏好等全局静态 API 的主源已落在独立 `object`（`LauncherPreferences`、`LauncherThemeStyle`、`LauncherUiMode`、`LauncherSplash`、`LauncherNavigationMetrics`）；`LauncherActivity` 的 companion 仅保留 `@JvmStatic` 委托方法与兼容常量，供既有 Java/Kotlin 调用方零修改。新增静态 API 直接写入对应 object，不再向 `LauncherActivity` companion 添加实现。
+- 主题/色调/偏好等全局静态 API 的主源已落在独立 `object`（`LauncherPreferences`、`LauncherThemeStyle`、`LauncherUiMode`、`LauncherSplash`、`LauncherNavigationMetrics`）；`LauncherActivity` 的 companion 仅保留 `@JvmStatic` 委托方法与少量 `const val` 兼容常量。Phase 2 已清零 `@JvmField val` 兼容常量；仍保留的 `const val` 仅限 Intent extra/action、偏好键、Splash 时长三类，作为独立技术债阶段清理（具体清单见重构计划文档），不在功能改动中混提。新增静态 API 直接写入对应 object，不再向 `LauncherActivity` companion 添加实现或常量。
+- **常量单一来源**：SharedPreferences 名（`APP_PREFS`/`ACCOUNT_SETTINGS_PREFS`/`PROFILE_PREFS`）、偏好键（`KEY_LAUNCHER_DARK_MODE`/`KEY_LAUNCHER_PARTICLES_ENABLED`/`KEY_LAUNCHER_PARTICLE_STYLE`/`KEY_LAUNCHER_THEME_STYLE`）、粒子样式（`PARTICLE_STYLE_*`）、主题风格（`THEME_STYLE_*`）、主题主色（`*_PRIMARY_COLOR`，`@JvmField`）均以 `LauncherPreferences`/`LauncherThemeStyle` 为唯一来源；禁止在 Activity/Fragment 内定义同名局部常量或硬编码字面量。`com.core` 模块如需引用这些名称，通过 core 侧镜像常量或下沉到 `com.core` 公共常量 object，不在 core 侧硬编码字面量。
+- **工具方法单一来源**：dp 转换统一用 `LauncherTheme.dp(context, value)`（Int/Float 重载），禁止在 Activity/Fragment/Adapter/Dialog 内保留本地 `dp()` 副本；需额外缩放因子（如平板竖屏缩放）时包装 `LauncherTheme.dp()` 并保持单次舍入语义（`Math.round(value * density * scale)`，不两次舍入）。沉浸式窗口配置统一用 `LauncherEdgeToEdgeHelper.apply(activity)` 或 `apply(activity, adjustResize=true)`，禁止内联 `configureEdgeToEdgeWindow()` 实现；luminance 模式（chat 类页面按主色亮度决定 LIGHT_STATUS_BAR）需扩展 helper 重载或保留独立实现并注释差异。外部 URL 打开统一用 `LauncherUrlOpener.open(context, url)`，禁止裸 `startActivity(Intent.ACTION_VIEW)` 不带 catch。
 - 新增普通 Activity/Fragment 使用 ViewBinding；Fragment 在 `onDestroyView()` 解除 listener 并置空 binding。
 - 不以静态颜色或静态圆角 drawable 覆盖运行时主题。优先调用 `LauncherTheme`。
 - 修改 UI 时只调整用户指定的层级，不顺带改动引擎启动、存档、账户同步或列表数据流。
 - 竖屏与 Pad 横屏分别复用各自组件；禁止把竖屏平板缩放器直接套到 `PadUi`。
+- **重复实现优先删除而非保留**：当两个类/方法实现 95% 以上相同逻辑时（如 `LauncherGameActionController.java` 与 `GameActionMenuFactory.kt`），必须让唯一调用方迁移到保留实现后整体删除重复类，不在两个实现上并行修补。保留重复类会同时累积双份的 catch(Throwable)、`runOnUiThread` 未守卫与代码膨胀，违反单一来源。删除前必须确认：调用方已切换、`@JvmStatic`/`@JvmField` 兼容签名无外部引用、相关测试或实机路径覆盖。
 
 ## 2. 新增功能代码规范
 
 ### 语言与文件选择
 
-- 新增 Activity / Fragment 一律使用 Kotlin + XML 布局；不再新建 Java 页面文件。
-- 新增业务功能方法（Bridge、Controller、Manager、Repository、工具类等）一律使用 Kotlin。
-- 已存在的 Java 文件可在原文件内继续修改；只有大规模重构时才迁移到 Kotlin
+- 新增 Activity / Fragment / Dialog 工具类 / Adapter / ViewHolder / Controller / Manager / Repository / 工具类一律使用 Kotlin；不再新建 Java 页面或 UI 工具文件。近期违规新建的 Java 文件清单见重构计划文档，在相关功能改动时迁 Kotlin。
+- 已存在的 Java 文件可在原文件内继续修改；只有大规模重构时才迁移到 Kotlin。
 - 新增 Kotlin 业务文件放在与职责对应的 `com.core.*` 子包下；UI 页面放在 `com.apps.*` 对应子包。
 
 ### 页面三语与本地化
@@ -33,14 +35,20 @@
 
 ### Kotlin 代码风格
 
-- 工具类 / 桥接类使用 `object` + `@JvmStatic` 暴露入口给 Java 调用方；常量使用 `const val`；包内可见方法使用 `internal`。
+- 工具类 / 桥接类使用 `object` + `@JvmStatic` 暴露入口给 Java 调用方；常量使用 `const val`；包内可见方法使用 `internal`。`internal` 函数若被同模块 Java 代码调用，须加 `@JvmName("原名")` 避免 name mangling；纯 Kotlin-to-Kotlin 的 internal 无需加。
 - 跨 Java 边界的方法参数优先声明为可空（如 `String?`），兼容 Java 调用方传入 null；保留既有约定（参考 `VndbClient.kt`、`MetadataUtils.cleanTitle()`）。
 - 需要复刻 Java `trim()` 语义时使用 `uriText == null || uriText.trim().isEmpty()`，不用 `isNullOrBlank()`（参考 `SafeImageLoader.kt`）。
 - 需要匹配 Java `Math.round(float)` 半向上语义时使用 `Math.round(float)`，不用 `roundToInt()`（参考 `UiScaleUtil.kt`）。
 - 集合优先使用只读 `List` / `Map`，需要可变时显式使用 `MutableList` / `MutableMap`。
 - 不滥用 `!!`；可空值用 `?.` 或 `?:` 兜底。
-- 单方法接口使用 `fun interface`；Java 枚举迁移使用 `enum class` + `companion object` + `@JvmStatic fromString`。
+- 单方法接口使用 `fun interface`；Java 枚举迁移使用 `enum class` + `companion object` + `@JvmStatic fromString`。存量 Java 单方法接口在所在文件因业务改动被打开时一并迁 `fun interface`，不专项发起大规模迁移（候选清单见重构计划文档）。
 - `@Volatile` 仅用于跨线程可见性需求；只在 `@Synchronized` 方法内访问的字段不需要 `@Volatile`。
+
+### ViewModel 与 Fragment 通信
+
+- ViewModel 创建统一用 `ViewModelProvider.Factory` 或 `by viewModels()`/`by activityViewModels()` Kotlin 扩展；`AndroidViewModel` 默认构造可例外，但加构造参数时必须显式 Factory，不依赖反射构造。禁止 `ViewModelProvider(this).get(X::class.java)` 裸构造带参 ViewModel。
+- Fragment ↔ 子 Fragment/BottomSheet 通信优先用 Fragment Result API（`setFragmentResult`/`setFragmentResultListener`），监听方绑定 `viewLifecycleOwner`；跨页面共享状态用 SharedViewModel（`by activityViewModels()`）。禁止通过 Activity 强转、public 字段直传或单例 EventBus。
+- ViewModel 对外暴露 `LiveData`/`StateFlow` 不可变视图，内部可变状态用 `MutableLiveData`/`MutableStateFlow` 私有持有；UI 层只观察不写入。
 
 ### XML 布局规范
 
@@ -77,6 +85,8 @@
 - 次级按钮使用 `LauncherTheme.secondaryButton()`：card 色背景 + primary 色文字。
 - 取消操作使用次级语义；红色仅用于明确的危险动作。不要用主色同时表达“当前状态”和“破坏性操作”。
 - `launcher_game_text_overlay_color`、统计遮罩、封面/头像渐变属于内容呈现特效，不是通用页面或按钮色。
+- **取色统一**：禁止在 `com.apps` 页面硬编码 `Color.GRAY`/`Color.WHITE`/`Color.BLACK`/`Color.parseColor("#...")` 作为运行时颜色。次级文字/占位灰统一用 `LauncherTheme.textMuted(context)`；深色模式白色 tint 用 `LauncherTheme.applyCardCircleIcon()` 等已封装方法；背景用 `LauncherTheme.bg(context)`；分割线用 `LauncherTheme.line(context)`。需要纯白/纯黑做遮罩或混合基色时（如 `ColorUtils.blend`）可使用 `Color.WHITE`/`Color.BLACK`，但必须紧邻注释说明是混合基色而非页面取色。`ContextCompat.getColor(context, R.color.launcher_*)` 直接取色仅在 `LauncherTheme` 内部使用，页面层应调用 `LauncherTheme.*()` 语义方法。
+- **导航图标取色**：导航中心/选中态图标 tint 统一封装，不在各横屏 Activity/Renderer 内重复 `setColorFilter(Color.WHITE)`/`Color.GRAY` 分支。选中态用 `LauncherTheme.primary(context)`，未选中态用 `LauncherTheme.textMuted(context)`；白色 tint 走 `LauncherTheme` 封装方法。多处 nav 染色逻辑重复，应合并到 `LauncherNavRenderer`（具体位置见重构计划文档）。
 
 ### 字体与字号层级
 
@@ -98,7 +108,7 @@
 
 ### 动态粒子与主题色
 
-- 首页和 Pad 横屏背景统一使用 `LauncherParticleView`；它是装饰性背景层，必须置于内容之后、不可获取焦点、不可拦截触摸，也不能放进引擎、存档或账户等业务 Activity。
+- 首页和 Pad 横屏背景统一使用 `LauncherParticleView`；它是装饰性背景层，必须置于内容之后、不可获取焦点、不可拦截触摸，也不能放进引擎、存档或账户等业务 Activity。构造时必须显式调用 `setFocusable(false)` / `setClickable(false)` / `setFocusableInTouchMode(false)`，不依赖默认值；任何新增的纯装饰 View（背景粒子、水印、装饰渐变层）同理。
 - 粒子总开关与样式只通过 `LauncherActivity` 的 `launcher_particles_enabled`、`launcher_particle_style` 读写；样式限定为 `floating`、`rain`、`star`、`sakura`、`fireflies`、`constellation`、`ripples`。设置页变更后调用所在页面的 `renderParticles()`，不要临时复制一套粒子状态。
 - `LauncherParticleView` 在绘制时检查 `LauncherActivity.getLauncherThemeStyle()`；主题风格变化后会按粒子原有色位重新着色，不需要重建页面或重新创建动画线程。
 - 默认主题保持现有的柔和彩色粒子调色板；凛弥、杏璃、心海天主题以各自 primary color 为基色，生成同色相、低饱和/分层亮度的粒子变体。粒子不得使用与当前主题无关的固定高饱和色。
@@ -108,7 +118,7 @@
 
 ### 粒子样式清单
 
-共 7 种粒子样式，均通过 `LauncherActivity.PARTICLE_STYLE_*` 常量标识，在 `LauncherParticleView` 内以 `isXxxStyle()` 分支选择更新与绘制逻辑：
+共 7 种粒子样式，均通过 `LauncherPreferences.PARTICLE_STYLE_*` 常量标识，在 `LauncherParticleView` 内以 `isXxxStyle()` 分支选择更新与绘制逻辑：
 
 | 样式 | 常量 | 说明 |
 |---|---|---|
@@ -161,6 +171,13 @@
 - 选择器入口可复用表单外观，但保留“选择目录/封面/引擎”等业务语义，不能伪装为保存按钮。
 - 列表功能行按语义区分：设置行、主题选择行、聊天入口行、游戏内容项各自保留原行高与信息层级。
 
+### RecyclerView 与滚动容器
+
+- 固定行数的列表必须显式 `setHasFixedSize(true)`；长列表用 `setItemViewCacheSize` 或共享 `RecycledViewPool` 提升复用率。`onBindViewHolder` 内不得创建 Listener/对象，应通过 `holder.adapterPosition`/`bindingAdapterPosition` 复用回调。
+- ViewHolder 内不得定义 `dp()` 等工具方法，统一走 `LauncherTheme.dp(itemView.context, ...)`；Adapter 内同理（违规存量见重构计划文档）。
+- 包含 RecyclerView 或可滚动子 View 的页面根滚动容器必须用 `NestedScrollView` 而非 `ScrollView`，避免嵌套滚动手势冲突；RecyclerView 作为滚动容器的子项时设 `nestedScrollingEnabled=false` 并给固定/包裹高度，禁止 `wrap_content` 撑满全量数据。
+- ImageView 必须显式指定 `scaleType`，不依赖默认 `fitCenter`：游戏封面/头像统一 `centerCrop`；图标按钮 `center`/`centerInside`；含透明边的装饰图 `fitCenter`/`centerInside`。
+
 ### 开关
 
 - 所有 `SwitchCompat` 必须调用 `LauncherTheme.styleMaterialSwitch()`；禁止在新页面或修改到的存量页面继续使用 `styleSwitch()`。
@@ -185,8 +202,14 @@
 - 确认回调必须先 `dismiss()` 再执行业务操作。
 - Activity 内不得手写对话框 View 树（手拼 `LinearLayout`/`TextView`/`Button`）；权限引导、确认等弹窗一律走 `LauncherDialogFactory` 的 `show*()` API，复用 `root()`/`standardTitle()`/`standardMessage()`/`button()` 等 helper 保持外壳统一，避免在 Activity 中堆积 70+ 行内联对话框代码。新增弹窗类型优先扩展 Factory，不要回退到 Activity 内联实现。
 - 含输入法、动态进度、复杂列表或不可控长文本的弹窗不能硬迁移到普通 API；先提供有明确生命周期的专用模板，再迁移。
+- **PopupWindow / 自建菜单宽度兜底**：竖屏自建 `PopupWindow`/`AlertDialog` 同样禁止裸 `dp(N)` 宽度字面量，必须做屏幕宽度兜底（`min(densityWidth, screen-48dp)`）；优先扩展 `LauncherDialogFactory` 的 `showStandardActionChoices` 而非在 Activity 手拼菜单（违规存量见重构计划文档）。
 
 ## 6. PadUi 横屏规范
+
+### 适用范围
+
+- 本章同时约束 `PadUi`（Pad 横屏）与 `HDModel`（HD 横屏）两个横屏场景。HD 横屏页面（`HdSettingsFragment`、`HdModeActivity`、`HdSaveManagerFragment`、`HdHomeFragment` 等）的弹窗、取色、宽度兜底与 PadUi 一致，不要因为命名不同而回退到竖屏 `LauncherDialogFactory`。
+- 横屏与竖屏的弹窗工厂严格分库：竖屏页面只用 `LauncherDialogFactory`，横屏页面（Pad/HD）只用 `PadDialogFactory`。HD 横屏页面调用竖屏 `LauncherDialogFactory` 会导致宽度/字号/缩放不一致，属于必纠缺陷。
 
 ### 布局与按钮
 
@@ -220,7 +243,7 @@
 ### 弹窗实现纪律
 
 - `PadManageFragment` 的 `createLauncherDialog`/`createDialogRoot`/`createDialogTitle`/`createDialogButton`/`createDialogCancelButton` 等 helper 仅服务于上述 4 个保留专用实现；新增同类弹窗必须直接用 `PadDialogFactory` 的对应 `show*()` API，不要扩展这些 helper 或手写 root/title/button。
-- 专用实现的弹窗宽度必须通过 `PadDialogFactory.dialogWidthPx(context, widthDp)` 做屏幕宽度兜底（`min(densityWidth, screen-48dp)`），不要直接传 `dp(288)`/`dp(270)`，避免极窄屏溢出。
+- 专用实现的弹窗宽度必须通过 `PadDialogFactory.dialogWidthPx(context, widthDp)` 做屏幕宽度兜底（`min(densityWidth, screen-48dp)`），不要直接传 `dp(288)`/`dp(270)`，避免极窄屏溢出。竖屏 `LauncherDialogFactory` 内部已做兜底；任何自建弹窗或菜单（含 `PopupWindow`、`AlertDialog`）在指定宽度时也必须做屏幕宽度兜底，禁止裸 `dp(288)` 等固定宽度字面量。
 - `showConfirm`（双按钮确认，288dp）使用 inflate 的 `dialog_launcher_confirm` 布局实现水平并排按钮；`showStandardConfirm`（普通确认，270dp）使用程序化构建的垂直按钮。两者是不同弹窗类型，水平/垂直差异是有意设计，不是实现不一致；不要为统一而合并。
 - 同步确认、账户确认归类为"普通确认"，使用 `showStandardConfirm`（270dp）；只有需要水平双按钮的启动确认才用 `showConfirm`（288dp）。
 - 粒子样式选择使用 `PadDialogFactory.showSingleChoice`（可滑动单选列表），通过 `checkedIndex` 表达已选状态、末项"关闭动态粒子"表达关闭操作、回调内 `Toast` 反馈；不要再手写选项行。
@@ -240,6 +263,20 @@ git diff --check
 ```
 
 6. 涉及 IME、同步、权限、引擎启动或真机现象时，再按对应业务路径做实机验证；不要以 UI 编译成功替代行为验证。
+7. 规范一致性 grep 检查（应全部为空或仅命中合规位置）：
+
+```bash
+# 分层：com.core 不依赖 com.apps
+! grep -r "import com.apps" app/src/main/java/com/core/
+# dp() 副本：仅 LauncherTheme 内部允许
+grep -rn "fun dp(\|int dp(" app/src/main/java/com/apps --include="*.kt" --include="*.java" | grep -v "LauncherTheme"
+# 内联窗口配置：应全部走 LauncherEdgeToEdgeHelper
+grep -rn "configureEdgeToEdgeWindow\|FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS" app/src/main/java/com/apps --include="*.kt" --include="*.java" | grep -v "LauncherEdgeToEdgeHelper"
+# HD/Pad 横屏错用竖屏弹窗工厂
+grep -rn "LauncherDialogFactory.show" app/src/main/java/com/apps/HDModel app/src/main/java/com/apps/PadUi
+# 裸 startActivity(ACTION_VIEW) 未走 LauncherUrlOpener
+grep -rn "ACTION_VIEW" app/src/main/java/com/apps --include="*.kt" --include="*.java" | grep -v "LauncherUrlOpener"
+```
 
 ## 8. `app/src/main/java` 通用代码规范
 
@@ -248,9 +285,12 @@ git diff --check
 ### 分层与包依赖
 
 - `com.apps.*` 是展示层：Activity、Fragment、Adapter、View、UI 状态及导航协调代码。它可以依赖 `com.core.*`，但不直接承担持久化、网络协议解析或可独立复用的领域决策。
-- `com.core.*` 是业务与平台层：model、data、net、sync、scanner、importer、launcher、metadata、translation 的非 UI 能力及通用 util。`com.core.*` 禁止 import `com.apps.*`，也不得直接持有或启动 Activity、Fragment、Dialog、Theme 等 UI 对象。
-- UI 所需的 core 回调通过接口、状态模型或事件向上交付；core 不反向调用 UI。Application 级 UI 初始化应移到 `com.apps` 的启动协调代码，避免 core 成为 UI 的依赖方。
-- 新包名一律小写，使用 `lowercase`；新增 Pad 代码放入 `com.apps.padui`，用户数据代码放入 `com.apps.userdata`。既有 `PadUi`、`UserData` 仅在其周边改动时迁移，迁移时同步更新所有引用。
+- `com.core.*` 是业务与平台层：model、data、net、sync、scanner、importer、launcher、metadata、translation 的非 UI 能力及通用 util。`com.core.*` 禁止 import `com.apps.*`，也不得直接持有或启动 `com.apps.*` 的 Activity、Fragment、Dialog、Theme 等 UI 对象。
+- **引擎壳层 Activity 启动豁免**：`com.core.launcher` 启动引擎壳层 Activity（`com.core.tyrano.TyranoActivity` 等 engine 子模块）及外部模拟器包（`com.akira.tyranoemu.remote.*`、`org.tvp.kirikiri2.*`、`com.yuri.onscripter.*`）是允许的边界例外，因为引擎启动天然需要起 Activity。但禁止启动 `com.apps.*` 的 UI Activity；UI 跳转由 `com.apps` 调用方在收到 core 启动结果后自行发起。
+- **core 内 Dialog/View 持有禁令**：`com.core.*` 不得直接 `new AlertDialog`/`WindowManager.addView` 构建弹窗或悬浮 View。确需平台覆盖层时，走 `LauncherUiBridge` 扩展方法由 `com.apps` 实现，或将该 Service 迁至 `com.apps`。core 内 Service 通过 `WindowManager` 渲染平台覆盖 View 的归属需在后续阶段界定（违规存量见重构计划文档）。
+- UI 所需的 core 回调通过接口、状态模型或事件向上交付；core 不反向调用 UI。Application 级 UI 初始化应移到 `com.apps` 的启动协调代码，避免 core 成为 UI 的依赖方。`com.core.launcher.LauncherUiBridge` 是 core 读取 Launcher 主题色、重启入口和覆盖层确认弹窗的边界；`com.apps.LauncherApplication` 负责注册具体实现。
+- 新包名一律小写，使用 `lowercase`；新增 Pad 代码放入 `com.apps.padui`。用户数据导出/导入、游玩记录缓冲、会话映射等可复用能力放入 `com.core.userdata`；展示入口只从 `com.apps.*` 调用 core API。既有 `PadUi` 等大小写包仅在其周边改动时迁移，迁移时同步更新所有引用。
+- 本地智能体的网络协议、MCP、运行时编排、工作区文件操作和持久化能力归属 `com.core.agent.net`、`com.core.agent.runtime`、`com.core.agent.workspace`、`com.core.agent.store`。`com.apps.agent` 只保留 Activity、Adapter、自定义 View 等展示层代码。
 - 按功能归属文件：一个 feature 的 UI、状态和协调代码放在对应 `com.apps.<feature>`；可复用的领域能力放在对应 `com.core.<feature>`。不要仅为“工具类”而创建无业务语义的公共包。
 
 ### 状态、线程与生命周期
@@ -258,14 +298,21 @@ git diff --check
 - 新增 Kotlin 异步代码使用结构化协程：页面相关任务使用 `lifecycleScope`，ViewModel 任务使用 `viewModelScope`，并显式指定 `Dispatchers.IO`、`Default` 或 `Main`。不得使用 `GlobalScope`。
 - `AppExecutors` 是 Java 及存量调用的兼容层；新增 Kotlin 业务代码不新增 `AppExecutors + runOnUiThread` 链路。迁移旧代码时优先按所在生命周期替换，而不是在无生命周期的静态对象中创建 scope。
 - 后台任务不得直接更新 View；回到主线程前先确认 Activity/Fragment 仍有效。Fragment 的 View 任务必须在 `onDestroyView()` 后自动取消或不再访问 binding。
+- **回主线程守卫**：所有回主线程执行的 lambda 体首行必须加守卫——Activity 为 `if (isFinishing || isDestroyed) return`，Fragment 为 `if (!isAdded || binding == null) return`。覆盖范围包括 `runOnUiThread { ... }`、`AppExecutors.mainThread().execute { ... }`、`RxMainScheduler.post { ... }`、`mainQueue.post { ... }`/`getMainQueue().post(...)`，以及 core Bridge 通过 `postToMain` 上行回调的实现方 lambda。仅检查 `getActivity() != null` 不足以防止 Activity finishing/destroyed 后的 UI 更新崩溃。存量缺失守卫的文件清单见重构计划文档，在相关功能改动时一并补齐。
 - Repository/Bridge 返回领域结果或 `Result`；UI 层只负责加载、成功、空态和失败态渲染。不要让 Activity/Fragment 同时处理 HTTP、文件读写、持久化和复杂业务决策。
-- 共享状态仅在确有并发访问时使用 `@Volatile`、锁或原子类型；说明其保护的状态与线程边界，避免以全局可变单例代替状态所有权。
+- **UI 层文件 IO 下沉**：Activity/Fragment/Adapter 不得在主线程执行 `ContentResolver.openInputStream`、`BitmapFactory.decode*`、`Files.copy`、`File.listFiles` 等可能阻塞或 OOM 的 IO。头像解码、封面拷贝、URI 可读性探测等必须切到 `AppExecutors.runOnIo`/`Dispatchers.IO`，结果回主线程时按下方守卫规则校验生命周期。文件写入下沉到 `LauncherScanBridge`/`LauncherImageBridge` 等 core 层 API，UI 层只传入来源 URI 与目标路径，不直接持有流。批量 IO 必须带大小上限（参考 ImporterIO 的 `MAX_ENTRY_BYTES`/`MAX_TOTAL_BYTES`/`MAX_ENTRY_COUNT`），避免 ZIP/压缩放大攻击。
+- **core 内所有 IO 路径强制字节上限**：`com.core.*` 内所有 `read()`/`FileInputStream`/`HttpURLConnection`/`BitmapFactory` 读取必须有显式字节上限（参照 `ImporterIO.MAX_ENTRY_BYTES`/`LauncherUserData.readText(file, maxBytes, label)` 模式），禁止无界 `read()`/`available()`；截图/Bitmap 路径除像素维上限外补字节上限。`LauncherUserData` 的 `MAX_SETTINGS_BYTES`/`MAX_PLAY_SQL_BYTES` 等各自定义的限额保留，命名后续可统一。
+- **postDelayed 清理**：凡 `Handler`/`RxMainScheduler.postDelayed`/`mainQueue.postDelayed` 的延迟任务必须持有 disposable/callback 引用，并在 `onDestroy`/`onDestroyView` 清理；`View.postDelayed` 可豁免（View 销毁时自动清理）。lambda 内仍须加回主线程守卫作为兜底。参照 `LauncherPublicChatActivity.cancelHeartbeat`、`GameSessionController.removeCallbacks`、`LauncherParticleView.removeCallbacks` 为合规实现。
+- **core 长生命周期监听器释放**：`com.core.*` 内 `FileObserver`/`HandlerThread` 须提供显式 `stop()`/`release()`/`quit()` 入口并在 Service/Launcher 销毁时调用，避免泄漏（具体位置见重构计划文档）。
+- 共享状态仅在确有并发访问时使用 `@Volatile`、锁或原子类型；说明其保护的状态与线程边界，避免以全局可变单例代替状态所有权。`@Volatile` 仅用于跨线程可见性需求；只在 `@Synchronized` 方法内访问的字段、或仅主线程访问的字段不需要 `@Volatile`，误加会误导读者以为存在跨线程访问。已识别的 `@Volatile` 误用存量见重构计划文档，相关功能改动时删除。
 
 ### 异常、日志与数据处理
 
 - 禁止捕获 `Throwable`，除非处于明确的进程边界、回滚清理或日志兜底点，且必须说明原因；不得吞掉 `CancellationException`、`InterruptedException`、`Error` 等不可恢复信号。
 - 只捕获可预期的具体异常；失败必须返回给调用方、显示合适的用户提示或写入 `DevLogger`。允许忽略的异常必须在紧邻 catch 处说明为何可安全忽略。
-- 收窄异常时需分析具体 API 的实际异常契约，不能只看 catch 语法是否通过：受检异常之外，确认方法是否可能返回 null、抛出 `SecurityException`/`IllegalArgumentException` 等运行时异常。例如 `ContentResolver.openInputStream()` 可能返回 null 或抛 `SecurityException`（`content://` 授权过期），只捕获 `IOException` 会导致后台线程 NPE 或未捕获异常崩溃。对可能返回 null 的流必须显式判空，对可预期的运行时异常应一并捕获（`catch (IOException | SecurityException e)`），并在 catch 处说明失败兜底行为（提示用户、清除失效配置、回退默认值）。
+- 收窄异常时需分析具体 API 的实际异常契约，不能只看 catch 语法是否通过：受检异常之外，确认方法是否返回 null、抛出 `SecurityException`/`IllegalArgumentException` 等运行时异常。例如 `ContentResolver.openInputStream()` 可能返回 null 或抛 `SecurityException`（`content://` 授权过期），只捕获 `IOException` 会导致后台线程 NPE 或未捕获异常崩溃。对可能返回 null 的流必须显式判空，对可预期的运行时异常应一并捕获（`catch (IOException | SecurityException e)`），并在 catch 处说明失败兜底行为（提示用户、清除失效配置、回退默认值）。
+- **常见 catch 收窄对照**：`startActivity`/`startActivityForResult` → `ActivityNotFoundException`；`PackageManager.getPackageInfo` → `PackageManager.NameNotFoundException`；`SharedPreferences`/`SQLiteDatabase` 操作 → `SQLException`/`IllegalStateException`；`Shizuku` 调用 → `ShizukuNotInstalledException`/`SecurityException`；`Intent.parseUri`/`Uri.parse` → `URISyntaxException`/`IllegalArgumentException`；`SimpleDateFormat.parse` → `ParseException`；`Class.forName`/`Method.invoke` → `ReflectiveOperationException`；文件 IO（`copy`/`move`/`delete`） → `IOException`/`SecurityException`；`DocumentFile.listFiles()`/`File.listFiles()`/`File.delete()` 文件树遍历 → `catch (Exception)` 或 `catch (IOException | SecurityException)`，不得 `catch (Throwable ignored)` 静默吞掉；`Error`/`OutOfMemoryError` 在任何路径都必须传播不得捕获，bitmap decode 需显式 `catch (OutOfMemoryError) { throw e }`。`throw new Exception` 一律改为具体异常类型（`IOException`/`IllegalStateException`/`IllegalArgumentException`）。违规存量位置见重构计划文档。
+- **CancellationException 重抛强制模式**：协程 `catch` 块若捕获 `Exception`/`Throwable`，必须先 `catch (e: CancellationException) { throw e }` 重抛，再 `catch (e: Exception)` 处理业务异常，否则会吞掉协程取消信号。合规范本与违规存量见重构计划文档。
 - 不使用 `!!` 作为常规控制流。可空值优先使用 `?.`、`?:`、提前返回或 `requireNotNull`（仅用于违反内部不变量的情形）。
 - 时间展示统一复用 `TimeFormatUtil`；网络协议或导入格式解析可使用专用 `SimpleDateFormat`，但须显式指定 `Locale` 与格式来源。不要在 UI 中重复实现通用展示格式。
 - 用户可见文本优先放入资源；日志不得包含 access token、API key、密码或完整的私有路径。涉及外部输入、文件与 URI 时先校验可读性、边界和编码。
@@ -274,6 +321,10 @@ git diff --check
 
 - 一个类/文件只保留一个主要职责。页面拆分为 UI 绑定与渲染、状态/事件协调、业务操作；Repository 拆分为查询、写入、迁移或外部源适配等明确职责。
 - 单文件超过约 500 行、或同时包含 UI、线程调度、I/O 和领域规则时，应在下一次相关功能改动中拆分。优先提取可独立测试的 Controller、Use Case、Formatter 或数据源，不改变对外行为。
+- **大文件拆分模式**：按职责切片而非按行数均分。典型拆分维度——UI 渲染层（Toolbar/Gesture/Paging/Avatar 子 Controller）、领域选项层（Catalog/Resolver，参照 `EngineOptionCatalog`/`EnginePackageResolver`）、工厂子 object（`LauncherDialogFactory` 拆 Confirm/Choice/Loading/Update）。拆分后原文件作为薄协调层保留，对外 API 签名（`@JvmStatic`/`@JvmField`）不变，调用方零修改。禁止为拆分而拆分：若文件虽长但职责单一且改动频率低（如单一渲染器、单一解码器），可保留并注释说明。
+- **死代码清理**：`private`/`internal` 方法无调用方、`onPause()` 等仅 `super` 的空实现、被新实现取代但未删的旧类，属于必清死代码。清理前必须用全局搜索确认无反射/资源/Manifest 引用；对存疑项标注验证结论后再决定。删除前执行验证命令：`grep -rn "ClassName" app/src/main --include="*.kt" --include="*.java" | grep -v "ClassName\."` 确认无业务调用，`grep -rn "ClassName" app/src/test app/src/androidTest` 确认无测试引用；删除后运行 `./gradlew :app:assembleDebug` 与 `git diff --check` 确认无断链。已确认死代码清单见重构计划文档。
+- **废弃 API 禁用**：禁止新增使用 `LocalActivityManager`/`ActivityGroup`/`Fragment.userVisibleHint` 等已废弃 API。存量使用 `LocalActivityManager` 嵌套 Activity 的 Fragment 应在相关功能改动时迁移到子 Fragment 或 NavComponent，迁移时一并瘦身因转发 `dispatch*` 调用而膨胀的生命周期方法（具体清单见重构计划文档）。
+- **跨页面共享领域逻辑的提取**：当两个及以上 Activity/Fragment 包含相同的领域数据组装（如引擎选项列表、包名路由、子类型匹配）或相同的工具方法（如 dp 转换、窗口配置、URL 打开）时，必须提取为 package-private 或 internal 的独立类/object，不在每个页面内保留副本。参照 `LauncherEdgeToEdgeHelper`（共享窗口配置）、`LauncherTheme.dp`（全模块共享 dp 转换）。`EngineOptionCatalog`/`EnginePackageResolver` 是共享引擎选择逻辑的提取范例，但当前仍为 Java 存量文件，应迁 Kotlin `object` + `@JvmStatic`（见 §2 语言约束）。提取后调用方零行为变更，新功能只扩展提取类不回退到内联。
 - **Activity 的 companion 不得承担全局静态职责**：偏好读写、主题判断、UI 模式包装、Splash 资源、导航样式等与 Activity 实例无关的静态能力，必须放在独立 `object`（参考 `LauncherPreferences`、`LauncherThemeStyle`、`LauncherUiMode`、`LauncherSplash`、`LauncherNavRenderer`）。`LauncherActivity` 的 companion 只作为兼容委托层保留既有 `@JvmStatic` 签名，不得新增实现；新增调用方直接引用对应 object，不经 companion 转发。Activity 实例逻辑（生命周期、路由、装配）与渲染/状态管理应分离，导航渲染等大块 UI 逻辑抽成持有 Activity 的协调类，避免单 Activity 文件膨胀。
 - **object 间禁止循环依赖**：低层工具 object（`LauncherNavigationMetrics`、`LauncherPreferences` 等）不得反向依赖高层 `LauncherActivity`。SharedPreferences 名等共享常量统一以 `LauncherPreferences.APP_PREFS` 为单一来源，不通过 `LauncherActivity.APP_PREFS` 回跳，避免形成模块级循环引用。新 object 只依赖同层或更底层的 object/`Context`。
 - **常量委托的约束**：`const val` 无法委托到另一 object 的属性，大规模重构时可在兼容层保留字面量副本并注明主源；`@JvmField val` 可用 `@JvmField val X = LauncherY.X` 形式委托以保持单一来源。重构时优先保留 `@JvmStatic` 委托方法签名与 `@JvmField`/`const val` 常量名不变，让既有调用方零修改、分步迁移，降低回归风险。
@@ -285,9 +336,11 @@ git diff --check
 
 - 新增或迁移代码应通过 Android Lint、Kotlin 格式检查和静态分析；在引入工具前，至少执行构建与 `git diff --check`。建议逐步接入 Ktlint/Spotless 与 Detekt，并先对新增问题设为阻断。
 - 涉及分层调整时，检查 `com.core` 不新增 `import com.apps`；涉及线程调整时，验证页面销毁后没有 UI 更新或任务泄漏。
+- **跨模块技术债处理口径**：`com.core` 内既存的 `"yukihub_prefs"`、`"kr_engine_version"`、`LauncherUserData.MAIN_PREF_KEYS` 偏好键等与 `com.apps.LauncherPreferences` 重复的字面量属于历史技术债，非阻塞但不扩散。需设立 `com.core.CorePreferences`（或 `com.core.util.PrefConstants`）object 作为 core 侧偏好名/键单一来源，注明主源在 `LauncherPreferences`；新增 `com.core` 代码必须引用该镜像常量，不得新增字面量。引擎包名路由字符串下沉到 `com.core.launcher.EnginePackages`（或 `EngineType` 伴生）作单一来源。批量清理作为独立技术债阶段处理，不与 UI 改动混在同一提交（具体位置与计数见重构计划文档）。
 - 最低验证命令保持如下；涉及 core 逻辑时同时补充或运行对应单元测试：
 
 ```bash
+! grep -r "import com.apps" app/src/main/java/com/core/
 ./gradlew :app:assembleDebug
 git diff --check
 ```
