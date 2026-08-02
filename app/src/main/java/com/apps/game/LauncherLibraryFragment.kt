@@ -917,7 +917,7 @@ open class LauncherLibraryFragment : Fragment(),
             }
             val result = updated
             mainQueue.post {
-                if (!isAdded || view == null) return@post
+                if (!isAdded || _binding == null) return@post
                 if (result != null) updateSingleGame(result)
             }
         }
@@ -944,7 +944,7 @@ open class LauncherLibraryFragment : Fragment(),
                 false
             }
             mainQueue.post {
-                if (!isAdded || view == null) return@post
+                if (!isAdded || _binding == null) return@post
                 if (!deleted) {
                     Toast.makeText(app, R.string.game_library_delete_retry, Toast.LENGTH_SHORT).show()
                     return@post
@@ -975,7 +975,7 @@ open class LauncherLibraryFragment : Fragment(),
                 -1
             }
             mainQueue.post {
-                if (!isAdded || view == null) return@post
+                if (!isAdded || _binding == null) return@post
                 if (deleted < 0) {
                     Toast.makeText(app, R.string.game_library_clear_failed, Toast.LENGTH_SHORT).show()
                     return@post

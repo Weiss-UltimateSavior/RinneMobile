@@ -14,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.core.R
+import com.core.launcherbridge.LauncherUpdateBridge
 import kotlin.math.max
 import kotlin.math.min
 
@@ -104,9 +105,9 @@ object PadDialogFactory {
         progress.indeterminateDrawable?.setColorFilter(
             LauncherTheme.primary(context), PorterDuff.Mode.SRC_IN
         )
-        val progressParams = LinearLayout.LayoutParams(dp(context, 32), dp(context, 32))
+        val progressParams = LinearLayout.LayoutParams(LauncherTheme.dp(context, 32), LauncherTheme.dp(context, 32))
         progressParams.gravity = android.view.Gravity.CENTER_HORIZONTAL
-        progressParams.setMargins(0, dp(context, 14), 0, 0)
+        progressParams.setMargins(0, LauncherTheme.dp(context, 14), 0, 0)
         root.addView(progress, progressParams)
 
         val hintView = message(context, hint)
@@ -134,9 +135,9 @@ object PadDialogFactory {
         progress.indeterminateDrawable?.setColorFilter(
             LauncherTheme.primary(context), PorterDuff.Mode.SRC_IN
         )
-        val progressParams = LinearLayout.LayoutParams(dp(context, 32), dp(context, 32))
+        val progressParams = LinearLayout.LayoutParams(LauncherTheme.dp(context, 32), LauncherTheme.dp(context, 32))
         progressParams.gravity = android.view.Gravity.CENTER_HORIZONTAL
-        progressParams.setMargins(0, dp(context, 14), 0, 0)
+        progressParams.setMargins(0, LauncherTheme.dp(context, 14), 0, 0)
         root.addView(progress, progressParams)
 
         val progressView = message(context, progressText)
@@ -187,9 +188,9 @@ object PadDialogFactory {
                     listener?.onChoice(index)
                 }
                 val optionParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 36)
+                    LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 36)
                 )
-                optionParams.setMargins(0, if (index == 0) 0 else dp(context, 11), 0, 0)
+                optionParams.setMargins(0, if (index == 0) 0 else LauncherTheme.dp(context, 11), 0, 0)
                 actions.addView(option, optionParams)
             }
         }
@@ -197,9 +198,9 @@ object PadDialogFactory {
         val choiceCount = choices?.size ?: 0
         val listHeight = choiceCount * 36 + max(0, choiceCount - 1) * 11
         val scrollParams = topMargin(context, 11)
-        val maxScrollHeight = min(dp(context, 252), dp(context, listHeight))
+        val maxScrollHeight = min(LauncherTheme.dp(context, 252), LauncherTheme.dp(context, listHeight))
         val screenHeight = context.resources.displayMetrics.heightPixels
-        val reservedHeight = dp(context, 160)
+        val reservedHeight = LauncherTheme.dp(context, 160)
         val availableHeight = max(0, screenHeight - reservedHeight)
         scrollParams.height = min(maxScrollHeight, availableHeight)
         root.addView(scroll, scrollParams)
@@ -208,6 +209,56 @@ object PadDialogFactory {
         cancel.setOnClickListener { dialog.dismiss() }
         root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
         setContent(dialog, root, WIDTH_COMPACT_DP)
+    }
+
+    @JvmStatic
+    fun showMessageActionChoices(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: Array<CharSequence>?,
+        cancelText: CharSequence?,
+        listener: ChoiceListener?
+    ) {
+        val dialog = open(context, WIDTH_CONFIRM_DP, true)
+        val root = root(context)
+        root.addView(title(context, title))
+
+        val scroll = ScrollView(context)
+        scroll.addView(message(context, message))
+        val scrollParams = topMargin(context, 13)
+        val screenHeight = context.resources.displayMetrics.heightPixels
+        scrollParams.height = min(LauncherTheme.dp(context, 220), max(LauncherTheme.dp(context, 80), screenHeight - LauncherTheme.dp(context, 210)))
+        root.addView(scroll, scrollParams)
+
+        if (choices != null) {
+            for (i in choices.indices) {
+                val index = i
+                val option = button(context, choices[i], true)
+                option.setOnClickListener {
+                    dialog.dismiss()
+                    listener?.onChoice(index)
+                }
+                root.addView(option, fixedHeightTopMargin(context, if (index == 0) 13 else 9, 36))
+            }
+        }
+
+        val cancel = button(context, cancelText ?: context.getString(R.string.core_cancel), false)
+        cancel.setOnClickListener { dialog.dismiss() }
+        root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
+        setContent(dialog, root, WIDTH_CONFIRM_DP)
+    }
+
+    @JvmStatic
+    fun showUpdateResult(
+        context: Context,
+        info: LauncherUpdateBridge.UpdateInfo?,
+        currentVersion: String?,
+        hasUpdate: Boolean,
+        error: String?
+    ) {
+        // 完整实现已拆分至 PadUpdateDialog，此处保留转发以兼容既有调用方，避免 PadDialogFactory 超过行数限制
+        PadUpdateDialog.showUpdateResult(context, info, currentVersion, hasUpdate, error)
     }
 
     @JvmStatic
@@ -235,18 +286,18 @@ object PadDialogFactory {
                     listener?.onChoice(index)
                 }
                 val optionParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 38)
+                    LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 38)
                 )
-                optionParams.setMargins(0, dp(context, 7), 0, 0)
+                optionParams.setMargins(0, LauncherTheme.dp(context, 7), 0, 0)
                 list.addView(option, optionParams)
             }
         }
         scroll.addView(list)
         val listHeight = optionCount * (38 + 7)
         val scrollParams = topMargin(context, 7)
-        val maxScrollHeight = min(dp(context, 280), dp(context, listHeight))
+        val maxScrollHeight = min(LauncherTheme.dp(context, 280), LauncherTheme.dp(context, listHeight))
         val screenHeight = context.resources.displayMetrics.heightPixels
-        val reservedHeight = dp(context, 160)
+        val reservedHeight = LauncherTheme.dp(context, 160)
         val availableHeight = max(0, screenHeight - reservedHeight)
         scrollParams.height = min(maxScrollHeight, availableHeight)
         root.addView(scroll, scrollParams)
@@ -273,7 +324,7 @@ object PadDialogFactory {
         actions.orientation = LinearLayout.HORIZONTAL
         val cancel = button(context, context.getString(R.string.core_cancel), false)
         cancel.setOnClickListener { dialog.dismiss() }
-        actions.addView(cancel, LinearLayout.LayoutParams(0, dp(context, 38), 1f))
+        actions.addView(cancel, LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 38), 1f))
 
         val danger = TextView(context)
         danger.text = dangerText
@@ -285,8 +336,8 @@ object PadDialogFactory {
             dialog.dismiss()
             onConfirm?.run()
         }
-        val dangerParams = LinearLayout.LayoutParams(0, dp(context, 38), 1f)
-        dangerParams.setMargins(dp(context, 8), 0, 0, 0)
+        val dangerParams = LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 38), 1f)
+        dangerParams.setMargins(LauncherTheme.dp(context, 8), 0, 0, 0)
         actions.addView(danger, dangerParams)
         root.addView(actions, fixedHeightTopMargin(context, 13, 38))
         setContent(dialog, root, WIDTH_COMPACT_DP)
@@ -306,8 +357,8 @@ object PadDialogFactory {
 
     @JvmStatic
     fun dialogWidthPx(context: Context, widthDp: Int): Int {
-        val densityWidth = dp(context, widthDp)
-        val horizontalMargin = dp(context, 48)
+        val densityWidth = LauncherTheme.dp(context, widthDp)
+        val horizontalMargin = LauncherTheme.dp(context, 48)
         val availableWidth = context.resources.displayMetrics.widthPixels - horizontalMargin
         return max(0, min(densityWidth, availableWidth))
     }
@@ -337,7 +388,7 @@ object PadDialogFactory {
     private fun root(context: Context): LinearLayout {
         val root = LinearLayout(context)
         root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(context, 22), dp(context, 20), dp(context, 22), dp(context, 16))
+        root.setPadding(LauncherTheme.dp(context, 22), LauncherTheme.dp(context, 20), LauncherTheme.dp(context, 22), LauncherTheme.dp(context, 16))
         return root
     }
 
@@ -357,7 +408,7 @@ object PadDialogFactory {
         view.gravity = android.view.Gravity.CENTER
         view.setTextColor(LauncherTheme.textMuted(context))
         view.textSize = 12f
-        view.setLineSpacing(dp(context, 4).toFloat(), 1f)
+        view.setLineSpacing(LauncherTheme.dp(context, 4).toFloat(), 1f)
         return view
     }
 
@@ -395,14 +446,14 @@ object PadDialogFactory {
         view.gravity = android.view.Gravity.CENTER
         view.textSize = 13f
         view.setTypeface(null, Typeface.BOLD)
-        view.minHeight = dp(view.context, 38)
+        view.minHeight = LauncherTheme.dp(view.context, 38)
     }
 
     private fun topMargin(context: Context, topMarginDp: Int): LinearLayout.LayoutParams {
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        params.setMargins(0, dp(context, topMarginDp), 0, 0)
+        params.setMargins(0, LauncherTheme.dp(context, topMarginDp), 0, 0)
         return params
     }
 
@@ -412,10 +463,7 @@ object PadDialogFactory {
         heightDp: Int
     ): LinearLayout.LayoutParams {
         val params = topMargin(context, topMarginDp)
-        params.height = dp(context, heightDp)
+        params.height = LauncherTheme.dp(context, heightDp)
         return params
     }
-
-    private fun dp(context: Context, value: Int): Int =
-        LauncherTheme.dp(context, value)
 }

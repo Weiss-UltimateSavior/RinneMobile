@@ -129,7 +129,9 @@ object PinnedGameShortcut {
             )
             square.recycle()
             scaled
-        } catch (_: Throwable) {
+        } catch (error: OutOfMemoryError) {
+            throw error
+        } catch (_: Exception) {
             null
         }
     }

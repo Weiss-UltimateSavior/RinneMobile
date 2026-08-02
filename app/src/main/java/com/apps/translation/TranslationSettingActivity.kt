@@ -5,14 +5,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.view.Window
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -345,17 +342,7 @@ class TranslationSettingActivity : AppCompatActivity() {
      * 与 LauncherKrkrSettingsActivity 保持一致。
      */
     private fun configureEdgeToEdgeWindow() {
-        val darkMode = LauncherActivity.isLauncherDarkMode(this)
-        val window: Window = window
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = ContextCompat.getColor(this, R.color.launcher_bg_color)
-        var flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        if (!darkMode) {
-            flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-        }
-        window.decorView.systemUiVisibility = flags
+        com.apps.LauncherEdgeToEdgeHelper.apply(this)
     }
 
     /**

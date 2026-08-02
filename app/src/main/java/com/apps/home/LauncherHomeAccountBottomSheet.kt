@@ -1,12 +1,14 @@
 package com.apps.home
 
 import android.app.Dialog
+import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.annotation.DrawableRes
 import androidx.fragment.app.FragmentManager
 import com.apps.LauncherActivity
 import com.apps.theme.LauncherTheme
@@ -29,40 +31,7 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
 
         val list = contentView.findViewById<LinearLayout>(R.id.homeAccountSheetList)
         val followsSystemTone = LauncherActivity.isFollowingSystemTone(context)
-        val actions = buildList {
-            add(SheetAction(
-                R.drawable.launcher_home_sheet_app_settings,
-                context.getString(R.string.app_settings_title),
-                ACTION_APP_SETTINGS,
-            ))
-            add(SheetAction(
-                R.drawable.launcher_home_sheet_theme,
-                context.getString(R.string.launcher_settings_action_theme),
-                ACTION_THEME,
-            ))
-            if (!followsSystemTone) {
-                add(SheetAction(
-                    R.drawable.launcher_home_sheet_tone,
-                    context.getString(R.string.launcher_settings_action_tone),
-                    ACTION_TONE,
-                ))
-            }
-            add(SheetAction(
-                R.drawable.launcher_home_sheet_update,
-                context.getString(R.string.launcher_settings_action_update),
-                ACTION_UPDATE,
-            ))
-            add(SheetAction(
-                R.drawable.launcher_home_sheet_feedback,
-                context.getString(R.string.launcher_settings_action_feedback),
-                ACTION_FEEDBACK,
-            ))
-            add(SheetAction(
-                R.drawable.launcher_home_sheet_disclaimer,
-                context.getString(R.string.launcher_settings_action_disclaimer),
-                ACTION_DISCLAIMER,
-            ))
-        }
+        val actions = accountActions(context)
         val sheetHeight = ((if (followsSystemTone) 347f else 409f) * density).toInt()
         actions.forEach { action ->
             val itemBinding = ItemLauncherHomeAccountActionBinding.inflate(
@@ -108,7 +77,8 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
         return dialog
     }
 
-    private data class SheetAction(
+    data class SheetAction(
+        @DrawableRes
         val iconRes: Int,
         val title: String,
         val id: String,
@@ -125,6 +95,41 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
         const val ACTION_DISCLAIMER = "disclaimer"
 
         private const val TAG = "launcher_home_settings_sheet"
+
+        fun accountActions(context: Context): List<SheetAction> = buildList {
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_app_settings,
+                context.getString(R.string.app_settings_title),
+                ACTION_APP_SETTINGS,
+            ))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_theme,
+                context.getString(R.string.launcher_settings_action_theme),
+                ACTION_THEME,
+            ))
+            if (!LauncherActivity.isFollowingSystemTone(context)) {
+                add(SheetAction(
+                    R.drawable.launcher_home_sheet_tone,
+                    context.getString(R.string.launcher_settings_action_tone),
+                    ACTION_TONE,
+                ))
+            }
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_update,
+                context.getString(R.string.launcher_settings_action_update),
+                ACTION_UPDATE,
+            ))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_feedback,
+                context.getString(R.string.launcher_settings_action_feedback),
+                ACTION_FEEDBACK,
+            ))
+            add(SheetAction(
+                R.drawable.launcher_home_sheet_disclaimer,
+                context.getString(R.string.launcher_settings_action_disclaimer),
+                ACTION_DISCLAIMER,
+            ))
+        }
 
         fun show(manager: FragmentManager) {
             if (manager.isStateSaved || manager.findFragmentByTag(TAG) != null) return

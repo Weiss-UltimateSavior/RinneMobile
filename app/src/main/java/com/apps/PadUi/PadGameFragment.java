@@ -2,6 +2,8 @@ package com.apps.PadUi;
 
 import android.content.Context;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,24 +19,29 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.apps.LauncherActivity;
 import com.apps.LauncherPreferences;
-import com.apps.game.LauncherGameActionController;
-import com.apps.game.LauncherGameEditActivity;
+import com.apps.game.GameActionMenuFactory;
+import com.apps.game.GameMetadataFormatter;
+import com.apps.game.GamePasswordLock;
 import com.apps.game.GameSessionController;
-import com.apps.theme.LauncherMotion;
+import com.apps.game.PinnedGameShortcut;
+import com.apps.settings.LauncherCustomVndbSearchDialog;
+import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
 import com.core.databinding.FragmentPadGameBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
+import com.core.model.EngineType;
 import com.core.model.Game;
 import com.core.util.AppExecutors;
+import com.core.util.DevLogger;
 import com.core.util.SafeImageLoader;
 import com.core.util.RxMainQueue;
 
@@ -45,7 +52,7 @@ import java.util.List;
 import java.util.Locale;
 
 /** 横屏游戏库：手机每页 1 行 × 5 列，平板每页 2 行 × 5 列，横向手势切换分页。 */
-public class PadGameFragment extends Fragment {
+public class PadGameFragment extends Fragment implements GameActionMenuFactory.ActionMenuCallbacks {
     private static final String TAG = "PadGameFragment";
     private static final int GRID_COLUMNS = 5;
     private static final int PHONE_GRID_ROWS = 1;
@@ -59,8 +66,6 @@ public class PadGameFragment extends Fragment {
     private int currentPage;
     private boolean dataLoaded;
     private boolean loading;
-    // 编辑卡片后回退时，仅就地刷新被编辑的那张卡片，避免 loadGames() 重置 currentPage。
-    private long pendingEditGameId = -1L;
     private boolean swipeConsumed;
     private boolean pageAnimating;
     private int gridRows = PHONE_GRID_ROWS;
@@ -115,11 +120,6 @@ public class PadGameFragment extends Fragment {
         renderAccountInfo();
         if (sessionController != null && sessionController.hasActiveSession()) {
             sessionController.finishDirectPlaySessionIfNeeded(this);
-        } else if (pendingEditGameId > 0L) {
-            // 编辑页返回时仅就地刷新该卡片，保留当前分页位置。
-            long id = pendingEditGameId;
-            pendingEditGameId = -1L;
-            reloadGameInPlace(id);
         } else if (!dataLoaded) {
             loadGames();
         }
@@ -157,38 +157,7 @@ public class PadGameFragment extends Fragment {
                     return;
                 }
                 if (game != null) {
-                    // Pad 游戏库不提供卡片编辑入口；其余长按操作保持一致。
-                    LauncherGameActionController.show(PadGameFragment.this, game,
-                            new LauncherGameActionController.Host() {
-                                @Override
-                                public void refreshGames() {
-                                    loadGames();
-                                }
-
-                                @Override
-                                public void editGame(Game target) {
-                                    pendingEditGameId = target.id;
-                                    android.content.Intent intent = new android.content.Intent(
-                                            requireContext(), LauncherGameEditActivity.class);
-                                    intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, target.id);
-                                    startActivity(intent);
-                                }
-
-                                @Override
-                                public void updateGame(Game updated) {
-                                    updateGameInPlace(updated);
-                                }
-
-                                @Override
-                                public void removeGame(long gameId) {
-                                    removeGameInPlace(gameId);
-                                }
-
-                                @Override
-                                public void reloadGame(long gameId) {
-                                    reloadGameInPlace(gameId);
-                                }
-                            }, false);
+                    showGameActionMenu(game);
                 }
             }
         });
@@ -428,8 +397,8 @@ public class PadGameFragment extends Fragment {
                 return;
             }
             activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
                 loading = false;
-                if (binding == null) return;
                 allGames.clear();
                 allGames.addAll(loadedGames);
                 dataLoaded = true;
@@ -485,14 +454,223 @@ public class PadGameFragment extends Fragment {
 
     /** Re-fetches a single game from DB and updates it in-place, for async metadata operations. */
     private void reloadGameInPlace(long gameId) {
+        Context appContext = requireContext().getApplicationContext();
         AppExecutors.io().execute(() -> {
             Game updated = null;
             try {
-                updated = LauncherRepositoryBridge.findGameById(requireContext(), gameId);
+                updated = LauncherRepositoryBridge.findGameById(appContext, gameId);
             } catch (Exception e) { Log.w(TAG, "DB query failed", e); }
             final Game result = updated;
-            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+            Activity activity = getActivity();
+            if (activity != null) activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
                 if (result != null) updateGameInPlace(result);
+            });
+        });
+    }
+
+    private void showGameActionMenu(Game game) {
+        GameActionMenuFactory.ActionMenuConfig config = new GameActionMenuFactory.ActionMenuConfig();
+        // Pad 游戏库不提供卡片编辑入口；其余长按操作保持与竖屏公共菜单一致。
+        config.includeEditAction = false;
+        // 垂直列表型动作菜单属 compact 类，宽度对齐 §6 标准（270dp），与 PadDialogFactory.showActionChoices 一致。
+        config.dialogWidthDp = 270;
+        GameActionMenuFactory.showGameActionMenu(this, game, config, this);
+    }
+
+    @Override
+    public void onShowGameDetail(@NonNull Game game) {
+        GameActionMenuFactory.showGameDetailDialog(this, game);
+    }
+
+    @Override
+    public void onEditGame(@NonNull Game game) {
+        // Pad 游戏库动作菜单不展示编辑项；该回调仅满足公共接口契约。
+    }
+
+    @Override
+    public void onShowPlayStatus(@NonNull Game game) {
+        GameActionMenuFactory.showPlayStatusDialog(
+                this,
+                game,
+                (ctx, title, labels, checkedIndex, onChoice) ->
+                        PadDialogFactory.showSingleChoice(ctx, title, labels, checkedIndex, onChoice::accept),
+                this::updateGameInPlace);
+    }
+
+    @Override
+    public void onEditPlayTime(@NonNull Game game) {
+        GameActionMenuFactory.showEditPlayTimeDialog(this, game, this::updateGameInPlace);
+    }
+
+    @Override
+    public void onToggleFavorite(@NonNull Game game) {
+        toggleFavorite(game);
+    }
+
+    @Override
+    public void onTogglePassword(@NonNull Game game) {
+        if (GamePasswordLock.hasPassword(game)) {
+            GamePasswordLock.clearPassword(this, game, null);
+        } else {
+            GamePasswordLock.setPassword(this, game, null);
+        }
+    }
+
+    @Override
+    public void onShowMoreOptions(@NonNull Game game) {
+        showMoreOptionsDialog(game);
+    }
+
+    private void showMoreOptionsDialog(Game game) {
+        List<String> ids = new ArrayList<>();
+        List<CharSequence> labels = new ArrayList<>();
+        addMoreOption(ids, labels, "edit_play_time", getString(R.string.game_action_edit_duration));
+        addMoreOption(ids, labels, "pin_shortcut", getString(R.string.game_action_pin_shortcut));
+        addMoreOption(ids, labels, "rematch", getString(R.string.game_action_rematch_vndb));
+        addMoreOption(ids, labels, "custom_vndb", getString(R.string.game_action_custom_vndb));
+        addMoreOption(ids, labels, "sync", getString(R.string.game_action_sync_cover));
+        if (game.engine == EngineType.ONS) {
+            addMoreOption(ids, labels, "ons_settings", getString(R.string.game_action_ons_settings));
+        }
+        addMoreOption(ids, labels, "delete", getString(R.string.game_action_delete));
+        int deleteIndex = ids.indexOf("delete");
+        PadDialogFactory.showActionChoices(
+                requireContext(),
+                getString(R.string.game_action_more),
+                labels.toArray(new CharSequence[0]),
+                deleteIndex,
+                index -> {
+                    String id = ids.get(index);
+                    switch (id) {
+                        case "edit_play_time":
+                            GameActionMenuFactory.showEditPlayTimeDialog(this, game, this::updateGameInPlace);
+                            break;
+                        case "pin_shortcut":
+                            PinnedGameShortcut.requestPinShortcut(requireContext(), game);
+                            break;
+                        case "rematch":
+                            rematchMetadata(game);
+                            break;
+                        case "custom_vndb":
+                            LauncherCustomVndbSearchDialog.show(this, game, () -> reloadGameInPlace(game.id));
+                            break;
+                        case "sync":
+                            syncMetadataToCard(game);
+                            break;
+                        case "ons_settings":
+                            openOnsGameSettings(game);
+                            break;
+                        case "delete":
+                            confirmDeleteGame(game);
+                            break;
+                        default:
+                            break;
+                    }
+                });
+    }
+
+    private void addMoreOption(List<String> ids, List<CharSequence> labels, String id, CharSequence label) {
+        ids.add(id);
+        labels.add(label);
+    }
+
+    private void toggleFavorite(Game game) {
+        Context appContext = requireContext().getApplicationContext();
+        AppExecutors.runOnSingle(() -> {
+            Game updated = null;
+            try {
+                Game latest = LauncherRepositoryBridge.findGameById(appContext, game.id);
+                if (latest != null) {
+                    latest.favorite = !latest.favorite;
+                    if (LauncherRepositoryBridge.updateGame(appContext, latest) > 0) {
+                        updated = latest;
+                    }
+                }
+            } catch (Exception error) {
+                DevLogger.w(TAG, "Failed to toggle favorite", error);
+            }
+            Game result = updated;
+            Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
+                if (result != null) updateGameInPlace(result);
+            });
+        });
+    }
+
+    private void rematchMetadata(Game game) {
+        Toast.makeText(requireContext(), R.string.game_vndb_searching, Toast.LENGTH_SHORT).show();
+        LauncherMetadataBridge.fetchAndSaveMetadataAsync(requireContext(), game, success -> {
+            Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
+                Toast.makeText(requireContext(), success
+                                ? R.string.game_metadata_updated : R.string.game_metadata_not_found,
+                        Toast.LENGTH_SHORT).show();
+                if (success) reloadGameInPlace(game.id);
+            });
+        });
+    }
+
+    private void syncMetadataToCard(Game game) {
+        Toast.makeText(requireContext(), R.string.game_cover_syncing, Toast.LENGTH_SHORT).show();
+        LauncherMetadataBridge.syncCoverToGameAsync(requireContext(), game, success -> {
+            Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
+                Toast.makeText(requireContext(), success
+                                ? R.string.game_cover_synced : R.string.game_cover_unavailable,
+                        Toast.LENGTH_SHORT).show();
+                if (success) reloadGameInPlace(game.id);
+            });
+        });
+    }
+
+    private void openOnsGameSettings(Game game) {
+        try {
+            Intent intent = new Intent(requireContext(), LauncherKrkrSettingsActivity.class);
+            intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id);
+            startActivity(intent);
+        } catch (ActivityNotFoundException | IllegalArgumentException error) {
+            DevLogger.w(TAG, "Failed to open ONS game settings", error);
+            Toast.makeText(requireContext(), R.string.game_action_ons_open_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void confirmDeleteGame(Game game) {
+        PadDialogFactory.showDangerConfirm(
+                requireContext(),
+                getString(R.string.game_action_delete),
+                getString(R.string.game_delete_message, GameMetadataFormatter.safeTitle(requireContext(), game)),
+                getString(R.string.game_common_remove),
+                () -> deleteGame(game));
+    }
+
+    private void deleteGame(Game game) {
+        Context appContext = requireContext().getApplicationContext();
+        AppExecutors.runOnSingle(() -> {
+            boolean deleted;
+            try {
+                deleted = LauncherRepositoryBridge.deleteGame(appContext, game.id) > 0;
+            } catch (Exception error) {
+                DevLogger.w(TAG, "Failed to delete game", error);
+                deleted = false;
+            }
+            boolean deletedFinal = deleted;
+            Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
+                if (!deletedFinal) {
+                    Toast.makeText(appContext, R.string.game_delete_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                removeGameInPlace(game.id);
+                Toast.makeText(appContext, R.string.game_deleted, Toast.LENGTH_SHORT).show();
             });
         });
     }

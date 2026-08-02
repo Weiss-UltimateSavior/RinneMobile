@@ -19,8 +19,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -84,17 +82,8 @@ public class AvatarCropActivity extends AppCompatActivity {
 
     /** 沉浸式：透明状态栏 + launcher_bg_color 作为导航栏背景。 */
     private void configureEdgeToEdgeWindow() {
-        Window window = getWindow();
         if (getSupportActionBar() != null) getSupportActionBar().hide();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!LauncherActivity.isLauncherDarkMode(this)) {
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private View buildRoot(String inputUriString) {
@@ -570,7 +559,9 @@ public class AvatarCropActivity extends AppCompatActivity {
             Bitmap cropped;
             try {
                 cropped = Bitmap.createBitmap(bitmap, sx, sy, ss, ss);
-            } catch (Throwable t) {
+            } catch (OutOfMemoryError error) {
+                throw error;
+            } catch (IllegalArgumentException error) {
                 return null;
             }
             if (cropped == null) return null;

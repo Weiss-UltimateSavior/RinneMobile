@@ -54,7 +54,11 @@ object LauncherCoverLoader {
         options.inSampleSize = calculateSampleSize(options.outWidth, options.outHeight)
         options.inJustDecodeBounds = false
         context.contentResolver.openInputStream(Uri.parse(uriText))?.use { BitmapFactory.decodeStream(it, null, options) }
-    } catch (_: Throwable) { null }
+    } catch (error: OutOfMemoryError) {
+        throw error
+    } catch (_: Exception) {
+        null
+    }
 
     private fun calculateSampleSize(width: Int, height: Int): Int {
         if (width <= 0 || height <= 0) return 1

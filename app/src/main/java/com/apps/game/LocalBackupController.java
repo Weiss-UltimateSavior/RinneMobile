@@ -1,5 +1,6 @@
 package com.apps.game;
 
+import android.content.ActivityNotFoundException;
 import android.net.Uri;
 import android.util.Log;
 
@@ -50,20 +51,22 @@ public final class LocalBackupController {
                 int sessionCount = root.optJSONArray("play_sessions") == null ? 0 : root.optJSONArray("play_sessions").length();
                 int metaCount = root.optJSONArray("metadata_cache") == null ? 0 : root.optJSONArray("metadata_cache").length();
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     host.setImportInProgress(false);
                     host.showConfirmDialog(host.getString(R.string.game_backup_import_success),
                             host.getString(R.string.game_backup_import_counts,
                                     gameCount, sessionCount, metaCount),
                             host.getString(R.string.game_common_got_it), () -> {});
                 });
-            } catch (Throwable t) {
-                Log.e("LauncherManage", "import backup failed", t);
+            } catch (Error error) {
+                throw error;
+            } catch (Exception error) {
+                Log.e("LauncherManage", "import backup failed", error);
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     host.setImportInProgress(false);
                     host.showConfirmDialog(host.getString(R.string.game_import_failed),
-                            t.getMessage() != null ? t.getMessage()
+                            error.getMessage() != null ? error.getMessage()
                                     : host.getString(R.string.game_common_unknown_error),
                             host.getString(R.string.game_common_got_it), () -> {});
                 });
@@ -74,9 +77,9 @@ public final class LocalBackupController {
     public void exportLocalBackupToFile() {
         try {
             backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".ykbak");
-        } catch (Throwable t) {
+        } catch (ActivityNotFoundException | IllegalStateException | IllegalArgumentException | SecurityException error) {
             host.showConfirmDialog(host.getString(R.string.game_save_export_failed),
-                    t.getMessage() != null ? t.getMessage()
+                    error.getMessage() != null ? error.getMessage()
                             : host.getString(R.string.game_common_unknown_error),
                     host.getString(R.string.game_common_got_it), () -> {});
         }
@@ -88,25 +91,27 @@ public final class LocalBackupController {
             try {
                 LauncherSyncBridge.GzipBackup backup = LauncherSyncBridge.exportLocalBackupAsGzip(appContext);
                 try (java.io.OutputStream out = appContext.getContentResolver().openOutputStream(uri)) {
-                    if (out == null) throw new Exception("openOutputStream failed");
+                    if (out == null) throw new java.io.IOException("openOutputStream failed");
                     out.write(backup.bytes);
                     out.flush();
                 }
                 int compressedKb = backup.bytes.length / 1024;
                 int originalKb = backup.originalSize / 1024;
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     host.showConfirmDialog(host.getString(R.string.game_backup_export_success),
                             host.getString(R.string.game_backup_export_size,
                                     compressedKb, originalKb),
                             host.getString(R.string.game_common_got_it), () -> {});
                 });
-            } catch (Throwable t) {
-                Log.e("LauncherManage", "export backup failed", t);
+            } catch (Error error) {
+                throw error;
+            } catch (Exception error) {
+                Log.e("LauncherManage", "export backup failed", error);
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     host.showConfirmDialog(host.getString(R.string.game_save_export_failed),
-                            t.getMessage() != null ? t.getMessage()
+                            error.getMessage() != null ? error.getMessage()
                                     : host.getString(R.string.game_common_unknown_error),
                             host.getString(R.string.game_common_got_it), () -> {});
                 });

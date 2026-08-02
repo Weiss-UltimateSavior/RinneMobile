@@ -29,6 +29,11 @@ public interface ManageHost {
     /** Fragment 是否仍附加。 */
     boolean isAdded();
 
+    /** Fragment 及其 ViewBinding 是否仍可安全执行 UI 更新。 */
+    default boolean isUiAvailable() {
+        return isAdded();
+    }
+
     /** 主线程消息队列。 */
     RxMainQueue getMainQueue();
 

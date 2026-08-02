@@ -1,14 +1,11 @@
 package com.apps.sync;
 
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,13 +16,13 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherSyncCenterBinding;
 import com.core.launcherbridge.LauncherSyncBridge;
 import com.core.util.AppExecutors;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
@@ -154,6 +151,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             boolean ok = LauncherSyncBridge.testConnection(this);
             runOnUiThread(() -> {
+                if (isUiUnavailable()) return;
                 Toast.makeText(this, ok ? R.string.sync_connection_success
                         : R.string.sync_connection_failed, Toast.LENGTH_SHORT).show();
                 renderStatus();
@@ -179,13 +177,17 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
             @Override
             public void onComplete(String message) {
                 runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
                     Toast.makeText(LauncherSyncCenterActivity.this, message, Toast.LENGTH_SHORT).show();
                     renderStatus();
                 });
             }
             @Override
             public void onError(String error) {
-                runOnUiThread(() -> Toast.makeText(LauncherSyncCenterActivity.this, error, Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
+                    Toast.makeText(LauncherSyncCenterActivity.this, error, Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
@@ -206,21 +208,27 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
             try {
                 LauncherSyncBridge.GzipBackup backup = LauncherSyncBridge.exportLocalBackupAsGzip(this);
                 try (OutputStream out = getContentResolver().openOutputStream(uri)) {
-                    if (out == null) throw new Exception("openOutputStream failed");
+                    if (out == null) throw new IOException("openOutputStream failed");
                     out.write(backup.bytes);
                     out.flush();
                 }
-                runOnUiThread(() -> Toast.makeText(this,
-                        getString(R.string.sync_backup_completed,
-                                backup.bytes.length / 1024, backup.originalSize / 1024),
-                        Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
+                    Toast.makeText(this,
+                            getString(R.string.sync_backup_completed,
+                                    backup.bytes.length / 1024, backup.originalSize / 1024),
+                            Toast.LENGTH_LONG).show();
+                });
             } catch (Error error) {
                 // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续运行
                 throw error;
             } catch (Exception e) {
                 Log.e("LauncherSync", "export backup failed", e);
-                runOnUiThread(() -> Toast.makeText(this,
-                        getString(R.string.sync_backup_failed, e.getMessage()), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
+                    Toast.makeText(this,
+                            getString(R.string.sync_backup_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
@@ -233,6 +241,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
             try {
                 LauncherSyncBridge.importLocalBackupFromUri(this, uri);
                 runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
                     importInProgress = false;
                     Toast.makeText(this, R.string.sync_import_completed, Toast.LENGTH_LONG).show();
                 });
@@ -242,6 +251,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Log.e("LauncherSync", "import backup failed", e);
                 runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
                     importInProgress = false;
                     Toast.makeText(this, getString(R.string.sync_import_failed, e.getMessage()),
                             Toast.LENGTH_LONG).show();
@@ -254,16 +264,12 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
+    private boolean isUiUnavailable() {
+        return isFinishing() || isDestroyed() || binding == null;
+    }
+
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

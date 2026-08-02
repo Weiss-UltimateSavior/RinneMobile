@@ -9,17 +9,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.apps.LauncherActivity
+import com.apps.PadUi.PadDialogFactory
 import com.apps.account.LauncherDisclaimerActivity
+import com.apps.home.LauncherHomeAccountBottomSheet
 import com.apps.settings.LauncherAppSettingsActivity
-import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
+import com.apps.util.LauncherUrlOpener
 import com.core.R
 import com.core.launcherbridge.LauncherUpdateBridge
 
@@ -64,15 +67,13 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
         detailContainer = view.findViewById(R.id.hdSettingsDetailContainer)
         LauncherTheme.applyPrimaryTone(view)
         val actionList = view.findViewById<LinearLayout>(R.id.hdSettingsActionList)
-        repeat(actionList.childCount) { index ->
-            LauncherTheme.styleManageRow(actionList.getChildAt(index))
-        }
         val toneRow = view.findViewById<View>(R.id.hdSettingsTone)
         toneRow.visibility = if (LauncherActivity.isFollowingSystemTone(requireContext())) {
             View.GONE
         } else {
             View.VISIBLE
         }
+        applySettingsActionIcons(view, actionList)
         view.findViewById<View>(R.id.hdSettingsApp).setOnClickListener {
             showEmbeddedActivity("hd_app_settings", LauncherAppSettingsActivity::class.java)
         }
@@ -88,6 +89,25 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
             showEmbeddedActivity("hd_disclaimer", LauncherDisclaimerActivity::class.java)
         }
         showEmbeddedActivity("hd_app_settings", LauncherAppSettingsActivity::class.java)
+    }
+
+    private fun applySettingsActionIcons(view: View, actionList: LinearLayout) {
+        val rowIdsByAction = mapOf(
+            LauncherHomeAccountBottomSheet.ACTION_APP_SETTINGS to R.id.hdSettingsApp,
+            LauncherHomeAccountBottomSheet.ACTION_THEME to R.id.hdSettingsTheme,
+            LauncherHomeAccountBottomSheet.ACTION_TONE to R.id.hdSettingsTone,
+            LauncherHomeAccountBottomSheet.ACTION_UPDATE to R.id.hdSettingsUpdate,
+            LauncherHomeAccountBottomSheet.ACTION_FEEDBACK to R.id.hdSettingsFeedback,
+            LauncherHomeAccountBottomSheet.ACTION_DISCLAIMER to R.id.hdSettingsDisclaimer,
+        )
+        LauncherHomeAccountBottomSheet.accountActions(requireContext()).forEach { action ->
+            val row = rowIdsByAction[action.id]?.let { view.findViewById<LinearLayout>(it) }
+                ?: return@forEach
+            (row.getChildAt(0) as? ImageView)?.setImageResource(action.iconRes)
+        }
+        repeat(actionList.childCount) { index ->
+            LauncherTheme.styleManageRow(actionList.getChildAt(index))
+        }
     }
 
     override fun onResume() {
@@ -144,7 +164,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
         if (LauncherActivity.isFollowingSystemTone(requireContext())) return
         val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
         val nextTone = getString(if (darkMode) R.string.home_light_mode else R.string.home_dark_mode)
-        LauncherDialogFactory.showConfirm(
+        PadDialogFactory.showConfirm(
             requireContext(),
             getString(R.string.home_switch_tone),
             getString(R.string.home_switch_tone_message, nextTone),
@@ -167,7 +187,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
                     hasUpdate: Boolean,
                 ) {
                     if (!isAdded) return
-                    LauncherTheme.showUpdateResultDialog(
+                    PadDialogFactory.showUpdateResult(
                         requireContext(),
                         info,
                         currentVersion,
@@ -178,7 +198,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
 
                 override fun onError(message: String) {
                     if (!isAdded) return
-                    LauncherTheme.showUpdateResultDialog(
+                    PadDialogFactory.showUpdateResult(
                         requireContext(),
                         null,
                         "",
@@ -191,22 +211,21 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
     }
 
     private fun showFeedbackOptions() {
-        LauncherDialogFactory.showStandardActionChoices(
+        PadDialogFactory.showActionChoices(
             requireContext(),
             getString(R.string.home_feedback),
             arrayOf(
                 getString(R.string.home_github_repository),
                 getString(R.string.home_qq_group),
             ),
+            -1,
         ) { index ->
             openExternalUrl(if (index == 0) GITHUB_URL else QQ_GROUP_URL)
         }
     }
 
     private fun openExternalUrl(url: String) {
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        } catch (_: Throwable) {
+        if (!LauncherUrlOpener.open(requireContext(), url)) {
             Toast.makeText(requireContext(), R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show()
         }
     }

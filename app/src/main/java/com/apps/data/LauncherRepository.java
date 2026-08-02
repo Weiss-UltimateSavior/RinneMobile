@@ -255,7 +255,7 @@ public class LauncherRepository {
             Configuration configuration = new Configuration(appContext.getResources().getConfiguration());
             configuration.setLocale(locales.get(0));
             return appContext.createConfigurationContext(configuration);
-        } catch (Throwable ignored) {
+        } catch (RuntimeException ignored) {
             return appContext;
         }
     }

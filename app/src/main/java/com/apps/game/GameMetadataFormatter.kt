@@ -11,7 +11,7 @@ import java.util.regex.Pattern
 /**
  * 游戏元数据格式化与解析的纯静态工具集。
  *
- * 来源：LauncherLibraryFragment / PadManageFragment / LauncherGameActionController 三处重复实现。
+ * 来源：LauncherLibraryFragment / PadManageFragment / PadGameFragment 三处重复实现。
  * 全部为无状态纯函数，可被任意 Fragment / Controller / Adapter 调用。
  */
 object GameMetadataFormatter {
@@ -85,7 +85,7 @@ object GameMetadataFormatter {
                 total = (total + delta).toLong()
             }
             if (found) total else null
-        } catch (t: Throwable) {
+        } catch (error: RuntimeException) {
             null
         }
     }

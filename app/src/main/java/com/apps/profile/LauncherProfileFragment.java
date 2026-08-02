@@ -303,7 +303,8 @@ public class LauncherProfileFragment extends Fragment {
                 day.add(Calendar.DAY_OF_YEAR, 1);
             }
             if (getActivity() != null) getActivity().runOnUiThread(() -> {
-                if (binding != null) binding.profileWeeklyPlaytimeChart.setDailyDurations(durations, labels);
+                if (!isAdded() || binding == null) return;
+                binding.profileWeeklyPlaytimeChart.setDailyDurations(durations, labels);
             });
         });
     }
@@ -512,7 +513,7 @@ public class LauncherProfileFragment extends Fragment {
             final String savedUri = Uri.fromFile(outFile).toString();
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
-                if (!isAdded()) return;
+                if (!isAdded() || binding == null) return;
                 if (!success) {
                     Toast.makeText(requireContext(), R.string.profile_image_save_failed,
                             Toast.LENGTH_SHORT).show();

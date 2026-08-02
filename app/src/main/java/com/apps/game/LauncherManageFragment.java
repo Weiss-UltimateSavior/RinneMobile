@@ -243,6 +243,11 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
                 * tabletPortraitScale());
     }
 
+    @Override
+    public boolean isUiAvailable() {
+        return isAdded() && binding != null;
+    }
+
     // ==================== ManageHost 实现 ====================
     // requireContext() / isAdded() / startActivity() 由 Fragment 父类 final 方法隐式满足接口契约
 

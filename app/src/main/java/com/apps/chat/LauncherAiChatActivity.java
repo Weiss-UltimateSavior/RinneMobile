@@ -21,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -468,7 +467,9 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         binding.aiChatMessages.setLayoutParams(margins);
     }
 
-    private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (ColorUtils.calculateLuminance(LauncherTheme.primary(this)) > 0.5d) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }
+    private void configureEdgeToEdgeWindow() {
+        com.apps.LauncherEdgeToEdgeHelper.apply(this, true, true);
+    }
     private void applySavedToneMode() { LauncherActivity.applySavedToneMode(this); }
     @Override protected void attachBaseContext(android.content.Context context) { super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(context)); }
     @Override public void onBackPressed() { LauncherMotion.finish(this); }

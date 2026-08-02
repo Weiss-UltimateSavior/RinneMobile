@@ -1,17 +1,13 @@
 package com.apps.game;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherMotion;
@@ -55,7 +51,10 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
                 if (!isSupportedBuiltInGame(game)) continue;
                 counts.put(engine, (counts.containsKey(engine) ? counts.get(engine) : 0) + 1);
             }
-            runOnUiThread(() -> renderCategories(counts));
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                renderCategories(counts);
+            });
         });
     }
 

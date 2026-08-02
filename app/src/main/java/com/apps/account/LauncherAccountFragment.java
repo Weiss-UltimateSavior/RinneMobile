@@ -1,7 +1,6 @@
 package com.apps.account;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +20,7 @@ import com.apps.profile.LauncherProfileFragment;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
+import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherAccountFragment extends Fragment {
@@ -246,9 +246,7 @@ public class LauncherAccountFragment extends Fragment {
     }
 
     private void openExternalUrl(String url) {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-        } catch (Throwable t) {
+        if (!LauncherUrlOpener.open(requireContext(), url)) {
             Toast.makeText(requireContext(), R.string.social_cannot_open_link, Toast.LENGTH_SHORT).show();
         }
     }

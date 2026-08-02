@@ -1,7 +1,5 @@
 package com.apps.settings;
 
-import android.content.ActivityNotFoundException;
-import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -24,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import com.apps.LauncherActivity;
+import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class ResourceStationActivity extends AppCompatActivity {
@@ -226,11 +225,7 @@ public class ResourceStationActivity extends AppCompatActivity {
     }
 
     private void openExternalUri(Uri uri) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        intent.addCategory(Intent.CATEGORY_BROWSABLE);
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
+        if (!LauncherUrlOpener.open(this, uri == null ? null : uri.toString())) {
             Toast.makeText(this, com.core.R.string.settings_no_app_for_link, Toast.LENGTH_SHORT).show();
         }
     }

@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.apps.LauncherActivity
 import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
+import com.apps.PadUi.PadDialogFactory
 import com.apps.data.LauncherViewModel
 import com.apps.theme.LauncherTheme
 import com.core.R
@@ -87,7 +88,7 @@ class HdModeActivity : AppCompatActivity() {
                     ) {
                         if (isFinishing || isDestroyed) return
                         if (hasUpdate) {
-                            LauncherTheme.showUpdateResultDialog(
+                            PadDialogFactory.showUpdateResult(
                                 this@HdModeActivity,
                                 info,
                                 currentVersion,

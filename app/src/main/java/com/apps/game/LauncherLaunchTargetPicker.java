@@ -76,6 +76,7 @@ final class LauncherLaunchTargetPicker {
         AppExecutors.runOnIo(() -> {
             List<Target> targets = scanTargets(appContext, directoryUri, engine);
             activity.runOnUiThread(() -> {
+                if (activity.isFinishing() || activity.isDestroyed()) return;
                 if (!dialog.isShowing()) return;
                 root.removeView(status);
                 if (targets.isEmpty()) {
@@ -142,7 +143,8 @@ final class LauncherLaunchTargetPicker {
         DocumentFile[] files;
         try {
             files = directory.listFiles();
-        } catch (Throwable ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "list launch target files failed", error);
             return;
         }
         if (files == null) return;
@@ -189,7 +191,8 @@ final class LauncherLaunchTargetPicker {
         try {
             String name = file.getName();
             return name == null ? "" : name;
-        } catch (Throwable ignored) {
+        } catch (Exception error) {
+            Log.d(TAG, "read launch target name failed", error);
             return "";
         }
     }

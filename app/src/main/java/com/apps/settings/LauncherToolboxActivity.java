@@ -1,19 +1,14 @@
 package com.apps.settings;
 
-import android.content.Intent;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherToolboxBinding;
@@ -21,6 +16,7 @@ import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
+import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherToolboxActivity extends AppCompatActivity {
@@ -65,7 +61,12 @@ public class LauncherToolboxActivity extends AppCompatActivity {
                 getString(R.string.settings_open_download_title),
                 getString(R.string.settings_open_download_message, name),
                 getString(R.string.settings_confirm),
-                () -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
+                () -> {
+                    // 打开失败时提示用户，避免静默无响应
+                    if (!LauncherUrlOpener.open(this, url)) {
+                        Toast.makeText(this, R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void applySystemBarInsets() {
@@ -92,17 +93,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     }
 
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) {
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {

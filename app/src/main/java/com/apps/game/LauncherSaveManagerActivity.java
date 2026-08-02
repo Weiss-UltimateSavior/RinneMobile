@@ -1,12 +1,8 @@
 package com.apps.game;
 
-import android.graphics.Color;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -14,7 +10,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
@@ -66,6 +61,7 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             Game loaded = LauncherRepositoryBridge.findGameById(this, gameId);
             runOnUiThread(() -> {
+                if (isUiUnavailable()) return;
                 game = loaded;
                 renderGame();
             });
@@ -96,8 +92,11 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
         AppExecutors.runOnSingle(() -> {
             try {
                 int count = saveManager.exportInternalSaveToZip(game, destinationUri);
-                runOnUiThread(() -> Toast.makeText(this,
-                        getString(R.string.game_save_exported_count, count), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
+                    Toast.makeText(this,
+                            getString(R.string.game_save_exported_count, count), Toast.LENGTH_LONG).show();
+                });
             } catch (Exception e) {
                 GameDiagnostics.record(this, "save_exception", game,
                         getString(R.string.game_save_export_failed_detail,
@@ -121,6 +120,7 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
             try {
                 int count = saveManager.importInternalSaveFromZip(game, sourceUri, true);
                 runOnUiThread(() -> {
+                    if (isUiUnavailable()) return;
                     Toast.makeText(this, getString(R.string.game_save_imported_count, count),
                             Toast.LENGTH_LONG).show();
                 });
@@ -162,9 +162,16 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
     }
 
     private void showError(String title, Exception error) {
-        runOnUiThread(() -> com.apps.theme.LauncherDialogFactory.showInfo(this, title,
-                error.getMessage() == null
-                        ? getString(R.string.game_common_unknown_error) : error.getMessage()));
+        runOnUiThread(() -> {
+            if (isUiUnavailable()) return;
+            com.apps.theme.LauncherDialogFactory.showInfo(this, title,
+                    error.getMessage() == null
+                            ? getString(R.string.game_common_unknown_error) : error.getMessage());
+        });
+    }
+
+    private boolean isUiUnavailable() {
+        return isFinishing() || isDestroyed() || binding == null;
     }
 
     private void applySystemBarInsets() {

@@ -68,6 +68,7 @@ final class LauncherAppPickerDialog {
         AppExecutors.runOnIo(() -> {
             List<Item> items = loadLaunchableApps(activity);
             activity.runOnUiThread(() -> {
+                if (activity.isFinishing() || activity.isDestroyed()) return;
                 if (!dialog.isShowing()) return;
                 loading.setVisibility(View.GONE);
                 list.setVisibility(View.VISIBLE);

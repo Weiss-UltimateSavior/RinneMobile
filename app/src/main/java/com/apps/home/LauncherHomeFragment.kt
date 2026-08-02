@@ -36,6 +36,7 @@ import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
+import com.apps.util.LauncherUrlOpener
 import com.apps.widget.AvatarCropActivity
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.databinding.FragmentLauncherHomeBinding
@@ -140,10 +141,6 @@ open class LauncherHomeFragment : Fragment() {
         } else {
             viewModel.refreshRecentItems(includeFavorites = includeFavoriteItems())
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
     }
 
     override fun onDestroyView() {
@@ -558,7 +555,7 @@ open class LauncherHomeFragment : Fragment() {
                 }
             }
             RxMainScheduler.post {
-                if (!isAdded || view == null) return@post
+                if (!isAdded || binding == null) return@post
                 if (!success) {
                     Toast.makeText(app, com.core.R.string.home_avatar_save_failed, Toast.LENGTH_SHORT).show()
                     return@post
@@ -685,9 +682,8 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     private fun openExternalUrl(url: String?) {
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        } catch (throwable: Throwable) {
+        // 统一走 LauncherUrlOpener：scheme 白名单校验 + ActivityNotFoundException 捕获
+        if (!LauncherUrlOpener.open(requireContext(), url)) {
             Toast.makeText(requireContext(), com.core.R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show()
         }
     }

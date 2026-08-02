@@ -1,17 +1,12 @@
 package com.apps.account;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherPasswordResetBinding;

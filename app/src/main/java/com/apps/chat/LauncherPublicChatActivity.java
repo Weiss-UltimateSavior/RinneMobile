@@ -2,7 +2,6 @@ package com.apps.chat;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.graphics.Color;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.Editable;
@@ -11,14 +10,11 @@ import android.text.TextWatcher;
 import android.view.animation.LinearInterpolator;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -237,17 +233,28 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
                 : connectionState + " · " + channelState);
     }
 
-    private void showError(String message) { if (!isFinishing()) Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
+    private void showError(String message) { if (!isUiUnavailable()) Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
+
+    private void runOnUiIfAlive(Runnable action) {
+        runOnUiThread(() -> {
+            if (isUiUnavailable()) return;
+            action.run();
+        });
+    }
+
+    private boolean isUiUnavailable() {
+        return isFinishing() || isDestroyed() || binding == null;
+    }
 
     private final class RealtimeCallbacks implements LauncherPublicChatBridge.RealtimeListener {
-        @Override public void onConnected() { runOnUiThread(() -> { connectionState = getString(R.string.social_connected); renderStatus(); scheduleHeartbeat(); }); }
-        @Override public void onMessageCreated(LauncherPublicChatBridge.Message message) { runOnUiThread(() -> upsert(message, true)); }
-        @Override public void onMessageDeleted(int messageId) { runOnUiThread(() -> removeMessage(messageId)); }
-        @Override public void onMessagePinned(LauncherPublicChatBridge.Message message) { runOnUiThread(() -> upsert(message, false)); }
-        @Override public void onReadonlyChanged(boolean value) { runOnUiThread(() -> { readonly = value; renderStatus(); }); }
-        @Override public void onMuted(boolean value, Long until, String reason) { runOnUiThread(() -> { muted = value; muteReason = reason; renderStatus(); }); }
+        @Override public void onConnected() { runOnUiIfAlive(() -> { connectionState = getString(R.string.social_connected); renderStatus(); scheduleHeartbeat(); }); }
+        @Override public void onMessageCreated(LauncherPublicChatBridge.Message message) { runOnUiIfAlive(() -> upsert(message, true)); }
+        @Override public void onMessageDeleted(int messageId) { runOnUiIfAlive(() -> removeMessage(messageId)); }
+        @Override public void onMessagePinned(LauncherPublicChatBridge.Message message) { runOnUiIfAlive(() -> upsert(message, false)); }
+        @Override public void onReadonlyChanged(boolean value) { runOnUiIfAlive(() -> { readonly = value; renderStatus(); }); }
+        @Override public void onMuted(boolean value, Long until, String reason) { runOnUiIfAlive(() -> { muted = value; muteReason = reason; renderStatus(); }); }
         @Override public void onAnnouncementChanged(LauncherPublicChatBridge.Announcement announcement) { LauncherPublicChatBridge.loadAnnouncements(LauncherPublicChatActivity.this, new LauncherPublicChatBridge.AnnouncementsCallback() { @Override public void onSuccess(List<LauncherPublicChatBridge.Announcement> list) { renderAnnouncements(list); } @Override public void onError(String message) { showError(message); } }); }
-        @Override public void onError(String message) { runOnUiThread(() -> { connectionState = getString(R.string.social_disconnected); renderStatus(); }); }
+        @Override public void onError(String message) { runOnUiIfAlive(() -> { connectionState = getString(R.string.social_disconnected); renderStatus(); }); }
     }
 
     @Override protected void onDestroy() { cancelHeartbeat(); stopSendAnimation(); if (socket != null) socket.close(1000, "页面关闭"); super.onDestroy(); }
@@ -327,7 +334,9 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         binding.publicChatMessages.setLayoutParams(margins);
     }
 
-    private void configureEdgeToEdgeWindow() { boolean dark = LauncherActivity.isLauncherDarkMode(this); Window window = getWindow(); window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS); window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE); window.setStatusBarColor(Color.TRANSPARENT); window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color)); int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN; if (ColorUtils.calculateLuminance(LauncherTheme.primary(this)) > 0.5d) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; if (!dark) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; window.getDecorView().setSystemUiVisibility(flags); }
+    private void configureEdgeToEdgeWindow() {
+        com.apps.LauncherEdgeToEdgeHelper.apply(this, true, true);
+    }
     private void applySavedToneMode() { LauncherActivity.applySavedToneMode(this); }
     @Override protected void attachBaseContext(android.content.Context newBase) { super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase)); }
 }

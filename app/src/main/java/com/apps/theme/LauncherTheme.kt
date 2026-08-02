@@ -2,6 +2,7 @@ package com.apps.theme
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
@@ -570,7 +571,7 @@ object LauncherTheme {
         if (view == null || view.id == View.NO_ID) return ""
         return try {
             view.resources.getResourceEntryName(view.id)
-        } catch (ignored: Throwable) {
+        } catch (ignored: Resources.NotFoundException) {
             ""
         }
     }

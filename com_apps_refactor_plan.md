@@ -83,26 +83,29 @@
 
 ### 阶段 5：大文件拆分 + UI 层 IO 下沉 + 重复类删除（P2，渐进）
 
-#### 5.1 大文件拆分（>500 行，按行数降序，共 16 个）
+#### 5.1 大文件拆分（>500 行，按行数降序，2026-08-02 校准）
 
-| 文件 | 当前行数 | 拆分方案 |
-|------|------|----------|
-| game/LauncherLibraryFragment.kt | 1139 | 拆 LibraryToolbarUi / LibrarySwipeGesture / LibraryPagingHelper |
-| PadUi/PadSettingsActivity.java | 867 | 按 Section 拆 Theme/Engine/Metadata/Account Controller |
-| theme/LauncherDialogFactory.kt | 805 | 拆 Confirm/Choice/Loading/Update 子 object |
-| PadUi/PadManageFragment.kt | 752 | 拆 SearchCategory / SyncDelegate / GameActions |
-| home/LauncherHomeFragment.kt | 698 | 抽 LauncherAvatarController + LauncherRecentListRenderer |
-| profile/LauncherProfileFragment.java | 665 | 抽 ProfileRankFetcher + ProfileImageSync |
-| theme/LauncherTheme.kt | 653 | 拆 Colors/Drawables/Switch/Spinner 子 object |
-| LauncherActivity.kt | 646 | companion 委托层评估收窄（已 -30 行） |
-| PadUi/PadGameFragment.java | 605 | 拆 PadGamePagingController / PadGameAvatarRenderer |
-| theme/LauncherParticleView.java | 604 | 按 style 拆 ParticleStyleStrategy |
-| widget/AvatarCropActivity.java | 592 | 抽 AvatarCropView + AvatarBitmapDecoder |
-| **game/LauncherGameActionController.java** | **558** | **整体删除（见 5.3）** |
-| agent/LocalAgentActivity.java | 545 | 抽 LocalAgentCallback 命名类 |
-| game/LauncherAddGameActivity.java | 522 | 图片 IO 下沉（随 5.2） |
-| game/GameActionMenuFactory.kt | 520 | 抽 EditPlayTimeDialog 后降至 ~300 |
-| game/LauncherGameEditActivity.java | 500 | 图片 IO 下沉（随 5.2） |
+| 文件 | 当前行数 | 较基线变化 | 拆分方案 |
+|------|------|------|----------|
+| game/LauncherLibraryFragment.kt | 1139 | — | 拆 LibraryToolbarUi / LibrarySwipeGesture / LibraryPagingHelper |
+| PadUi/PadGameFragment.java | 783 | +178（Phase 5.3 迁移 GameActionMenuFactory 后实现 7 个 ActionMenuCallbacks 回调） | 拆 PadGamePagingController / PadGameAvatarRenderer |
+| PadUi/PadSettingsActivity.java | 866 | -1 | 按 Section 拆 Theme/Engine/Metadata/Account Controller |
+| theme/LauncherDialogFactory.kt | 774 | -31（W2 提取 LauncherUpdateFormatter + §1 删 dp 副本） | 拆 Confirm/Choice/Loading/Update 子 object |
+| PadUi/PadManageFragment.kt | 750 | -2（删 loadNextPage 死代码） | 拆 SearchCategory / SyncDelegate / GameActions |
+| home/LauncherHomeFragment.kt | 694 | -4（删空 onPause + ACTION_VIEW 迁 LauncherUrlOpener） | 抽 LauncherAvatarController + LauncherRecentListRenderer |
+| profile/LauncherProfileFragment.java | 666 | +1 | 抽 ProfileRankFetcher + ProfileImageSync |
+| theme/LauncherTheme.kt | 654 | +1（catch 精确化：Throwable → Resources.NotFoundException） | 拆 Colors/Drawables/Switch/Spinner 子 object |
+| LauncherActivity.kt | 644 | -2 | companion 委托层评估收窄（已 -30 行） |
+| theme/LauncherParticleView.java | 607 | +3（补 setFocusable/setClickable/setFocusableInTouchMode） | 按 style 拆 ParticleStyleStrategy |
+| widget/AvatarCropActivity.java | 583 | -9 | 抽 AvatarCropView + AvatarBitmapDecoder |
+| agent/LocalAgentActivity.java | 548 | +3（独立 e2e 实现补注释引用 §8.1） | 抽 LocalAgentCallback 命名类 |
+| game/LauncherAddGameActivity.java | 544 | +22 | 图片 IO 下沉（随 5.2） |
+| game/GameActionMenuFactory.kt | 520 | — | 抽 EditPlayTimeDialog 后降至 ~300 |
+| game/LauncherGameEditActivity.java | 511 | +11 | 图片 IO 下沉（随 5.2） |
+| ~~game/LauncherGameActionController.java~~ | ~~558~~ | **已删除**（Phase 5.3 完成） | ✅ 整体删除 |
+| ~~PadUi/PadDialogFactory.kt~~ | ~~538~~ | **已回落 469 行**（W4 拆出 PadUpdateDialog + §1 删 dp 副本） | ✅ 移出清单 |
+
+> Phase 5.3 删除 `LauncherGameActionController.java`（-558 行）后，`PadGameFragment.java` 因实现 `ActionMenuCallbacks` 7 个回调方法净增 178 行，属预期。后续随 5.1 拆分时一并瘦身。
 
 #### 5.2 UI 层文件 IO 下沉
 
@@ -115,9 +118,12 @@
 | LauncherProfileFragment | 620-631 isReadableImageUri | 主线程 openInputStream ⚠️，移到 AppExecutors.runOnIo |
 | LauncherProfileFragment | 476-533 copyImageToInternal | 提 LauncherImageBridge.copyToInternal |
 
-#### 5.3 重复类整体删除（**未执行，原计划高估已完成**）
+#### 5.3 重复类整体删除（✅ 已完成）
 
-- **`game/LauncherGameActionController.java`（558 行）** 仍存在，与 `GameActionMenuFactory.kt` 95% 重复，仅 `PadGameFragment:161` 一处调用。让 PadGameFragment 改用 `GameActionMenuFactory.showGameActionMenu`（`ActionMenuConfig.includeEditAction=false` 已支持），删除该类。一次性消除 558 行 + 5 处 catch(Throwable) + 5 处 runOnUiThread 未守卫。
+- ~~`game/LauncherGameActionController.java`（558 行）~~ **已删除**。原与 `GameActionMenuFactory.kt` 95% 重复，仅 `PadGameFragment` 一处调用。已让 `PadGameFragment` 改用 `GameActionMenuFactory.showGameActionMenu`（`ActionMenuConfig.includeEditAction=false`、`dialogWidthDp=270`），删除该类。
+- 一次性消除：558 行重复代码 + 5 处 catch(Throwable) + 5 处 runOnUiThread 未守卫（原 `LauncherGameActionController` 内部实现）。
+- 迁移后 `PadGameFragment` 新增 5 处 `if (!isAdded() || binding == null) return` 守卫、`openOnsGameSettings` catch 收窄为 `ActivityNotFoundException | IllegalArgumentException` + DevLogger.w。
+- 子弹窗宽度对齐 §6 标准（详情/编辑时长 288dp、动作菜单/删除确认 270dp），实机确认见阶段 10.3。
 
 ### 阶段 6：HD/Pad 一致性 + 取色统一（P2）
 
@@ -208,7 +214,7 @@
 | AvatarCropActivity.java | 86 | — |
 | LauncherChatSelectActivity.java | 131 | — |
 | TranslationSettingActivity.kt | 347 | — |
-| LocalAgentActivity.java | 494 | — |
+| LocalAgentActivity.java | 494 | 保留独立 e2e（技术理由：WindowCompat insets/cutout/对比度 flags 与 bindInsets()/IME 处理耦合，见 LocalAgentActivity.java:493-519 注释） |
 | LauncherThemeMenuActivity.java | 210 | — |
 | LauncherPublicChatActivity.java | 330 | **特殊**：用 `ColorUtils.calculateLuminance(LauncherTheme.primary(this)) > 0.5d` 决定 LIGHT_STATUS_BAR |
 | LauncherAiChatActivity.java | 471 | **特殊**：同上 luminance 逻辑 |
@@ -282,12 +288,56 @@
 
 #### 9.10 其他存量
 
-| 位置 | 问题 |
-|---|---|
-| `LocalAgentMessageAdapter.kt:105-107` | ViewHolder 内 `dp()`，改 `LauncherTheme.dp(itemView.context, ...)` |
-| `LauncherAiChatActivity:114/206` | 手拼 PopupWindow + Dialog（与 4.1/4.2 合并处理） |
-| `LauncherSyncCenterActivity:209`、`LocalBackupController:91` | `throw new Exception` → `throw IOException` |
-| `EngineOptionCatalog`/`EnginePackageResolver` | Java 存量，迁 Kotlin `object` + `@JvmStatic` |
+| 位置 | 问题 | 状态 |
+|---|---|---|
+| `LocalAgentMessageAdapter.kt:106` | ViewHolder 内 `dp()`（规范 §4 明确禁止） | 待迁移（优先） |
+| `LauncherAiChatActivity:114/206` | 手拼 PopupWindow + Dialog（与 4.1/4.2 合并处理） | 待迁移 |
+| ~~`LauncherSyncCenterActivity:211`、`LocalBackupController:94`~~ | ~~`throw new Exception` → `throw IOException`~~ | ✅ 已修复（Phase 10.1 BLOCKING） |
+| `EngineOptionCatalog`/`EnginePackageResolver` | Java 存量，迁 Kotlin `object` + `@JvmStatic` | 待迁移 |
+| `LauncherModuleCompatibilityActivity:319` | `openInstallPage` 裸 `Intent(ACTION_VIEW)`（已带 catch 兜底，非 §7.5 清单内） | 既有技术债 |
+| `HdSettingsFragment` | `LocalActivityManager` 废弃 API（§8） | 既有技术债（§9.9 已列） |
+
+#### 9.10.1 本地 `dp()` 副本存量分类（2026-08-02 校准，共 18 处）
+
+> Phase 10.1 已删除 `PadDialogFactory.kt` 与 `LauncherDialogFactory.kt` 两处副本（原为 `LauncherTheme.dp` 薄包装）。剩余 18 处按迁移难度分类，建议按 ViewHolder 型 → 简单副本型 → 签名差异/接口契约型顺序渐进清理。
+
+**ViewHolder 型（规范 §4 明确禁止，1 处，优先迁移）**
+
+| 文件:行号 | 签名 | 迁移建议 |
+|---|---|---|
+| `agent/LocalAgentMessageAdapter.kt:106` | `fun dp(value: Int): Int = Math.round(value * itemView.resources.displayMetrics.density)` | 删除方法，调用点改 `LauncherTheme.dp(itemView.context, value)` |
+
+**简单副本型（13 处，机械替换）**
+
+| 文件:行号 | 签名 | 备注 |
+|---|---|---|
+| `PadUi/PadManageFragment.kt:690` | `private fun dp(value: Int): Int = LauncherTheme.dp(requireContext(), value)` | 已是薄包装，直接内联 |
+| `game/LauncherLibraryFragment.kt:1091` | `private fun dp(value: Int): Int = LauncherTheme.dp(requireContext(), value)` | 已是薄包装，直接内联 |
+| `home/LauncherHomeFragment.kt:647` | `protected open fun dp(value: Int): Int` | `protected open` 但无子类 override，可降级 private 或内联 |
+| `settings/ResourceStationActivity.java:239` | `private int dp(int value)` | Activity 内标准副本 |
+| `chat/LauncherPublicChatActivity.java:279` | `private int dp(int value)` | Activity 内标准副本 |
+| `chat/LauncherAiChatActivity.java:411` | `private int dp(int value)` | Activity 内标准副本 |
+| `PadUi/PadGameFragment.java:780` | `private int dp(int value)` | Fragment 内标准副本 |
+| `agent/LocalAgentActivity.java:543` | `private int dp(int value)` | Activity 内标准副本 |
+| `sync/LauncherSyncCenterActivity.java:263` | `private int dp(int value)` | Activity 内标准副本 |
+| `settings/LauncherCustomVndbSearchDialog.java:365` | `private static int dp(Fragment, int)` | 入参为 Fragment |
+| `agent/AgentConfigDialog.java:217` | `private static int dp(Activity, int)` | 入参为 Activity |
+| `widget/AvatarCropActivity.java:222` | `private int dp(float value)` | 入参为 float，需 `value.toInt()` 或扩展 Float 重载 |
+| `LauncherNavRenderer.kt:335` | `private fun dp(value: Int): Int` | 用 `host.resources`，可改 `LauncherTheme.dp(host, value)` |
+
+**签名差异型（2 处，需评估扩展 helper 重载）**
+
+| 文件:行号 | 签名 | 迁移建议 |
+|---|---|---|
+| `widget/LauncherWeeklyPlaytimeChartView.kt:86` | `private fun dp(value: Int): Float = value * resources.displayMetrics.density` | 返回 Float 用于 canvas 坐标，建议在 `LauncherTheme` 增 `dpFloat(context, value): Float` 重载 |
+| `widget/LauncherTabletPortraitScaler.kt:36` | `@JvmStatic fun dp(context, baseDp: Int): Int`（带 `scaleFor` 缩放） | 并行工具非副本，是 `LauncherDialogFactory.dialogWidthPx` 调用目标；评估是否将 `LauncherTheme.dp` 的平板缩放分支统一委托到此处 |
+
+**接口契约型（2 处，需改接口签名）**
+
+| 文件:行号 | 签名 | 迁移建议 |
+|---|---|---|
+| `game/ManageHost.java:49` | `int dp(int value);`（接口方法） | 改默认方法委托 `LauncherTheme.dp` 或 `LauncherTabletPortraitScaler.dp` |
+| `game/LauncherManageFragment.java:240` | `@Override public int dp(int value)`（带 `tabletPortraitScale()` 缩放） | 与上条联动，接口不变则无法删除 |
 
 #### 9.11 runOnUiThread 守卫清单校准（更新阶段 3.2）
 
@@ -305,6 +355,228 @@
 | 引擎包名路由（`"com.core.tyrano"`/`"internal.tyrano"` 等） | core 14 处 + com.apps 重复 | ExternalGameLaunchers/GameSaveFileManager/LauncherGameLaunchBridge/AgentScanRootGateway/GameWorkspaceGateway + com.apps 侧 LauncherSaveCategoryActivity/GameSessionController |
 
 **方案**：设立 `com.core.CorePreferences` object（偏好名/键，注明主源在 `LauncherPreferences`）；引擎包名下沉 `com.core.launcher.EnginePackages`。
+
+### 阶段 10：2026-08-02 收尾审查整改记录
+
+> 本轮代码审查（W1–W6 + INFO）整改归档。BLOCKING 与 W1–W6 均已修复，随 Phase 5.3+8.1（共 51 文件）一并落地；本节记录整改结果与遗留建议。
+
+#### 10.1 已修复项
+
+| 级别 | 项目 | 整改结果 |
+|------|------|----------|
+| BLOCKING×2 | LocalBackupController.java:94、LauncherSyncCenterActivity.java:211 `throw new Exception` → `throw new IOException` | 已修复 |
+| W1 | LauncherHomeFragment.kt 裸 `startActivity(ACTION_VIEW)` + `catch(Throwable)` | 已迁移 `LauncherUrlOpener.open`（scheme 白名单 + 失败 Toast） |
+| W2 | PadDialogFactory/LauncherDialogFactory 重复的 `showUpdateAvailable`/`emptyOr`/`trimUpdateBody` | 已提取为 `LauncherUpdateFormatter`（theme/LauncherUpdateFormatter.kt），两工厂共用 |
+| W3 | configureEdgeToEdgeWindow 迁移后 Color/Window/WindowManager/ContextCompat import 残留 | 已清理 11 处文件（LauncherAiChatActivity 的 import 仍被弹窗逻辑使用，非残留） |
+| W4 | PadDialogFactory.kt 单文件超 500 行 | 已拆分，当前 469 行（更新对话框拆出为 PadUpdateDialog.kt 66 行） |
+| W5 | PadGameFragment 子弹窗宽度 | 已对齐 §6 标准（270/288dp）；需实机确认横屏平板视觉 |
+| W6 | LocalAgentActivity 独立 configureEdgeToEdgeWindow | 保留独立实现，理由已标注于 §8.1 表格 |
+| §1 | PadDialogFactory/LauncherDialogFactory 本地 `private fun dp()` 副本 | 已删除包装，直接调用 `LauncherTheme.dp`（两重载公式相同，语义等价） |
+
+#### 10.2 遗留建议（INFO）
+
+- **提交粒度**：本次提交混合多关注点（Phase 5.3 + 8.1 + W1–W6 + INFO 整改共 59 文件），建议后续按阶段拆分 commit
+- **URL 确认**：`LauncherUpdateFormatter.FALLBACK_RELEASE_URL` 含 "test" 标签（`https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test`），KDoc 已注明"与 LauncherModuleCompatibilityActivity 等处使用的 test 标签保持一致，不可擅自修改"；仍需确认是否为正式发布地址，或改为 `/releases/latest` 通用链接
+- **`LauncherUpdateFormatter` 注解**：公开方法（`buildUpdateMessage`/`emptyOr`/`trimUpdateBody`/`resolveUpdateUrl`）未加 `@JvmStatic`。当前调用方仅 Kotlin（`PadUpdateDialog.kt`、`LauncherDialogFactory.kt`），无 Java 调用方，非必须；为与项目内其他 `object` 风格一致可补加，若后续有 Java 调用方再补亦可
+- **大文件跟踪**：`LauncherDialogFactory.kt` 当前 774 行（含多个 `showXxx` 重载），待阶段 5.1 渐进瘦身（拆 `Confirm/Choice/Loading/Update` 子 object）；`PadGameFragment.java` 783 行（Phase 5.3 迁移后实现 7 个回调净增 178 行），待阶段 5.1 拆 `PadGamePagingController/PadGameAvatarRenderer`
+- **既有技术债（本次未引入，不阻塞）**：
+  - `HdSettingsFragment` 仍用 `LocalActivityManager`（§9.9 已列）
+  - 本地 `dp()` 副本残留 18 处，完整分类与迁移建议见 §9.10.1（ViewHolder 型 1 处优先、简单副本型 13 处机械替换、签名差异型 2 处需扩展 helper、接口契约型 2 处需改接口）
+  - `LauncherModuleCompatibilityActivity:319` `openInstallPage` 裸 `Intent(ACTION_VIEW)`（已带 `catch (ActivityNotFoundException | SecurityException)` 兜底，非 §7.5 迁移清单内）
+  - `ACTION_VIEW`/`FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS` 在未迁移文件中残留（`ResourceStationActivity`、`PadSettingsActivity`、`PadGameModeActivity`、`HdModeActivity` 等，属存量）
+  - `PadDialogFactory.kt:470`、`LauncherDialogFactory.kt:746` 的 `private fun dp()` 已删除（§10.1 已记录）
+
+#### 10.3 实机测试说明（2026-08-02 暂存区）
+
+> 本轮暂存区 59 文件改动（+831/-1039）覆盖 Phase 5.3（删 `LauncherGameActionController`）、Phase 8.1（13 处 EdgeToEdge 迁移）、W1–W6 + INFO 整改（`throw Exception` 收窄、`LauncherUrlOpener` 推广、`LauncherUpdateFormatter` 提取、`PadUpdateDialog` 拆分、dp 副本删除、5 个 account/profile 文件 import 清理）。构建已通过 `./gradlew :app:assembleDebug`，以下为实机验证清单。
+
+##### 0. 测试准备
+
+```bash
+# 构建 Debug APK
+./gradlew :app:assembleDebug
+
+# 安装到设备
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 启动 logcat 监控（关注 ClassCastException/IllegalState/NotFoundException/ActivityNotFound 等）
+adb logcat -c && adb logcat | grep -E "AndroidRuntime|FATAL|System\.err|DevLogger|LauncherApplication|com\.apps"
+```
+
+**测试设备建议**：
+- 竖屏手机（Android 10+，覆盖状态栏/导航栏 inset）
+- 平板横屏（Pad/HD 模式，验证 §6 弹窗宽度兜底与 nav 取色）
+- 含刘海/药丸屏设备（验证 `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`，主要影响 `LocalAgentActivity`）
+- 深色/浅色模式各一遍
+
+##### 1. Phase 5.3：PadGameFragment 长按游戏菜单（P0，必测）
+
+**测试场景**：平板横屏 → 游戏库 → 长按任一游戏卡片
+
+**验证点**：
+- 主菜单项集合与顺序：详情 → 游玩状态 → 收藏 → 密码 → 更多选项 → 取消（与原 `LauncherGameActionController` 一致）
+- 不应出现「编辑」项（`includeEditAction=false`）
+- 菜单宽度 270dp，长游戏名 `singleLine + ellipsize=end` 不挤压底部取消按钮
+- 点击「详情」：弹出 288dp 详情对话框，长 URI/包名应能内部滚动（`maxLines=14` + `ScrollingMovementMethod`）
+- 点击「游玩状态」：弹出单选列表（横屏走 `PadDialogFactory.showSingleChoice`），选中后卡片状态刷新
+- 点击「收藏」：卡片收藏图标立即更新（`toggleFavorite` 走 `AppExecutors.runOnSingle` + `binding == null` 守卫）
+- 点击「密码」：跳转 `GamePasswordLock` 设置/取消密码，回调后卡片刷新
+- 点击「更多选项」：子菜单（编辑游玩时长 → 添加到桌面 → 重新匹配 → 自定义 VNDB → 同步 → [ONS 引擎才显示] ONS 设置 → 删除 → 取消）
+- 点击「删除」：270dp 危险确认弹窗（红色删除按钮），确认后卡片从列表移除
+- 快速连续长按多个游戏：无崩溃（`reloadGameInPlace`/`removeGameInPlace` 守卫生效）
+- ONS 引擎游戏才显示「ONS 设置」：点击应正常跳转 `LauncherKrkrSettingsActivity`（ONScripter 配置页），失败走 `DevLogger.w` + Toast `game_action_ons_open_failed`
+
+**阻断条件**：菜单项缺失/顺序错乱、回调不触发、弹窗宽度异常、Fragment destroy 后崩溃。
+
+##### 2. Phase 8.1：13 处 EdgeToEdge 迁移（P0，必测）
+
+**测试场景**：逐个进入下列页面，验证状态栏/导航栏沉浸式效果、深浅模式切换、屏幕旋转
+
+| # | 页面 | 入口 | 关键验证 |
+|---|------|------|---------|
+| 1 | LauncherActivity | 启动 App | 状态栏透明、nav bar 用 `launcher_bottom_bar_color`、首页粒子背景延伸到状态栏 |
+| 2 | LauncherSyncCenterActivity | 设置 → 同步中心 | 状态栏透明、深浅模式切换后立即生效 |
+| 3 | LauncherToolboxActivity | 设置 → 工具箱 | 同上 |
+| 4 | LauncherAppSettingsActivity | 设置 → 应用设置 | 同上 |
+| 5 | LauncherKrkrSettingsActivity | 长按游戏 → 更多 → ONS 设置 | 同上 |
+| 6 | LauncherMetadataSourceActivity | 设置 → 元数据源 | 同上 |
+| 7 | AvatarCropActivity | 头像编辑 → 裁剪 | 状态栏透明 + ActionBar 隐藏（`getSupportActionBar().hide()` 保留） |
+| 8 | LauncherChatSelectActivity | 聊天列表 | 同上 |
+| 9 | TranslationSettingActivity | 设置 → 翻译设置 | 同上 |
+| 10 | LocalAgentActivity | 设置 → 本地智能体 | **特殊**：保留独立 e2e 实现，验证 WindowCompat insets、刘海 SHORT_EDGES、contrast enforced 在含刘海设备上正常 |
+| 11 | LauncherThemeMenuActivity | 设置 → 主题 | 同上 |
+| 12 | LauncherPublicChatActivity | 进入公共聊天 | **luminance 模式**：状态栏图标颜色按 `LauncherTheme.primary` 亮度决定（亮主色→深色图标，暗主色→浅色图标） |
+| 13 | LauncherAiChatActivity | 进入 AI 聊天 | 同上 |
+
+**通用验证**：
+- 切换深色/浅色模式（设置 → 深色模式），状态栏图标颜色立即翻转
+- 屏幕旋转（横竖屏切换），状态栏布局不错位
+- 含刘海设备：内容不被刘海遮挡（尤其 LocalAgentActivity）
+
+**阻断条件**：状态栏白底白字、nav bar 颜色异常、旋转后布局错位、刘海遮挡内容。
+
+##### 3. W1：LauncherHomeFragment 外链打开（P0）
+
+**测试场景**：首页 → 点击任一外链（如公告/资源站链接）
+
+**验证点**：
+- `http://`/`https://` 链接正常打开系统浏览器
+- 非 http(s) scheme 链接（如 `intent://`、`market://`）应弹 Toast `home_cannot_open_link`，不崩溃
+- 无对应 Activity 的链接应弹同样的 Toast（`LauncherUrlOpener.open` 返回 false）
+
+**阻断条件**：点击外链无响应/崩溃、白名单外 scheme 静默失败。
+
+##### 4. W2：HD 横屏更新检查弹窗（P1）
+
+**测试场景**：HD 横屏 → 设置 → 检查更新
+
+**验证点**：
+- 弹窗宽度走 `PadDialogFactory` 标准（270/288dp），不是竖屏 252dp
+- 有更新时：展示「当前版本 / 最新版本 / 更新日志」，提供「前往下载 / 查看发布页 / 稍后」选项
+- 无更新时：`showInfo` 提示「已是最新版本」
+- 检查失败时：`showInfo` 提示错误信息
+- 点击「前往下载」/「查看发布页」走 `LauncherUrlOpener.open`，失败有 Toast
+- 竖屏手机同样入口（设置 → 检查更新）应走 `LauncherDialogFactory`（252dp），与横屏宽度有差异
+
+**阻断条件**：横屏误用竖屏工厂（宽度 252dp）、URL 打开失败无提示、更新日志拼接乱码。
+
+##### 5. W3 + INFO 3：import 清理 + dp 副本删除（P1，编译已验证，实机观察）
+
+**测试场景**：本轮清理了 11 + 5 = 16 个文件的 unused import + 删除两个 factory 的 `private fun dp()`
+
+**验证点**：
+- 编译通过不代表运行时无 `NoClassDefFoundError`/`NoSuchMethodError`，重点观察：
+  - 进入任一 Pad/HD 弹窗（确认、加载、菜单、单选、危险确认、信息提示），弹窗内间距/高度/宽度视觉无变化（dp 公式位级一致）
+  - 进入竖屏弹窗（`LauncherDialogFactory` 各 `show*`），同上
+- 16 个清理 import 的文件逐个进入对应页面，无 `ClassNotFoundException`：
+  - account 包：账户设置、注册、找回密码
+  - profile 包：模块兼容性、资料编辑
+  - settings 包：资源站、元数据源、工具箱、Krkr 设置
+  - sync 包：同步中心
+  - chat 包：聊天选择、公共聊天、AI 聊天
+  - theme 包：主题菜单
+  - widget 包：头像裁剪
+
+**阻断条件**：任一页面进入崩溃、弹窗尺寸异常。
+
+##### 6. W4：PadDialogFactory 拆分后所有 Pad 弹窗（P1）
+
+**测试场景**：平板横屏 → 触发各类 Pad 弹窗
+
+**验证点**：
+- 双按钮确认（`showConfirm` 288dp 水平并排按钮）
+- 普通确认/信息/加载/菜单/单选/危险确认（`showStandardConfirm` 等 270dp 垂直按钮）
+- 修改游玩时长（专用实现，IME 唤起正常）
+- 同步进度（专用实现，`sync_progress` tag 后台更新）
+- 文件访问权限（专用实现，Android 版本分支）
+- 游戏详情（288dp 详情容器，长 URI 内部滚动）
+- 更新结果（`PadUpdateDialog.showUpdateResult` 三分支：error/hasUpdate/else）
+
+**阻断条件**：弹窗宽度异常、按钮布局错位、IME 不弹出、同步进度卡死。
+
+##### 7. W5：PadGameFragment 子弹窗宽度（P1）
+
+**测试场景**：Phase 5.3 迁移后，子弹窗宽度从 320~360dp 收窄到 270~288dp
+
+**验证点**：
+- 详情对话框（288dp）：长 URI/包名能内部滚动，不被截断
+- 编辑游玩时长（288dp）：双输入框布局不错位，IME 唤起正常
+- 动作菜单/更多选项（270dp）：长游戏名 `singleLine + ellipsize=end`
+- 删除确认（270dp）：红色删除按钮 + 取消按钮垂直布局
+
+**阻断条件**：内容截断不可读、输入框被键盘遮挡、按钮不可点击。
+
+##### 8. catch 收窄 + runOnUiThread 守卫回归（P1）
+
+**测试场景**：触发各类异常路径与快速返回
+
+**验证点**：
+- `LocalBackupController`/`LauncherSyncCenterActivity` `throw IOException` 路径：同步备份失败时弹错误提示，不崩溃（外层 `catch (Exception)` 正确捕获）
+- `PadGameFragment` `openOnsGameSettings` 失败：`catch (ActivityNotFoundException | IllegalArgumentException)` + `DevLogger.w` + Toast
+- 快速返回测试：
+  - 进入游戏库 → 长按游戏 → 立即按返回键 → 再次进入：无 `IllegalStateException`（`binding == null` 守卫生效）
+  - 进入同步中心 → 开始同步 → 立即按返回键：无 UI 更新崩溃（`isUiUnavailable()` 守卫）
+  - 进入公共聊天 → 收到心跳回调 → 立即按返回键：无崩溃（`runOnUiIfAlive` 包装 + `isUiUnavailable()` 守卫）
+- `LauncherAppSettingsActivity` 协程取消：返回时 `CancellationException` 正确重抛，无协程泄漏
+
+**阻断条件**：异常路径崩溃、快速返回崩溃、协程取消信号被吞。
+
+##### 9. LauncherUrlOpener 推广回归（P2）
+
+**测试场景**：本轮新增 5 处 `LauncherUrlOpener.open` 调用
+
+**验证点**：
+- `ResourceStationActivity`：点击资源站外链正常打开
+- `LauncherMetadataSourceActivity`：点击元数据源外链正常打开
+- `LauncherToolboxActivity`：点击工具外链，失败有 Toast（已加返回值检查）
+- `HdSettingsFragment`：HD 横屏设置页外链正常打开
+- `LauncherAccountFragment`：账户页外链正常打开，失败有 Toast `social_cannot_open_link`
+
+**阻断条件**：外链无法打开、失败无提示。
+
+##### 10. 分层回归（P2）
+
+**测试场景**：验证 `com.core` 不反向依赖 `com.apps`
+
+```bash
+# 命令验证（应 0 命中）
+grep -rn "import com.apps" app/src/main/java/com/core/ --include="*.kt" --include="*.java"
+```
+
+**实机验证**：
+- 冷启动 App：无 `LauncherApplication` 警告日志
+- 进入引擎壳层（启动 Kirikiri/Tyrano 游戏）：`LauncherUiBridge` 桥接正常，主题色注入成功
+- 主题风格切换（default/rinne/anri/xinhaitian）：粒子颜色按主题重新着色，无重建页面
+
+**阻断条件**：`com.core` 反向依赖 `com.apps`、引擎启动失败、主题切换粒子颜色异常。
+
+##### 测试优先级与建议顺序
+
+1. **P0 必测**：1（PadGameFragment 菜单）→ 2（EdgeToEdge 13 处）→ 3（外链打开）
+2. **P1 重要**：4（HD 更新弹窗）→ 5（import + dp 清理）→ 6（Pad 弹窗全集）→ 7（子弹窗宽度）→ 8（异常 + 守卫）
+3. **P2 回归**：9（UrlOpener 推广）→ 10（分层回归）
+
+**通过标准**：P0 全部通过 + P1 无阻断 + P2 无新增异常。logcat 无 `FATAL EXCEPTION`、无 `ClassCastException`、无 `IllegalStateException: binding` 类崩溃。
 
 ---
 

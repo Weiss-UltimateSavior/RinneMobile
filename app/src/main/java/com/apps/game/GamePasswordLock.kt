@@ -12,7 +12,7 @@ import com.core.util.RxMainScheduler
 
 /**
  * 游戏密码锁定工具类。
- * 提供设置/取消/验证密码的统一入口，供 LauncherGameActionController 和三个 Fragment 共用。
+ * 提供设置/取消/验证密码的统一入口，供游戏库相关 Fragment 共用。
  */
 object GamePasswordLock {
 
@@ -81,8 +81,8 @@ object GamePasswordLock {
                 false
             }
             RxMainScheduler.post {
-                // 页面已销毁时只保留落库结果，新页面会从数据库重新加载。
                 if (!fragment.isAdded || fragment.view == null) return@post
+                // 页面已销毁时只保留落库结果，新页面会从数据库重新加载。
                 if (success) {
                     game.passwordLock = hashedPassword
                     Toast.makeText(fragment.requireContext(), toastMessageRes, Toast.LENGTH_SHORT).show()

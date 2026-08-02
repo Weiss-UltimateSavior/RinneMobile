@@ -1,6 +1,7 @@
 package com.apps.PadUi
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -379,10 +380,6 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         listController?.loadNextPage()
     }
 
-    private fun loadNextPage(forceFullRefresh: Boolean) {
-        listController?.loadNextPage(forceFullRefresh)
-    }
-
     private fun renderState() {
         val b = _binding ?: return
         val lc = listController ?: return
@@ -554,7 +551,8 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             val intent = Intent(requireContext(), LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
-        } catch (ignored: Throwable) {
+        } catch (error: ActivityNotFoundException) {
+            Log.w("PadManageFragment", "Failed to open ONS game settings", error)
             Toast.makeText(requireContext(), com.core.R.string.pad_cannot_open_ons_settings, Toast.LENGTH_SHORT).show()
         }
     }
@@ -576,7 +574,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             }
             val result = updated
             mainQueue.post {
-                if (!isAdded || view == null) return@post
+                if (!isAdded || _binding == null) return@post
                 if (result != null) updateSingleGame(result)
             }
         }
@@ -602,7 +600,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
                 false
             }
             mainQueue.post {
-                if (!isAdded || view == null) return@post
+                if (!isAdded || _binding == null) return@post
                 if (!deleted) {
                     Toast.makeText(app, com.core.R.string.pad_delete_failed, Toast.LENGTH_SHORT).show()
                     return@post

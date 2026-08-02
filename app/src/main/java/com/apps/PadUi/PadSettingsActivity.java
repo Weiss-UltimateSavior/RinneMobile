@@ -1,6 +1,7 @@
 package com.apps.PadUi;
 
 import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -27,6 +28,7 @@ import com.apps.home.HomeStyle;
 import com.apps.theme.LauncherMotion;
 import com.apps.sync.LauncherSyncScheduler;
 import com.apps.theme.LauncherTheme;
+import com.apps.util.LauncherUrlOpener;
 import com.core.userdata.LauncherUserData;
 import com.core.R;
 import com.core.databinding.ActivityPadSettingsBinding;
@@ -647,7 +649,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void enterNativeKrkr() {
         try {
             startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(this));
-        } catch (Throwable throwable) {
+        } catch (ActivityNotFoundException | IllegalArgumentException throwable) {
             Toast.makeText(this, R.string.pad_native_krkr_failed, Toast.LENGTH_SHORT).show();
         }
     }
@@ -672,10 +674,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     }
 
     private void openMetadataTokenUrl() {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://next.bgm.tv/demo/access-token/create")));
-        } catch (Throwable throwable) {
+        if (!LauncherUrlOpener.open(this, "https://next.bgm.tv/demo/access-token/create")) {
             Toast.makeText(this, R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show();
         }
     }

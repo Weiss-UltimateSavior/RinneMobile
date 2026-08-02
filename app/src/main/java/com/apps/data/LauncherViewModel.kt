@@ -64,13 +64,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     /** 仅用于 UI 控制的 refreshing 显示，与状态写入校验分离。 */
     private val visibleRecentRefreshToken = AtomicInteger()
 
-    @Volatile private var selectedItem: NavItem = NavItem.HOME
-
     /** Java 调用方通过 [getLauncherState] 观察；返回类型为 LiveData 以隐藏可变性。 */
     fun getLauncherState(): LiveData<LauncherState> = launcherState
 
     fun selectNavItem(item: NavItem?) {
-        selectedItem = item ?: NavItem.HOME
+        val selectedItem = item ?: NavItem.HOME
         val current = launcherState.value
         if (current == null) {
             launcherState.value = emptyState(false)

@@ -1,8 +1,8 @@
 package com.apps
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -11,14 +11,12 @@ import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.apps.HDModel.HdModeActivity
@@ -35,6 +33,7 @@ import com.apps.home.LauncherPlaceholderFragment
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
+import com.core.util.DevLogger
 import com.core.R
 import com.core.databinding.ActivityLauncherBinding
 import com.core.launcherbridge.LauncherGameLaunchBridge
@@ -282,17 +281,12 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun configureEdgeToEdgeWindow() {
-        val darkMode = LauncherPreferences.isDarkMode(this)
-        val window = window
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = ContextCompat.getColor(this, R.color.launcher_bottom_bar_color)
-        var flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        if (!darkMode) {
-            flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-        }
-        window.decorView.systemUiVisibility = flags
+        LauncherEdgeToEdgeHelper.apply(
+            this,
+            adjustResize = false,
+            usePrimaryLuminanceForStatusBar = false,
+            navigationBarColorRes = R.color.launcher_bottom_bar_color,
+        )
     }
 
     private fun scheduleAutoUpdateCheck() {
@@ -329,8 +323,13 @@ class LauncherActivity : AppCompatActivity() {
                         try {
                             startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
                                 Uri.parse("package:$packageName")))
-                        } catch (t: Throwable) {
-                            try { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) } catch (ignored: Throwable) { }
+                        } catch (error: ActivityNotFoundException) {
+                            DevLogger.w("LauncherActivity", "App-specific storage settings unavailable; falling back", error)
+                            try {
+                                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                            } catch (fallbackError: ActivityNotFoundException) {
+                                DevLogger.w("LauncherActivity", "All files access settings unavailable", fallbackError)
+                            }
                         }
                     },
                     Runnable { }
@@ -477,7 +476,6 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     companion object {
-        @Volatile
         private var launcherSplashShownInProcess = false
 
         private const val SPLASH_MIN_DISPLAY_MS = 2_000L

@@ -1,17 +1,10 @@
 package com.apps.settings;
 
-import android.content.Intent;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherMetadataSourceBinding;
@@ -19,6 +12,7 @@ import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.metadata.MetadataController;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherTheme;
+import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherMetadataSourceActivity extends AppCompatActivity {
@@ -117,9 +111,7 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
     }
 
     private void openTokenUrl() {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://next.bgm.tv/demo/access-token/create")));
-        } catch (Throwable t) {
+        if (!LauncherUrlOpener.open(this, "https://next.bgm.tv/demo/access-token/create")) {
             Toast.makeText(this, R.string.settings_cannot_open_link, Toast.LENGTH_SHORT).show();
         }
     }
@@ -134,15 +126,7 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
     }
 
     private void configureEdgeToEdgeWindow() {
-        boolean darkMode = LauncherActivity.isLauncherDarkMode(this);
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));
-        int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-        if (!darkMode) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        window.getDecorView().setSystemUiVisibility(flags);
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

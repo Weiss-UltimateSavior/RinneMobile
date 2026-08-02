@@ -102,7 +102,7 @@ public final class ExternalImportController {
                 List<ImportGameData> games = task.parse();
                 new ImporterService(appContext).markExisting(games);
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     dismissImportLoading();
                     showImportPreviewDialog(games);
                 });
@@ -112,7 +112,7 @@ public final class ExternalImportController {
             } catch (Exception e) {
                 Log.e("LauncherManage", "external import parse failed", e);
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
                     host.showConfirmDialog(host.getString(R.string.game_import_parse_failed),
@@ -171,7 +171,7 @@ public final class ExternalImportController {
             try {
                 ImportResult result = new ImporterService(appContext).importSelected(games);
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
                     afterExternalImport(result);
@@ -182,7 +182,7 @@ public final class ExternalImportController {
             } catch (Exception e) {
                 Log.e("LauncherManage", "external import write failed", e);
                 host.getMainQueue().post(() -> {
-                    if (!host.isAdded()) return;
+                    if (!host.isUiAvailable()) return;
                     dismissImportLoading();
                     host.setImportInProgress(false);
                     host.showConfirmDialog(host.getString(R.string.game_import_failed),

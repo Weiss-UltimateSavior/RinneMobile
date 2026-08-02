@@ -167,7 +167,7 @@ object LauncherDialogFactory {
         val messageView = standardMessage(context, message)
         scroll.addView(messageView)
         val scrollParams = topMargin(context, 13)
-        scrollParams.height = dp(context, 220)
+        scrollParams.height = LauncherTheme.dp(context, 220)
         root.addView(scroll, scrollParams)
 
         val confirm = button(context, confirmText, true)
@@ -206,7 +206,7 @@ object LauncherDialogFactory {
         actions.orientation = LinearLayout.HORIZONTAL
         val cancel = button(context, context.getString(R.string.launcher_dialog_cancel), false)
         cancel.setOnClickListener { dialog.dismiss() }
-        actions.addView(cancel, LinearLayout.LayoutParams(0, dp(context, 38), 1f))
+        actions.addView(cancel, LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 38), 1f))
 
         val danger = TextView(context)
         danger.text = dangerText
@@ -218,8 +218,8 @@ object LauncherDialogFactory {
             dialog.dismiss()
             onConfirm?.run()
         }
-        val dangerParams = LinearLayout.LayoutParams(0, dp(context, 38), 1f)
-        dangerParams.setMargins(dp(context, 10), 0, 0, 0)
+        val dangerParams = LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 38), 1f)
+        dangerParams.setMargins(LauncherTheme.dp(context, 10), 0, 0, 0)
         actions.addView(danger, dangerParams)
         root.addView(actions, fixedHeightTopMargin(context, 13, 38))
         setContent(dialog, root, WIDTH_STANDARD_DP)
@@ -236,9 +236,9 @@ object LauncherDialogFactory {
         progress.isIndeterminate = true
         progress.indeterminateDrawable?.setColorFilter(
             LauncherTheme.primary(context), PorterDuff.Mode.SRC_IN)
-        val progressParams = LinearLayout.LayoutParams(dp(context, 32), dp(context, 32))
+        val progressParams = LinearLayout.LayoutParams(LauncherTheme.dp(context, 32), LauncherTheme.dp(context, 32))
         progressParams.gravity = Gravity.CENTER_HORIZONTAL
-        progressParams.setMargins(0, dp(context, 14), 0, 0)
+        progressParams.setMargins(0, LauncherTheme.dp(context, 14), 0, 0)
         root.addView(progress, progressParams)
 
         val hintView = standardMessage(context, hint)
@@ -268,9 +268,9 @@ object LauncherDialogFactory {
         progress.isIndeterminate = true
         progress.indeterminateDrawable?.setColorFilter(
             LauncherTheme.primary(context), PorterDuff.Mode.SRC_IN)
-        val progressParams = LinearLayout.LayoutParams(dp(context, 32), dp(context, 32))
+        val progressParams = LinearLayout.LayoutParams(LauncherTheme.dp(context, 32), LauncherTheme.dp(context, 32))
         progressParams.gravity = Gravity.CENTER_HORIZONTAL
-        progressParams.setMargins(0, dp(context, 14), 0, 0)
+        progressParams.setMargins(0, LauncherTheme.dp(context, 14), 0, 0)
         root.addView(progress, progressParams)
 
         val progressView = standardMessage(context, progressText)
@@ -313,15 +313,15 @@ object LauncherDialogFactory {
                     button(context, choices[i], false)
                 }
                 option.gravity = Gravity.CENTER_VERTICAL
-                option.setPadding(dp(context, 13), 0, dp(context, 13), 0)
+                option.setPadding(LauncherTheme.dp(context, 13), 0, LauncherTheme.dp(context, 13), 0)
                 option.maxLines = 2
                 option.setOnClickListener {
                     dialog.dismiss()
                     listener?.onChoice(index)
                 }
                 val optionParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 42))
-                if (i > 0) optionParams.setMargins(0, dp(context, 7), 0, 0)
+                    LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 42))
+                if (i > 0) optionParams.setMargins(0, LauncherTheme.dp(context, 7), 0, 0)
                 list.addView(option, optionParams)
             }
         }
@@ -329,7 +329,7 @@ object LauncherDialogFactory {
         val optionCount = choices?.size ?: 0
         val listHeight = optionCount * 42 + Math.max(0, optionCount - 1) * 7
         val scrollParams = topMargin(context, 12)
-        scrollParams.height = Math.min(dp(context, 252), dp(context, listHeight))
+        scrollParams.height = Math.min(LauncherTheme.dp(context, 252), LauncherTheme.dp(context, listHeight))
         root.addView(scroll, scrollParams)
         val cancel = button(context, context.getString(R.string.launcher_dialog_cancel), false)
         cancel.setOnClickListener { dialog.dismiss() }
@@ -447,7 +447,10 @@ object LauncherDialogFactory {
                 title,
                 context.getString(
                     R.string.theme_already_latest,
-                    emptyOr(currentVersion, context.getString(R.string.settings_unknown))
+                    LauncherUpdateFormatter.emptyOr(
+                        currentVersion,
+                        context.getString(R.string.settings_unknown)
+                    )
                 )
             )
         }
@@ -470,8 +473,8 @@ object LauncherDialogFactory {
             val option = compactChoice(context, choices!![i], index == checkedIndex)
             option.gravity = Gravity.CENTER
             val optionParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 38))
-            optionParams.setMargins(0, dp(context, 7), 0, 0)
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 38))
+            optionParams.setMargins(0, LauncherTheme.dp(context, 7), 0, 0)
             option.setOnClickListener {
                 dialog.dismiss()
                 listener?.onChoice(index)
@@ -481,7 +484,7 @@ object LauncherDialogFactory {
         scroll.addView(list)
         val listHeight = optionCount * (38 + 7)
         val scrollParams = topMargin(context, 7)
-        scrollParams.height = Math.min(dp(context, 280), dp(context, listHeight))
+        scrollParams.height = Math.min(LauncherTheme.dp(context, 280), LauncherTheme.dp(context, listHeight))
         root.addView(scroll, scrollParams)
 
         val cancel = cancelButton(context)
@@ -558,14 +561,14 @@ object LauncherDialogFactory {
                 dialog.dismiss()
                 listener?.onChoice(candidate)
             }
-            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 38))
-            params.setMargins(0, dp(context, 8), 0, 0)
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 38))
+            params.setMargins(0, LauncherTheme.dp(context, 8), 0, 0)
             list.addView(option, params)
         }
         scroll.addView(list)
         val scrollParams = topMargin(context, 4)
         val count = choices?.size ?: 0
-        scrollParams.height = Math.min(dp(context, 250), dp(context, 8 + count * 46))
+        scrollParams.height = Math.min(LauncherTheme.dp(context, 250), LauncherTheme.dp(context, 8 + count * 46))
         root.addView(scroll, scrollParams)
         val buttons = LinearLayout(context)
         buttons.orientation = LinearLayout.HORIZONTAL
@@ -574,14 +577,14 @@ object LauncherDialogFactory {
             dialog.dismiss()
             onSkip?.run()
         }
-        buttons.addView(skip, LinearLayout.LayoutParams(0, dp(context, 36), 1f))
+        buttons.addView(skip, LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 36), 1f))
         val cancel = button(context, cancelText, false)
         cancel.setOnClickListener {
             dialog.dismiss()
             onCancel?.run()
         }
-        val cancelParams = LinearLayout.LayoutParams(0, dp(context, 36), 1f)
-        cancelParams.setMargins(dp(context, 8), 0, 0, 0)
+        val cancelParams = LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 36), 1f)
+        cancelParams.setMargins(LauncherTheme.dp(context, 8), 0, 0, 0)
         buttons.addView(cancel, cancelParams)
         root.addView(buttons, fixedHeightTopMargin(context, 12, 36))
         setContent(dialog, root, WIDTH_COMPACT_DP)
@@ -656,8 +659,8 @@ object LauncherDialogFactory {
         val root = LinearLayout(context)
         root.orientation = LinearLayout.VERTICAL
         root.setPadding(
-            dp(context, 22), dp(context, if (scrollable) 18 else 20),
-            dp(context, 22), dp(context, if (scrollable) 15 else 16))
+            LauncherTheme.dp(context, 22), LauncherTheme.dp(context, if (scrollable) 18 else 20),
+            LauncherTheme.dp(context, 22), LauncherTheme.dp(context, if (scrollable) 15 else 16))
         root.background = LauncherTheme.secondaryButton(context, 20f)
         return root
     }
@@ -689,7 +692,7 @@ object LauncherDialogFactory {
         val view = message(context, value)
         view.gravity = Gravity.CENTER
         view.textSize = 12f
-        view.setLineSpacing(dp(context, 2).toFloat(), 1.05f)
+        view.setLineSpacing(LauncherTheme.dp(context, 2).toFloat(), 1.05f)
         return view
     }
 
@@ -730,23 +733,19 @@ object LauncherDialogFactory {
     private fun topMargin(context: Context, marginDp: Int): LinearLayout.LayoutParams {
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        params.setMargins(0, dp(context, marginDp), 0, 0)
+        params.setMargins(0, LauncherTheme.dp(context, marginDp), 0, 0)
         return params
     }
 
     private fun fixedHeightTopMargin(context: Context, marginDp: Int, heightDp: Int): LinearLayout.LayoutParams {
         val params = topMargin(context, marginDp)
-        params.height = dp(context, heightDp)
+        params.height = LauncherTheme.dp(context, heightDp)
         return params
-    }
-
-    private fun dp(context: Context, value: Int): Int {
-        return LauncherTheme.dp(context, value.toFloat())
     }
 
     private fun dialogWidthPx(context: Context, widthDp: Int): Int {
         val desiredWidth = LauncherTabletPortraitScaler.dp(context, widthDp)
-        val horizontalMargin = dp(context, 16) * 2
+        val horizontalMargin = LauncherTheme.dp(context, 16) * 2
         val maxWidth = Math.max(0, context.resources.displayMetrics.widthPixels - horizontalMargin)
         return Math.min(desiredWidth, maxWidth)
     }
@@ -757,21 +756,8 @@ object LauncherDialogFactory {
         info: LauncherUpdateBridge.UpdateInfo,
         currentVersion: String?
     ) {
-        val unknown = context.getString(R.string.settings_unknown)
-        val body = trimUpdateBody(info.body, 1600).trim { it <= ' ' }
-        val message = StringBuilder()
-            .append(context.getString(R.string.theme_current_version, emptyOr(currentVersion, unknown)))
-            .append("\n")
-            .append(context.getString(R.string.theme_latest_version, emptyOr(info.tagName, info.version)))
-            .append("\n\n")
-            .apply {
-                if (body.isNotEmpty()) {
-                    append(context.getString(R.string.theme_release_notes)).append("\n").append(body)
-                } else {
-                    append(context.getString(R.string.theme_new_release_summary))
-                }
-            }
-            .toString()
+        // 消息拼接与 URL 解析统一复用 LauncherUpdateFormatter，避免与 PadDialogFactory 重复实现
+        val message = LauncherUpdateFormatter.buildUpdateMessage(context, info, currentVersion)
         showMessageActionChoices(
             context,
             title,
@@ -782,24 +768,7 @@ object LauncherDialogFactory {
             ),
             context.getString(R.string.theme_later)
         ) { index ->
-            val fallbackRelease = "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/tag/test"
-            val url = if (index == 0) {
-                emptyOr(info.apkUrl, info.releaseUrl)
-            } else {
-                emptyOr(info.releaseUrl, fallbackRelease)
-            }
-            LauncherUrlOpener.open(context, url)
+            LauncherUrlOpener.open(context, LauncherUpdateFormatter.resolveUpdateUrl(info, index))
         }
-    }
-
-    private fun emptyOr(value: String?, fallback: String): String {
-        return if (value == null || value.trim { it <= ' ' }.isEmpty()) fallback else value
-    }
-
-    private fun trimUpdateBody(text: String?, max: Int): String {
-        if (text == null) return ""
-        val trimmed = text.trim { it <= ' ' }
-        if (max <= 0 || trimmed.length <= max) return trimmed
-        return trimmed.substring(0, max) + "\n..."
     }
 }

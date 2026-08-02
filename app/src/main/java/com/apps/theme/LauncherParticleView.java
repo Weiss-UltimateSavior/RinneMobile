@@ -73,6 +73,9 @@ public class LauncherParticleView extends View {
         fireflyShaders = new RadialGradient[particleColors.length];
         setWillNotDraw(false);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        setFocusable(false);
+        setFocusableInTouchMode(false);
+        setClickable(false);
         paint.setStyle(Paint.Style.FILL);
     }
 

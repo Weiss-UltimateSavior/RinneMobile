@@ -51,7 +51,7 @@ public final class Xp3TargetResolver {
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ScanBatchResult result = LauncherScanBridge.scanWithReport(appContext, roots, request);
             host.getMainQueue().post(() -> {
-                if (!host.isAdded()) return;
+                if (!host.isUiAvailable()) return;
                 dismissScanLoadingDialog();
                 activeScanRequest = null;
                 handleScanDiscovery(result);
@@ -111,7 +111,7 @@ public final class Xp3TargetResolver {
     }
 
     private void resolveXp3Candidates(List<ScanResult> results, int startIndex) {
-        if (!host.isAdded()) return;
+        if (!host.isUiAvailable()) return;
         if (results == null) {
             importResolvedScanResults(new ArrayList<>());
             return;
@@ -153,7 +153,7 @@ public final class Xp3TargetResolver {
         AppExecutors.runOnSingle(() -> {
             LauncherScanBridge.ImportStats stats = LauncherScanBridge.importScanResults(appContext, results);
             host.getMainQueue().post(() -> {
-                if (!host.isAdded()) return;
+                if (!host.isUiAvailable()) return;
                 dismissScanLoadingDialog();
                 showScanResultDialog(stats);
             });

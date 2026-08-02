@@ -71,7 +71,9 @@ object LauncherSplash {
                     }
                 }, 500)
             }
-        } catch (_: Throwable) {
+        } catch (error: OutOfMemoryError) {
+            throw error
+        } catch (_: RuntimeException) {
             // 解码失败时恢复显示默认启动图
             imageView.visibility = View.VISIBLE
         }

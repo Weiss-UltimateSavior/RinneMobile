@@ -1,13 +1,10 @@
 package com.apps.game;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -82,7 +79,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
                     boolean hasSave = false;
                     try {
                         hasSave = !saveManager.listInternalSaveFiles(game).isEmpty();
-                    } catch (Throwable ignored) {
+                    } catch (Exception ignored) {
                         // An unreadable location is presented as no save instead of blocking the list.
                     }
                     saveStates.add(hasSave);

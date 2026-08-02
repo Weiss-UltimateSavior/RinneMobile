@@ -496,8 +496,11 @@ public class LocalAgentActivity extends AppCompatActivity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        // LocalAgent uses a custom edge-to-edge profile: WindowCompat insets,
+        // cutout support and contrast flags are coupled with bindInsets()/IME handling.
         // edge-to-edge 模式下 setSoftInputMode(SOFT_INPUT_ADJUST_RESIZE) 已失效
         //（Android 11+ 弃用），IME inset 改由 bindInsets() 手动处理。
+        // 技术理由见 com_apps_refactor_plan.md §8.1：独立 e2e 实现（WindowCompat insets/cutout/对比度与 bindInsets/IME 耦合）
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(ContextCompat.getColor(this, R.color.launcher_bg_color));

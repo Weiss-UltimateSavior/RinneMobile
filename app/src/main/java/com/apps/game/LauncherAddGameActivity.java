@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,10 +16,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -32,7 +28,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,6 +41,7 @@ import com.core.launcherbridge.LauncherScanBridge;
 import com.core.model.EngineType;
 import com.core.model.Game;
 import com.core.util.AppExecutors;
+import com.core.util.DevLogger;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,7 +121,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         setupEnginePicker();
         bindActions();
         applyThemeTone();
-        try { Shizuku.addRequestPermissionResultListener(shizukuPermissionListener); } catch (Throwable ignored) { }
+        try {
+            Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
+        } catch (Exception error) {
+            DevLogger.w("LauncherAddGame", "Failed to register Shizuku permission listener", error);
+        }
     }
 
     private void bindViews() {
@@ -168,7 +168,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (value == null || value.trim().isEmpty()) return null;
         try {
             return Uri.parse(value);
-        } catch (Throwable ignored) {
+        } catch (IllegalArgumentException error) {
+            DevLogger.w("LauncherAddGame", "Invalid saved URI state", error);
             return null;
         }
     }
@@ -256,7 +257,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         }
         if (!LauncherGameHubShortcutBridge.hasShizukuPermission()) {
             try { LauncherGameHubShortcutBridge.requestShizukuPermission(SHIZUKU_GAMEHUB_PERMISSION_REQUEST); }
-            catch (Throwable error) { Toast.makeText(this, R.string.game_shizuku_request_failed, Toast.LENGTH_LONG).show(); }
+            catch (Exception error) {
+                DevLogger.w("LauncherAddGame", "Failed to request Shizuku permission", error);
+                Toast.makeText(this, R.string.game_shizuku_request_failed, Toast.LENGTH_LONG).show();
+            }
             return;
         }
         binding.addGameImportGameHubShortcut.setEnabled(false);
@@ -265,13 +269,16 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         AppExecutors.runOnIo(() -> {
             List<LauncherGameHubShortcutBridge.Shortcut> items;
             try { items = LauncherGameHubShortcutBridge.loadShortcuts(); }
-            catch (Throwable ignored) { items = new ArrayList<>(); }
+            catch (Exception error) {
+                DevLogger.w("LauncherAddGame", "Failed to load GameHub shortcuts", error);
+                items = new ArrayList<>();
+            }
             final List<LauncherGameHubShortcutBridge.Shortcut> shortcuts = items;
             runOnUiThread(() -> {
+                if (isUiUnavailable()) return;
                 binding.addGameImportGameHubShortcut.setEnabled(true);
                 binding.addGameImportGameHubShortcut.setAlpha(1f);
                 binding.addGameImportGameHubShortcut.setContentDescription(getString(R.string.game_gamehub_import_shortcut));
-                if (isFinishing()) return;
                 if (shortcuts.isEmpty()) {
                     Toast.makeText(this, R.string.game_gamehub_no_shortcuts, Toast.LENGTH_LONG).show();
                     return;
@@ -332,7 +339,8 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 try {
                     DocumentFile root = DocumentFile.fromTreeUri(appContext, selectedGameDir);
                     detected = LauncherScanBridge.detectEngine(root, 2);
-                } catch (Throwable ignored) {
+                } catch (Exception error) {
+                    DevLogger.w("LauncherAddGame", "Engine detection failed; using selected engine", error);
                 }
             }
             EngineType finalEngine = selectedEngine;
@@ -380,6 +388,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 LauncherCoverBridge.fetchCoverForGameAsync(appContext, game);
             }
             runOnUiThread(() -> {
+                if (isUiUnavailable()) return;
                 binding.addGameSave.setEnabled(true);
                 binding.addGameSave.setText(R.string.game_common_save);
                 if (id > 0) {
@@ -439,7 +448,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
                 outputStream.flush();
             }
             return Uri.fromFile(file).toString();
-        } catch (Throwable ignored) {
+        } catch (OutOfMemoryError error) {
+            throw error;
+        } catch (Exception error) {
+            DevLogger.w("LauncherAddGame", "Failed to copy cover to internal storage", error);
             return null;
         } finally {
             if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
@@ -479,12 +491,14 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         try {
             String docId = DocumentsContract.getTreeDocumentId(uri);
             if (docId != null && !docId.trim().isEmpty()) return Uri.decode(docId);
-        } catch (Throwable ignored) {
+        } catch (IllegalArgumentException | SecurityException error) {
+            DevLogger.w("LauncherAddGame", "Failed to read tree document id", error);
         }
         try {
             String docId = DocumentsContract.getDocumentId(uri);
             if (docId != null && !docId.trim().isEmpty()) return Uri.decode(docId);
-        } catch (Throwable ignored) {
+        } catch (IllegalArgumentException | SecurityException error) {
+            DevLogger.w("LauncherAddGame", "Failed to read document id", error);
         }
         return uri.toString();
     }
@@ -509,6 +523,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
+    private boolean isUiUnavailable() {
+        return isFinishing() || isDestroyed() || binding == null;
+    }
+
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
@@ -516,7 +534,11 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        try { Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener); } catch (Throwable ignored) { }
+        try {
+            Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
+        } catch (Exception error) {
+            DevLogger.w("LauncherAddGame", "Failed to remove Shizuku permission listener", error);
+        }
         super.onDestroy();
     }
 }

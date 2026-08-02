@@ -131,7 +131,10 @@ public class GameListController {
             List<CategoryOption> builtCategories;
             try {
                 games = LauncherRepositoryBridge.getAllGames(appContext);
-            } catch (Throwable throwable) {
+            } catch (Error error) {
+                throw error;
+            } catch (Exception error) {
+                Log.w(TAG, "Failed to load games", error);
                 games = Collections.emptyList();
             }
             if (disposed) return;
@@ -140,7 +143,10 @@ public class GameListController {
                 CategoryBuildResult result = GameCategoryBuilder.build(appContext, games);
                 developers = result.developers;
                 builtCategories = result.categories;
-            } catch (Throwable throwable) {
+            } catch (Error error) {
+                throw error;
+            } catch (Exception error) {
+                Log.w(TAG, "Failed to build game categories", error);
                 developers = Collections.emptyMap();
                 builtCategories = Collections.emptyList();
             }
