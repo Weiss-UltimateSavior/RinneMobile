@@ -72,7 +72,7 @@ public final class GameWorkspaceGateway {
             Node node = queue.removeFirst();
             DocumentFile[] children;
             try { children = node.file.listFiles(); }
-            catch (Throwable error) { continue; }
+            catch (SecurityException ignored) { continue; }
             for (DocumentFile child : children) {
                 checkActive(cancellation);
                 if (items.length() >= limit) { truncated = true; queue.clear(); break; }
@@ -383,7 +383,8 @@ public final class GameWorkspaceGateway {
             nodesVisited++;
             if (node.file.isDirectory()) {
                 DocumentFile[] children;
-                try { children = node.file.listFiles(); } catch (Throwable error) { continue; }
+                // 目录列举权限失效：单文件失败隔离，跳过该目录不影响整体搜索
+                try { children = node.file.listFiles(); } catch (SecurityException ignored) { continue; }
                 for (DocumentFile child : children) {
                     checkActive(cancellation);
                     String name = safeName(child);
@@ -398,11 +399,13 @@ public final class GameWorkspaceGateway {
             if (!node.file.isFile() || declared > MAX_SEARCH_FILE_BYTES) continue;
             files++;
             byte[] bytes;
+            // 单文件读取失败隔离（IO 异常或权限失效），跳过该文件不影响整体搜索
             try { bytes = readBounded(context, node.file, MAX_SEARCH_FILE_BYTES, cancellation); }
-            catch (Throwable ignored) { continue; }
+            catch (IOException | SecurityException ignored) { continue; }
             bytesRead += bytes.length;
             Decoded decoded;
-            try { decoded = decode(bytes, encoding); } catch (Throwable ignored) { continue; }
+            // 单文件解码失败隔离，跳过该文件不影响整体搜索
+            try { decoded = decode(bytes, encoding); } catch (Exception ignored) { continue; }
             String[] lines = decoded.text.split("\\R", -1);
             for (int i = 0; i < lines.length && matches.length() < maxMatches; i++) {
                 int column = lines[i].indexOf(query);
@@ -671,7 +674,7 @@ public final class GameWorkspaceGateway {
         if (path.isEmpty()) return null;
         try {
             return path.equals(AgentRelativePath.normalize(path, false)) ? value : null;
-        } catch (Throwable ignored) {
+        } catch (IllegalArgumentException ignored) {
             return null;
         }
     }
@@ -782,7 +785,7 @@ public final class GameWorkspaceGateway {
             if (containsUnsafePreviewCharacters(text)) return fullHexPreview(bytes, prefix);
             return diffLines(text, prefix);
         }
-        catch (Throwable ignored) {
+        catch (IOException | RuntimeException ignored) {
             return fullHexPreview(bytes, prefix);
         }
     }
@@ -842,7 +845,7 @@ public final class GameWorkspaceGateway {
     private static String safeName(DocumentFile file) { String value = file.getName(); return value == null ? "" : value; }
     private static boolean safeProviderName(String name) {
         try { return !name.isEmpty() && name.equals(AgentRelativePath.normalize(name, false)); }
-        catch (Throwable ignored) { return false; }
+        catch (IllegalArgumentException ignored) { return false; }
     }
     private static void rejectSensitive(String path) { if (AgentRelativePath.isSensitive(path)) throw new SecurityException("敏感文件或账号/存档目录默认禁止智能体访问"); }
     private static void rejectVisualControls(String value) {

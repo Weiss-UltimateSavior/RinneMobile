@@ -88,7 +88,6 @@ public class AvatarCropActivity extends AppCompatActivity {
 
     private View buildRoot(String inputUriString) {
         int bgColor = ContextCompat.getColor(this, R.color.launcher_bg_color);
-        int textColor = ContextCompat.getColor(this, R.color.launcher_text_color);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -99,7 +98,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         title.setText(R.string.avatar_crop_title);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
         title.setTypeface(null, Typeface.BOLD);
-        title.setTextColor(textColor);
+        title.setTextColor(LauncherTheme.text(this));
         final int pad = dp(16);
         title.setPadding(pad, pad, pad, pad);
         root.addView(title, new LinearLayout.LayoutParams(

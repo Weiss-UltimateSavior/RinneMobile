@@ -8,6 +8,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.net.URLEncoder
 
@@ -126,7 +127,8 @@ object LauncherPublicChatBridge {
                             "user_unmuted" -> listener.onMuted(false, null, "")
                             "announcement_created", "announcement_updated" -> listener.onAnnouncementChanged(parseAnnouncement(data!!.getJSONObject("announcement")))
                         }
-                    } catch (_: Throwable) {
+                    } catch (e: Exception) {
+                        // 单条事件解析失败忽略（含 data 缺失 NPE），不影响连接
                     }
                 }
 
@@ -136,7 +138,7 @@ object LauncherPublicChatBridge {
                     postToMain { listener.onError(if (expired) "登录已过期，请重新登录" else "实时连接已断开") }
                 }
             })
-        } catch (_: Throwable) {
+        } catch (e: Exception) {
             postToMain { listener.onError("无法建立实时连接") }
             return null
         }

@@ -1,5 +1,6 @@
 package com.core.launcherbridge
 
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -171,7 +172,8 @@ internal object LauncherAuthHttpClient {
                 } else {
                     detail = detailObj.toString()
                 }
-            } catch (_: Throwable) {
+            } catch (_: JSONException) {
+                // 错误体解析失败时保留原始文本，由下方统一抛出
             }
             throw RuntimeException("HTTP $code: ${trim(detail, 200)}")
         }

@@ -1003,13 +1003,19 @@ class GameRepository(context: Context) {
                 if (s.startsWith("content://")) {
                     val uri = android.net.Uri.parse(s)
                     var docId: String? = null
-                    try { docId = android.provider.DocumentsContract.getDocumentId(uri) } catch (ignored: Throwable) { }
+                    try { docId = android.provider.DocumentsContract.getDocumentId(uri) } catch (_: IllegalArgumentException) {
+                        // 非 document URI 时无法提取 docId，忽略
+                    }
                     if (docId == null || docId.isEmpty()) {
-                        try { docId = android.provider.DocumentsContract.getTreeDocumentId(uri) } catch (ignored: Throwable) { }
+                        try { docId = android.provider.DocumentsContract.getTreeDocumentId(uri) } catch (_: IllegalArgumentException) {
+                            // 非 tree URI 时无法提取 docId，忽略
+                        }
                     }
                     if (docId != null && docId.isNotEmpty()) s = android.net.Uri.decode(docId)
                 }
-            } catch (ignored: Throwable) { }
+            } catch (_: IllegalArgumentException) {
+                // URI 解析失败时保留原始字符串
+            }
             while (s.contains("//")) s = s.replace("//", "/")
             while (s.endsWith("/") && s.length > 1) s = s.substring(0, s.length - 1)
             return s.lowercase(Locale.ROOT)

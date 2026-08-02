@@ -78,7 +78,8 @@ object LauncherMetadataBridge {
             val metaRepo = MetadataRepository(app)
             metaRepo.saveVndb(game.id, meta)
             meta
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 元数据抓取失败时返回 null，由调用方兜底
             null
         }
     }
@@ -115,7 +116,8 @@ object LauncherMetadataBridge {
                     }
                     ok = true
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 元数据更新失败忽略
             }
             val success = ok
             postToMain { callback.onResult(success) }
@@ -160,7 +162,8 @@ object LauncherMetadataBridge {
                 MetadataRepository(app).saveVndb(game.id, metadata)
                 setPreferredMetadataSource(app, game.id, MetadataController.SOURCE_VNDB)
                 success = true
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 元数据更新失败忽略
             }
             val finalSuccess = success
             postToMain { callback.onResult(finalSuccess) }
@@ -211,7 +214,8 @@ object LauncherMetadataBridge {
                 MetadataRepository(app).saveBangumi(game.id, metadata)
                 setPreferredMetadataSource(app, game.id, MetadataController.SOURCE_BANGUMI)
                 success = true
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 元数据更新失败忽略
             }
             val finalSuccess = success
             postToMain { callback.onResult(finalSuccess) }
@@ -274,7 +278,8 @@ object LauncherMetadataBridge {
                         }
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 元数据更新失败忽略
             }
             val success = ok
             postToMain { callback.onResult(success) }

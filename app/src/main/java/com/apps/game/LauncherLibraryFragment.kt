@@ -580,7 +580,10 @@ open class LauncherLibraryFragment : Fragment(),
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 searchQuery = if (s == null) "" else s.toString().trim { it <= ' ' }
                 if (searchDebounce != null) mainQueue.removeCallbacks(searchDebounce!!)
-                searchDebounce = Runnable { applyFilters() }
+                searchDebounce = Runnable {
+                    if (!isAdded || _binding == null) return@Runnable
+                    applyFilters()
+                }
                 mainQueue.postDelayed(searchDebounce!!, 300)
             }
             override fun afterTextChanged(s: Editable?) { }

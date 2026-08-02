@@ -193,6 +193,7 @@ class TranslationSettingActivity : AppCompatActivity() {
         AppExecutors.runOnSingle {
             val result = VisionTranslationClient.testVision(this, effectiveUrl, effectiveModel)
             runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
                 loadingDialog.dismiss()
                 binding.translationTestButton.isEnabled = true
                 if (result.success) {

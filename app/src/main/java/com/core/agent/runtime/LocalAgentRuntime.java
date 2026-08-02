@@ -14,6 +14,7 @@ import com.core.agent.workspace.AgentScanRootGateway;
 import com.core.agent.workspace.GameWorkspaceGateway;
 import com.core.util.RxMainScheduler;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -605,7 +606,7 @@ public final class LocalAgentRuntime {
             JSONObject value = new JSONObject(result);
             return "文件=" + value.optString("relative_path") + "；快照=" + value.optString("snapshot_id")
                     + "；新SHA-256=" + value.optString("after_sha256");
-        } catch (Throwable ignored) { return "修改结果已本地记录"; }
+        } catch (JSONException ignored) { return "修改结果已本地记录"; }
     }
 
     private static String readableError(Throwable error) {

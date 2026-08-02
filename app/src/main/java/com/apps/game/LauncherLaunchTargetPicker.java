@@ -3,21 +3,13 @@ package com.apps.game;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 
-import com.apps.theme.LauncherMotion;
-import com.apps.theme.LauncherTheme;
+import com.apps.theme.LauncherDialogFactory;
 import com.core.R;
 import com.core.model.EngineType;
 import com.core.util.AppExecutors;
@@ -43,80 +35,41 @@ final class LauncherLaunchTargetPicker {
             Toast.makeText(activity, R.string.game_directory_required, Toast.LENGTH_SHORT).show();
             return;
         }
-        AlertDialog dialog = new AlertDialog.Builder(activity).create();
-        dialog.show();
-        LauncherMotion.applyDialogMotion(dialog);
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(LauncherTheme.dp(activity, 270), WindowManager.LayoutParams.WRAP_CONTENT);
-
-        LinearLayout root = new LinearLayout(activity);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(
-                LauncherTheme.dp(activity, 22),
-                LauncherTheme.dp(activity, 20),
-                LauncherTheme.dp(activity, 22),
-                LauncherTheme.dp(activity, 16));
-        root.setBackgroundResource(R.drawable.launcher_dialog_bg);
-
-        TextView title = text(activity, activity.getString(R.string.game_launch_choose_file), 16, true);
-        root.addView(title, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView status = text(activity, activity.getString(R.string.game_launch_scanning), 13, false);
-        status.setTextColor(ContextCompat.getColor(activity, R.color.launcher_text_muted_color));
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        statusParams.setMargins(0, LauncherTheme.dp(activity, 13), 0, 0);
-        root.addView(status, statusParams);
-        window.setContentView(root);
-
+        // 弹窗外壳（透明 window / card 背景 / 动效 / 宽度兜底）统一走 LauncherDialogFactory。
+        // 第一阶段：loading 外壳（标题 + “正在扫描”提示），不可取消，生命周期由本方法管理。
+        AlertDialog loading = LauncherDialogFactory.showLoading(
+                activity,
+                activity.getString(R.string.game_launch_choose_file),
+                activity.getString(R.string.game_launch_scanning));
         Context appContext = activity.getApplicationContext();
         AppExecutors.runOnIo(() -> {
             List<Target> targets = scanTargets(appContext, directoryUri, engine);
             activity.runOnUiThread(() -> {
                 if (activity.isFinishing() || activity.isDestroyed()) return;
-                if (!dialog.isShowing()) return;
-                root.removeView(status);
+                if (!loading.isShowing()) return;
+                loading.dismiss();
                 if (targets.isEmpty()) {
-                    status.setText(R.string.game_launch_no_file);
-                    root.addView(status, statusParams);
-                } else {
-                    ScrollView scroll = new ScrollView(activity);
-                    LinearLayout list = new LinearLayout(activity);
-                    list.setOrientation(LinearLayout.VERTICAL);
-                    for (Target target : targets) {
-                        TextView item = text(activity, target.label, 13, false);
-                        item.setSingleLine(true);
-                        item.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
-                        item.setBackground(LauncherTheme.cancelChip(activity));
-                        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(activity, 38));
-                        itemParams.setMargins(0, LauncherTheme.dp(activity, 7), 0, 0);
-                        item.setOnClickListener(view -> {
-                            if (callback != null) callback.onTargetSelected(target.value);
-                            dialog.dismiss();
-                        });
-                        list.addView(item, itemParams);
-                    }
-                    scroll.addView(list);
-                    int listHeight = LauncherTheme.dp(activity, 7)
-                            + targets.size() * (LauncherTheme.dp(activity, 38) + LauncherTheme.dp(activity, 7));
-                    LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT, Math.min(listHeight, LauncherTheme.dp(activity, 280)));
-                    scrollParams.setMargins(0, LauncherTheme.dp(activity, 7), 0, 0);
-                    root.addView(scroll, scrollParams);
+                    // 无可用目标：沿用“未找到游戏文件”提示语义。
+                    LauncherDialogFactory.showInfo(
+                            activity,
+                            activity.getString(R.string.game_launch_choose_file),
+                            activity.getString(R.string.game_launch_no_file));
+                    return;
                 }
-                TextView cancel = text(activity,
-                        activity.getString(R.string.game_common_cancel), 13, true);
-                cancel.setTextColor(LauncherTheme.primary(activity));
-                cancel.setBackground(LauncherTheme.cancelChip(activity));
-                LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(activity, 36));
-                cancelParams.setMargins(0, LauncherTheme.dp(activity, 9), 0, 0);
-                cancel.setOnClickListener(view -> dialog.dismiss());
-                root.addView(cancel, cancelParams);
+                CharSequence[] labels = new CharSequence[targets.size()];
+                for (int i = 0; i < targets.size(); i++) {
+                    labels[i] = targets.get(i).label;
+                }
+                // 第二阶段：工厂单选列表外壳（checkedIndex 传 -1 表示全部未选中），
+                // 选中索引回映射为目标值后走原回调，语义与原实现一致。
+                LauncherDialogFactory.showSingleChoice(
+                        activity,
+                        activity.getString(R.string.game_launch_choose_file),
+                        labels,
+                        -1,
+                        index -> {
+                            if (callback != null) callback.onTargetSelected(targets.get(index).value);
+                        });
             });
         });
     }
@@ -195,16 +148,6 @@ final class LauncherLaunchTargetPicker {
             Log.d(TAG, "read launch target name failed", error);
             return "";
         }
-    }
-
-    private static TextView text(Context context, String value, int sizeSp, boolean bold) {
-        TextView view = new TextView(context);
-        view.setText(value);
-        view.setGravity(Gravity.CENTER);
-        view.setTextColor(ContextCompat.getColor(context, R.color.launcher_text_color));
-        view.setTextSize(sizeSp);
-        if (bold) view.setTypeface(null, android.graphics.Typeface.BOLD);
-        return view;
     }
 
     private static final class Target {

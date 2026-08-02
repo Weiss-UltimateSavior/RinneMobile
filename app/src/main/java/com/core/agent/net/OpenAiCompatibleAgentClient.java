@@ -317,7 +317,7 @@ public final class OpenAiCompatibleAgentClient {
             Matcher matcher = pattern.matcher(value);
             if (!matcher.find()) continue;
             try { actualMaxTokens = Integer.parseInt(matcher.group(1).replace(",", "")); }
-            catch (Throwable ignored) { actualMaxTokens = 0; }
+            catch (NumberFormatException ignored) { actualMaxTokens = 0; }
             break;
         }
         String message = displayMessage == null || displayMessage.trim().isEmpty()

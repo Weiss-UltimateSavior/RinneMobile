@@ -10,6 +10,7 @@ import com.core.model.Game
 import com.core.util.AppExecutors
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -42,7 +43,8 @@ object LauncherCoverBridge {
                 latest.coverPersistUri = cover
                 latest.coverSourceType = 1
                 repository.update(latest)
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 封面同步失败可忽略，不影响主流程
             }
         }
     }
@@ -128,11 +130,11 @@ object LauncherCoverBridge {
             }
             bitmap.recycle()
             return Uri.fromFile(cacheFile).toString()
-        } catch (_: Throwable) {
-            cacheFile?.let { try { it.delete() } catch (_: Throwable) {} }
+        } catch (e: Exception) {
+            cacheFile?.let { try { it.delete() } catch (_: SecurityException) { /* 删除失败忽略 */ } }
             return null
         } finally {
-            inputStream?.let { try { it.close() } catch (_: Throwable) {} }
+            inputStream?.let { try { it.close() } catch (_: IOException) { /* 关闭失败忽略 */ } }
             conn?.disconnect()
         }
     }

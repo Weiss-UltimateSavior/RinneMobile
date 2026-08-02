@@ -172,7 +172,7 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
                 updateCardHeight();
             }
         });
-        binding.padGameRecycler.post(this::updateCardHeight);
+        binding.padGameRecycler.post(() -> { if (!isAdded() || binding == null) return; updateCardHeight(); });
     }
 
     private void updateCardHeight() {

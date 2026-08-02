@@ -89,7 +89,8 @@ object LauncherDiagnosticsBridge {
         }
         try {
             file.delete()
-        } catch (_: Throwable) {
+        } catch (_: SecurityException) {
+            // 删除失败（权限受限）忽略，清理尽力而为
         }
     }
 }

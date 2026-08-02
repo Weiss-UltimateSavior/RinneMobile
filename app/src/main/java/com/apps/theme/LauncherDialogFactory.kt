@@ -518,11 +518,7 @@ object LauncherDialogFactory {
         for (i in 0 until count) {
             val depth = depthValues!![i]
             val selected = depth == currentDepth
-            val option = button(
-                context,
-                (if (selected) "● " else "○ ") + labels!![i],
-                selected
-            )
+            val option = compactChoice(context, labels!![i], selected)
             option.setOnClickListener {
                 dialog.dismiss()
                 listener?.onChoice(depth, fullRefresh[0])
@@ -743,7 +739,13 @@ object LauncherDialogFactory {
         return params
     }
 
-    private fun dialogWidthPx(context: Context, widthDp: Int): Int {
+    /**
+     * 弹窗宽度兜底（px）：期望宽度不超过屏幕宽度减去两侧 16dp 边距，平板竖屏走 [LauncherTabletPortraitScaler.dp] 缩放。
+     *
+     * 提升为公开 @JvmStatic 以消除各处私有副本（如 AgentLlmConfigDialog），统一弹窗宽度算法单一来源。
+     */
+    @JvmStatic
+    fun dialogWidthPx(context: Context, widthDp: Int): Int {
         val desiredWidth = LauncherTabletPortraitScaler.dp(context, widthDp)
         val horizontalMargin = LauncherTheme.dp(context, 16) * 2
         val maxWidth = Math.max(0, context.resources.displayMetrics.widthPixels - horizontalMargin)

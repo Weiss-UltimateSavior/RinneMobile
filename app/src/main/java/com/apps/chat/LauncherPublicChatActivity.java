@@ -99,17 +99,24 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     private void loadChannel() {
         LauncherPublicChatBridge.loadInitial(this, new LauncherPublicChatBridge.ChatCallback() {
             @Override public void onSuccess(List<LauncherPublicChatBridge.Message> loaded, Integer cursor) {
+                if (isUiUnavailable()) return;
                 messages.clear(); messages.addAll(loaded); sortMessages(); nextBeforeId = cursor; adapter.notifyDataSetChanged();
                 if (!messages.isEmpty()) binding.publicChatMessages.scrollToPosition(messages.size() - 1);
             }
             @Override public void onError(String message) { showError(message); }
         });
         LauncherPublicChatBridge.loadStatus(this, new LauncherPublicChatBridge.StatusCallback() {
-            @Override public void onSuccess(LauncherPublicChatBridge.Status state) { readonly = state.readonly; muted = state.muted; muteReason = state.muteReason; renderStatus(); }
+            @Override public void onSuccess(LauncherPublicChatBridge.Status state) {
+                if (isUiUnavailable()) return;
+                readonly = state.readonly; muted = state.muted; muteReason = state.muteReason; renderStatus();
+            }
             @Override public void onError(String message) { showError(message); }
         });
         LauncherPublicChatBridge.loadAnnouncements(this, new LauncherPublicChatBridge.AnnouncementsCallback() {
-            @Override public void onSuccess(List<LauncherPublicChatBridge.Announcement> announcements) { renderAnnouncements(announcements); }
+            @Override public void onSuccess(List<LauncherPublicChatBridge.Announcement> announcements) {
+                if (isUiUnavailable()) return;
+                renderAnnouncements(announcements);
+            }
             @Override public void onError(String message) { showError(message); }
         });
         socket = LauncherPublicChatBridge.connect(this, new RealtimeCallbacks());
@@ -121,6 +128,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         int beforeId = nextBeforeId;
         LauncherPublicChatBridge.loadOlder(this, beforeId, new LauncherPublicChatBridge.ChatCallback() {
             @Override public void onSuccess(List<LauncherPublicChatBridge.Message> loaded, Integer cursor) {
+                if (isUiUnavailable()) return;
                 int previousCount = messages.size();
                 for (int i = loaded.size() - 1; i >= 0; i--) upsert(loaded.get(i), false);
                 nextBeforeId = cursor; loadingOlder = false; adapter.notifyDataSetChanged();
@@ -140,10 +148,12 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         startSendAnimation();
         LauncherPublicChatBridge.send(this, content, new LauncherPublicChatBridge.MessageCallback() {
             @Override public void onSuccess(LauncherPublicChatBridge.Message message) {
+                if (isUiUnavailable()) return;
                 sending = false;
                 stopSendAnimation(); updateSendState(); upsert(message, true);
             }
             @Override public void onError(String message) {
+                if (isUiUnavailable()) return;
                 sending = false;
                 stopSendAnimation();
                 binding.publicChatInput.setText(content);
@@ -253,7 +263,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         @Override public void onMessagePinned(LauncherPublicChatBridge.Message message) { runOnUiIfAlive(() -> upsert(message, false)); }
         @Override public void onReadonlyChanged(boolean value) { runOnUiIfAlive(() -> { readonly = value; renderStatus(); }); }
         @Override public void onMuted(boolean value, Long until, String reason) { runOnUiIfAlive(() -> { muted = value; muteReason = reason; renderStatus(); }); }
-        @Override public void onAnnouncementChanged(LauncherPublicChatBridge.Announcement announcement) { LauncherPublicChatBridge.loadAnnouncements(LauncherPublicChatActivity.this, new LauncherPublicChatBridge.AnnouncementsCallback() { @Override public void onSuccess(List<LauncherPublicChatBridge.Announcement> list) { renderAnnouncements(list); } @Override public void onError(String message) { showError(message); } }); }
+        @Override public void onAnnouncementChanged(LauncherPublicChatBridge.Announcement announcement) { LauncherPublicChatBridge.loadAnnouncements(LauncherPublicChatActivity.this, new LauncherPublicChatBridge.AnnouncementsCallback() { @Override public void onSuccess(List<LauncherPublicChatBridge.Announcement> list) { if (isUiUnavailable()) return; renderAnnouncements(list); } @Override public void onError(String message) { showError(message); } }); }
         @Override public void onError(String message) { runOnUiIfAlive(() -> { connectionState = getString(R.string.social_disconnected); renderStatus(); }); }
     }
 
@@ -263,6 +273,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         cancelHeartbeat();
         heartbeatDisposable = RxMainScheduler.postDelayed(new Runnable() {
             @Override public void run() {
+                if (isUiUnavailable()) return;
                 if (socket != null) socket.send("ping");
                 scheduleHeartbeat();
             }

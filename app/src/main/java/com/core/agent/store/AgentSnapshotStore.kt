@@ -3,6 +3,7 @@ package com.core.agent.store
 import android.content.Context
 import com.core.util.TimeFormatUtil
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
@@ -120,7 +121,9 @@ object AgentSnapshotStore {
                     .put("expected_current_sha256", value.getString("expected_current_sha256"))
                     .put("status", value.optString("status", "pending"))
                     .put("created_at", value.getLong("created_at")))
-            } catch (ignored: Throwable) { }
+            } catch (e: Exception) {
+                // 跳过损坏快照（解析/IO 失败均忽略单条）
+            }
         }
         return JSONObject().put("items", items).toString()
     }
@@ -144,7 +147,9 @@ object AgentSnapshotStore {
                     .append("\n时间：").append(TimeFormatUtil.date(value.optLong("created_at")))
                     .append('\n')
                 count++
-            } catch (ignored: Throwable) { }
+            } catch (e: Exception) {
+                // 跳过损坏快照（解析/IO 失败均忽略单条）
+            }
         }
         return text.toString()
     }
@@ -236,7 +241,8 @@ object AgentSnapshotStore {
         return try {
             val value = JSONObject(String(read(file, 16 * 1024), StandardCharsets.UTF_8))
             expectedId == value.optString("id")
-        } catch (ignored: Throwable) {
+        } catch (e: Exception) {
+            // 临时元数据解析失败视为无效
             false
         }
     }
@@ -259,7 +265,9 @@ object AgentSnapshotStore {
                         retained--
                     }
                 }
-            } catch (ignored: Throwable) { }
+            } catch (e: Exception) {
+                // 跳过损坏快照（解析/IO 失败均忽略单条）
+            }
             i--
         }
     }

@@ -618,7 +618,8 @@ open class LauncherHomeFragment : Fragment() {
                 showDefaultAvatar()
                 return
             }
-        } catch (throwable: Throwable) {
+        } catch (error: RuntimeException) {
+            // 头像加载兜底：SafeImageLoader 已内部返回 false，此处仅防运行时异常
             showDefaultAvatar()
         }
     }

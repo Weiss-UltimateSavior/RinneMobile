@@ -269,6 +269,7 @@ class LauncherActivity : AppCompatActivity() {
         intent.action = null
         PinnedGameShortcut.launchPinnedGame(this, gameId, pinnedGameSessionController, object : PinnedGameShortcut.LaunchCallback {
             override fun onResult(result: LauncherGameLaunchBridge.LaunchResult) {
+                if (isFinishing || isDestroyed) return
                 if (!result.success && result.message.trim { it <= ' ' }.isNotEmpty()) {
                     if (result.activeGameConflict) {
                         LauncherGameLaunchBridge.showActiveGameDialog(this@LauncherActivity, result.activeGameTitle)

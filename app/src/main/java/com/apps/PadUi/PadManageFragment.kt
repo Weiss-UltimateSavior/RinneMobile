@@ -272,7 +272,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         binding.libraryRecycler.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
             if (right - left != oldRight - oldLeft) updateAdaptiveCardHeight()
         }
-        binding.libraryRecycler.post { updateAdaptiveCardHeight() }
+        binding.libraryRecycler.post {
+            if (!isAdded || _binding == null) return@post
+            updateAdaptiveCardHeight()
+        }
         binding.libraryRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
@@ -335,7 +338,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 searchQuery = s?.toString()?.trim { it <= ' ' } ?: ""
                 mainQueue.removeCallbacks(searchDebounce)
-                searchDebounce = Runnable { applyFilters() }
+                searchDebounce = Runnable {
+                    if (!isAdded || _binding == null) return@Runnable
+                    applyFilters()
+                }
                 mainQueue.postDelayed(searchDebounce, 300)
             }
 
@@ -386,7 +392,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         val hasGames = lc.visibleGames.isNotEmpty()
         b.libraryRecycler.visibility = if (hasGames) View.VISIBLE else View.GONE
         if (hasGames) {
-            b.libraryRecycler.post { updateAdaptiveCardHeight() }
+            b.libraryRecycler.post {
+                if (!isAdded || _binding == null) return@post
+                updateAdaptiveCardHeight()
+            }
             scheduleLoadUntilViewportFilled()
         }
         b.libraryEmpty.setText(

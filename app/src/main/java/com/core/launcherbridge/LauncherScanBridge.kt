@@ -16,6 +16,7 @@ import com.core.scanner.ScanRequest
 import com.core.scanner.ScanResult
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.util.Locale
 
@@ -46,7 +47,8 @@ object LauncherScanBridge {
             out.rpgMakerSubtype = source.rpgMakerSubtype ?: ""
             out.renpySubtype = source.renpySubtype ?: ""
             out.godotSubtype = source.godotSubtype ?: ""
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 引擎探测失败忽略
         }
         return out
     }
@@ -146,7 +148,7 @@ object LauncherScanBridge {
                 }
             } catch (_: SecurityException) {
                 batch.errorsInternal.add("目录权限已失效，请重新添加：${simplifyUri(root)}")
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 batch.errorsInternal.add("扫描目录失败：${simplifyUri(root)}")
             }
         }
@@ -168,7 +170,8 @@ object LauncherScanBridge {
         return try {
             val parsed = Uri.parse(uri)
             parsed.lastPathSegment ?: uri
-        } catch (_: Throwable) {
+        } catch (_: IllegalArgumentException) {
+            // Uri 解析失败回退原始字符串
             uri
         }
     }
@@ -219,7 +222,9 @@ object LauncherScanBridge {
                     game.coverUri = cover
                     game.coverPersistUri = cover
                     game.coverSourceType = 1
-                    try { repository.update(game) } catch (_: Throwable) {}
+                    try { repository.update(game) } catch (_: Exception) {
+                        // 封面元数据更新失败忽略，不影响导入
+                    }
                 } else {
                     LauncherCoverBridge.fetchCoverForGameAsync(context, game)
                 }
@@ -261,7 +266,10 @@ object LauncherScanBridge {
                     }
                 }
             }
-        } catch (_: Throwable) {
+        } catch (_: IllegalArgumentException) {
+            // SAF tree document id 非法时忽略（单文件失败隔离）
+        } catch (_: SecurityException) {
+            // SAF 封面目录查询权限失效时忽略（单文件失败隔离）
         }
         return null
     }
@@ -304,10 +312,11 @@ object LauncherScanBridge {
             }
             bitmap.recycle()
             return Uri.fromFile(out).toString()
-        } catch (_: Throwable) {
+        } catch (_: IOException) {
+            // 封面复制失败（IO 异常）返回 null，由调用方回退
             return null
         } finally {
-            inputStream?.let { try { it.close() } catch (_: Throwable) {} }
+            inputStream?.let { try { it.close() } catch (_: IOException) { /* 关闭失败忽略 */ } }
         }
     }
 
@@ -349,7 +358,8 @@ object LauncherScanBridge {
                 val pkg = app.packageName.lowercase(Locale.ROOT)
                 val label = try {
                     pm.getApplicationLabel(app).toString().lowercase(Locale.ROOT)
-                } catch (_: Throwable) {
+                } catch (_: RuntimeException) {
+                    // 个别应用标签解析失败忽略，回退空串
                     ""
                 }
                 val hit = pkg.contains("winlator") || label.contains("winlator")
@@ -361,7 +371,8 @@ object LauncherScanBridge {
                 if (fallback.isEmpty()) fallback = app.packageName
             }
             fallback
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 应用枚举失败返回空串，回退默认处理
             ""
         }
     }

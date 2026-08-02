@@ -65,7 +65,7 @@ public final class AgentScanRootGateway {
             checkActive(cancellation);
             Node node = queue.removeFirst();
             DocumentFile[] children;
-            try { children = node.file.listFiles(); } catch (Throwable ignored) { continue; }
+            try { children = node.file.listFiles(); } catch (SecurityException ignored) { continue; }
             if (children == null) continue;
             java.util.Arrays.sort(children, java.util.Comparator.comparing(
                     (DocumentFile file) -> safeName(file), String.CASE_INSENSITIVE_ORDER));
@@ -159,7 +159,7 @@ public final class AgentScanRootGateway {
                 if (newBase == null) throw new IOException("创建目录失败");
                 if (!leafName(pending.sourcePath).equals(safeName(newBase))) {
                     boolean deleted = false;
-                    try { deleted = newBase.delete(); } catch (Throwable ignored) { }
+                    try { deleted = newBase.delete(); } catch (SecurityException ignored) { /* 回滚清理尽力而为 */ }
                     if (!deleted) {
                         changed = true;
                         throw new IOException("文件提供方更改了新目录名称，且无法删除新建目录");
@@ -178,7 +178,7 @@ public final class AgentScanRootGateway {
                     newBase = resolve(root, pending.destinationPath);
                     if (newBase == null || !newBase.exists()) {
                         boolean rolledBack = false;
-                        try { rolledBack = source.renameTo(leafName(pending.sourcePath)); } catch (Throwable ignored) { }
+                        try { rolledBack = source.renameTo(leafName(pending.sourcePath)); } catch (SecurityException ignored) { /* 回滚尽力而为 */ }
                         if (rolledBack) throw new IOException("文件提供方更改了重命名结果，已回滚到原名称");
                         changed = true;
                         throw new IOException("文件提供方更改了重命名结果，且无法回滚到原名称");
@@ -200,7 +200,7 @@ public final class AgentScanRootGateway {
                     newBase = destination.findFile(sourceName);
                     if (newBase == null) {
                         if (sourceIsDirectory) {
-                            try { newBase = DocumentFile.fromTreeUri(context, moved); } catch (Throwable ignored) { }
+                            try { newBase = DocumentFile.fromTreeUri(context, moved); } catch (IllegalArgumentException ignored) { /* 非法 URI 忽略 */ }
                         }
                         if (newBase == null) newBase = DocumentFile.fromSingleUri(context, moved);
                     }
@@ -316,7 +316,7 @@ public final class AgentScanRootGateway {
     private static DocumentFile openRoot(Context context, Root root, boolean required) throws IOException {
         DocumentFile file;
         try { file = DocumentFile.fromTreeUri(context, Uri.parse(root.uri)); }
-        catch (Throwable error) { file = null; }
+        catch (IllegalArgumentException error) { file = null; }
         if (file == null || !file.exists() || !file.isDirectory()) {
             if (required) throw new IOException("扫描目录不可访问，请在管理页重新授权");
             return null;
@@ -347,7 +347,7 @@ public final class AgentScanRootGateway {
             if (value == null || value.trim().isEmpty()) return "扫描目录";
             int colon = value.lastIndexOf(':');
             return safeText(colon >= 0 && colon < value.length() - 1 ? value.substring(colon + 1) : value, 80);
-        } catch (Throwable ignored) { return "扫描目录"; }
+        } catch (IllegalArgumentException ignored) { return "扫描目录"; }
     }
 
     private static String parentPath(String path) { int slash = path.lastIndexOf('/'); return slash < 0 ? "" : path.substring(0, slash); }
@@ -355,7 +355,7 @@ public final class AgentScanRootGateway {
     private static String safeName(DocumentFile file) { String value = file.getName(); return value == null ? "" : value; }
     private static boolean safeProviderName(String name) {
         try { return !name.isEmpty() && name.equals(AgentRelativePath.normalize(name, false)); }
-        catch (Throwable ignored) { return false; }
+        catch (IllegalArgumentException ignored) { return false; }
     }
     private static void rejectSensitive(String path) { if (AgentRelativePath.isSensitive(path)) throw new SecurityException("敏感账号、密钥或存档路径禁止智能体访问"); }
     private static String safeText(String value, int max) {

@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
@@ -49,7 +50,9 @@ final class ExternalImportPreviewDialog {
             return;
         }
         window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setLayout(host.dp(300), WindowManager.LayoutParams.WRAP_CONTENT);
+        // 宽度按 300dp 指定，并通过 LauncherDialogFactory 做屏幕宽度兜底（左右各留 16dp + 平板竖屏缩放），避免小屏溢出
+        window.setLayout(LauncherDialogFactory.dialogWidthPx(host.requireContext(), 300),
+                WindowManager.LayoutParams.WRAP_CONTENT);
 
         LinearLayout root = new LinearLayout(host.requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
