@@ -149,13 +149,13 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
     ) {
         (container.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
             params.weight = if (selected) 1.55f else 0.8625f
-            params.height = dp(if (selected) 44 else 45)
+            params.height = LauncherTheme.dp(host, if (selected) 44 else 45)
             params.marginStart = 0
             params.marginEnd = 0
             container.layoutParams = params
         }
         container.background = if (selected) {
-            InsetDrawable(LauncherTheme.selectedChip(host), dp(4), 0, dp(6), 0)
+            InsetDrawable(LauncherTheme.selectedChip(host), LauncherTheme.dp(host, 4), 0, LauncherTheme.dp(host, 6), 0)
         } else {
             null
         }
@@ -304,10 +304,6 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
         }
         logo.scaleX = scale
         logo.scaleY = scale
-    }
-
-    private fun dp(value: Int): Int {
-        return (value * host.resources.displayMetrics.density).toInt()
     }
 
     companion object {

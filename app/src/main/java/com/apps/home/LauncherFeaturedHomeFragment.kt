@@ -70,14 +70,14 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
             action.gravity = Gravity.CENTER
             // 默认首页的整行卡片背景在第二套首页中拆为独立的图标容器，文字保持在容器下方。
             action.background = null
-            action.setPadding(0, dp(2), 0, 0)
-            action.minimumHeight = dp(70)
+            action.setPadding(0, LauncherTheme.dp(requireContext(), 2), 0, 0)
+            action.minimumHeight = LauncherTheme.dp(requireContext(), 70)
             val params = (action.layoutParams as GridLayout.LayoutParams).apply {
                 width = 0
                 height = GridLayout.LayoutParams.WRAP_CONTENT
                 columnSpec = GridLayout.spec(index, 1f)
                 rowSpec = GridLayout.spec(0)
-                setMargins(if (index == 0) 0 else dp(4), 0, if (index == 3) 0 else dp(4), 0)
+                setMargins(if (index == 0) 0 else LauncherTheme.dp(requireContext(), 4), 0, if (index == 3) 0 else LauncherTheme.dp(requireContext(), 4), 0)
             }
             action.layoutParams = params
 
@@ -92,16 +92,16 @@ class LauncherFeaturedHomeFragment : LauncherHomeFragment() {
                 )
             }
             icon?.apply {
-                layoutParams = LinearLayout.LayoutParams(dp(49), dp(49))
+                layoutParams = LinearLayout.LayoutParams(LauncherTheme.dp(requireContext(), 49), LauncherTheme.dp(requireContext(), 49))
                 setBackgroundResource(com.core.R.drawable.launcher_featured_quick_action_bg)
-                setPadding(dp(10), dp(10), dp(10), dp(10))
+                setPadding(LauncherTheme.dp(requireContext(), 10), LauncherTheme.dp(requireContext(), 10), LauncherTheme.dp(requireContext(), 10), LauncherTheme.dp(requireContext(), 10))
                 setColorFilter(primary)
             }
             label?.apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(5) }
+                ).apply { topMargin = LauncherTheme.dp(requireContext(), 5) }
                 gravity = Gravity.CENTER
                 setTextColor(LauncherTheme.text(requireContext()))
                 textSize = 12.66f

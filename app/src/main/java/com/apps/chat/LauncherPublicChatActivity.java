@@ -287,7 +287,6 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         }
     }
 
-    private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
     private void applyInsets() {
         View root = binding.publicChatRoot;
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
@@ -295,15 +294,15 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
             int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
             setOverlayMargins(binding.publicChatTopOverlay, 0, 0);
-            binding.publicChatTitleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
+            binding.publicChatTitleBar.setPaddingRelative(LauncherTheme.dp(this, 13), topInset + LauncherTheme.dp(this, 12), LauncherTheme.dp(this, 13), LauncherTheme.dp(this, 15));
             boolean keyboardVisible = imeBottom > systemBottom;
             setOverlayMargins(binding.publicChatComposerOverlay, 0, keyboardVisible ? imeBottom : 0);
             View inputThemeBar = binding.publicChatInputThemeBar;
             inputThemeBar.setPaddingRelative(
                     inputThemeBar.getPaddingStart(),
-                    dp(13),
+                    LauncherTheme.dp(this, 13),
                     inputThemeBar.getPaddingEnd(),
-                    keyboardVisible ? dp(14) : systemBottom + dp(14));
+                    keyboardVisible ? LauncherTheme.dp(this, 14) : systemBottom + LauncherTheme.dp(this, 14));
             updateMessageListOverlayPadding();
             return insets;
         });
@@ -328,7 +327,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         setMessageListTopMargin(listTop);
         int bottomSpace = binding.publicChatComposerOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, binding.publicChatMessages.getBottom() - binding.publicChatComposerOverlay.getTop()) + dp(8);
+                : Math.max(0, binding.publicChatMessages.getBottom() - binding.publicChatComposerOverlay.getTop()) + LauncherTheme.dp(this, 8);
         binding.publicChatMessages.setPadding(
                 binding.publicChatMessages.getPaddingLeft(),
                 binding.publicChatMessages.getPaddingTop(),

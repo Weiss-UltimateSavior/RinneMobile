@@ -404,7 +404,7 @@ open class LauncherHomeFragment : Fragment() {
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     1f,
                 ).apply {
-                    setMargins(dp(5), dp(2), dp(5), dp(3))
+                    setMargins(LauncherTheme.dp(requireContext(), 5), LauncherTheme.dp(requireContext(), 2), LauncherTheme.dp(requireContext(), 5), LauncherTheme.dp(requireContext(), 3))
                 }
                 currentRow?.addView(itemView)
             }
@@ -644,10 +644,6 @@ open class LauncherHomeFragment : Fragment() {
 
     private fun prefs(): SharedPreferences =
         requireContext().applicationContext.getSharedPreferences(LauncherPreferences.APP_PREFS, android.content.Context.MODE_PRIVATE)
-
-    protected open fun dp(value: Int): Int {
-        return (value * resources.displayMetrics.density + 0.5f).toInt()
-    }
 
     private fun checkUpdate() {
         Toast.makeText(requireContext(), com.core.R.string.home_checking_update, Toast.LENGTH_SHORT).show()

@@ -152,7 +152,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             binding.libraryContent.paddingLeft,
             binding.libraryContent.paddingTop,
             binding.libraryContent.paddingRight,
-            dp(6)
+            LauncherTheme.dp(requireContext(), 6)
         )
         binding.libraryRecycler.setPadding(
             binding.libraryRecycler.paddingLeft,
@@ -301,10 +301,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         if (usableWidth <= 0) return
 
         // item_launcher_game_card 每张卡片左右各约 5dp margin。
-        val totalHorizontalMargins = dp(10) * GRID_COLUMNS
+        val totalHorizontalMargins = LauncherTheme.dp(requireContext(), 10) * GRID_COLUMNS
         val cardWidth = maxOf(1, (usableWidth - totalHorizontalMargins) / GRID_COLUMNS)
 
-        currentAdapter.setFixedCardHeight(maxOf(dp(34), Math.round(cardWidth * 1.25f)))
+        currentAdapter.setFixedCardHeight(maxOf(LauncherTheme.dp(requireContext(), 34), Math.round(cardWidth * 1.25f)))
     }
 
     private fun isTabletLayout(): Boolean {
@@ -673,14 +673,14 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         } else {
             LauncherTheme.menuItem(chip)
         }
-        chip.setPadding(dp(13), 0, dp(13), 0)
+        chip.setPadding(LauncherTheme.dp(requireContext(), 13), 0, LauncherTheme.dp(requireContext(), 13), 0)
         chip.setOnClickListener {
             selectedCategory = value ?: ""
             renderCategories()
             applyFilters()
         }
-        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(29))
-        lp.setMargins(0, 0, dp(7), 0)
+        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LauncherTheme.dp(requireContext(), 29))
+        lp.setMargins(0, 0, LauncherTheme.dp(requireContext(), 7), 0)
         b.libraryCategoryRow.addView(chip, lp)
     }
 
@@ -694,10 +694,6 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun applyToolbarIconTone(view: ImageView) {
         view.imageTintList = ColorStateList.valueOf(LauncherTheme.primary(requireContext()))
         view.background = null
-    }
-
-    private fun dp(value: Int): Int {
-        return LauncherTheme.dp(requireContext(), value)
     }
 
     // ===== GameListController.Listener =====

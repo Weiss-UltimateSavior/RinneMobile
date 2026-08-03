@@ -57,7 +57,7 @@ public final class LauncherCustomVndbSearchDialog {
             chip.setGravity(Gravity.CENTER);
             chip.setTextSize(12);
             chip.setTypeface(null, Typeface.BOLD);
-            chip.setPadding(dp(fragment, 10), dp(fragment, 7), dp(fragment, 10), dp(fragment, 7));
+            chip.setPadding(LauncherTheme.dp(fragment.requireContext(), 10), LauncherTheme.dp(fragment.requireContext(), 7), LauncherTheme.dp(fragment.requireContext(), 10), LauncherTheme.dp(fragment.requireContext(), 7));
             LauncherTheme.chip(chip, sources[i].equals(selectedSource[0]));
             chip.setOnClickListener(v -> {
                 selectedSource[0] = sources[idx];
@@ -65,27 +65,27 @@ public final class LauncherCustomVndbSearchDialog {
                 for (int j = 0; j < 3; j++) LauncherTheme.chip(sourceChips[j], j == idx);
             });
             LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            if (i < 2) chipParams.setMarginEnd(dp(fragment, 6));
+            if (i < 2) chipParams.setMarginEnd(LauncherTheme.dp(fragment.requireContext(), 6));
             sourceRow.addView(chip, chipParams);
             sourceChips[i] = chip;
         }
         LinearLayout.LayoutParams sourceRowParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        sourceRowParams.setMargins(0, dp(fragment, 13), 0, 0);
+        sourceRowParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 13), 0, 0);
         root.addView(sourceRow, sourceRowParams);
 
         TextView info = info(fragment,
                 fragment.getString(R.string.settings_custom_search_summary));
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoParams.setMargins(0, dp(fragment, 13), 0, 0);
+        infoParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 13), 0, 0);
         root.addView(info, infoParams);
 
         TextView label = label(fragment,
                 fragment.getString(R.string.settings_search_keywords));
         LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        labelParams.setMargins(0, dp(fragment, 13), 0, 0);
+        labelParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 13), 0, 0);
         root.addView(label, labelParams);
 
         EditText input = new com.apps.widget.LauncherEditText(fragment.requireContext());
@@ -98,17 +98,17 @@ public final class LauncherCustomVndbSearchDialog {
         input.setTextSize(13);
         input.setBackground(LauncherTheme.cancelChip(fragment.requireContext()));
         LauncherTheme.styleTextInput(input);
-        input.setPadding(dp(fragment, 13), dp(fragment, 9), dp(fragment, 13), dp(fragment, 9));
+        input.setPadding(LauncherTheme.dp(fragment.requireContext(), 13), LauncherTheme.dp(fragment.requireContext(), 9), LauncherTheme.dp(fragment.requireContext(), 13), LauncherTheme.dp(fragment.requireContext(), 9));
         LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        inputParams.setMargins(0, dp(fragment, 5), 0, 0);
+        inputParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 5), 0, 0);
         root.addView(input, inputParams);
 
         TextView hint = hint(fragment,
                 fragment.getString(R.string.settings_search_keywords_description));
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        hintParams.setMargins(0, dp(fragment, 7), 0, 0);
+        hintParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 7), 0, 0);
         root.addView(hint, hintParams);
 
         LinearLayout btnRow = new LinearLayout(fragment.requireContext());
@@ -116,21 +116,21 @@ public final class LauncherCustomVndbSearchDialog {
         btnRow.setWeightSum(2f);
         LinearLayout.LayoutParams btnRowParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        btnRowParams.setMargins(0, dp(fragment, 13), 0, 0);
+        btnRowParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 13), 0, 0);
         btnRow.setLayoutParams(btnRowParams);
 
         TextView cancel = button(fragment,
                 fragment.getString(R.string.settings_cancel), false);
-        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dp(fragment, 38), 1f);
-        cancelParams.setMargins(0, 0, dp(fragment, 5), 0);
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, LauncherTheme.dp(fragment.requireContext(), 38), 1f);
+        cancelParams.setMargins(0, 0, LauncherTheme.dp(fragment.requireContext(), 5), 0);
         cancel.setLayoutParams(cancelParams);
         cancel.setOnClickListener(view -> dialog.dismiss());
         btnRow.addView(cancel);
 
         TextView search = button(fragment,
                 fragment.getString(R.string.settings_search), true);
-        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, dp(fragment, 38), 1f);
-        searchParams.setMargins(dp(fragment, 5), 0, 0, 0);
+        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, LauncherTheme.dp(fragment.requireContext(), 38), 1f);
+        searchParams.setMargins(LauncherTheme.dp(fragment.requireContext(), 5), 0, 0, 0);
         search.setLayoutParams(searchParams);
         search.setOnClickListener(view -> {
             String keyword = input.getText() == null ? "" : input.getText().toString().trim();
@@ -196,7 +196,7 @@ public final class LauncherCustomVndbSearchDialog {
                 fragment.getString(R.string.settings_choose_source_result_summary, label));
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        infoParams.setMargins(0, dp(fragment, 13), 0, 0);
+        infoParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 13), 0, 0);
         root.addView(info, infoParams);
 
         LinearLayout list = new LinearLayout(fragment.requireContext());
@@ -212,8 +212,8 @@ public final class LauncherCustomVndbSearchDialog {
             row.setText(displayTitle + "\n" + original + "\n" + developer);
             row.setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_text_color));
             row.setTextSize(12);
-            row.setLineSpacing(dp(fragment, 4), 1f);
-            row.setPadding(dp(fragment, 12), dp(fragment, 9), dp(fragment, 12), dp(fragment, 9));
+            row.setLineSpacing(LauncherTheme.dp(fragment.requireContext(), 4), 1f);
+            row.setPadding(LauncherTheme.dp(fragment.requireContext(), 12), LauncherTheme.dp(fragment.requireContext(), 9), LauncherTheme.dp(fragment.requireContext(), 12), LauncherTheme.dp(fragment.requireContext(), 9));
             row.setBackground(LauncherTheme.cancelChip(fragment.requireContext()));
             row.setOnClickListener(view -> {
                 row.setEnabled(false);
@@ -236,7 +236,7 @@ public final class LauncherCustomVndbSearchDialog {
             });
             LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            rowParams.setMargins(0, dp(fragment, 9), 0, 0);
+            rowParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 9), 0, 0);
             list.addView(row, rowParams);
         }
 
@@ -244,19 +244,19 @@ public final class LauncherCustomVndbSearchDialog {
         scroll.addView(list);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
-        scrollParams.setMargins(0, dp(fragment, 4), 0, 0);
+        scrollParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 4), 0, 0);
         root.addView(scroll, scrollParams);
 
         TextView cancel = button(fragment,
                 fragment.getString(R.string.settings_cancel), false);
         cancel.setOnClickListener(view -> dialog.dismiss());
         LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(fragment, 38));
-        cancelParams.setMargins(0, dp(fragment, 13), 0, 0);
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(fragment.requireContext(), 38));
+        cancelParams.setMargins(0, LauncherTheme.dp(fragment.requireContext(), 13), 0, 0);
         root.addView(cancel, cancelParams);
         setContent(dialog, root, fragment, 288);
         Window window = dialog.getWindow();
-        if (window != null) window.setLayout(dp(fragment, 288),
+        if (window != null) window.setLayout(LauncherTheme.dp(fragment.requireContext(), 288),
                 (int) (fragment.getResources().getDisplayMetrics().heightPixels * 0.72f));
     }
 
@@ -269,7 +269,7 @@ public final class LauncherCustomVndbSearchDialog {
     private static LinearLayout createRoot(Fragment fragment) {
         LinearLayout root = new LinearLayout(fragment.requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(fragment, 22), dp(fragment, 18), dp(fragment, 22), dp(fragment, 15));
+        root.setPadding(LauncherTheme.dp(fragment.requireContext(), 22), LauncherTheme.dp(fragment.requireContext(), 18), LauncherTheme.dp(fragment.requireContext(), 22), LauncherTheme.dp(fragment.requireContext(), 15));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
         return root;
     }
@@ -291,7 +291,7 @@ public final class LauncherCustomVndbSearchDialog {
         info.setText(text);
         info.setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.launcher_text_muted_color));
         info.setTextSize(12);
-        info.setLineSpacing(dp(fragment, 4), 1f);
+        info.setLineSpacing(LauncherTheme.dp(fragment.requireContext(), 4), 1f);
         return info;
     }
 
@@ -332,7 +332,7 @@ public final class LauncherCustomVndbSearchDialog {
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
         window.setBackgroundDrawableResource(android.R.color.transparent);
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        window.setLayout(dp(fragment, widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(LauncherTheme.dp(fragment.requireContext(), widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private static void focusAndShowKeyboard(Dialog dialog, EditText input, Fragment fragment) {
@@ -360,10 +360,6 @@ public final class LauncherCustomVndbSearchDialog {
         InputMethodManager manager = (InputMethodManager) fragment.requireContext()
                 .getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
         if (manager != null) manager.hideSoftInputFromWindow(input.getWindowToken(), 0);
-    }
-
-    private static int dp(Fragment fragment, int value) {
-        return (int) (value * fragment.getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private static String safe(String value) {

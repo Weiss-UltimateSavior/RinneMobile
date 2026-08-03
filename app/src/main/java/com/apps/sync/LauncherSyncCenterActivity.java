@@ -267,10 +267,6 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         });
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
     private boolean isUiUnavailable() {
         return isFinishing() || isDestroyed() || binding == null;
     }

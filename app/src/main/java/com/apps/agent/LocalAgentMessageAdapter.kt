@@ -32,8 +32,8 @@ class LocalAgentMessageAdapter(
         val user = message.role == "user"
         val tool = message.role == "tool"
         val reasoning = message.role == "reasoning"
-        val horizontalInset = holder.dp(4)
-        val oppositeInset = holder.dp(if (reasoning) 18 else 54)
+        val horizontalInset = LauncherTheme.dp(holder.itemView.context, 4)
+        val oppositeInset = LauncherTheme.dp(holder.itemView.context, if (reasoning) 18 else 54)
         val binding = holder.binding
         (binding.agentEventCard.layoutParams as FrameLayout.LayoutParams).apply {
             gravity = if (user) Gravity.END else Gravity.START
@@ -47,17 +47,17 @@ class LocalAgentMessageAdapter(
         } else {
             ColorDrawable(Color.TRANSPARENT)
         }
-        val cardPadding = if (user) holder.dp(14) else 0
+        val cardPadding = if (user) LauncherTheme.dp(holder.itemView.context, 14) else 0
         binding.agentEventCard.setPadding(
-            cardPadding, if (user) holder.dp(11) else holder.dp(4),
-            cardPadding, if (user) holder.dp(11) else holder.dp(4)
+            cardPadding, if (user) LauncherTheme.dp(holder.itemView.context, 11) else LauncherTheme.dp(holder.itemView.context, 4),
+            cardPadding, if (user) LauncherTheme.dp(holder.itemView.context, 11) else LauncherTheme.dp(holder.itemView.context, 4)
         )
         binding.agentEventHeader.visibility = if (user || reasoning) View.GONE else View.VISIBLE
         binding.agentEventContent.visibility = if (reasoning) View.GONE else View.VISIBLE
         binding.agentReasoningContainer.visibility = if (reasoning) View.VISIBLE else View.GONE
         if (reasoning) {
             val follow = binding.agentReasoningScroll.childCount == 0 ||
-                binding.agentReasoningScroll.scrollY + binding.agentReasoningScroll.height + holder.dp(24) >=
+                binding.agentReasoningScroll.scrollY + binding.agentReasoningScroll.height + LauncherTheme.dp(holder.itemView.context, 24) >=
                 binding.agentReasoningScroll.getChildAt(0).height
             binding.agentReasoningContainer.background = null
             binding.agentReasoningState.text = binding.root.context.getString(
@@ -87,10 +87,10 @@ class LocalAgentMessageAdapter(
             message.content
         }
         binding.agentEventContent.maxWidth = max(
-            holder.dp(220), holder.itemView.resources.displayMetrics.widthPixels - holder.dp(100)
+            LauncherTheme.dp(holder.itemView.context, 220), holder.itemView.resources.displayMetrics.widthPixels - LauncherTheme.dp(holder.itemView.context, 100)
         )
         (binding.agentEventContent.layoutParams as LinearLayout.LayoutParams).apply {
-            topMargin = if (user) 0 else holder.dp(7)
+            topMargin = if (user) 0 else LauncherTheme.dp(holder.itemView.context, 7)
             binding.agentEventContent.layoutParams = this
         }
         binding.agentEventContent.setTextColor(
@@ -102,7 +102,5 @@ class LocalAgentMessageAdapter(
 
     override fun getItemCount(): Int = messages.size
 
-    class Holder(val binding: ItemLocalAgentEventBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun dp(value: Int): Int = Math.round(value * itemView.resources.displayMetrics.density)
-    }
+    class Holder(val binding: ItemLocalAgentEventBinding) : RecyclerView.ViewHolder(binding.root)
 }

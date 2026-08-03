@@ -94,7 +94,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(LauncherTheme.text(this));
-        final int pad = dp(16);
+        final int pad = LauncherTheme.dp(this, 16);
         title.setPadding(pad, pad, pad, pad);
         root.addView(title, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -114,7 +114,7 @@ public class AvatarCropActivity extends AppCompatActivity {
         // 底部按钮栏：取消 / 确定 各占一半权重
         final LinearLayout buttonBar = new LinearLayout(this);
         buttonBar.setOrientation(LinearLayout.HORIZONTAL);
-        final int barPad = dp(16);
+        final int barPad = LauncherTheme.dp(this, 16);
         buttonBar.setPadding(barPad, 0, barPad, 0);
 
         TextView cancelButton = new TextView(this);
@@ -134,8 +134,8 @@ public class AvatarCropActivity extends AppCompatActivity {
         confirm.setOnClickListener(v -> onConfirm());
         this.confirmButton = confirm;
 
-        int btnHeight = dp(48);
-        int gap = dp(8);
+        int btnHeight = LauncherTheme.dp(this, 48);
+        int gap = LauncherTheme.dp(this, 8);
         LinearLayout.LayoutParams cancelLp = new LinearLayout.LayoutParams(
                 0, btnHeight, 1f);
         cancelLp.setMarginEnd(gap);
@@ -153,7 +153,7 @@ public class AvatarCropActivity extends AppCompatActivity {
             int topInset = insets.getSystemWindowInsetTop();
             int bottomInset = insets.getSystemWindowInsetBottom();
             title.setPadding(pad, pad + topInset, pad, pad);
-            buttonBar.setPadding(barPad, 0, barPad, bottomInset + dp(8));
+            buttonBar.setPadding(barPad, 0, barPad, bottomInset + LauncherTheme.dp(this, 8));
             return insets;
         });
 
@@ -211,10 +211,6 @@ public class AvatarCropActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (cropView != null) cropView.release();
-    }
-
-    private int dp(float value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     /**

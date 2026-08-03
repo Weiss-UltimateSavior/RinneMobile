@@ -1,9 +1,6 @@
 package com.apps.profile;
 
-import android.content.ActivityNotFoundException;
-import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -15,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherTheme;
+import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.core.R;
 import com.core.databinding.ActivityLauncherModuleCompatibilityBinding;
@@ -315,12 +313,16 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     // ----- 安装页跳转 -----
 
     private void openInstallPage(String installUrl) {
+        boolean opened;
         try {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(installUrl));
-            browserIntent.addCategory(Intent.CATEGORY_BROWSABLE);
-            startActivity(browserIntent);
-        } catch (ActivityNotFoundException | SecurityException e) {
-            // 受限设备/异常浏览器组件下 startActivity 可能抛 SecurityException，统一兜底为失败弹窗
+            // 统一走共享 LauncherUrlOpener：scheme 白名单校验 + ActivityNotFoundException 捕获。
+            opened = LauncherUrlOpener.open(this, installUrl);
+        } catch (SecurityException e) {
+            // 受限设备/异常浏览器组件下 startActivity 可能抛 SecurityException，按打开失败统一兜底。
+            opened = false;
+        }
+        if (!opened) {
+            // 打开失败弹窗提示同前（成功打开同前）。
             LauncherDialogFactory.showInfo(this,
                     getString(R.string.module_cannot_open_browser),
                     getString(R.string.module_try_again_later));

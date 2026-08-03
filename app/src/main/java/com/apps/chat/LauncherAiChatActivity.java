@@ -105,7 +105,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         LinearLayout menu = new LinearLayout(this);
         menu.setOrientation(LinearLayout.VERTICAL);
         menu.setBackgroundResource(R.drawable.launcher_white_card);
-        menu.setPadding(dp(7), dp(7), dp(7), dp(7));
+        menu.setPadding(LauncherTheme.dp(this, 7), LauncherTheme.dp(this, 7), LauncherTheme.dp(this, 7), LauncherTheme.dp(this, 7));
 
         // 菜单宽度带屏幕兜底：小屏设备上不超过屏幕宽度减去两侧 48dp 边距，禁止裸固定 dp 宽度
         int menuWidth = Math.min(LauncherTheme.dp(this, 119),
@@ -118,7 +118,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
 
         addMoreMenuItem(menu, getString(R.string.social_custom_model), popupWindow, () -> new AgentLlmConfigDialog(this).show());
         addMoreMenuItem(menu, getString(R.string.social_clear_history), popupWindow, this::showClearConfirmDialog);
-        popupWindow.showAsDropDown(anchor, anchor.getWidth() - menuWidth, dp(5), android.view.Gravity.NO_GRAVITY);
+        popupWindow.showAsDropDown(anchor, anchor.getWidth() - menuWidth, LauncherTheme.dp(this, 5), android.view.Gravity.NO_GRAVITY);
     }
 
     private void addMoreMenuItem(LinearLayout menu, String label, PopupWindow popupWindow, Runnable action) {
@@ -128,7 +128,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         item.setTypeface(null, android.graphics.Typeface.BOLD);
         item.setGravity(android.view.Gravity.CENTER);
         item.setSingleLine(true);
-        item.setPadding(dp(13), 0, dp(13), 0);
+        item.setPadding(LauncherTheme.dp(this, 13), 0, LauncherTheme.dp(this, 13), 0);
         item.setTextColor(LauncherTheme.primary(this));
         // 菜单项透明背景：容器 menu 已绘制 launcher_white_card 圆角卡片，菜单项不再叠加背景
         item.setBackgroundColor(Color.TRANSPARENT);
@@ -137,8 +137,8 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             action.run();
         });
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(34));
-        params.setMargins(0, 0, 0, dp(5));
+                LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(this, 34));
+        params.setMargins(0, 0, 0, LauncherTheme.dp(this, 5));
         menu.addView(item, params);
     }
 
@@ -224,7 +224,6 @@ public class LauncherAiChatActivity extends AppCompatActivity {
 
     private void scrollToEnd() { if (!messages.isEmpty()) binding.aiChatMessages.scrollToPosition(messages.size() - 1); }
     private void showError(String message) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
-    private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
     private void applyInsets() {
         View root = binding.aiChatRoot;
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
@@ -232,15 +231,15 @@ public class LauncherAiChatActivity extends AppCompatActivity {
             int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
             setOverlayMargins(binding.aiChatTopOverlay, 0, 0);
-            binding.aiChatTitleBar.setPaddingRelative(dp(13), topInset + dp(12), dp(13), dp(15));
+            binding.aiChatTitleBar.setPaddingRelative(LauncherTheme.dp(this, 13), topInset + LauncherTheme.dp(this, 12), LauncherTheme.dp(this, 13), LauncherTheme.dp(this, 15));
             boolean keyboardVisible = imeBottom > systemBottom;
             setOverlayMargins(binding.aiChatComposerOverlay, 0, keyboardVisible ? imeBottom : 0);
             View inputThemeBar = binding.aiChatInputThemeBar;
             inputThemeBar.setPaddingRelative(
                     inputThemeBar.getPaddingStart(),
-                    dp(13),
+                    LauncherTheme.dp(this, 13),
                     inputThemeBar.getPaddingEnd(),
-                    keyboardVisible ? dp(14) : systemBottom + dp(14));
+                    keyboardVisible ? LauncherTheme.dp(this, 14) : systemBottom + LauncherTheme.dp(this, 14));
             updateMessageListOverlayPadding();
             return insets;
         });
@@ -266,7 +265,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         setMessageListTopMargin(listTop);
         int bottomSpace = binding.aiChatComposerOverlay.getVisibility() == View.GONE
                 ? 0
-                : Math.max(0, binding.aiChatMessages.getBottom() - binding.aiChatComposerOverlay.getTop()) + dp(8);
+                : Math.max(0, binding.aiChatMessages.getBottom() - binding.aiChatComposerOverlay.getTop()) + LauncherTheme.dp(this, 8);
         binding.aiChatMessages.setPadding(
                 binding.aiChatMessages.getPaddingLeft(),
                 binding.aiChatMessages.getPaddingTop(),

@@ -238,9 +238,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
 
     @Override
     public int dp(int value) {
-        return Math.round(value
-                * requireContext().getResources().getDisplayMetrics().density
-                * tabletPortraitScale());
+        return LauncherTheme.dp(requireContext(), value * tabletPortraitScale());
     }
 
     @Override

@@ -87,7 +87,7 @@ object GameActionMenuFactory {
     fun createDialogRoot(ctx: Context): LinearLayout {
         val root = LinearLayout(ctx)
         root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(ctx, 22), dp(ctx, 20), dp(ctx, 22), dp(ctx, 16))
+        root.setPadding(LauncherTheme.dp(ctx, 22), LauncherTheme.dp(ctx, 20), LauncherTheme.dp(ctx, 22), LauncherTheme.dp(ctx, 16))
         root.setBackgroundResource(R.drawable.launcher_dialog_bg)
         return root
     }
@@ -127,9 +127,9 @@ object GameActionMenuFactory {
             action.run()
         }
         val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(ctx, 38)
+            LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(ctx, 38)
         )
-        lp.setMargins(0, dp(ctx, 9), 0, 0)
+        lp.setMargins(0, LauncherTheme.dp(ctx, 9), 0, 0)
         btn.layoutParams = lp
         return btn
     }
@@ -146,9 +146,9 @@ object GameActionMenuFactory {
         cancel.background = LauncherTheme.cancelChip(ctx)
         cancel.setOnClickListener { dialog.dismiss() }
         val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(ctx, 36)
+            LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(ctx, 36)
         )
-        lp.setMargins(0, dp(ctx, 9), 0, 0)
+        lp.setMargins(0, LauncherTheme.dp(ctx, 9), 0, 0)
         cancel.layoutParams = lp
         return cancel
     }
@@ -219,9 +219,9 @@ object GameActionMenuFactory {
             action.run()
         }
         val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(ctx, 36)
+            LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(ctx, 36)
         )
-        lp.setMargins(0, dp(ctx, 11), 0, 0)
+        lp.setMargins(0, LauncherTheme.dp(ctx, 11), 0, 0)
         root.addView(option, lp)
     }
 
@@ -313,14 +313,14 @@ object GameActionMenuFactory {
         info.text = sb.toString()
         info.setTextColor(LauncherTheme.text(ctx))
         info.textSize = 12f
-        info.setLineSpacing(dp(ctx, 4).toFloat(), 1f)
+        info.setLineSpacing(LauncherTheme.dp(ctx, 4).toFloat(), 1f)
         info.maxLines = 14
         info.isVerticalScrollBarEnabled = true
         info.movementMethod = ScrollingMovementMethod.getInstance()
         val infoLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        infoLp.setMargins(0, dp(ctx, 13), 0, 0)
+        infoLp.setMargins(0, LauncherTheme.dp(ctx, 13), 0, 0)
         root.addView(info, infoLp)
 
         root.addView(createDialogCancelButton(ctx, dialog))
@@ -351,11 +351,11 @@ object GameActionMenuFactory {
             TimeFormatUtil.playTime(game.totalPlayTime), lastPlayedText)
         info.setTextColor(LauncherTheme.textMuted(ctx))
         info.textSize = 12f
-        info.setLineSpacing(dp(ctx, 4).toFloat(), 1f)
+        info.setLineSpacing(LauncherTheme.dp(ctx, 4).toFloat(), 1f)
         val infoLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        infoLp.setMargins(0, dp(ctx, 13), 0, 0)
+        infoLp.setMargins(0, LauncherTheme.dp(ctx, 13), 0, 0)
         root.addView(info, infoLp)
 
         val totalLabel = TextView(ctx)
@@ -366,7 +366,7 @@ object GameActionMenuFactory {
         val tlLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        tlLp.setMargins(0, dp(ctx, 13), 0, 0)
+        tlLp.setMargins(0, LauncherTheme.dp(ctx, 13), 0, 0)
         root.addView(totalLabel, tlLp)
 
         val totalInput = LauncherEditText(ctx)
@@ -374,13 +374,13 @@ object GameActionMenuFactory {
         totalInput.setTextColor(LauncherTheme.text(ctx))
         totalInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
         totalInput.textSize = 13f
-        totalInput.setPadding(dp(ctx, 13), dp(ctx, 9), dp(ctx, 13), dp(ctx, 9))
+        totalInput.setPadding(LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9), LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9))
         totalInput.background = LauncherTheme.cancelChip(ctx)
         LauncherTheme.styleTextInput(totalInput)
         val tiLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        tiLp.setMargins(0, dp(ctx, 5), 0, 0)
+        tiLp.setMargins(0, LauncherTheme.dp(ctx, 5), 0, 0)
         root.addView(totalInput, tiLp)
 
         val addLabel = TextView(ctx)
@@ -391,7 +391,7 @@ object GameActionMenuFactory {
         val alLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        alLp.setMargins(0, dp(ctx, 11), 0, 0)
+        alLp.setMargins(0, LauncherTheme.dp(ctx, 11), 0, 0)
         root.addView(addLabel, alLp)
 
         val addInput = LauncherEditText(ctx)
@@ -399,13 +399,13 @@ object GameActionMenuFactory {
         addInput.setTextColor(LauncherTheme.text(ctx))
         addInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
         addInput.textSize = 13f
-        addInput.setPadding(dp(ctx, 13), dp(ctx, 9), dp(ctx, 13), dp(ctx, 9))
+        addInput.setPadding(LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9), LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9))
         addInput.background = LauncherTheme.cancelChip(ctx)
         LauncherTheme.styleTextInput(addInput)
         val aiLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        aiLp.setMargins(0, dp(ctx, 5), 0, 0)
+        aiLp.setMargins(0, LauncherTheme.dp(ctx, 5), 0, 0)
         root.addView(addInput, aiLp)
 
         val hint = TextView(ctx)
@@ -415,7 +415,7 @@ object GameActionMenuFactory {
         val hLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        hLp.setMargins(0, dp(ctx, 7), 0, 0)
+        hLp.setMargins(0, LauncherTheme.dp(ctx, 7), 0, 0)
         root.addView(hint, hLp)
 
         val btnRow = LinearLayout(ctx)
@@ -424,7 +424,7 @@ object GameActionMenuFactory {
         val brLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        brLp.setMargins(0, dp(ctx, 13), 0, 0)
+        brLp.setMargins(0, LauncherTheme.dp(ctx, 13), 0, 0)
         btnRow.layoutParams = brLp
 
         val cancelBtn = TextView(ctx)
@@ -433,8 +433,8 @@ object GameActionMenuFactory {
         cancelBtn.textSize = 13f
         cancelBtn.setTypeface(null, Typeface.BOLD)
         LauncherTheme.secondaryButton(cancelBtn)
-        val cancelLp = LinearLayout.LayoutParams(0, dp(ctx, 38), 1f)
-        cancelLp.setMargins(0, 0, dp(ctx, 5), 0)
+        val cancelLp = LinearLayout.LayoutParams(0, LauncherTheme.dp(ctx, 38), 1f)
+        cancelLp.setMargins(0, 0, LauncherTheme.dp(ctx, 5), 0)
         cancelBtn.layoutParams = cancelLp
         cancelBtn.setOnClickListener { dialog.dismiss() }
         btnRow.addView(cancelBtn)
@@ -445,8 +445,8 @@ object GameActionMenuFactory {
         saveBtn.textSize = 13f
         saveBtn.setTypeface(null, Typeface.BOLD)
         LauncherTheme.primaryButton(saveBtn)
-        val saveLp = LinearLayout.LayoutParams(0, dp(ctx, 38), 1f)
-        saveLp.setMargins(dp(ctx, 5), 0, 0, 0)
+        val saveLp = LinearLayout.LayoutParams(0, LauncherTheme.dp(ctx, 38), 1f)
+        saveLp.setMargins(LauncherTheme.dp(ctx, 5), 0, 0, 0)
         saveBtn.layoutParams = saveLp
         saveBtn.setOnClickListener {
             val totalMinutes = GameMetadataFormatter.parseDuration(totalInput.text.toString().trim { it <= ' ' })
@@ -508,14 +508,4 @@ object GameActionMenuFactory {
             }
         }
     }
-
-    // ===== 工具方法 =====
-
-    /** 通过 LauncherTheme.dp 把 dp 值转换为像素。 */
-    @JvmStatic
-    fun dp(ctx: Context, value: Int): Int = LauncherTheme.dp(ctx, value.toFloat())
-
-    /** 兼容 long 入参的工具方法。 */
-    @JvmStatic
-    fun dp(ctx: Context, value: Float): Int = LauncherTheme.dp(ctx, value)
 }

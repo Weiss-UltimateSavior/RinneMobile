@@ -390,15 +390,15 @@ public class LocalAgentActivity extends AppCompatActivity {
             int safeBottom = Math.max(bars.bottom, cutout.bottom);
             boolean keyboardVisible = ime.bottom > safeBottom;
 
-            binding.agentTitleBar.setPaddingRelative(safeLeft + dp(13), safeTop + dp(10),
-                    safeRight + dp(13), dp(13));
-            setHorizontalMargins(binding.agentInfoBar, safeLeft + dp(16), safeRight + dp(16));
-            setHorizontalMargins(binding.agentEmptyState, safeLeft + dp(24), safeRight + dp(24));
-            binding.agentComposerOverlay.setPaddingRelative(safeLeft + dp(16), 0,
-                    safeRight + dp(16), (keyboardVisible ? 0 : safeBottom) + dp(10));
+            binding.agentTitleBar.setPaddingRelative(safeLeft + LauncherTheme.dp(this, 13), safeTop + LauncherTheme.dp(this, 10),
+                    safeRight + LauncherTheme.dp(this, 13), LauncherTheme.dp(this, 13));
+            setHorizontalMargins(binding.agentInfoBar, safeLeft + LauncherTheme.dp(this, 16), safeRight + LauncherTheme.dp(this, 16));
+            setHorizontalMargins(binding.agentEmptyState, safeLeft + LauncherTheme.dp(this, 24), safeRight + LauncherTheme.dp(this, 24));
+            binding.agentComposerOverlay.setPaddingRelative(safeLeft + LauncherTheme.dp(this, 16), 0,
+                    safeRight + LauncherTheme.dp(this, 16), (keyboardVisible ? 0 : safeBottom) + LauncherTheme.dp(this, 10));
             setBottomMargin(binding.agentComposerOverlay, keyboardVisible ? ime.bottom : 0);
-            binding.agentMessages.setPadding(safeLeft + dp(16), binding.agentMessages.getPaddingTop(),
-                    safeRight + dp(16), binding.agentMessages.getPaddingBottom());
+            binding.agentMessages.setPadding(safeLeft + LauncherTheme.dp(this, 16), binding.agentMessages.getPaddingTop(),
+                    safeRight + LauncherTheme.dp(this, 16), binding.agentMessages.getPaddingBottom());
             updateListPadding();
             return insets;
         });
@@ -427,8 +427,8 @@ public class LocalAgentActivity extends AppCompatActivity {
     private void updateListPadding() {
         if (binding == null) return;
         binding.agentMessages.setPadding(binding.agentMessages.getPaddingLeft(),
-                binding.agentTopOverlay.getHeight() + dp(8), binding.agentMessages.getPaddingRight(),
-                baseBottomPadding + binding.agentComposerOverlay.getHeight() + dp(8));
+                binding.agentTopOverlay.getHeight() + LauncherTheme.dp(this, 8), binding.agentMessages.getPaddingRight(),
+                baseBottomPadding + binding.agentComposerOverlay.getHeight() + LauncherTheme.dp(this, 8));
     }
 
     private void scrollToEnd() {
@@ -540,8 +540,6 @@ public class LocalAgentActivity extends AppCompatActivity {
         pendingUserMessage = null;
         updateEmptyState();
     }
-    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
-
     @Override protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }

@@ -22,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import com.apps.LauncherActivity;
+import com.apps.theme.LauncherTheme;
 import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
@@ -48,7 +49,7 @@ public class ResourceStationActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
-        webParams.topMargin = statusBarHeight() + dp(47);
+        webParams.topMargin = statusBarHeight() + LauncherTheme.dp(this, 47);
         webView.setLayoutParams(webParams);
         configureWebView(webView);
 
@@ -81,11 +82,11 @@ public class ResourceStationActivity extends AppCompatActivity {
     private FrameLayout createTopBar() {
         FrameLayout topBar = new FrameLayout(this);
         topBar.setBackgroundColor(ContextCompat.getColor(this, com.core.R.color.launcher_card_color));
-        topBar.setElevation(dp(4));
+        topBar.setElevation(LauncherTheme.dp(this, 4));
 
         FrameLayout.LayoutParams topBarParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                statusBarHeight() + dp(47)
+                statusBarHeight() + LauncherTheme.dp(this, 47)
         );
         topBarParams.gravity = Gravity.TOP;
         topBar.setLayoutParams(topBarParams);
@@ -100,7 +101,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         backButton.setGravity(Gravity.CENTER);
         backButton.setOnClickListener(view -> finish());
 
-        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(dp(47), dp(47));
+        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(LauncherTheme.dp(this, 47), LauncherTheme.dp(this, 47));
         backParams.gravity = Gravity.START | Gravity.TOP;
         topBar.addView(backButton, backParams);
 
@@ -108,7 +109,7 @@ public class ResourceStationActivity extends AppCompatActivity {
         openExternalButton.setImageResource(com.core.R.drawable.launcher_resource_open_external);
         openExternalButton.setColorFilter(ContextCompat.getColor(this, com.core.R.color.launcher_text_color));
         openExternalButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        int iconPad = dp(11);
+        int iconPad = LauncherTheme.dp(this, 11);
         openExternalButton.setPadding(iconPad, iconPad, iconPad, iconPad);
         openExternalButton.setOnClickListener(view -> {
             String current = webView == null ? null : webView.getUrl();
@@ -119,7 +120,7 @@ public class ResourceStationActivity extends AppCompatActivity {
             openExternalUri(Uri.parse(current));
         });
 
-        FrameLayout.LayoutParams openParams = new FrameLayout.LayoutParams(dp(47), dp(47));
+        FrameLayout.LayoutParams openParams = new FrameLayout.LayoutParams(LauncherTheme.dp(this, 47), LauncherTheme.dp(this, 47));
         openParams.gravity = Gravity.END | Gravity.TOP;
         topBar.addView(openExternalButton, openParams);
 
@@ -136,11 +137,11 @@ public class ResourceStationActivity extends AppCompatActivity {
 
         FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(47)
+                LauncherTheme.dp(this, 47)
         );
         titleParams.gravity = Gravity.TOP;
-        titleParams.leftMargin = dp(58);
-        titleParams.rightMargin = dp(58);
+        titleParams.leftMargin = LauncherTheme.dp(this, 58);
+        titleParams.rightMargin = LauncherTheme.dp(this, 58);
         topBar.addView(title, titleParams);
 
         return topBar;
@@ -250,10 +251,6 @@ public class ResourceStationActivity extends AppCompatActivity {
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
         if (resourceId > 0) return getResources().getDimensionPixelSize(resourceId);
         return 0;
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     @Override

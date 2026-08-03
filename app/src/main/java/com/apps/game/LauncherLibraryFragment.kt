@@ -339,7 +339,7 @@ open class LauncherLibraryFragment : Fragment(),
                 binding.libraryRecycler.paddingLeft,
                 binding.libraryRecycler.paddingTop,
                 binding.libraryRecycler.paddingRight,
-                dp(72)
+                LauncherTheme.dp(requireContext(), 72)
             )
             binding.libraryRecycler.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
                 if (bottom - top != oldBottom - oldTop) updateFixedGridCardHeight()
@@ -404,7 +404,7 @@ open class LauncherLibraryFragment : Fragment(),
             - currentBinding.libraryRecycler.paddingTop
             - currentBinding.libraryRecycler.paddingBottom
         // item_launcher_game_card contributes 5dp top + 5dp bottom margins per row.
-        currentAdapter.setFixedCardHeight(Math.max(dp(34), usableHeight / rows - dp(10)))
+        currentAdapter.setFixedCardHeight(Math.max(LauncherTheme.dp(requireContext(), 34), usableHeight / rows - LauncherTheme.dp(requireContext(), 10)))
     }
 
     /**
@@ -424,10 +424,10 @@ open class LauncherLibraryFragment : Fragment(),
         val usableWidth = recyclerWidth
             - recyclerView.paddingLeft
             - recyclerView.paddingRight
-        val totalHorizontalMargins = dp(10) * columns
+        val totalHorizontalMargins = LauncherTheme.dp(requireContext(), 10) * columns
         val cardWidth = Math.max(1, (usableWidth - totalHorizontalMargins) / columns)
         val cardHeight = Math.round(cardWidth * 5f / 3f)
-        currentAdapter.setFixedCardHeight(Math.max(dp(34), cardHeight))
+        currentAdapter.setFixedCardHeight(Math.max(LauncherTheme.dp(requireContext(), 34), cardHeight))
     }
 
     private fun setupSwipeGesture() {
@@ -701,7 +701,7 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun animatePageChange(forward: Boolean) {
         val currentBinding = _binding ?: return
-        val distance = dp(36) * (if (forward) 1f else -1f)
+        val distance = LauncherTheme.dp(requireContext(), 36) * (if (forward) 1f else -1f)
         currentBinding.libraryRecycler.animate().cancel()
         currentBinding.libraryRecycler.translationX = distance
         currentBinding.libraryRecycler.alpha = 0.72f
@@ -793,7 +793,7 @@ open class LauncherLibraryFragment : Fragment(),
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (loadMoreDragCandidate && loadMoreDragStartY - event.y > dp(48)) {
+                if (loadMoreDragCandidate && loadMoreDragStartY - event.y > LauncherTheme.dp(requireContext(), 48)) {
                     loadMoreDragCandidate = false
                     loadNextPage()
                 }
@@ -1089,10 +1089,6 @@ open class LauncherLibraryFragment : Fragment(),
     private fun applyToolbarIconTone(view: ImageView) {
         view.imageTintList = ColorStateList.valueOf(LauncherTheme.primary(requireContext()))
         view.background = null
-    }
-
-    private fun dp(value: Int): Int {
-        return LauncherTheme.dp(requireContext(), value)
     }
 
     // ===== GameListController.Listener =====

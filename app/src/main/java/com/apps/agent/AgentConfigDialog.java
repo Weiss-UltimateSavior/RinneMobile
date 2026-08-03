@@ -34,7 +34,7 @@ final class AgentConfigDialog {
         root.addView(text(activity, activity.getString(R.string.social_agent_api_config), 16, true));
         TextView note = text(activity, activity.getString(R.string.social_agent_api_note), 11, false);
         note.setTextColor(LauncherTheme.textMuted(activity));
-        LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(activity, 9), 0, 0); root.addView(note, noteLp);
+        LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, LauncherTheme.dp(activity, 9), 0, 0); root.addView(note, noteLp);
         EditText baseUrl = input(activity, root, activity.getString(R.string.social_agent_api_address),
                 activity.getString(R.string.social_agent_api_address_hint), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         baseUrl.setText(config.baseUrl);
@@ -77,7 +77,7 @@ final class AgentConfigDialog {
         root.addView(text(activity, activity.getString(R.string.social_agent_execution_title), 16, true));
         TextView note = text(activity, activity.getString(R.string.social_agent_execution_note), 11, false);
         note.setTextColor(LauncherTheme.textMuted(activity));
-        LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(activity, 8), 0, 0); root.addView(note, noteLp);
+        LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, LauncherTheme.dp(activity, 8), 0, 0); root.addView(note, noteLp);
         EditText toolCallLimit = input(activity, root, activity.getString(R.string.social_agent_tool_limit),
                 "1 - 50", InputType.TYPE_CLASS_NUMBER);
         toolCallLimit.setText(String.valueOf(config.toolCallLimit));
@@ -86,15 +86,15 @@ final class AgentConfigDialog {
         contextBudget.setText(String.valueOf(config.contextBudgetKb));
         TextView contextNote = text(activity, activity.getString(R.string.social_agent_context_note), 10, false);
         contextNote.setTextColor(LauncherTheme.textMuted(activity));
-        LinearLayout.LayoutParams contextNoteLp = wrap(); contextNoteLp.setMargins(0, dp(activity, 5), 0, 0);
+        LinearLayout.LayoutParams contextNoteLp = wrap(); contextNoteLp.setMargins(0, LauncherTheme.dp(activity, 5), 0, 0);
         root.addView(contextNote, contextNoteLp);
         SwitchCompat taskPlan = settingSwitch(activity, activity.getString(R.string.social_agent_task_plan), config.taskPlanEnabled);
-        LinearLayout.LayoutParams planLp = wrap(); planLp.setMargins(0, dp(activity, 10), 0, 0); root.addView(taskPlan, planLp);
+        LinearLayout.LayoutParams planLp = wrap(); planLp.setMargins(0, LauncherTheme.dp(activity, 10), 0, 0); root.addView(taskPlan, planLp);
         SwitchCompat fullPermission = settingSwitch(activity, activity.getString(R.string.social_agent_full_permission), config.isFullPermission());
-        LinearLayout.LayoutParams permissionLp = wrap(); permissionLp.setMargins(0, dp(activity, 4), 0, 0); root.addView(fullPermission, permissionLp);
+        LinearLayout.LayoutParams permissionLp = wrap(); permissionLp.setMargins(0, LauncherTheme.dp(activity, 4), 0, 0); root.addView(fullPermission, permissionLp);
         TextView warning = text(activity, activity.getString(R.string.social_agent_permission_warning), 10, false);
         warning.setTextColor(LauncherTheme.textMuted(activity));
-        LinearLayout.LayoutParams warningLp = wrap(); warningLp.setMargins(0, dp(activity, 5), 0, 0); root.addView(warning, warningLp);
+        LinearLayout.LayoutParams warningLp = wrap(); warningLp.setMargins(0, LauncherTheme.dp(activity, 5), 0, 0); root.addView(warning, warningLp);
         addButtons(activity, root, dialog, () -> {
             try {
                 int calls = Integer.parseInt(valueOf(toolCallLimit));
@@ -131,7 +131,7 @@ final class AgentConfigDialog {
     private static LinearLayout root(Activity activity) {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(activity, 22), dp(activity, 18), dp(activity, 22), dp(activity, 15));
+        root.setPadding(LauncherTheme.dp(activity, 22), LauncherTheme.dp(activity, 18), LauncherTheme.dp(activity, 22), LauncherTheme.dp(activity, 15));
         root.setBackgroundResource(R.drawable.launcher_dialog_bg);
         return root;
     }
@@ -144,7 +144,7 @@ final class AgentConfigDialog {
         window.setContentView(scroll);
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
-        window.setLayout(dp(activity, 288), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(LauncherTheme.dp(activity, 288), WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private static void addButtons(Activity activity, LinearLayout root, Dialog dialog, Runnable onSave) {
@@ -158,12 +158,12 @@ final class AgentConfigDialog {
         save.setGravity(Gravity.CENTER);
         cancel.setOnClickListener(view -> dialog.dismiss());
         save.setOnClickListener(view -> onSave.run());
-        buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(activity, 36), 1f));
-        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, dp(activity, 36), 1f);
-        saveLp.setMargins(dp(activity, 8), 0, 0, 0);
+        buttons.addView(cancel, new LinearLayout.LayoutParams(0, LauncherTheme.dp(activity, 36), 1f));
+        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0, LauncherTheme.dp(activity, 36), 1f);
+        saveLp.setMargins(LauncherTheme.dp(activity, 8), 0, 0, 0);
         buttons.addView(save, saveLp);
         LinearLayout.LayoutParams buttonsLp = wrap();
-        buttonsLp.setMargins(0, dp(activity, 12), 0, 0);
+        buttonsLp.setMargins(0, LauncherTheme.dp(activity, 12), 0, 0);
         root.addView(buttons, buttonsLp);
     }
 
@@ -181,7 +181,7 @@ final class AgentConfigDialog {
     private static EditText input(Activity activity, LinearLayout root, String label, String hint, int type) {
         TextView labelView = text(activity, label, 12, true);
         LinearLayout.LayoutParams labelLp = wrap();
-        labelLp.setMargins(0, dp(activity, 10), 0, dp(activity, 5));
+        labelLp.setMargins(0, LauncherTheme.dp(activity, 10), 0, LauncherTheme.dp(activity, 5));
         root.addView(labelView, labelLp);
         EditText input = new LauncherEditText(activity);
         input.setSingleLine(true);
@@ -190,10 +190,10 @@ final class AgentConfigDialog {
         input.setTextSize(12);
         input.setTextColor(LauncherTheme.text(activity));
         input.setHintTextColor(LauncherTheme.textMuted(activity));
-        input.setPadding(dp(activity, 13), 0, dp(activity, 13), 0);
+        input.setPadding(LauncherTheme.dp(activity, 13), 0, LauncherTheme.dp(activity, 13), 0);
         input.setBackground(LauncherTheme.secondaryButton(activity, 20f));
         LauncherTheme.styleTextInput(input);
-        root.addView(input, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(activity, 40)));
+        root.addView(input, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(activity, 40)));
         return input;
     }
 
@@ -214,7 +214,4 @@ final class AgentConfigDialog {
         return new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     }
 
-    private static int dp(Activity activity, int value) {
-        return Math.round(value * activity.getResources().getDisplayMetrics().density);
-    }
 }

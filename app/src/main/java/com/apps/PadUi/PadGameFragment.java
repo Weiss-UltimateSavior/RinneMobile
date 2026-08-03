@@ -187,9 +187,9 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
                 - parent.getPaddingBottom();
         if (availableWidth <= 0 || availableHeight <= 0) return;
 
-        int cardWidth = Math.max(1, (availableWidth - dp(10) * GRID_COLUMNS) / GRID_COLUMNS);
+        int cardWidth = Math.max(1, (availableWidth - LauncherTheme.dp(requireContext(), 10) * GRID_COLUMNS) / GRID_COLUMNS);
         int heightByRatio = Math.max(1, Math.round(cardWidth * 5f / 3f));
-        int heightByRows = Math.max(1, (availableHeight - dp(10) * gridRows) / gridRows);
+        int heightByRows = Math.max(1, (availableHeight - LauncherTheme.dp(requireContext(), 10) * gridRows) / gridRows);
         adapter.setFixedCardHeight(Math.min(heightByRatio, heightByRows));
     }
 
@@ -271,8 +271,8 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
                         float deltaX = second.getX() - first.getX();
                         float deltaY = second.getY() - first.getY();
                         if (Math.abs(deltaX) <= Math.abs(deltaY)
-                                || Math.abs(deltaX) < dp(64)
-                                || Math.abs(velocityX) < dp(180)) {
+                                || Math.abs(deltaX) < LauncherTheme.dp(requireContext(), 64)
+                                || Math.abs(velocityX) < LauncherTheme.dp(requireContext(), 180)) {
                             return false;
                         }
                         swipeConsumed = true;
@@ -775,9 +775,5 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
         if (AUTH_STATUS_SYNCING.equals(status)) return getString(R.string.pad_online_syncing);
         if (AUTH_STATUS_EXPIRED.equals(status)) return getString(R.string.pad_online_expired);
         return getString(R.string.pad_online_mode);
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

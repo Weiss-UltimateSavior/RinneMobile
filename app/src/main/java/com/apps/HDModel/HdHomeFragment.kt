@@ -124,7 +124,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
                 height = coverHeight
             }
             itemView.layoutParams = itemView.layoutParams.apply {
-                height = coverHeight + dp(40)
+                height = coverHeight + LauncherTheme.dp(requireContext(), 40)
             }
         }
     }
@@ -200,7 +200,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
 
         header.layoutParams = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
-            dp(50),
+            LauncherTheme.dp(requireContext(), 50),
         )
 
         // 动作按钮组装到 XML 预设容器（hdHomeActionBar），不动态创建/挂载新 View。
@@ -211,7 +211,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
 
         actions.forEach { action ->
             action.layoutParams = LinearLayout.LayoutParams(
-                dp(64),
+                LauncherTheme.dp(requireContext(), 64),
                 ViewGroup.LayoutParams.MATCH_PARENT,
             )
             actionBar.addView(action)
@@ -222,9 +222,9 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         action.orientation = LinearLayout.HORIZONTAL
         action.gravity = android.view.Gravity.CENTER
         action.background = null
-        action.setPadding(dp(16), 0, dp(16), 0)
+        action.setPadding(LauncherTheme.dp(requireContext(), 16), 0, LauncherTheme.dp(requireContext(), 16), 0)
         val icon = action.getChildAt(0) as ImageView
-        icon.layoutParams = LinearLayout.LayoutParams(dp(32), dp(32))
+        icon.layoutParams = LinearLayout.LayoutParams(LauncherTheme.dp(requireContext(), 32), LauncherTheme.dp(requireContext(), 32))
         action.getChildAt(1).visibility = View.GONE
     }
 
