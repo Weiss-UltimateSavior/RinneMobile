@@ -104,7 +104,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
         binding = ActivityLauncherGameEditBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         engineOptions = EngineOptionCatalog.create(this, true);
@@ -484,10 +484,6 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             return insets;
         });
         binding.editScroll.requestApplyInsets();
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private boolean isUiUnavailable() {

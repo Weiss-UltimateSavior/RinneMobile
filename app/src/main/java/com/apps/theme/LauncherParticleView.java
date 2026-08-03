@@ -174,7 +174,7 @@ public class LauncherParticleView extends View {
                 } else if (isStarStyle()) {
                     paint.setAlpha(starAlpha(particle, now));
                     paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(dp(1f));
+                    paint.setStrokeWidth(LauncherTheme.dpFloat(getContext(), 1f));
                     paint.setStrokeCap(Paint.Cap.ROUND);
                     canvas.drawLine(particle.x - particle.radius, particle.y,
                             particle.x + particle.radius, particle.y, paint);
@@ -250,12 +250,12 @@ public class LauncherParticleView extends View {
         particle.x = random.nextFloat() * width;
         particle.y = random.nextFloat() * height;
         if (isRainStyle()) {
-            particle.radius = dp(1.6f + random.nextFloat() * 1.2f);
-            particle.length = dp(9f + random.nextFloat() * 13f);
-            particle.speedX = dp(42f + random.nextFloat() * 32f);
-            particle.speedY = dp(128f + random.nextFloat() * 96f);
+            particle.radius = LauncherTheme.dpFloat(getContext(), 1.6f + random.nextFloat() * 1.2f);
+            particle.length = LauncherTheme.dpFloat(getContext(), 9f + random.nextFloat() * 13f);
+            particle.speedX = LauncherTheme.dpFloat(getContext(), 42f + random.nextFloat() * 32f);
+            particle.speedY = LauncherTheme.dpFloat(getContext(), 128f + random.nextFloat() * 96f);
         } else if (isStarStyle()) {
-            particle.radius = dp(1.4f + random.nextFloat() * 2.5f);
+            particle.radius = LauncherTheme.dpFloat(getContext(), 1.4f + random.nextFloat() * 2.5f);
             particle.length = 0f;
             particle.speedX = 0f;
             particle.speedY = 0f;
@@ -274,27 +274,27 @@ public class LauncherParticleView extends View {
                 particle.speedY = 0f;
                 particle.alpha = 0;
             } else {
-                particle.radius = dp(7f);
-                particle.speedX = dp((random.nextFloat() - 0.5f) * 40f);
-                particle.speedY = dp(30f + random.nextFloat() * 30f);
+                particle.radius = LauncherTheme.dpFloat(getContext(), 7f);
+                particle.speedX = LauncherTheme.dpFloat(getContext(), (random.nextFloat() - 0.5f) * 40f);
+                particle.speedY = LauncherTheme.dpFloat(getContext(), 30f + random.nextFloat() * 30f);
                 particle.alpha = 120 + random.nextInt(60);
             }
         } else if (isFirefliesStyle()) {
-            particle.radius = dp(2f + random.nextFloat() * 2f);
+            particle.radius = LauncherTheme.dpFloat(getContext(), 2f + random.nextFloat() * 2f);
             particle.length = 0f;
             particle.speedX = 0f;
             particle.speedY = 0f;
             particle.wanderAngle = random.nextFloat() * (float) (Math.PI * 2d);
-            particle.wanderSpeed = dp(8f + random.nextFloat() * 10f);
+            particle.wanderSpeed = LauncherTheme.dpFloat(getContext(), 8f + random.nextFloat() * 10f);
             particle.minAlpha = 20 + random.nextInt(30);
             particle.maxAlpha = 180 + random.nextInt(60);
             particle.pulsePhase = random.nextFloat() * (float) (Math.PI * 2d);
             particle.pulseSpeed = 0.8f + random.nextFloat() * 1.2f;
         } else if (isConstellationStyle()) {
-            particle.radius = dp(1.5f + random.nextFloat() * 1.5f);
+            particle.radius = LauncherTheme.dpFloat(getContext(), 1.5f + random.nextFloat() * 1.5f);
             particle.length = 0f;
-            particle.speedX = dp((random.nextFloat() - 0.5f) * 16f);
-            particle.speedY = dp((random.nextFloat() - 0.5f) * 16f);
+            particle.speedX = LauncherTheme.dpFloat(getContext(), (random.nextFloat() - 0.5f) * 16f);
+            particle.speedY = LauncherTheme.dpFloat(getContext(), (random.nextFloat() - 0.5f) * 16f);
             particle.alpha = 100 + random.nextInt(60);
         } else if (isRipplesStyle()) {
             if (index >= RIPPLES_ACTIVE_COUNT) {
@@ -303,7 +303,7 @@ public class LauncherParticleView extends View {
             } else {
                 particle.rippleProgress = random.nextFloat();
                 particle.rippleSpeed = 0.1f + random.nextFloat() * 0.15f;
-                particle.maxRadius = dp(60f + random.nextFloat() * 40f);
+                particle.maxRadius = LauncherTheme.dpFloat(getContext(), 60f + random.nextFloat() * 40f);
             }
             particle.radius = 0f;
             particle.length = 0f;
@@ -311,10 +311,10 @@ public class LauncherParticleView extends View {
             particle.speedY = 0f;
             particle.alpha = 0;
         } else {
-            particle.radius = dp(2.2f + random.nextFloat() * 4.2f);
+            particle.radius = LauncherTheme.dpFloat(getContext(), 2.2f + random.nextFloat() * 4.2f);
             particle.length = 0f;
-            particle.speedX = dp((random.nextFloat() - 0.5f) * 10f);
-            particle.speedY = -dp(7f + random.nextFloat() * 18f);
+            particle.speedX = LauncherTheme.dpFloat(getContext(), (random.nextFloat() - 0.5f) * 10f);
+            particle.speedY = -LauncherTheme.dpFloat(getContext(), 7f + random.nextFloat() * 18f);
         }
         particle.colorIndex = random.nextInt(particleColors.length);
         particle.color = particleColor(particle.colorIndex);
@@ -386,10 +386,6 @@ public class LauncherParticleView extends View {
         return Color.HSVToColor(hsv);
     }
 
-    private float dp(float value) {
-        return value * getResources().getDisplayMetrics().density;
-    }
-
     private void updateSakura(Particle particle, float delta, int width, int height) {
         if (particle.radius <= 0f) return;
         particle.y += particle.speedY * delta;
@@ -413,7 +409,7 @@ public class LauncherParticleView extends View {
         particle.wanderAngle += (random.nextFloat() - 0.5f) * 3.0f * delta;
         particle.x += (float) Math.cos(particle.wanderAngle) * particle.wanderSpeed * delta;
         particle.y += (float) Math.sin(particle.wanderAngle) * particle.wanderSpeed * delta;
-        float margin = dp(14f);
+        float margin = LauncherTheme.dpFloat(getContext(), 14f);
         if (particle.x < -margin) {
             particle.x = width + margin;
         } else if (particle.x > width + margin) {
@@ -488,7 +484,7 @@ public class LauncherParticleView extends View {
         paint.setShader(shader);
         paint.setAlpha(alpha);
         paint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(0f, 0f, dp(14f), paint);
+        canvas.drawCircle(0f, 0f, LauncherTheme.dpFloat(getContext(), 14f), paint);
         paint.setShader(null);
         paint.setColor(particle.color);
         canvas.drawCircle(0f, 0f, particle.radius, paint);
@@ -502,14 +498,14 @@ public class LauncherParticleView extends View {
         }
         int idx = particle.colorIndex;
         if (fireflyShaders[idx] == null) {
-            fireflyShaders[idx] = new RadialGradient(0f, 0f, dp(14f),
+            fireflyShaders[idx] = new RadialGradient(0f, 0f, LauncherTheme.dpFloat(getContext(), 14f),
                     particle.color, Color.TRANSPARENT, Shader.TileMode.CLAMP);
         }
         return fireflyShaders[idx];
     }
 
     private void drawConstellation(Canvas canvas) {
-        float maxDist = dp(80f);
+        float maxDist = LauncherTheme.dpFloat(getContext(), 80f);
         // 第一遍：画所有粒子圆点
         paint.setStyle(Paint.Style.FILL);
         for (Particle particle : particles) {
@@ -520,7 +516,7 @@ public class LauncherParticleView extends View {
         }
         // 第二遍：两两检测距离，<maxDist 时画连线
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(dp(1f));
+        paint.setStrokeWidth(LauncherTheme.dpFloat(getContext(), 1f));
         for (int i = 0; i < particles.length; i++) {
             Particle a = particles[i];
             if (a == null) continue;
@@ -544,7 +540,7 @@ public class LauncherParticleView extends View {
         if (particle.maxRadius <= 0f) return;
         paint.setShader(null);
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(dp(1.5f));
+        paint.setStrokeWidth(LauncherTheme.dpFloat(getContext(), 1.5f));
         paint.setStrokeCap(Paint.Cap.ROUND);
         float r = particle.rippleProgress * particle.maxRadius;
         int a = (int) ((1f - particle.rippleProgress) * 180f);

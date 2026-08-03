@@ -24,7 +24,7 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherMetadataSourceBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -123,10 +123,6 @@ public class LauncherMetadataSourceActivity extends AppCompatActivity {
                 getString(R.string.settings_metadata_bangumi_mirror_token),
                 getString(R.string.settings_metadata_ymgal_public)
         };
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

@@ -109,7 +109,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
         binding = ActivityLauncherAddGameBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         engineOptions = EngineOptionCatalog.create(this, false);
@@ -517,10 +517,6 @@ public class LauncherAddGameActivity extends AppCompatActivity {
 
     private void showAppPicker(TextView target) {
         LauncherAppPickerDialog.show(this, target::setText);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private boolean isUiUnavailable() {

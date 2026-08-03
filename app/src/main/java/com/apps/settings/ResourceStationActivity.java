@@ -199,6 +199,14 @@ public class ResourceStationActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * WebView 导航拦截策略：决定链接是继续在内部 WebView 加载，还是转交外部浏览器。
+     * 职责：http/https 命中本页资源站 host 白名单 → 留在内部加载（返回 false）；
+     * 其余 http/https 与非 file/content 的其它 scheme → 触发外部打开（调用 {@link #openExternalUri}，
+     * 统一委托 {@link LauncherUrlOpener} 的 scheme 白名单 + ActivityNotFoundException 捕获）；
+     * file/content scheme → 直接拦截返回 true（阻止本地资源加载，不外部打开）。
+     * 返回 true 拦截 WebView 默认导航。本方法自身不直接 startActivity。
+     */
     private boolean shouldOpenExternally(Uri uri) {
         if (uri == null) return false;
         String scheme = uri.getScheme();
@@ -218,6 +226,12 @@ public class ResourceStationActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * 本页资源站 host 白名单：命中 www.kungal.com / www.shinnku.com / www.touchgal.ink
+     * 及其子域（*.kungal.com 等，不含裸域名）的链接优先在内部 WebView 中加载，不转外部浏览器。
+     * 该白名单仅服务于本页面的 WebView 导航策略，不属于通用 URL 打开规则，
+     * 故保留在本页而不下沉到共享的 {@link LauncherUrlOpener}（后者保持通用 scheme 白名单语义）。
+     */
     private boolean isAllowedHost(String host) {
         String h = host.toLowerCase();
         return h.equals("www.kungal.com") || h.endsWith(".kungal.com")
@@ -225,6 +239,7 @@ public class ResourceStationActivity extends AppCompatActivity {
                 || h.equals("www.touchgal.ink") || h.endsWith(".touchgal.ink");
     }
 
+    // 外部打开统一走共享的 LauncherUrlOpener：scheme 白名单（http/https）校验 + ActivityNotFoundException 捕获
     private void openExternalUri(Uri uri) {
         if (!LauncherUrlOpener.open(this, uri == null ? null : uri.toString())) {
             Toast.makeText(this, com.core.R.string.settings_no_app_for_link, Toast.LENGTH_SHORT).show();

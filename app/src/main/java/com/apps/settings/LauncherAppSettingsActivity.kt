@@ -41,7 +41,7 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         LauncherActivity.applySavedToneMode(this)
         super.onCreate(savedInstanceState)
-        configureEdgeToEdgeWindow()
+        com.apps.LauncherEdgeToEdgeHelper.apply(this)
 
         binding = ActivityLauncherAppSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -415,10 +415,6 @@ class LauncherAppSettingsActivity : AppCompatActivity() {
             insets
         }
         binding.root.requestApplyInsets()
-    }
-
-    private fun configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this)
     }
 
     override fun attachBaseContext(newBase: Context) {

@@ -50,7 +50,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
         binding = ActivityLauncherSaveGameListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
@@ -272,10 +272,6 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
             return insets;
         });
         binding.saveGameListScroll.requestApplyInsets();
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

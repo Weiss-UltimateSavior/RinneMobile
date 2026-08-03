@@ -66,7 +66,12 @@ class LauncherActivity : AppCompatActivity() {
             override fun reloadGame(gameId: Long) { refreshLauncherSnapshot() }
             override fun reloadAllGames() { refreshLauncherSnapshot() }
         })
-        configureEdgeToEdgeWindow()
+        LauncherEdgeToEdgeHelper.apply(
+            this,
+            adjustResize = false,
+            usePrimaryLuminanceForStatusBar = false,
+            navigationBarColorRes = R.color.launcher_bottom_bar_color,
+        )
 
         if (savedInstanceState != null || launcherSplashShownInProcess || !LauncherSplash.isSplashImageEnabled(this)) {
             showLauncherContent()
@@ -279,15 +284,6 @@ class LauncherActivity : AppCompatActivity() {
                 }
             }
         })
-    }
-
-    private fun configureEdgeToEdgeWindow() {
-        LauncherEdgeToEdgeHelper.apply(
-            this,
-            adjustResize = false,
-            usePrimaryLuminanceForStatusBar = false,
-            navigationBarColorRes = R.color.launcher_bottom_bar_color,
-        )
     }
 
     private fun scheduleAutoUpdateCheck() {

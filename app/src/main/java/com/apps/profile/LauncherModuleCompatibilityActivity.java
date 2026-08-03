@@ -58,7 +58,7 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherModuleCompatibilityBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -340,10 +340,6 @@ public class LauncherModuleCompatibilityActivity extends AppCompatActivity {
             return insets;
         });
         binding.getRoot().requestApplyInsets();
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

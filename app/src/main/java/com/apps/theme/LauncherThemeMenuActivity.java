@@ -22,7 +22,7 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherThemeMenuBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -201,10 +201,6 @@ public class LauncherThemeMenuActivity extends AppCompatActivity {
     private void renderParticleToggle() {
         binding.particleToggleState.setText(R.string.theme_configure);
         LauncherTheme.chip(binding.particleToggleState, true);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {

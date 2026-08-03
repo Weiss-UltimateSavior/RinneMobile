@@ -73,16 +73,12 @@ public class AvatarCropActivity extends AppCompatActivity {
             return;
         }
 
-        configureEdgeToEdgeWindow();
+        // 沉浸式：透明状态栏 + launcher_bg_color 作为导航栏背景。
+        if (getSupportActionBar() != null) getSupportActionBar().hide();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
         View root = buildRoot(inputUriString);
         setContentView(root);
         ViewCompat.requestApplyInsets(root);
-    }
-
-    /** 沉浸式：透明状态栏 + launcher_bg_color 作为导航栏背景。 */
-    private void configureEdgeToEdgeWindow() {
-        if (getSupportActionBar() != null) getSupportActionBar().hide();
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private View buildRoot(String inputUriString) {

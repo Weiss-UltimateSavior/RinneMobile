@@ -23,7 +23,7 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherProfileEditBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -170,10 +170,6 @@ public class LauncherProfileEditActivity extends AppCompatActivity {
 
     private void showResultDialog(String title, String message) {
         LauncherDialogFactory.showInfo(this, title, message);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {

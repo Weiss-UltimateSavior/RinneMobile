@@ -27,7 +27,7 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherChatSelectBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -122,10 +122,6 @@ public class LauncherChatSelectActivity extends AppCompatActivity {
         binding.publicChatCheck.setVisibility(publicSelected ? View.VISIBLE : View.INVISIBLE);
         binding.yukiAiCheck.setVisibility(yukiSelected ? View.VISIBLE : View.INVISIBLE);
         binding.rinmiAiCheck.setVisibility(rinmiSelected ? View.VISIBLE : View.INVISIBLE);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {

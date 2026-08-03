@@ -51,10 +51,16 @@ class TranslationSettingActivity : AppCompatActivity() {
             startOverlayService()
         }
 
+    /**
+     * 翻译设置页初始化：恢复已保存的主题色调模式 → 配置 edge-to-edge 窗口
+     * （透明状态栏、状态栏图标根据深色模式切换，与 LauncherKrkrSettingsActivity 保持一致）
+     * → 初始化 ViewBinding 并绑定系统栏 insets → 冷启动兜底（截屏权限失效时自动关闭
+     * 启用开关并停止孤儿 Service）→ 初始化视图并渲染配置、绑定交互。
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         LauncherActivity.applySavedToneMode(this)
         super.onCreate(savedInstanceState)
-        configureEdgeToEdgeWindow()
+        com.apps.LauncherEdgeToEdgeHelper.apply(this)
 
         binding = ActivityTranslationSettingBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -336,14 +342,6 @@ class TranslationSettingActivity : AppCompatActivity() {
                 setEnabledSwitchChecked(false)
             }
         }
-    }
-
-    /**
-     * 配置 edge-to-edge 窗口：透明状态栏，状态栏图标根据深色模式切换。
-     * 与 LauncherKrkrSettingsActivity 保持一致。
-     */
-    private fun configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this)
     }
 
     /**

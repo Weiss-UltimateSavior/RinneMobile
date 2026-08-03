@@ -41,7 +41,7 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this, true);
 
         binding = ActivityLauncherRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -274,10 +274,6 @@ public class LauncherRegisterActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         LauncherMotion.finish(this);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this, true);
     }
 
     private void applySavedToneMode() {

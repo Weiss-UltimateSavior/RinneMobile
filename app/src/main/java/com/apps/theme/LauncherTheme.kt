@@ -582,6 +582,16 @@ object LauncherTheme {
         return (value * context.resources.displayMetrics.density + 0.5f).toInt()
     }
 
+    /**
+     * dp 转 px 的浮点版本（无舍入）：返回 value * density。
+     * 与 [dp]（四舍五入返回 Int px）的语义不同，保留浮点精度，
+     * 供粒子动画速度/半径等浮点物理量与绘制坐标使用，避免舍入造成的行为差异。
+     */
+    @JvmStatic
+    fun dpFloat(context: Context, value: Float): Float {
+        return value * context.resources.displayMetrics.density
+    }
+
     private fun isPrimaryButtonId(idName: String?): Boolean {
         if (idName == null) return false
         return "btnSubmit" == idName

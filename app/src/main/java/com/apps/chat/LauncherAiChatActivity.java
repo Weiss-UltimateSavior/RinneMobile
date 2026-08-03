@@ -51,7 +51,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this, true, true);
         if (!LauncherAuthBridge.isLoggedIn(this)) {
             Toast.makeText(this, R.string.social_ai_login_required, Toast.LENGTH_SHORT).show();
             LauncherMotion.finish(this);
@@ -283,9 +283,6 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         binding.aiChatMessages.setLayoutParams(margins);
     }
 
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this, true, true);
-    }
     private void applySavedToneMode() { LauncherActivity.applySavedToneMode(this); }
     @Override protected void attachBaseContext(android.content.Context context) { super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(context)); }
     @Override public void onBackPressed() { LauncherMotion.finish(this); }

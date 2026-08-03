@@ -37,7 +37,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         gameId = getIntent().getLongExtra(EXTRA_GAME_ID, 0L);
 
@@ -239,10 +239,6 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
 
     private String[] engineVersionLabels() {
         return getResources().getStringArray(R.array.engine_version_options);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

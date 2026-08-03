@@ -52,7 +52,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
         registerBackupLaunchers();
 
         binding = ActivityLauncherSyncCenterBinding.inflate(getLayoutInflater());
@@ -273,10 +273,6 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
 
     private boolean isUiUnavailable() {
         return isFinishing() || isDestroyed() || binding == null;
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

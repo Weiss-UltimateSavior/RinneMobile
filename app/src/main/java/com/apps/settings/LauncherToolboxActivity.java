@@ -35,7 +35,7 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherToolboxBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -90,10 +90,6 @@ public class LauncherToolboxActivity extends AppCompatActivity {
     private void applyThemeTone() {
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.longActionButton(binding.toolboxBack);
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {

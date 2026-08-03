@@ -33,7 +33,7 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         LauncherActivity.applySavedToneMode(this);
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
         binding = ActivityLauncherSaveCategoryBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
@@ -152,10 +152,6 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
             return insets;
         });
         binding.saveCategoryScroll.requestApplyInsets();
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     @Override

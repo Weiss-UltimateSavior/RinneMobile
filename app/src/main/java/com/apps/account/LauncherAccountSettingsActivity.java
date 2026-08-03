@@ -37,7 +37,7 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this);
 
         binding = ActivityLauncherAccountSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -294,10 +294,6 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
             return insets;
         });
         binding.getRoot().requestApplyInsets();
-    }
-
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this);
     }
 
     private void applySavedToneMode() {

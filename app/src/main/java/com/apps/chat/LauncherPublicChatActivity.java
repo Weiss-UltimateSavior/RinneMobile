@@ -57,7 +57,7 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
-        configureEdgeToEdgeWindow();
+        com.apps.LauncherEdgeToEdgeHelper.apply(this, true, true);
         binding = ActivityLauncherPublicChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         connectionState = getString(R.string.social_connecting);
@@ -345,9 +345,6 @@ public class LauncherPublicChatActivity extends AppCompatActivity {
         binding.publicChatMessages.setLayoutParams(margins);
     }
 
-    private void configureEdgeToEdgeWindow() {
-        com.apps.LauncherEdgeToEdgeHelper.apply(this, true, true);
-    }
     private void applySavedToneMode() { LauncherActivity.applySavedToneMode(this); }
     @Override protected void attachBaseContext(android.content.Context newBase) { super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase)); }
 }

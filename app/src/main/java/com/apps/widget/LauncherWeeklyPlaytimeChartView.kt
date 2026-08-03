@@ -33,12 +33,12 @@ class LauncherWeeklyPlaytimeChartView @JvmOverloads constructor(
         val width = width
         val height = height
         if (width <= 0 || height <= 0) return
-        val horizontal = dp(12)
-        val top = dp(16)
-        val bottom = height - dp(24)
+        val horizontal = LauncherTheme.dpFloat(context, 12f)
+        val top = LauncherTheme.dpFloat(context, 16f)
+        val bottom = height - LauncherTheme.dpFloat(context, 24f)
         val chartWidth = max(1f, width - horizontal * 2f)
         val maxDuration = dailyDurations.maxOf { max(0L, it) }
-        labelPaint.textSize = dp(10)
+        labelPaint.textSize = LauncherTheme.dpFloat(context, 10f)
         labelPaint.color = LauncherTheme.textMuted(context)
         if (maxDuration == 0L) {
             labelPaint.textAlign = Paint.Align.CENTER
@@ -54,7 +54,7 @@ class LauncherWeeklyPlaytimeChartView @JvmOverloads constructor(
         linePaint.apply {
             color = LauncherTheme.primary(context)
             style = Paint.Style.STROKE
-            strokeWidth = dp(2)
+            strokeWidth = LauncherTheme.dpFloat(context, 2f)
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
@@ -69,19 +69,17 @@ class LauncherWeeklyPlaytimeChartView @JvmOverloads constructor(
         repeat(7) { index ->
             val x = horizontal + chartWidth * index / 6f
             val y = bottom - (bottom - top) * max(0L, dailyDurations[index]) / maxDuration
-            canvas.drawCircle(x, y, dp(4), pointPaint)
+            canvas.drawCircle(x, y, LauncherTheme.dpFloat(context, 4f), pointPaint)
         }
         labelPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText(TimeFormatUtil.playTime(maxDuration), horizontal, dp(11), labelPaint)
+        canvas.drawText(TimeFormatUtil.playTime(maxDuration), horizontal, LauncherTheme.dpFloat(context, 11f), labelPaint)
         drawDayLabels(canvas, horizontal, bottom, chartWidth)
     }
 
     private fun drawDayLabels(canvas: Canvas, horizontal: Float, bottom: Float, chartWidth: Float) {
         labelPaint.textAlign = Paint.Align.CENTER
         repeat(7) { index ->
-            canvas.drawText(dayLabels[index].orEmpty(), horizontal + chartWidth * index / 6f, bottom + dp(18), labelPaint)
+            canvas.drawText(dayLabels[index].orEmpty(), horizontal + chartWidth * index / 6f, bottom + LauncherTheme.dpFloat(context, 18f), labelPaint)
         }
     }
-
-    private fun dp(value: Int): Float = value * resources.displayMetrics.density
 }
