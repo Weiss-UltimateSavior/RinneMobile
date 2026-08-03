@@ -3,33 +3,18 @@ package com.apps.game
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
-import android.view.GestureDetector
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
-import android.view.Window
-import android.view.WindowManager
-import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.inputmethod.InputMethodManager
-import android.widget.HorizontalScrollView
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -39,7 +24,6 @@ import com.apps.refreshNavigationOverlayInsets
 import com.apps.settings.LauncherCustomVndbSearchDialog
 import com.apps.settings.LauncherKrkrSettingsActivity
 import com.apps.theme.LauncherDialogFactory
-import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.databinding.FragmentLauncherLibraryBinding
@@ -48,7 +32,6 @@ import com.core.model.EngineType
 import com.core.model.Game
 import com.core.util.AppExecutors
 import com.core.util.RxMainQueue
-import kotlin.math.abs
 
 open class LauncherLibraryFragment : Fragment(),
     GameListController.Listener,
@@ -104,19 +87,47 @@ open class LauncherLibraryFragment : Fragment(),
     private var gridLayoutManager: GridLayoutManager? = null
     private var selectedCategory: String = ""
     private var searchQuery: String = ""
-    private var categoriesCollapsed: Boolean = true
     // 编辑卡片后回退时，仅就地刷新被编辑的那张卡片，避免 loadGames() 重置分页与滑动位置。
     private var pendingEditGameId: Long = -1L
-    private var searchDebounce: Runnable? = null
-    private var swipeGestureDetector: GestureDetector? = null
-    private var swipeConsumed: Boolean = false
-    private var loadMoreDragStartY: Float = 0f
-    private var loadMoreDragCandidate: Boolean = false
     private var posterGridStyle: Boolean = false
+    private lateinit var pagingHelper: LibraryPagingHelper
+    private lateinit var swipeGesture: LibrarySwipeGesture
+    private lateinit var toolbarUi: LibraryToolbarUi
+
+    /** LibraryPagingHelper 等协调类访问器（§8 持有 Fragment 的协调类模式）。 */
+    internal val libraryBinding: FragmentLauncherLibraryBinding? get() = _binding
+    internal val libraryListController: GameListController get() = listController
+    internal val libraryAdapter: LauncherGameAdapter? get() = adapter
+    internal var libraryPosterGridStyle: Boolean
+        get() = posterGridStyle
+        set(value) { posterGridStyle = value }
+    internal fun libraryUsesTabletPortraitCardSizing(): Boolean = usesTabletPortraitCardSizing()
+    internal fun libraryFixedGridRows(): Int = getFixedGridRows()
+    internal fun libraryGridColumns(): Int = getGridColumns()
+    internal val libraryPagingHelper: LibraryPagingHelper get() = pagingHelper
+    internal val libraryCategories: MutableList<CategoryOption> get() = categories
+    internal var librarySelectedCategory: String
+        get() = selectedCategory
+        set(value) { selectedCategory = value }
+    internal fun libraryRenderCategories() = toolbarUi.renderCategories()
+    internal fun libraryApplyFilters() = applyFilters()
+
+    /** LibraryToolbarUi 访问器（§8 持有 Fragment 的协调类模式）。 */
+    internal val librarySyncController: GameSyncController get() = syncController
+    internal val libraryGridManager: GridLayoutManager? get() = gridLayoutManager
+    internal val libraryMainQueue: RxMainQueue get() = mainQueue
+    internal var librarySearchQuery: String
+        get() = searchQuery
+        set(value) { searchQuery = value }
+    internal fun libraryActiveGridColumns(): Int = getActiveGridColumns()
+    internal fun libraryGetPosterStylePreferenceKey(): String = getPosterStylePreferenceKey()
+    internal fun libraryUsePortraitLibraryScaler(): Boolean = usePortraitLibraryScaler()
+    internal fun libraryAreCategoriesCollapsedByDefault(): Boolean = areCategoriesCollapsedByDefault()
+    internal fun libraryConfirmClearList() = confirmClearList()
 
     companion object {
         private const val TAG = "LauncherLibrary"
-        private const val LIBRARY_PREFS = "launcher_library_preferences"
+        internal const val LIBRARY_PREFS = "launcher_library_preferences"
         private const val KEY_POSTER_GRID_STYLE = "poster_grid_style"
     }
 
@@ -195,19 +206,19 @@ open class LauncherLibraryFragment : Fragment(),
         posterGridStyle = requireContext().applicationContext
             .getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
             .getBoolean(getPosterStylePreferenceKey(), false)
-        categoriesCollapsed = areCategoriesCollapsedByDefault()
-        binding.libraryCategoryScroll.visibility =
-            if (categoriesCollapsed) View.GONE else View.VISIBLE
-        setupSearchAndCategories()
+        toolbarUi = LibraryToolbarUi(this)
+        toolbarUi.setup()
         sessionController = GameSessionController(requireContext(), mainQueue, object : GameSessionController.Listener {
             override fun reloadGame(gameId: Long) { reloadSingleGame(gameId) }
             override fun reloadAllGames() { loadGames() }
         })
         syncController = GameSyncController(mainQueue, this, syncDialogFactory)
         listController = GameListController(mainQueue, this)
+        pagingHelper = LibraryPagingHelper(this)
         setupRecycler()
         loadGames()
-        setupSwipeGesture()
+        swipeGesture = LibrarySwipeGesture(this)
+        swipeGesture.setup()
     }
 
     override fun onResume() {
@@ -301,10 +312,7 @@ open class LauncherLibraryFragment : Fragment(),
         gameAdapter.setPosterStyle(posterGridStyle)
         gameAdapter.setOnGameCardListener(object : LauncherGameAdapter.OnGameCardListener {
             override fun onGameClick(game: Game?) {
-                if (swipeConsumed) {
-                    swipeConsumed = false
-                    return
-                }
+                if (swipeGesture.consumeSwipe()) return
                 if (game != null) {
                     gameAdapter.setSelectedGameId(game.id)
                     confirmLaunchGame(game)
@@ -312,10 +320,7 @@ open class LauncherLibraryFragment : Fragment(),
             }
 
             override fun onGameLongClick(game: Game?) {
-                if (swipeConsumed) {
-                    swipeConsumed = false
-                    return
-                }
+                if (swipeGesture.consumeSwipe()) return
                 if (game != null) showGameActionMenu(game)
             }
         })
@@ -342,16 +347,16 @@ open class LauncherLibraryFragment : Fragment(),
                 LauncherTheme.dp(requireContext(), 72)
             )
             binding.libraryRecycler.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-                if (bottom - top != oldBottom - oldTop) updateFixedGridCardHeight()
+                if (bottom - top != oldBottom - oldTop) pagingHelper.updateFixedGridCardHeight()
             }
-            binding.libraryRecycler.post { updateFixedGridCardHeight() }
+            binding.libraryRecycler.post { pagingHelper.updateFixedGridCardHeight() }
         } else if (usesTabletPortraitCardSizing()) {
             // 平板竖屏增加列数后，根据每列实际宽度重新计算 5:3 卡片比例。
             // 这样不会继续沿用手机写死高度，也不会影响手机竖屏。
             binding.libraryRecycler.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-                if (right - left != oldRight - oldLeft) updateTabletPortraitCardHeight()
+                if (right - left != oldRight - oldLeft) pagingHelper.updateTabletPortraitCardHeight()
             }
-            binding.libraryRecycler.post { updateTabletPortraitCardHeight() }
+            binding.libraryRecycler.post { pagingHelper.updateTabletPortraitCardHeight() }
         }
         binding.libraryRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -359,7 +364,7 @@ open class LauncherLibraryFragment : Fragment(),
                 if (usesHorizontalPaging() || dy <= 0 || listController.isLoading || listController.isFullyLoaded) return
                 val lastVisible = layoutManager.findLastVisibleItemPosition()
                 if (lastVisible >= Math.max(0, listController.getVisibleGames().size - getActiveGridColumns())) {
-                    loadNextPage()
+                    pagingHelper.loadNextPage()
                 }
             }
         })
@@ -368,12 +373,12 @@ open class LauncherLibraryFragment : Fragment(),
         // 这里单独监听“向上拉”的手势，每次手势最多加载一页，避免一次性加载全部。
         binding.libraryRecycler.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                handleLoadMoreDragWhenNotScrollable(rv, e)
+                pagingHelper.handleLoadMoreDragWhenNotScrollable(rv, e)
                 return false
             }
 
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                handleLoadMoreDragWhenNotScrollable(rv, e)
+                pagingHelper.handleLoadMoreDragWhenNotScrollable(rv, e)
             }
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) { }
@@ -393,265 +398,6 @@ open class LauncherLibraryFragment : Fragment(),
         )
     }
 
-    private fun updateFixedGridCardHeight() {
-        if (posterGridStyle) return
-        val currentBinding = _binding ?: return
-        val currentAdapter = adapter ?: return
-        val rows = getFixedGridRows()
-        val height = currentBinding.libraryRecycler.height
-        if (rows <= 0 || height <= 0) return
-        val usableHeight = height
-            - currentBinding.libraryRecycler.paddingTop
-            - currentBinding.libraryRecycler.paddingBottom
-        // item_launcher_game_card contributes 5dp top + 5dp bottom margins per row.
-        currentAdapter.setFixedCardHeight(Math.max(LauncherTheme.dp(requireContext(), 34), usableHeight / rows - LauncherTheme.dp(requireContext(), 10)))
-    }
-
-    /**
-     * 平板竖屏卡片按列宽保持原来的高:宽 = 5:3。
-     * item_launcher_game_card 每张卡片左右各有约 5dp margin。
-     */
-    private fun updateTabletPortraitCardHeight() {
-        if (posterGridStyle || !usesTabletPortraitCardSizing()) return
-        val currentBinding = _binding ?: return
-        val currentAdapter = adapter ?: return
-
-        val recyclerView = currentBinding.libraryRecycler
-        val recyclerWidth = recyclerView.width
-        val columns = Math.max(1, getGridColumns())
-        if (recyclerWidth <= 0) return
-
-        val usableWidth = recyclerWidth
-            - recyclerView.paddingLeft
-            - recyclerView.paddingRight
-        val totalHorizontalMargins = LauncherTheme.dp(requireContext(), 10) * columns
-        val cardWidth = Math.max(1, (usableWidth - totalHorizontalMargins) / columns)
-        val cardHeight = Math.round(cardWidth * 5f / 3f)
-        currentAdapter.setFixedCardHeight(Math.max(LauncherTheme.dp(requireContext(), 34), cardHeight))
-    }
-
-    private fun setupSwipeGesture() {
-        swipeGestureDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
-            private val swipeThreshold = 80
-            private val swipeVelocity = 200
-
-            override fun onDown(event: MotionEvent): Boolean {
-                return true
-            }
-
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                if (e1 == null) return false
-                val diffX = e2.x - e1.x
-                val diffY = e2.y - e1.y
-                if (abs(diffX) > abs(diffY) && abs(diffX) > swipeThreshold && abs(velocityX) > swipeVelocity) {
-                    val handled = if (diffX < 0) handleSwipeLeft() else handleSwipeRight()
-                    if (handled) swipeConsumed = true
-                    return handled
-                }
-                return false
-            }
-        })
-
-        // RecyclerView 区域：通过 OnItemTouchListener 获取触摸事件
-        binding.libraryRecycler.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                swipeGestureDetector!!.onTouchEvent(e)
-                return false
-            }
-
-            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                swipeGestureDetector!!.onTouchEvent(e)
-            }
-
-            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
-        })
-
-        // 非列表区域（背景、分类栏、空提示等）
-        binding.root.setOnTouchListener { _, event ->
-            swipeGestureDetector!!.onTouchEvent(event)
-            false
-        }
-        binding.libraryContent.setOnTouchListener { _, event ->
-            swipeGestureDetector!!.onTouchEvent(event)
-            false
-        }
-        binding.libraryEmpty.setOnTouchListener { _, event ->
-            swipeGestureDetector!!.onTouchEvent(event)
-            false
-        }
-    }
-
-    private fun handleSwipeLeft(): Boolean {
-        if (usesHorizontalPaging()) return showNextPage()
-        return switchToNextCategory()
-    }
-
-    private fun handleSwipeRight(): Boolean {
-        if (usesHorizontalPaging()) return showPreviousPage()
-        return switchToPreviousCategory()
-    }
-
-    private fun getFlatCategories(): List<CategoryOption> {
-        val flat = mutableListOf<CategoryOption>()
-        flat.add(CategoryOption(getString(R.string.game_common_all), ""))
-        flat.addAll(categories)
-        return flat
-    }
-
-    private fun getCurrentCategoryIndex(): Int {
-        val flat = getFlatCategories()
-        for (i in flat.indices) {
-            if (flat[i].value == selectedCategory) return i
-        }
-        return 0
-    }
-
-    private fun switchToNextCategory(): Boolean {
-        val flat = getFlatCategories()
-        val idx = getCurrentCategoryIndex()
-        if (idx < flat.size - 1) {
-            selectedCategory = flat[idx + 1].value
-            renderCategories()
-            applyFilters()
-            animateCategorySwitch()
-            return true
-        }
-        return false
-    }
-
-    private fun switchToPreviousCategory(): Boolean {
-        val flat = getFlatCategories()
-        val idx = getCurrentCategoryIndex()
-        if (idx > 0) {
-            selectedCategory = flat[idx - 1].value
-            renderCategories()
-            applyFilters()
-            animateCategorySwitch()
-            return true
-        }
-        return false
-    }
-
-    private fun animateCategorySwitch() {
-        val currentBinding = _binding ?: return
-        // 滚动分类栏到当前选中项
-        val categoryScroll: HorizontalScrollView = currentBinding.libraryCategoryScroll
-        for (i in 0 until currentBinding.libraryCategoryRow.childCount) {
-            val child = currentBinding.libraryCategoryRow.getChildAt(i)
-            if (child is TextView) {
-                val tag = child.tag
-                val catValue = tag?.toString() ?: ""
-                if (catValue == selectedCategory) {
-                    val scrollX = child.left - categoryScroll.width / 2 + child.width / 2
-                    categoryScroll.smoothScrollTo(scrollX, 0)
-                    break
-                }
-            }
-        }
-        // 列表淡入动画
-        currentBinding.libraryRecycler.alpha = 0.7f
-        currentBinding.libraryRecycler.animate().alpha(1f).setDuration(250)
-            .setInterpolator(AccelerateDecelerateInterpolator()).start()
-    }
-
-    private fun setupSearchAndCategories() {
-        binding.librarySearchButton.setOnClickListener {
-            val show = binding.librarySearchInput.visibility != View.VISIBLE
-            binding.librarySearchInput.visibility = if (show) View.VISIBLE else View.GONE
-            if (show) {
-                binding.librarySearchInput.requestFocus()
-                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-                imm?.showSoftInput(binding.librarySearchInput, InputMethodManager.SHOW_IMPLICIT)
-            } else {
-                binding.librarySearchInput.setText("")
-                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-                imm?.hideSoftInputFromWindow(binding.librarySearchInput.windowToken, 0)
-            }
-            renderToolbarButtonState()
-        }
-        binding.librarySyncButton.setOnClickListener { showLibrarySettingsMenu() }
-        binding.libraryCollapseButton.setOnClickListener {
-            categoriesCollapsed = !categoriesCollapsed
-            binding.libraryCategoryScroll.visibility = if (categoriesCollapsed) View.GONE else View.VISIBLE
-            renderToolbarButtonState()
-        }
-        binding.librarySearchInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                searchQuery = if (s == null) "" else s.toString().trim { it <= ' ' }
-                if (searchDebounce != null) mainQueue.removeCallbacks(searchDebounce!!)
-                searchDebounce = Runnable {
-                    if (!isAdded || _binding == null) return@Runnable
-                    applyFilters()
-                }
-                mainQueue.postDelayed(searchDebounce!!, 300)
-            }
-            override fun afterTextChanged(s: Editable?) { }
-        })
-        renderToolbarButtonState()
-    }
-
-    private fun showLibrarySettingsMenu() {
-        val styleLabel = getString(if (posterGridStyle)
-            R.string.game_library_horizontal_cards else R.string.game_library_poster_grid)
-        LauncherDialogFactory.showStandardActionChoices(
-            requireContext(), getString(R.string.game_library_settings),
-            arrayOf(getString(R.string.game_library_sync_all), styleLabel,
-                getString(R.string.game_library_clear))
-        ) { index ->
-            when (index) {
-                0 -> syncController.showSyncDataConfirmDialog()
-                1 -> togglePosterGridStyle()
-                2 -> confirmClearList()
-            }
-        }
-    }
-
-    private fun togglePosterGridStyle() {
-        posterGridStyle = !posterGridStyle
-        requireContext().applicationContext
-            .getSharedPreferences(LIBRARY_PREFS, Context.MODE_PRIVATE)
-            .edit().putBoolean(getPosterStylePreferenceKey(), posterGridStyle).apply()
-        val currentBinding = _binding
-        if (currentBinding != null) {
-            applyPosterStyleWhenRecyclerIsIdle(currentBinding, posterGridStyle)
-        }
-        Toast.makeText(
-            requireContext(),
-            getString(if (posterGridStyle)
-                R.string.game_library_switched_poster else R.string.game_library_switched_horizontal),
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    private fun applyPosterStyleWhenRecyclerIsIdle(
-        currentBinding: FragmentLauncherLibraryBinding,
-        posterStyle: Boolean,
-    ) {
-        val recyclerView = currentBinding.libraryRecycler
-        recyclerView.post {
-            if (_binding !== currentBinding || posterGridStyle != posterStyle) return@post
-            if (recyclerView.isComputingLayout) {
-                applyPosterStyleWhenRecyclerIsIdle(currentBinding, posterStyle)
-                return@post
-            }
-            recyclerView.stopScroll()
-            recyclerView.itemAnimator?.endAnimations()
-            gridLayoutManager?.spanCount = getActiveGridColumns()
-            adapter?.setPosterStyle(posterStyle)
-            recyclerView.recycledViewPool.clear()
-            recyclerView.scrollToPosition(0)
-            recyclerView.invalidateItemDecorations()
-            recyclerView.post {
-                if (_binding !== currentBinding || posterGridStyle != posterStyle) return@post
-                when {
-                    !posterStyle && usesHorizontalPaging() -> updateFixedGridCardHeight()
-                    !posterStyle && usesTabletPortraitCardSizing() -> updateTabletPortraitCardHeight()
-                }
-            }
-        }
-    }
-
     private fun loadGames() {
         listController.loadGames()
     }
@@ -662,10 +408,6 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun applyFilters(forceFullRefresh: Boolean) {
         listController.applyFilters(forceFullRefresh)
-    }
-
-    private fun renderPagedGrid(forceFullRefresh: Boolean) {
-        listController.renderPagedGrid(forceFullRefresh)
     }
 
     /**
@@ -685,124 +427,6 @@ open class LauncherLibraryFragment : Fragment(),
     /** Re-fetches a single game from DB and updates it in-place, for async metadata operations. */
     override fun reloadSingleGame(gameId: Long) {
         listController.reloadSingleGame(this, gameId)
-    }
-
-    private fun showNextPage(): Boolean {
-        if (!listController.showNextPage()) return false
-        animatePageChange(true)
-        return true
-    }
-
-    private fun showPreviousPage(): Boolean {
-        if (!listController.showPreviousPage()) return false
-        animatePageChange(false)
-        return true
-    }
-
-    private fun animatePageChange(forward: Boolean) {
-        val currentBinding = _binding ?: return
-        val distance = LauncherTheme.dp(requireContext(), 36) * (if (forward) 1f else -1f)
-        currentBinding.libraryRecycler.animate().cancel()
-        currentBinding.libraryRecycler.translationX = distance
-        currentBinding.libraryRecycler.alpha = 0.72f
-        currentBinding.libraryRecycler.animate()
-            .translationX(0f)
-            .alpha(1f)
-            .setDuration(220L)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .start()
-    }
-
-    private fun loadNextPage() {
-        listController.loadNextPage()
-    }
-
-    private fun loadNextPage(forceFullRefresh: Boolean) {
-        listController.loadNextPage(forceFullRefresh)
-    }
-
-    private fun renderState() {
-        val currentBinding = _binding ?: return
-        val hasGames = listController.getVisibleGames().isNotEmpty()
-        currentBinding.libraryRecycler.visibility = if (hasGames) View.VISIBLE else View.GONE
-        if (hasGames && usesHorizontalPaging()) {
-            currentBinding.libraryRecycler.post { updateFixedGridCardHeight() }
-        } else if (hasGames && usesTabletPortraitCardSizing()) {
-            currentBinding.libraryRecycler.post { updateTabletPortraitCardHeight() }
-        }
-        currentBinding.libraryEmpty.text =
-            getString(if (listController.getAllGames().isEmpty())
-                R.string.game_empty else R.string.game_empty_search)
-        currentBinding.libraryEmpty.visibility = if (hasGames) View.GONE else View.VISIBLE
-        if (hasGames) scheduleLoadUntilViewportFilled()
-    }
-
-    /**
-     * A short first page can leave no scroll range, which previously required a manual upward
-     * drag to reveal more games. Add pages after layout until the list is scrollable or exhausted.
-     *
-     * 使用 OnPreDrawListener 等待 RecyclerView 完成布局后再检测是否填满容器。
-     * 高 dpi 手机首屏尤其需要：page size 默认 8 项（2 列 × 4 行）往往填不满高屏幕，
-     * 若用 post() 检测，runnable 可能在 DiffUtil 触发的布局完成前运行，
-     * canScrollVertically() 基于旧布局返回 true（误判为已填满），导致下一页无法自动加载。
-     */
-    private fun scheduleLoadUntilViewportFilled() {
-        val currentBinding = _binding ?: return
-        if (listController.isViewportFillCheckPending || usesHorizontalPaging()
-            || listController.isLoading || listController.isFullyLoaded
-            || listController.getVisibleGames().size >= listController.getFilteredGames().size
-        ) {
-            return
-        }
-        listController.setViewportFillCheckPending(true)
-        val recyclerView = currentBinding.libraryRecycler
-        val observer = recyclerView.viewTreeObserver
-        val listener = object : ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                val vto = recyclerView.viewTreeObserver
-                vto.removeOnPreDrawListener(this)
-                listController.setViewportFillCheckPending(false)
-                if (_binding == null || listController.isLoading || listController.isFullyLoaded
-                    || listController.getVisibleGames().size >= listController.getFilteredGames().size
-                ) {
-                    return true
-                }
-                // 列表无法向下滚动时，说明内容未填满容器，加载下一页
-                if (!recyclerView.canScrollVertically(1)) {
-                    listController.loadNextPage()
-                }
-                return true
-            }
-        }
-        observer.addOnPreDrawListener(listener)
-    }
-
-    private fun handleLoadMoreDragWhenNotScrollable(recyclerView: RecyclerView, event: MotionEvent) {
-        if (listController.isLoading || listController.isFullyLoaded
-            || listController.getFilteredGames().isEmpty()
-            || listController.getVisibleGames().size >= listController.getFilteredGames().size
-        ) {
-            loadMoreDragCandidate = false
-            return
-        }
-
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                loadMoreDragStartY = event.y
-                loadMoreDragCandidate = !recyclerView.canScrollVertically(1)
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                if (loadMoreDragCandidate && loadMoreDragStartY - event.y > LauncherTheme.dp(requireContext(), 48)) {
-                    loadMoreDragCandidate = false
-                    loadNextPage()
-                }
-            }
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                loadMoreDragCandidate = false
-            }
-        }
     }
 
     private fun confirmLaunchGame(game: Game?) {
@@ -989,7 +613,7 @@ open class LauncherLibraryFragment : Fragment(),
                 categories.clear()
                 gameDevelopers.clear()
                 selectedCategory = ""
-                renderCategories()
+                toolbarUi.renderCategories()
                 applyFilters(true)
                 Toast.makeText(app, R.string.game_library_cleared, Toast.LENGTH_SHORT).show()
             }
@@ -999,7 +623,7 @@ open class LauncherLibraryFragment : Fragment(),
     // ===== GameSyncController.Listener =====
 
     override fun onBatchSyncComplete(loadedGames: List<Game>, categoryResult: CategoryBuildResult) {
-        if (_binding == null) return
+        if (!isAdded || _binding == null) return
         listController.replaceAllGames(loadedGames)
 
         gameDevelopers.clear()
@@ -1014,7 +638,7 @@ open class LauncherLibraryFragment : Fragment(),
             selectedCategory = ""
         }
 
-        renderCategories()
+        toolbarUi.renderCategories()
         listController.setDataLoaded(true)
 
         // controller 已持有最新数据，applyFilters(true) 会强制全量刷新卡片
@@ -1026,69 +650,6 @@ open class LauncherLibraryFragment : Fragment(),
         val intent = Intent(requireContext(), LauncherGameEditActivity::class.java)
         intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, game.id)
         startActivity(intent)
-    }
-
-    private fun renderCategories() {
-        val currentBinding = _binding ?: return
-        currentBinding.libraryCategoryRow.removeAllViews()
-        addCategoryChip(getString(R.string.game_common_all), "")
-        for (category in categories) {
-            addCategoryChip(category.label, category.value)
-        }
-    }
-
-    private fun addCategoryChip(label: String?, value: String?) {
-        val chip = TextView(requireContext())
-        val selected = value == selectedCategory
-        chip.text = label
-        chip.isSingleLine = true
-        chip.gravity = Gravity.CENTER
-        chip.setTextSize(
-            android.util.TypedValue.COMPLEX_UNIT_PX,
-            resources.getDimension(com.core.R.dimen.launcher_library_category_text_size)
-        )
-        chip.setTypeface(null, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-        chip.tag = value
-        if (selected) {
-            chip.setTextColor(LauncherTheme.onPrimary(requireContext()))
-            chip.background = LauncherTheme.selectedChip(requireContext())
-        } else {
-            LauncherTheme.menuItem(chip)
-        }
-        val chipHorizontalPadding = resources.getDimensionPixelSize(
-            com.core.R.dimen.launcher_library_category_horizontal_padding
-        )
-        chip.setPadding(chipHorizontalPadding, 0, chipHorizontalPadding, 0)
-        chip.setOnClickListener {
-            selectedCategory = value ?: ""
-            renderCategories()
-            applyFilters()
-        }
-        val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            resources.getDimensionPixelSize(com.core.R.dimen.launcher_library_category_chip_height)
-        )
-        lp.setMargins(
-            0, 0,
-            resources.getDimensionPixelSize(com.core.R.dimen.launcher_library_category_chip_margin_end),
-            0
-        )
-        binding.libraryCategoryRow.addView(chip, lp)
-        if (usePortraitLibraryScaler()) {
-            LauncherTabletPortraitScaler.apply(chip)
-        }
-    }
-
-    private fun renderToolbarButtonState() {
-        val currentBinding = _binding ?: return
-        applyToolbarIconTone(currentBinding.librarySyncButton)
-        applyToolbarIconTone(currentBinding.librarySearchButton)
-        applyToolbarIconTone(currentBinding.libraryCollapseButton)
-    }
-
-    private fun applyToolbarIconTone(view: ImageView) {
-        view.imageTintList = ColorStateList.valueOf(LauncherTheme.primary(requireContext()))
-        view.background = null
     }
 
     // ===== GameListController.Listener =====
@@ -1125,7 +686,7 @@ open class LauncherLibraryFragment : Fragment(),
         ) {
             selectedCategory = ""
         }
-        renderCategories()
+        toolbarUi.renderCategories()
     }
 
     override fun onVisibleGamesChanged(forceFullRefresh: Boolean) {
@@ -1133,6 +694,6 @@ open class LauncherLibraryFragment : Fragment(),
     }
 
     override fun onRenderStateRequested() {
-        renderState()
+        pagingHelper.renderState()
     }
 }

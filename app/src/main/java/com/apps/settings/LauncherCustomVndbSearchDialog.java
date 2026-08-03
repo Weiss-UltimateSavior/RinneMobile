@@ -23,6 +23,7 @@ import com.core.metadata.VnMetadata;
 import com.core.model.Game;
 
 import java.util.List;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 
@@ -256,7 +257,7 @@ public final class LauncherCustomVndbSearchDialog {
         root.addView(cancel, cancelParams);
         setContent(dialog, root, fragment, 288);
         Window window = dialog.getWindow();
-        if (window != null) window.setLayout(LauncherTheme.dp(fragment.requireContext(), 288),
+        if (window != null) window.setLayout(LauncherDialogFactory.dialogWidthPx(fragment.requireContext(), 288),
                 (int) (fragment.getResources().getDisplayMetrics().heightPixels * 0.72f));
     }
 
@@ -332,7 +333,7 @@ public final class LauncherCustomVndbSearchDialog {
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
         window.setBackgroundDrawableResource(android.R.color.transparent);
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        window.setLayout(LauncherTheme.dp(fragment.requireContext(), widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(LauncherDialogFactory.dialogWidthPx(fragment.requireContext(), widthDp), WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private static void focusAndShowKeyboard(Dialog dialog, EditText input, Fragment fragment) {

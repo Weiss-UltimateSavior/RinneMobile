@@ -250,4 +250,7 @@
     <string name="social_agent_full_permission_label">完全权限</string>
     <string name="social_agent_restricted_permission_label">受限权限</string>
     <string name="social_agent_configure_api">点击右上角设置模型 API</string>
+    <string name="social_agent_temperature_hint">0.0 - 2.0</string>
+    <string name="social_agent_tool_limit_hint">1 - 50</string>
+    <string name="social_agent_context_budget_hint">16 - 1024</string>
 </resources>

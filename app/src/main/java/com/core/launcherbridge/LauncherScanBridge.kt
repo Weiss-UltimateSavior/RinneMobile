@@ -10,6 +10,8 @@ import com.core.data.GameRepository
 import com.core.launcher.EnginePackages
 import com.core.model.EngineType
 import com.core.model.Game
+import com.core.util.BoundedInputStream
+import com.core.util.MAX_BITMAP_SOURCE_BYTES
 import com.core.scanner.EngineDetector
 import com.core.scanner.GameScanner
 import com.core.scanner.ScanReport
@@ -281,12 +283,12 @@ object LauncherScanBridge {
         var inputStream: InputStream? = null
         try {
             val source = Uri.parse(sourceUriStr)
-            inputStream = context.contentResolver.openInputStream(source) ?: return null
+            inputStream = BoundedInputStream(context.contentResolver.openInputStream(source) ?: return null, MAX_BITMAP_SOURCE_BYTES)
             val opts = BitmapFactory.Options()
             opts.inJustDecodeBounds = true
             BitmapFactory.decodeStream(inputStream, null, opts)
             inputStream.close()
-            inputStream = context.contentResolver.openInputStream(source) ?: return null
+            inputStream = BoundedInputStream(context.contentResolver.openInputStream(source) ?: return null, MAX_BITMAP_SOURCE_BYTES)
             val maxDim = maxOf(opts.outWidth, opts.outHeight)
             var sampleSize = 1
             while (maxDim / sampleSize > 1440) sampleSize *= 2

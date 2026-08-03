@@ -35,26 +35,20 @@ object GameMetadataFormatter {
 
     /** 返回可读的引擎名称；null 或未知值返回"未知"。 */
     @JvmStatic
-    fun engineText(engine: EngineType?): String = when (engine) {
-        EngineType.KIRIKIRI -> "Kirikiri"
-        EngineType.ONS -> "ONS"
-        EngineType.TYRANO -> "Tyrano"
-        EngineType.ARTEMIS -> "Artemis"
-        EngineType.WINLATOR -> "Winlator"
-        EngineType.GAMEHUB -> "GameHub"
-        EngineType.PSP -> "PSP"
-        EngineType.NINTENDO_3DS -> "3DS"
-        EngineType.NINTENDO_SWITCH -> "Switch"
-        else -> "Unknown"
-    }
-
-    @JvmStatic
-    fun engineText(context: Context, engine: EngineType?): String =
-        if (engine == null || engine == EngineType.UNKNOWN) {
-            context.getString(R.string.game_common_unknown)
-        } else {
-            engineText(engine)
+    fun engineText(context: Context, engine: EngineType?): String = context.getString(
+        when (engine) {
+            EngineType.KIRIKIRI -> R.string.game_engine_kirikiri
+            EngineType.ONS -> R.string.game_engine_onscripter
+            EngineType.TYRANO -> R.string.game_engine_tyrano
+            EngineType.ARTEMIS -> R.string.game_engine_artemis
+            EngineType.WINLATOR -> R.string.game_engine_winlator
+            EngineType.GAMEHUB -> R.string.game_engine_gamehub
+            EngineType.PSP -> R.string.game_engine_psp
+            EngineType.NINTENDO_3DS -> R.string.game_engine_nintendo_3ds
+            EngineType.NINTENDO_SWITCH -> R.string.game_engine_nintendo_switch
+            else -> R.string.game_common_unknown
         }
+    )
 
     /**
      * 解析时长字符串为分钟数。

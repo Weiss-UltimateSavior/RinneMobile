@@ -166,86 +166,89 @@ public class LocalAgentActivity extends AppCompatActivity {
         setWorkbenchStatus(getString(R.string.social_agent_planning),
                 getString(R.string.social_agent_planning_detail), "02");
         renderRunning(true);
-        runtime.send(text, new LocalAgentRuntime.Callback() {
-            @Override public void onTextDelta(String delta) {
-                if (unavailable() || streamingMessage == null || delta == null || delta.isEmpty()) return;
-                currentRoundText.append(delta);
-                renderReasoningMessage();
-                scrollToEndIfFollowing();
+        runtime.send(text, new LocalAgentCallback());
+    }
+
+    /** 本地智能体运行时回调：流式文本/推理/工具/审批/完成/错误 的统一处理。 */
+    private final class LocalAgentCallback implements LocalAgentRuntime.Callback {
+        @Override public void onTextDelta(String delta) {
+            if (unavailable() || streamingMessage == null || delta == null || delta.isEmpty()) return;
+            currentRoundText.append(delta);
+            renderReasoningMessage();
+            scrollToEndIfFollowing();
+        }
+        @Override public void onReasoningDelta(String delta) {
+            if (unavailable() || streamingMessage == null || delta == null || delta.isEmpty()) return;
+            committedReasoning.append(delta);
+            renderReasoningMessage();
+            scrollToEndIfFollowing();
+        }
+        @Override public void onModelRoundFinished(boolean toolRound) {
+            if (unavailable()) return;
+            if (toolRound && currentRoundText.length() > 0) {
+                if (committedReasoning.length() > 0) committedReasoning.append("\n\n");
+                committedReasoning.append(currentRoundText);
             }
-            @Override public void onReasoningDelta(String delta) {
-                if (unavailable() || streamingMessage == null || delta == null || delta.isEmpty()) return;
-                committedReasoning.append(delta);
-                renderReasoningMessage();
-                scrollToEndIfFollowing();
+            currentRoundText.setLength(0);
+            renderReasoningMessage();
+        }
+        @Override public void onToolStarted(String name) {
+            if (!unavailable()) {
+                setWorkbenchStatus(getString(R.string.social_agent_executing), name, "03");
             }
-            @Override public void onModelRoundFinished(boolean toolRound) {
-                if (unavailable()) return;
-                if (toolRound && currentRoundText.length() > 0) {
-                    if (committedReasoning.length() > 0) committedReasoning.append("\n\n");
-                    committedReasoning.append(currentRoundText);
-                }
-                currentRoundText.setLength(0);
-                renderReasoningMessage();
+        }
+        @Override public void onToolFinished(String name, boolean success) {
+            if (!unavailable()) setWorkbenchStatus(
+                    getString(success ? R.string.social_agent_operation_complete
+                            : R.string.social_agent_operation_incomplete),
+                    getString(success ? R.string.social_agent_preparing_result
+                            : R.string.social_agent_analyzing_failure), "04");
+        }
+        @Override public void onApprovalRequired(LocalAgentRuntime.ApprovalRequest request,
+                                                 LocalAgentRuntime.ApprovalResponder responder) {
+            if (unavailable()) { responder.resolve(false); return; }
+            setWorkbenchStatus(getString(R.string.social_agent_waiting_confirmation),
+                    getString(R.string.social_agent_confirmation_detail), "05");
+            activeApprovalDialog = LauncherDialogFactory.showLongMessageConfirm(
+                    LocalAgentActivity.this, request.title, request.preview, request.confirmText,
+                    () -> { activeApprovalDialog = null; responder.resolve(true); },
+                    () -> { activeApprovalDialog = null; responder.resolve(false); });
+        }
+        @Override public void onCriticalWarning(String title, String message) {
+            if (!unavailable()) LauncherDialogFactory.showLongMessageConfirm(
+                    LocalAgentActivity.this, title, message,
+                    getString(R.string.social_action_got_it), () -> { }, () -> { });
+        }
+        @Override public void onComplete(String finalText) {
+            if (unavailable()) return;
+            dismissApprovalDialog();
+            if (streamingMessage != null) {
+                streamingMessage.content = finalText;
+                int index = messages.indexOf(streamingMessage);
+                if (index >= 0) adapter.notifyItemChanged(index);
             }
-            @Override public void onToolStarted(String name) {
-                if (!unavailable()) {
-                    setWorkbenchStatus(getString(R.string.social_agent_executing), name, "03");
-                }
+            if (reasoningMessage != null) {
+                reasoningMessage.name = "complete";
+                int reasoningIndex = messages.indexOf(reasoningMessage);
+                if (reasoningIndex >= 0) adapter.notifyItemChanged(reasoningIndex);
             }
-            @Override public void onToolFinished(String name, boolean success) {
-                if (!unavailable()) setWorkbenchStatus(
-                        getString(success ? R.string.social_agent_operation_complete
-                                : R.string.social_agent_operation_incomplete),
-                        getString(success ? R.string.social_agent_preparing_result
-                                : R.string.social_agent_analyzing_failure), "04");
-            }
-            @Override public void onApprovalRequired(LocalAgentRuntime.ApprovalRequest request,
-                                                     LocalAgentRuntime.ApprovalResponder responder) {
-                if (unavailable()) { responder.resolve(false); return; }
-                setWorkbenchStatus(getString(R.string.social_agent_waiting_confirmation),
-                        getString(R.string.social_agent_confirmation_detail), "05");
-                activeApprovalDialog = LauncherDialogFactory.showLongMessageConfirm(
-                        LocalAgentActivity.this, request.title, request.preview, request.confirmText,
-                        () -> { activeApprovalDialog = null; responder.resolve(true); },
-                        () -> { activeApprovalDialog = null; responder.resolve(false); });
-            }
-            @Override public void onCriticalWarning(String title, String message) {
-                if (!unavailable()) LauncherDialogFactory.showLongMessageConfirm(
-                        LocalAgentActivity.this, title, message,
-                        getString(R.string.social_action_got_it), () -> { }, () -> { });
-            }
-            @Override public void onComplete(String finalText) {
-                if (unavailable()) return;
-                dismissApprovalDialog();
-                if (streamingMessage != null) {
-                    streamingMessage.content = finalText;
-                    int index = messages.indexOf(streamingMessage);
-                    if (index >= 0) adapter.notifyItemChanged(index);
-                }
-                if (reasoningMessage != null) {
-                    reasoningMessage.name = "complete";
-                    int reasoningIndex = messages.indexOf(reasoningMessage);
-                    if (reasoningIndex >= 0) adapter.notifyItemChanged(reasoningIndex);
-                }
-                streamingMessage = null;
-                reasoningMessage = null;
-                pendingUserMessage = null;
-                renderRunning(false);
-                setWorkbenchStatus(getString(R.string.social_agent_task_complete),
-                        getString(R.string.social_agent_task_complete_detail), "06");
-                updateEmptyState();
-            }
-            @Override public void onError(String message) {
-                if (unavailable()) return;
-                dismissApprovalDialog();
-                removePendingUiMessages();
-                renderRunning(false);
-                setWorkbenchStatus(getString(R.string.social_agent_task_incomplete), message, "!");
-                LauncherDialogFactory.showInfo(LocalAgentActivity.this,
-                        getString(R.string.social_agent_incomplete_title), message);
-            }
-        });
+            streamingMessage = null;
+            reasoningMessage = null;
+            pendingUserMessage = null;
+            renderRunning(false);
+            setWorkbenchStatus(getString(R.string.social_agent_task_complete),
+                    getString(R.string.social_agent_task_complete_detail), "06");
+            updateEmptyState();
+        }
+        @Override public void onError(String message) {
+            if (unavailable()) return;
+            dismissApprovalDialog();
+            removePendingUiMessages();
+            renderRunning(false);
+            setWorkbenchStatus(getString(R.string.social_agent_task_incomplete), message, "!");
+            LauncherDialogFactory.showInfo(LocalAgentActivity.this,
+                    getString(R.string.social_agent_incomplete_title), message);
+        }
     }
 
     private void renderRunning(boolean running) {

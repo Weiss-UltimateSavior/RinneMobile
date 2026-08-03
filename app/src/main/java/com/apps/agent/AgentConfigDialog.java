@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.apps.widget.LauncherEditText;
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
@@ -46,7 +47,7 @@ final class AgentConfigDialog {
                         : activity.getString(R.string.social_agent_api_key_hint),
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText temperature = input(activity, root, activity.getString(R.string.social_temperature),
-                "0.0 - 2.0", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                activity.getString(R.string.social_agent_temperature_hint), InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         temperature.setText(String.valueOf(config.temperature));
         addButtons(activity, root, dialog, () -> {
             try {
@@ -79,10 +80,10 @@ final class AgentConfigDialog {
         note.setTextColor(LauncherTheme.textMuted(activity));
         LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, LauncherTheme.dp(activity, 8), 0, 0); root.addView(note, noteLp);
         EditText toolCallLimit = input(activity, root, activity.getString(R.string.social_agent_tool_limit),
-                "1 - 50", InputType.TYPE_CLASS_NUMBER);
+                activity.getString(R.string.social_agent_tool_limit_hint), InputType.TYPE_CLASS_NUMBER);
         toolCallLimit.setText(String.valueOf(config.toolCallLimit));
         EditText contextBudget = input(activity, root, activity.getString(R.string.social_agent_context_budget),
-                "16 - 1024", InputType.TYPE_CLASS_NUMBER);
+                activity.getString(R.string.social_agent_context_budget_hint), InputType.TYPE_CLASS_NUMBER);
         contextBudget.setText(String.valueOf(config.contextBudgetKb));
         TextView contextNote = text(activity, activity.getString(R.string.social_agent_context_note), 10, false);
         contextNote.setTextColor(LauncherTheme.textMuted(activity));
@@ -144,7 +145,7 @@ final class AgentConfigDialog {
         window.setContentView(scroll);
         dialog.show();
         LauncherMotion.applyDialogMotion(dialog);
-        window.setLayout(LauncherTheme.dp(activity, 288), WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setLayout(LauncherDialogFactory.dialogWidthPx(activity, 288), WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private static void addButtons(Activity activity, LinearLayout root, Dialog dialog, Runnable onSave) {

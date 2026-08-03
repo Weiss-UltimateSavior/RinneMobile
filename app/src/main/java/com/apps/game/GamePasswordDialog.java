@@ -18,6 +18,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
@@ -216,7 +217,7 @@ public final class GamePasswordDialog {
             } else {
                 dialogHeight = WindowManager.LayoutParams.WRAP_CONTENT;
             }
-            window.setLayout(LauncherTheme.dp(context, 280), dialogHeight);
+            window.setLayout(LauncherDialogFactory.dialogWidthPx(context, 280), dialogHeight);
         }
     }
 

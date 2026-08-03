@@ -587,10 +587,6 @@ class LauncherActivity : AppCompatActivity() {
             LauncherSplash.setSplashImageEnabled(context, enabled)
 
         @JvmStatic
-        fun applyCustomSplashImage(context: android.content.Context, imageView: android.widget.ImageView?) =
-            LauncherSplash.applyCustomSplashImage(context, imageView)
-
-        @JvmStatic
         fun customPortraitBackgroundFile(context: android.content.Context): java.io.File =
             LauncherPortraitBackground.customImageFile(context)
 
@@ -625,9 +621,5 @@ class LauncherActivity : AppCompatActivity() {
         @JvmStatic
         fun setLiquidGlassNavigationStyle(context: android.content.Context, enabled: Boolean) =
             LauncherNavigationMetrics.setLiquidGlassStyle(context, enabled)
-
-        @JvmStatic
-        fun getNavigationOverlayBottomPadding(context: android.content.Context): Int =
-            LauncherNavigationMetrics.overlayBottomPadding(context)
     }
 }

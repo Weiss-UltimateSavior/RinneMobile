@@ -1,25 +1,18 @@
 package com.apps.home
 
 import android.content.Intent
-import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.apps.LauncherActivity
-import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
 import com.apps.navigationOverlayBottomPadding
 import com.apps.refreshNavigationOverlayInsets
@@ -36,18 +29,11 @@ import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
-import com.apps.util.LauncherAvatarPersistence
 import com.apps.util.LauncherUrlOpener
-import com.apps.widget.AvatarCropActivity
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.databinding.FragmentLauncherHomeBinding
-import com.core.launcherbridge.LauncherAuthBridge
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.launcherbridge.LauncherUpdateBridge
-import com.core.model.Game
-import com.core.util.AppExecutors
-import com.core.util.RxMainScheduler
-import com.core.util.SafeImageLoader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -59,27 +45,7 @@ open class LauncherHomeFragment : Fragment() {
     private lateinit var viewModel: LauncherViewModel
     private var sessionController: GameSessionController? = null
 
-    private val avatarPickerLauncher: ActivityResultLauncher<PickVisualMediaRequest> =
-        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri == null) return@registerForActivityResult
-            startCrop(uri)
-        }
-
-    private val cropLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK && result.data != null) {
-                val outputUri = result.data?.getStringExtra(AvatarCropActivity.EXTRA_OUTPUT_URI)
-                if (!outputUri.isNullOrEmpty()) {
-                    copyAvatarToInternal(Uri.parse(outputUri))
-                }
-            }
-        }
-
-    private fun startCrop(sourceUri: Uri) {
-        val intent = Intent(requireContext(), AvatarCropActivity::class.java)
-        intent.putExtra(AvatarCropActivity.EXTRA_INPUT_URI, sourceUri.toString())
-        cropLauncher.launch(intent)
-    }
+    private val avatarController = LauncherAvatarController(this) { binding }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -116,7 +82,7 @@ open class LauncherHomeFragment : Fragment() {
         }
         setupRecentList()
         currentBinding.launcherAvatarContainer.clipToOutline = true
-        renderAvatar()
+        avatarController.renderAvatar()
         applyThemeStyle()
         LauncherTheme.applyPrimaryTone(currentBinding.root)
         applyIconTone()
@@ -132,7 +98,7 @@ open class LauncherHomeFragment : Fragment() {
         applyThemeStyle()
         LauncherTheme.applyPrimaryTone(currentBinding.root)
         applyIconTone()
-        renderAvatar()
+        avatarController.renderAvatar()
         if (sessionController?.hasActiveSession() == true) {
             sessionController?.finishDirectPlaySessionIfNeeded(this)
         } else {
@@ -185,7 +151,7 @@ open class LauncherHomeFragment : Fragment() {
                 LauncherHomeAccountBottomSheet.ACTION_DISCLAIMER -> openDisclaimer()
             }
         }
-        currentBinding.launcherAvatarContainer.setOnClickListener { showChangeAvatarDialog() }
+        currentBinding.launcherAvatarContainer.setOnClickListener { avatarController.showChangeAvatarDialog() }
         currentBinding.actionProfileMenu.setOnClickListener {
             LauncherHomeAccountBottomSheet.show(parentFragmentManager)
         }
@@ -219,6 +185,7 @@ open class LauncherHomeFragment : Fragment() {
     protected open fun applyIconTone() {
         val currentBinding = binding ?: return
         val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
+        // 深色模式图标 tint 用白色（内容色，非页面取色；浅色模式 clearColorFilter 走资源原始色）
         val white = android.graphics.Color.WHITE
         LauncherTheme.applyCardCircleIcon(currentBinding.actionProfileMenu, requireContext())
         applyIconTint(currentBinding.actionSaveSlotIcon, darkMode, white)
@@ -327,7 +294,19 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     protected open fun renderHomeLists(state: LauncherViewModel.LauncherState) {
-        renderRecentItems(state.recentItems)
+        val currentBinding = binding ?: return
+        LauncherRecentListRenderer.render(
+            currentBinding,
+            requireContext(),
+            state.recentItems,
+            recentItemLayoutRes(),
+            recentDisplayLimit(),
+            recentGridColumns(),
+            usePortraitTabletScaler(),
+            ::bindRecentItem,
+            ::confirmLaunchRecentGame,
+            ::confirmDeleteRecentItem,
+        )
     }
 
     protected open fun recentItemLayoutRes(): Int = com.core.R.layout.item_launcher_recent
@@ -350,71 +329,6 @@ open class LauncherHomeFragment : Fragment() {
         meta.text = item.timeAndDuration
         status.text = LauncherRepository.launchTypeLabel(requireContext(), item.launchType)
             .ifEmpty { getString(com.core.R.string.repo_played) }
-    }
-
-    private fun renderRecentItems(items: List<LauncherRepository.RecentItem>?) {
-        val currentBinding = binding ?: return
-        if (items.isNullOrEmpty()) {
-            currentBinding.recentEmpty.visibility = View.VISIBLE
-            currentBinding.recentList.visibility = View.GONE
-            currentBinding.recentList.removeAllViews()
-            return
-        }
-        currentBinding.recentEmpty.visibility = View.GONE
-        currentBinding.recentList.visibility = View.VISIBLE
-        currentBinding.recentList.removeAllViews()
-        val inflater = LayoutInflater.from(requireContext())
-        val columns = recentGridColumns().coerceAtLeast(1)
-        val visibleItems = items.take(recentDisplayLimit().coerceAtLeast(0))
-        var currentRow: LinearLayout? = null
-        for ((index, item) in visibleItems.withIndex()) {
-            if (columns > 1 && index % columns == 0) {
-                currentRow = LinearLayout(requireContext()).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                    )
-                }
-                currentBinding.recentList.addView(currentRow)
-            }
-            val itemView = inflater.inflate(
-                recentItemLayoutRes(),
-                currentBinding.recentList,
-                false
-            )
-            if (usePortraitTabletScaler()) {
-                LauncherTabletPortraitScaler.apply(itemView)
-            }
-            bindRecentItem(itemView, item)
-            LauncherTheme.applyPrimaryTone(itemView)
-            itemView.setOnClickListener { confirmLaunchRecentGame(item) }
-            itemView.setOnLongClickListener {
-                confirmDeleteRecentItem(item)
-                true
-            }
-            if (columns == 1) {
-                currentBinding.recentList.addView(itemView)
-            } else {
-                itemView.layoutParams = LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f,
-                ).apply {
-                    setMargins(LauncherTheme.dp(requireContext(), 5), LauncherTheme.dp(requireContext(), 2), LauncherTheme.dp(requireContext(), 5), LauncherTheme.dp(requireContext(), 3))
-                }
-                currentRow?.addView(itemView)
-            }
-        }
-        if (columns > 1 && visibleItems.isNotEmpty()) {
-            val missing = (columns - visibleItems.size % columns) % columns
-            repeat(missing) {
-                currentRow?.addView(
-                    View(requireContext()),
-                    LinearLayout.LayoutParams(0, 0, 1f),
-                )
-            }
-        }
     }
 
     protected fun confirmLaunchRecentGame(item: LauncherRepository.RecentItem) {
@@ -482,119 +396,6 @@ open class LauncherHomeFragment : Fragment() {
         viewModel.refreshStats()
         viewModel.refreshRecentItems(includeFavorites = includeFavoriteItems())
     }
-
-    private fun showChangeAvatarDialog() {
-        LauncherDialogFactory.showStandardConfirm(
-            requireContext(),
-            getString(com.core.R.string.home_change_avatar),
-            getString(com.core.R.string.home_change_avatar_message),
-            getString(com.core.R.string.core_confirm)
-        ) {
-            avatarPickerLauncher.launch(
-                PickVisualMediaRequest.Builder()
-                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    .build()
-            )
-        }
-    }
-
-    private fun copyAvatarToInternal(sourceUri: Uri) {
-        val app = requireContext().applicationContext
-        // 文件与偏好持久化已下沉 LauncherAvatarPersistence（§5.2 项 1）；
-        // 由应用级任务承载，不随 Home View 销毁而取消。
-        AppExecutors.runOnSingle {
-            val savedUri = LauncherAvatarPersistence.copyAvatarToInternal(app, sourceUri)
-            val success = savedUri != null
-            RxMainScheduler.post {
-                if (!isAdded || binding == null) return@post
-                if (!success) {
-                    Toast.makeText(app, com.core.R.string.home_avatar_save_failed, Toast.LENGTH_SHORT).show()
-                    return@post
-                }
-                renderAvatar()
-                Toast.makeText(app, com.core.R.string.home_avatar_updated, Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun renderAvatar() {
-        val currentBinding = binding ?: return
-        // 优先使用主页头像，再检查个人页头像
-        var avatar = prefs().getString(LauncherAvatarPersistence.KEY_PROFILE_AVATAR, "")
-        if (avatar == null || avatar.trim { it <= ' ' }.isEmpty()) {
-            val profileAvatar = requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
-                .getString(LauncherAvatarPersistence.KEY_CUSTOM_AVATAR, "")
-            if (profileAvatar != null && profileAvatar.trim { it <= ' ' }.isNotEmpty()) {
-                avatar = profileAvatar
-            }
-        }
-        // 更新首字母
-        val nickname = if (LauncherAuthBridge.isLoggedIn(requireContext())) {
-            LauncherAuthBridge.getNickname(requireContext())
-        } else {
-            ""
-        }
-        val initial = if (nickname.trim { it <= ' ' }.isNotEmpty()) {
-            nickname.trim { it <= ' ' }.substring(0, 1).uppercase()
-        } else {
-            getString(com.core.R.string.launcher_avatar_fallback_initial)
-        }
-        currentBinding.launcherAvatarInitial.text = initial
-
-        if (avatar == null || avatar.trim { it <= ' ' }.isEmpty()) {
-            currentBinding.launcherAvatarImage.setImageDrawable(null)
-            currentBinding.launcherAvatarImage.visibility = View.GONE
-            currentBinding.launcherAvatarInitial.visibility = View.VISIBLE
-            return
-        }
-        try {
-            currentBinding.launcherAvatarImage.clipToOutline = true
-            // 先显示回退态；缓存命中时 SafeImageLoader 会同步回填并立即覆盖此状态。
-            currentBinding.launcherAvatarImage.visibility = View.GONE
-            currentBinding.launcherAvatarInitial.visibility = View.VISIBLE
-            if (!SafeImageLoader.loadUri(
-                    currentBinding.launcherAvatarImage,
-                    avatar,
-                    SafeImageLoader.Callback { success ->
-                        val cb = binding ?: return@Callback
-                        if (success) {
-                            cb.launcherAvatarImage.visibility = View.VISIBLE
-                            cb.launcherAvatarInitial.visibility = View.GONE
-                        } else {
-                            showDefaultAvatar()
-                        }
-                    }
-                )
-            ) {
-                showDefaultAvatar()
-                return
-            }
-        } catch (error: RuntimeException) {
-            // 头像加载兜底：SafeImageLoader 已内部返回 false，此处仅防运行时异常
-            showDefaultAvatar()
-        }
-    }
-
-    private fun showDefaultAvatar() {
-        val currentBinding = binding ?: return
-        val nickname = if (LauncherAuthBridge.isLoggedIn(requireContext())) {
-            LauncherAuthBridge.getNickname(requireContext())
-        } else {
-            ""
-        }
-        val initial = if (nickname.trim { it <= ' ' }.isNotEmpty()) {
-            nickname.trim { it <= ' ' }.substring(0, 1).uppercase()
-        } else {
-            getString(com.core.R.string.launcher_avatar_fallback_initial)
-        }
-        currentBinding.launcherAvatarInitial.text = initial
-        currentBinding.launcherAvatarImage.setImageDrawable(null)
-        currentBinding.launcherAvatarImage.visibility = View.GONE
-        currentBinding.launcherAvatarInitial.visibility = View.VISIBLE
-    }
-
-    private fun prefs(): SharedPreferences =
-        requireContext().applicationContext.getSharedPreferences(LauncherPreferences.APP_PREFS, android.content.Context.MODE_PRIVATE)
 
     private fun checkUpdate() {
         Toast.makeText(requireContext(), com.core.R.string.home_checking_update, Toast.LENGTH_SHORT).show()

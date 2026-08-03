@@ -99,6 +99,11 @@ object LauncherCoverBridge {
             }
             inputStream!!.close()
             inputStream = null
+            // decodeFile 前置字节上限（下载循环已强制 MAX_COVER_RESPONSE_BYTES，此为防御性二次校验）
+            if (cacheFile.length() > MAX_COVER_RESPONSE_BYTES) {
+                cacheFile.delete()
+                return null
+            }
             val opts = BitmapFactory.Options()
             opts.inJustDecodeBounds = true
             BitmapFactory.decodeFile(cacheFile.absolutePath, opts)

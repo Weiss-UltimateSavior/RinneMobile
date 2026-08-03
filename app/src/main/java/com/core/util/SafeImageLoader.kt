@@ -97,8 +97,10 @@ object SafeImageLoader {
         val targetHeight = if (requestedHeight > 0) requestedHeight else 512
         return try {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            context.contentResolver.openInputStream(uri).use { input ->
-                BitmapFactory.decodeStream(input, null, bounds)
+            context.contentResolver.openInputStream(uri)?.let { stream ->
+                BoundedInputStream(stream, MAX_BITMAP_SOURCE_BYTES).use { input ->
+                    BitmapFactory.decodeStream(input, null, bounds)
+                }
             }
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
             val pixels = bounds.outWidth.toLong() * bounds.outHeight.toLong()
@@ -110,9 +112,13 @@ object SafeImageLoader {
                 sample *= 2
             }
             val options = BitmapFactory.Options().apply { inSampleSize = maxOf(1, sample) }
-            context.contentResolver.openInputStream(uri).use { input ->
-                BitmapFactory.decodeStream(input, null, options)
+            context.contentResolver.openInputStream(uri)?.let { stream ->
+                BoundedInputStream(stream, MAX_BITMAP_SOURCE_BYTES).use { input ->
+                    BitmapFactory.decodeStream(input, null, options)
+                }
             }
+        } catch (e: OutOfMemoryError) {
+            throw e
         } catch (ignored: Exception) {
             null
         }

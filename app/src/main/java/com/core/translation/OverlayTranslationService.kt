@@ -129,6 +129,7 @@ class OverlayTranslationService : Service() {
             mediaProjection?.unregisterCallback(projectionCallback)
             mediaProjection?.stop()
         } catch (_: Exception) {
+            // MediaProjection 已停止/回调已注销时抛异常可安全忽略（onDestroy 清理尽力而为）
         }
         mediaProjection = null
         projectionReady = false
@@ -179,6 +180,7 @@ class OverlayTranslationService : Service() {
                 mediaProjection?.unregisterCallback(projectionCallback)
                 mediaProjection?.stop()
             } catch (_: Exception) {
+                // 旧 MediaProjection 已停止时抛异常可安全忽略（重建前清理尽力而为）
             }
             mediaProjection = null
             projectionReady = false
@@ -248,22 +250,26 @@ class OverlayTranslationService : Service() {
         try {
             imageReader?.setOnImageAvailableListener(null, null)
         } catch (_: Exception) {
+            // ImageReader 已关闭时置空监听器抛异常可安全忽略（teardown 尽力而为）
         }
         synchronized(this) {
             try {
                 latestImage?.close()
             } catch (_: Exception) {
+                // Image 已关闭时重复 close 抛异常可安全忽略（teardown 尽力而为）
             }
             latestImage = null
         }
         try {
             virtualDisplay?.release()
         } catch (_: Exception) {
+            // VirtualDisplay 已释放时重复 release 抛异常可安全忽略（teardown 尽力而为）
         }
         virtualDisplay = null
         try {
             imageReader?.close()
         } catch (_: Exception) {
+            // ImageReader 已关闭时重复 close 抛异常可安全忽略（teardown 尽力而为）
         }
         imageReader = null
     }
@@ -381,6 +387,7 @@ class OverlayTranslationService : Service() {
                     try {
                         windowManager.updateViewLayout(button, params)
                     } catch (_: Exception) {
+                        // 悬浮按钮已移除/布局被替换时更新抛异常可安全忽略（拖动位置更新尽力而为）
                     }
                     true
                 }
@@ -430,6 +437,7 @@ class OverlayTranslationService : Service() {
             try {
                 windowManager.removeView(v)
             } catch (_: Exception) {
+                // 悬浮按钮可能已被系统移除，removeView 抛异常可安全忽略（清理尽力而为）
             }
         }
         floatingButton = null
@@ -555,6 +563,7 @@ class OverlayTranslationService : Service() {
             try {
                 image.close()
             } catch (_: Exception) {
+                // 错误路径下 Image 可能已关闭，close 抛异常可安全忽略（兜底清理）
             }
             throw e
         }
@@ -666,6 +675,7 @@ class OverlayTranslationService : Service() {
             try {
                 windowManager.removeView(v)
             } catch (_: Exception) {
+                // 结果卡片可能已被系统移除，removeView 抛异常可安全忽略（清理尽力而为）
             }
         }
         resultCard = null

@@ -678,6 +678,7 @@ public final class GameWorkspaceGateway {
         try {
             return path.equals(AgentRelativePath.normalize(path, false)) ? value : null;
         } catch (IllegalArgumentException ignored) {
+            // AgentRelativePath.normalize 对非法路径抛 IllegalArgumentException，视为不安全路径拒绝（返回 null 让调用方走缺省）
             return null;
         }
     }
@@ -789,6 +790,7 @@ public final class GameWorkspaceGateway {
             return diffLines(text, prefix);
         }
         catch (IOException | RuntimeException ignored) {
+            // 按指定编码解码失败时回退十六进制预览（失败兜底：预览仍可用，不中断请求）
             return fullHexPreview(bytes, prefix);
         }
     }
@@ -848,7 +850,10 @@ public final class GameWorkspaceGateway {
     private static String safeName(DocumentFile file) { String value = file.getName(); return value == null ? "" : value; }
     private static boolean safeProviderName(String name) {
         try { return !name.isEmpty() && name.equals(AgentRelativePath.normalize(name, false)); }
-        catch (IllegalArgumentException ignored) { return false; }
+        catch (IllegalArgumentException ignored) {
+            // AgentRelativePath.normalize 对非法名称抛 IllegalArgumentException，视为不安全名返回 false
+            return false;
+        }
     }
     private static void rejectSensitive(String path) { if (AgentRelativePath.isSensitive(path)) throw new SecurityException("敏感文件或账号/存档目录默认禁止智能体访问"); }
     private static void rejectVisualControls(String value) {
