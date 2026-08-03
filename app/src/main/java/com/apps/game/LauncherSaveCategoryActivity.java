@@ -16,6 +16,7 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 import com.core.R;
 import com.core.databinding.ActivityLauncherSaveCategoryBinding;
 import com.core.databinding.ItemLauncherManageBinding;
+import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.model.EngineType;
 import com.core.model.Game;
@@ -122,13 +123,13 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
         if (pkg.isEmpty()) return true;
         switch (game.engine) {
             case KIRIKIRI:
-                return pkg.startsWith("internal.krkr") || "org.tvp.kirikiri2.internal".equals(pkg);
+                return pkg.startsWith(EnginePackages.INTERNAL_KRKR) || EnginePackages.LEGACY_KRKR.equals(pkg);
             case ARTEMIS:
-                return pkg.startsWith("internal.artemis");
+                return pkg.startsWith(EnginePackages.INTERNAL_ARTEMIS);
             case ONS:
-                return pkg.startsWith("internal.ons") || "com.core.ons".equals(pkg);
+                return pkg.startsWith(EnginePackages.INTERNAL_ONS) || EnginePackages.LEGACY_ONS.equals(pkg);
             case TYRANO:
-                return pkg.startsWith("internal.tyrano") || "com.core.tyrano".equals(pkg);
+                return pkg.startsWith(EnginePackages.INTERNAL_TYRANO) || EnginePackages.LEGACY_TYRANO.equals(pkg);
             default:
                 return false;
         }

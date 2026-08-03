@@ -29,7 +29,7 @@ object LauncherConfigSyncBridge {
                 if (token.isEmpty()) throw RuntimeException("未登录")
                 val response = LauncherAuthHttpClient.get("/auth/config", token)
                 RxMainScheduler.post { callback.onSuccess(response) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "获取配置失败")
                 if (msg.contains("401")) { LauncherAuthBridge.expireSession(context); msg = "登录已过期，请重新登录" }
                 val errMsg = msg
@@ -50,7 +50,7 @@ object LauncherConfigSyncBridge {
                 val body = JSONObject(configJson)
                 LauncherAuthHttpClient.put("/auth/config", body, token)
                 RxMainScheduler.post { callback.onSuccess(configJson) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "上传配置失败")
                 if (msg.contains("401")) { LauncherAuthBridge.expireSession(context); msg = "登录已过期，请重新登录" }
                 val errMsg = msg
@@ -73,7 +73,7 @@ object LauncherConfigSyncBridge {
                 val json = JSONObject(response ?: "{}")
                 val playData = json.optString("play_data", "")
                 RxMainScheduler.post { callback.onSuccess(playData) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "获取游玩记录失败")
                 if (msg.contains("401")) { LauncherAuthBridge.expireSession(context); msg = "登录已过期，请重新登录" }
                 val errMsg = msg
@@ -99,7 +99,7 @@ object LauncherConfigSyncBridge {
                 body.put("play_data", playSql)
                 LauncherAuthHttpClient.putLarge("/auth/config/play-data", body, token)
                 RxMainScheduler.post { callback.onSuccess(playSql) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "上传游玩记录失败")
                 if (msg.contains("401")) { LauncherAuthBridge.expireSession(context); msg = "登录已过期，请重新登录" }
                 val errMsg = msg

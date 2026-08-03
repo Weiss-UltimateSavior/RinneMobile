@@ -9,7 +9,6 @@ import com.core.CorePreferences
  */
 object LauncherKrkrBridge {
 
-    private const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
     private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
     private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
     private const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"
@@ -29,7 +28,7 @@ object LauncherKrkrBridge {
     @JvmStatic
     fun getEngineVersion(context: Context?): String {
         if (context == null) return ENGINE_VERSION_AUTO
-        val v = prefs(context).getString(KEY_KR_ENGINE_VERSION, ENGINE_VERSION_AUTO)
+        val v = prefs(context).getString(CorePreferences.KEY_KR_ENGINE_VERSION, ENGINE_VERSION_AUTO)
         return normalizeEngineVersion(v)
     }
 
@@ -37,7 +36,7 @@ object LauncherKrkrBridge {
     fun setEngineVersion(context: Context?, version: String?) {
         if (context == null) return
         prefs(context).edit()
-            .putString(KEY_KR_ENGINE_VERSION, normalizeEngineVersion(version))
+            .putString(CorePreferences.KEY_KR_ENGINE_VERSION, normalizeEngineVersion(version))
             .apply()
     }
 

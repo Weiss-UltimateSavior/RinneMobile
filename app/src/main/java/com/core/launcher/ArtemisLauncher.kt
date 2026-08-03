@@ -50,7 +50,7 @@ internal object ArtemisLauncher {
         }
 
         val requestedPackage = packageName?.trim().orEmpty()
-        val autoFallback = requestedPackage.equals("internal.artemis", ignoreCase = true)
+        val autoFallback = requestedPackage.equals(EnginePackages.INTERNAL_ARTEMIS, ignoreCase = true)
         val effectivePackage = if (autoFallback) {
             preferredPackage(context, requestedPackage, rootPath)
         } else {
@@ -69,7 +69,7 @@ internal object ArtemisLauncher {
             }
             putExtra("rootUri", gamePath)
             putExtra("launchTarget", launchTarget)
-            putExtra("launchMode", "internal.artemis")
+            putExtra("launchMode", EnginePackages.INTERNAL_ARTEMIS)
             putExtra("orientation", 6)
             putExtra("scopedSaveDir", scoped)
             putExtra("scopedSaveName", saveName)
@@ -146,7 +146,7 @@ internal object ArtemisLauncher {
                     "save=${saveRoot.absolutePath} links=$linkCount skippedSave=$skippedSaveCount",
             )
             mirrorRoot.absolutePath
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("prepare Artemis scoped mirror failed root=$rootPath", error)
             null
         }
@@ -170,7 +170,7 @@ internal object ArtemisLauncher {
                 override fun onEvent(event: Int, path: String?) {
                     try {
                         copyRegularFiles(File(mirrorPath), File(savePath), onlyNewer = true)
-                    } catch (error: Throwable) {
+                    } catch (error: Exception) {
                         logWarn("Artemis realtime save export failed", error)
                     }
                 }
@@ -178,8 +178,17 @@ internal object ArtemisLauncher {
             observer.startWatching()
             synchronized(observerLock) { saveObservers[mirrorPath] = observer }
             logInfo("Artemis save observer started mirror=$mirrorPath save=$savePath")
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("Artemis save observer start failed mirror=$mirrorRoot save=$saveRoot", error)
+        }
+    }
+
+    /** 停止全部存档同步 FileObserver 并清空集合；游戏会话结束时调用，避免长生命周期监听器残留。 */
+    @JvmStatic
+    fun stopSaveSync() {
+        synchronized(observerLock) {
+            saveObservers.values.forEach { runCatching { it.stopWatching() } }
+            saveObservers.clear()
         }
     }
 
@@ -204,7 +213,7 @@ internal object ArtemisLauncher {
         }
         destination.setLastModified(source.lastModified())
         true
-    } catch (error: Throwable) {
+    } catch (error: Exception) {
         logWarn("copy file failed $source -> $destination", error)
         false
     }
@@ -253,7 +262,8 @@ internal object ArtemisLauncher {
             var name = File(rootPath).name
             if (name.isBlank()) name = kotlin.math.abs(rootPath.hashCode()).toString()
             name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifEmpty { "default" }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：名称规范化失败时回退默认值
             "default"
         }
     }
@@ -269,7 +279,7 @@ internal object ArtemisLauncher {
             }
             Os.symlink(target.absolutePath, link.absolutePath)
             isSymlinkTo(link, target)
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("symlink failed $link -> $target", error)
             false
         }
@@ -277,14 +287,16 @@ internal object ArtemisLauncher {
 
     private fun isSymlinkTo(link: File, target: File): Boolean = try {
         Os.readlink(link.absolutePath) == target.absolutePath
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // 尽力而为：readlink 失败视为非目标符号链接
         false
     }
 
     private fun isSymlink(file: File): Boolean = try {
         Os.readlink(file.absolutePath)
         true
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // 尽力而为：readlink 失败视为非符号链接
         false
     }
 
@@ -297,7 +309,7 @@ internal object ArtemisLauncher {
     private fun appendThemeColors(intent: Intent, context: Context) {
         try {
             LauncherUiBridge.appendEngineThemeExtras(intent, context)
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("appendThemeColors failed", error)
         }
     }

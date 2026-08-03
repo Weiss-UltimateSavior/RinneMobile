@@ -412,6 +412,7 @@ public final class LocalAgentRuntime {
                         // OOM/VirtualMachineError 必须传播，避免在已损坏的 JVM 状态下继续推理
                         throw error;
                     } catch (Throwable error) {
+                        // 进程边界兜底：工具执行失败转为业务错误结果；Error 已在上方重抛
                         success = false;
                         toolResult = new JSONObject().put("error", "TOOL_EXECUTION_FAILED")
                                 .put("message", safeToolError(toolName, error)).toString();

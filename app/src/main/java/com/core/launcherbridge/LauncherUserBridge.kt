@@ -29,7 +29,7 @@ object LauncherUserBridge {
                 val nickname = LauncherAuthBridge.getNickname(context)
                 val email = LauncherAuthBridge.getEmail(context)
                 RxMainScheduler.post { callback.onSuccess(nickname, email) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "获取用户信息失败")
                 if (msg.contains("401")) {
                     LauncherAuthBridge.expireSession(context)
@@ -55,7 +55,7 @@ object LauncherUserBridge {
                 val email = json.optString("email", "")
                 LauncherAuthBridge.saveUserInfo(context, username, email)
                 RxMainScheduler.post { callback.onSuccess(token) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "修改用户名失败")
                 if (msg.contains("401")) {
                     LauncherAuthBridge.expireSession(context)
@@ -84,7 +84,7 @@ object LauncherUserBridge {
                 // 修改密码后 Token 全部吊销，清除本地 Token
                 LauncherAuthBridge.clearToken(context)
                 RxMainScheduler.post { callback.onSuccess("") }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "修改密码失败")
                 if (msg.contains("401")) {
                     LauncherAuthBridge.expireSession(context)
@@ -108,7 +108,7 @@ object LauncherUserBridge {
                 if (token.isEmpty()) throw RuntimeException("未登录")
                 val json = JSONObject(LauncherAuthHttpClient.get("/auth/llm", token))
                 RxMainScheduler.post { callback.onSuccess(LlmConfig.fromJson(json)) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 postLlmError(context, t, "获取模型配置失败", callback)
             }
         }
@@ -123,7 +123,7 @@ object LauncherUserBridge {
                 val json = JSONObject(LauncherAuthHttpClient.putLlm("/auth/llm", config?.toJson() ?: LlmConfig().toJson(), token))
                 val result = json.optJSONObject("llm")
                 RxMainScheduler.post { callback.onSuccess(LlmConfig.fromJson(result ?: json)) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 postLlmError(context, t, "保存模型配置失败", callback)
             }
         }

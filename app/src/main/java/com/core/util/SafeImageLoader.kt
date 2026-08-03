@@ -51,7 +51,7 @@ object SafeImageLoader {
         val requestedHeight = imageView.height
         val uri: Uri = try {
             Uri.parse(uriKey)
-        } catch (ignored: Throwable) {
+        } catch (ignored: Exception) {
             return false
         }
         val cached = MEMORY_CACHE.get(uriKey)
@@ -113,7 +113,7 @@ object SafeImageLoader {
             context.contentResolver.openInputStream(uri).use { input ->
                 BitmapFactory.decodeStream(input, null, options)
             }
-        } catch (ignored: Throwable) {
+        } catch (ignored: Exception) {
             null
         }
     }

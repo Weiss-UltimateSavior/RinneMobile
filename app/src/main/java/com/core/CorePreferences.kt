@@ -6,4 +6,7 @@ package com.core
  */
 object CorePreferences {
     const val APP_PREFS = "yukihub_prefs"
+
+    /** KRKR 引擎版本偏好键（原 LauncherGameLaunchBridge/LauncherKrkrBridge/SyncManager 各持字面量副本，§9.12 单源化）。 */
+    const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
 }

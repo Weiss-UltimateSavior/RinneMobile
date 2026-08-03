@@ -149,7 +149,7 @@ class EmulatorLauncher {
             gamePath: String?,
             launchTarget: String?,
         ): Intent = ArtemisLauncher.buildIntent(
-            requireNotNull(context), "internal.artemis", gamePath, launchTarget,
+            requireNotNull(context), EnginePackages.INTERNAL_ARTEMIS, gamePath, launchTarget,
         )
 
         @JvmStatic

@@ -30,7 +30,7 @@ object LauncherPublicChatBridge {
                 val messages = parseMessages(response.optJSONArray("messages"))
                 val cursor: Int? = if (response.isNull("next_before_id")) null else response.optInt("next_before_id")
                 postToMain { callback.onSuccess(messages, cursor) }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 postToMain { callback.onError(errorMessage(context, error, "加载消息失败")) }
             }
         }
@@ -45,7 +45,7 @@ object LauncherPublicChatBridge {
                 val messages = parseMessages(response.optJSONArray("messages"))
                 val cursor: Int? = if (response.isNull("next_before_id")) null else response.optInt("next_before_id")
                 postToMain { callback.onSuccess(messages, cursor) }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 postToMain { callback.onError(errorMessage(context, error, "加载历史消息失败")) }
             }
         }
@@ -59,7 +59,7 @@ object LauncherPublicChatBridge {
                 val body = JSONObject().put("content", content)
                 val message = parseMessage(JSONObject(postJson("/chat/public/messages", body, token)))
                 postToMain { callback.onSuccess(message) }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 postToMain { callback.onError(errorMessage(context, error, "发送失败")) }
             }
         }
@@ -78,7 +78,7 @@ object LauncherPublicChatBridge {
                         json.optString("mute_reason")
                     ))
                 }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 postToMain { callback.onError(errorMessage(context, error, "获取频道状态失败")) }
             }
         }
@@ -92,7 +92,7 @@ object LauncherPublicChatBridge {
                 val announcements = ArrayList<Announcement>()
                 for (i in 0 until array.length()) announcements.add(parseAnnouncement(array.getJSONObject(i)))
                 postToMain { callback.onSuccess(announcements) }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 postToMain { callback.onError(errorMessage(context, error, "获取公告失败")) }
             }
         }

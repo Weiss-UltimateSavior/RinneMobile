@@ -64,6 +64,7 @@ object AgentSnapshotStore {
             cleanup(directory)
             return id
         } catch (error: Throwable) {
+            // 回滚清理：写入失败时删除半成品文件再重抛；Error 也须先清理，故捕获 Throwable
             data.delete(); metadata.delete(); metadataTemp.delete()
             throw error
         }

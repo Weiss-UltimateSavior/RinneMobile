@@ -8,7 +8,6 @@
     <string name="core_active_game_title">別のゲームが実行中です</string>
     <string name="core_active_game_message">別のゲームが実行中です：%1$s</string>
     <string name="core_active_game_dialog_message">%1$s はまだ実行中です。進行状況を保存し、通常終了するか履歴画面から終了してから別のゲームを起動してください。</string>
-    <string name="core_got_it">了解</string>
     <string name="core_game_directory_permission_lost">ゲームフォルダーにアクセスできません。SAF 権限が失効した可能性があります。フォルダーを再設定してください。</string>
     <string name="core_gamehub_local_id_required">先にゲームセンターでゲームを編集し、GameHub の localGameId を取り込んでください。</string>
     <string name="core_emulator_package_required">先にゲームセンターでゲームを編集し、エミュレーターのパッケージ名を入力してください。</string>

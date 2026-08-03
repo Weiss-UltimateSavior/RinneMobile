@@ -214,6 +214,7 @@ public final class AgentScanRootGateway {
                     .put("destination_path", pending.destinationPath)
                     .put("updated_game_records", updatedGames).toString();
         } catch (Throwable error) {
+            // 事务边界：目录变更守卫与原始异常一并重抛，保持全部失败类型上抛
             if (changed) throw new MutationFailure("扫描目录已变化，但后续校验或游戏记录同步失败", error);
             throw error;
         }

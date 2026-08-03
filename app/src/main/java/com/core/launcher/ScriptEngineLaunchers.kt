@@ -44,7 +44,7 @@ internal object ScriptEngineLaunchers {
             putExtra("rootUri", gamePath)
             putExtra("launchTarget", launchTarget)
             putExtra("type", "Tyrano")
-            putExtra("launchMode", "internal.tyrano")
+            putExtra("launchMode", EnginePackages.INTERNAL_TYRANO)
             putExtra("orientation", 6)
             putExtra("scopedSaveDir", scoped)
             putExtra("scopedSaveRoot", save.directory.absolutePath)
@@ -103,7 +103,7 @@ internal object ScriptEngineLaunchers {
             putExtra("gamePath", root)
             putExtra("rootUri", gamePath)
             putExtra("launchTarget", launchTarget)
-            putExtra("launchMode", "internal.ons")
+            putExtra("launchMode", EnginePackages.INTERNAL_ONS)
             addFlags(engineIntentFlags())
         }
     }
@@ -132,7 +132,7 @@ internal object ScriptEngineLaunchers {
             }
             logWarn("internal ONS has no boot entry root=${root.absolutePath} files=${describeDirectory(root, 40)}")
             null
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("internal ONS root resolve failed: $requestedRootPath", error)
             null
         }
@@ -214,7 +214,8 @@ internal object ScriptEngineLaunchers {
                     SaveLocation.available(directory, "Tyrano 游戏内存档目录")
                 }
             }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：路径解析失败时返回不可用状态，由上层提示用户
             SaveLocation.unavailable("无法解析 Tyrano 实际游戏目录")
         }
     }
@@ -235,7 +236,7 @@ internal object ScriptEngineLaunchers {
     private fun appendThemeColors(intent: Intent, context: Context) {
         try {
             LauncherUiBridge.appendEngineThemeExtras(intent, context)
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             Log.w(TAG, "appendThemeColors failed", error)
         }
     }
@@ -264,7 +265,8 @@ internal object ScriptEngineLaunchers {
             var name = File(rootPath).name
             if (name.isBlank()) name = kotlin.math.abs(rootPath.hashCode()).toString()
             name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifEmpty { "default" }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：名称规范化失败时回退默认值
             "default"
         }
     }
@@ -313,7 +315,8 @@ internal object ScriptEngineLaunchers {
                 }
             }
             uriText
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：URI 解析失败时保持原始文本
             uriText
         }
     }

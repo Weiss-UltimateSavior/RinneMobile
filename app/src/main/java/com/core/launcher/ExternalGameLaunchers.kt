@@ -18,19 +18,19 @@ internal object ExternalGameLaunchers {
     private val strategies = CopyOnWriteArrayList<EngineLaunchStrategy>()
 
     init {
-        addBuiltIn(InternalStrategy(EngineType.KIRIKIRI, "internal.krkr", "org.tvp.kirikiri2.internal") {
+        addBuiltIn(InternalStrategy(EngineType.KIRIKIRI, EnginePackages.INTERNAL_KRKR, EnginePackages.LEGACY_KRKR) {
             KrkrLauncher.buildIntent(it, rootUri, launchTarget)
         })
-        addBuiltIn(InternalStrategy(EngineType.TYRANO, "internal.tyrano", "com.core.tyrano") {
+        addBuiltIn(InternalStrategy(EngineType.TYRANO, EnginePackages.INTERNAL_TYRANO, EnginePackages.LEGACY_TYRANO) {
             ScriptEngineLaunchers.buildTyranoIntent(it, rootUri, launchTarget)
         })
-        addBuiltIn(InternalStrategy(EngineType.ONS, "internal.ons", "internal.onscripter", "com.core.ons") {
+        addBuiltIn(InternalStrategy(EngineType.ONS, EnginePackages.INTERNAL_ONS, EnginePackages.INTERNAL_ONSCRIPTER, EnginePackages.LEGACY_ONS) {
             ScriptEngineLaunchers.buildOnsIntent(it, rootUri, launchTarget)
         })
         addBuiltIn(InternalStrategy(
             EngineType.ARTEMIS,
-            "internal.artemis", "com.core.artemis", "internal.artemis.compat",
-            "internal.artemis.compatible", "internal.artemis.compat.v2", "internal.artemis.compatible.v2",
+            EnginePackages.INTERNAL_ARTEMIS, EnginePackages.LEGACY_ARTEMIS, EnginePackages.ARTEMIS_COMPAT,
+            EnginePackages.ARTEMIS_COMPATIBLE, EnginePackages.ARTEMIS_COMPAT_V2, EnginePackages.ARTEMIS_COMPATIBLE_V2,
         ) { ArtemisLauncher.buildIntent(it, packageName, rootUri, launchTarget) })
         addBuiltIn(PspStrategy)
         addBuiltIn(CitraStrategy)
@@ -119,6 +119,7 @@ internal object ExternalGameLaunchers {
             context.startActivity(intent)
             true
         } catch (_: Exception) {
+            // 尽力而为：startActivity 失败时返回 false，由上层尝试其他启动契约
             false
         }
     }
@@ -182,7 +183,8 @@ internal object ExternalGameLaunchers {
             var current = DocumentFile.fromTreeUri(context, Uri.parse(rootUri))
             launchTarget.split('/').filter(String::isNotEmpty).forEach { current = current?.findFile(it) }
             current?.takeIf { it.isFile }?.uri?.toString() ?: rootUri
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：SAF 解析失败时回退根 URI
             rootUri
         }
     }
@@ -308,7 +310,7 @@ internal object ExternalGameLaunchers {
             try {
                 context.startActivity(intent)
                 return true
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 // Try the next Winlator fork contract.
             }
         }
@@ -361,7 +363,8 @@ internal object ExternalGameLaunchers {
                 return "/data/user/0/$packageForPath/files/rootfs/home/xuser/.wine/dosdevices/$drive:${executable.substring(2)}"
             }
             executable
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：desktop 解析失败时返回 null，由上层回退
             null
         }
     }
@@ -408,7 +411,7 @@ internal object ExternalGameLaunchers {
                 current?.uri?.toString()?.let(ScriptEngineLaunchers::uriToFilePath)?.let { childPath ->
                     if (!childPath.startsWith("content://")) return childPath
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 // Preserve the content URI fallback.
             }
             return rootPath

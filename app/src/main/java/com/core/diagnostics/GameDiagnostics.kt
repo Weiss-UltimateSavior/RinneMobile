@@ -73,7 +73,8 @@ object GameDiagnostics {
             }
             FileWriter(file, true).use { it.append(event.toString()).append('\n') }
         } catch (_: Throwable) {
-            // Diagnostics must never interrupt launching a game.
+            // Diagnostics must never interrupt launching a game — log-fallback boundary（§8 豁免）：
+            // 诊断记录失败即使 Error 也不中断启动。
         }
     }
 
@@ -88,7 +89,8 @@ object GameDiagnostics {
                 DevLogger.getLogFile()?.let { putFile(zip, "logs/logcat.txt", it) }
             }
             output
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：导出失败时返回 null，不阻断调用方
             null
         }
     }
@@ -144,10 +146,10 @@ object GameDiagnostics {
 
     private fun versionName(context: Context): String = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
-    } catch (_: Throwable) { "" }
+    } catch (_: Exception) { /* 尽力而为：版本名读取失败保持空串 */ "" }
 
     private fun versionCode(context: Context): Long = try {
         val info = context.packageManager.getPackageInfo(context.packageName, 0)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode else @Suppress("DEPRECATION") info.versionCode.toLong()
-    } catch (_: Throwable) { 0L }
+    } catch (_: Exception) { /* 尽力而为：版本号读取失败返回 0 */ 0L }
 }

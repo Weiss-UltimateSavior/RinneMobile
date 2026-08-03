@@ -84,7 +84,7 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
         return try {
             context.startActivity(intent)
             true
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "startActivity failed action=${intent.action} folder=$folder", t)
             false
         }
@@ -148,7 +148,7 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                 val sfFile = File(rtpAppDir, "sf.sf2")
                 if (sfFile.exists() && sfFile.length() > 0) return
                 copyAssetToFile(context, "rtp/sf.sf2", sfFile)
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 Log.w(TAG, "ensureRtpEnvironment failed (non-fatal)", t)
             }
         }
@@ -161,7 +161,7 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                         input.copyTo(output)
                     }
                 }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 Log.w(TAG, "copy asset $assetPath → $dest failed (non-fatal)", t)
             }
         }
@@ -217,7 +217,7 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                     configFile.writeText(configJson)
                     Log.d(TAG, "created configuration.json at " + configFile.absolutePath)
                 }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 Log.w(TAG, "ensureGameConfiguration failed (non-fatal)", t)
             }
         }
@@ -301,7 +301,8 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
             return try {
                 val raw = folder.ifEmpty { title }
                 Integer.toHexString(raw.hashCode())
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：hashCode 失败时以时间戳兜底生成 ID
                 "yuki" + System.currentTimeMillis()
             }
         }
@@ -321,7 +322,7 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                 game.put("folder", folder)
                 game.put("execFile", "")
                 game.put("type", gameType)
-            } catch (_: Throwable) { }
+            } catch (_: Exception) { /* 尽力而为：JSON 字段写入失败时保持默认配置，不影响启动 */ }
             intent.putExtra("game", game.toString())
 
             // settings 里的 useRuby18 字段决定 rpgmxp/rpgmvx 加载哪个 .so：
@@ -344,7 +345,7 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                     rpgSection.put("useRuby18", useRuby18Val)
                     settings.put("rpg", rpgSection)
                 }
-            } catch (_: Throwable) { }
+            } catch (_: Exception) { /* 尽力而为：JSON 字段写入失败时保持默认配置，不影响启动 */ }
             intent.putExtra("settings", settings.toString())
 
             // 6 = sensorLandscape，与 YukiHub 内置引擎 Activity 的 orientation 保持一致。
@@ -379,13 +380,13 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                 val path = uri.path
                 val hasDocumentPart = path != null && path.contains("/document/")
                 if (hasDocumentPart) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId == null || docId.trim().isEmpty()) {
-                    try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId == null || docId.trim().isEmpty()) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId != null) {
                     val colon = docId.indexOf(':')
@@ -400,7 +401,8 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                 }
                 // tree URI 无法解析为文件路径时，尝试复制到 internalFolder 再传过去。
                 copyTreeToLocalPath(context, uri)
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：URI 解析失败时保持原始文本
                 uriText
             }
         }
@@ -416,7 +418,8 @@ class ExternalRpgMakerPluginStrategy : EngineLaunchStrategy {
                 val dir = DocumentFile.fromTreeUri(context, treeUri)
                 if (dir == null || !dir.isDirectory) return null
                 null
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：无法访问 tree URI 时返回 null
                 null
             }
         }

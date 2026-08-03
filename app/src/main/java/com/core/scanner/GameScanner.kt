@@ -131,7 +131,7 @@ object GameScanner {
 
         val children = try {
             reader.listChildren(directory)
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             if (!request.isCancelled && !request.isDeadlineReached) {
                 Log.w(TAG, "list directory failed uri=${directory.uri}", t)
                 report.addError("无法读取目录：${directory.uri}")

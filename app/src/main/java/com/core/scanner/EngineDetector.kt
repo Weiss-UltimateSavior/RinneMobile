@@ -253,7 +253,7 @@ object EngineDetector {
         try {
             if (dir == null || !dir.isDirectory) return
             files = knownFiles ?: dir.listFiles()
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "detect list failed uri=" + safeUri(dir), t)
             return
         }
@@ -276,8 +276,8 @@ object EngineDetector {
 
             var directory = false
             var file = false
-            try { directory = f.isDirectory } catch (_: Throwable) { }
-            try { file = f.isFile } catch (_: Throwable) { }
+            try { directory = f.isDirectory } catch (_: Exception) { /* 尽力而为：属性读取失败保持默认 */ }
+            try { file = f.isFile } catch (_: Exception) { /* 尽力而为：属性读取失败保持默认 */ }
 
             if (directory) {
                 if (lower == "tyrano") s.hasTyranoDir = true
@@ -412,7 +412,7 @@ object EngineDetector {
         return try {
             val name = file?.name
             name ?: ""
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "getName failed uri=" + safeUri(file), t)
             ""
         }
@@ -426,7 +426,8 @@ object EngineDetector {
     private fun safeUri(file: DocumentFile?): String {
         return try {
             if (file?.uri == null) "null" else file.uri.toString()
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：URI 读取失败时返回 unknown 占位
             "unknown"
         }
     }

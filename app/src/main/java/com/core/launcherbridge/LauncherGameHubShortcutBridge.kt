@@ -19,14 +19,16 @@ object LauncherGameHubShortcutBridge {
     @JvmStatic
     fun isShizukuRunning(): Boolean = try {
         Shizuku.pingBinder()
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // Shizuku 服务不可用时视为未运行
         false
     }
 
     @JvmStatic
     fun hasShizukuPermission(): Boolean = try {
         Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // Shizuku 不可用时视为未授权
         false
     }
 
@@ -94,7 +96,8 @@ object LauncherGameHubShortcutBridge {
     private fun matchFirst(text: String, expression: String): String? = try {
         val matcher = Pattern.compile(expression).matcher(text)
         if (matcher.find()) matcher.group(matcher.groupCount()) else null
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // 正则匹配失败返回 null，按无匹配处理
         null
     }
 
@@ -137,7 +140,8 @@ object LauncherGameHubShortcutBridge {
                 }
                 output.toString("UTF-8")
             }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 读取子进程输出失败时返回空串
             ""
         }
     }

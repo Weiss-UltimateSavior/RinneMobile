@@ -82,7 +82,7 @@ internal object EngineSaveLocations {
 
                 else -> Location.unavailable("该内置引擎未提供可管理的存档目录")
             }
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("resolve actual save location failed engine=$engine root=$rootUri", error)
             Location.unavailable("无法解析实际存档目录")
         }
@@ -111,7 +111,7 @@ internal object EngineSaveLocations {
                 if (!root.isNullOrBlank() && !root.startsWith("content://")) {
                     candidates += File(root, "savedata")
                 }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 logWarn("resolve KRKR native save directory failed root=$rootUri", error)
             }
         }

@@ -41,7 +41,7 @@ object LauncherOnsGameSettingsBridge {
             if (!json.isNullOrBlank()) {
                 applyOverride(settings, JSONObject(json))
             }
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "load override failed gameId=$gameId", t)
         }
         return settings
@@ -55,7 +55,7 @@ object LauncherOnsGameSettingsBridge {
             prefs(context).edit()
                 .putString(key(gameId), toJson(settings).toString())
                 .apply()
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "save override failed gameId=$gameId", t)
         }
     }

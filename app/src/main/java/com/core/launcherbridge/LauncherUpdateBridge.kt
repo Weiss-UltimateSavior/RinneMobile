@@ -33,7 +33,7 @@ object LauncherUpdateBridge {
                 val info = fetchLatestRelease(current)
                 val newer = info != null && isNewerVersion(info.version, current)
                 postToMain { callback?.onResult(info, current, newer) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 postToMain {
                     val msg = if (t.message.isNullOrBlank()) {
                         context.getString(R.string.core_try_again_later)
@@ -86,7 +86,8 @@ object LauncherUpdateBridge {
         return try {
             val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
             if (version.isNullOrBlank()) "0.0.0" else version.trim()
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 版本信息不可用时按默认值处理
             "0.0.0"
         }
     }
@@ -112,7 +113,8 @@ object LauncherUpdateBridge {
             if (part == null) return 0L
             val digits = part.replace(Regex("[^0-9]"), "")
             if (digits.isEmpty()) 0L else digits.toLong()
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 解析失败返回默认值 0
             0L
         }
     }

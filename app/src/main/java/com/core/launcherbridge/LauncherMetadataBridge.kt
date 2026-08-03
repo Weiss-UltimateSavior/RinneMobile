@@ -138,7 +138,7 @@ object LauncherMetadataBridge {
             var error: String? = null
             try {
                 candidates = VndbClient.searchCandidates(query, maxOf(1, minOf(10, limit)))
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 error = if (t.message.isNullOrBlank()) "VNDB 搜索失败" else t.message
             }
             val result = candidates ?: emptyList()
@@ -190,7 +190,7 @@ object LauncherMetadataBridge {
             var error: String? = null
             try {
                 candidates = BangumiClient.searchCandidates(query, token, maxOf(1, minOf(10, limit)), useMirror)
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 error = if (t.message.isNullOrBlank()) "Bangumi 搜索失败" else t.message
             }
             val result = candidates ?: emptyList()

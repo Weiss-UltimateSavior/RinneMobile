@@ -58,7 +58,7 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
         return try {
             context.startActivity(intent)
             true
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "startActivity failed action=" + intent.action + " folder=$folder", t)
             false
         }
@@ -74,8 +74,8 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
         private const val ACTION_RUN = "cyou.joiplay.runtime.renpy.run"
 
         /** YukiHub 内部使用的别名——与 InternalKrkrStrategy 的命名风格保持一致。 */
-        private const val ALIAS_RENPY = "internal.renpy"
-        private const val ALIAS_RENPY8 = "internal.renpy8"
+        private const val ALIAS_RENPY = EnginePackages.INTERNAL_RENPY
+        private const val ALIAS_RENPY8 = EnginePackages.INTERNAL_RENPY8
 
         /** 检查 Ren'Py Plugin 是否已安装。 */
         @JvmStatic
@@ -132,7 +132,8 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
             return try {
                 val raw = folder ?: title
                 Integer.toHexString(raw.hashCode())
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：hashCode 失败时以时间戳兜底生成 ID
                 "yuki" + System.currentTimeMillis()
             }
         }
@@ -151,7 +152,7 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
                 game.put("folder", folder)
                 game.put("execFile", "")
                 game.put("type", "renpy")
-            } catch (_: Throwable) { }
+            } catch (_: Exception) { /* 尽力而为：JSON 字段写入失败时保持默认配置，不影响启动 */ }
             intent.putExtra("game", game.toString())
 
             // settings 使用嵌套 JSON 格式（如 {"app":{"cheats":{"boolean":false}},
@@ -183,13 +184,13 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
                 val path = uri.path
                 val hasDocumentPart = path != null && path.contains("/document/")
                 if (hasDocumentPart) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId.isNullOrEmpty()) {
-                    try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId.isNullOrEmpty()) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId != null) {
                     val colon = docId.indexOf(':')
@@ -204,7 +205,8 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
                 }
                 // tree URI 无法解析为文件路径时，返回 null 让上层报错而不传错误路径给插件。
                 copyTreeToLocalPath(context, uri)
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：URI 解析失败时保持原始文本
                 uriText
             }
         }
@@ -218,7 +220,8 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
                 val dir = DocumentFile.fromTreeUri(context, treeUri)
                 if (dir == null || !dir.isDirectory) return null
                 null
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：无法访问 tree URI 时返回 null
                 null
             }
         }

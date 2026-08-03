@@ -8,7 +8,6 @@
     <string name="core_active_game_title">A game is already running</string>
     <string name="core_active_game_message">A game is already running: %1$s</string>
     <string name="core_active_game_dialog_message">%1$s is still running. Save your progress, then close it normally or remove it from Recents before launching another game.</string>
-    <string name="core_got_it">Got it</string>
     <string name="core_game_directory_permission_lost">The game directory is unavailable. Its SAF permission may have expired; bind the directory again.</string>
     <string name="core_gamehub_local_id_required">Edit the game in Game Center and import its GameHub localGameId first.</string>
     <string name="core_emulator_package_required">Edit the game in Game Center and enter an emulator package name first.</string>

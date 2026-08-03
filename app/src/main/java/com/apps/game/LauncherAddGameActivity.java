@@ -6,8 +6,6 @@ import android.content.res.ColorStateList;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,9 +41,6 @@ import com.core.model.Game;
 import com.core.util.AppExecutors;
 import com.core.util.DevLogger;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -353,7 +348,10 @@ public class LauncherAddGameActivity extends AppCompatActivity {
             game.title = title;
             game.engine = finalEngine;
             game.rootUri = selectedGameDir.toString();
-            String copiedCover = copyCoverToInternalStorage(selectedCover);
+            // 走共享桥接实现：bounds 采样解码（内存友好）+ 720dp 封顶 + covers 目录落盘（§5.2 下沉）。
+            String copiedCover = selectedCover == null
+                    ? null
+                    : LauncherScanBridge.copyCoverToInternalStorage(this, selectedCover.toString());
             game.coverUri = copiedCover;
             game.coverPersistUri = copiedCover;
             game.coverSourceType = copiedCover == null ? 0 : 1;
@@ -418,44 +416,6 @@ public class LauncherAddGameActivity extends AppCompatActivity {
      */
     private String selectedRpgMakerSubtype() {
         return EnginePackageResolver.subtypeForOption(selectedEngineOption);
-    }
-
-    private String copyCoverToInternalStorage(Uri uri) {
-        if (uri == null) return null;
-        Bitmap bitmap = null;
-        try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
-            bitmap = BitmapFactory.decodeStream(inputStream);
-            if (bitmap == null) return null;
-            int width = bitmap.getWidth();
-            int height = bitmap.getHeight();
-            int max = 720;
-            if (width > max || height > max) {
-                float scale = Math.min(max / (float) width, max / (float) height);
-                Bitmap scaled = Bitmap.createScaledBitmap(
-                        bitmap,
-                        Math.max(1, (int) (width * scale)),
-                        Math.max(1, (int) (height * scale)),
-                        true
-                );
-                bitmap.recycle();
-                bitmap = scaled;
-            }
-            File dir = new File(getFilesDir(), "covers");
-            if (!dir.exists() && !dir.mkdirs()) return null;
-            File file = new File(dir, "cover_" + System.currentTimeMillis() + ".jpg");
-            try (FileOutputStream outputStream = new FileOutputStream(file)) {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 88, outputStream);
-                outputStream.flush();
-            }
-            return Uri.fromFile(file).toString();
-        } catch (OutOfMemoryError error) {
-            throw error;
-        } catch (Exception error) {
-            DevLogger.w("LauncherAddGame", "Failed to copy cover to internal storage", error);
-            return null;
-        } finally {
-            if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
-        }
     }
 
     /** 持久化 URI 授权。返回 true 表示 RW 授权成功，false 表示降级为只读或彻底失败。 */

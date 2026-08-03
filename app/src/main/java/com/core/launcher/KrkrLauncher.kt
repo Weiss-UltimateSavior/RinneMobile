@@ -99,7 +99,7 @@ internal object KrkrLauncher {
             putExtra("focus", "true")
             putExtra("krEngineVersion", when { use126 -> "1.2.6"; use134 -> "1.3.4"; else -> "1.3.9" })
             putExtra("orientation", 6)
-            putExtra("launchMode", if (originMode) "internal.krkr.origin" else "internal.krkr")
+            putExtra("launchMode", if (originMode) EnginePackages.INTERNAL_KRKR_ORIGIN else EnginePackages.INTERNAL_KRKR)
             putExtra("scopedSaveDir", scoped)
             putExtra("globalScopedSaveDir", globalScoped)
             putExtra("autoKrMirror", autoSdCardMirror)
@@ -137,7 +137,7 @@ internal object KrkrLauncher {
                 val mirrorRoot = File(File(internal, "krkr_mirror"), safeSaveName(root))
                 SaveLocation(File(mirrorRoot, "savedata"), "KRKR 独立存档目录", true)
             }
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("resolve KRKR save location failed root=$rootUri", error)
             SaveLocation(null, "无法解析实际存档目录", false)
         }
@@ -210,7 +210,8 @@ internal object KrkrLauncher {
             launch.parentFile?.let { return it.absolutePath }
         }
         rawRootPath
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // 尽力而为：解析失败时回退原始根路径
         rawRootPath
     }
 
@@ -235,7 +236,8 @@ internal object KrkrLauncher {
             directory?.takeIf(DocumentFile::isDirectory)?.listFiles()?.firstOrNull { file ->
                 file?.isFile == true && file.name?.lowercase(Locale.ROOT)?.endsWith(".xp3") == true
             }?.name?.let { name -> if (rootPath.endsWith('/')) rootPath + name else "$rootPath/$name" }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：SAF 目录探测失败时跳过候选
             null
         }
     }
@@ -258,7 +260,8 @@ internal object KrkrLauncher {
                 val cleanTarget = target.trimStart('/')
                 if (rootPath.endsWith('/')) rootPath + cleanTarget else "$rootPath/$cleanTarget"
             } else null
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：SAF 目标查找失败时返回 null，由上层回退
             null
         }
     }
@@ -270,7 +273,8 @@ internal object KrkrLauncher {
             File(rootPath).listFiles()?.firstOrNull { child ->
                 child?.isFile == true && child.name?.lowercase(Locale.ROOT)?.endsWith(normalizedSuffix) == true
             }?.absolutePath
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：目录列举失败时返回 null，由上层回退
             null
         }
     }
@@ -295,7 +299,7 @@ internal object KrkrLauncher {
                 logInfo("migrated KRKR internal saves count=$migrated from=$previousInternalRoot to=$saveDirectory")
             }
             true
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("prepare KRKR scoped save directory failed save=$saveDirectory", error)
             false
         }
@@ -326,7 +330,7 @@ internal object KrkrLauncher {
         }
         destination.setLastModified(source.lastModified())
         true
-    } catch (error: Throwable) {
+    } catch (error: Exception) {
         logWarn("copy file failed $source -> $destination", error)
         false
     }
@@ -334,7 +338,8 @@ internal object KrkrLauncher {
     private fun isSymlink(file: File): Boolean = try {
         Os.readlink(file.absolutePath)
         true
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // 尽力而为：readlink 失败视为非符号链接
         false
     }
 
@@ -344,7 +349,8 @@ internal object KrkrLauncher {
             var name = File(rootPath).name
             if (name.isBlank()) name = kotlin.math.abs(rootPath.hashCode()).toString()
             name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifEmpty { "default" }
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // 尽力而为：名称规范化失败时回退默认值
             "default"
         }
     }
@@ -352,7 +358,7 @@ internal object KrkrLauncher {
     private fun appendThemeColors(intent: Intent, context: Context) {
         try {
             LauncherUiBridge.appendEngineThemeExtras(intent, context)
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logWarn("appendThemeColors failed", error)
         }
     }

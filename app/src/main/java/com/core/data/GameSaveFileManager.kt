@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Base64
 import androidx.documentfile.provider.DocumentFile
 import com.core.launcher.EmulatorLauncher
+import com.core.launcher.EnginePackages
 import com.core.model.EngineType
 import com.core.model.Game
 import java.io.File
@@ -466,10 +467,10 @@ class GameSaveFileManager(context: Context) {
             if (pkg.isEmpty()) return game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS
                 || game.engine == EngineType.ONS || game.engine == EngineType.TYRANO
             return when (game.engine) {
-                EngineType.KIRIKIRI -> pkg.startsWith("internal.krkr") || "org.tvp.kirikiri2.internal" == pkg
-                EngineType.ARTEMIS -> pkg.startsWith("internal.artemis")
-                EngineType.ONS -> pkg.startsWith("internal.ons") || "com.core.ons" == pkg
-                EngineType.TYRANO -> pkg.startsWith("internal.tyrano") || "com.core.tyrano" == pkg
+                EngineType.KIRIKIRI -> pkg.startsWith(EnginePackages.INTERNAL_KRKR) || EnginePackages.LEGACY_KRKR == pkg
+                EngineType.ARTEMIS -> pkg.startsWith(EnginePackages.INTERNAL_ARTEMIS)
+                EngineType.ONS -> pkg.startsWith(EnginePackages.INTERNAL_ONS) || EnginePackages.LEGACY_ONS == pkg
+                EngineType.TYRANO -> pkg.startsWith(EnginePackages.INTERNAL_TYRANO) || EnginePackages.LEGACY_TYRANO == pkg
                 else -> false
             }
         }

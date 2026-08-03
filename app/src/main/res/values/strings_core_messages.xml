@@ -8,7 +8,6 @@
     <string name="core_active_game_title">已有游戏正在运行</string>
     <string name="core_active_game_message">已有游戏正在运行：%1$s</string>
     <string name="core_active_game_dialog_message">《%1$s》仍在运行。请先保存进度，并在最近任务中手动划掉或正常退出该游戏后再启动其他游戏。</string>
-    <string name="core_got_it">知道了</string>
     <string name="core_game_directory_permission_lost">游戏目录访问失败：SAF 权限可能已失效，请重新绑定目录。</string>
     <string name="core_gamehub_local_id_required">请先在游戏中心编辑游戏，导入 GameHub localGameId。</string>
     <string name="core_emulator_package_required">请先在游戏中心编辑游戏，填写模拟器包名。</string>

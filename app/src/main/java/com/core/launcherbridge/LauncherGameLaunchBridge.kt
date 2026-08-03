@@ -2,14 +2,16 @@ package com.core.launcherbridge
 
 import android.app.Activity
 import android.app.ActivityManager
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import androidx.documentfile.provider.DocumentFile
+import com.core.CorePreferences
 import com.core.R
 import com.core.diagnostics.GameDiagnostics
 import com.core.data.GameRepository
+import com.core.launcher.ArtemisLauncher
 import com.core.launcher.EmulatorLauncher
+import com.core.launcher.EnginePackages
 import com.core.model.EngineType
 import com.core.model.Game
 import com.core.util.AppExecutors
@@ -20,7 +22,6 @@ import java.util.Locale
  */
 object LauncherGameLaunchBridge {
 
-    private const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
     private const val LAUNCH_GATE_PREFS = "launcher_active_game_gate"
     private const val KEY_ACTIVE_SESSION_ID = "active_session_id"
     private const val KEY_ACTIVE_GAME_ID = "active_game_id"
@@ -30,9 +31,6 @@ object LauncherGameLaunchBridge {
     private const val ACTIVE_PROCESS_GRACE_MS = 5_000L
     private const val MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L
     private val launchGateLock = Any()
-    // Values from releases before the core package refactor may still be stored in games.db.
-    private const val LEGACY_INTERNAL_TYRANO_PACKAGE = "com.yuki.yukihub.tyrano"
-    private const val LEGACY_INTERNAL_ONS_PACKAGE = "com.yuki.yukihub.ons"
 
     interface LaunchCallback {
         fun onResult(result: LaunchResult)
@@ -105,25 +103,8 @@ object LauncherGameLaunchBridge {
             maxDuration
         )
         releaseLaunchGate(appContext, sessionId)
-    }
-
-    /**
-     * 在所有启动入口使用同一提示：不会结束或强制关闭当前游戏，用户需自行退出/划掉它。
-     */
-    @JvmStatic
-    fun showActiveGameDialog(context: Context?, activeGameTitle: String?) {
-        if (context == null) return
-        val title = activeGameTitle?.trim().takeUnless { it.isNullOrEmpty() }
-            ?: context.getString(R.string.core_current_game)
-        try {
-            AlertDialog.Builder(context)
-                .setTitle(R.string.core_active_game_title)
-                .setMessage(context.getString(R.string.core_active_game_dialog_message, title))
-                .setPositiveButton(R.string.core_got_it, null)
-                .show()
-        } catch (_: Throwable) {
-            // A non-Activity context cannot own a dialog window. Callers still receive the message.
-        }
+        // 会话结束即停止 Artemis 存档同步监听器，避免 FileObserver 残留（§9.6）。
+        ArtemisLauncher.stopSaveSync()
     }
 
     private fun acquireLaunchGate(
@@ -181,10 +162,10 @@ object LauncherGameLaunchBridge {
         val pkg = emulatorPackage.trim().lowercase(Locale.ROOT)
         val ownPackage = context.packageName
         return when {
-            pkg.startsWith("internal.krkr") || pkg == "org.tvp.kirikiri2.internal" -> "$ownPackage:kirikiri2"
-            pkg.startsWith("internal.tyrano") || pkg == "com.core.tyrano" || pkg == LEGACY_INTERNAL_TYRANO_PACKAGE -> "$ownPackage:tyrano"
-            pkg.startsWith("internal.ons") || pkg == "com.core.ons" || pkg == LEGACY_INTERNAL_ONS_PACKAGE -> "$ownPackage:ons"
-            pkg.startsWith("internal.artemis") -> "$ownPackage:artemis"
+            EnginePackages.isInternalKrkr(pkg) -> "$ownPackage:kirikiri2"
+            EnginePackages.isInternalTyrano(pkg) -> "$ownPackage:tyrano"
+            EnginePackages.isInternalOns(pkg) -> "$ownPackage:ons"
+            EnginePackages.isInternalArtemis(pkg) -> "$ownPackage:artemis"
             pkg.startsWith("internal.psp") -> "org.ppsspp.ppsspp"
             else -> emulatorPackage.trim()
         }
@@ -195,7 +176,7 @@ object LauncherGameLaunchBridge {
         manager.runningAppProcesses.orEmpty().any { process ->
             process.processName == processOrPackage || process.pkgList?.any { it == processOrPackage } == true
         }
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
         // Keep the gate when the platform refuses process visibility rather than permitting a second game.
         true
     }
@@ -253,7 +234,7 @@ object LauncherGameLaunchBridge {
     private fun validate(context: Context, game: Game, emulatorPackage: String): String? {
         val root = game.rootUri?.trim()
         if (!root.isNullOrEmpty() && root.startsWith("content://")) {
-            val readable = try { DocumentFile.fromTreeUri(context, android.net.Uri.parse(root))?.canRead() == true } catch (_: Throwable) { false }
+            val readable = try { DocumentFile.fromTreeUri(context, android.net.Uri.parse(root))?.canRead() == true } catch (_: Exception) { /* 尽力而为 */ false }
             if (!readable) {
                 val message = context.getString(R.string.core_game_directory_permission_lost)
                 GameDiagnostics.recordSafPermissionInvalid(context, game, message)
@@ -306,22 +287,23 @@ object LauncherGameLaunchBridge {
                 LauncherScanBridge.detectEngine(
                     DocumentFile.fromTreeUri(context, android.net.Uri.parse(game.rootUri)), 2
                 )
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 引擎探测失败时回退到默认包名
                 null
             }
             if (detected != null && detected.confidence > 0) {
                 return defaultPackageForDetectedEngine(detected.engine, detected.rpgMakerSubtype, detected.renpySubtype, detected.godotSubtype)
             }
             // A root.pfs is an unambiguous Artemis launch target even when SAF enumeration fails.
-            if (game.launchTarget?.trim()?.endsWith(".pfs", ignoreCase = true) == true) return "internal.artemis"
+            if (game.launchTarget?.trim()?.endsWith(".pfs", ignoreCase = true) == true) return EnginePackages.INTERNAL_ARTEMIS
         }
-        if (emulatorPackage.isEmpty() && game.engine == EngineType.KIRIKIRI) return "internal.krkr"
-        if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return "internal.ons"
-        if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return "internal.tyrano"
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.KIRIKIRI) return EnginePackages.INTERNAL_KRKR
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return EnginePackages.INTERNAL_ONS
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return EnginePackages.INTERNAL_TYRANO
         if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return "org.ppsspp.ppsspp"
         if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android"
         if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator"
-        if (game.engine == EngineType.ARTEMIS && emulatorPackage.isEmpty()) return "internal.artemis"
+        if (game.engine == EngineType.ARTEMIS && emulatorPackage.isEmpty()) return EnginePackages.INTERNAL_ARTEMIS
         return emulatorPackage
     }
 
@@ -331,10 +313,10 @@ object LauncherGameLaunchBridge {
         renpySubtype: String,
         godotSubtype: String,
     ): String = when (engine) {
-        EngineType.KIRIKIRI -> "internal.krkr"
-        EngineType.ONS -> "internal.ons"
-        EngineType.TYRANO -> "internal.tyrano"
-        EngineType.ARTEMIS -> "internal.artemis"
+        EngineType.KIRIKIRI -> EnginePackages.INTERNAL_KRKR
+        EngineType.ONS -> EnginePackages.INTERNAL_ONS
+        EngineType.TYRANO -> EnginePackages.INTERNAL_TYRANO
+        EngineType.ARTEMIS -> EnginePackages.INTERNAL_ARTEMIS
         EngineType.PSP -> "org.ppsspp.ppsspp"
         EngineType.NINTENDO_3DS -> "io.github.azaharplus.android"
         EngineType.NINTENDO_SWITCH -> "dev.eden.eden_emulator"
@@ -378,20 +360,18 @@ object LauncherGameLaunchBridge {
     private fun startGameActivity(context: Context, game: Game, emulatorPackage: String, launchTarget: String?): StartAttempt {
         val pkg = emulatorPackage.trim()
         try {
-            if (pkg.startsWith("internal.krkr") || pkg == "org.tvp.kirikiri2.internal") {
+            if (EnginePackages.isInternalKrkr(pkg)) {
                 val prefs = context.yukiPrefs()
-                val krEngineVersion = prefs.getString(KEY_KR_ENGINE_VERSION, "auto")
+                val krEngineVersion = prefs.getString(CorePreferences.KEY_KR_ENGINE_VERSION, "auto")
                 return startActivitySafely(context, EmulatorLauncher.buildInternalKrkrIntent(context, game.rootUri, launchTarget, false, krEngineVersion, false))
             }
-            if (pkg.startsWith("internal.tyrano") || pkg == "com.core.tyrano"
-                || pkg == LEGACY_INTERNAL_TYRANO_PACKAGE) {
+            if (EnginePackages.isInternalTyrano(pkg)) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalTyranoIntent(context, game.rootUri, launchTarget))
             }
-            if (pkg.startsWith("internal.ons") || pkg == "com.core.ons"
-                || pkg == LEGACY_INTERNAL_ONS_PACKAGE) {
+            if (EnginePackages.isInternalOns(pkg)) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalOnsIntent(context, game.rootUri, launchTarget, game.id))
             }
-            if (pkg.startsWith("internal.artemis")) {
+            if (EnginePackages.isInternalArtemis(pkg)) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalArtemisIntent(context, pkg, game.rootUri, launchTarget))
             }
             if (pkg.startsWith("internal.psp") || pkg == "org.ppsspp.ppsspp") {
@@ -406,7 +386,7 @@ object LauncherGameLaunchBridge {
             } else {
                 StartAttempt.failure("activity_unavailable_or_rejected")
             }
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             return StartAttempt.failure("activity_exception", error)
         }
     }
@@ -421,7 +401,8 @@ object LauncherGameLaunchBridge {
                 current = current.findFile(segment)
             }
             if (current != null && current.isFile) return current.uri.toString()
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
+            // SAF 遍历失败时回退到根目录 URI
         }
         return rootUri
     }
@@ -434,7 +415,7 @@ object LauncherGameLaunchBridge {
             }
             context.startActivity(intent)
             StartAttempt.success()
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             StartAttempt.failure("activity_exception", error)
         }
     }
@@ -452,10 +433,10 @@ object LauncherGameLaunchBridge {
 
     private fun resolveLaunchType(emulatorPackage: String?): String {
         val pkg = emulatorPackage?.trim()?.lowercase(Locale.ROOT) ?: ""
-        if (pkg.startsWith("internal.krkr") || pkg == "org.tvp.kirikiri2.internal") return "internal.krkr"
-        if (pkg.startsWith("internal.ons") || pkg == "com.core.ons" || pkg == LEGACY_INTERNAL_ONS_PACKAGE) return "internal.ons"
-        if (pkg.startsWith("internal.tyrano") || pkg == "com.core.tyrano" || pkg == LEGACY_INTERNAL_TYRANO_PACKAGE) return "internal.tyrano"
-        if (pkg.startsWith("internal.artemis")) return pkg
+        if (EnginePackages.isInternalKrkr(pkg)) return EnginePackages.INTERNAL_KRKR
+        if (EnginePackages.isInternalOns(pkg)) return EnginePackages.INTERNAL_ONS
+        if (EnginePackages.isInternalTyrano(pkg)) return EnginePackages.INTERNAL_TYRANO
+        if (EnginePackages.isInternalArtemis(pkg)) return pkg
         return "external"
     }
 

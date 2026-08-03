@@ -126,7 +126,7 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
         return try {
             context.startActivity(intent)
             true
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "startActivity failed action=" + intent.action + " folder=$folder", t)
             false
         }
@@ -270,7 +270,8 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
             return try {
                 val raw = folder ?: title
                 Integer.toHexString(raw.hashCode())
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：hashCode 失败时以时间戳兜底生成 ID
                 "yuki" + System.currentTimeMillis()
             }
         }
@@ -291,7 +292,7 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
                 game.put("folder", folder)
                 game.put("execFile", "")
                 game.put("type", godotType)
-            } catch (_: Throwable) { }
+            } catch (_: Exception) { /* 尽力而为：JSON 字段写入失败时保持默认配置，不影响启动 */ }
             intent.putExtra("game", game.toString())
             Log.i(TAG, "buildLaunchIntent: action=$action pkg=$pluginPackage game json=$game")
 
@@ -320,13 +321,13 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
                 val path = uri.path
                 val hasDocumentPart = path != null && path.contains("/document/")
                 if (hasDocumentPart) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId.isNullOrEmpty()) {
-                    try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId.isNullOrEmpty()) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Throwable) { }
+                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId != null) {
                     val colon = docId.indexOf(':')
@@ -340,7 +341,8 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
                     }
                 }
                 copyTreeToLocalPath(context, uri)
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：URI 解析失败时保持原始文本
                 uriText
             }
         }
@@ -350,7 +352,8 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
                 val dir = DocumentFile.fromTreeUri(context, treeUri)
                 if (dir == null || !dir.isDirectory) return null
                 null
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
+                // 尽力而为：无法访问 tree URI 时返回 null
                 null
             }
         }

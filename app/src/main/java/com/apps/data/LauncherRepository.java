@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import com.apps.LauncherPreferences;
+import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge.RecentActivity;
@@ -216,10 +217,10 @@ public class LauncherRepository {
     public static String launchTypeLabel(Context context, String launchType) {
         if (launchType == null || launchType.trim().isEmpty()) return "";
         String value = launchType.trim();
-        if (value.startsWith("internal.krkr")) return context.getString(R.string.repo_internal_krkr);
-        if (value.startsWith("internal.ons")) return context.getString(R.string.repo_internal_ons);
-        if (value.startsWith("internal.tyrano")) return context.getString(R.string.repo_internal_tyrano);
-        if (value.startsWith("internal.artemis")) return context.getString(R.string.repo_internal_artemis);
+        if (value.startsWith(EnginePackages.INTERNAL_KRKR)) return context.getString(R.string.repo_internal_krkr);
+        if (value.startsWith(EnginePackages.INTERNAL_ONS)) return context.getString(R.string.repo_internal_ons);
+        if (value.startsWith(EnginePackages.INTERNAL_TYRANO)) return context.getString(R.string.repo_internal_tyrano);
+        if (value.startsWith(EnginePackages.INTERNAL_ARTEMIS)) return context.getString(R.string.repo_internal_artemis);
         if (value.startsWith("internal.")) return context.getString(R.string.repo_internal_launch);
         if ("manual".equals(value)) return context.getString(R.string.repo_manual_record);
         if ("external".equals(value)) return context.getString(R.string.repo_external_emulator);

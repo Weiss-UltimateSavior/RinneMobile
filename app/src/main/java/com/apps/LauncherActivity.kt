@@ -23,6 +23,7 @@ import com.apps.HDModel.HdModeActivity
 import com.apps.PadUi.PadGameModeActivity
 import com.apps.account.LauncherAccountFragment
 import com.apps.data.LauncherViewModel
+import com.apps.game.GameActionMenuFactory
 import com.apps.game.GameSessionController
 import com.apps.game.LauncherLibraryFragment
 import com.apps.game.LauncherManageFragment
@@ -277,7 +278,7 @@ class LauncherActivity : AppCompatActivity() {
                 if (isFinishing || isDestroyed) return
                 if (!result.success && result.message.trim { it <= ' ' }.isNotEmpty()) {
                     if (result.activeGameConflict) {
-                        LauncherGameLaunchBridge.showActiveGameDialog(this@LauncherActivity, result.activeGameTitle)
+                        GameActionMenuFactory.showActiveGameInfo(this@LauncherActivity, result.activeGameTitle)
                     } else {
                         Toast.makeText(this@LauncherActivity, result.message, Toast.LENGTH_LONG).show()
                     }

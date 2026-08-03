@@ -61,7 +61,7 @@ object LauncherUserData {
             "startup_scan_depth",
             "profile_avatar",
             "auth_saved_email",
-            "kr_engine_version",
+            CorePreferences.KEY_KR_ENGINE_VERSION,
             "kr_scoped_save_dir",
             "artemis_scoped_save_dir",
             "tyrano_scoped_save_dir",

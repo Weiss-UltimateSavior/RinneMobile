@@ -1,6 +1,7 @@
 package com.core.launcherbridge
 
 import android.content.Context
+import com.core.launcher.EnginePackages
 import com.core.launcher.ExternalGodotPluginStrategy
 import com.core.launcher.ExternalRenPyPluginStrategy
 import com.core.launcher.ExternalRpgMakerPluginStrategy
@@ -90,7 +91,7 @@ object LauncherModuleBridge {
     /**
      * 判断给定包名是否属于 RenPy 外部插件。
      * 涵盖真实包名 `cyou.joiplay.runtime.renpy.v8d4d1` 及别名：
-     * internal.renpy / internal.renpy8。
+     * [com.core.launcher.EnginePackages.INTERNAL_RENPY] / [com.core.launcher.EnginePackages.INTERNAL_RENPY8]。
      */
     @JvmStatic
     fun isRenPyPluginPackage(pkg: String?): Boolean {
@@ -98,7 +99,7 @@ object LauncherModuleBridge {
         val p = pkg.trim().lowercase(Locale.ROOT)
         if (p.isEmpty()) return false
         if (ExternalRenPyPluginStrategy.PLUGIN_PACKAGE.equals(p, ignoreCase = true)) return true
-        return p.startsWith("internal.renpy")
+        return p.startsWith(EnginePackages.INTERNAL_RENPY)
     }
 
     /**

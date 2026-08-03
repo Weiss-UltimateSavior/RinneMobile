@@ -30,7 +30,7 @@ object LauncherPlayTimeBridge {
                 body.put("deviceId", deviceId ?: "")
                 val session = parsePlaySession(JSONObject(LauncherAuthHttpClient.post("/auth/play-time/sessions/start", body, token)))
                 RxMainScheduler.post { callback.onSuccess(session) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(
                     t,
                     context.getString(R.string.core_play_session_start_failed),
@@ -80,7 +80,7 @@ object LauncherPlayTimeBridge {
                     "/auth/play-time/sessions/${sessionId.trim()}/$action",
                     token)))
                 RxMainScheduler.post { callback.onSuccess(session) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, fallback)
                 if (msg.contains("401")) {
                     LauncherAuthBridge.expireSession(context)
@@ -125,7 +125,7 @@ object LauncherPlayTimeBridge {
                 body.put("records", arr)
                 val response = LauncherAuthHttpClient.post("/auth/play-time", body, token)
                 RxMainScheduler.post { callback.onSuccess(response) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(
                     t,
                     context.getString(R.string.core_play_time_upload_failed),
@@ -153,7 +153,7 @@ object LauncherPlayTimeBridge {
                 if (token.isEmpty()) throw RuntimeException(context.getString(R.string.core_not_signed_in))
                 val response = LauncherAuthHttpClient.get("/auth/play-time", token)
                 RxMainScheduler.post { callback.onSuccess(response) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(
                     t,
                     context.getString(R.string.core_play_time_fetch_failed),
@@ -182,7 +182,7 @@ object LauncherPlayTimeBridge {
                     entries.add(LeaderboardEntry(item.optInt("rank"), item.optString("username"), item.optLong("total_duration_ms")))
                 }
                 RxMainScheduler.post { callback.onSuccess(entries) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(
                     t,
                     context.getString(R.string.core_play_time_leaderboard_failed),
@@ -207,7 +207,7 @@ object LauncherPlayTimeBridge {
                 val item = JSONObject(LauncherAuthHttpClient.get("/auth/play-time/rank", token))
                 val rank = MyRank(item.optInt("rank"), item.optLong("total_duration_ms"))
                 RxMainScheduler.post { callback.onSuccess(rank) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(
                     t,
                     context.getString(R.string.core_play_time_rank_failed),

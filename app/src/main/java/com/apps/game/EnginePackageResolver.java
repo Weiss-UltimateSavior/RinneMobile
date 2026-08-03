@@ -1,5 +1,6 @@
 package com.apps.game;
 
+import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherScanBridge;
 import com.core.model.EngineType;
 
@@ -11,16 +12,16 @@ final class EnginePackageResolver {
     }
 
     static String defaultPackage(EngineType engine) {
-        if (engine == EngineType.KIRIKIRI) return "internal.krkr";
-        if (engine == EngineType.ONS) return "internal.ons";
-        if (engine == EngineType.TYRANO) return "internal.tyrano";
-        if (engine == EngineType.ARTEMIS) return "internal.artemis";
+        if (engine == EngineType.KIRIKIRI) return EnginePackages.INTERNAL_KRKR;
+        if (engine == EngineType.ONS) return EnginePackages.INTERNAL_ONS;
+        if (engine == EngineType.TYRANO) return EnginePackages.INTERNAL_TYRANO;
+        if (engine == EngineType.ARTEMIS) return EnginePackages.INTERNAL_ARTEMIS;
         if (engine == EngineType.PSP) return "org.ppsspp.ppsspp";
         if (engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android";
         if (engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator";
         if (engine == EngineType.GAMEHUB) return "com.xiaoji.egggame";
         if (engine == EngineType.RPGMAKER) return "internal.rpgmxp";
-        if (engine == EngineType.RENPY) return "internal.renpy";
+        if (engine == EngineType.RENPY) return EnginePackages.INTERNAL_RENPY;
         if (engine == EngineType.GODOT) return "internal.godot";
         return "";
     }

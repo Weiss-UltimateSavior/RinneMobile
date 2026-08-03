@@ -124,7 +124,7 @@ object LauncherAuthBridge {
                 saveToken(context, token)
                 fetchAndSaveUserInfo(context)
                 RxMainScheduler.post { callback.onSuccess(token) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "登录失败")
                 if (msg.contains("401") || msg.contains("邮箱或密码错误")) {
                     msg = "邮箱或密码错误"
@@ -155,7 +155,7 @@ object LauncherAuthBridge {
                 saveToken(context, token)
                 fetchAndSaveUserInfo(context)
                 RxMainScheduler.post { callback.onSuccess(token) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var msg = LauncherAuthHttpClient.parseErrorMessage(t, "注册失败")
                 msg = when {
                     msg.contains("邀请码无效") || msg.contains("已过期") -> "邀请码无效或已过期"
@@ -185,7 +185,7 @@ object LauncherAuthBridge {
                 body.put("invite_code", inviteCode)
                 LauncherAuthHttpClient.post("/auth/verify-code", body, null)
                 RxMainScheduler.post { callback.onSuccess() }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var message = normalizeEmailCodeError(LauncherAuthHttpClient.parseErrorMessage(t, "验证码发送失败"))
                 if (message.contains("邀请码无效") || message.contains("已过期")) {
                     message = "邀请码无效或已过期"
@@ -214,7 +214,7 @@ object LauncherAuthBridge {
                 LauncherAuthHttpClient.post("/auth/reset-password", body, null)
                 clearToken(context)
                 RxMainScheduler.post { callback.onSuccess() }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 val message = normalizeEmailCodeError(LauncherAuthHttpClient.parseErrorMessage(t, "密码重置失败"))
                 RxMainScheduler.post { callback.onError(message) }
             }
@@ -231,7 +231,7 @@ object LauncherAuthBridge {
                 val json = JSONObject(LauncherAuthHttpClient.get("/auth/subscription", token))
                 val subscribed = json.optBoolean("subscribed", false)
                 RxMainScheduler.post { callback.onSuccess(subscribed) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var message = LauncherAuthHttpClient.parseErrorMessage(t, "获取邮件订阅状态失败")
                 if (message.contains("401")) {
                     expireSession(context)
@@ -254,7 +254,7 @@ object LauncherAuthBridge {
                 body.put("subscribed", subscribed)
                 val json = JSONObject(LauncherAuthHttpClient.put("/auth/subscription", body, token))
                 RxMainScheduler.post { callback.onSuccess(json.optBoolean("subscribed", subscribed)) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 var message = LauncherAuthHttpClient.parseErrorMessage(t, "更新邮件订阅失败")
                 if (message.contains("401")) {
                     expireSession(context)
@@ -274,7 +274,7 @@ object LauncherAuthBridge {
                 body.put("deviceId", LauncherUserData.getRealtimePlaytimeDeviceId(context))
                 LauncherAuthHttpClient.post(path, body, null)
                 RxMainScheduler.post { callback.onSuccess() }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 val message = normalizeEmailCodeError(LauncherAuthHttpClient.parseErrorMessage(t, fallback))
                 RxMainScheduler.post { callback.onError(message) }
             }

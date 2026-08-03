@@ -90,7 +90,8 @@ internal object LauncherBridgeHttp {
             null -> text
             else -> detail.toString()
         }
-    } catch (_: Throwable) {
+    } catch (_: Exception) {
+        // 错误体非 JSON 时原样返回文本
         text
     }
 }

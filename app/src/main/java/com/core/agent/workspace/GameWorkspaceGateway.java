@@ -516,11 +516,14 @@ public final class GameWorkspaceGateway {
             try { observed = sha256(readBounded(context, file, MAX_READ_BYTES)); } catch (Exception e) { Log.w(TAG, "diagnostic-sha256-after-failure-failed", e); }
             try { AgentSnapshotStore.markStatus(context, snapshotId,
                     restored ? "rolled_back" : "recovery_required", observed); }
+            // 尽力而为的状态回写失败并入主错误（addSuppressed），不掩盖主异常；回滚清理点故保留 Throwable
             catch (Throwable statusError) { error.addSuppressed(statusError); }
             throw new WriteFailure(restored ? "写入失败，已恢复原文件" : "写入及自动恢复失败，文件可能已损坏",
                     pending.gameTitle, pending.relativePath, snapshotId, restored, error);
         } catch (Throwable error) {
+            // 回滚清理：标记快照 aborted 后重抛；Error 也须先落状态，故捕获 Throwable
             try { AgentSnapshotStore.markStatus(context, snapshotId, "aborted", pending.beforeSha256); }
+            // 状态回写尽力而为，失败并入主错误（addSuppressed），不掩盖主异常
             catch (Throwable statusError) { error.addSuppressed(statusError); }
             throw error;
         }

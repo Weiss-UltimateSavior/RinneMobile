@@ -17,11 +17,13 @@ object AgentMutationTransaction {
             if (!cancellation.isActive()) throw InterruptedException("cancelled")
             commit?.run()
         } catch (error: Throwable) {
+            // 事务回滚：写入/校验失败时恢复原内容再抛 Failure；Error 也须先回滚，故捕获 Throwable
             var restored = false
             try {
                 io.write(expectedBefore)
                 restored = Arrays.equals(expectedBefore, io.read())
             } catch (restoreError: Throwable) {
+                // 尽力而为的回滚恢复失败并入主错误（addSuppressed），不掩盖主异常
                 error.addSuppressed(restoreError)
             }
             throw Failure(restored, error)

@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.core.data.GameRepository
+import com.core.launcher.EnginePackages
 import com.core.model.EngineType
 import com.core.model.Game
 import com.core.scanner.EngineDetector
@@ -315,22 +316,25 @@ object LauncherScanBridge {
         } catch (_: IOException) {
             // 封面复制失败（IO 异常）返回 null，由调用方回退
             return null
+        } catch (_: SecurityException) {
+            // SAF 授权失效（openInputStream/decode 抛 SecurityException）时返回 null，由调用方回退
+            return null
         } finally {
             inputStream?.let { try { it.close() } catch (_: IOException) { /* 关闭失败忽略 */ } }
         }
     }
 
     private fun emulatorPackageForEngine(engine: EngineType?, context: Context?): String = when (engine) {
-        EngineType.KIRIKIRI -> "internal.krkr"
-        EngineType.ONS -> "internal.ons"
-        EngineType.TYRANO -> "internal.tyrano"
-        EngineType.ARTEMIS -> "internal.artemis"
+        EngineType.KIRIKIRI -> EnginePackages.INTERNAL_KRKR
+        EngineType.ONS -> EnginePackages.INTERNAL_ONS
+        EngineType.TYRANO -> EnginePackages.INTERNAL_TYRANO
+        EngineType.ARTEMIS -> EnginePackages.INTERNAL_ARTEMIS
         EngineType.PSP -> "org.ppsspp.ppsspp"
         EngineType.NINTENDO_3DS -> "io.github.azaharplus.android"
         EngineType.NINTENDO_SWITCH -> "dev.eden.eden_emulator"
         // 没有子类型的旧版/未来扫描结果保留保守的 RPG XP 回退。
         EngineType.RPGMAKER -> "internal.rpgmxp"
-        EngineType.RENPY -> "internal.renpy"
+        EngineType.RENPY -> EnginePackages.INTERNAL_RENPY
         EngineType.GODOT -> "internal.godot"
         // Winlator 包名因改版众多（com.winlator / com.winlator.cmod / glibc / proot 等），
         // 扫描阶段无法静态确定，需要探测设备上已安装的可启动 Winlator 系应用。

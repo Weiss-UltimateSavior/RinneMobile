@@ -7,17 +7,18 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.core.userdata.LauncherUserData;
+import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.launcherbridge.LauncherGameLaunchBridge;
 import com.core.launcherbridge.PlaySession;
 import com.core.launcherbridge.PlaySessionCallback;
 import com.core.model.Game;
+import com.core.userdata.LauncherUserData;
 import com.core.util.RxMainQueue;
 
-import java.util.Locale;
-
 import com.apps.LauncherPreferences;
+
+import java.util.Locale;
 
 /**
  * 游戏会话控制器：管理本地 session 与服务端 session 的启动、心跳、收尾。
@@ -89,7 +90,7 @@ public final class GameSessionController {
         launchGame(context, game, result -> {
             if (!fragment.isAdded()) return;
             if (result.activeGameConflict) {
-                LauncherGameLaunchBridge.showActiveGameDialog(fragment.requireContext(), result.activeGameTitle);
+                GameActionMenuFactory.showActiveGameInfo(fragment.requireContext(), result.activeGameTitle);
             } else if (!result.success && result.message != null && !result.message.trim().isEmpty()) {
                 Toast.makeText(fragment.requireContext(), result.message, Toast.LENGTH_LONG).show();
             }
@@ -225,10 +226,12 @@ public final class GameSessionController {
     public static String resolveLaunchTypeForRecord(Game game) {
         if (game == null || game.emulatorPackage == null) return "external";
         String pkg = game.emulatorPackage.trim().toLowerCase(Locale.ROOT);
-        if (pkg.startsWith("internal.krkr") || pkg.equals("org.tvp.kirikiri2.internal")) return "internal.krkr";
-        if (pkg.startsWith("internal.ons") || pkg.equals("com.core.ons")) return "internal.ons";
-        if (pkg.startsWith("internal.tyrano") || pkg.equals("com.core.tyrano")) return "internal.tyrano";
-        if (pkg.startsWith("internal.artemis")) return pkg;
+        if (EnginePackages.isInternalKrkr(pkg)) return EnginePackages.INTERNAL_KRKR;
+        // ons/tyrano 有意不用共享谓词（isInternalOns/Tyrano 含 com.yuki.yukihub.* 历史别名）：
+        // 本方法只标记游玩记录 launchType，保持与既有记录格式一致，避免引入历史别名匹配。
+        if (pkg.startsWith(EnginePackages.INTERNAL_ONS) || EnginePackages.LEGACY_ONS.equals(pkg)) return EnginePackages.INTERNAL_ONS;
+        if (pkg.startsWith(EnginePackages.INTERNAL_TYRANO) || EnginePackages.LEGACY_TYRANO.equals(pkg)) return EnginePackages.INTERNAL_TYRANO;
+        if (EnginePackages.isInternalArtemis(pkg)) return pkg;
         if (pkg.startsWith("internal.psp") || pkg.equals("org.ppsspp.ppsspp")) return "internal.psp";
         if (pkg.startsWith("internal.citra") || pkg.equals("io.github.azaharplus.android")) return "internal.citra";
         return "external";

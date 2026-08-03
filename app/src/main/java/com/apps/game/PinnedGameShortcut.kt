@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
+import android.util.LruCache
 import android.widget.Toast
 import com.apps.LauncherActivity
 import com.apps.LauncherIntents
@@ -23,6 +24,12 @@ import com.core.util.RxMainScheduler
 object PinnedGameShortcut {
     private const val SHORTCUT_ID_PREFIX = "game_"
     private const val MAX_ICON_SIZE_PX = 192
+
+    /**
+     * 图标位图缓存（按封面源 URI 键控），避免重复 IO 解码。
+     * 驱逐时仅丢弃引用交由 GC 回收，不主动 recycle，避免并发 Icon 仍引用已回收位图。
+     */
+    private val iconCache = LruCache<String, Bitmap>(8)
 
     interface LaunchCallback {
         fun onResult(result: LauncherGameLaunchBridge.LaunchResult)
@@ -46,14 +53,27 @@ object PinnedGameShortcut {
             .setAction(LauncherIntents.ACTION_LAUNCH_PINNED_GAME)
             .putExtra(LauncherIntents.EXTRA_PINNED_GAME_ID, game.id)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID_PREFIX + game.id)
-            .setShortLabel(title)
-            .setLongLabel(title)
-            .setIntent(intent)
-            .setIcon(shortcutIcon(context, game))
-            .build()
-        manager.requestPinShortcut(shortcut, null)
-        Toast.makeText(context, R.string.game_shortcut_confirm_system, Toast.LENGTH_SHORT).show()
+        // 图标解码含文件 IO（openInputStream/decodeFile）与位图缩放，移入 IO 线程并走缓存（§5.2 项 4）。
+        val appContext = context.applicationContext
+        AppExecutors.runOnIo {
+            val icon = shortcutIcon(appContext, game)
+            RxMainScheduler.post {
+                val shortcut = ShortcutInfo.Builder(appContext, SHORTCUT_ID_PREFIX + game.id)
+                    .setShortLabel(title)
+                    .setLongLabel(title)
+                    .setIntent(intent)
+                    .setIcon(icon)
+                    .build()
+                try {
+                    manager.requestPinShortcut(shortcut, null)
+                } catch (e: IllegalStateException) {
+                    // 解码窗口期应用可能已不在前台，系统拒绝置顶请求时忽略，避免崩溃
+                    android.util.Log.w("PinnedGameShortcut", "requestPinShortcut rejected", e)
+                }
+                // 用已捕获的 appContext 弹 Toast，避免 IO 期间 Activity 销毁导致 context 泄漏
+                Toast.makeText(appContext, R.string.game_shortcut_confirm_system, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     /** Resolves the current game by id before delegating to the shared launch bridge. */
@@ -94,9 +114,16 @@ object PinnedGameShortcut {
     private fun shortcutIcon(context: Context, game: Game): Icon {
         val source = game.coverPersistUri?.trim().takeUnless { it.isNullOrEmpty() }
             ?: game.coverUri?.trim().takeUnless { it.isNullOrEmpty() }
-        val bitmap = source?.let { decodeShortcutBitmap(context, it) }
-        return if (bitmap != null) Icon.createWithBitmap(bitmap)
-        else Icon.createWithResource(context, R.mipmap.ic_launcher)
+        if (source != null) {
+            // LruCache 内部自带同步，无需外部加锁
+            iconCache.get(source)?.let { return Icon.createWithBitmap(it) }
+            val decoded = decodeShortcutBitmap(context, source)
+            if (decoded != null) {
+                iconCache.put(source, decoded)
+                return Icon.createWithBitmap(decoded)
+            }
+        }
+        return Icon.createWithResource(context, R.mipmap.ic_launcher)
     }
 
     private fun decodeShortcutBitmap(context: Context, source: String): Bitmap? {

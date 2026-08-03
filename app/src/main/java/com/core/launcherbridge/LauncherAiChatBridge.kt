@@ -49,7 +49,7 @@ object LauncherAiChatBridge {
                     }
                 }
                 postToMain { callback.onSuccess(messages) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 postError(context, t, "获取聊天记录失败") { callback.onError(it) }
             }
         }
@@ -65,7 +65,7 @@ object LauncherAiChatBridge {
                 body.put("thread_id", threadId)
                 val json = JSONObject(request(context, "POST", "/ai/chat", body))
                 postToMain { callback.onSuccess(json.optString("message", "")) }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 postError(context, t, "聊天请求失败") { callback.onError(it) }
             }
         }
@@ -77,7 +77,7 @@ object LauncherAiChatBridge {
             try {
                 request(context, "DELETE", "/ai/chat/history/${encode(threadId)}", null)
                 postToMain { callback.onSuccess() }
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 postError(context, t, "清空聊天记录失败") { callback.onError(it) }
             }
         }

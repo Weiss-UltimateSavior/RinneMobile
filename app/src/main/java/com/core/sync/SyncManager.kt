@@ -62,7 +62,7 @@ class SyncManager(context: Context) {
         return try {
             val c = getClient()
             c != null && c.testConnection()
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             Log.w(TAG, "testConnection failed", t)
             false
         }
@@ -178,7 +178,7 @@ class SyncManager(context: Context) {
                     result.merged = true
                 }
                 listener?.onSyncComplete(result)
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 Log.e(TAG, "sync failed", t)
                 listener?.onError(t.message ?: context.getString(R.string.core_unknown_error))
             }
@@ -235,7 +235,7 @@ class SyncManager(context: Context) {
         settings.put("engine_label_position", appPrefs.getString(KEY_ENGINE_LABEL_POSITION, "title"))
         settings.put("sort_mode", appPrefs.getString(KEY_SORT_MODE, "recent"))
         settings.put("background_video_sound", appPrefs.getBoolean(KEY_BACKGROUND_VIDEO_SOUND, false))
-        settings.put("kr_engine_version", appPrefs.getString(KEY_KR_ENGINE_VERSION, "auto"))
+        settings.put("kr_engine_version", appPrefs.getString(CorePreferences.KEY_KR_ENGINE_VERSION, "auto"))
         settings.put("kr_scoped_save_dir", appPrefs.getBoolean(KEY_KR_SCOPED_SAVE_DIR, false))
         settings.put("artemis_scoped_save_dir", appPrefs.getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, false))
         settings.put("tyrano_scoped_save_dir", appPrefs.getBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, true))
@@ -328,7 +328,7 @@ class SyncManager(context: Context) {
             if (settings.has("background_video_sound")) prefsEditor.putBoolean(KEY_BACKGROUND_VIDEO_SOUND, settings.optBoolean("background_video_sound", false))
             if (settings.has("kr_engine_version")) {
                 val krVersion = settings.optString("kr_engine_version", "auto")
-                if ("auto" == krVersion || "1.3.9" == krVersion || "1.3.4" == krVersion) prefsEditor.putString(KEY_KR_ENGINE_VERSION, krVersion)
+                if ("auto" == krVersion || "1.3.9" == krVersion || "1.3.4" == krVersion) prefsEditor.putString(CorePreferences.KEY_KR_ENGINE_VERSION, krVersion)
             }
             if (settings.has("kr_scoped_save_dir")) prefsEditor.putBoolean(KEY_KR_SCOPED_SAVE_DIR, settings.optBoolean("kr_scoped_save_dir", false))
             if (settings.has("artemis_scoped_save_dir")) prefsEditor.putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, settings.optBoolean("artemis_scoped_save_dir", false))
@@ -412,7 +412,6 @@ class SyncManager(context: Context) {
         private const val KEY_ENGINE_LABEL_POSITION = "engine_label_position"
         private const val KEY_SORT_MODE = "sort_mode"
         private const val KEY_BACKGROUND_VIDEO_SOUND = "background_video_sound"
-        private const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
         private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
         private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
         private const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"

@@ -139,6 +139,7 @@ public final class AgentPrivateWorkspace {
                 Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Throwable error) {
+            // 回滚清理：写入失败时删除临时文件再重抛；Error 也须先清理，故捕获 Throwable
             if (temp.exists()) temp.delete();
             throw error;
         }
@@ -169,6 +170,7 @@ public final class AgentPrivateWorkspace {
         try {
             Files.copy(source.toPath(), destination.toPath());
         } catch (Throwable error) {
+            // 回滚清理：复制失败时移除不完整目标文件再重抛；Error 也须先清理，故捕获 Throwable
             if (destination.exists() && !destination.delete()) {
                 throw new MutationFailure("复制失败且无法移除不完整目标文件", error);
             }

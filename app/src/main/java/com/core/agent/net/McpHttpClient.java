@@ -58,6 +58,7 @@ public final class McpHttpClient {
             request(server, initialized.sessionId, negotiated, "notifications/initialized", new JSONObject(), false);
             return new Session(server, initialized.sessionId, negotiated);
         } catch (Throwable error) {
+            // 回滚清理：initialize 失败时尽力终止会话再重抛；Error 也须先清理，故捕获 Throwable
             terminateSessionBestEffort(server, initialized.sessionId,
                     negotiated.matches("\\d{4}-\\d{2}-\\d{2}") ? negotiated : DEFAULT_PROTOCOL_VERSION);
             throw error;

@@ -69,6 +69,9 @@ public class LauncherProfileFragment extends Fragment {
     private FragmentLauncherProfileBinding binding;
     private AlertDialog loadingDialog;
 
+    /** applyProfileBgImage 请求版本号（仅主线程访问），用于丢弃过期 IO 结果（W6）。 */
+    private int profileBgRequestVersion = 0;
+
     private final ActivityResultLauncher<PickVisualMediaRequest> avatarPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) return;
@@ -604,25 +607,39 @@ public class LauncherProfileFragment extends Fragment {
         if (customUri == null) return;
 
         Uri uri = Uri.parse(customUri);
-        if (!isReadableImageUri(uri)) {
-            requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
-                    .edit().remove(KEY_CUSTOM_COVER).apply();
-            return;
-        }
-
-        binding.profileBgImage.setImageURI(uri);
+        // 可读性校验含文件系统 IO（file:// isFile 与 content:// openInputStream），移入 IO 线程（§5.2）。
+        // 先捕获上下文快照，避免 IO 任务排队期间 fragment detach 导致 requireContext 崩溃。
+        android.content.Context context = getContext();
+        if (context == null) return;
+        // 版本号守卫：连续调用时仅最新一次请求允许回写 UI，避免旧 IO 结果覆盖新背景（W6）。
+        final int requestVersion = ++profileBgRequestVersion;
+        AppExecutors.runOnIo(() -> {
+            boolean readable = isReadableImageUri(uri, context);
+            android.app.Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
+                if (requestVersion != profileBgRequestVersion) return;
+                if (!readable) {
+                    requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
+                            .edit().remove(KEY_CUSTOM_COVER).apply();
+                    return;
+                }
+                binding.profileBgImage.setImageURI(uri);
+            });
+        });
     }
 
     private void applyDefaultProfileBgImage() {
         binding.profileBgImage.setImageResource(LauncherThemeStyle.homeStatsImageRes(requireContext()));
     }
 
-    private boolean isReadableImageUri(@NonNull Uri uri) {
+    private boolean isReadableImageUri(@NonNull Uri uri, @NonNull android.content.Context context) {
         if ("file".equals(uri.getScheme())) {
             String path = uri.getPath();
             return path != null && new File(path).isFile();
         }
-        try (InputStream ignored = requireContext().getContentResolver().openInputStream(uri)) {
+        try (InputStream ignored = context.getContentResolver().openInputStream(uri)) {
             return ignored != null;
         } catch (IOException | SecurityException e) {
             // 授权过期或权限缺失时返回 false，让调用方清除失效 URI 并回退默认背景。
