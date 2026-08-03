@@ -1,5 +1,6 @@
 package com.apps.profile;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
@@ -38,7 +39,6 @@ import com.core.launcherbridge.ConfigCallback;
 import com.core.launcherbridge.PlayDataCallback;
 import com.core.util.TimeFormatUtil;
 import com.core.util.AppExecutors;
-import com.core.util.SafeImageLoader;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,13 +58,14 @@ import com.apps.leaderboard.LauncherLeaderboardActivity;
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
+import com.apps.translation.TranslationSettingActivity;
+import com.apps.util.LauncherAvatarPersistence;
 import com.apps.widget.AvatarCropActivity;
 import com.apps.widget.LauncherTabletPortraitScaler;
-import com.apps.translation.TranslationSettingActivity;
 
 public class LauncherProfileFragment extends Fragment {
     private static final String KEY_CUSTOM_COVER = "custom_cover_uri";
-    private static final String KEY_CUSTOM_AVATAR = "custom_avatar_uri";
+    private static final String KEY_CUSTOM_AVATAR = LauncherAvatarPersistence.KEY_CUSTOM_AVATAR;
 
     private FragmentLauncherProfileBinding binding;
     private AlertDialog loadingDialog;
@@ -80,14 +81,14 @@ public class LauncherProfileFragment extends Fragment {
     private final ActivityResultLauncher<PickVisualMediaRequest> coverPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) return;
-                copyImageToInternal(uri, "launcher_cover.jpg", KEY_CUSTOM_COVER, this::applyProfileBgImage, false);
+                copyImageToInternal(uri, "launcher_cover.jpg", KEY_CUSTOM_COVER, this::applyProfileBgImage);
             });
     private final ActivityResultLauncher<Intent> cropLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
                     String outputUri = result.getData().getStringExtra(AvatarCropActivity.EXTRA_OUTPUT_URI);
                     if (outputUri != null && !outputUri.isEmpty()) {
-                        copyImageToInternal(Uri.parse(outputUri), "launcher_avatar.jpg", KEY_CUSTOM_AVATAR, this::applyAvatarImage, true);
+                        saveCroppedAvatar(Uri.parse(outputUri));
                     }
                 }
             });
@@ -476,7 +477,28 @@ public class LauncherProfileFragment extends Fragment {
         cropLauncher.launch(intent);
     }
 
-    private void copyImageToInternal(Uri sourceUri, String fileName, String prefsKey, Runnable onDone, boolean syncToHome) {
+    /** 保存裁剪后的头像：统一走 LauncherAvatarPersistence（fd.sync + 双偏好 commit + 缓存失效），与主页头像行为一致（W2）。 */
+    private void saveCroppedAvatar(Uri outputUri) {
+        final Context app = requireContext().getApplicationContext();
+        AppExecutors.runOnIo(() -> {
+            String savedUri = LauncherAvatarPersistence.copyAvatarToInternal(app, outputUri);
+            final boolean success = savedUri != null;
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (!isAdded() || binding == null) return;
+                if (!success) {
+                    Toast.makeText(app, R.string.profile_image_save_failed,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                applyAvatarImage();
+                Toast.makeText(app, R.string.profile_image_updated,
+                        Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
+    private void copyImageToInternal(Uri sourceUri, String fileName, String prefsKey, Runnable onDone) {
         AppExecutors.runOnIo(() -> {
             File outFile = new File(requireContext().getFilesDir(), fileName);
             // 先写临时文件，成功后再原子替换正式文件，避免复制失败时破坏旧头像/封面
@@ -524,10 +546,6 @@ public class LauncherProfileFragment extends Fragment {
                 }
                 requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
                         .edit().putString(prefsKey, savedUri).apply();
-                if (syncToHome) {
-                    syncAvatarToHome(savedUri);
-                    SafeImageLoader.invalidateUri(savedUri);
-                }
                 onDone.run();
                 Toast.makeText(requireContext(), R.string.profile_image_updated,
                         Toast.LENGTH_SHORT).show();
@@ -662,7 +680,7 @@ public class LauncherProfileFragment extends Fragment {
         }
         // 再检查主页头像
         String homeAvatar = requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
-                .getString("profile_avatar", null);
+                .getString(LauncherAvatarPersistence.KEY_PROFILE_AVATAR, null);
         if (homeAvatar != null && !homeAvatar.trim().isEmpty()) {
             try {
                 binding.profileAvatar.setImageURI(Uri.parse(homeAvatar));
@@ -673,11 +691,5 @@ public class LauncherProfileFragment extends Fragment {
         }
         // 默认头像
         binding.profileAvatar.setImageResource(R.drawable.launcher_default_avatar);
-    }
-
-    private void syncAvatarToHome(String avatarUri) {
-        // 将个人页头像同步到主页的 SharedPreferences
-        requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
-                .edit().putString("profile_avatar", avatarUri).apply();
     }
 }

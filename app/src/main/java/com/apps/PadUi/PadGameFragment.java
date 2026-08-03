@@ -33,6 +33,7 @@ import com.apps.game.PinnedGameShortcut;
 import com.apps.settings.LauncherCustomVndbSearchDialog;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.theme.LauncherTheme;
+import com.apps.util.LauncherAvatarPersistence;
 import com.core.R;
 import com.core.databinding.FragmentPadGameBinding;
 import com.core.launcherbridge.LauncherAuthBridge;
@@ -692,7 +693,7 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
         return game.title.trim();
     }
 
-    private static final String KEY_PROFILE_AVATAR = "profile_avatar";
+    private static final String KEY_PROFILE_AVATAR = LauncherAvatarPersistence.KEY_PROFILE_AVATAR;
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_AUTH_STATUS = "auth_status";
     private static final String AUTH_STATUS_ONLINE = "online";
@@ -711,7 +712,7 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
         if (avatar == null || avatar.trim().isEmpty()) {
             String profileAvatar = requireContext()
                     .getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
-                    .getString("custom_avatar_uri", "");
+                    .getString(LauncherAvatarPersistence.KEY_CUSTOM_AVATAR, "");
             if (profileAvatar != null && !profileAvatar.trim().isEmpty()) {
                 avatar = profileAvatar;
             }

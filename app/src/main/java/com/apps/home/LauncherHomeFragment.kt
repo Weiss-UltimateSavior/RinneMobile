@@ -36,6 +36,7 @@ import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
+import com.apps.util.LauncherAvatarPersistence
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.AvatarCropActivity
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -47,10 +48,6 @@ import com.core.model.Game
 import com.core.util.AppExecutors
 import com.core.util.RxMainScheduler
 import com.core.util.SafeImageLoader
-import java.io.File
-import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -503,57 +500,11 @@ open class LauncherHomeFragment : Fragment() {
 
     private fun copyAvatarToInternal(sourceUri: Uri) {
         val app = requireContext().applicationContext
-        // 用户确认后的文件与偏好持久化由应用级任务承载，不随 Home View 销毁而取消。
+        // 文件与偏好持久化已下沉 LauncherAvatarPersistence（§5.2 项 1）；
+        // 由应用级任务承载，不随 Home View 销毁而取消。
         AppExecutors.runOnSingle {
-            val outFile = File(app.filesDir, "launcher_avatar.jpg")
-            val savedUri = Uri.fromFile(outFile).toString()
-            var tempFile: File? = null
-            val success = try {
-                val pendingFile =
-                    File.createTempFile("launcher_avatar_", ".tmp", app.filesDir)
-                tempFile = pendingFile
-                val input = app.contentResolver.openInputStream(sourceUri)
-                    ?: throw IllegalStateException("Unable to open avatar source")
-                input.use {
-                    FileOutputStream(pendingFile).use { out ->
-                        val buffer = ByteArray(8192)
-                        var n = it.read(buffer)
-                        while (n > 0) {
-                            out.write(buffer, 0, n)
-                            n = it.read(buffer)
-                        }
-                        out.flush()
-                        out.fd.sync()
-                    }
-                }
-                // 临时文件与目标位于同一目录；原子替换失败时旧头像保持不变。
-                Files.move(
-                    pendingFile.toPath(),
-                    outFile.toPath(),
-                    StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING
-                )
-                val homeCommitted = app.getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
-                    .edit().putString(KEY_PROFILE_AVATAR, savedUri).commit()
-                if (homeCommitted) {
-                    val profileCommitted = app.getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
-                        .edit().putString("custom_avatar_uri", savedUri).commit()
-                    SafeImageLoader.invalidateUri(savedUri)
-                    if (!profileCommitted) {
-                        Log.w("LauncherHomeFragment", "Failed to mirror avatar preference")
-                    }
-                }
-                homeCommitted
-            } catch (e: Exception) {
-                Log.w("LauncherHomeFragment", "Failed to persist avatar", e)
-                false
-            } finally {
-                tempFile?.let { pending ->
-                    if (pending.exists() && !pending.delete()) {
-                        Log.w("LauncherHomeFragment", "Failed to delete temporary avatar")
-                    }
-                }
-            }
+            val savedUri = LauncherAvatarPersistence.copyAvatarToInternal(app, sourceUri)
+            val success = savedUri != null
             RxMainScheduler.post {
                 if (!isAdded || binding == null) return@post
                 if (!success) {
@@ -569,10 +520,10 @@ open class LauncherHomeFragment : Fragment() {
     private fun renderAvatar() {
         val currentBinding = binding ?: return
         // 优先使用主页头像，再检查个人页头像
-        var avatar = prefs().getString(KEY_PROFILE_AVATAR, "")
+        var avatar = prefs().getString(LauncherAvatarPersistence.KEY_PROFILE_AVATAR, "")
         if (avatar == null || avatar.trim { it <= ' ' }.isEmpty()) {
             val profileAvatar = requireContext().getSharedPreferences(LauncherPreferences.PROFILE_PREFS, 0)
-                .getString("custom_avatar_uri", "")
+                .getString(LauncherAvatarPersistence.KEY_CUSTOM_AVATAR, "")
             if (profileAvatar != null && profileAvatar.trim { it <= ' ' }.isNotEmpty()) {
                 avatar = profileAvatar
             }
@@ -686,6 +637,6 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     companion object {
-        private const val KEY_PROFILE_AVATAR = "profile_avatar"
+        // 头像键与文件名单源：com.apps.util.LauncherAvatarPersistence
     }
 }
