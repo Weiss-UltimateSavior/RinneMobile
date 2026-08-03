@@ -18,7 +18,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 
 import com.apps.LauncherActivity;
@@ -402,7 +401,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void configureLandscapeWindow() {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        int background = ContextCompat.getColor(this, R.color.launcher_bg_color);
+        int background = LauncherTheme.bg(this);
         window.setStatusBarColor(background);
         window.setNavigationBarColor(background);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -479,10 +478,10 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void styleSidebarItem(TextView item, boolean selected) {
         if (selected) {
             item.setBackground(LauncherTheme.selectedChip(this));
-            item.setTextColor(ContextCompat.getColor(this, R.color.launcher_on_primary_color));
+            item.setTextColor(LauncherTheme.onPrimary(this));
         } else {
             item.setBackground(null);
-            item.setTextColor(ContextCompat.getColor(this, R.color.launcher_text_color));
+            item.setTextColor(LauncherTheme.text(this));
         }
     }
 

@@ -1,5 +1,6 @@
 package com.apps
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.InsetDrawable
 import android.view.View
@@ -133,8 +134,8 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
 
     private fun setNavSelected(container: LinearLayout, icon: ImageView, label: TextView, selected: Boolean) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected)
-        // 选中项始终使用当前主题主色；未选中项在浅色、深色模式下统一使用灰色。
-        val color = if (selected) LauncherThemeStyle.primaryColor(host) else Color.GRAY
+        // 选中项使用主题主色、未选中项使用 muted 灰色；取色统一走 navTone 封装。
+        val color = navTone(selected, host)
         icon.setColorFilter(color)
         label.setTextColor(color)
         label.setTypeface(null, android.graphics.Typeface.BOLD)
@@ -250,39 +251,12 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
     private fun applyLauncherThemeTone() {
         val b = binding ?: return
         refreshLiquidGlassThemeState()
-        b.navLaunchCenterCircle.background = LauncherTheme.circleWithSoftShadow(host)
+        applyThemeLogoTone(b.navLaunchCenterCircle, b.navLaunchCenterImage, b.navLaunchCenterText, host)
+        // 主题风格判断已由 applyThemeLogoTone 内部完成；此处复用结果做 Logo 缩放与 Pill 图标分支。
         val rinneTheme = LauncherThemeStyle.isRinne(host)
         val anriTheme = LauncherThemeStyle.isAnri(host)
         val xinhaitianTheme = LauncherThemeStyle.isXinhaitian(host)
         val natsumeTheme = LauncherThemeStyle.isNatsume(host)
-        val themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme
-        b.navLaunchCenterImage.visibility = if (themedIcon) View.GONE else View.VISIBLE
-        b.navLaunchCenterText.visibility = if (themedIcon) View.VISIBLE else View.GONE
-        when {
-            rinneTheme -> {
-                b.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_rinne_def)
-                b.navLaunchCenterImage.clearColorFilter()
-                b.navLaunchCenterText.setColorFilter(Color.WHITE)
-            }
-            anriTheme -> {
-                b.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_anri_def)
-                b.navLaunchCenterImage.clearColorFilter()
-                b.navLaunchCenterText.setColorFilter(Color.WHITE)
-            }
-            xinhaitianTheme -> {
-                b.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_xinhaitian_def)
-                b.navLaunchCenterImage.clearColorFilter()
-                b.navLaunchCenterText.setColorFilter(Color.WHITE)
-            }
-            natsumeTheme -> {
-                b.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_natsume_def)
-                b.navLaunchCenterImage.clearColorFilter()
-                b.navLaunchCenterText.setColorFilter(Color.WHITE)
-            }
-            else -> {
-                b.navLaunchCenterImage.setColorFilter(Color.WHITE)
-            }
-        }
         applyCenterLogoScale(b.navLaunchCenterText, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme)
         b.navPillLaunchCenterIcon.apply {
             when {
@@ -334,5 +308,69 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
 
     private fun dp(value: Int): Int {
         return (value * host.resources.displayMetrics.density).toInt()
+    }
+
+    companion object {
+        /**
+         * 导航图标取色统一封装：选中态使用主题主色，未选中态使用 muted 灰色。
+         * 竖屏 Launcher / Pad 横屏 / HD 横屏三处 nav 复用，不再各自写 Color.GRAY/Color.WHITE 分支。
+         */
+        @JvmStatic
+        fun navTone(selected: Boolean, context: Context): Int =
+            if (selected) LauncherTheme.primary(context) else LauncherTheme.textMuted(context)
+
+        /** 对单个导航图标应用选中/未选中取色（[navTone] 的 ImageView 便捷形式）。 */
+        @JvmStatic
+        fun applyNavTone(icon: ImageView, selected: Boolean, context: Context) {
+            icon.setColorFilter(navTone(selected, context))
+        }
+
+        /**
+         * 导航中心主题 Logo 统一应用：按 rinne/anri/xinhaitian/natsume 主题风格切换中心
+         * 图标资源与可见性，供竖屏 Launcher 与 Pad 横屏共用，消除两处重复分支。
+         * 主题图标白色 tint 属混合用途（Logo 绘制于彩色主题渐变圆之上，需恒定白色保证
+         * 对比度，不随深浅色模式变化），故不做主题取色。
+         */
+        @JvmStatic
+        fun applyThemeLogoTone(centerCircle: View, logoImage: ImageView, logoText: ImageView, context: Context) {
+            centerCircle.background = LauncherTheme.circleWithSoftShadow(context)
+            val rinneTheme = LauncherThemeStyle.isRinne(context)
+            val anriTheme = LauncherThemeStyle.isAnri(context)
+            val xinhaitianTheme = LauncherThemeStyle.isXinhaitian(context)
+            val natsumeTheme = LauncherThemeStyle.isNatsume(context)
+            val themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme
+            logoImage.visibility = if (themedIcon) View.GONE else View.VISIBLE
+            logoText.visibility = if (themedIcon) View.VISIBLE else View.GONE
+            when {
+                rinneTheme -> {
+                    logoText.setImageResource(R.drawable.launcher_theme_rinne_def)
+                    logoImage.clearColorFilter()
+                    // 主题图标白色 tint，属混合用途。
+                    logoText.setColorFilter(Color.WHITE)
+                }
+                anriTheme -> {
+                    logoText.setImageResource(R.drawable.launcher_theme_anri_def)
+                    logoImage.clearColorFilter()
+                    // 主题图标白色 tint，属混合用途。
+                    logoText.setColorFilter(Color.WHITE)
+                }
+                xinhaitianTheme -> {
+                    logoText.setImageResource(R.drawable.launcher_theme_xinhaitian_def)
+                    logoImage.clearColorFilter()
+                    // 主题图标白色 tint，属混合用途。
+                    logoText.setColorFilter(Color.WHITE)
+                }
+                natsumeTheme -> {
+                    logoText.setImageResource(R.drawable.launcher_theme_natsume_def)
+                    logoImage.clearColorFilter()
+                    // 主题图标白色 tint，属混合用途。
+                    logoText.setColorFilter(Color.WHITE)
+                }
+                else -> {
+                    // 主题图标白色 tint，属混合用途。
+                    logoImage.setColorFilter(Color.WHITE)
+                }
+            }
+        }
     }
 }

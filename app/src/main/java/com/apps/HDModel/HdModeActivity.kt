@@ -4,18 +4,17 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import com.apps.LauncherActivity
+import com.apps.LauncherNavRenderer
 import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
 import com.apps.PadUi.PadDialogFactory
@@ -132,7 +131,7 @@ class HdModeActivity : AppCompatActivity() {
 
     private fun configureLandscapeWindow() {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        val background = ContextCompat.getColor(this, R.color.launcher_bg_color)
+        val background = LauncherTheme.bg(this)
         window.statusBarColor = background
         window.navigationBarColor = background
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -182,7 +181,8 @@ class HdModeActivity : AppCompatActivity() {
 
     private fun styleNavigationIcon(icon: ImageView, selected: Boolean) {
         icon.background = null
-        icon.setColorFilter(if (selected) LauncherTheme.primary(this) else Color.GRAY)
+        // 选中/未选中取色统一走 LauncherNavRenderer.navTone 封装（primary/textMuted）。
+        LauncherNavRenderer.applyNavTone(icon, selected, this)
     }
 
     private fun showHomeFragment() {

@@ -97,6 +97,15 @@
                     android:padding="@dimen/launcher_home_menu_padding"
                     android:scaleType="centerInside"
                     android:src="@drawable/launcher_action_menu" />
+
+                <!-- HD 横屏首页：动作按钮水平组装容器，默认隐藏；手机版不参与布局。 -->
+                <LinearLayout
+                    android:id="@+id/hdHomeActionBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical|end"
+                    android:orientation="horizontal"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <FrameLayout

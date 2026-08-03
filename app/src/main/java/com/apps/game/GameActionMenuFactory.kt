@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherEditText
@@ -99,7 +100,7 @@ object GameActionMenuFactory {
         title.gravity = Gravity.CENTER
         title.setSingleLine(true)
         title.ellipsize = android.text.TextUtils.TruncateAt.END
-        title.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
+        title.setTextColor(LauncherTheme.text(ctx))
         title.textSize = 16f
         title.setTypeface(null, Typeface.BOLD)
         return title
@@ -152,13 +153,13 @@ object GameActionMenuFactory {
         return cancel
     }
 
-    /** 设置对话框内容与宽度（widthDp 为 dp 值，内部转 px）。 */
+    /** 设置对话框内容与宽度（widthDp 为 dp 值，内部转 px 并做屏幕宽度兜底）。 */
     @JvmStatic
     fun setDialogContent(dialog: AlertDialog, content: View, widthDp: Int) {
         val window = dialog.window ?: return
         window.setContentView(content)
         window.setLayout(
-            dp(content.context, widthDp),
+            LauncherDialogFactory.dialogWidthPx(content.context, widthDp),
             WindowManager.LayoutParams.WRAP_CONTENT
         )
     }
@@ -310,7 +311,7 @@ object GameActionMenuFactory {
         sb.append("\n\n").append(ctx.getString(
             R.string.game_detail_path, if (game.rootUri == null) "" else Uri.decode(game.rootUri)))
         info.text = sb.toString()
-        info.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
+        info.setTextColor(LauncherTheme.text(ctx))
         info.textSize = 12f
         info.setLineSpacing(dp(ctx, 4).toFloat(), 1f)
         info.maxLines = 14
@@ -348,7 +349,7 @@ object GameActionMenuFactory {
         }
         info.text = ctx.getString(R.string.game_action_current_duration,
             TimeFormatUtil.playTime(game.totalPlayTime), lastPlayedText)
-        info.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_muted_color))
+        info.setTextColor(LauncherTheme.textMuted(ctx))
         info.textSize = 12f
         info.setLineSpacing(dp(ctx, 4).toFloat(), 1f)
         val infoLp = LinearLayout.LayoutParams(
@@ -359,7 +360,7 @@ object GameActionMenuFactory {
 
         val totalLabel = TextView(ctx)
         totalLabel.setText(R.string.game_action_set_total_duration)
-        totalLabel.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
+        totalLabel.setTextColor(LauncherTheme.text(ctx))
         totalLabel.textSize = 12f
         totalLabel.setTypeface(null, Typeface.BOLD)
         val tlLp = LinearLayout.LayoutParams(
@@ -370,7 +371,7 @@ object GameActionMenuFactory {
 
         val totalInput = LauncherEditText(ctx)
         totalInput.setHint(R.string.game_action_total_duration_hint)
-        totalInput.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
+        totalInput.setTextColor(LauncherTheme.text(ctx))
         totalInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
         totalInput.textSize = 13f
         totalInput.setPadding(dp(ctx, 13), dp(ctx, 9), dp(ctx, 13), dp(ctx, 9))
@@ -384,7 +385,7 @@ object GameActionMenuFactory {
 
         val addLabel = TextView(ctx)
         addLabel.setText(R.string.game_action_add_duration)
-        addLabel.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
+        addLabel.setTextColor(LauncherTheme.text(ctx))
         addLabel.textSize = 12f
         addLabel.setTypeface(null, Typeface.BOLD)
         val alLp = LinearLayout.LayoutParams(
@@ -395,7 +396,7 @@ object GameActionMenuFactory {
 
         val addInput = LauncherEditText(ctx)
         addInput.setHint(R.string.game_action_add_duration_hint)
-        addInput.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_color))
+        addInput.setTextColor(LauncherTheme.text(ctx))
         addInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
         addInput.textSize = 13f
         addInput.setPadding(dp(ctx, 13), dp(ctx, 9), dp(ctx, 13), dp(ctx, 9))
@@ -409,7 +410,7 @@ object GameActionMenuFactory {
 
         val hint = TextView(ctx)
         hint.setText(R.string.game_action_duration_units_hint)
-        hint.setTextColor(ContextCompat.getColor(ctx, R.color.launcher_text_muted_color))
+        hint.setTextColor(LauncherTheme.textMuted(ctx))
         hint.textSize = 11f
         val hLp = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
@@ -468,7 +469,7 @@ object GameActionMenuFactory {
         dialog.setContentView(root)
         dialog.show()
         LauncherMotion.applyDialogMotion(dialog)
-        window?.setLayout(dp(ctx, 288), WindowManager.LayoutParams.WRAP_CONTENT)
+        window?.setLayout(LauncherDialogFactory.dialogWidthPx(ctx, 288), WindowManager.LayoutParams.WRAP_CONTENT)
 
         totalInput.requestFocus()
         totalInput.post {

@@ -16,7 +16,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
@@ -168,7 +167,7 @@ public final class ScanDirectoryController {
 
         TextView title = new TextView(host.requireContext());
         title.setText(directoryLabel(root));
-        title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
+        title.setTextColor(LauncherTheme.text(host.requireContext()));
         host.setResponsiveTextSize(title, 13);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setSingleLine(true);

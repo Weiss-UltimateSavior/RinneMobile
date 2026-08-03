@@ -25,7 +25,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -87,7 +86,7 @@ public class AvatarCropActivity extends AppCompatActivity {
     }
 
     private View buildRoot(String inputUriString) {
-        int bgColor = ContextCompat.getColor(this, R.color.launcher_bg_color);
+        int bgColor = LauncherTheme.bg(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);

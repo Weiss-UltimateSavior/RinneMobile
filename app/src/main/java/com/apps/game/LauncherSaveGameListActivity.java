@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.apps.LauncherActivity;
 import com.apps.theme.LauncherDialogFactory;
@@ -118,7 +117,7 @@ public class LauncherSaveGameListActivity extends AppCompatActivity {
         meta.setText(recentMeta(game));
         status.setText("●");
         status.setTextColor(hasSave ? LauncherTheme.primary(this)
-                : ContextCompat.getColor(this, R.color.launcher_danger_color));
+                : LauncherTheme.danger(this));
         itemView.setClickable(true);
         itemView.setFocusable(true);
         itemView.setOnClickListener(v -> {

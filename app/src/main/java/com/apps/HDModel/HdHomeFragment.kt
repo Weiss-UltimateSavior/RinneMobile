@@ -28,6 +28,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
     private var localActivityManager: LocalActivityManager? = null
     private var embeddedActivityId: String? = null
+    private var hdHeaderArranged = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,6 +69,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         localActivityManager = null
         detailContainer = null
         embeddedActivityId = null
+        hdHeaderArranged = false
         super.onDestroyView()
     }
 
@@ -187,25 +189,24 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         val content = currentBinding.contentScroll.getChildAt(0) as? LinearLayout ?: return
         if (content.childCount < 4) return
         val header = content.getChildAt(0) as? LinearLayout ?: return
-        val statsCard = currentBinding.homeStatsCard
-        val actionGrid = currentBinding.homeActionsGrid
+        // 幂等守卫：同一 View 实例只组装一次，避免二次调用重复 addView/清空已组装的按钮。
+        if (hdHeaderArranged) return
+        hdHeaderArranged = true
 
-        content.removeView(statsCard)
-        content.removeView(actionGrid)
-        header.removeView(currentBinding.actionProfileMenu)
+        // HD 横屏：竖屏区块不再参与布局，改用 visibility 隐藏，保留 ViewBinding 引用不失效。
+        currentBinding.homeStatsCard.visibility = View.GONE
+        currentBinding.homeActionsGrid.visibility = View.GONE
+        currentBinding.actionProfileMenu.visibility = View.GONE
 
         header.layoutParams = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             dp(50),
         )
 
-        val actionBar = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL or android.view.Gravity.END
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            )
+        // 动作按钮组装到 XML 预设容器（hdHomeActionBar），不动态创建/挂载新 View。
+        val actionBar = currentBinding.hdHomeActionBar.apply {
+            visibility = View.VISIBLE
+            removeAllViews()
         }
 
         actions.forEach { action ->
@@ -215,7 +216,6 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
             )
             actionBar.addView(action)
         }
-        header.addView(actionBar)
     }
 
     private fun styleIconAction(action: LinearLayout) {

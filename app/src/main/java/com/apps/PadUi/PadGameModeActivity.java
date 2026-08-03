@@ -2,7 +2,6 @@ package com.apps.PadUi;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
@@ -15,11 +14,10 @@ import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.apps.LauncherActivity;
-import com.apps.LauncherThemeStyle;
+import com.apps.LauncherNavRenderer;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.core.R;
@@ -71,7 +69,7 @@ public class PadGameModeActivity extends AppCompatActivity {
     private void configureLandscapeWindow() {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        int backgroundColor = ContextCompat.getColor(this, R.color.launcher_bg_color);
+        int backgroundColor = LauncherTheme.bg(this);
         window.setStatusBarColor(backgroundColor);
         window.setNavigationBarColor(backgroundColor);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -154,52 +152,22 @@ public class PadGameModeActivity extends AppCompatActivity {
     }
 
     private void renderSelectedNav(Page page) {
-        int primary = LauncherActivity.launcherPrimaryColor(this);
-        setNavSelected(binding.navGame, binding.navGameIcon, page == Page.GAME, primary);
-        setNavSelected(binding.navManage, binding.navManageIcon, page == Page.MANAGE, primary);
+        setNavSelected(binding.navGame, binding.navGameIcon, page == Page.GAME);
+        setNavSelected(binding.navManage, binding.navManageIcon, page == Page.MANAGE);
 
-        applyLauncherThemeTone();
+        // 主题中心 Logo 资源切换与取色复用 LauncherNavRenderer 统一封装，消除重复分支。
+        LauncherNavRenderer.applyThemeLogoTone(
+                binding.navLaunchCenterCircle,
+                binding.navLaunchCenterImage,
+                binding.navLaunchCenterText,
+                this);
         moveNavIndicator(page == Page.GAME ? binding.navGame : binding.navManage);
     }
 
-    /** 跟随主题切换中间图标：默认图标或主题风格图标（凛弥/杏璃）。 */
-    private void applyLauncherThemeTone() {
-        if (binding == null) return;
-        binding.navLaunchCenterCircle.setBackground(LauncherTheme.circleWithSoftShadow(this));
-        String style = LauncherActivity.getLauncherThemeStyle(this);
-        boolean rinneTheme = LauncherThemeStyle.THEME_STYLE_RINNE.equals(style);
-        boolean anriTheme = LauncherThemeStyle.THEME_STYLE_ANRI.equals(style);
-        boolean xinhaitianTheme = LauncherThemeStyle.THEME_STYLE_XINHAITIAN.equals(style);
-        boolean natsumeTheme = LauncherThemeStyle.THEME_STYLE_NATSUME.equals(style);
-        boolean themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme;
-        binding.navLaunchCenterImage.setVisibility(themedIcon ? View.GONE : View.VISIBLE);
-        binding.navLaunchCenterText.setVisibility(themedIcon ? View.VISIBLE : View.GONE);
-        if (rinneTheme) {
-            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_rinne_def);
-            binding.navLaunchCenterImage.clearColorFilter();
-            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
-        } else if (anriTheme) {
-            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_anri_def);
-            binding.navLaunchCenterImage.clearColorFilter();
-            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
-        } else if (xinhaitianTheme) {
-            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_xinhaitian_def);
-            binding.navLaunchCenterImage.clearColorFilter();
-            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
-        } else if (natsumeTheme) {
-            binding.navLaunchCenterText.setImageResource(R.drawable.launcher_theme_natsume_def);
-            binding.navLaunchCenterImage.clearColorFilter();
-            binding.navLaunchCenterText.setColorFilter(Color.WHITE);
-        } else {
-            binding.navLaunchCenterImage.setColorFilter(Color.WHITE);
-        }
-    }
-
-    private void setNavSelected(LinearLayout container, ImageView icon,
-                                boolean selected, int primary) {
+    private void setNavSelected(LinearLayout container, ImageView icon, boolean selected) {
         container.setBackgroundResource(R.drawable.launcher_nav_unselected);
-        int color = selected ? primary : Color.GRAY;
-        icon.setColorFilter(color);
+        // 选中/未选中取色统一走 LauncherNavRenderer.navTone 封装（primary/textMuted）。
+        LauncherNavRenderer.applyNavTone(icon, selected, this);
     }
 
     private void moveNavIndicator(View target) {

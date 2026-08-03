@@ -10,8 +10,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
-
 import com.apps.theme.LauncherDialogFactory;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -67,7 +65,7 @@ final class ExternalImportPreviewDialog {
         TextView info = new TextView(host.requireContext());
         info.setText(host.getString(R.string.game_import_preview_count, totalCount, existCount));
         info.setGravity(android.view.Gravity.CENTER);
-        info.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
+        info.setTextColor(LauncherTheme.textMuted(host.requireContext()));
         host.setResponsiveTextSize(info, 12);
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -156,7 +154,7 @@ final class ExternalImportPreviewDialog {
         TextView title = new TextView(host.requireContext());
         title.setText(text);
         title.setGravity(android.view.Gravity.CENTER);
-        title.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_color));
+        title.setTextColor(LauncherTheme.text(host.requireContext()));
         host.setResponsiveTextSize(title, 16);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         return title;
@@ -187,9 +185,9 @@ final class ExternalImportPreviewDialog {
         name.setText(game.name);
         name.setSingleLine(true);
         name.setEllipsize(TextUtils.TruncateAt.END);
-        name.setTextColor(ContextCompat.getColor(host.requireContext(),
-                game.exists ? com.core.R.color.launcher_text_muted_color
-                        : com.core.R.color.launcher_text_color));
+        name.setTextColor(game.exists
+                ? LauncherTheme.textMuted(host.requireContext())
+                : LauncherTheme.text(host.requireContext()));
         host.setResponsiveTextSize(name, 13);
         textColumn.addView(name, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -198,7 +196,7 @@ final class ExternalImportPreviewDialog {
         status.setText(buildStatusText(host, game));
         status.setSingleLine(true);
         status.setEllipsize(TextUtils.TruncateAt.END);
-        status.setTextColor(ContextCompat.getColor(host.requireContext(), com.core.R.color.launcher_text_muted_color));
+        status.setTextColor(LauncherTheme.textMuted(host.requireContext()));
         host.setResponsiveTextSize(status, 10);
         LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
