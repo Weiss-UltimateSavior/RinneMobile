@@ -16,9 +16,8 @@ import kotlin.math.max
 
 class LauncherAiChatMessageAdapter(
     private val messages: List<LauncherAiChatBridge.Message>,
-    assistantName: String?
+    private val assistantName: String?
 ) : RecyclerView.Adapter<LauncherAiChatMessageAdapter.Holder>() {
-    private val assistantName = assistantName ?: "AI"
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_launcher_chat_message, parent, false)
@@ -46,7 +45,8 @@ class LauncherAiChatMessageAdapter(
         } else if (tool) {
             holder.author.context.getString(R.string.social_tool_author, message.name)
         } else {
-            assistantName
+            // 兜底显示名走资源，避免硬编码 "AI"
+            assistantName ?: holder.author.context.getString(R.string.social_ai_chat)
         }
         holder.time.visibility = View.GONE
         holder.pinned.visibility = View.GONE

@@ -81,7 +81,7 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     /**
-     * 在 splash 首帧绘制完成后再启动 [SPLASH_MIN_DISPLAY_MS] 倒计时，
+     * 在 splash 首帧绘制完成后再启动 [LauncherSplash.SPLASH_MIN_DISPLAY_MS] 倒计时，
      * 取代原先自 onCreate 起算的固定 1500ms 延时。
      *
      * 触发顺序：`setContentView` → 首次 measure/layout → OnPreDrawListener 回调 →
@@ -94,7 +94,7 @@ class LauncherActivity : AppCompatActivity() {
             override fun onPreDraw(): Boolean {
                 content.viewTreeObserver.removeOnPreDrawListener(this)
                 splashDelay = RxMainScheduler.postDelayed(
-                    Runnable { showLauncherContent() }, SPLASH_MIN_DISPLAY_MS
+                    Runnable { showLauncherContent() }, LauncherSplash.SPLASH_MIN_DISPLAY_MS
                 )
                 return true
             }
@@ -103,7 +103,7 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun showLauncherContent() {
         if (isFinishing || isDestroyed) return
-        val forcePortraitHome = intent?.getBooleanExtra(EXTRA_FORCE_PORTRAIT_HOME, false) == true
+        val forcePortraitHome = intent?.getBooleanExtra(LauncherIntents.EXTRA_FORCE_PORTRAIT_HOME, false) == true
         if (LauncherPreferences.isHdModeStartupEnabled(this) && !forcePortraitHome) {
             startActivity(Intent(this, HdModeActivity::class.java))
             finish()
@@ -253,19 +253,19 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun openAccountLoginIfRequested(intent: Intent?) {
-        if (intent == null || !intent.getBooleanExtra(EXTRA_OPEN_ACCOUNT_LOGIN, false)) return
+        if (intent == null || !intent.getBooleanExtra(LauncherIntents.EXTRA_OPEN_ACCOUNT_LOGIN, false)) return
         val vm = viewModel ?: return
-        intent.removeExtra(EXTRA_OPEN_ACCOUNT_LOGIN)
+        intent.removeExtra(LauncherIntents.EXTRA_OPEN_ACCOUNT_LOGIN)
         vm.selectNavItem(LauncherViewModel.NavItem.ACCOUNT)
     }
 
     private fun launchPinnedGameIfRequested(intent: Intent?) {
         if (intent == null) return
         val action = intent.action
-        if (ACTION_LAUNCH_PINNED_GAME != action
-            && LEGACY_ACTION_LAUNCH_PINNED_GAME != action) return
-        val gameId = intent.getLongExtra(EXTRA_PINNED_GAME_ID, -1L)
-        intent.removeExtra(EXTRA_PINNED_GAME_ID)
+        if (LauncherIntents.ACTION_LAUNCH_PINNED_GAME != action
+            && LauncherIntents.LEGACY_ACTION_LAUNCH_PINNED_GAME != action) return
+        val gameId = intent.getLongExtra(LauncherIntents.EXTRA_PINNED_GAME_ID, -1L)
+        intent.removeExtra(LauncherIntents.EXTRA_PINNED_GAME_ID)
         intent.action = null
         PinnedGameShortcut.launchPinnedGame(this, gameId, pinnedGameSessionController, object : PinnedGameShortcut.LaunchCallback {
             override fun onResult(result: LauncherGameLaunchBridge.LaunchResult) {
@@ -313,8 +313,8 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun requestStoragePermissionIfNeeded() {
         val prefs = getSharedPreferences(LauncherPreferences.APP_PREFS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_STORAGE_PERMISSION_ASKED, false)) return
-        prefs.edit().putBoolean(KEY_STORAGE_PERMISSION_ASKED, true).apply()
+        if (prefs.getBoolean(LauncherPreferences.KEY_STORAGE_PERMISSION_ASKED, false)) return
+        prefs.edit().putBoolean(LauncherPreferences.KEY_STORAGE_PERMISSION_ASKED, true).apply()
 
         if (Build.VERSION.SDK_INT >= 30) {
             if (!Environment.isExternalStorageManager()) {
@@ -478,15 +478,6 @@ class LauncherActivity : AppCompatActivity() {
 
     companion object {
         private var launcherSplashShownInProcess = false
-
-        private const val SPLASH_MIN_DISPLAY_MS = 2_000L
-        const val EXTRA_OPEN_ACCOUNT_LOGIN = "open_account_login"
-        const val EXTRA_PINNED_GAME_ID = "pinned_game_id"
-        const val EXTRA_FORCE_PORTRAIT_HOME = "force_portrait_home"
-        const val ACTION_LAUNCH_PINNED_GAME = "com.core.action.LAUNCH_PINNED_GAME"
-        // Keep shortcuts pinned before the package refactor working after an app update.
-        private const val LEGACY_ACTION_LAUNCH_PINNED_GAME = "com.yuki.yukihub.action.LAUNCH_PINNED_GAME"
-        private const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
 
         // ===== 委托方法：实现已迁移至各 object，此处仅保留签名以兼容现有调用方 =====
 

@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.core.CoreBackup;
 import com.core.R;
 import com.core.databinding.ActivityLauncherSyncCenterBinding;
 import com.core.launcherbridge.LauncherSyncBridge;
@@ -31,6 +32,12 @@ import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
 public class LauncherSyncCenterActivity extends AppCompatActivity {
+    /**
+     * 本地备份文件名前缀：机器可读值，单源在 com.core.CoreBackup.FILE_PREFIX，
+     * 不放入可翻译 string 资源以免被翻译污染文件名（yukihub_backup_ + 时间戳 + .ykbak）
+     */
+    private static final String BACKUP_FILE_PREFIX = CoreBackup.FILE_PREFIX;
+
     private ActivityResultLauncher<String> backupCreateLauncher;
     private ActivityResultLauncher<String[]> backupOpenLauncher;
     private ActivityLauncherSyncCenterBinding binding;
@@ -82,7 +89,7 @@ public class LauncherSyncCenterActivity extends AppCompatActivity {
         binding.btnSave.setOnClickListener(v -> saveConfig());
         binding.btnTest.setOnClickListener(v -> testConnection());
         binding.btnSyncNow.setOnClickListener(v -> syncNow());
-        binding.btnExport.setOnClickListener(v -> backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".ykbak"));
+        binding.btnExport.setOnClickListener(v -> backupCreateLauncher.launch(BACKUP_FILE_PREFIX + System.currentTimeMillis() + ".ykbak"));
         binding.btnImport.setOnClickListener(v -> showImportConfirmDialog());
     }
 

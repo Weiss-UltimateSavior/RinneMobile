@@ -81,7 +81,7 @@ public class AgentLlmConfigDialog {
         LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         infoLp.setMargins(0, LauncherTheme.dp(activity, 9), 0, 0);
         root.addView(info, infoLp);
-        EditText baseUrl = llmInput(root, activity.getString(R.string.social_api_endpoint), "https://api.example.com/v1", InputType.TYPE_TEXT_VARIATION_URI);
+        EditText baseUrl = llmInput(root, activity.getString(R.string.social_api_endpoint), activity.getString(R.string.social_agent_api_address_hint), InputType.TYPE_TEXT_VARIATION_URI);
         EditText apiKey = llmInput(root, activity.getString(R.string.social_api_key), activity.getString(R.string.social_api_key_default_hint), InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText model = llmInput(root, activity.getString(R.string.social_model_name), activity.getString(R.string.social_model_example), InputType.TYPE_CLASS_TEXT);
         EditText temperature = llmInput(root, activity.getString(R.string.social_temperature), activity.getString(R.string.social_temperature_hint), InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);

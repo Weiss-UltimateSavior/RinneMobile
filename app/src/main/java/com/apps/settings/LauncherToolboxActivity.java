@@ -43,15 +43,15 @@ public class LauncherToolboxActivity extends AppCompatActivity {
         applySystemBarInsets();
         applyThemeTone();
 
-        binding.toolUsefulUnpack.setOnClickListener(view -> confirmOpenExternalTool("usefulunpack", USEFULUNPACK_URL));
-        binding.toolTermux.setOnClickListener(view -> confirmOpenExternalTool("termux", TERMUX_URL));
-        binding.toolShizuku.setOnClickListener(view -> confirmOpenExternalTool("shizuku", SHIZUKU_URL));
-        binding.toolWinlator.setOnClickListener(view -> confirmOpenExternalTool("winlator", WINLATOR_URL));
+        binding.toolUsefulUnpack.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.USEFULUNPACK, USEFULUNPACK_URL));
+        binding.toolTermux.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.TERMUX, TERMUX_URL));
+        binding.toolShizuku.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.SHIZUKU, SHIZUKU_URL));
+        binding.toolWinlator.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.WINLATOR, WINLATOR_URL));
         binding.toolGaishi.setOnClickListener(view ->
                 confirmOpenExternalTool(getString(R.string.settings_tool_gaishi), GAISHI_URL));
-        binding.toolPpsspp.setOnClickListener(view -> confirmOpenExternalTool("PPSSPP", PPSSPP_URL));
-        binding.toolLunabox.setOnClickListener(view -> confirmOpenExternalTool("LunaBox", LUNABOX_URL));
-        binding.toolAzahar.setOnClickListener(view -> confirmOpenExternalTool("AzaharPlus", AZAHARPLUS_URL));
+        binding.toolPpsspp.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.PPSSPP, PPSSPP_URL));
+        binding.toolLunabox.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.LUNABOX, LUNABOX_URL));
+        binding.toolAzahar.setOnClickListener(view -> confirmOpenExternalTool(ToolboxTool.AZAHARPLUS, AZAHARPLUS_URL));
         binding.toolboxBack.setOnClickListener(view -> LauncherMotion.finish(this));
     }
 

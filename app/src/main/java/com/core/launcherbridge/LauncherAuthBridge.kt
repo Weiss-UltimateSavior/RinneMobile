@@ -2,6 +2,7 @@ package com.core.launcherbridge
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.core.CorePreferences
 import com.core.userdata.LauncherUserData
 import com.core.util.AppExecutors
 import com.core.util.RxMainScheduler
@@ -28,7 +29,7 @@ import org.json.JSONObject
  */
 object LauncherAuthBridge {
 
-    private const val PREFS_NAME = "yukihub_prefs"
+    private const val PREFS_NAME = CorePreferences.APP_PREFS
     private const val KEY_AUTH_ACCESS_TOKEN = "auth_access_token"
     private const val KEY_AUTH_NICKNAME = "auth_nickname"
     private const val KEY_AUTH_EMAIL = "auth_email"

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import com.core.CorePreferences
 import com.core.launcherbridge.LauncherOnsGameSettingsBridge
 import com.core.ons.OnsSettings
 import com.core.tyrano.TyranoActivity
@@ -15,7 +16,7 @@ import java.util.Locale
 /** 内置 Tyrano 与 ONS 引擎的路径解析、存档定位及 Intent 契约。 */
 internal object ScriptEngineLaunchers {
     private const val TAG = "EmulatorLauncher"
-    private const val PREFS_NAME = "yukihub_prefs"
+    private const val PREFS_NAME = CorePreferences.APP_PREFS
     private val onsBootNames = setOf(
         "0.txt", "00.txt", "nscr_sec.dat", "nscript.dat", "onscript.nt2", "onscript.nt3",
         "arc.nsa", "arc.sar",

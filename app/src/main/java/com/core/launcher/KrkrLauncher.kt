@@ -9,6 +9,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.akira.tyranoemu.remote.Kirikiroid126
 import com.akira.tyranoemu.remote.Kirikiroid134
 import com.akira.tyranoemu.remote.Kirikiroid139
+import com.core.CorePreferences
 import org.tvp.kirikiri2.KR2Activity
 import java.io.File
 import java.io.FileInputStream
@@ -18,7 +19,7 @@ import java.util.Locale
 /** KRKR 入口解析、引擎版本路由和独立存档重定向。 */
 internal object KrkrLauncher {
     private const val TAG = "EmulatorLauncher"
-    private const val PREFS_NAME = "yukihub_prefs"
+    private const val PREFS_NAME = CorePreferences.APP_PREFS
 
     data class SaveLocation(
         @JvmField val directory: File?,

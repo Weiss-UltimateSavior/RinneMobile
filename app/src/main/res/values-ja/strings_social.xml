@@ -224,6 +224,7 @@
     <string name="social_agent_api_config">モデル API 設定</string>
     <string name="social_agent_api_note">設定はこの端末にのみ保存されます。会話と必要なゲーム情報は選択したモデルサービスへ送信されます。API Key は Android Keystore で暗号化されます。</string>
     <string name="social_agent_api_address">API アドレス</string>
+    <string name="social_agent_api_address_hint">https://api.example.com/v1</string>
     <string name="social_agent_model_support_hint">ツール呼び出し対応モデル</string>
     <string name="social_agent_api_key_saved_hint">保存済み。空欄の場合は変更しません</string>
     <string name="social_agent_api_key_hint">API Key を入力</string>

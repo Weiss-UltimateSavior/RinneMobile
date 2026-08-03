@@ -7,6 +7,7 @@ import android.provider.DocumentsContract;
 
 import androidx.documentfile.provider.DocumentFile;
 
+import com.core.CorePreferences;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.model.Game;
 
@@ -26,7 +27,7 @@ import java.util.Map;
 
 /** Access to user-configured SAF scan roots. Raw content URIs are never returned to the model. */
 public final class AgentScanRootGateway {
-    private static final String PREFS = "yukihub_prefs";
+    private static final String PREFS = CorePreferences.APP_PREFS;
     private static final String KEY_ROOTS = "scan_root_uris";
     private static final String KEY_LEGACY_ROOT = "last_scan_root_uri";
     private static final String KEY_ENABLED = "scan_root_enabled";

@@ -14,6 +14,9 @@ object LauncherSplash {
     private const val KEY_SPLASH_ENABLED = "launcher_splash_enabled"
     private const val CUSTOM_SPLASH_IMAGE_FILE = "launcher_splash_image"
 
+    /** splash 页面最短展示时长（毫秒），避免冷启动时启动图一闪而过。 */
+    const val SPLASH_MIN_DISPLAY_MS = 2_000L
+
     /** The image is kept in private storage so it remains available after URI grants expire. */
     @JvmStatic
     fun customSplashImageFile(context: Context): File =

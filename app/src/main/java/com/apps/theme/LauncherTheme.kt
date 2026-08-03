@@ -490,7 +490,8 @@ object LauncherTheme {
                 val view = convertView
                     ?: LayoutInflater.from(context).inflate(R.layout.spinner_dropdown_themed, parent, false)
                 if (view is TextView) {
-                    view.text = getItem(position)?.toString() ?: "null"
+                    // Spinner 空项兜底显示空串，避免向用户暴露 "null"
+                    view.text = getItem(position)?.toString() ?: ""
                 }
                 styleSpinnerItemView(view, true)
                 return view

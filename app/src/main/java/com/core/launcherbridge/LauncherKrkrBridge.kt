@@ -1,6 +1,7 @@
 package com.core.launcherbridge
 
 import android.content.Context
+import com.core.CorePreferences
 
 /**
  * KRKR 引擎设置桥接：负责读取/保存主项目 yukihub_prefs 中的 KRKR 引擎相关配置。
@@ -23,7 +24,7 @@ object LauncherKrkrBridge {
     // sets do not expose the launcher extension helpers, while this preference file is shared
     // by all launcher and engine components.
     private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(CorePreferences.APP_PREFS, Context.MODE_PRIVATE)
 
     @JvmStatic
     fun getEngineVersion(context: Context?): String {

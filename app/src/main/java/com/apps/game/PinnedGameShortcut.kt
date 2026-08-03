@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import com.apps.LauncherActivity
+import com.apps.LauncherIntents
 import com.core.R
 import com.core.data.GameRepository
 import com.core.launcherbridge.LauncherGameLaunchBridge
@@ -42,8 +43,8 @@ object PinnedGameShortcut {
         val title = game.title?.trim().takeUnless { it.isNullOrEmpty() }
             ?: context.getString(R.string.game_unnamed)
         val intent = Intent(context, LauncherActivity::class.java)
-            .setAction(LauncherActivity.ACTION_LAUNCH_PINNED_GAME)
-            .putExtra(LauncherActivity.EXTRA_PINNED_GAME_ID, game.id)
+            .setAction(LauncherIntents.ACTION_LAUNCH_PINNED_GAME)
+            .putExtra(LauncherIntents.EXTRA_PINNED_GAME_ID, game.id)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID_PREFIX + game.id)
             .setShortLabel(title)

@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.apps.LauncherActivity;
+import com.apps.LauncherIntents;
 import com.apps.LauncherNavRenderer;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
@@ -122,7 +123,7 @@ public class PadGameModeActivity extends AppCompatActivity {
                 getString(R.string.core_confirm),
                 () -> {
                     Intent intent = new Intent(this, LauncherActivity.class);
-                    intent.putExtra(LauncherActivity.EXTRA_FORCE_PORTRAIT_HOME, true);
+                    intent.putExtra(LauncherIntents.EXTRA_FORCE_PORTRAIT_HOME, true);
                     startActivity(intent);
                     finish();
                 }

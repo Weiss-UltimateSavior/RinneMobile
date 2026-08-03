@@ -2,6 +2,7 @@ package com.core.util
 
 import android.content.Context
 import android.util.Log
+import com.core.CorePreferences
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileWriter
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit
  */
 object DevLogger {
     private const val TAG = "DevLogger"
-    private const val PREFS = "yukihub_prefs"
+    private const val PREFS = CorePreferences.APP_PREFS
     private const val KEY = "dev_log_enabled"
     private const val MAX_LOG_SIZE = 10L * 1024L * 1024L
 

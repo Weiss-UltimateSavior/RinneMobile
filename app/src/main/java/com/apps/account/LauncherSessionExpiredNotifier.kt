@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import com.apps.LauncherActivity
+import com.apps.LauncherIntents
 import com.apps.theme.LauncherDialogFactory
 import com.core.R
 import com.core.launcherbridge.LauncherAuthBridge
@@ -48,7 +49,7 @@ object LauncherSessionExpiredNotifier : LauncherAuthBridge.SessionExpiredListene
                 activity.startActivity(
                     Intent(activity, LauncherActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        .putExtra(LauncherActivity.EXTRA_OPEN_ACCOUNT_LOGIN, true)
+                        .putExtra(LauncherIntents.EXTRA_OPEN_ACCOUNT_LOGIN, true)
                 )
             },
             activity.getString(R.string.social_action_later),

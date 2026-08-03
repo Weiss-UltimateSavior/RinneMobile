@@ -54,10 +54,10 @@ public final class ExternalImportController {
                 host.getString(R.string.game_import_cross_platform),
                 host.getString(R.string.game_import_source_message),
                 new CharSequence[] {
-                        "Playnite（JSON）",
-                        "PotatoVN（ZIP）",
+                        host.getString(R.string.game_import_playnite),
+                        host.getString(R.string.game_import_potatovn),
                         host.getString(R.string.game_import_vnite_directory),
-                        "LunaBox（ZIP）"
+                        host.getString(R.string.game_import_lunabox)
                 },
                 index -> {
                     switch (index) {

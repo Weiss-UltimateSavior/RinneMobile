@@ -2,6 +2,7 @@ package com.core.launcher
 
 import android.content.Context
 import android.util.Log
+import com.core.CorePreferences
 import com.core.launcherbridge.LauncherOnsGameSettingsBridge
 import com.core.model.EngineType
 import java.io.File
@@ -10,7 +11,7 @@ import java.util.LinkedHashMap
 /** Aggregates the save directories actually used by the built-in engines. */
 internal object EngineSaveLocations {
     private const val TAG = "EmulatorLauncher"
-    private const val PREFS_NAME = "yukihub_prefs"
+    private const val PREFS_NAME = CorePreferences.APP_PREFS
 
     data class Location(
         @JvmField val directory: File?,

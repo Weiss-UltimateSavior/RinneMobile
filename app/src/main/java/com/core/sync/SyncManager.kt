@@ -3,6 +3,7 @@ package com.core.sync
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.core.CorePreferences
 import com.core.R
 import com.core.data.GameRepository
 import com.core.data.MetadataRepository
@@ -382,7 +383,7 @@ class SyncManager(context: Context) {
 
         private const val TAG = "SyncManager"
         private const val SYNC_PREFS = "yukihub_sync"
-        private const val APP_PREFS = "yukihub_prefs"
+        private const val APP_PREFS = CorePreferences.APP_PREFS
         // 坚果云 WebDAV 根目录通常不可直接写文件，需要写入一个已存在的同步文件夹。
         // 请用户先在坚果云中创建 YukiHub 文件夹。
         private const val REMOTE_DIR = "YukiHub"

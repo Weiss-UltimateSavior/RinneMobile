@@ -298,7 +298,7 @@ public final class GamePasswordDialog {
             return sb.toString();
         } catch (Exception e) {
             Log.e(TAG, "hash failed, refusing to return raw password", e);
-            throw new IllegalStateException("密码加密失败", e);
+            throw new IllegalStateException("Failed to encrypt password", e);
         }
     }
 

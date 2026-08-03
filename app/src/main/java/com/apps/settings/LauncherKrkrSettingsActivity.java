@@ -238,7 +238,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     }
 
     private String[] engineVersionLabels() {
-        return new String[]{getString(R.string.settings_auto), "1.3.9", "1.3.4", "1.2.6"};
+        return getResources().getStringArray(R.array.engine_version_options);
     }
 
     private void configureEdgeToEdgeWindow() {

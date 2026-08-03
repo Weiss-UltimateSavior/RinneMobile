@@ -14,6 +14,13 @@
     <string name="settings_engine_summary">Rinne は管理しやすいよう、標準で共通セーブディレクトリを使用します。既存のセーブがあるゲームで共通セーブを無効にすると、予期しない問題が発生する場合があります。</string>
     <string name="settings_kr_engine_version">KR エンジンバージョン</string>
     <string name="settings_auto">自動</string>
+    <!-- KR エンジンバージョン候補：先頭項目は settings_auto を参照しロケール回退を維持 -->
+    <string-array name="engine_version_options">
+        <item>@string/settings_auto</item>
+        <item>1.3.9</item>
+        <item>1.3.4</item>
+        <item>1.2.6</item>
+    </string-array>
     <string name="settings_krkr_unified_save">KRKR 共通セーブディレクトリ</string>
     <string name="settings_artemis_unified_save">Artemis 共通セーブディレクトリ</string>
     <string name="settings_tyrano_unified_save">Tyrano 共通セーブディレクトリ</string>
@@ -141,6 +148,7 @@
     <string name="settings_choose_metadata_source">メタデータ取得元を選択</string>
     <string name="settings_cannot_open_link">リンクを開けません</string>
     <string name="settings_open_download_title">ダウンロードページを開く</string>
+    <string name="settings_back_arrow">&lt;</string>
     <string name="settings_open_download_message">ブラウザーで %1$s のダウンロードページを開きますか？</string>
     <string name="settings_resource_station_title">情報ステーション</string>
     <string name="settings_no_address_to_open">開けるアドレスがありません</string>
@@ -159,6 +167,7 @@
     <string name="settings_choose_source_result">%1$s の一致結果を選択</string>
     <string name="settings_choose_source_result_summary">候補を選ぶと %1$s メタデータの関連付けが保存されます。カバーの同期は引き続き「その他のオプション」から行えます。</string>
     <string name="settings_unnamed">名称未設定</string>
+    <string name="launcher_avatar_fallback_initial">Y</string>
     <string name="settings_source_candidate">%1$s 候補</string>
     <string name="settings_metadata_bound">%1$s メタデータを関連付けました</string>
     <string name="settings_metadata_save_failed">%1$s メタデータを保存できませんでした</string>

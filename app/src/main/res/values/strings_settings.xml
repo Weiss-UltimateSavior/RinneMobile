@@ -14,6 +14,13 @@
     <string name="settings_engine_summary">Rinne 默认使用统一存档管理目录，便于统一管理；存在旧存档的游戏关闭统一存档，会发生不可预料的 bug。</string>
     <string name="settings_kr_engine_version">KR 引擎版本</string>
     <string name="settings_auto">自动</string>
+    <!-- KR 引擎版本下拉选项：首项复用 settings_auto，保持多语言回退一致 -->
+    <string-array name="engine_version_options">
+        <item>@string/settings_auto</item>
+        <item>1.3.9</item>
+        <item>1.3.4</item>
+        <item>1.2.6</item>
+    </string-array>
     <string name="settings_krkr_unified_save">KRKR 统一存档目录</string>
     <string name="settings_artemis_unified_save">Artemis 统一存档目录</string>
     <string name="settings_tyrano_unified_save">Tyrano 统一存档目录</string>
@@ -142,6 +149,7 @@
     <string name="settings_choose_metadata_source">选择资料源</string>
     <string name="settings_cannot_open_link">无法打开链接</string>
     <string name="settings_open_download_title">跳转下载</string>
+    <string name="settings_back_arrow">&lt;</string>
     <string name="settings_open_download_message">即将跳转到浏览器下载 %1$s，是否继续？</string>
     <string name="settings_resource_station_title">资讯站</string>
     <string name="settings_no_address_to_open">当前没有可打开的地址</string>
@@ -160,6 +168,7 @@
     <string name="settings_choose_source_result">选择 %1$s 匹配结果</string>
     <string name="settings_choose_source_result_summary">点选一个候选项后会保存 %1$s 元数据绑定。封面同步仍使用更多选项里的同步功能。</string>
     <string name="settings_unnamed">未命名</string>
+    <string name="launcher_avatar_fallback_initial">Y</string>
     <string name="settings_source_candidate">%1$s 候选</string>
     <string name="settings_metadata_bound">%1$s 元数据已绑定</string>
     <string name="settings_metadata_save_failed">%1$s 元数据保存失败</string>

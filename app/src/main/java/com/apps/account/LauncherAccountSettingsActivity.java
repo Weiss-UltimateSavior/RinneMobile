@@ -239,7 +239,8 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     }
 
     private boolean isUnchangedPlayDataError(String message) {
-        return message != null && (message.contains("USER_NOT_FOUND") || message.contains("用户不存在"));
+        // 仅匹配服务端错误码；删除中文文案分支，避免客户端文案依赖
+        return message != null && message.contains("USER_NOT_FOUND");
     }
 
     private AlertDialog showLoadingDialog(String titleText, String hintText) {

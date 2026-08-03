@@ -586,7 +586,7 @@ open class LauncherHomeFragment : Fragment() {
         val initial = if (nickname.trim { it <= ' ' }.isNotEmpty()) {
             nickname.trim { it <= ' ' }.substring(0, 1).uppercase()
         } else {
-            "Y"
+            getString(com.core.R.string.launcher_avatar_fallback_initial)
         }
         currentBinding.launcherAvatarInitial.text = initial
 
@@ -634,7 +634,7 @@ open class LauncherHomeFragment : Fragment() {
         val initial = if (nickname.trim { it <= ' ' }.isNotEmpty()) {
             nickname.trim { it <= ' ' }.substring(0, 1).uppercase()
         } else {
-            "Y"
+            getString(com.core.R.string.launcher_avatar_fallback_initial)
         }
         currentBinding.launcherAvatarInitial.text = initial
         currentBinding.launcherAvatarImage.setImageDrawable(null)

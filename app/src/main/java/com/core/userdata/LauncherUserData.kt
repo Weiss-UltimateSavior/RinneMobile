@@ -3,6 +3,7 @@ package com.core.userdata
 import android.app.Activity
 import android.content.Context
 import android.os.Process
+import com.core.CorePreferences
 import com.core.launcher.LauncherUiBridge
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.launcherbridge.LauncherSyncBridge
@@ -42,7 +43,7 @@ object LauncherUserData {
     private const val MAX_RUNTIME_RECORDS_BYTES = 2 * 1024 * 1024
 
     // ── SharedPreferences 文件名 ──
-    private const val PREFS_MAIN = "yukihub_prefs"
+    private const val PREFS_MAIN = CorePreferences.APP_PREFS
     private const val PREFS_PROFILE = "launcher_profile_prefs"
     private const val PREFS_ACCOUNT_SETTINGS = "launcher_account_settings"
     private const val KEY_REALTIME_DEVICE_ID = "realtime_playtime_device_id"

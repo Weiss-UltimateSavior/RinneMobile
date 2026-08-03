@@ -8,6 +8,7 @@ import androidx.activity.result.ActivityResultLauncher;
 
 import org.json.JSONObject;
 
+import com.core.CoreBackup;
 import com.core.R;
 import com.core.launcherbridge.LauncherSyncBridge;
 import com.core.util.AppExecutors;
@@ -76,7 +77,7 @@ public final class LocalBackupController {
 
     public void exportLocalBackupToFile() {
         try {
-            backupCreateLauncher.launch("yukihub_backup_" + System.currentTimeMillis() + ".ykbak");
+            backupCreateLauncher.launch(CoreBackup.FILE_PREFIX + System.currentTimeMillis() + ".ykbak");
         } catch (ActivityNotFoundException | IllegalStateException | IllegalArgumentException | SecurityException error) {
             host.showConfirmDialog(host.getString(R.string.game_save_export_failed),
                     error.getMessage() != null ? error.getMessage()

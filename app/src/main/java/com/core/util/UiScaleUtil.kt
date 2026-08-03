@@ -3,13 +3,14 @@ package com.core.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
+import com.core.CorePreferences
 
 /**
  * UI 字体与全局缩放工具：通过 SharedPreferences 持久化用户偏好，
  * 在 Activity attach 时用 [wrap] 创建自定义 Configuration 的 Context。
  */
 object UiScaleUtil {
-    const val PREFS_NAME = "yukihub_prefs"
+    const val PREFS_NAME = CorePreferences.APP_PREFS
     const val KEY_UI_FONT_SCALE = "ui_font_scale"
     const val KEY_UI_SCALE = "ui_scale"
     const val DEFAULT_FONT_SCALE = 1.0f

@@ -92,7 +92,8 @@ public class ResourceStationActivity extends AppCompatActivity {
         topBar.setPadding(0, statusBarHeight(), 0, 0);
 
         TextView backButton = new TextView(this);
-        backButton.setText("<");
+        // 返回箭头走字符串资源（无既有返回图标 drawable，保守资源化避免视觉风险）
+        backButton.setText(getString(com.core.R.string.settings_back_arrow));
         backButton.setTextColor(ContextCompat.getColor(this, com.core.R.color.launcher_text_color));
         backButton.setTextSize(22);
         backButton.setTypeface(null, android.graphics.Typeface.BOLD);

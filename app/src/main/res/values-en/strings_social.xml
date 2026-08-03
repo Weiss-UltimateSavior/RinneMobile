@@ -224,6 +224,7 @@
     <string name="social_agent_api_config">Model API configuration</string>
     <string name="social_agent_api_note">Configuration is stored only on this device. Conversations and necessary game information are sent to the selected model service. API keys are encrypted with Android Keystore.</string>
     <string name="social_agent_api_address">API address</string>
+    <string name="social_agent_api_address_hint">https://api.example.com/v1</string>
     <string name="social_agent_model_support_hint">A model that supports tool calls</string>
     <string name="social_agent_api_key_saved_hint">Saved; leave blank to keep it</string>
     <string name="social_agent_api_key_hint">Enter an API Key</string>

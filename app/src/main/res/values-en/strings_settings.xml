@@ -14,6 +14,13 @@
     <string name="settings_engine_summary">Rinne uses a unified save directory by default for easier management. Disabling unified saves for a game with existing saves may cause unexpected issues.</string>
     <string name="settings_kr_engine_version">KR Engine Version</string>
     <string name="settings_auto">Auto</string>
+    <!-- KR engine version dropdown options: first item reuses settings_auto for locale fallback consistency -->
+    <string-array name="engine_version_options">
+        <item>@string/settings_auto</item>
+        <item>1.3.9</item>
+        <item>1.3.4</item>
+        <item>1.2.6</item>
+    </string-array>
     <string name="settings_krkr_unified_save">Unified Save Directory for KRKR</string>
     <string name="settings_artemis_unified_save">Unified Save Directory for Artemis</string>
     <string name="settings_tyrano_unified_save">Unified Save Directory for Tyrano</string>
@@ -141,6 +148,7 @@
     <string name="settings_choose_metadata_source">Choose Metadata Source</string>
     <string name="settings_cannot_open_link">Unable to open link</string>
     <string name="settings_open_download_title">Open Download Page</string>
+    <string name="settings_back_arrow">&lt;</string>
     <string name="settings_open_download_message">Open your browser to download %1$s?</string>
     <string name="settings_resource_station_title">Resource Hub</string>
     <string name="settings_no_address_to_open">No address is available to open</string>
@@ -159,6 +167,7 @@
     <string name="settings_choose_source_result">Choose a %1$s Match</string>
     <string name="settings_choose_source_result_summary">Selecting a result saves its %1$s metadata binding. Cover syncing remains available under More Options.</string>
     <string name="settings_unnamed">Untitled</string>
+    <string name="launcher_avatar_fallback_initial">Y</string>
     <string name="settings_source_candidate">%1$s Candidate</string>
     <string name="settings_metadata_bound">%1$s metadata bound</string>
     <string name="settings_metadata_save_failed">Failed to save %1$s metadata</string>

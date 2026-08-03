@@ -36,7 +36,7 @@ final class AgentConfigDialog {
         note.setTextColor(LauncherTheme.textMuted(activity));
         LinearLayout.LayoutParams noteLp = wrap(); noteLp.setMargins(0, dp(activity, 9), 0, 0); root.addView(note, noteLp);
         EditText baseUrl = input(activity, root, activity.getString(R.string.social_agent_api_address),
-                "https://api.example.com/v1", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+                activity.getString(R.string.social_agent_api_address_hint), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         baseUrl.setText(config.baseUrl);
         EditText model = input(activity, root, activity.getString(R.string.social_model_name),
                 activity.getString(R.string.social_agent_model_support_hint), InputType.TYPE_CLASS_TEXT);

@@ -32,6 +32,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.core.CorePreferences
 import com.core.R
 import com.core.launcher.LauncherUiBridge
 import com.core.util.AppExecutors
@@ -105,7 +106,7 @@ class OverlayTranslationService : Service() {
         super.onCreate()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         handler = Handler(Looper.getMainLooper())
-        themePreferences = getSharedPreferences("yukihub_prefs", Context.MODE_PRIVATE)
+        themePreferences = getSharedPreferences(CorePreferences.APP_PREFS, Context.MODE_PRIVATE)
         themePreferences.registerOnSharedPreferenceChangeListener(themePreferenceListener)
         captureThread = android.os.HandlerThread("TranslationCapture").also { it.start() }
         captureHandler = Handler(captureThread!!.looper)

@@ -28,8 +28,21 @@
     <string name="game_directory_unnamed">未命名目录</string>
     <string name="game_directory_target">[游戏目录]</string>
     <string name="game_engine_auto">自动识别</string>
+    <string name="game_engine_kirikiri">Kirikiri</string>
+    <string name="game_engine_onscripter">ONScripter</string>
+    <string name="game_engine_tyrano">Tyrano</string>
     <string name="game_engine_rpgmaker_mkxp">mkxp-z (Ruby 3.x, 自定义/通用)</string>
     <string name="game_engine_godot_auto">Godot (自动检测 3/4)</string>
+    <string name="game_engine_artemis">Artemis</string>
+    <string name="game_engine_winlator">Winlator</string>
+    <string name="game_engine_gamehub">GameHub</string>
+    <string name="game_engine_psp">PSP</string>
+    <string name="game_engine_nintendo_3ds">Nintendo 3DS</string>
+    <string name="game_engine_nintendo_switch">Nintendo Switch (Eden)</string>
+    <string name="game_engine_rpgmaker_xp">RPG Maker XP (RGSS1, Ruby 1.8)</string>
+    <string name="game_engine_rpgmaker_vx">RPG Maker VX (RGSS2, Ruby 1.9)</string>
+    <string name="game_engine_rpgmaker_vxace">RPG Maker VX Ace (RGSS3, Ruby 1.9)</string>
+    <string name="game_engine_renpy">Ren\'Py</string>
 
     <string name="game_add_title">添加游戏</string>
     <string name="game_add_subtitle">填写信息后保存到游戏库</string>
@@ -268,6 +281,9 @@
     <string name="game_import_cross_platform">跨端同步</string>
     <string name="game_import_source_message">选择数据来源平台，导入后仅保留元数据与游玩记录</string>
     <string name="game_import_vnite_directory">Vnite（目录）</string>
+    <string name="game_import_playnite">Playnite（JSON）</string>
+    <string name="game_import_potatovn">PotatoVN（ZIP）</string>
+    <string name="game_import_lunabox">LunaBox（ZIP）</string>
     <string name="game_import_parsing">正在解析数据…</string>
     <string name="game_import_parse_failed">解析失败</string>
     <string name="game_import_importing">正在导入…</string>

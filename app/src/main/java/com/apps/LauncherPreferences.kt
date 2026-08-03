@@ -25,6 +25,7 @@ object LauncherPreferences {
     private const val LEGACY_KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
     const val KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled"
     const val KEY_LAUNCHER_PARTICLE_STYLE = "launcher_particle_style"
+    const val KEY_STORAGE_PERMISSION_ASKED = "launcher_storage_permission_asked"
     const val PARTICLE_STYLE_FLOATING = "floating"
     const val PARTICLE_STYLE_RAIN = "rain"
     const val PARTICLE_STYLE_STAR = "star"

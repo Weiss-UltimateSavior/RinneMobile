@@ -13,20 +13,20 @@ final class EngineOptionCatalog {
     static EngineOption[] create(Context context, boolean includeUnknown) {
         EngineOption[] base = new EngineOption[]{
                 new EngineOption(EngineType.AUTO, context.getString(R.string.game_engine_auto), null),
-                new EngineOption(EngineType.KIRIKIRI, "Kirikiri", null),
-                new EngineOption(EngineType.ONS, "ONScripter", null),
-                new EngineOption(EngineType.TYRANO, "Tyrano", null),
-                new EngineOption(EngineType.ARTEMIS, "Artemis", null),
-                new EngineOption(EngineType.WINLATOR, "Winlator", null),
-                new EngineOption(EngineType.GAMEHUB, "GameHub", null),
-                new EngineOption(EngineType.PSP, "PSP", null),
-                new EngineOption(EngineType.NINTENDO_3DS, "Nintendo 3DS", null),
-                new EngineOption(EngineType.NINTENDO_SWITCH, "Nintendo Switch (Eden)", null),
-                new EngineOption(EngineType.RPGMAKER, "RPG Maker XP (RGSS1, Ruby 1.8)", "rpgmxp"),
-                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX (RGSS2, Ruby 1.9)", "rpgmvx"),
-                new EngineOption(EngineType.RPGMAKER, "RPG Maker VX Ace (RGSS3, Ruby 1.9)", "rpgmvxace"),
+                new EngineOption(EngineType.KIRIKIRI, context.getString(R.string.game_engine_kirikiri), null),
+                new EngineOption(EngineType.ONS, context.getString(R.string.game_engine_onscripter), null),
+                new EngineOption(EngineType.TYRANO, context.getString(R.string.game_engine_tyrano), null),
+                new EngineOption(EngineType.ARTEMIS, context.getString(R.string.game_engine_artemis), null),
+                new EngineOption(EngineType.WINLATOR, context.getString(R.string.game_engine_winlator), null),
+                new EngineOption(EngineType.GAMEHUB, context.getString(R.string.game_engine_gamehub), null),
+                new EngineOption(EngineType.PSP, context.getString(R.string.game_engine_psp), null),
+                new EngineOption(EngineType.NINTENDO_3DS, context.getString(R.string.game_engine_nintendo_3ds), null),
+                new EngineOption(EngineType.NINTENDO_SWITCH, context.getString(R.string.game_engine_nintendo_switch), null),
+                new EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_xp), "rpgmxp"),
+                new EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_vx), "rpgmvx"),
+                new EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_vxace), "rpgmvxace"),
                 new EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_mkxp), "mkxp-z"),
-                new EngineOption(EngineType.RENPY, "Ren'Py", "renpy"),
+                new EngineOption(EngineType.RENPY, context.getString(R.string.game_engine_renpy), "renpy"),
                 new EngineOption(EngineType.GODOT, context.getString(R.string.game_engine_godot_auto), "godot4")
         };
         if (!includeUnknown) return base;

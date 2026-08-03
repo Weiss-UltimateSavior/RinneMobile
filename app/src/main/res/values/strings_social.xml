@@ -224,6 +224,7 @@
     <string name="social_agent_api_config">模型 API 配置</string>
     <string name="social_agent_api_note">配置仅保存在本机。对话和必要的游戏信息会发送给所选模型服务。API Key 使用 Android Keystore 加密。</string>
     <string name="social_agent_api_address">API 地址</string>
+    <string name="social_agent_api_address_hint">https://api.example.com/v1</string>
     <string name="social_agent_model_support_hint">支持工具调用的模型</string>
     <string name="social_agent_api_key_saved_hint">已保存；留空保持不变</string>
     <string name="social_agent_api_key_hint">请输入 API Key</string>

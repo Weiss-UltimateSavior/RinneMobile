@@ -8,6 +8,7 @@ import android.util.Log
 import com.akira.tyranoemu.remote.ArtemisActivityV1
 import com.akira.tyranoemu.remote.ArtemisActivityV2
 import com.akira.tyranoemu.remote.ArtemisActivityV3
+import com.core.CorePreferences
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -16,7 +17,7 @@ import java.util.Locale
 /** Artemis 引擎的作用域镜像、存档同步和 Activity 路由。 */
 internal object ArtemisLauncher {
     private const val TAG = "EmulatorLauncher"
-    private const val PREFS_NAME = "yukihub_prefs"
+    private const val PREFS_NAME = CorePreferences.APP_PREFS
     private const val ENGINE_PREF_PREFIX = "artemis_engine."
     private val observerLock = Any()
     private val saveObservers = mutableMapOf<String, FileObserver>()

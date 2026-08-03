@@ -2,6 +2,7 @@ package com.core.launcherbridge
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.core.CorePreferences
 import com.core.util.RxMainScheduler
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -10,7 +11,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /** Shared plumbing for launcher bridges; keeps their Java-facing APIs unchanged. */
-internal const val YUKIHUB_PREFS_NAME = "yukihub_prefs"
+internal const val YUKIHUB_PREFS_NAME = CorePreferences.APP_PREFS
 
 internal fun Context.yukiPrefs(): SharedPreferences =
     applicationContext.getSharedPreferences(YUKIHUB_PREFS_NAME, Context.MODE_PRIVATE)

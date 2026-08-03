@@ -68,7 +68,7 @@ public class LauncherAiChatActivity extends AppCompatActivity {
         binding = ActivityLauncherAiChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
-        characterName = title == null || title.trim().isEmpty() ? "AI" : title.replace("（AI）", "");
+        characterName = title == null || title.trim().isEmpty() ? getString(R.string.social_ai_chat) : title.replace("（AI）", "");
         binding.aiChatTitle.setText(title == null || title.trim().isEmpty()
                 ? getString(R.string.social_ai_chat) : title);
         messageListBaseBottomPadding = binding.aiChatMessages.getPaddingBottom();
