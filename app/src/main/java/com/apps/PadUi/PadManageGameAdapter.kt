@@ -33,7 +33,7 @@ class PadManageGameAdapter : BaseGameCardAdapter(::applyPadLayout, true) {
                 overlay.height = height
                 binding.launcherGameTextOverlay.layoutParams = overlay
             }
-            compactText(binding)
+            BaseGameCardAdapter.compactText(binding)
         }
     }
 }

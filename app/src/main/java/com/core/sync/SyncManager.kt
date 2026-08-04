@@ -8,6 +8,7 @@ import com.core.R
 import com.core.data.GameRepository
 import com.core.data.MetadataRepository
 import com.core.data.YukiDatabaseHelper
+import com.core.prefs.ScanRootKeys
 import com.core.util.AppExecutors
 import org.json.JSONArray
 import org.json.JSONObject
@@ -231,7 +232,7 @@ class SyncManager(context: Context) {
         settings.put("metadata_source", appPrefs.getString(KEY_METADATA_SOURCE, "vndb"))
         // 不同步扫描目录（last_scan_root_uri/scan_root_uris）：它们通常包含用户本机目录/存储路径，跨设备无效且可能泄露隐私。
         settings.put("auto_scan_on_startup", appPrefs.getBoolean(KEY_AUTO_SCAN_ON_STARTUP, false))
-        settings.put("startup_scan_depth", appPrefs.getInt(KEY_STARTUP_SCAN_DEPTH, 2))
+        settings.put("startup_scan_depth", appPrefs.getInt(ScanRootKeys.KEY_STARTUP_SCAN_DEPTH, 2))
         settings.put("engine_label_position", appPrefs.getString(KEY_ENGINE_LABEL_POSITION, "title"))
         settings.put("sort_mode", appPrefs.getString(KEY_SORT_MODE, "recent"))
         settings.put("background_video_sound", appPrefs.getBoolean(KEY_BACKGROUND_VIDEO_SOUND, false))
@@ -319,7 +320,7 @@ class SyncManager(context: Context) {
             if (SOURCE_VNDB == source || SOURCE_BANGUMI == source || SOURCE_BANGUMI_MIRROR == source || SOURCE_YMGAL == source) prefsEditor.putString(KEY_METADATA_SOURCE, source)
             // 兼容旧备份：忽略扫描目录（last_scan_root_uri/scan_root_uris），避免导入跨设备无效路径或泄露本机目录。
             if (settings.has("auto_scan_on_startup")) prefsEditor.putBoolean(KEY_AUTO_SCAN_ON_STARTUP, settings.optBoolean("auto_scan_on_startup", false))
-            if (settings.has("startup_scan_depth")) prefsEditor.putInt(KEY_STARTUP_SCAN_DEPTH, Math.max(1, Math.min(4, settings.optInt("startup_scan_depth", 2))))
+            if (settings.has("startup_scan_depth")) prefsEditor.putInt(ScanRootKeys.KEY_STARTUP_SCAN_DEPTH, Math.max(1, Math.min(4, settings.optInt("startup_scan_depth", 2))))
             if (settings.has("engine_label_position")) prefsEditor.putString(KEY_ENGINE_LABEL_POSITION, if ("cover" == settings.optString("engine_label_position", "title")) "cover" else "title")
             if (settings.has("sort_mode")) {
                 val sort = settings.optString("sort_mode", "recent")
@@ -404,11 +405,9 @@ class SyncManager(context: Context) {
         private const val SOURCE_BANGUMI = "bangumi"
         private const val SOURCE_BANGUMI_MIRROR = "bangumi_mirror"
         private const val SOURCE_YMGAL = "ymgal"
-        private const val KEY_LAST_SCAN_ROOT_URI = "last_scan_root_uri"
         private const val KEY_BACKGROUND_DIM_ENABLED = "background_dim_enabled"
         private const val KEY_BACKGROUND_DIM_ALPHA = "background_dim_alpha"
         private const val KEY_AUTO_SCAN_ON_STARTUP = "auto_scan_on_startup"
-        private const val KEY_STARTUP_SCAN_DEPTH = "startup_scan_depth"
         private const val KEY_ENGINE_LABEL_POSITION = "engine_label_position"
         private const val KEY_SORT_MODE = "sort_mode"
         private const val KEY_BACKGROUND_VIDEO_SOUND = "background_video_sound"

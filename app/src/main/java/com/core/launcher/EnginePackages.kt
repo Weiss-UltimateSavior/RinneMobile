@@ -28,6 +28,15 @@ object EnginePackages {
     const val INTERNAL_RENPY = "internal.renpy"
     const val INTERNAL_RENPY8 = "internal.renpy8"
 
+    const val INTERNAL_PSP = "internal.psp"
+    const val EXTERNAL_PPSSPP = "org.ppsspp.ppsspp"
+    const val INTERNAL_CITRA = "internal.citra"
+    const val EXTERNAL_AZAHAR = "io.github.azaharplus.android"
+    const val EXTERNAL_EDEN = "dev.eden.eden_emulator"
+    const val EXTERNAL_GAMEHUB = "com.xiaoji.egggame"
+    const val INTERNAL_RPGMAKER_XP = "internal.rpgmxp"
+    const val INTERNAL_GODOT = "internal.godot"
+
     /** internal.krkr（含 .origin 后缀）或历史 tvp 包名。 */
     @JvmStatic
     fun isInternalKrkr(pkg: String?): Boolean =

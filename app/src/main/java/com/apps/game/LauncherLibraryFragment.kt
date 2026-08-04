@@ -232,7 +232,7 @@ open class LauncherLibraryFragment : Fragment(),
             val id = pendingEditGameId
             pendingEditGameId = -1L
             reloadSingleGame(id)
-        } else if (!listController.isDataLoaded) {
+        } else if (!listController.isDataLoaded()) {
             loadGames()
         }
     }
@@ -361,7 +361,7 @@ open class LauncherLibraryFragment : Fragment(),
         binding.libraryRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (usesHorizontalPaging() || dy <= 0 || listController.isLoading || listController.isFullyLoaded) return
+                if (usesHorizontalPaging() || dy <= 0 || listController.isLoading() || listController.isFullyLoaded()) return
                 val lastVisible = layoutManager.findLastVisibleItemPosition()
                 if (lastVisible >= Math.max(0, listController.getVisibleGames().size - getActiveGridColumns())) {
                     pagingHelper.loadNextPage()

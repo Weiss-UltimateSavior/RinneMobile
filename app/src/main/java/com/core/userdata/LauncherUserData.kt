@@ -7,6 +7,7 @@ import com.core.CorePreferences
 import com.core.launcher.LauncherUiBridge
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.launcherbridge.LauncherSyncBridge
+import com.core.prefs.ScanRootKeys
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -55,10 +56,10 @@ object LauncherUserData {
             "launcher_particles_enabled",
             "launcher_particle_style",
             "launcher_storage_permission_asked",
-            "scan_root_uris",
-            "scan_root_enabled",
-            "last_scan_root_uri",
-            "startup_scan_depth",
+            ScanRootKeys.KEY_SCAN_ROOT_URIS,
+            ScanRootKeys.KEY_SCAN_ROOT_ENABLED,
+            ScanRootKeys.KEY_LAST_SCAN_ROOT_URI,
+            ScanRootKeys.KEY_STARTUP_SCAN_DEPTH,
             "profile_avatar",
             "auth_saved_email",
             CorePreferences.KEY_KR_ENGINE_VERSION,

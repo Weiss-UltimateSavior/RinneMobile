@@ -213,6 +213,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     }
 
     override fun onDestroyView() {
+        mainQueue.removeCallbacks(searchDebounce)
         sessionController?.cleanup()
         syncController?.cleanup()
         listController?.cleanup()
@@ -280,8 +281,8 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val lc = listController ?: return
-                if (dy <= 0 || lc.isLoading || lc.isFullyLoaded) return
-                if (layoutManager.findLastVisibleItemPosition() >= maxOf(0, lc.visibleGames.size - GRID_COLUMNS)) {
+                if (dy <= 0 || lc.isLoading() || lc.isFullyLoaded()) return
+                if (layoutManager.findLastVisibleItemPosition() >= maxOf(0, lc.getVisibleGames().size - GRID_COLUMNS)) {
                     loadNextPage()
                 }
             }
@@ -389,7 +390,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun renderState() {
         val b = _binding ?: return
         val lc = listController ?: return
-        val hasGames = lc.visibleGames.isNotEmpty()
+        val hasGames = lc.getVisibleGames().isNotEmpty()
         b.libraryRecycler.visibility = if (hasGames) View.VISIBLE else View.GONE
         if (hasGames) {
             b.libraryRecycler.post {
@@ -399,7 +400,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             scheduleLoadUntilViewportFilled()
         }
         b.libraryEmpty.setText(
-            if (lc.allGames.isEmpty()) com.core.R.string.pad_no_games
+            if (lc.getAllGames().isEmpty()) com.core.R.string.pad_no_games
             else com.core.R.string.pad_no_matching_games
         )
         b.libraryEmpty.visibility = if (hasGames) View.GONE else View.VISIBLE
@@ -413,8 +414,8 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun scheduleLoadUntilViewportFilled() {
         val b = _binding ?: return
         val lc = listController ?: return
-        if (lc.isViewportFillCheckPending || lc.isLoading || lc.isFullyLoaded
-            || lc.visibleGames.size >= lc.filteredGames.size
+        if (lc.isViewportFillCheckPending() || lc.isLoading() || lc.isFullyLoaded()
+            || lc.getVisibleGames().size >= lc.getFilteredGames().size
         ) {
             return
         }
@@ -430,9 +431,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
                 // 这一轮布局检查已完成；若首屏仍未填满，loadNextPage() 触发的
                 // renderState() 才能登记下一轮检查并继续加载。
                 currentLc?.setViewportFillCheckPending(false)
-                if (currentLc == null || currentBinding == null || currentLc.isLoading
-                    || currentLc.isFullyLoaded
-                    || currentLc.visibleGames.size >= currentLc.filteredGames.size
+                if (currentLc == null || currentBinding == null || currentLc.isLoading()
+                    || currentLc.isFullyLoaded()
+                    || currentLc.getVisibleGames().size >= currentLc.getFilteredGames().size
                 ) {
                     return true
                 }
@@ -623,7 +624,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     // ===== GameSyncController.Listener =====
 
     override fun onBatchSyncComplete(loadedGames: List<Game>, categoryResult: CategoryBuildResult) {
-        if (_binding == null) return
+        if (!isAdded || _binding == null) return
         val lc = listController ?: return
         // 关键：必须同步更新 controller 内部的 all 列表，否则后续 applyFilters()
         // 调用的 controller.rebuild() 仍会遍历旧 Game 对象，导致新封面无法刷新到卡片。
@@ -740,7 +741,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
     override fun onVisibleGamesChanged(forceFullRefresh: Boolean) {
         val lc = listController ?: return
-        adapter?.submit(ArrayList(lc.visibleGames), forceFullRefresh)
+        adapter?.submit(ArrayList(lc.getVisibleGames()), forceFullRefresh)
     }
 
     override fun onRenderStateRequested() {

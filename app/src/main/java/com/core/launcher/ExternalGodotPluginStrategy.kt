@@ -142,7 +142,7 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
         const val PLUGIN_PACKAGE_GODOT3 = "cyou.joiplay.runtime.godot3"
 
         /** YukiHub 内部使用的别名。 */
-        private const val ALIAS_GODOT = "internal.godot"
+        private val ALIAS_GODOT = EnginePackages.INTERNAL_GODOT
         private const val ALIAS_GODOT3 = "internal.godot3"
         private const val ALIAS_GODOT4 = "internal.godot4"
 

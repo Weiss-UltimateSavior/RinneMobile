@@ -68,8 +68,8 @@ internal class LibraryPagingHelper(private val fragment: LauncherLibraryFragment
     fun scheduleLoadUntilViewportFilled() {
         val currentBinding = fragment.libraryBinding ?: return
         val lc = fragment.libraryListController
-        if (lc.isViewportFillCheckPending || fragment.usesHorizontalPaging()
-            || lc.isLoading || lc.isFullyLoaded
+        if (lc.isViewportFillCheckPending() || fragment.usesHorizontalPaging()
+            || lc.isLoading() || lc.isFullyLoaded()
             || lc.getVisibleGames().size >= lc.getFilteredGames().size
         ) {
             return
@@ -84,7 +84,7 @@ internal class LibraryPagingHelper(private val fragment: LauncherLibraryFragment
                 val currentLc = fragment.libraryListController
                 val currentBinding = fragment.libraryBinding
                 currentLc.setViewportFillCheckPending(false)
-                if (currentBinding == null || currentLc.isLoading || currentLc.isFullyLoaded
+                if (currentBinding == null || currentLc.isLoading() || currentLc.isFullyLoaded()
                     || currentLc.getVisibleGames().size >= currentLc.getFilteredGames().size
                 ) {
                     return true
@@ -101,7 +101,7 @@ internal class LibraryPagingHelper(private val fragment: LauncherLibraryFragment
 
     fun handleLoadMoreDragWhenNotScrollable(recyclerView: RecyclerView, event: MotionEvent) {
         val lc = fragment.libraryListController
-        if (lc.isLoading || lc.isFullyLoaded
+        if (lc.isLoading() || lc.isFullyLoaded()
             || lc.getFilteredGames().isEmpty()
             || lc.getVisibleGames().size >= lc.getFilteredGames().size
         ) {

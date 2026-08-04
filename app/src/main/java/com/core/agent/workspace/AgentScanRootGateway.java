@@ -10,6 +10,7 @@ import androidx.documentfile.provider.DocumentFile;
 import com.core.CorePreferences;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.model.Game;
+import com.core.prefs.ScanRootKeys;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,9 +29,6 @@ import java.util.Map;
 /** Access to user-configured SAF scan roots. Raw content URIs are never returned to the model. */
 public final class AgentScanRootGateway {
     private static final String PREFS = CorePreferences.APP_PREFS;
-    private static final String KEY_ROOTS = "scan_root_uris";
-    private static final String KEY_LEGACY_ROOT = "last_scan_root_uri";
-    private static final String KEY_ENABLED = "scan_root_enabled";
     private static final int MAX_ROOTS = 3;
     private static final int MAX_NODES = 2000;
 
@@ -285,7 +283,7 @@ public final class AgentScanRootGateway {
     private static List<Root> roots(Context context) throws Exception {
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         List<String> uris = new ArrayList<>();
-        String joined = prefs.getString(KEY_ROOTS, "");
+        String joined = prefs.getString(ScanRootKeys.KEY_SCAN_ROOT_URIS, "");
         if (joined != null && !joined.trim().isEmpty()) {
             for (String part : joined.split("\\n")) {
                 String value = part == null ? "" : part.trim();
@@ -293,9 +291,9 @@ public final class AgentScanRootGateway {
                 if (uris.size() >= MAX_ROOTS) break;
             }
         }
-        String legacy = prefs.getString(KEY_LEGACY_ROOT, "");
+        String legacy = prefs.getString(ScanRootKeys.KEY_LAST_SCAN_ROOT_URI, "");
         if (uris.isEmpty() && legacy != null && legacy.startsWith("content://")) uris.add(legacy.trim());
-        String[] states = prefs.getString(KEY_ENABLED, "").split(",", -1);
+        String[] states = prefs.getString(ScanRootKeys.KEY_SCAN_ROOT_ENABLED, "").split(",", -1);
         List<Root> roots = new ArrayList<>();
         for (int i = 0; i < uris.size(); i++) {
             String uri = uris.get(i);

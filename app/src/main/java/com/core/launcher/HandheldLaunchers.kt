@@ -9,11 +9,11 @@ import android.util.Log
 /** 掌机外部模拟器的 Intent 构建和可用性探测。 */
 internal object HandheldLaunchers {
     private const val TAG = "EmulatorLauncher"
-    private const val PPSSPP_PACKAGE = "org.ppsspp.ppsspp"
+    private val PPSSPP_PACKAGE = EnginePackages.EXTERNAL_PPSSPP
     private const val PPSSPP_ACTIVITY = "org.ppsspp.ppsspp.PpssppActivity"
-    private const val AZAHAR_PACKAGE = "io.github.azaharplus.android"
+    private val AZAHAR_PACKAGE = EnginePackages.EXTERNAL_AZAHAR
     private const val CITRA_ACTIVITY = "org.citra.citra_emu.activities.EmulationActivity"
-    private const val EDEN_PACKAGE = "dev.eden.eden_emulator"
+    private val EDEN_PACKAGE = EnginePackages.EXTERNAL_EDEN
     private const val EDEN_ACTIVITY = "org.yuzu.yuzu_emu.activities.EmulationActivity"
     private val citraPackages = arrayOf(
         AZAHAR_PACKAGE,
