@@ -254,7 +254,7 @@ internal object ArtemisLauncher {
 
     private fun isScopedSaveEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean("artemis_scoped_save_dir", true)
+            .getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
 
     private fun safeSaveName(rootPath: String?): String {
         if (rootPath.isNullOrBlank()) return "default"

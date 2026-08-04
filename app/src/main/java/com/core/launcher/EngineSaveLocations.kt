@@ -51,7 +51,7 @@ internal object EngineSaveLocations {
                         ArtemisLauncher.resolveGamePath(rootUri, launchTarget),
                     )
                     val scoped = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                        .getBoolean("artemis_scoped_save_dir", true)
+                        .getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
                     val location = ArtemisLauncher.resolveSaveLocation(context, rootPath, scoped)
                     Location(location.directory, location.description, location.available)
                 }
@@ -71,7 +71,7 @@ internal object EngineSaveLocations {
                         ScriptEngineLaunchers.resolveTyranoGameDirectory(rootUri, launchTarget),
                     )
                     val scoped = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                        .getBoolean("tyrano_scoped_save_dir", true)
+                        .getBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, true)
                     val location = ScriptEngineLaunchers.resolveTyranoSaveLocation(
                         context,
                         gameDirectory,

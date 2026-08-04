@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.os.Process
 import com.core.CorePreferences
+import com.core.launcher.EngineSaveKeys
 import com.core.launcher.LauncherUiBridge
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.launcherbridge.LauncherSyncBridge
+import com.core.prefs.LauncherMainKeys
 import com.core.prefs.ScanRootKeys
 import org.json.JSONArray
 import org.json.JSONException
@@ -51,22 +53,22 @@ object LauncherUserData {
 
     // ── yukihub_prefs 键 ──
     private val MAIN_PREF_KEYS = arrayOf(
-            "launcher_dark_mode",
-            "launcher_theme_style",
-            "launcher_particles_enabled",
-            "launcher_particle_style",
-            "launcher_storage_permission_asked",
+            LauncherMainKeys.KEY_LAUNCHER_DARK_MODE,
+            LauncherMainKeys.KEY_LAUNCHER_THEME_STYLE,
+            LauncherMainKeys.KEY_LAUNCHER_PARTICLES_ENABLED,
+            LauncherMainKeys.KEY_LAUNCHER_PARTICLE_STYLE,
+            LauncherMainKeys.KEY_STORAGE_PERMISSION_ASKED,
             ScanRootKeys.KEY_SCAN_ROOT_URIS,
             ScanRootKeys.KEY_SCAN_ROOT_ENABLED,
             ScanRootKeys.KEY_LAST_SCAN_ROOT_URI,
             ScanRootKeys.KEY_STARTUP_SCAN_DEPTH,
-            "profile_avatar",
-            "auth_saved_email",
+            CorePreferences.KEY_PROFILE_AVATAR,
+            LauncherMainKeys.KEY_AUTH_SAVED_EMAIL,
             CorePreferences.KEY_KR_ENGINE_VERSION,
-            "kr_scoped_save_dir",
-            "artemis_scoped_save_dir",
-            "tyrano_scoped_save_dir",
-            "tyrano_external_network"
+            EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR,
+            EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR,
+            EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR,
+            EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK
     )
 
     // ── launcher_profile_prefs 键 ──

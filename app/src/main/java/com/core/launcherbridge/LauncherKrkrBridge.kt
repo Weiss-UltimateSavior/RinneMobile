@@ -2,17 +2,13 @@ package com.core.launcherbridge
 
 import android.content.Context
 import com.core.CorePreferences
+import com.core.launcher.EngineSaveKeys
 
 /**
  * KRKR 引擎设置桥接：负责读取/保存主项目 yukihub_prefs 中的 KRKR 引擎相关配置。
  * 涉及键值与 MainActivity / SyncManager 完全一致，保证 Launcher 修改后主项目立即可见。
  */
 object LauncherKrkrBridge {
-
-    private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
-    private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
-    private const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"
-    private const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
 
     const val ENGINE_VERSION_AUTO = "auto"
     const val ENGINE_VERSION_139 = "1.3.9"
@@ -45,13 +41,13 @@ object LauncherKrkrBridge {
         if (context == null) return true
         // Keep the new app-scoped mode as the default, while allowing a game
         // with stricter filesystem assumptions to use its original directory.
-        return prefs(context).getBoolean(KEY_KR_SCOPED_SAVE_DIR, true)
+        return prefs(context).getBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, true)
     }
 
     @JvmStatic
     fun setKrScopedSaveDir(context: Context?, enabled: Boolean) {
         if (context == null) return
-        prefs(context).edit().putBoolean(KEY_KR_SCOPED_SAVE_DIR, enabled).apply()
+        prefs(context).edit().putBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, enabled).apply()
     }
 
     @JvmStatic
@@ -59,38 +55,38 @@ object LauncherKrkrBridge {
         if (context == null) return true
         // Keep the current safe default for new installs, but honour an
         // explicit user choice to run Artemis against its original directory.
-        return prefs(context).getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
+        return prefs(context).getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
     }
 
     @JvmStatic
     fun setArtemisScopedSaveDir(context: Context?, enabled: Boolean) {
         if (context == null) return
-        prefs(context).edit().putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, enabled).apply()
+        prefs(context).edit().putBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, enabled).apply()
     }
 
     @JvmStatic
     fun isTyranoScopedSaveDir(context: Context?): Boolean {
         if (context == null) return true
-        return prefs(context).getBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, true)
+        return prefs(context).getBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, true)
     }
 
     @JvmStatic
     fun setTyranoScopedSaveDir(context: Context?, enabled: Boolean) {
         if (context == null) return
-        prefs(context).edit().putBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, enabled).apply()
+        prefs(context).edit().putBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, enabled).apply()
     }
 
     /** Enables remote HTTP(S) subresources for Tyrano games that require a CDN or online API. */
     @JvmStatic
     fun isTyranoExternalNetworkEnabled(context: Context?): Boolean {
         if (context == null) return false
-        return prefs(context).getBoolean(KEY_TYRANO_EXTERNAL_NETWORK, false)
+        return prefs(context).getBoolean(EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK, false)
     }
 
     @JvmStatic
     fun setTyranoExternalNetworkEnabled(context: Context?, enabled: Boolean) {
         if (context == null) return
-        prefs(context).edit().putBoolean(KEY_TYRANO_EXTERNAL_NETWORK, enabled).apply()
+        prefs(context).edit().putBoolean(EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK, enabled).apply()
     }
 
     @JvmStatic

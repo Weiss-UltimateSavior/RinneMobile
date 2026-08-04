@@ -29,6 +29,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import com.core.engine.EnginePrefs
 import com.core.engine.R
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -63,8 +64,8 @@ class TyranoActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         enterFullscreen()
-        allowExternalNetwork = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_TYRANO_EXTERNAL_NETWORK, false)
+        allowExternalNetwork = getSharedPreferences(EnginePrefs.APP_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(EnginePrefs.KEY_TYRANO_EXTERNAL_NETWORK, false)
 
         gameDir = resolveGameDir(intent)
         Log.i(TAG, "onCreate gameDir=$gameDir")
@@ -644,10 +645,6 @@ class TyranoActivity : Activity() {
         private const val MAX_ENTRY_SEARCH_DEPTH = 2
         private val TYRANO_ENTRY_SUBDIRS = arrayOf("resources", "app", "tyrano", "data", "scenario", "system", "game")
 
-        // 共享偏好键：与 app 模块的 LauncherKrkrBridge / UiScaleUtil 保持一致，
-        // engine 直接读取以保证 Launcher 修改后引擎侧立即可见。
-        private const val PREFS_NAME = "yukihub_prefs"
-        private const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
         private const val KEY_UI_FONT_SCALE = "ui_font_scale"
         private const val KEY_UI_SCALE = "ui_scale"
         private const val DEFAULT_FONT_SCALE = 1.0f
@@ -680,7 +677,7 @@ class TyranoActivity : Activity() {
          */
         private fun wrapContextForUiScale(base: Context?): Context? {
             if (base == null) return null
-            val prefs = base.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = base.getSharedPreferences(EnginePrefs.APP_PREFS, Context.MODE_PRIVATE)
             // NaN/Infinite 回落到各自默认值，与 app 模块 UiScaleUtil.clamp/clampUiScale 严格一致
             val fontScale = prefs.getFloat(KEY_UI_FONT_SCALE, DEFAULT_FONT_SCALE).let {
                 if (it.isNaN() || it.isInfinite()) DEFAULT_FONT_SCALE else it.coerceIn(MIN_FONT_SCALE, MAX_FONT_SCALE)

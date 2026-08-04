@@ -32,6 +32,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherAddGameBinding;
+import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherCoverBridge;
 import com.core.launcherbridge.LauncherGameHubShortcutBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
@@ -290,7 +291,7 @@ public class LauncherAddGameActivity extends AppCompatActivity {
         if (item == null) return;
         binding.addGameGameHubIdInput.setText(item.localGameId);
         if (textOf(binding.addGameNameInput).isEmpty()) binding.addGameNameInput.setText(item.localAppName);
-        if (textOf(binding.addGameEmulatorInput).isEmpty()) binding.addGameEmulatorInput.setText("com.xiaoji.egggame");
+        if (textOf(binding.addGameEmulatorInput).isEmpty()) binding.addGameEmulatorInput.setText(EnginePackages.EXTERNAL_GAMEHUB);
     }
 
     /** 扫描游戏目录下的相关游戏文件，弹出列表供用户选择启动入口。 */

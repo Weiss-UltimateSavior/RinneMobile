@@ -37,6 +37,7 @@ import com.core.launcherbridge.MyRankCallback;
 import com.core.launcherbridge.MyRank;
 import com.core.launcherbridge.ConfigCallback;
 import com.core.launcherbridge.PlayDataCallback;
+import com.core.prefs.LauncherMainKeys;
 import com.core.util.TimeFormatUtil;
 import com.core.util.AppExecutors;
 
@@ -428,7 +429,7 @@ public class LauncherProfileFragment extends Fragment {
         // 保留邮箱到登录页输入框的缓存
         if (savedEmail != null && !savedEmail.trim().isEmpty()) {
             requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
-                    .edit().putString("auth_saved_email", savedEmail).apply();
+                    .edit().putString(LauncherMainKeys.KEY_AUTH_SAVED_EMAIL, savedEmail).apply();
         }
         Toast.makeText(requireContext(), R.string.profile_logged_out, Toast.LENGTH_SHORT).show();
         // 返回登录页

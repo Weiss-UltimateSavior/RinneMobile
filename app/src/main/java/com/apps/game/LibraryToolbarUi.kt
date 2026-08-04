@@ -61,16 +61,22 @@ internal class LibraryToolbarUi(private val fragment: LauncherLibraryFragment) {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 fragment.librarySearchQuery = if (s == null) "" else s.toString().trim { it <= ' ' }
-                if (searchDebounce != null) fragment.libraryMainQueue.removeCallbacks(searchDebounce!!)
+                searchDebounce?.let { fragment.libraryMainQueue.removeCallbacks(it) }
                 searchDebounce = Runnable {
                     if (!fragment.isAdded || fragment.libraryBinding == null) return@Runnable
                     fragment.libraryApplyFilters()
                 }
-                fragment.libraryMainQueue.postDelayed(searchDebounce!!, 300)
+                searchDebounce?.let { fragment.libraryMainQueue.postDelayed(it, 300) }
             }
             override fun afterTextChanged(s: Editable?) { }
         })
         renderToolbarButtonState()
+    }
+
+    /** 释放搜索防抖任务等资源（Fragment onDestroyView 调用，§8 生命周期清理）。 */
+    fun cleanup() {
+        searchDebounce?.let { fragment.libraryMainQueue.removeCallbacks(it) }
+        searchDebounce = null
     }
 
     private fun showLibrarySettingsMenu() {

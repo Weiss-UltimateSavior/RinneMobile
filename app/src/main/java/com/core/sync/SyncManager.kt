@@ -8,6 +8,7 @@ import com.core.R
 import com.core.data.GameRepository
 import com.core.data.MetadataRepository
 import com.core.data.YukiDatabaseHelper
+import com.core.launcher.EngineSaveKeys
 import com.core.prefs.ScanRootKeys
 import com.core.util.AppExecutors
 import org.json.JSONArray
@@ -219,7 +220,7 @@ class SyncManager(context: Context) {
         val profile = JSONObject()
         profile.put("name", appPrefs.getString(KEY_PROFILE_NAME, "Yuki"))
         profile.put("signature", appPrefs.getString(KEY_PROFILE_SIGNATURE, ""))
-        val avatarUri = appPrefs.getString(KEY_PROFILE_AVATAR, "")
+        val avatarUri = appPrefs.getString(CorePreferences.KEY_PROFILE_AVATAR, "")
         // 只同步网络头像地址；本地 file/content 路径跨设备无效，也可能暴露本机目录。
         if (avatarUri != null && (avatarUri.startsWith("http://") || avatarUri.startsWith("https://"))) {
             profile.put("avatar_uri", avatarUri)
@@ -237,10 +238,10 @@ class SyncManager(context: Context) {
         settings.put("sort_mode", appPrefs.getString(KEY_SORT_MODE, "recent"))
         settings.put("background_video_sound", appPrefs.getBoolean(KEY_BACKGROUND_VIDEO_SOUND, false))
         settings.put("kr_engine_version", appPrefs.getString(CorePreferences.KEY_KR_ENGINE_VERSION, "auto"))
-        settings.put("kr_scoped_save_dir", appPrefs.getBoolean(KEY_KR_SCOPED_SAVE_DIR, false))
-        settings.put("artemis_scoped_save_dir", appPrefs.getBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, false))
-        settings.put("tyrano_scoped_save_dir", appPrefs.getBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, true))
-        settings.put("tyrano_external_network", appPrefs.getBoolean(KEY_TYRANO_EXTERNAL_NETWORK, false))
+        settings.put("kr_scoped_save_dir", appPrefs.getBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, false))
+        settings.put("artemis_scoped_save_dir", appPrefs.getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, false))
+        settings.put("tyrano_scoped_save_dir", appPrefs.getBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, true))
+        settings.put("tyrano_external_network", appPrefs.getBoolean(EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK, false))
         settings.put("ui_font_scale", appPrefs.getFloat(KEY_UI_FONT_SCALE, 1.0f))
         // 不同步自定义背景文件引用：本地图片/视频路径跨设备通常无效，且视频背景不应进入同步逻辑。
         settings.put("background_dim_enabled", appPrefs.getBoolean(KEY_BACKGROUND_DIM_ENABLED, true))
@@ -312,7 +313,7 @@ class SyncManager(context: Context) {
             prefsEditor
                 .putString(KEY_PROFILE_NAME, profile.optString("name", appPrefs.getString(KEY_PROFILE_NAME, "Yuki")))
                 .putString(KEY_PROFILE_SIGNATURE, profile.optString("signature", appPrefs.getString(KEY_PROFILE_SIGNATURE, "")))
-                .putString(KEY_PROFILE_AVATAR, incomingAvatar)
+                .putString(CorePreferences.KEY_PROFILE_AVATAR, incomingAvatar)
         }
         val settings = root.optJSONObject("settings")
         if (settings != null) {
@@ -331,10 +332,10 @@ class SyncManager(context: Context) {
                 val krVersion = settings.optString("kr_engine_version", "auto")
                 if ("auto" == krVersion || "1.3.9" == krVersion || "1.3.4" == krVersion) prefsEditor.putString(CorePreferences.KEY_KR_ENGINE_VERSION, krVersion)
             }
-            if (settings.has("kr_scoped_save_dir")) prefsEditor.putBoolean(KEY_KR_SCOPED_SAVE_DIR, settings.optBoolean("kr_scoped_save_dir", false))
-            if (settings.has("artemis_scoped_save_dir")) prefsEditor.putBoolean(KEY_ARTEMIS_SCOPED_SAVE_DIR, settings.optBoolean("artemis_scoped_save_dir", false))
-            if (settings.has("tyrano_scoped_save_dir")) prefsEditor.putBoolean(KEY_TYRANO_SCOPED_SAVE_DIR, settings.optBoolean("tyrano_scoped_save_dir", true))
-            if (settings.has("tyrano_external_network")) prefsEditor.putBoolean(KEY_TYRANO_EXTERNAL_NETWORK, settings.optBoolean("tyrano_external_network", false))
+            if (settings.has("kr_scoped_save_dir")) prefsEditor.putBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, settings.optBoolean("kr_scoped_save_dir", false))
+            if (settings.has("artemis_scoped_save_dir")) prefsEditor.putBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, settings.optBoolean("artemis_scoped_save_dir", false))
+            if (settings.has("tyrano_scoped_save_dir")) prefsEditor.putBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, settings.optBoolean("tyrano_scoped_save_dir", true))
+            if (settings.has("tyrano_external_network")) prefsEditor.putBoolean(EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK, settings.optBoolean("tyrano_external_network", false))
             if (settings.has("ui_font_scale")) prefsEditor.putFloat(KEY_UI_FONT_SCALE, Math.max(0.85, Math.min(1.30, settings.optDouble("ui_font_scale", 1.0))).toFloat())
             // 不导入 custom_background/custom_background_type，避免旧备份里的本地图片/视频路径污染新设备。
             if (settings.has("background_dim_enabled")) prefsEditor.putBoolean(KEY_BACKGROUND_DIM_ENABLED, settings.optBoolean("background_dim_enabled", true))
@@ -399,7 +400,6 @@ class SyncManager(context: Context) {
 
         private const val KEY_PROFILE_NAME = "profile_name"
         private const val KEY_PROFILE_SIGNATURE = "profile_signature"
-        private const val KEY_PROFILE_AVATAR = "profile_avatar"
         private const val KEY_METADATA_SOURCE = "metadata_source"
         private const val SOURCE_VNDB = "vndb"
         private const val SOURCE_BANGUMI = "bangumi"
@@ -411,10 +411,6 @@ class SyncManager(context: Context) {
         private const val KEY_ENGINE_LABEL_POSITION = "engine_label_position"
         private const val KEY_SORT_MODE = "sort_mode"
         private const val KEY_BACKGROUND_VIDEO_SOUND = "background_video_sound"
-        private const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
-        private const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
-        private const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"
-        private const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
         private const val KEY_UI_FONT_SCALE = "ui_font_scale"
         private const val KEY_GAME_COLUMNS = "game_columns"
         private const val KEY_UI_SCALE = "ui_scale"

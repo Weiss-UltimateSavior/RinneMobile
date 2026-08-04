@@ -15,6 +15,7 @@ import com.core.R;
 import com.core.databinding.FragmentLauncherAccountBinding;
 import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.prefs.LauncherMainKeys;
 import com.apps.LauncherPreferences;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.LauncherNavigationMetricsKt;
@@ -154,7 +155,7 @@ public class LauncherAccountFragment extends Fragment {
         binding.inputEmail.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         // 自动填充上次登录的邮箱
         String savedEmail = requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, 0)
-                .getString("auth_saved_email", "");
+                .getString(LauncherMainKeys.KEY_AUTH_SAVED_EMAIL, "");
         if (savedEmail != null && !savedEmail.trim().isEmpty()) {
             binding.inputEmail.setText(savedEmail);
         }

@@ -99,7 +99,7 @@ public class LocalAgentActivity extends AppCompatActivity {
         binding.agentStateIcon.setImageTintList(ColorStateList.valueOf(LauncherTheme.onPrimary(this)));
         int primary = LauncherTheme.primary(this);
         binding.agentInput.setTextColor(primary);
-        binding.agentInput.setHintTextColor(ContextCompat.getColor(this, com.core.R.color.launcher_text_muted_color));
+        binding.agentInput.setHintTextColor(LauncherTheme.textMuted(this));
         LauncherTheme.styleTextInput(binding.agentInput);
         binding.agentSend.setBackground(null);
         binding.agentSend.setImageTintList(ColorStateList.valueOf(primary));

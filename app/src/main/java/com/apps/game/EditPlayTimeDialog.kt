@@ -11,7 +11,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
@@ -74,7 +73,7 @@ object EditPlayTimeDialog {
         val totalInput = LauncherEditText(ctx)
         totalInput.setHint(R.string.game_action_total_duration_hint)
         totalInput.setTextColor(LauncherTheme.text(ctx))
-        totalInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
+        totalInput.setHintTextColor(LauncherTheme.inputHint(ctx))
         totalInput.textSize = 13f
         totalInput.setPadding(LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9), LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9))
         totalInput.background = LauncherTheme.cancelChip(ctx)
@@ -99,7 +98,7 @@ object EditPlayTimeDialog {
         val addInput = LauncherEditText(ctx)
         addInput.setHint(R.string.game_action_add_duration_hint)
         addInput.setTextColor(LauncherTheme.text(ctx))
-        addInput.setHintTextColor(ContextCompat.getColor(ctx, R.color.launcher_input_hint_color))
+        addInput.setHintTextColor(LauncherTheme.inputHint(ctx))
         addInput.textSize = 13f
         addInput.setPadding(LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9), LauncherTheme.dp(ctx, 13), LauncherTheme.dp(ctx, 9))
         addInput.background = LauncherTheme.cancelChip(ctx)

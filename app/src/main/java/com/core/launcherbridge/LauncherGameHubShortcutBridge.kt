@@ -1,6 +1,7 @@
 package com.core.launcherbridge
 
 import android.content.pm.PackageManager
+import com.core.launcher.EnginePackages
 import rikka.shizuku.Shizuku
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -48,9 +49,9 @@ object LauncherGameHubShortcutBridge {
         val output = runShizukuCommand(
             "uid=\$(am get-current-user 2>/dev/null); case \"\$uid\" in ''|*[!0-9]*) uid=0;; esac; "
                     + "for u in \$uid 0; do "
-                    + "cmd shortcut get-shortcuts --user \$u --flags 31 com.xiaoji.egggamz 2>&1; "
-                    + "cmd shortcut get-shortcuts --user \$u --flags 31 com.xiaoji.egggame 2>&1; "
-                    + "done; dumpsys shortcut 2>&1 | grep -i -A 40 -B 12 'com.xiaoji.egggamz\\|com.xiaoji.egggame\\|localGameId\\|local_\\|steamAppId' 2>&1"
+                    + "cmd shortcut get-shortcuts --user \$u --flags 31 ${EnginePackages.EXTERNAL_GAMEHUB_LEGACY} 2>&1; "
+                    + "cmd shortcut get-shortcuts --user \$u --flags 31 ${EnginePackages.EXTERNAL_GAMEHUB} 2>&1; "
+                    + "done; dumpsys shortcut 2>&1 | grep -i -A 40 -B 12 '${EnginePackages.EXTERNAL_GAMEHUB_LEGACY}\\|${EnginePackages.EXTERNAL_GAMEHUB}\\|localGameId\\|local_\\|steamAppId' 2>&1"
         )
 
         val items = ArrayList<Shortcut>()
@@ -107,6 +108,14 @@ object LauncherGameHubShortcutBridge {
         return cleaned.ifEmpty { null }
     }
 
+    /**
+     * 通过 Shizuku 执行 shell 命令并读取输出。
+     *
+     * 使用反射调用非公开的 Shizuku.newProcess：Shizuku 未公开跨进程 Process 启动 API，
+     * 反射为权宜实现。Shizuku 版本升级可能调整该内部方法签名/可见性，导致反射失败
+     * （本方法每次调用都会尝试，失败时抛异常由调用方兜底）。若后续 Shizuku 提供公开等价
+     * API，应优先替换并移除本反射。
+     */
     @Throws(Exception::class)
     private fun runShizukuCommand(command: String): String {
         val method = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)

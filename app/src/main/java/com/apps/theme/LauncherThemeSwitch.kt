@@ -10,32 +10,6 @@ import kotlin.math.max
 /** 统一 SwitchCompat 启停按钮与 Material 3 风格开关的色调/轨道绘制。 */
 internal object LauncherThemeSwitch {
 
-    internal fun styleSwitch(switchCompat: SwitchCompat?) {
-        if (switchCompat == null) return
-        val context = switchCompat.context
-        val primary = LauncherThemeColors.primary(context)
-        val mutedGray = ContextCompat.getColor(context, R.color.launcher_text_muted_color)
-
-        // thumb：开关圆点。开启时主色，关闭时浅灰
-        val thumbStates = arrayOf(
-            intArrayOf(android.R.attr.state_checked),
-            intArrayOf(-android.R.attr.state_checked)
-        )
-        val thumbColors = intArrayOf(primary, mutedGray)
-        switchCompat.thumbTintList = ColorStateList(thumbStates, thumbColors)
-
-        // track：开关轨道。开启时半透明主色，关闭时更浅的灰
-        // Color.WHITE 仅作 track 高亮混合基色，非页面取色（§3 豁免）
-        val trackOn = LauncherThemeParts.blend(primary, Color.WHITE, 0.6f)
-        val trackOff = LauncherThemeParts.blend(mutedGray, Color.WHITE, 0.6f)
-        val trackStates = arrayOf(
-            intArrayOf(android.R.attr.state_checked),
-            intArrayOf(-android.R.attr.state_checked)
-        )
-        val trackColors = intArrayOf(trackOn, trackOff)
-        switchCompat.trackTintList = ColorStateList(trackStates, trackColors)
-    }
-
     internal fun styleMaterialSwitch(switchCompat: SwitchCompat?) {
         if (switchCompat == null) return
         val context = switchCompat.context

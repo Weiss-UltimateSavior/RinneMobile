@@ -39,6 +39,10 @@ object LauncherTheme {
     @JvmStatic
     fun textMuted(context: Context): Int = LauncherThemeColors.textMuted(context)
 
+    /** 输入框提示文字颜色（launcher_input_hint_color）。 */
+    @JvmStatic
+    fun inputHint(context: Context): Int = LauncherThemeColors.inputHint(context)
+
     @JvmStatic
     fun primaryText(context: Context): Int = LauncherThemeColors.primaryText(context)
 
@@ -166,13 +170,6 @@ object LauncherTheme {
 
     @JvmStatic
     fun styleSpinner(spinner: Spinner?) = LauncherThemeSpinner.styleSpinner(spinner)
-
-    /**
-     * 统一 SwitchCompat 启停按钮的色调：开启时使用主题主色，关闭时使用中性灰。
-     * 必须在 Activity 创建后调用，确保主题已加载。
-     */
-    @JvmStatic
-    fun styleSwitch(switchCompat: SwitchCompat?) = LauncherThemeSwitch.styleSwitch(switchCompat)
 
     /**
      * Material 3 风格开关：开启时为实色轨道与白色圆点，关闭时使用描边轨道。

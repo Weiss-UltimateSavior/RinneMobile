@@ -21,6 +21,9 @@ internal class LibrarySwipeGesture(private val fragment: LauncherLibraryFragment
     private var swipeGestureDetector: GestureDetector? = null
     private var swipeConsumed: Boolean = false
 
+    /** RecyclerView 触摸监听引用，供 cleanup() 解除（§8 生命周期清理）。 */
+    private var recyclerTouchListener: RecyclerView.OnItemTouchListener? = null
+
     /** 消费一次已处理的横滑（供卡片点击/长按守卫使用，原 Fragment onGameClick/onGameLongClick 语义）。 */
     fun consumeSwipe(): Boolean {
         val consumed = swipeConsumed
@@ -52,7 +55,7 @@ internal class LibrarySwipeGesture(private val fragment: LauncherLibraryFragment
 
         val currentBinding = fragment.libraryBinding ?: return
         // RecyclerView 区域：通过 OnItemTouchListener 获取触摸事件
-        currentBinding.libraryRecycler.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+        val touchListener = object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 swipeGestureDetector!!.onTouchEvent(e)
                 return false
@@ -63,7 +66,9 @@ internal class LibrarySwipeGesture(private val fragment: LauncherLibraryFragment
             }
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
-        })
+        }
+        recyclerTouchListener = touchListener
+        currentBinding.libraryRecycler.addOnItemTouchListener(touchListener)
 
         // 非列表区域（背景、分类栏、空提示等）
         currentBinding.root.setOnTouchListener { _, event ->
@@ -78,6 +83,22 @@ internal class LibrarySwipeGesture(private val fragment: LauncherLibraryFragment
             swipeGestureDetector!!.onTouchEvent(event)
             false
         }
+    }
+
+    /** 解除触摸监听并释放手势检测器（Fragment onDestroyView 调用，§8 生命周期清理）。 */
+    fun cleanup() {
+        val currentBinding = fragment.libraryBinding
+        if (currentBinding != null) {
+            val touchListener = recyclerTouchListener
+            if (touchListener != null) {
+                currentBinding.libraryRecycler.removeOnItemTouchListener(touchListener)
+            }
+            currentBinding.root.setOnTouchListener(null)
+            currentBinding.libraryContent.setOnTouchListener(null)
+            currentBinding.libraryEmpty.setOnTouchListener(null)
+        }
+        recyclerTouchListener = null
+        swipeGestureDetector = null
     }
 
     private fun handleSwipeLeft(): Boolean {

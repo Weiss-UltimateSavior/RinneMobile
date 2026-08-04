@@ -480,7 +480,7 @@ internal object ExternalGameLaunchers {
         target?.trim()?.takeUnless { it.isEmpty() || it.startsWith('[') }.orEmpty()
 
     private fun isGameHubPackage(pkg: String?): Boolean =
-        pkg?.trim()?.lowercase(Locale.ROOT) in setOf("com.xiaoji.egggame", "com.xiaoji.egggamz")
+        pkg?.trim()?.lowercase(Locale.ROOT) in setOf(EnginePackages.EXTERNAL_GAMEHUB, EnginePackages.EXTERNAL_GAMEHUB_LEGACY)
 
     private fun isWinlatorPackage(pkg: String?): Boolean {
         val value = pkg?.lowercase(Locale.ROOT) ?: return false

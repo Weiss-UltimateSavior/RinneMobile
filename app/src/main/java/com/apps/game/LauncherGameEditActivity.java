@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.core.R;
 import com.core.databinding.ActivityLauncherGameEditBinding;
+import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.diagnostics.GameDiagnostics;
 import com.core.model.EngineType;
@@ -425,7 +426,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
             binding.editTitle.setText(item.localAppName);
         }
         if (binding.editEmulator.getText() == null || binding.editEmulator.getText().toString().trim().isEmpty()) {
-            binding.editEmulator.setText("com.xiaoji.egggame");
+            binding.editEmulator.setText(EnginePackages.EXTERNAL_GAMEHUB);
         }
     }
 

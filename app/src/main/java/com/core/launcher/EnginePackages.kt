@@ -34,6 +34,7 @@ object EnginePackages {
     const val EXTERNAL_AZAHAR = "io.github.azaharplus.android"
     const val EXTERNAL_EDEN = "dev.eden.eden_emulator"
     const val EXTERNAL_GAMEHUB = "com.xiaoji.egggame"
+    const val EXTERNAL_GAMEHUB_LEGACY = "com.xiaoji.egggamz"
     const val INTERNAL_RPGMAKER_XP = "internal.rpgmxp"
     const val INTERNAL_GODOT = "internal.godot"
 

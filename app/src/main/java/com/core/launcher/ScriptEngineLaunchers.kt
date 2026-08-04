@@ -222,7 +222,7 @@ internal object ScriptEngineLaunchers {
 
     private fun isTyranoScopedSaveEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean("tyrano_scoped_save_dir", true)
+            .getBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, true)
 
     private fun ensureWritable(directory: File, engine: String) {
         if (!directory.exists() && !directory.mkdirs()) {

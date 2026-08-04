@@ -146,7 +146,7 @@ internal object KrkrLauncher {
     @JvmStatic
     fun isScopedSaveEnabled(context: Context?): Boolean = context == null ||
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean("kr_scoped_save_dir", true)
+            .getBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, true)
 
     @JvmStatic
     fun resolvePath(context: Context?, rootUri: String?, launchTarget: String?): String? {

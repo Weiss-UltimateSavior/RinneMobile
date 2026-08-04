@@ -278,6 +278,8 @@ open class LauncherLibraryFragment : Fragment(),
         sessionController?.cleanup()
         if (::syncController.isInitialized) syncController.cleanup()
         if (::listController.isInitialized) listController.cleanup()
+        if (::toolbarUi.isInitialized) toolbarUi.cleanup()
+        if (::swipeGesture.isInitialized) swipeGesture.cleanup()
         if (_binding != null) {
             binding.root.setOnApplyWindowInsetsListener(null)
             binding.libraryRecycler.adapter = null

@@ -35,6 +35,7 @@ import androidx.core.app.NotificationCompat
 import com.core.CorePreferences
 import com.core.R
 import com.core.launcher.LauncherUiBridge
+import com.core.prefs.LauncherMainKeys
 import com.core.util.AppExecutors
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -78,13 +79,16 @@ class OverlayTranslationService : Service() {
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: android.hardware.display.VirtualDisplay? = null
     private var imageReader: android.media.ImageReader? = null
-    @Volatile private var latestImage: Image? = null
+    private var latestImage: Image? = null
     private var isTranslating = false
+    private var projectionRestartTask: Runnable? = null
+    private var projectionInitTask: Runnable? = null
+    private var translationRetryTask: Runnable? = null
     private var projectionReady = false
     private var closeConfirmShowing = false
     private lateinit var themePreferences: SharedPreferences
     private val themePreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == "launcher_theme_style") {
+        if (key == LauncherMainKeys.KEY_LAUNCHER_THEME_STYLE) {
             handler.post { refreshFloatingButtonTheme() }
         }
     }
@@ -96,7 +100,9 @@ class OverlayTranslationService : Service() {
             mediaProjection = null
             teardownCapture()
             // 延迟自动重建，避免在系统资源紧张时立即重试。
-            handler.postDelayed({ ensureMediaProjection() }, 1000)
+            val task = Runnable { ensureMediaProjection() }
+            projectionRestartTask = task
+            handler.postDelayed(task, 1000)
         }
     }
 
@@ -113,7 +119,9 @@ class OverlayTranslationService : Service() {
         startForegroundCompat()
         showFloatingButton()
         // 延迟创建 MediaProjection，等待前台 Service 完全就绪。
-        handler.postDelayed({ ensureMediaProjection() }, PROJECTION_INIT_DELAY_MS)
+        val task = Runnable { ensureMediaProjection() }
+        projectionInitTask = task
+        handler.postDelayed(task, PROJECTION_INIT_DELAY_MS)
         Toast.makeText(this, R.string.translation_overlay_enabled, Toast.LENGTH_SHORT).show()
     }
 
@@ -122,6 +130,12 @@ class OverlayTranslationService : Service() {
         if (::themePreferences.isInitialized) {
             themePreferences.unregisterOnSharedPreferenceChangeListener(themePreferenceListener)
         }
+        projectionRestartTask?.let { handler.removeCallbacks(it) }
+        projectionRestartTask = null
+        projectionInitTask?.let { handler.removeCallbacks(it) }
+        projectionInitTask = null
+        translationRetryTask?.let { handler.removeCallbacks(it) }
+        translationRetryTask = null
         removeFloatingButton()
         removeResultCard()
         teardownCapture()
@@ -461,11 +475,13 @@ class OverlayTranslationService : Service() {
                 return
             }
             // 刚重建 projection，等待系统推送第一帧
-            handler.postDelayed({
+            val task = Runnable {
                 // 本次等待并非实际翻译；先解除占用状态，再进入正常截图与请求流程。
                 isTranslating = false
                 triggerTranslation()
-            }, 800)
+            }
+            translationRetryTask = task
+            handler.postDelayed(task, 800)
             showLoadingCard()
             isTranslating = true
             return

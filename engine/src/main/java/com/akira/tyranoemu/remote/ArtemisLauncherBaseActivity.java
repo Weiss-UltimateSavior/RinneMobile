@@ -5,9 +5,10 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.content.Intent;
 
+import com.core.engine.EnginePrefs;
+
 public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.ArtemisActivity {
     private static final long EARLY_EXIT_WINDOW_MS = 3_000L;
-    private static final String PREFS_NAME = "yukihub_prefs";
     private static final String KEY_ARTEMIS_ENGINE_PREFIX = "artemis_engine.";
     private long createdAtElapsed;
     private boolean userRequestedFinish;
@@ -77,7 +78,7 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
         String path = source.getStringExtra("path");
         if (nextPackage == null || path == null || path.trim().isEmpty()) return;
 
-        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+        getSharedPreferences(EnginePrefs.APP_PREFS, MODE_PRIVATE).edit()
                 .putString(KEY_ARTEMIS_ENGINE_PREFIX + Integer.toHexString(path.hashCode()), nextPackage)
                 .apply();
         Intent retry = new Intent(this,

@@ -23,6 +23,8 @@ internal object LauncherThemeColors {
 
     internal fun textMuted(context: Context): Int = LauncherThemeParts.color(context, R.color.launcher_text_muted_color)
 
+    internal fun inputHint(context: Context): Int = LauncherThemeParts.color(context, R.color.launcher_input_hint_color)
+
     internal fun primaryText(context: Context): Int = LauncherThemeParts.color(context, R.color.launcher_primary_color)
 
     internal fun danger(context: Context): Int = LauncherThemeParts.color(context, R.color.launcher_danger_color)

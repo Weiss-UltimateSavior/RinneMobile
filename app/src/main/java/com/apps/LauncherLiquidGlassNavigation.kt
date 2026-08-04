@@ -133,6 +133,7 @@ private fun LiquidGlassLandscapeButton(
 ) {
     val density = LocalDensity.current
     val interactionSource = remember { MutableInteractionSource() }
+    // LiquidGlass 内容特效专属 surface 色（深色 0xFF171919）：Compose 玻璃拟态导航专用，不随 LauncherTheme 主题切换（§3 内容特效豁免）
     val surfaceColor = if (darkMode) Color(0xFF171919) else Color.White
 
     Box(
@@ -209,6 +210,7 @@ private fun LiquidGlassBottomNavigation(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
+    // LiquidGlass 内容特效专属配色（surface 0xFF171919 / muted 0xFFB6BFBB、浅色 0xFF63716B）：玻璃拟态导航专用，不随 LauncherTheme 主题切换（§3 内容特效豁免）
     val surfaceColor = if (darkMode) Color(0xFF171919) else Color.White
     val mutedColor = if (darkMode) Color(0xFFB6BFBB) else Color(0xFF63716B)
     val shape = RoundedCornerShape(32.dp)

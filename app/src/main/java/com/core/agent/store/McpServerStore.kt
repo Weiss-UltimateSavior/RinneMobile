@@ -165,8 +165,8 @@ object McpServerStore {
                 if (!id.matches("[0-9a-fA-F-]{36}".toRegex())) continue
                 result.add(Server(id, validateName(item.optString("name")),
                     validateEndpoint(item.optString("endpoint")), item.optLong("created_at")))
-            } catch (ignored: Throwable) {
-                // Skip invalid records during migration
+            } catch (ignored: IllegalArgumentException) {
+                // 跳过迁移期间损坏的旧记录：validateName/validateEndpoint 只抛 IllegalArgumentException
             }
         }
         return result

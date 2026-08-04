@@ -17,6 +17,8 @@ import java.nio.file.StandardCopyOption
  */
 object LauncherAvatarPersistence {
     const val FILE_NAME = "launcher_avatar.jpg"
+
+    /** 主页头像偏好键（主源 com.core.CorePreferences.KEY_PROFILE_AVATAR，const val 字面量副本）。 */
     const val KEY_PROFILE_AVATAR = "profile_avatar"
     const val KEY_CUSTOM_AVATAR = "custom_avatar_uri"
 
