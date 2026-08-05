@@ -181,10 +181,14 @@ class ExternalRenPyPluginStrategy : EngineLaunchStrategy {
                 if ("file".equals(scheme, ignoreCase = true)) return uri.path
                 if (!"content".equals(scheme, ignoreCase = true)) return uriText
                 var docId: String? = null
-                val path = uri.path
-                val hasDocumentPart = path != null && path.contains("/document/")
-                if (hasDocumentPart) {
-                    try { docId = DocumentsContract.getDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
+                val encodedPath = uri.encodedPath
+                val documentMarker = encodedPath?.indexOf("/document/")
+                if (documentMarker != null && documentMarker >= 0) {
+                    // tree-document 混合 URI（tree/<treeId>/document/<docId>）：getDocumentId 只接受
+                    // 纯 document 形式，混合形式抛异常会回退 tree 根而丢失游戏子目录（与
+                    // ScriptEngineLaunchers.uriToFilePath 同类缺陷，同思路修复）；取 /document/ 之后
+                    // 的编码段解码得完整 docId。
+                    try { docId = Uri.decode(encodedPath.substring(documentMarker + "/document/".length)) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }
                 }
                 if (docId.isNullOrEmpty()) {
                     try { docId = DocumentsContract.getTreeDocumentId(uri) } catch (_: Exception) { /* 尽力而为：解析失败保持默认 */ }

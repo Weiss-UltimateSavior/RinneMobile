@@ -25,6 +25,7 @@ import com.apps.game.LauncherSaveCategoryActivity
 import com.apps.settings.LauncherToolboxActivity
 import com.apps.settings.LauncherAppSettingsActivity
 import com.apps.settings.ResourceStationActivity
+import com.apps.settings.ResourceStationFragment
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
@@ -232,8 +233,8 @@ open class LauncherHomeFragment : Fragment() {
         ) { index ->
             val resource = resourceOptions.getOrNull(index) ?: return@showStandardActionChoices
             val intent = Intent(requireContext(), ResourceStationActivity::class.java)
-            intent.putExtra("resource_url", resource.second)
-            intent.putExtra("resource_title", resource.first)
+            intent.putExtra(ResourceStationFragment.EXTRA_URL, resource.second)
+            intent.putExtra(ResourceStationFragment.EXTRA_TITLE, resource.first)
             startLauncherActivity(intent)
         }
     }

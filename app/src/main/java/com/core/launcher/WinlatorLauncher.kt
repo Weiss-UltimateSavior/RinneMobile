@@ -41,7 +41,7 @@ internal object WinlatorLauncher {
         val execPath = resolveWinlatorExecPath(desktopPath, pkg)
         if (containerId <= 0 && isWinlatorPackage(pkg)) containerId = 1
         val launchMode = mode?.trim()?.lowercase(Locale.ROOT) ?: "game"
-        if (launchMode == "program" || launchMode == "normal") return ExternalGameLaunchers.launchPackage(context, pkg)
+        if (launchMode == "program" || launchMode == "normal") return PackageLauncher.launchPackage(context, pkg)
         val intents = mutableListOf<Intent>()
         arrayOf("XServerDisplayActivity", "XrActivity").forEach { simpleName ->
             arrayOf("$pkg.$simpleName", "$pkg.activities.$simpleName").forEach { className ->

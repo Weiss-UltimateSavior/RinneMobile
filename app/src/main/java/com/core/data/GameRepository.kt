@@ -727,8 +727,15 @@ class GameRepository(context: Context) {
                 if (s.startsWith("content://")) {
                     val uri = android.net.Uri.parse(s)
                     var docId: String? = null
-                    try { docId = android.provider.DocumentsContract.getDocumentId(uri) } catch (_: IllegalArgumentException) {
-                        // 非 document URI 时无法提取 docId，忽略
+                    val encodedPath = uri.encodedPath
+                    val documentMarker = encodedPath?.indexOf("/document/")
+                    if (documentMarker != null && documentMarker >= 0) {
+                        // tree-document 混合 URI（tree/<treeId>/document/<docId>）：getDocumentId 只接受
+                        // 纯 document 形式，混合形式抛异常会回退 tree 根，使同库下多游戏身份 key 坍缩
+                        //（与 ScriptEngineLaunchers.uriToFilePath 同类缺陷，同思路修复）。
+                        docId = try {
+                            android.net.Uri.decode(encodedPath.substring(documentMarker + "/document/".length))
+                        } catch (_: IllegalArgumentException) { null }
                     }
                     if (docId == null || docId.isEmpty()) {
                         try { docId = android.provider.DocumentsContract.getTreeDocumentId(uri) } catch (_: IllegalArgumentException) {

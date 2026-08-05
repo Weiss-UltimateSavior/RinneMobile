@@ -87,32 +87,10 @@ internal object ExternalGameLaunchers {
         return Collections.unmodifiableList(types)
     }
 
+    /** 通用包名启动回退（阶段 124 W-2 单源下沉）：实现移至 [PackageLauncher]，本方法保留 @JvmStatic 兼容签名。 */
     @JvmStatic
-    fun launchPackage(context: Context?, packageName: String?): Boolean {
-        if (context == null || packageName.isNullOrBlank()) return false
-        val pkg = packageName.trim()
-        context.packageManager.getLaunchIntentForPackage(pkg)?.let { intent ->
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-            return true
-        }
-        arrayOf(
-            "$pkg.MainActivity", "$pkg.AppActivity", "$pkg.TyranoActivity",
-            "$pkg.PlayerActivity", "$pkg.activity.MainActivity",
-        ).forEach { className ->
-            val intent = Intent(Intent.ACTION_MAIN)
-                .addCategory(Intent.CATEGORY_LAUNCHER)
-                .setClassName(pkg, className)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try {
-                context.startActivity(intent)
-                return true
-            } catch (_: Exception) {
-                // Try the next common launcher class.
-            }
-        }
-        return false
-    }
+    fun launchPackage(context: Context?, packageName: String?): Boolean =
+        PackageLauncher.launchPackage(context, packageName)
 
     private fun addBuiltIn(strategy: EngineLaunchStrategy) = strategies.add(strategy)
 

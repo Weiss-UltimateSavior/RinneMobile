@@ -22,6 +22,7 @@ import com.apps.settings.LauncherAppSettingsFragment
 import com.apps.settings.LauncherToolboxActivity
 import com.apps.settings.LauncherToolboxFragment
 import com.apps.settings.ResourceStationActivity
+import com.apps.settings.ResourceStationFragment
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
 import com.apps.theme.LauncherThemeMenuFragment
@@ -32,10 +33,8 @@ import com.core.databinding.FragmentLauncherHomeBinding
 /**
  * HD 模式首页：复用 Launcher 首页的业务逻辑与交互，仅在布局完成后改为大屏横向排版。
  */
-@Suppress("DEPRECATION")
 class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var embeddedHost: HdEmbeddedActivityHost? = null
     private var hdHeaderArranged = false
 
     override fun onCreateView(
@@ -50,29 +49,11 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdHomeDetailContainer)
         super.onViewCreated(view, savedInstanceState)
     }
 
-    override fun onResume() {
-        super.onResume()
-        embeddedHost?.onResume()
-    }
-
-    override fun onPause() {
-        embeddedHost?.onPause()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        embeddedHost?.onStop()
-        super.onStop()
-    }
-
     override fun onDestroyView() {
-        embeddedHost?.onDestroyView()
-        embeddedHost = null
         detailContainer = null
         hdHeaderArranged = false
         super.onDestroyView()
@@ -150,7 +131,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
             (activity as? HdModeActivity)?.showSaveManagerFragment()
             return
         }
-        // 菜单目标迁子 Fragment（9.9 ②HdHome）：设置/主题/免责声明/工具箱/本地智能体
+        // 菜单目标迁子 Fragment（9.9 ②HdHome）：设置/主题/免责声明/工具箱/本地智能体/资源站
         when (className) {
             LauncherAppSettingsActivity::class.java.name -> {
                 showChildFragment(CHILD_APP_SETTINGS_TAG, LauncherAppSettingsFragment())
@@ -172,33 +153,21 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
                 showChildFragment(CHILD_LOCAL_AGENT_TAG, LocalAgentFragment())
                 return
             }
-        }
-        // 其余目标（ResourceStation/未知 intent）保持嵌入路径
-        if (className == ResourceStationActivity::class.java.name) {
-            intent.putExtra(ResourceStationActivity.EXTRA_HD_EMBEDDED, true)
-        }
-        val host = embeddedHost
-        val container = detailContainer
-        if (host == null || container == null) {
-            super.startLauncherActivity(intent)
-            return
-        }
-        val activityName = className.orEmpty()
-        val id = "hd_home_${activityName.substringAfterLast('.').ifEmpty { "detail" }}"
-        val content = host.start(
-            id,
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-        ) ?: return
-        container.visibility = View.VISIBLE
-        HdPageMotion.showEmbedded(container, content)
-        val hostActivity = requireActivity() as? HdModeActivity
-        hostActivity?.refreshNavigationChrome()
-        // I-2 守卫（阶段 120）：post 延迟执行期间宿主 Activity 可能已销毁，幂等刷新前校验状态。
-        container.post {
-            if (hostActivity != null && !hostActivity.isFinishing && !hostActivity.isDestroyed) {
-                hostActivity.refreshNavigationChrome()
+            ResourceStationActivity::class.java.name -> {
+                // 9.9 ③ 阶段 125：ResourceStation 由 embeddedHost 嵌入迁子 Fragment（hdEmbedded=true 复刻 HD 圆角背景视觉）。
+                showChildFragment(
+                    CHILD_RESOURCE_STATION_TAG,
+                    ResourceStationFragment.newInstance(
+                        url = intent.getStringExtra(ResourceStationFragment.EXTRA_URL),
+                        title = intent.getStringExtra(ResourceStationFragment.EXTRA_TITLE),
+                        hdEmbedded = true,
+                    ),
+                )
+                return
             }
         }
+        // 其余目标（理论未知 intent）回退默认启动（竖屏行为）；HD 下不再经 LocalActivityManager 嵌入（W-3 HdHome 关闭）。
+        super.startLauncherActivity(intent)
     }
 
     private fun showChildFragment(tag: String, fragment: Fragment) {
@@ -214,12 +183,13 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        // 子 Fragment 路径（5 个菜单目标）
+        // 子 Fragment 路径（6 个目标：设置/主题/免责声明/工具箱/本地智能体/资源站）
         val existing = childFragmentManager.findFragmentByTag(CHILD_APP_SETTINGS_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_THEME_MENU_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_DISCLAIMER_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_TOOLBOX_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_LOCAL_AGENT_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_RESOURCE_STATION_TAG)
         if (existing != null) {
             childFragmentManager.beginTransaction()
                 .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
@@ -228,15 +198,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
             detailContainer?.visibility = View.GONE
             return true
         }
-        // embeddedHost 回退（ResourceStation/未知 intent）
-        val host = embeddedHost ?: return false
-        val id = host.beginClose(child) ?: return false
-        detailContainer?.apply {
-            HdPageMotion.closeEmbedded(this, hideContainer = true) {
-                post { host.destroy(id) }
-            }
-        }
-        return true
+        return false
     }
 
     private fun arrangeHdHeader(
@@ -291,5 +253,6 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         private const val CHILD_DISCLAIMER_TAG = "hd_home_disclaimer"
         private const val CHILD_TOOLBOX_TAG = "hd_home_toolbox"
         private const val CHILD_LOCAL_AGENT_TAG = "hd_home_local_agent"
+        private const val CHILD_RESOURCE_STATION_TAG = "hd_home_resource_station"
     }
 }
