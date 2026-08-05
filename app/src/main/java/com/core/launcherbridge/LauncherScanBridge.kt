@@ -348,7 +348,7 @@ object LauncherScanBridge {
      * 探测设备上已安装的 Winlator 系应用包名。
      *
      * 匹配规则与主分支 MainActivity.guessInstalledWinlatorPackage 一致，
-     * 关键词集合与 [com.core.launcher.ExternalGameLaunchers] 的 isWinlatorPackage 同源：
+     * 关键词集合与 [com.core.launcher.WinlatorLauncher] 的 isWinlatorPackage 同源：
      * 包名或应用名包含 winlator / glibc / proot / mobox / winalator，且存在 Launcher Intent。
      * 优先返回包名含 "cmod" 的改版；其次返回首个命中项；未命中返回空串。
      */

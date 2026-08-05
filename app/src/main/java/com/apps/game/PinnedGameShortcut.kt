@@ -31,6 +31,15 @@ object PinnedGameShortcut {
      */
     private val iconCache = LruCache<String, Bitmap>(8)
 
+    /**
+     * 清空图标位图缓存（内存压力时调用，见 LauncherActivity.onTrimMemory 方案 A）。
+     * 驱逐仅丢弃引用交由 GC 回收，不主动 recycle。
+     */
+    @JvmStatic
+    fun clearIconCache() {
+        iconCache.evictAll()
+    }
+
     interface LaunchCallback {
         fun onResult(result: LauncherGameLaunchBridge.LaunchResult)
     }

@@ -1,6 +1,5 @@
 package com.apps.HDModel
 
-import android.app.LocalActivityManager
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -26,8 +25,7 @@ import com.core.databinding.FragmentLauncherHomeBinding
 @Suppress("DEPRECATION")
 class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var localActivityManager: LocalActivityManager? = null
-    private var embeddedActivityId: String? = null
+    private var embeddedHost: HdEmbeddedActivityHost? = null
     private var hdHeaderArranged = false
 
     override fun onCreateView(
@@ -42,33 +40,30 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        localActivityManager = LocalActivityManager(requireActivity(), false).apply {
-            dispatchCreate(savedInstanceState)
-        }
+        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdHomeDetailContainer)
         super.onViewCreated(view, savedInstanceState)
     }
 
     override fun onResume() {
         super.onResume()
-        localActivityManager?.dispatchResume()
+        embeddedHost?.onResume()
     }
 
     override fun onPause() {
-        localActivityManager?.dispatchPause(requireActivity().isFinishing)
+        embeddedHost?.onPause()
         super.onPause()
     }
 
     override fun onStop() {
-        localActivityManager?.dispatchStop()
+        embeddedHost?.onStop()
         super.onStop()
     }
 
     override fun onDestroyView() {
-        localActivityManager?.dispatchDestroy(requireActivity().isFinishing)
-        localActivityManager = null
+        embeddedHost?.onDestroyView()
+        embeddedHost = null
         detailContainer = null
-        embeddedActivityId = null
         hdHeaderArranged = false
         super.onDestroyView()
     }
@@ -147,36 +142,31 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         if (intent.component?.className == ResourceStationActivity::class.java.name) {
             intent.putExtra(ResourceStationActivity.EXTRA_HD_EMBEDDED, true)
         }
-        val manager = localActivityManager
+        val host = embeddedHost
         val container = detailContainer
-        if (manager == null || container == null) {
+        if (host == null || container == null) {
             super.startLauncherActivity(intent)
             return
         }
         val activityName = intent.component?.className.orEmpty()
         val id = "hd_home_${activityName.substringAfterLast('.').ifEmpty { "detail" }}"
-        embeddedActivityId = id
-        val window = manager.startActivity(
+        val content = host.start(
             id,
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
         ) ?: return
-        val content = window.decorView
         container.visibility = View.VISIBLE
         HdPageMotion.showEmbedded(container, content)
-        val host = requireActivity() as? HdModeActivity
-        host?.refreshNavigationChrome()
-        container.post { host?.refreshNavigationChrome() }
+        val hostActivity = requireActivity() as? HdModeActivity
+        hostActivity?.refreshNavigationChrome()
+        container.post { hostActivity?.refreshNavigationChrome() }
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val manager = localActivityManager ?: return false
-        val id = embeddedActivityId ?: return false
-        val current = manager.currentActivity
-        if (child != null && current != null && current !== child) return false
-        embeddedActivityId = null
+        val host = embeddedHost ?: return false
+        val id = host.beginClose(child) ?: return false
         detailContainer?.apply {
             HdPageMotion.closeEmbedded(this, hideContainer = true) {
-                post { manager.destroyActivity(id, true) }
+                post { host.destroy(id) }
             }
         }
         return true

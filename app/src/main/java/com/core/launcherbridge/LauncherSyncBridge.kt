@@ -5,9 +5,11 @@ import android.content.res.AssetFileDescriptor
 import android.net.Uri
 import com.core.R
 import com.core.sync.SyncManager
+import com.core.sync.SyncSnapshotCodec
 import com.core.util.RxMainScheduler
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
 
 /**
@@ -15,7 +17,7 @@ import java.io.InputStream
  */
 object LauncherSyncBridge {
 
-    private val MAX_LOCAL_BACKUP_BYTES: Int = SyncManager.MAX_LOCAL_BACKUP_BYTES
+    private val MAX_LOCAL_BACKUP_BYTES: Int = SyncSnapshotCodec.MAX_LOCAL_BACKUP_BYTES
 
     @JvmStatic
     fun isConfigured(context: Context?): Boolean =
@@ -51,7 +53,7 @@ object LauncherSyncBridge {
 
     @Throws(Exception::class)
     private fun exportLocalBackup(context: Context?): JSONObject {
-        if (context == null) throw Exception("上下文不可用")
+        if (context == null) throw IllegalStateException("上下文不可用")
         val root = SyncManager(context.applicationContext).exportSnapshotForLocalBackup()
         root.put("created_at", System.currentTimeMillis())
         root.put("backup_type", "local_full")
@@ -62,10 +64,10 @@ object LauncherSyncBridge {
     @JvmStatic
     @Throws(Exception::class)
     fun importLocalBackup(context: Context?, snapshot: JSONObject?) {
-        if (context == null) throw Exception("上下文不可用")
-        if (snapshot == null) throw Exception(context.getString(R.string.core_backup_empty))
+        if (context == null) throw IllegalStateException("上下文不可用")
+        if (snapshot == null) throw IllegalArgumentException(context.getString(R.string.core_backup_empty))
         if ("YukiHub" != snapshot.optString("app", "")) {
-            throw Exception(context.getString(R.string.core_backup_invalid))
+            throw IllegalArgumentException(context.getString(R.string.core_backup_invalid))
         }
         SyncManager(context.applicationContext).importSnapshotFromLocalBackup(snapshot)
     }
@@ -79,11 +81,11 @@ object LauncherSyncBridge {
     @JvmStatic
     @Throws(Exception::class)
     fun exportLocalBackupAsGzip(context: Context?): GzipBackup {
-        if (context == null) throw Exception("上下文不可用")
+        if (context == null) throw IllegalStateException("上下文不可用")
         val root = exportLocalBackup(context)
         val jsonText = root.toString(2)
         val jsonBytes = jsonText.toByteArray(Charsets.UTF_8)
-        val compressed = SyncManager.compressGzip(jsonText)
+        val compressed = SyncSnapshotCodec.compressGzip(jsonText)
         return GzipBackup(compressed, jsonBytes.size)
     }
 
@@ -96,10 +98,10 @@ object LauncherSyncBridge {
     @JvmStatic
     @Throws(Exception::class)
     fun importLocalBackupFromBytes(context: Context?, bytes: ByteArray?): JSONObject {
-        if (context == null) throw Exception("上下文不可用")
-        if (bytes == null || bytes.isEmpty()) throw Exception(context.getString(R.string.core_backup_empty))
+        if (context == null) throw IllegalStateException("上下文不可用")
+        if (bytes == null || bytes.isEmpty()) throw IllegalArgumentException(context.getString(R.string.core_backup_empty))
         // 本地备份解压上限与导出端 MAX_LOCAL_BACKUP_BYTES 一致（32MB），避免 16-32MB 备份无法导入
-        val text = SyncManager.decompressIfGzip(bytes, SyncManager.MAX_LOCAL_BACKUP_BYTES)
+        val text = SyncSnapshotCodec.decompressIfGzip(bytes, SyncSnapshotCodec.MAX_LOCAL_BACKUP_BYTES)
         val root = JSONObject(text)
         importLocalBackup(context, root)
         return root
@@ -120,8 +122,8 @@ object LauncherSyncBridge {
     @JvmStatic
     @Throws(Exception::class)
     fun importLocalBackupFromUri(context: Context?, uri: Uri?): JSONObject {
-        if (context == null) throw Exception("上下文不可用")
-        if (uri == null) throw Exception(context.getString(R.string.core_backup_file_unavailable))
+        if (context == null) throw IllegalStateException("上下文不可用")
+        if (uri == null) throw IllegalArgumentException(context.getString(R.string.core_backup_file_unavailable))
         val bytes = readBytesFromUri(context, uri)
         return importLocalBackupFromBytes(context, bytes)
     }
@@ -177,14 +179,14 @@ object LauncherSyncBridge {
             // Some document providers cannot report a length; the stream limit below remains authoritative.
         }
         if (declaredLength > MAX_LOCAL_BACKUP_BYTES) {
-            throw Exception(context.getString(
+            throw IOException(context.getString(
                 R.string.core_backup_declared_too_large,
                 declaredLength,
                 MAX_LOCAL_BACKUP_BYTES,
             ))
         }
         val input: InputStream = context.contentResolver.openInputStream(uri)
-            ?: throw Exception("openInputStream failed")
+            ?: throw IOException("openInputStream failed")
         input.use { stream ->
             val bos = ByteArrayOutputStream()
             val buf = ByteArray(8192)
@@ -193,7 +195,7 @@ object LauncherSyncBridge {
             while (stream.read(buf).also { len = it } != -1) {
                 total += len
                 if (total > MAX_LOCAL_BACKUP_BYTES) {
-                    throw Exception(context.getString(
+                    throw IOException(context.getString(
                         R.string.core_backup_too_large,
                         MAX_LOCAL_BACKUP_BYTES,
                     ))

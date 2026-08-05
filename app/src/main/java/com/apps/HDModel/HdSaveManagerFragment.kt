@@ -1,6 +1,5 @@
 package com.apps.HDModel
 
-import android.app.LocalActivityManager
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -27,12 +26,11 @@ import java.util.LinkedHashMap
  */
 @Suppress("DEPRECATION")
 class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
-    private var localActivityManager: LocalActivityManager? = null
+    private var embeddedHost: HdEmbeddedActivityHost? = null
     private var categoryList: LinearLayout? = null
     private var statusView: TextView? = null
     private var detailContainer: FrameLayout? = null
     private var selectedEngine: EngineType? = null
-    private var embeddedActivityId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,9 +39,7 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
     ): View = inflater.inflate(R.layout.fragment_hd_save_manager, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        localActivityManager = LocalActivityManager(requireActivity(), false).apply {
-            dispatchCreate(savedInstanceState)
-        }
+        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         categoryList = view.findViewById(R.id.hdSaveCategoryList)
         statusView = view.findViewById(R.id.hdSaveCategoryStatus)
         detailContainer = view.findViewById(R.id.hdSaveDetailContainer)
@@ -53,26 +49,25 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
 
     override fun onResume() {
         super.onResume()
-        localActivityManager?.dispatchResume()
+        embeddedHost?.onResume()
     }
 
     override fun onPause() {
-        localActivityManager?.dispatchPause(requireActivity().isFinishing)
+        embeddedHost?.onPause()
         super.onPause()
     }
 
     override fun onStop() {
-        localActivityManager?.dispatchStop()
+        embeddedHost?.onStop()
         super.onStop()
     }
 
     override fun onDestroyView() {
-        localActivityManager?.dispatchDestroy(requireActivity().isFinishing)
-        localActivityManager = null
+        embeddedHost?.onDestroyView()
+        embeddedHost = null
         categoryList = null
         statusView = null
         detailContainer = null
-        embeddedActivityId = null
         super.onDestroyView()
     }
 
@@ -122,28 +117,23 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
     }
 
     private fun showEngine(engine: EngineType) {
-        val manager = localActivityManager ?: return
+        val host = embeddedHost ?: return
         val container = detailContainer ?: return
         selectedEngine = engine
         val intent = Intent(requireContext(), LauncherSaveGameListActivity::class.java)
             .putExtra(LauncherSaveGameListActivity.EXTRA_ENGINE, engine.name)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val id = "hd_save_${engine.name}"
-        embeddedActivityId = id
-        val window = manager.startActivity(id, intent) ?: return
-        val content = window.decorView
+        val content = host.start(id, intent) ?: return
         HdPageMotion.showEmbedded(container, content)
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val manager = localActivityManager ?: return false
-        val id = embeddedActivityId ?: return false
-        val current = manager.currentActivity
-        if (child != null && current != null && current !== child) return false
-        embeddedActivityId = null
+        val host = embeddedHost ?: return false
+        val id = host.beginClose(child) ?: return false
         detailContainer?.apply {
             HdPageMotion.closeEmbedded(this) {
-                post { manager.destroyActivity(id, true) }
+                post { host.destroy(id) }
             }
         }
         return true

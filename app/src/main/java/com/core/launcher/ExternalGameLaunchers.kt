@@ -2,17 +2,21 @@ package com.core.launcher
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import com.core.model.EngineType
-import java.io.File
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 
-/** 外部模拟器策略注册、GameHub/Winlator 协议和通用包启动回退。 */
+/**
+ * 外部模拟器策略注册、GameHub 协议和通用包启动回退。
+ *
+ * 职责切分（重构计划 3.5 阶段 98，§8:323 按职责切片）：
+ *   - Winlator 启动协议（.desktop/.exe 解析 + fork 契约回退）→ [WinlatorLauncher]
+ * 本类保留策略注册表、手持机/内置策略与通用 Kirikiri 回退，@JvmStatic 签名不变。
+ */
 internal object ExternalGameLaunchers {
     private const val TAG = "EmulatorLauncher"
     private val strategies = CopyOnWriteArrayList<EngineLaunchStrategy>()
@@ -204,12 +208,25 @@ internal object ExternalGameLaunchers {
 
     private object WinlatorStrategy : BaseStrategy(EngineType.WINLATOR) {
         override fun supports(request: LaunchRequest): Boolean =
-            isWinlatorPackage(request.packageName) && isWinlatorTarget(request.launchTarget)
+            WinlatorLauncher.isWinlatorPackage(request.packageName) && WinlatorLauncher.isWinlatorTarget(request.launchTarget)
 
-        override fun launch(context: Context, request: LaunchRequest): Boolean = launchWinlator(
-            context, request.packageName, request.rootUri, request.launchTarget, request.winlatorLaunchMode,
-        )
+        override fun launch(context: Context, request: LaunchRequest): Boolean =
+            WinlatorLauncher.launch(context, request)
     }
+
+    // ── Winlator 解析委托（保留 @JvmStatic 签名，ExternalGameLaunchersTest 零变更）──
+
+    @JvmStatic
+    fun resolveWinlatorExecPath(desktopPath: String?, pkg: String?): String? =
+        WinlatorLauncher.resolveWinlatorExecPath(desktopPath, pkg)
+
+    @JvmStatic
+    fun extractDesktopExecutable(exec: String?): String? =
+        WinlatorLauncher.extractDesktopExecutable(exec)
+
+    @JvmStatic
+    fun parseWinlatorContainerId(desktopPath: String?): Int =
+        WinlatorLauncher.parseWinlatorContainerId(desktopPath)
 
     private fun launchGenericKirikiriCompatible(context: Context, request: LaunchRequest): Boolean {
         if (!request.rootUri.isNullOrBlank()) {
@@ -261,162 +278,6 @@ internal object ExternalGameLaunchers {
                 .putExtra("path", uriText).putExtra("uri", uriText).putExtra("game", uriText)
                 .putExtra("startup", uriText).putExtra("projectRoot", rootText).putExtra("launchFile", target),
         )
-    }
-
-    private fun launchWinlator(
-        context: Context,
-        pkg: String,
-        rootUri: String?,
-        launchTarget: String?,
-        mode: String?,
-    ): Boolean {
-        val desktopPath = resolveDesktopPath(context, rootUri, launchTarget)?.takeIf(String::isNotBlank)
-            ?: return false
-        var containerId = parseWinlatorContainerId(desktopPath)
-        val execPath = resolveWinlatorExecPath(desktopPath, pkg)
-        if (containerId <= 0 && isWinlatorPackage(pkg)) containerId = 1
-        val launchMode = mode?.trim()?.lowercase(Locale.ROOT) ?: "game"
-        if (launchMode == "program" || launchMode == "normal") return launchPackage(context, pkg)
-        val intents = mutableListOf<Intent>()
-        arrayOf("XServerDisplayActivity", "XrActivity").forEach { simpleName ->
-            arrayOf("$pkg.$simpleName", "$pkg.activities.$simpleName").forEach { className ->
-                intents += addWinlatorExtras(explicit(pkg, className, Intent.ACTION_MAIN, null), desktopPath, execPath, containerId)
-            }
-        }
-        intents += addWinlatorExtras(
-            Intent(Intent.ACTION_VIEW).setPackage(pkg)
-                .setDataAndType(Uri.fromFile(File(desktopPath)), "application/x-desktop"),
-            desktopPath,
-            null,
-            containerId,
-        )
-        context.packageManager.getLaunchIntentForPackage(pkg)?.let {
-            intents += addWinlatorExtras(it, desktopPath, null, containerId)
-        }
-        intents += addWinlatorExtras(
-            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg),
-            desktopPath, null, containerId,
-        )
-        intents += addWinlatorExtras(explicit(pkg, "$pkg.MainActivity", Intent.ACTION_MAIN, null)
-            .addCategory(Intent.CATEGORY_LAUNCHER), desktopPath, null, containerId)
-        intents += addWinlatorExtras(explicit(pkg, "$pkg.activities.MainActivity", Intent.ACTION_MAIN, null)
-            .addCategory(Intent.CATEGORY_LAUNCHER), desktopPath, null, containerId)
-        intents.forEach { intent ->
-            intent.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
-            )
-            try {
-                context.startActivity(intent)
-                return true
-            } catch (_: Exception) {
-                // Try the next Winlator fork contract.
-            }
-        }
-        return false
-    }
-
-    private fun addWinlatorExtras(
-        intent: Intent,
-        desktopPath: String,
-        execPath: String?,
-        containerId: Int,
-    ): Intent {
-        if (containerId > 0) intent.putExtra("container_id", containerId)
-        intent.putExtra("shortcut_path", desktopPath)
-        intent.putExtra("desktop_path", desktopPath)
-        intent.putExtra("path", desktopPath)
-        intent.putExtra("file", desktopPath)
-        intent.putExtra("rom", desktopPath)
-        if (!execPath.isNullOrBlank()) {
-            intent.putExtra("exec_path", execPath)
-            intent.putExtra("path", execPath)
-            dirname(execPath)?.let { intent.putExtra("start_path", it) }
-        }
-        return intent
-    }
-
-    @JvmStatic
-    fun resolveWinlatorExecPath(desktopPath: String?, pkg: String?): String? {
-        return try {
-            val file = desktopPath?.let(::File)?.takeIf(File::isFile) ?: return null
-            var exec: String? = null
-            var workingPath: String? = null
-            file.bufferedReader().useLines { lines ->
-                lines.forEach { line ->
-                    val text = line.trim()
-                    if (text.startsWith("Exec=")) exec = text.substring(5).trim()
-                    else if (text.startsWith("Path=")) workingPath = text.substring(5).trim()
-                }
-            }
-            var executable = extractDesktopExecutable(exec) ?: return null
-            executable = executable.replace('\\', '/')
-            if (Regex("^[A-Za-z]:/.*").matches(executable)) {
-                if (!workingPath.isNullOrBlank()) {
-                    val fileName = executable.substringAfterLast('/')
-                    val unixPath = workingPath!!.replace('\\', '/')
-                    return unixPath + if (unixPath.endsWith('/')) fileName else "/$fileName"
-                }
-                val drive = executable[0].lowercaseChar()
-                val packageForPath = pkg?.trim()?.takeIf(String::isNotEmpty) ?: "com.winlator"
-                return "/data/user/0/$packageForPath/files/rootfs/home/xuser/.wine/dosdevices/$drive:${executable.substring(2)}"
-            }
-            executable
-        } catch (_: Exception) {
-            // 尽力而为：desktop 解析失败时返回 null，由上层回退
-            null
-        }
-    }
-
-    @JvmStatic
-    fun extractDesktopExecutable(exec: String?): String? {
-        var value = exec?.trim() ?: return null
-        val wineIndex = value.lowercase(Locale.ROOT).lastIndexOf("wine ")
-        if (wineIndex >= 0) value = value.substring(wineIndex + 5).trim()
-        if (value.startsWith('"')) {
-            val end = value.indexOf('"', 1)
-            if (end > 1) return value.substring(1, end)
-        }
-        val exeIndex = value.lowercase(Locale.ROOT).indexOf(".exe")
-        return if (exeIndex >= 0) value.substring(0, exeIndex + 4).trim() else value
-    }
-
-    @JvmStatic
-    fun parseWinlatorContainerId(desktopPath: String?): Int {
-        desktopPath ?: return 0
-        val first = desktopPath.indexOf("/xuser-")
-        val markerStart = if (first >= 0) first + 7 else {
-            val fallback = desktopPath.indexOf("xuser-")
-            if (fallback < 0) return 0 else fallback + 6
-        }
-        val digits = desktopPath.substring(markerStart).takeWhile(Char::isDigit)
-        return digits.toIntOrNull() ?: 0
-    }
-
-    private fun resolveDesktopPath(context: Context, rootUri: String?, launchTarget: String?): String? {
-        val target = launchTarget?.trim().orEmpty()
-        if (target.startsWith('/') || target.startsWith("file://")) {
-            return ScriptEngineLaunchers.stripFileScheme(target)
-        }
-        val rootPath = ScriptEngineLaunchers.uriToFilePath(rootUri)
-        if (rootPath.isNullOrBlank()) return target
-        if (rootPath.lowercase(Locale.ROOT).endsWith(".desktop")) {
-            return ScriptEngineLaunchers.stripFileScheme(rootPath)
-        }
-        if (rootPath.startsWith("content://")) {
-            try {
-                var current = rootUri?.let { DocumentFile.fromTreeUri(context, Uri.parse(it)) }
-                target.split('/').filter(String::isNotEmpty).forEach { current = current?.findFile(it) }
-                current?.uri?.toString()?.let(ScriptEngineLaunchers::uriToFilePath)?.let { childPath ->
-                    if (!childPath.startsWith("content://")) return childPath
-                }
-            } catch (_: Exception) {
-                // Preserve the content URI fallback.
-            }
-            return rootPath
-        }
-        return if (rootPath.endsWith('/')) rootPath + target else "$rootPath/$target"
     }
 
     private fun buildKirikiriLaunchUris(context: Context, rootUri: String, launchTarget: String?): List<Uri> {
@@ -481,18 +342,6 @@ internal object ExternalGameLaunchers {
 
     private fun isGameHubPackage(pkg: String?): Boolean =
         pkg?.trim()?.lowercase(Locale.ROOT) in setOf(EnginePackages.EXTERNAL_GAMEHUB, EnginePackages.EXTERNAL_GAMEHUB_LEGACY)
-
-    private fun isWinlatorPackage(pkg: String?): Boolean {
-        val value = pkg?.lowercase(Locale.ROOT) ?: return false
-        return listOf("winlator", "glibc", "proot", "mobox", "winalator").any(value::contains)
-    }
-
-    private fun isWinlatorTarget(target: String?): Boolean {
-        val value = target?.trim()?.lowercase(Locale.ROOT) ?: return false
-        return value.endsWith(".desktop") || value.endsWith(".exe")
-    }
-
-    private fun dirname(path: String?): String? = path?.lastIndexOf('/')?.takeIf { it > 0 }?.let(path::substring)
 
     private fun engineIntentFlags(): Int = Intent.FLAG_ACTIVITY_NEW_TASK or
         Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or

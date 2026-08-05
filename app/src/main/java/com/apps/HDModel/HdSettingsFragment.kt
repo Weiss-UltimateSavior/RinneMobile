@@ -1,6 +1,5 @@
 package com.apps.HDModel
 
-import android.app.LocalActivityManager
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -30,8 +29,7 @@ import com.core.launcherbridge.LauncherUpdateBridge
 @Suppress("DEPRECATION")
 class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var localActivityManager: LocalActivityManager? = null
-    private var embeddedActivityId: String? = null
+    private var embeddedHost: HdEmbeddedActivityHost? = null
 
     /**
      * 嵌入的 [LauncherAppSettingsActivity] 无法接收 Activity Result 回调，
@@ -61,9 +59,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        localActivityManager = LocalActivityManager(requireActivity(), false).apply {
-            dispatchCreate(savedInstanceState)
-        }
+        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdSettingsDetailContainer)
         LauncherTheme.applyPrimaryTone(view)
         val actionList = view.findViewById<LinearLayout>(R.id.hdSettingsActionList)
@@ -112,49 +108,43 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
 
     override fun onResume() {
         super.onResume()
-        localActivityManager?.dispatchResume()
+        embeddedHost?.onResume()
     }
 
     override fun onPause() {
-        localActivityManager?.dispatchPause(requireActivity().isFinishing)
+        embeddedHost?.onPause()
         super.onPause()
     }
 
     override fun onStop() {
-        localActivityManager?.dispatchStop()
+        embeddedHost?.onStop()
         super.onStop()
     }
 
     override fun onDestroyView() {
-        localActivityManager?.dispatchDestroy(requireActivity().isFinishing)
-        localActivityManager = null
+        embeddedHost?.onDestroyView()
+        embeddedHost = null
         detailContainer = null
-        embeddedActivityId = null
         pendingSplashImageCallback = null
         super.onDestroyView()
     }
 
     private fun showEmbeddedActivity(id: String, activityClass: Class<*>) {
-        val manager = localActivityManager ?: return
+        val host = embeddedHost ?: return
         val container = detailContainer ?: return
-        embeddedActivityId = id
-        val window = manager.startActivity(
+        val content = host.start(
             id,
             Intent(requireContext(), activityClass).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
         ) ?: return
-        val content = window.decorView
         HdPageMotion.showEmbedded(container, content)
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val manager = localActivityManager ?: return false
-        val id = embeddedActivityId ?: return false
-        val current = manager.currentActivity
-        if (child != null && current != null && current !== child) return false
-        embeddedActivityId = null
+        val host = embeddedHost ?: return false
+        val id = host.beginClose(child) ?: return false
         detailContainer?.apply {
             HdPageMotion.closeEmbedded(this) {
-                post { manager.destroyActivity(id, true) }
+                post { host.destroy(id) }
             }
         }
         return true

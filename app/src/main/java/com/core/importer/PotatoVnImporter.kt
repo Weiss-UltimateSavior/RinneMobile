@@ -46,14 +46,14 @@ object PotatoVnImporter {
     fun parse(context: Context, uri: Uri): List<ImportGameData> {
         val tempDir = File(context.cacheDir, "potatovn_import_${System.currentTimeMillis()}")
         if (!tempDir.exists() && !tempDir.mkdirs()) {
-            throw Exception("无法创建缓存目录")
+            throw IOException("无法创建缓存目录")
         }
         ImporterIO.registerTempDir(tempDir)
 
         val raw = context.contentResolver.openInputStream(uri)
-            ?: throw Exception("无法打开 ZIP 文件")
+            ?: throw IOException("无法打开 ZIP 文件")
         val galgamesJson = raw.use { extractZip(it, tempDir) }
-            ?: throw Exception("ZIP 中未找到 data.galgames.json")
+            ?: throw IllegalArgumentException("ZIP 中未找到 data.galgames.json")
 
         val arr = JSONArray(galgamesJson)
         val result = ArrayList<ImportGameData>(arr.length())
@@ -304,7 +304,7 @@ object PotatoVnImporter {
         }
         val parent = outFile.parentFile
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            throw Exception("无法创建目录: ${parent.absolutePath}")
+            throw IOException("无法创建目录: ${parent.absolutePath}")
         }
         FileOutputStream(outFile).use { fos ->
             val data = ImporterIO.readBytes(zis, ImporterIO.MAX_ENTRY_BYTES, acc)

@@ -2,6 +2,7 @@ package com.apps
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -34,6 +35,7 @@ import com.apps.home.LauncherPlaceholderFragment
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
+import com.apps.widget.LauncherCoverLoader
 import com.core.util.DevLogger
 import com.core.R
 import com.core.databinding.ActivityLauncherBinding
@@ -42,6 +44,7 @@ import com.core.launcherbridge.LauncherUpdateBridge
 import com.core.util.Disposable
 import com.core.util.RxMainQueue
 import com.core.util.RxMainScheduler
+import com.core.util.SafeImageLoader
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -223,6 +226,24 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
         viewModel?.refreshStats()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // 阶段 13 方案 A（缓解，非根治）：UI 隐藏或系统内存压力时释放图片内存缓存。
+        // 内置引擎游戏以 singleInstance + 独立 taskAffinity 运行，被用户划掉时系统
+        // 同 UID 整包回收主进程；此处主动释放缓存可降低游戏运行期间进程被 LMK
+        // 优先回收的概率。缓存均为惰性重建，释放仅导致封面/图标下次加载重新解码。
+        val shouldRelease = level == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN ||
+            level in ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW..ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL ||
+            level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND
+        if (shouldRelease) releaseMemoryCaches()
+    }
+
+    private fun releaseMemoryCaches() {
+        SafeImageLoader.clearMemoryCache()
+        LauncherCoverLoader.clearMemoryCache()
+        PinnedGameShortcut.clearIconCache()
     }
 
     private fun recreateIfLiquidGlassModeChanged(): Boolean {

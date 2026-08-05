@@ -3,6 +3,7 @@ package com.core.importer
 import android.content.Context
 import android.net.Uri
 import org.json.JSONArray
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 /**
@@ -74,7 +75,7 @@ object PlayniteImporter {
     @Throws(Exception::class)
     private fun readAllBytes(context: Context, uri: Uri): ByteArray {
         val input = context.contentResolver.openInputStream(uri)
-            ?: throw Exception("无法打开文件")
+            ?: throw IOException("无法打开文件")
         // 单文件场景，acc=null 表示不跟踪累计
         return input.use { ImporterIO.readBytes(it, MAX_FILE_BYTES, null) }
     }

@@ -7,6 +7,7 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -64,7 +65,7 @@ object VniteImporter {
         }
 
         if (gameDocsJson == null) {
-            throw Exception("未找到 Vnite 游戏数据文件（gameDocs.json）")
+            throw IllegalArgumentException("未找到 Vnite 游戏数据文件（gameDocs.json）")
         }
 
         // 解析 GameDocs（Vnite 格式可能是数组或 map）
@@ -296,7 +297,7 @@ object VniteImporter {
     @Throws(Exception::class)
     private fun readUriToString(context: Context, uri: Uri): String {
         val input = context.contentResolver.openInputStream(uri)
-            ?: throw Exception("无法读取文件: $uri")
+            ?: throw IOException("无法读取文件: $uri")
         return input.use { ImporterIO.readString(it, ImporterIO.MAX_ENTRY_BYTES, StandardCharsets.UTF_8) }
     }
 }

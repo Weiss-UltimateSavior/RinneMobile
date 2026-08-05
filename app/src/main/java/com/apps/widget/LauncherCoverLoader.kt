@@ -48,6 +48,15 @@ object LauncherCoverLoader {
         imageView.setImageDrawable(null)
     }
 
+    /**
+     * 清空封面内存缓存（内存压力时调用，见 LauncherActivity.onTrimMemory 方案 A）。
+     * 缓存为惰性重建，清空仅导致下次加载重新解码；不主动 recycle 已交付位图。
+     */
+    @JvmStatic
+    fun clearMemoryCache() {
+        cache.evictAll()
+    }
+
     private fun decodeSampled(context: Context, uriText: String): Bitmap? = try {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(Uri.parse(uriText))?.use { BitmapFactory.decodeStream(it, null, options) }

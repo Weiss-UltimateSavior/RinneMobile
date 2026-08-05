@@ -54,7 +54,7 @@ object LunaBoxImporter {
     fun parse(context: Context, uri: Uri): List<ImportGameData> {
         val tempDir = File(context.cacheDir, "lunabox_import_${System.currentTimeMillis()}")
         if (!tempDir.exists() && !tempDir.mkdirs()) {
-            throw Exception("无法创建缓存目录")
+            throw IOException("无法创建缓存目录")
         }
         ImporterIO.registerTempDir(tempDir)
 
@@ -68,7 +68,7 @@ object LunaBoxImporter {
         var entryCount = 0
 
         val raw = context.contentResolver.openInputStream(uri)
-            ?: throw Exception("无法打开 ZIP 文件")
+            ?: throw IOException("无法打开 ZIP 文件")
         raw.use { input ->
             ZipInputStream(input).use { zis ->
                 while (true) {
@@ -106,7 +106,7 @@ object LunaBoxImporter {
             }
         }
 
-        val games = gamesCsv ?: throw Exception("ZIP 中未找到 database/games.csv")
+        val games = gamesCsv ?: throw IllegalArgumentException("ZIP 中未找到 database/games.csv")
 
         // 解析 tags CSV -> game_id -> list of tag names
         val tagsByGameId = parseTagsCsv(tagsCsv)

@@ -111,6 +111,7 @@ object LauncherPlayRecords {
                 LauncherUserData.writeText(file, root.toString(2))
                 return true
             } catch (e: Exception) {
+                // 清空失败时降级为直接删除整个文件，下次追加时自动重建空缓冲
                 return file.delete()
             }
         }
@@ -215,6 +216,7 @@ object LauncherPlayRecords {
             val arr = root.optJSONArray("records")
             return arr ?: JSONArray()
         } catch (e: Exception) {
+            // 游玩记录为追加式临时缓冲，损坏/超限时按空处理，不阻断主流程（后续写入会重建）
             return JSONArray()
         }
     }
@@ -227,6 +229,7 @@ object LauncherPlayRecords {
             LauncherUserData.writeText(file, root.toString(2))
             return true
         } catch (e: Exception) {
+            // 写入失败返回 false，由调用方决定重试/忽略（上传缓冲非关键路径）
             return false
         }
     }
@@ -240,6 +243,7 @@ object LauncherPlayRecords {
             val arr = root.optJSONArray("sessions")
             return arr ?: JSONArray()
         } catch (e: Exception) {
+            // 服务端会话映射为可重建缓存，损坏/超限时按空处理，不阻断主流程
             return JSONArray()
         }
     }
@@ -252,6 +256,7 @@ object LauncherPlayRecords {
             LauncherUserData.writeText(file, root.toString(2))
             return true
         } catch (e: Exception) {
+            // 写入失败返回 false，由调用方决定重试/忽略（映射可重建，非关键路径）
             return false
         }
     }

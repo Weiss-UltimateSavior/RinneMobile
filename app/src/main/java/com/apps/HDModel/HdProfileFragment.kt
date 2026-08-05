@@ -1,7 +1,6 @@
 package com.apps.HDModel
 
 import android.Manifest
-import android.app.LocalActivityManager
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -24,8 +23,7 @@ import com.apps.translation.TranslationSettingActivity
 @Suppress("DEPRECATION")
 class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var localActivityManager: LocalActivityManager? = null
-    private var embeddedActivityId: String? = null
+    private var embeddedHost: HdEmbeddedActivityHost? = null
     private var pendingProjectionCallback: ((resultCode: Int, data: Intent?) -> Unit)? = null
     private var pendingNotificationPermissionCallback: ((Boolean) -> Unit)? = null
 
@@ -54,9 +52,7 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        localActivityManager = LocalActivityManager(requireActivity(), false).apply {
-            dispatchCreate(savedInstanceState)
-        }
+        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdProfileDetailContainer)
         super.onViewCreated(view, savedInstanceState)
         openAccountSettings()
@@ -64,24 +60,23 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
 
     override fun onResume() {
         super.onResume()
-        localActivityManager?.dispatchResume()
+        embeddedHost?.onResume()
     }
 
     override fun onPause() {
-        localActivityManager?.dispatchPause(requireActivity().isFinishing)
+        embeddedHost?.onPause()
         super.onPause()
     }
 
     override fun onStop() {
-        localActivityManager?.dispatchStop()
+        embeddedHost?.onStop()
         super.onStop()
     }
 
     override fun onDestroyView() {
-        localActivityManager?.dispatchDestroy(requireActivity().isFinishing)
-        localActivityManager = null
+        embeddedHost?.onDestroyView()
+        embeddedHost = null
         detailContainer = null
-        embeddedActivityId = null
         pendingProjectionCallback = null
         pendingNotificationPermissionCallback = null
         super.onDestroyView()
@@ -143,26 +138,21 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     internal fun showEmbeddedActivity(id: String, intent: Intent) {
-        val manager = localActivityManager ?: return
+        val host = embeddedHost ?: return
         val container = detailContainer ?: return
-        embeddedActivityId = id
-        val window = manager.startActivity(
+        val content = host.start(
             id,
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
         ) ?: return
-        val content = window.decorView
         HdPageMotion.showEmbedded(container, content)
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val manager = localActivityManager ?: return false
-        val id = embeddedActivityId ?: return false
-        val current = manager.currentActivity
-        if (child != null && current != null && current !== child) return false
-        embeddedActivityId = null
+        val host = embeddedHost ?: return false
+        val id = host.beginClose(child) ?: return false
         detailContainer?.apply {
             HdPageMotion.closeEmbedded(this) {
-                post { manager.destroyActivity(id, true) }
+                post { host.destroy(id) }
             }
         }
         return true

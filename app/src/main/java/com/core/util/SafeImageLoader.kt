@@ -36,6 +36,15 @@ object SafeImageLoader {
         MEMORY_CACHE.remove(uriText.trim())
     }
 
+    /**
+     * 清空内存缓存（内存压力时调用，见 LauncherActivity.onTrimMemory 方案 A）。
+     * 仅移除缓存引用交由 GC 回收，不主动 recycle，避免仍被 ImageView 使用的位图失效。
+     */
+    @JvmStatic
+    fun clearMemoryCache() {
+        MEMORY_CACHE.evictAll()
+    }
+
     @JvmStatic
     fun loadUri(imageView: ImageView?, uriText: String?, callback: Callback?): Boolean {
         if (imageView == null) return false
