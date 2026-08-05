@@ -242,12 +242,13 @@
 
 ### 弹窗实现纪律
 
-- `PadManageFragment` 的 `createLauncherDialog`/`createDialogRoot`/`createDialogTitle`/`createDialogButton`/`createDialogCancelButton` 等 helper 仅服务于上述 4 个保留专用实现；新增同类弹窗必须直接用 `PadDialogFactory` 的对应 `show*()` API，不要扩展这些 helper 或手写 root/title/button。
+- 游戏详情/播放状态/编辑游玩时长等共享弹窗的 UI 元素 helper（`createLauncherDialog`/`createDialogRoot`/`createDialogTitle`/`createDialogButton`/`createDialogCancelButton`）位于 `com.apps.game.GameActionMenuFactory`（阶段 29 抽取；`PadManageFragment` 已无同名 helper，仅实现 `GameActionMenuFactory.ActionMenuCallbacks` 调用其 show* 入口）。这些 helper 仅供 `GameActionMenuFactory` 的共享弹窗使用；新增同类弹窗必须直接用 `PadDialogFactory` 的对应 `show*()` API，不要扩展这些 helper 或手写 root/title/button。
 - 专用实现的弹窗宽度必须通过 `PadDialogFactory.dialogWidthPx(context, widthDp)` 做屏幕宽度兜底（`min(densityWidth, screen-48dp)`），不要直接传 `dp(288)`/`dp(270)`，避免极窄屏溢出。竖屏 `LauncherDialogFactory` 内部已做兜底；任何自建弹窗或菜单（含 `PopupWindow`、`AlertDialog`）在指定宽度时也必须做屏幕宽度兜底，禁止裸 `dp(288)` 等固定宽度字面量。
 - `showConfirm`（双按钮确认，288dp）使用 inflate 的 `dialog_launcher_confirm` 布局实现水平并排按钮；`showStandardConfirm`（普通确认，270dp）使用程序化构建的垂直按钮。两者是不同弹窗类型，水平/垂直差异是有意设计，不是实现不一致；不要为统一而合并。
 - 同步确认、账户确认归类为"普通确认"，使用 `showStandardConfirm`（270dp）；只有需要水平双按钮的启动确认才用 `showConfirm`（288dp）。
 - 粒子样式选择使用 `PadDialogFactory.showSingleChoice`（可滑动单选列表），通过 `checkedIndex` 表达已选状态、末项"关闭动态粒子"表达关闭操作、回调内 `Toast` 反馈；不要再手写选项行。
 - `PadManageFragment` 跨包调用 `com.apps.settings.LauncherCustomVndbSearchDialog` 属于复杂搜索专用界面，超出 PadUi 弹窗规范范围，保留跨包调用。
+- **跨上下文共享宽度兜底的豁免**：`GameActionMenuFactory` 等被竖屏手机 / Pad 横屏 / 平板竖屏多上下文调用的共享弹窗工厂，允许统一使用 `LauncherDialogFactory.dialogWidthPx(ctx, widthDp)` 做宽度兜底，不强制按调用方上下文路由竖屏 / Pad 工厂。理由：(1) `LauncherTabletPortraitScaler.scaleFor` 在 Pad 横屏返回 1，宽度值正确无错误缩放；(2) 平板竖屏下宽度放大但内容 padding/字号未同步缩放，属已知视觉比例差异，默许接受；(3) Pad 横屏边距 32dp（vs §6 规范 48dp）偏差 16dp，功能无溢出，默许接受。后续若需严格按调用方路由，应在 `ActionMenuConfig` 或 `SubDialogFactory` 接口注入宽度计算函数引用，不在 `setDialogContent` 内做上下文判断。
 
 ## 7. 修改与验证清单
 
