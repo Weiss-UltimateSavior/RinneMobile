@@ -1,7 +1,6 @@
 package com.apps.HDModel
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.apps.game.LauncherSaveCategoryActivity
-import com.apps.game.LauncherSaveGameListActivity
+import com.apps.game.LauncherSaveGameListFragment
 import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ItemLauncherManageBinding
@@ -22,11 +21,12 @@ import com.core.util.AppExecutors
 import java.util.LinkedHashMap
 
 /**
- * HD 存档管理页：左侧按内置引擎分类，右侧承载原有存档游戏列表 Activity。
+ * HD 存档管理页：左侧按内置引擎分类，右侧以子 Fragment 承载存档游戏列表。
+ *
+ * 重构计划 9.9 阶段 107：嵌入 Activity 迁子 Fragment（[LauncherSaveGameListFragment]），
+ * 不再使用 LocalActivityManager；ActivityResult 由子 Fragment 自身注册，可靠性更高。
  */
-@Suppress("DEPRECATION")
 class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
-    private var embeddedHost: HdEmbeddedActivityHost? = null
     private var categoryList: LinearLayout? = null
     private var statusView: TextView? = null
     private var detailContainer: FrameLayout? = null
@@ -39,7 +39,6 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
     ): View = inflater.inflate(R.layout.fragment_hd_save_manager, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         categoryList = view.findViewById(R.id.hdSaveCategoryList)
         statusView = view.findViewById(R.id.hdSaveCategoryStatus)
         detailContainer = view.findViewById(R.id.hdSaveDetailContainer)
@@ -47,24 +46,7 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
         loadCategories()
     }
 
-    override fun onResume() {
-        super.onResume()
-        embeddedHost?.onResume()
-    }
-
-    override fun onPause() {
-        embeddedHost?.onPause()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        embeddedHost?.onStop()
-        super.onStop()
-    }
-
     override fun onDestroyView() {
-        embeddedHost?.onDestroyView()
-        embeddedHost = null
         categoryList = null
         statusView = null
         detailContainer = null
@@ -117,25 +99,27 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
     }
 
     private fun showEngine(engine: EngineType) {
-        val host = embeddedHost ?: return
         val container = detailContainer ?: return
         selectedEngine = engine
-        val intent = Intent(requireContext(), LauncherSaveGameListActivity::class.java)
-            .putExtra(LauncherSaveGameListActivity.EXTRA_ENGINE, engine.name)
-            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val id = "hd_save_${engine.name}"
-        val content = host.start(id, intent) ?: return
-        HdPageMotion.showEmbedded(container, content)
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+            )
+            .replace(
+                R.id.hdSaveDetailContainer,
+                LauncherSaveGameListFragment.newInstance(engine.name),
+                SAVE_LIST_TAG,
+            )
+            .commit()
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val host = embeddedHost ?: return false
-        val id = host.beginClose(child) ?: return false
-        detailContainer?.apply {
-            HdPageMotion.closeEmbedded(this) {
-                post { host.destroy(id) }
-            }
-        }
+        val fragment = childFragmentManager.findFragmentByTag(SAVE_LIST_TAG) ?: return false
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
+            .remove(fragment)
+            .commit()
         return true
     }
 
@@ -145,5 +129,9 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
         EngineType.ONS -> "O"
         EngineType.TYRANO -> "T"
         else -> "G"
+    }
+
+    companion object {
+        private const val SAVE_LIST_TAG = "hd_save_game_list"
     }
 }

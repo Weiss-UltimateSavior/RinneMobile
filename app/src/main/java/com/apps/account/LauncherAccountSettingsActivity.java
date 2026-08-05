@@ -1,299 +1,32 @@
 package com.apps.account;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 
-import com.core.userdata.LauncherUserData;
-import com.core.R;
-import com.core.databinding.ActivityLauncherAccountSettingsBinding;
-import com.core.launcherbridge.ConfigCallback;
-import com.core.launcherbridge.LauncherAuthBridge;
-import com.core.launcherbridge.PlayDataCallback;
-import com.core.launcherbridge.SubscriptionCallback;
 import com.apps.LauncherActivity;
-import com.apps.LauncherPreferences;
-import com.apps.sync.LauncherSyncScheduler;
-import com.apps.theme.LauncherDialogFactory;
-import com.apps.theme.LauncherMotion;
-import com.apps.theme.LauncherTheme;
-import com.apps.widget.LauncherTabletPortraitScaler;
+import com.core.R;
 
+/**
+ * 账号设置页薄宿主（重构计划 9.9 阶段 111）。
+ *
+ * 全部逻辑抽取至 {@link LauncherAccountSettingsFragment}，本类仅承载竖屏独立启动路径
+ * （HD 由 HdProfileFragment 以子 Fragment 承载）。
+ */
 public class LauncherAccountSettingsActivity extends AppCompatActivity {
-    private ActivityLauncherAccountSettingsBinding binding;
-    private AlertDialog loadingDialog;
-    private boolean emailSubscriptionUpdating;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         applySavedToneMode();
         super.onCreate(savedInstanceState);
         com.apps.LauncherEdgeToEdgeHelper.apply(this);
-
-        binding = ActivityLauncherAccountSettingsBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        LauncherTabletPortraitScaler.applyActivityContent(this);
-        applySystemBarInsets();
-        LauncherTheme.applyPrimaryTone(binding.getRoot());
-        LauncherTheme.styleMaterialSwitch(binding.chipSyncConfig);
-        LauncherTheme.styleMaterialSwitch(binding.chipRealtimePlaytime);
-        LauncherTheme.styleMaterialSwitch(binding.chipEmailSubscribe);
-
-        bindActions();
-        renderAllChips();
-        refreshEmailSubscription();
-        LauncherSyncScheduler.updateSchedule(this);
-    }
-
-    private void bindActions() {
-        binding.rowSyncConfig.setOnClickListener(v -> onSyncConfigClick());
-        binding.rowRealtimePlaytime.setOnClickListener(v -> onRealtimePlaytimeClick());
-        binding.rowEmailSubscribe.setOnClickListener(v -> onEmailSubscriptionClick());
-    }
-
-    private void refreshEmailSubscription() {
-        if (!LauncherAuthBridge.isLoggedIn(this)) return;
-        LauncherAuthBridge.fetchEmailSubscription(this, new SubscriptionCallback() {
-            @Override
-            public void onSuccess(boolean subscribed) {
-                if (isFinishing()) return;
-                saveEmailSubscription(subscribed);
-                renderChip(binding.chipEmailSubscribe, subscribed);
-            }
-
-            @Override
-            public void onError(String message) {
-                // 保留本地缓存状态；网络错误不打断账号设置页的其他操作。
-            }
-        });
-    }
-
-    private void onEmailSubscriptionClick() {
-        if (emailSubscriptionUpdating) return;
-        if (!LauncherAuthBridge.isLoggedIn(this)) {
-            showResultDialog(getString(R.string.social_login_required),
-                    getString(R.string.social_subscription_login_required));
-            return;
+        setContentView(R.layout.activity_launcher_profile_host);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.profileHostContainer, new LauncherAccountSettingsFragment())
+                    .commit();
         }
-        boolean subscribed = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).getBoolean("email_subscribe", false);
-        if (subscribed) {
-            updateEmailSubscription(false);
-        } else {
-            showEmailSubscriptionConfirmDialog();
-        }
-    }
-
-    private void showEmailSubscriptionConfirmDialog() {
-        LauncherDialogFactory.showConfirm(
-                this,
-                getString(R.string.social_enable_subscription),
-                getString(R.string.social_enable_subscription_message),
-                getString(R.string.social_enable_subscription),
-                () -> updateEmailSubscription(true)
-        );
-    }
-
-    private void updateEmailSubscription(boolean subscribed) {
-        emailSubscriptionUpdating = true;
-        binding.rowEmailSubscribe.setEnabled(false);
-        LauncherAuthBridge.updateEmailSubscription(this, subscribed, new SubscriptionCallback() {
-            @Override
-            public void onSuccess(boolean actualSubscribed) {
-                if (isFinishing()) return;
-                emailSubscriptionUpdating = false;
-                binding.rowEmailSubscribe.setEnabled(true);
-                saveEmailSubscription(actualSubscribed);
-                renderChip(binding.chipEmailSubscribe, actualSubscribed);
-                Toast.makeText(LauncherAccountSettingsActivity.this,
-                        actualSubscribed ? R.string.social_subscription_enabled
-                                : R.string.social_subscription_disabled, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onError(String message) {
-                if (isFinishing()) return;
-                emailSubscriptionUpdating = false;
-                binding.rowEmailSubscribe.setEnabled(true);
-                showResultDialog(getString(R.string.social_subscription_update_failed), message);
-            }
-        });
-    }
-
-    private void saveEmailSubscription(boolean subscribed) {
-        getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).edit().putBoolean("email_subscribe", subscribed).apply();
-    }
-
-    private void onSyncConfigClick() {
-        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0);
-        boolean currentEnabled = prefs.getBoolean("sync_config", false);
-        if (currentEnabled) {
-            // 关闭：直接关闭并取消定时备份
-            prefs.edit().putBoolean("sync_config", false).apply();
-            renderChip(binding.chipSyncConfig, false);
-            LauncherSyncScheduler.updateSchedule(this);
-            return;
-        }
-        // 开启：弹窗确认是否上传当前配置
-        showSyncConfirmDialog();
-    }
-
-    private void onRealtimePlaytimeClick() {
-        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0);
-        boolean currentEnabled = prefs.getBoolean("realtime_playtime", getDefault("realtime_playtime"));
-        if (currentEnabled) {
-            // 关闭：直接关闭
-            prefs.edit().putBoolean("realtime_playtime", false).apply();
-            renderChip(binding.chipRealtimePlaytime, false);
-            return;
-        }
-        // 开启：弹窗确认
-        showRealtimePlaytimeConfirmDialog();
-    }
-
-    private void showRealtimePlaytimeConfirmDialog() {
-        LauncherDialogFactory.showStandardConfirm(
-                this,
-                getString(R.string.social_realtime_play_time),
-                getString(R.string.social_realtime_play_time_message),
-                getString(R.string.social_confirm_enable),
-                () -> {
-                    getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).edit().putBoolean("realtime_playtime", true).apply();
-                    renderChip(binding.chipRealtimePlaytime, true);
-                }
-        );
-    }
-
-    private void showSyncConfirmDialog() {
-        LauncherDialogFactory.showStandardConfirm(
-                this,
-                getString(R.string.social_config_sync),
-                getString(R.string.social_config_sync_message),
-                getString(R.string.social_confirm_upload),
-                this::enableSyncAndUpload
-        );
-    }
-
-    private void enableSyncAndUpload() {
-        // 先开启开关
-        getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0).edit().putBoolean("sync_config", true).apply();
-        renderChip(binding.chipSyncConfig, true);
-        LauncherSyncScheduler.updateSchedule(this);
-
-        // 显示加载弹窗
-        loadingDialog = showLoadingDialog(getString(R.string.social_uploading_config),
-                getString(R.string.social_uploading_config_note));
-
-        // 导出并上传
-        String settingsJson = LauncherUserData.exportSettingsJson(this);
-        LauncherAuthBridge.uploadConfig(this, settingsJson, new ConfigCallback() {
-            @Override
-            public void onSuccess(String configJson) {
-                // 上传游玩记录
-                String playData = LauncherUserData.exportCloudPlayData(LauncherAccountSettingsActivity.this);
-                if (playData == null || playData.trim().isEmpty()) {
-                    // 导出失败，仅配置上传成功
-                    dismissLoading();
-                    showResultDialog(getString(R.string.social_partial_upload_failed),
-                            getString(R.string.social_export_failed));
-                    return;
-                }
-                LauncherAuthBridge.uploadPlayData(LauncherAccountSettingsActivity.this, playData, new PlayDataCallback() {
-                    @Override
-                    public void onSuccess(String playData) {
-                        dismissLoading();
-                        showResultDialog(getString(R.string.social_upload_success),
-                                getString(R.string.social_upload_success_all));
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        dismissLoading();
-                        // 服务端对未变化的游玩数据会以 USER_NOT_FOUND 返回；
-                        // 前一步配置上传已成功，故将其视为无需重复上传。
-                        if (isUnchangedPlayDataError(message)) {
-                            showResultDialog(getString(R.string.social_upload_success),
-                                    getString(R.string.social_upload_no_changes));
-                            return;
-                        }
-                        showResultDialog(getString(R.string.social_partial_upload_failed),
-                                getString(R.string.social_play_record_upload_failed, message));
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String message) {
-                dismissLoading();
-                showResultDialog(getString(R.string.social_upload_failed), message);
-            }
-        });
-    }
-
-    private boolean isUnchangedPlayDataError(String message) {
-        // 仅匹配服务端错误码；删除中文文案分支，避免客户端文案依赖
-        return message != null && message.contains("USER_NOT_FOUND");
-    }
-
-    private AlertDialog showLoadingDialog(String titleText, String hintText) {
-        return LauncherDialogFactory.showLoading(this, titleText, hintText);
-    }
-
-    private void dismissLoading() {
-        if (loadingDialog != null && loadingDialog.isShowing()) {
-            loadingDialog.dismiss();
-            loadingDialog = null;
-        }
-    }
-
-    private void showResultDialog(String title, String message) {
-        LauncherDialogFactory.showInfo(this, title, message);
-    }
-
-    private void renderAllChips() {
-        SharedPreferences prefs = getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, 0);
-        renderChip(binding.chipSyncConfig, prefs.getBoolean("sync_config", getDefault("sync_config")));
-        renderChip(binding.chipRealtimePlaytime, prefs.getBoolean("realtime_playtime", getDefault("realtime_playtime")));
-        renderChip(binding.chipEmailSubscribe, prefs.getBoolean("email_subscribe", getDefault("email_subscribe")));
-    }
-
-    private void renderChip(SwitchCompat chip, boolean enabled) {
-        chip.setChecked(enabled);
-    }
-
-    private boolean getDefault(String key) {
-        switch (key) {
-            case "realtime_playtime":
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private void applySystemBarInsets() {
-        int originalLeft = binding.accountSettingsScroll.getPaddingLeft();
-        int originalTop = binding.accountSettingsScroll.getPaddingTop();
-        int originalRight = binding.accountSettingsScroll.getPaddingRight();
-        int originalBottom = binding.accountSettingsScroll.getPaddingBottom();
-
-        binding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
-            binding.accountSettingsScroll.setPadding(
-                    originalLeft,
-                    originalTop + insets.getSystemWindowInsetTop(),
-                    originalRight,
-                    originalBottom
-            );
-            return insets;
-        });
-        binding.getRoot().requestApplyInsets();
     }
 
     private void applySavedToneMode() {
@@ -304,5 +37,4 @@ public class LauncherAccountSettingsActivity extends AppCompatActivity {
     protected void attachBaseContext(android.content.Context newBase) {
         super.attachBaseContext(LauncherActivity.wrapLauncherUiMode(newBase));
     }
-
 }

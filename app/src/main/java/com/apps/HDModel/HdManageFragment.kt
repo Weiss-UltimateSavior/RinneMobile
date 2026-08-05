@@ -1,26 +1,27 @@
 package com.apps.HDModel
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.fragment.app.Fragment
+import com.apps.game.LauncherAddGameFragment
 import com.apps.game.LauncherManageFragment
-import com.apps.game.LauncherAddGameActivity
-import com.apps.settings.LauncherKrkrSettingsActivity
-import com.apps.settings.LauncherMetadataSourceActivity
-import com.apps.sync.LauncherSyncCenterActivity
+import com.apps.settings.LauncherKrkrSettingsFragment
+import com.apps.settings.LauncherMetadataSourceFragment
+import com.apps.sync.LauncherSyncCenterFragment
 import com.core.R
 
 /**
  * HD 管理页：复用管理页全部控制器和交互，以左右分栏 XML 适配大屏内容容器。
+ *
+ * 重构计划 9.9 阶段 110：嵌入 Activity 迁子 Fragment（添加游戏/元数据源/引擎设置/同步中心），
+ * 不再使用 LocalActivityManager；ActivityResult 由子 Fragment 自身注册。
  */
-@Suppress("DEPRECATION")
 class HdManageFragment : LauncherManageFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var embeddedHost: HdEmbeddedActivityHost? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,30 +34,12 @@ class HdManageFragment : LauncherManageFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdManageDetailContainer)
         super.onViewCreated(view, savedInstanceState)
         openAddGame()
     }
 
-    override fun onResume() {
-        super.onResume()
-        embeddedHost?.onResume()
-    }
-
-    override fun onPause() {
-        embeddedHost?.onPause()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        embeddedHost?.onStop()
-        super.onStop()
-    }
-
     override fun onDestroyView() {
-        embeddedHost?.onDestroyView()
-        embeddedHost = null
         detailContainer = null
         super.onDestroyView()
     }
@@ -66,39 +49,49 @@ class HdManageFragment : LauncherManageFragment(), HdEmbeddedActivityOwner {
     override fun applyManageSystemBarInsets(): Boolean = false
 
     override fun openAddGame() {
-        showEmbeddedActivity("hd_add_game", LauncherAddGameActivity::class.java)
+        showChildFragment(CHILD_ADD_GAME_TAG, LauncherAddGameFragment())
     }
 
     override fun openMetadataSource() {
-        showEmbeddedActivity("hd_metadata_source", LauncherMetadataSourceActivity::class.java)
+        showChildFragment(CHILD_METADATA_SOURCE_TAG, LauncherMetadataSourceFragment())
     }
 
     override fun openKrkrSettings() {
-        showEmbeddedActivity("hd_engine_settings", LauncherKrkrSettingsActivity::class.java)
+        showChildFragment(CHILD_ENGINE_SETTINGS_TAG, LauncherKrkrSettingsFragment.newInstance(0L))
     }
 
     override fun openSyncCenter() {
-        showEmbeddedActivity("hd_sync_center", LauncherSyncCenterActivity::class.java)
+        showChildFragment(CHILD_SYNC_CENTER_TAG, LauncherSyncCenterFragment())
     }
 
-    private fun showEmbeddedActivity(id: String, activityClass: Class<*>) {
-        val host = embeddedHost ?: return
-        val container = detailContainer ?: return
-        val content = host.start(
-            id,
-            Intent(requireContext(), activityClass).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-        ) ?: return
-        HdPageMotion.showEmbedded(container, content)
+    private fun showChildFragment(tag: String, fragment: Fragment) {
+        if (!isAdded || detailContainer == null) return
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+            )
+            .replace(R.id.hdManageDetailContainer, fragment, tag)
+            .commit()
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val host = embeddedHost ?: return false
-        val id = host.beginClose(child) ?: return false
-        detailContainer?.apply {
-            HdPageMotion.closeEmbedded(this) {
-                post { host.destroy(id) }
-            }
-        }
+        val existing = childFragmentManager.findFragmentByTag(CHILD_ADD_GAME_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_METADATA_SOURCE_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_ENGINE_SETTINGS_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_SYNC_CENTER_TAG)
+            ?: return false
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
+            .remove(existing)
+            .commit()
         return true
+    }
+
+    companion object {
+        private const val CHILD_ADD_GAME_TAG = "hd_add_game"
+        private const val CHILD_METADATA_SOURCE_TAG = "hd_metadata_source"
+        private const val CHILD_ENGINE_SETTINGS_TAG = "hd_engine_settings"
+        private const val CHILD_SYNC_CENTER_TAG = "hd_sync_center"
     }
 }

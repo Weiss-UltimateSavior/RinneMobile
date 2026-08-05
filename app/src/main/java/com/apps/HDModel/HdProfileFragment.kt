@@ -1,45 +1,32 @@
 package com.apps.HDModel
 
-import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import com.apps.account.LauncherAccountSettingsActivity
-import com.apps.leaderboard.LauncherLeaderboardActivity
-import com.apps.profile.LauncherModuleCompatibilityActivity
-import com.apps.profile.LauncherProfileEditActivity
+import com.apps.account.LauncherAccountSettingsFragment
+import com.apps.leaderboard.LauncherLeaderboardFragment
+import com.apps.profile.LauncherModuleCompatibilityFragment
+import com.apps.profile.LauncherProfileEditFragment
 import com.apps.profile.LauncherProfileFragment
+import com.apps.translation.TranslationSettingFragment
 import com.core.R
-import com.apps.translation.TranslationSettingActivity
 
-/** HD 个人页：复用账户资料业务，以双栏内容适配大屏容器。 */
+/**
+ * HD 个人页：复用账户资料业务，以双栏内容适配大屏容器。
+ *
+ * 重构计划 9.9 阶段 111：5 个设置目标（资料编辑/账号设置/模块兼容/翻译设置/排行榜）
+ * 迁子 Fragment 承载；聊天流（[HdChatSelectActivity] 路由到任意聊天 Activity）暂保留
+ * embeddedHost 承载（聊天目标为大型 Activity，迁子 Fragment 留待后续阶段）。
+ */
 @Suppress("DEPRECATION")
 class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
     private var embeddedHost: HdEmbeddedActivityHost? = null
-    private var pendingProjectionCallback: ((resultCode: Int, data: Intent?) -> Unit)? = null
-    private var pendingNotificationPermissionCallback: ((Boolean) -> Unit)? = null
-
-    private val projectionLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val callback = pendingProjectionCallback
-            pendingProjectionCallback = null
-            callback?.invoke(result.resultCode, result.data)
-        }
-
-    private val notificationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            val callback = pendingNotificationPermissionCallback
-            pendingNotificationPermissionCallback = null
-            callback?.invoke(granted)
-        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -77,8 +64,6 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
         embeddedHost?.onDestroyView()
         embeddedHost = null
         detailContainer = null
-        pendingProjectionCallback = null
-        pendingNotificationPermissionCallback = null
         super.onDestroyView()
     }
 
@@ -91,11 +76,11 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     override fun createAccountFragment(): Fragment = HdAccountFragment()
 
     override fun openProfileEdit() {
-        showEmbeddedActivity("hd_profile_edit", LauncherProfileEditActivity::class.java)
+        showChildFragment(CHILD_PROFILE_EDIT_TAG, LauncherProfileEditFragment())
     }
 
     override fun openAccountSettings() {
-        showEmbeddedActivity("hd_account_settings", LauncherAccountSettingsActivity::class.java)
+        showChildFragment(CHILD_ACCOUNT_SETTINGS_TAG, LauncherAccountSettingsFragment())
     }
 
     override fun openChatRoom() {
@@ -103,34 +88,26 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun openModuleCompatibility() {
-        showEmbeddedActivity(
-            "hd_module_compatibility",
-            LauncherModuleCompatibilityActivity::class.java,
-        )
+        showChildFragment(CHILD_MODULE_COMPAT_TAG, LauncherModuleCompatibilityFragment())
     }
 
     override fun openTranslationSettings() {
-        showEmbeddedActivity("hd_translation_settings", TranslationSettingActivity::class.java)
+        showChildFragment(CHILD_TRANSLATION_TAG, TranslationSettingFragment())
     }
 
     override fun openLeaderboard() {
-        showEmbeddedActivity("hd_leaderboard", LauncherLeaderboardActivity::class.java)
+        showChildFragment(CHILD_LEADERBOARD_TAG, LauncherLeaderboardFragment())
     }
 
-    override fun launchTranslationProjection(callback: (resultCode: Int, data: Intent?) -> Unit): Boolean {
-        if (!isAdded) return false
-        val mediaProjectionManager = requireContext()
-            .getSystemService(Context.MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
-        pendingProjectionCallback = callback
-        projectionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
-        return true
-    }
-
-    override fun requestTranslationNotificationPermission(callback: (Boolean) -> Unit): Boolean {
-        if (!isAdded) return false
-        pendingNotificationPermissionCallback = callback
-        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        return true
+    private fun showChildFragment(tag: String, fragment: Fragment) {
+        if (!isAdded || detailContainer == null) return
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+            )
+            .replace(R.id.hdProfileDetailContainer, fragment, tag)
+            .commit()
     }
 
     private fun showEmbeddedActivity(id: String, activityClass: Class<*>) {
@@ -148,13 +125,34 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val host = embeddedHost ?: return false
-        val id = host.beginClose(child) ?: return false
+        val existing = childFragmentManager.findFragmentByTag(CHILD_PROFILE_EDIT_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_ACCOUNT_SETTINGS_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_MODULE_COMPAT_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_TRANSLATION_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_LEADERBOARD_TAG)
+        if (existing != null) {
+            childFragmentManager.beginTransaction()
+                .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
+                .remove(existing)
+                .commit()
+            return true
+        }
+        // 聊天流仍由 embeddedHost 承载（HdChatSelectActivity 路由到任意聊天 Activity）。
+        val host = embeddedHost
+        val id = host?.beginClose(child) ?: return false
         detailContainer?.apply {
             HdPageMotion.closeEmbedded(this) {
                 post { host.destroy(id) }
             }
         }
         return true
+    }
+
+    companion object {
+        private const val CHILD_PROFILE_EDIT_TAG = "hd_profile_edit"
+        private const val CHILD_ACCOUNT_SETTINGS_TAG = "hd_account_settings"
+        private const val CHILD_MODULE_COMPAT_TAG = "hd_module_compatibility"
+        private const val CHILD_TRANSLATION_TAG = "hd_translation_settings"
+        private const val CHILD_LEADERBOARD_TAG = "hd_leaderboard"
     }
 }

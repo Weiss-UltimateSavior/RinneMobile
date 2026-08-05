@@ -1,8 +1,6 @@
 package com.apps.HDModel
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,45 +9,22 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.apps.LauncherActivity
 import com.apps.PadUi.PadDialogFactory
-import com.apps.account.LauncherDisclaimerActivity
+import com.apps.account.LauncherDisclaimerFragment
 import com.apps.home.LauncherHomeAccountBottomSheet
-import com.apps.settings.LauncherAppSettingsActivity
+import com.apps.settings.LauncherAppSettingsFragment
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
-import com.apps.theme.LauncherThemeMenuActivity
+import com.apps.theme.LauncherThemeMenuFragment
 import com.apps.util.LauncherUrlOpener
 import com.core.R
 import com.core.launcherbridge.LauncherUpdateBridge
 
-/** HD 设置页：左侧保留首页设置菜单，右侧承载对应 Activity。 */
-@Suppress("DEPRECATION")
+/** HD 设置页：左侧保留首页设置菜单，右侧承载对应子 Fragment。 */
 class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var embeddedHost: HdEmbeddedActivityHost? = null
-
-    /**
-     * 嵌入的 [LauncherAppSettingsActivity] 无法接收 Activity Result 回调，
-     * 因此由本 Fragment 使用自身的 ActivityResultRegistry 启动系统图片选择器，
-     * 把选中的 Uri 通过 [pendingSplashImageCallback] 回传给发起请求的嵌入 Activity。
-     */
-    private var pendingSplashImageCallback: ((Uri?) -> Unit)? = null
-    private val splashImagePicker =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            val callback = pendingSplashImageCallback
-            pendingSplashImageCallback = null
-            callback?.invoke(uri)
-        }
-
-    override fun launchSplashImagePicker(callback: (Uri?) -> Unit): Boolean {
-        if (!isAdded) return false
-        pendingSplashImageCallback = callback
-        splashImagePicker.launch("image/*")
-        return true
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,7 +34,6 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdSettingsDetailContainer)
         LauncherTheme.applyPrimaryTone(view)
         val actionList = view.findViewById<LinearLayout>(R.id.hdSettingsActionList)
@@ -71,10 +45,10 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
         }
         applySettingsActionIcons(view, actionList)
         view.findViewById<View>(R.id.hdSettingsApp).setOnClickListener {
-            showEmbeddedActivity("hd_app_settings", LauncherAppSettingsActivity::class.java)
+            showChildFragment(CHILD_APP_SETTINGS_TAG, LauncherAppSettingsFragment())
         }
         view.findViewById<View>(R.id.hdSettingsTheme).setOnClickListener {
-            showEmbeddedActivity("hd_theme_settings", LauncherThemeMenuActivity::class.java)
+            showChildFragment(CHILD_THEME_MENU_TAG, LauncherThemeMenuFragment())
         }
         toneRow.setOnClickListener { confirmToggleTone() }
         view.findViewById<View>(R.id.hdSettingsUpdate).setOnClickListener { checkUpdate() }
@@ -82,9 +56,14 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
             showFeedbackOptions()
         }
         view.findViewById<View>(R.id.hdSettingsDisclaimer).setOnClickListener {
-            showEmbeddedActivity("hd_disclaimer", LauncherDisclaimerActivity::class.java)
+            showChildFragment(CHILD_DISCLAIMER_TAG, LauncherDisclaimerFragment())
         }
-        showEmbeddedActivity("hd_app_settings", LauncherAppSettingsActivity::class.java)
+        showChildFragment(CHILD_APP_SETTINGS_TAG, LauncherAppSettingsFragment())
+    }
+
+    override fun onDestroyView() {
+        detailContainer = null
+        super.onDestroyView()
     }
 
     private fun applySettingsActionIcons(view: View, actionList: LinearLayout) {
@@ -106,47 +85,26 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        embeddedHost?.onResume()
-    }
-
-    override fun onPause() {
-        embeddedHost?.onPause()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        embeddedHost?.onStop()
-        super.onStop()
-    }
-
-    override fun onDestroyView() {
-        embeddedHost?.onDestroyView()
-        embeddedHost = null
-        detailContainer = null
-        pendingSplashImageCallback = null
-        super.onDestroyView()
-    }
-
-    private fun showEmbeddedActivity(id: String, activityClass: Class<*>) {
-        val host = embeddedHost ?: return
-        val container = detailContainer ?: return
-        val content = host.start(
-            id,
-            Intent(requireContext(), activityClass).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-        ) ?: return
-        HdPageMotion.showEmbedded(container, content)
+    private fun showChildFragment(tag: String, fragment: Fragment) {
+        if (!isAdded || detailContainer == null) return
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+            )
+            .replace(R.id.hdSettingsDetailContainer, fragment, tag)
+            .commit()
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        val host = embeddedHost ?: return false
-        val id = host.beginClose(child) ?: return false
-        detailContainer?.apply {
-            HdPageMotion.closeEmbedded(this) {
-                post { host.destroy(id) }
-            }
-        }
+        val existing = childFragmentManager.findFragmentByTag(CHILD_APP_SETTINGS_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_THEME_MENU_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_DISCLAIMER_TAG)
+            ?: return false
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
+            .remove(existing)
+            .commit()
         return true
     }
 
@@ -221,6 +179,9 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
     }
 
     companion object {
+        private const val CHILD_APP_SETTINGS_TAG = "hd_app_settings"
+        private const val CHILD_THEME_MENU_TAG = "hd_theme_settings"
+        private const val CHILD_DISCLAIMER_TAG = "hd_disclaimer"
         private const val GITHUB_URL =
             "https://github.com/Weiss-UltimateSavior/RinneMobile"
         private const val QQ_GROUP_URL =
