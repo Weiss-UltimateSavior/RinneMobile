@@ -51,10 +51,14 @@ class AsarArchive @Throws(Exception::class) constructor(file: File?) : Closeable
             parseNode("", JSONObject(String(jsonBytes, StandardCharsets.UTF_8)))
             validateEntries(opened.length(), parsedDataOffset)
         } catch (error: Exception) {
-            try { opened.close() } catch (_: Throwable) { }
+            try { opened.close() } catch (_: Throwable) {
+                // 流关闭失败可安全忽略（资源由 GC 最终回收）
+            }
             throw error
         } catch (error: Error) {
-            try { opened.close() } catch (_: Throwable) { }
+            try { opened.close() } catch (_: Throwable) {
+                // 流关闭失败可安全忽略（资源由 GC 最终回收）
+            }
             throw error
         }
         raf = opened
@@ -148,7 +152,9 @@ class AsarArchive @Throws(Exception::class) constructor(file: File?) : Closeable
         private const val MAX_ENTRY_BYTES = 256L * 1024L * 1024L
 
         private fun logInfo(message: String) {
-            try { Log.i(TAG, message) } catch (_: RuntimeException) { }
+            try { Log.i(TAG, message) } catch (_: RuntimeException) {
+                // 日志失败可安全忽略（不影响加载流程）
+            }
         }
 
         private fun normalize(path: String?): String {
@@ -177,6 +183,7 @@ class AsarArchive @Throws(Exception::class) constructor(file: File?) : Closeable
             return try {
                 if (value == null || value.trim().isEmpty()) 0L else value.trim().toLong()
             } catch (_: Throwable) {
+                // 数字字段解析失败回退 0L（asar 头字段非关键路径，§8 兜底）
                 0L
             }
         }

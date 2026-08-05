@@ -23,6 +23,7 @@ import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ActivityHdModeBinding
 import com.core.launcherbridge.LauncherUpdateBridge
+import com.core.util.Disposable
 import com.core.util.RxMainScheduler
 
 /** 大屏横屏模式的基础外壳；侧边导航功能将在后续逐项接入。 */
@@ -31,6 +32,7 @@ class HdModeActivity : AppCompatActivity() {
     private lateinit var launcherViewModel: LauncherViewModel
     private var selectedNavItem = HdNavItem.HOME
     private var appliedThemeStyle = LauncherThemeStyle.THEME_STYLE_DEFAULT
+    private var autoUpdateDelay: Disposable? = null
     private val launcherPreferenceListener =
         SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             when (key) {
@@ -77,7 +79,7 @@ class HdModeActivity : AppCompatActivity() {
      * 仅在有新版本时弹窗提示，失败静默处理。
      */
     private fun scheduleAutoUpdateCheck() {
-        RxMainScheduler.postDelayed(Runnable {
+        autoUpdateDelay = RxMainScheduler.postDelayed(Runnable {
             if (!isFinishing && !isDestroyed) {
                 LauncherUpdateBridge.checkUpdate(this, object : LauncherUpdateBridge.Callback {
                     override fun onResult(
@@ -124,11 +126,19 @@ class HdModeActivity : AppCompatActivity() {
         super.onStop()
     }
 
+    override fun onDestroy() {
+        autoUpdateDelay?.let { if (!it.isDisposed()) it.dispose() }
+        super.onDestroy()
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(STATE_SELECTED_NAV, selectedNavItem.name)
         super.onSaveInstanceState(outState)
     }
 
+    // HD 横屏全出血窗口：系统栏着色为页面背景色（LauncherTheme.bg）+ 刘海短边裁切 +
+    // 关闭对比度增强。与 LauncherEdgeToEdgeHelper（透明状态栏 + 明暗自适应）语义不同，
+    // 故不走 helper（豁免，见 agent.md §8 grep 监控与重构计划 4.7 项 2）。
     private fun configureLandscapeWindow() {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         val background = LauncherTheme.bg(this)

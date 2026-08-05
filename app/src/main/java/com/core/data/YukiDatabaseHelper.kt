@@ -68,7 +68,9 @@ class YukiDatabaseHelper(context: Context) :
                 ")")
         db.execSQL("CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT)")
         createMetadataCacheTable(db)
-        try { db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_play_sessions_uuid ON play_sessions(session_uuid)") } catch (ignored: Exception) {}
+        try { db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_play_sessions_uuid ON play_sessions(session_uuid)") } catch (ignored: Exception) {
+            // 索引幂等创建，已存在/并发冲突时失败可安全忽略
+        }
         createRootUriKeyIndex(db)
     }
 
@@ -98,7 +100,9 @@ class YukiDatabaseHelper(context: Context) :
         }
         if (oldVersion < 9) {
             safeAlter(db, "ALTER TABLE games ADD COLUMN gamehub_local_game_id TEXT")
-            try { db.execSQL("UPDATE games SET gamehub_local_game_id=gaishi_local_game_id WHERE (gamehub_local_game_id IS NULL OR gamehub_local_game_id='') AND gaishi_local_game_id IS NOT NULL") } catch (ignored: Exception) {}
+            try { db.execSQL("UPDATE games SET gamehub_local_game_id=gaishi_local_game_id WHERE (gamehub_local_game_id IS NULL OR gamehub_local_game_id='') AND gaishi_local_game_id IS NOT NULL") } catch (ignored: Exception) {
+                // 迁移回填 UPDATE，列缺失/数据异常时失败可安全忽略（不影响主流程）
+            }
         }
         if (oldVersion < 10) {
             safeAlter(db, "ALTER TABLE games ADD COLUMN gamehub_launch_mode TEXT DEFAULT 'game'")
@@ -155,9 +159,14 @@ class YukiDatabaseHelper(context: Context) :
             db.execSQL("ALTER TABLE metadata_cache_new RENAME TO metadata_cache")
             db.setTransactionSuccessful()
         } catch (ignored: Exception) {
-            try { createMetadataCacheTable(db) } catch (ignored2: Exception) {}
+            // 主键升级失败时兜底重建缓存表；重建也失败则忽略（缓存下次重建，不影响库可用）
+            try { createMetadataCacheTable(db) } catch (ignored2: Exception) {
+                // 兜底重建失败可安全忽略（缓存表非关键路径）
+            }
         } finally {
-            try { db.endTransaction() } catch (ignored3: Exception) {}
+            try { db.endTransaction() } catch (ignored3: Exception) {
+                // 事务已结束/回滚时 endTransaction 抛异常，清理尽力而为
+            }
         }
     }
 
@@ -168,10 +177,18 @@ class YukiDatabaseHelper(context: Context) :
         safeAlter(db, "ALTER TABLE play_sessions ADD COLUMN updated_at INTEGER DEFAULT 0")
         safeAlter(db, "ALTER TABLE play_sessions ADD COLUMN dirty INTEGER DEFAULT 1")
         safeAlter(db, "ALTER TABLE play_sessions ADD COLUMN deleted INTEGER DEFAULT 0")
-        try { db.execSQL("UPDATE play_sessions SET session_uuid=lower(hex(randomblob(16))) WHERE session_uuid IS NULL OR session_uuid='' ") } catch (ignored: Exception) {}
-        try { db.execSQL("UPDATE play_sessions SET created_at=start_time WHERE created_at IS NULL OR created_at=0") } catch (ignored: Exception) {}
-        try { db.execSQL("UPDATE play_sessions SET updated_at=COALESCE(end_time,start_time) WHERE updated_at IS NULL OR updated_at=0") } catch (ignored: Exception) {}
-        try { db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_play_sessions_uuid ON play_sessions(session_uuid)") } catch (ignored: Exception) {}
+        try { db.execSQL("UPDATE play_sessions SET session_uuid=lower(hex(randomblob(16))) WHERE session_uuid IS NULL OR session_uuid='' ") } catch (ignored: Exception) {
+            // 数据回填 UPDATE，迁移中失败可安全忽略（不影响主流程）
+        }
+        try { db.execSQL("UPDATE play_sessions SET created_at=start_time WHERE created_at IS NULL OR created_at=0") } catch (ignored: Exception) {
+            // 数据回填 UPDATE，迁移中失败可安全忽略（不影响主流程）
+        }
+        try { db.execSQL("UPDATE play_sessions SET updated_at=COALESCE(end_time,start_time) WHERE updated_at IS NULL OR updated_at=0") } catch (ignored: Exception) {
+            // 数据回填 UPDATE，迁移中失败可安全忽略（不影响主流程）
+        }
+        try { db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_play_sessions_uuid ON play_sessions(session_uuid)") } catch (ignored: Exception) {
+            // 索引幂等创建，已存在/并发冲突时失败可安全忽略
+        }
     }
 
     /**
@@ -237,6 +254,8 @@ class YukiDatabaseHelper(context: Context) :
     }
 
     private fun safeAlter(db: SQLiteDatabase, sql: String) {
-        try { db.execSQL(sql) } catch (ignored: Exception) {}
+        try { db.execSQL(sql) } catch (ignored: Exception) {
+            // 迁移 ALTER 幂等执行，列已存在/表结构不符时失败可安全忽略（迁移继续）
+        }
     }
 }

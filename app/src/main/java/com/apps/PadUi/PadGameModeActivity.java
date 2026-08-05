@@ -67,6 +67,9 @@ public class PadGameModeActivity extends AppCompatActivity {
         outState.putString("pad_page", (currentPage == null ? Page.GAME : currentPage).name());
     }
 
+    // Pad 横屏全出血窗口：系统栏着色为页面背景色（LauncherTheme.bg）+ 刘海短边裁切 +
+    // 关闭对比度增强。与 LauncherEdgeToEdgeHelper（透明状态栏 + 明暗自适应）语义不同，
+    // 故不走 helper（豁免，见 agent.md §8 grep 监控与重构计划 4.7 项 2）。
     private void configureLandscapeWindow() {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);

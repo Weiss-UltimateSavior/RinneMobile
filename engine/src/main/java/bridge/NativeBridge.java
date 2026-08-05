@@ -150,7 +150,9 @@ public final class NativeBridge {
             if (uri == null) return false;
             KR2Activity activity = KrPathUtils.currentActivity();
             if (activity != null) {
-                try { DocumentsContract.deleteDocument(activity.getContentResolver(), uri); } catch (Throwable ignored) { }
+                try { DocumentsContract.deleteDocument(activity.getContentResolver(), uri); } catch (Throwable ignored) {
+                    // 探针文档删除失败可安全忽略（仅清理探针残留）
+                }
             }
             Log.i("NativeBridge", "mkdir SAF " + path);
             return true;
@@ -211,7 +213,9 @@ public final class NativeBridge {
                     while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
                     out.flush();
                 }
-                try { DocumentsContract.deleteDocument(resolver, src); } catch (Throwable ignored) { }
+                try { DocumentsContract.deleteDocument(resolver, src); } catch (Throwable ignored) {
+                    // 源文档删除失败可安全忽略（重命名主路径已完成，残留由后续清理兜底）
+                }
                 Log.i("NativeBridge", "rename SAF " + from + " -> " + to + " src=" + src);
                 return true;
             }
@@ -332,7 +336,9 @@ public final class NativeBridge {
                 String n = f == null ? null : f.getName();
                 if (n != null && n.equalsIgnoreCase(name)) return f;
             }
-        } catch (Throwable ignored) { }
+        } catch (Throwable ignored) {
+            // 子目录枚举失败时返回 null，由调用方按不存在处理（尽力而为）
+        }
         return null;
     }
 

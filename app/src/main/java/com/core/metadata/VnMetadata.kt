@@ -54,6 +54,7 @@ data class VnMetadata @JvmOverloads constructor(
             for (s in screenshotUrls) arr.put(s)
             o.put("screenshotUrls", arr)
         } catch (ignored: Exception) {
+            // 序列化失败时忽略，返回部分填充的 JSONObject（仅影响导出完整性）
         }
         return o
     }

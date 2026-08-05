@@ -80,6 +80,7 @@ object GameMetadataFormatter {
             }
             if (found) total else null
         } catch (error: RuntimeException) {
+            // 时长字符串解析失败时返回 null，由调用方按无数据处理（契约见 KDoc），可安全忽略
             null
         }
     }

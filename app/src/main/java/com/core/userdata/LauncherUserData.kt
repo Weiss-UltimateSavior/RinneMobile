@@ -10,7 +10,6 @@ import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.launcherbridge.LauncherSyncBridge
 import com.core.prefs.LauncherMainKeys
 import com.core.prefs.ScanRootKeys
-import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -34,16 +33,10 @@ object LauncherUserData {
 
     private const val SETTINGS_FILE = "launcher_user_data.json"
     private const val PLAY_SQL_FILE = "launcher_play_data.sql"
-    private const val PLAY_RECORDS_FILE = "launcher_play_records.json"
-    private const val PLAY_SERVER_SESSIONS_FILE = "launcher_play_server_sessions.json"
     private const val VERSION = 1
-    private const val PLAY_RECORDS_VERSION = 1
-    // 单条游玩记录最长 12 小时，与主项目 MAX_PLAY_SESSION_MS 保持一致
-    private const val MAX_PLAY_RECORD_MS = 12L * 60L * 60L * 1000L
     private const val MAX_SETTINGS_BYTES = 1024 * 1024
     private const val MAX_PLAY_SQL_BYTES = 32 * 1024 * 1024
     private const val MAX_CLOUD_PLAY_DATA_BYTES = 16 * 1024 * 1024
-    private const val MAX_RUNTIME_RECORDS_BYTES = 2 * 1024 * 1024
 
     // ── SharedPreferences 文件名 ──
     private const val PREFS_MAIN = CorePreferences.APP_PREFS
@@ -86,13 +79,9 @@ object LauncherUserData {
             "email_subscribe"
     )
 
-    private val PLAY_RECORDS_LOCK = Any()
-    private val SERVER_SESSIONS_LOCK = Any()
-
     // ══════════════════════════════════════════════════
     //  导出
     // ══════════════════════════════════════════════════
-
     /**
      * 导出所有数据：设置→JSON，游玩记录→SQL。
      *
@@ -371,11 +360,13 @@ object LauncherUserData {
         try {
             if (LauncherUiBridge.restartLauncher(activity)) return
         } catch (ignored: Exception) {
+            // UI 桥重启失败时忽略，降级为下方普通重启（尽力而为）
         }
         // 非 Launcher 上下文或 UI 桥未注册时降级为普通重启。
         try {
             Process.killProcess(Process.myPid())
         } catch (ignored: Exception) {
+            // killProcess 失败时忽略（进程即将终止，无需处理）
         }
     }
 
@@ -405,6 +396,7 @@ object LauncherUserData {
     //   之外并行维护一份「实际游玩记录」缓冲，用于后续上传到服务端。
     //   该缓冲为追加式 JSON 文件 launcher_play_records.json，上传成功后可调用
     //   clearPlayRecords 清空。
+    //   实现已拆分至 LauncherPlayRecords（重构计划 3.5），此处保留同签名委托。
 
     /**
      * 追加一条实际游玩记录到临时缓冲。
@@ -420,105 +412,36 @@ object LauncherUserData {
      */
     @JvmStatic
     fun appendPlayRecord(context: Context?, gameId: Long, gameTitle: String?,
-                         startTime: Long, endTime: Long, duration: Long, launchType: String?): String? {
-        if (context == null || gameId <= 0L || startTime <= 0L) return null
-        val safeEnd = if (endTime > 0L) endTime else System.currentTimeMillis()
-        val rawDuration = if (duration > 0L) duration else Math.max(0L, safeEnd - startTime)
-        if (rawDuration <= 0L) return null
-        val safeDuration = Math.min(rawDuration, MAX_PLAY_RECORD_MS)
-
-        val record = JSONObject()
-        val sessionUuid = UUID.randomUUID().toString()
-        try {
-            record.put("sessionUuid", sessionUuid)
-            record.put("gameId", gameId)
-            record.put("gameTitle", if (gameTitle == null) "" else gameTitle)
-            record.put("startTime", startTime)
-            record.put("endTime", safeEnd)
-            record.put("duration", safeDuration)
-            record.put("launchType", if (launchType == null) "external" else launchType)
-            record.put("recordedAt", System.currentTimeMillis())
-        } catch (e: JSONException) {
-            return null
-        }
-
-        synchronized(PLAY_RECORDS_LOCK) {
-            val file = getPlayRecordsFile(context)
-            val arr = readPlayRecordsArray(context)
-            arr.put(record)
-            if (writePlayRecordsFile(file, arr)) return sessionUuid
-        }
-        return null
-    }
+                         startTime: Long, endTime: Long, duration: Long, launchType: String?): String? =
+        LauncherPlayRecords.appendPlayRecord(context, gameId, gameTitle, startTime, endTime, duration, launchType)
 
     /**
      * 读取所有暂存的游玩记录（按记录追加顺序）。
      */
     @JvmStatic
-    fun readPlayRecords(context: Context?): List<JSONObject> {
-        val list = mutableListOf<JSONObject>()
-        if (context == null) return list
-        val arr = readPlayRecordsArray(context)
-        for (i in 0 until arr.length()) {
-            val o = arr.optJSONObject(i)
-            if (o != null) list.add(o)
-        }
-        return list
-    }
+    fun readPlayRecords(context: Context?): List<JSONObject> = LauncherPlayRecords.readPlayRecords(context)
 
     /**
      * 读取暂存的游玩记录条数。
      */
     @JvmStatic
-    fun getPlayRecordCount(context: Context): Int {
-        return readPlayRecordsArray(context).length()
-    }
+    fun getPlayRecordCount(context: Context): Int = LauncherPlayRecords.getPlayRecordCount(context)
 
     /**
      * 清空所有暂存的游玩记录。建议在上传成功后调用。
      */
     @JvmStatic
-    fun clearPlayRecords(context: Context?): Boolean {
-        if (context == null) return false
-        synchronized(PLAY_RECORDS_LOCK) {
-            val file = getPlayRecordsFile(context)
-            if (!file.exists()) return true
-            try {
-                val root = JSONObject()
-                root.put("version", PLAY_RECORDS_VERSION)
-                root.put("records", JSONArray())
-                writeText(file, root.toString(2))
-                return true
-            } catch (e: Exception) {
-                return file.delete()
-            }
-        }
-    }
+    fun clearPlayRecords(context: Context?): Boolean = LauncherPlayRecords.clearPlayRecords(context)
 
     /**
      * 删除已上传的若干条记录（按 sessionUuid 匹配），用于增量上传场景。
      */
     @JvmStatic
-    fun removePlayRecords(context: Context?, sessionUuids: Collection<String>?): Boolean {
-        if (context == null) return false
-        if (sessionUuids == null || sessionUuids.isEmpty()) return true
-        synchronized(PLAY_RECORDS_LOCK) {
-            val arr = readPlayRecordsArray(context)
-            val remaining = JSONArray()
-            for (i in 0 until arr.length()) {
-                val o = arr.optJSONObject(i)
-                if (o == null) continue
-                val uuid = o.optString("sessionUuid", "")
-                if (!sessionUuids.contains(uuid)) remaining.put(o)
-            }
-            return writePlayRecordsFile(getPlayRecordsFile(context), remaining)
-        }
-    }
+    fun removePlayRecords(context: Context?, sessionUuids: Collection<String>?): Boolean =
+        LauncherPlayRecords.removePlayRecords(context, sessionUuids)
 
     @JvmStatic
-    fun getPlayRecordsFile(context: Context): File {
-        return File(getUserDataDir(context), PLAY_RECORDS_FILE)
-    }
+    fun getPlayRecordsFile(context: Context): File = LauncherPlayRecords.getPlayRecordsFile(context)
 
     /**
      * 取得服务端实际游玩计时使用的设备 ID。安装后生成并持久化，不能每次启动都变化。
@@ -539,115 +462,19 @@ object LauncherUserData {
      */
     @JvmStatic
     fun rememberServerPlaySession(context: Context?, localSessionId: Long, gameId: Long,
-                                  gameTitle: String?, serverSessionId: String?): Boolean {
-        if (context == null || localSessionId <= 0L || gameId <= 0L || serverSessionId == null || serverSessionId.trim { it <= ' ' }.isEmpty()) {
-            return false
-        }
-        synchronized(SERVER_SESSIONS_LOCK) {
-            val arr = readServerSessionsArray(context)
-            val kept = JSONArray()
-            for (i in 0 until arr.length()) {
-                val old = arr.optJSONObject(i)
-                if (old == null || old.optLong("localSessionId", -1L) == localSessionId) continue
-                kept.put(old)
-            }
-            val item = JSONObject()
-            try {
-                item.put("localSessionId", localSessionId)
-                item.put("gameId", gameId)
-                item.put("gameTitle", if (gameTitle == null) "" else gameTitle)
-                item.put("serverSessionId", serverSessionId)
-                item.put("createdAt", System.currentTimeMillis())
-            } catch (e: JSONException) {
-                return false
-            }
-            kept.put(item)
-            return writeServerSessionsFile(getServerSessionsFile(context), kept)
-        }
-    }
+                                  gameTitle: String?, serverSessionId: String?): Boolean =
+        LauncherPlayRecords.rememberServerPlaySession(context, localSessionId, gameId, gameTitle, serverSessionId)
 
     @JvmStatic
-    fun findServerPlaySessionId(context: Context?, localSessionId: Long): String {
-        if (context == null || localSessionId <= 0L) return ""
-        val arr = readServerSessionsArray(context)
-        for (i in 0 until arr.length()) {
-            val item = arr.optJSONObject(i)
-            if (item != null && item.optLong("localSessionId", -1L) == localSessionId) {
-                return item.optString("serverSessionId", "")
-            }
-        }
-        return ""
-    }
+    fun findServerPlaySessionId(context: Context?, localSessionId: Long): String =
+        LauncherPlayRecords.findServerPlaySessionId(context, localSessionId)
 
     @JvmStatic
-    fun removeServerPlaySession(context: Context?, localSessionId: Long): Boolean {
-        if (context == null || localSessionId <= 0L) return false
-        synchronized(SERVER_SESSIONS_LOCK) {
-            val arr = readServerSessionsArray(context)
-            val kept = JSONArray()
-            for (i in 0 until arr.length()) {
-                val item = arr.optJSONObject(i)
-                if (item == null || item.optLong("localSessionId", -1L) == localSessionId) continue
-                kept.put(item)
-            }
-            return writeServerSessionsFile(getServerSessionsFile(context), kept)
-        }
-    }
+    fun removeServerPlaySession(context: Context?, localSessionId: Long): Boolean =
+        LauncherPlayRecords.removeServerPlaySession(context, localSessionId)
 
     @JvmStatic
-    fun getServerSessionsFile(context: Context): File {
-        return File(getUserDataDir(context), PLAY_SERVER_SESSIONS_FILE)
-    }
-
-    private fun readPlayRecordsArray(context: Context): JSONArray {
-        val file = getPlayRecordsFile(context)
-        if (!file.exists()) return JSONArray()
-        try {
-            val json = readText(file, MAX_RUNTIME_RECORDS_BYTES, "游玩记录缓存")
-            val root = JSONObject(json)
-            val arr = root.optJSONArray("records")
-            return arr ?: JSONArray()
-        } catch (e: Exception) {
-            return JSONArray()
-        }
-    }
-
-    private fun writePlayRecordsFile(file: File, arr: JSONArray): Boolean {
-        try {
-            val root = JSONObject()
-            root.put("version", PLAY_RECORDS_VERSION)
-            root.put("records", arr)
-            writeText(file, root.toString(2))
-            return true
-        } catch (e: Exception) {
-            return false
-        }
-    }
-
-    private fun readServerSessionsArray(context: Context): JSONArray {
-        val file = getServerSessionsFile(context)
-        if (!file.exists()) return JSONArray()
-        try {
-            val json = readText(file, MAX_RUNTIME_RECORDS_BYTES, "游玩会话缓存")
-            val root = JSONObject(json)
-            val arr = root.optJSONArray("sessions")
-            return arr ?: JSONArray()
-        } catch (e: Exception) {
-            return JSONArray()
-        }
-    }
-
-    private fun writeServerSessionsFile(file: File, arr: JSONArray): Boolean {
-        try {
-            val root = JSONObject()
-            root.put("version", PLAY_RECORDS_VERSION)
-            root.put("sessions", arr)
-            writeText(file, root.toString(2))
-            return true
-        } catch (e: Exception) {
-            return false
-        }
-    }
+    fun getServerSessionsFile(context: Context): File = LauncherPlayRecords.getServerSessionsFile(context)
 
     // ══════════════════════════════════════════════════
     //  文件 I/O 工具
@@ -665,7 +492,7 @@ object LauncherUserData {
     }
 
     @Throws(IOException::class)
-    private fun readText(file: File?, maxBytes: Int, label: String?): String {
+    internal fun readText(file: File?, maxBytes: Int, label: String?): String {
         if (file == null || !file.isFile) throw IOException("$label 不存在或不是普通文件")
         val declaredLength = file.length()
         if (declaredLength > maxBytes.toLong()) {

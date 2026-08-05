@@ -205,7 +205,9 @@ class ExternalGodotPluginStrategy : EngineLaunchStrategy {
                 Log.w(TAG, "failed to read pck header: " + pckFile.name, e)
                 "godot4"
             } finally {
-                try { fis?.close() } catch (_: IOException) { }
+                try { fis?.close() } catch (_: IOException) {
+                    // 流关闭失败可安全忽略（资源由 GC 最终回收）
+                }
             }
         }
 

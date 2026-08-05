@@ -48,6 +48,7 @@ class LauncherActivity : AppCompatActivity() {
     private var binding: ActivityLauncherBinding? = null
     private var viewModel: LauncherViewModel? = null
     private var splashDelay: Disposable? = null
+    private var autoUpdateDelay: Disposable? = null
     private var pinnedGameSessionController: GameSessionController? = null
     private lateinit var navRenderer: LauncherNavRenderer
     private var appliedNavigationStyle = LauncherNavigationMetrics.Style.DEFAULT
@@ -193,6 +194,7 @@ class LauncherActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         splashDelay?.let { if (!it.isDisposed()) it.dispose() }
+        autoUpdateDelay?.let { if (!it.isDisposed()) it.dispose() }
         pinnedGameSessionController?.cleanup()
         super.onDestroy()
     }
@@ -288,7 +290,7 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun scheduleAutoUpdateCheck() {
-        RxMainScheduler.postDelayed(Runnable {
+        autoUpdateDelay = RxMainScheduler.postDelayed(Runnable {
             if (!isFinishing && !isDestroyed) {
                 LauncherUpdateBridge.checkUpdate(this, object : LauncherUpdateBridge.Callback {
                     override fun onResult(info: LauncherUpdateBridge.UpdateInfo?, currentVersion: String, hasUpdate: Boolean) {

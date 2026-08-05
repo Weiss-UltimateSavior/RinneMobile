@@ -337,7 +337,9 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
                     .getMethod("launcherPrimaryColor", Context.class)
                     .invoke(null, this);
             if (value instanceof Integer) return (Integer) value;
-        } catch (Throwable ignored) { }
+        } catch (Throwable ignored) {
+            // 反射失败时忽略，回退 Intent extra 主色（兼容兜底）
+        }
         return launcherColor("launcher_primary_color", Color.rgb(24, 185, 120));
     }
 
@@ -360,7 +362,9 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
                     .getMethod("wrapLauncherUiMode", Context.class)
                     .invoke(null, this);
             if (value instanceof Context) return (Context) value;
-        } catch (Throwable ignored) { }
+        } catch (Throwable ignored) {
+            // 反射失败时忽略，回退默认 Context（兼容兜底）
+        }
         return this;
     }
 
@@ -387,7 +391,9 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
                     .getMethod("isLauncherDarkMode", Context.class)
                     .invoke(null, this);
             if (value instanceof Boolean) return (Boolean) value;
-        } catch (Throwable ignored) { }
+        } catch (Throwable ignored) {
+            // 反射失败时忽略，回退系统 uiMode 判断（兼容兜底）
+        }
         return (getResources().getConfiguration().uiMode
                 & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
                 == android.content.res.Configuration.UI_MODE_NIGHT_YES;
@@ -469,7 +475,9 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             loadingSpinner = null;
             NativeBridge.setKrkrGameReadyListener(null);
             if (app == this) app = null;
-        } catch (Throwable ignored) { }
+        } catch (Throwable ignored) {
+            // 清理阶段部分成员已为 null/已回收，失败可安全忽略（进程即将被 kill）
+        }
         // This Activity has a dedicated process. Do not enter Cocos teardown first:
         // its RenderThread can still lock native state after that state is destroyed.
         Log.i(TAG, "terminate dedicated KR process before Cocos teardown");

@@ -65,6 +65,9 @@ public class ResourceStationActivity extends AppCompatActivity {
         webView.loadUrl(url);
     }
 
+    // ResourceStation WebView 沉浸式状态栏：透明状态栏 + 底栏色导航栏，LIGHT 标志固定
+    // （页面顶栏恒为卡片色、无深色分支）。与 LauncherEdgeToEdgeHelper 的明暗自适应语义
+    // 不同，故不走 helper（豁免，见 agent.md §8 grep 监控与重构计划 4.7 项 2）。
     private void configureImmersiveStatusBar() {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);

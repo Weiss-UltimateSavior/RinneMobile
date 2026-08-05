@@ -75,6 +75,7 @@ internal object TyranoStorage {
     private fun insideRoot(root: File, candidate: File): File? = try {
         candidate.canonicalFile.takeIf { it.path.startsWith(root.path + File.separator) }
     } catch (_: Throwable) {
+        // canonicalFile 解析失败时视为路径越界，返回 null 拒绝访问（边界兜底，§8）
         null
     }
 

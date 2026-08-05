@@ -64,7 +64,9 @@ final class TyranoLocalHttpServer implements Runnable {
     int getPort() { return serverSocket.getLocalPort(); }
     void stop() {
         running = false;
-        try { serverSocket.close(); } catch (Throwable ignored) { }
+        try { serverSocket.close(); } catch (Throwable ignored) {
+            // 已停止/未绑定时 close 失败可安全忽略（停止清理尽力而为）
+        }
         clients.shutdownNow();
     }
 
@@ -129,7 +131,9 @@ final class TyranoLocalHttpServer implements Runnable {
             if (isExpectedClientDisconnect(t)) {
                 Log.d(TAG, "client disconnected while serving local resource: " + t.getClass().getSimpleName());
             } else {
-                try { sendText(socket, 500, "Internal Server Error", "server error"); } catch (Throwable ignored) { }
+                try { sendText(socket, 500, "Internal Server Error", "server error"); } catch (Throwable ignored) {
+                    // 错误响应发送失败可安全忽略（客户端可能已断开，主异常仍按原路径记录）
+                }
                 Log.w(TAG, "handle request failed", t);
             }
         } finally {
@@ -268,7 +272,9 @@ final class TyranoLocalHttpServer implements Runnable {
         try {
             while ((read = in.read(buf)) >= 0) out.write(buf, 0, read);
         } finally {
-            try { in.close(); } catch (Throwable ignored) { }
+            try { in.close(); } catch (Throwable ignored) {
+                // 流关闭失败可安全忽略（资源由 GC 最终回收）
+            }
         }
         return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
@@ -331,7 +337,9 @@ final class TyranoLocalHttpServer implements Runnable {
                     left -= read;
                 }
             } finally {
-                try { in.close(); } catch (Throwable ignored) { }
+                try { in.close(); } catch (Throwable ignored) {
+                    // 流关闭失败可安全忽略（资源由 GC 最终回收）
+                }
             }
         }
         raw.flush();
@@ -364,7 +372,9 @@ final class TyranoLocalHttpServer implements Runnable {
         out.flush();
     }
 
-    private static void close(Socket socket) { try { socket.close(); } catch (Throwable ignored) { } }
+    private static void close(Socket socket) { try { socket.close(); } catch (Throwable ignored) {
+        // 连接已关闭/已断开时 close 失败可安全忽略（连接清理尽力而为）
+    } }
 
     /** WebView commonly cancels media/preload requests; this is not a server failure. */
     private static boolean isExpectedClientDisconnect(Throwable error) {

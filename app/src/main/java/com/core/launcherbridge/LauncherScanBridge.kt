@@ -331,13 +331,13 @@ object LauncherScanBridge {
         EngineType.ONS -> EnginePackages.INTERNAL_ONS
         EngineType.TYRANO -> EnginePackages.INTERNAL_TYRANO
         EngineType.ARTEMIS -> EnginePackages.INTERNAL_ARTEMIS
-        EngineType.PSP -> "org.ppsspp.ppsspp"
-        EngineType.NINTENDO_3DS -> "io.github.azaharplus.android"
-        EngineType.NINTENDO_SWITCH -> "dev.eden.eden_emulator"
+        EngineType.PSP -> EnginePackages.EXTERNAL_PPSSPP
+        EngineType.NINTENDO_3DS -> EnginePackages.EXTERNAL_AZAHAR
+        EngineType.NINTENDO_SWITCH -> EnginePackages.EXTERNAL_EDEN
         // 没有子类型的旧版/未来扫描结果保留保守的 RPG XP 回退。
-        EngineType.RPGMAKER -> "internal.rpgmxp"
+        EngineType.RPGMAKER -> EnginePackages.INTERNAL_RPGMAKER_XP
         EngineType.RENPY -> EnginePackages.INTERNAL_RENPY
-        EngineType.GODOT -> "internal.godot"
+        EngineType.GODOT -> EnginePackages.INTERNAL_GODOT
         // Winlator 包名因改版众多（com.winlator / com.winlator.cmod / glibc / proot 等），
         // 扫描阶段无法静态确定，需要探测设备上已安装的可启动 Winlator 系应用。
         EngineType.WINLATOR -> guessInstalledWinlatorPackage(context)

@@ -209,6 +209,7 @@ object VniteImporter {
                 val d = sdf.parse(raw)
                 if (d != null) return d.time
             } catch (ignored: Exception) {
+                // 时间格式解析失败时忽略，尝试下一格式（全部失败回退当前时间）
             }
         }
         Log.w(TAG, "无法解析时间，fallback 当前时间: $raw")

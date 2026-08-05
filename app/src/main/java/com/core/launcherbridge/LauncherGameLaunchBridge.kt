@@ -166,7 +166,7 @@ object LauncherGameLaunchBridge {
             EnginePackages.isInternalTyrano(pkg) -> "$ownPackage:tyrano"
             EnginePackages.isInternalOns(pkg) -> "$ownPackage:ons"
             EnginePackages.isInternalArtemis(pkg) -> "$ownPackage:artemis"
-            pkg.startsWith("internal.psp") -> "org.ppsspp.ppsspp"
+            pkg.startsWith(EnginePackages.INTERNAL_PSP) -> EnginePackages.EXTERNAL_PPSSPP
             else -> emulatorPackage.trim()
         }
     }
@@ -252,7 +252,7 @@ object LauncherGameLaunchBridge {
         if (emulatorPackage.isEmpty()) {
             return context.getString(R.string.core_emulator_package_required)
         }
-        if ((emulatorPackage.startsWith("internal.psp") || emulatorPackage == "org.ppsspp.ppsspp")
+        if ((emulatorPackage.startsWith(EnginePackages.INTERNAL_PSP) || emulatorPackage == EnginePackages.EXTERNAL_PPSSPP)
             && !EmulatorLauncher.isPPSSPPInstalled(context)
         ) {
             return context.getString(R.string.core_ppsspp_required)
@@ -300,9 +300,9 @@ object LauncherGameLaunchBridge {
         if (emulatorPackage.isEmpty() && game.engine == EngineType.KIRIKIRI) return EnginePackages.INTERNAL_KRKR
         if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return EnginePackages.INTERNAL_ONS
         if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return EnginePackages.INTERNAL_TYRANO
-        if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return "org.ppsspp.ppsspp"
-        if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_3DS) return "io.github.azaharplus.android"
-        if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_SWITCH) return "dev.eden.eden_emulator"
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return EnginePackages.EXTERNAL_PPSSPP
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_3DS) return EnginePackages.EXTERNAL_AZAHAR
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_SWITCH) return EnginePackages.EXTERNAL_EDEN
         if (game.engine == EngineType.ARTEMIS && emulatorPackage.isEmpty()) return EnginePackages.INTERNAL_ARTEMIS
         return emulatorPackage
     }
@@ -317,9 +317,9 @@ object LauncherGameLaunchBridge {
         EngineType.ONS -> EnginePackages.INTERNAL_ONS
         EngineType.TYRANO -> EnginePackages.INTERNAL_TYRANO
         EngineType.ARTEMIS -> EnginePackages.INTERNAL_ARTEMIS
-        EngineType.PSP -> "org.ppsspp.ppsspp"
-        EngineType.NINTENDO_3DS -> "io.github.azaharplus.android"
-        EngineType.NINTENDO_SWITCH -> "dev.eden.eden_emulator"
+        EngineType.PSP -> EnginePackages.EXTERNAL_PPSSPP
+        EngineType.NINTENDO_3DS -> EnginePackages.EXTERNAL_AZAHAR
+        EngineType.NINTENDO_SWITCH -> EnginePackages.EXTERNAL_EDEN
         EngineType.RPGMAKER -> "internal." + rpgMakerSubtype.ifBlank { "rpgmxp" }
         EngineType.RENPY -> "internal." + renpySubtype.ifBlank { "renpy" }
         EngineType.GODOT -> "internal." + godotSubtype.ifBlank { "godot4" }
@@ -374,7 +374,7 @@ object LauncherGameLaunchBridge {
             if (EnginePackages.isInternalArtemis(pkg)) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalArtemisIntent(context, pkg, game.rootUri, launchTarget))
             }
-            if (pkg.startsWith("internal.psp") || pkg == "org.ppsspp.ppsspp") {
+            if (pkg.startsWith(EnginePackages.INTERNAL_PSP) || pkg == EnginePackages.EXTERNAL_PPSSPP) {
                 if (!EmulatorLauncher.isPPSSPPInstalled(context)) {
                     return StartAttempt.failure("emulator_missing")
                 }

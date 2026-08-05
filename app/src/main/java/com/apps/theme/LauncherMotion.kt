@@ -62,6 +62,10 @@ object LauncherMotion {
     @JvmStatic
     fun runAfterPulse(view: View?, action: Runnable?) {
         pulse(view)
-        RxMainScheduler.postDelayed({ action?.run() }, 150L)
+        val target = view
+        RxMainScheduler.postDelayed({
+            // 150ms 内视图可能已随页面销毁而分离，先判窗口附着再执行回调（§8:302 守卫）
+            if (target != null && target.isAttachedToWindow) action?.run()
+        }, 150L)
     }
 }

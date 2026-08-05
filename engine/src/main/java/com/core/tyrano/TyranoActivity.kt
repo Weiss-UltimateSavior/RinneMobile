@@ -416,6 +416,7 @@ class TyranoActivity : Activity() {
                     it.path.startsWith(namespace.path + File.separator)
                 }
             } catch (_: Throwable) {
+                // canonicalFile 解析失败时视为不在受控目录内，返回 null 走默认存档路径（边界兜底，§8）
                 null
             }
         }
@@ -660,6 +661,7 @@ class TyranoActivity : Activity() {
                 directory.isDirectory &&
                 directory.canWrite()
         } catch (_: Throwable) {
+            // 目录探测/创建失败视为不可写，返回 false 由调用方回退（边界兜底，§8）
             false
         }
 

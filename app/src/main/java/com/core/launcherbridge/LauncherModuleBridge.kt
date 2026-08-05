@@ -115,7 +115,7 @@ object LauncherModuleBridge {
         if (p.isEmpty()) return false
         if (ExternalGodotPluginStrategy.PLUGIN_PACKAGE_GODOT3.equals(p, ignoreCase = true)) return true
         if (ExternalGodotPluginStrategy.PLUGIN_PACKAGE_GODOT4.equals(p, ignoreCase = true)) return true
-        return p == "internal.godot" || p == "internal.godot3" || p == "internal.godot4"
+        return p == EnginePackages.INTERNAL_GODOT || p == "internal.godot3" || p == "internal.godot4"
     }
 
     private fun getPrefs(context: Context) = context.yukiPrefs()

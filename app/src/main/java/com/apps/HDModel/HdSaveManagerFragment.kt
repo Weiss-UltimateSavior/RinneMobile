@@ -86,7 +86,7 @@ class HdSaveManagerFragment : Fragment(), HdEmbeddedActivityOwner {
                 counts[engine] = (counts[engine] ?: 0) + 1
             }
             activity?.runOnUiThread {
-                if (view == null) return@runOnUiThread
+                if (!isAdded || view == null) return@runOnUiThread
                 renderCategories(counts)
             }
         }

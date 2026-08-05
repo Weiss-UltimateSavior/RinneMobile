@@ -257,6 +257,7 @@ public class LauncherRepository {
             configuration.setLocale(locales.get(0));
             return appContext.createConfigurationContext(configuration);
         } catch (RuntimeException ignored) {
+            // 本地化配置创建失败时回退 appContext（未应用新语言，展示仍可读），可安全忽略
             return appContext;
         }
     }

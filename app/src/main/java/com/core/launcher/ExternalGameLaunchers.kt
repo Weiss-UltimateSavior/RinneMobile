@@ -138,8 +138,8 @@ internal object ExternalGameLaunchers {
 
     private object PspStrategy : BaseStrategy(EngineType.PSP) {
         override fun supports(request: LaunchRequest): Boolean =
-            request.packageName.equals("internal.psp", true) ||
-                request.packageName.equals("org.ppsspp.ppsspp", true) ||
+            request.packageName.equals(EnginePackages.INTERNAL_PSP, true) ||
+                request.packageName.equals(EnginePackages.EXTERNAL_PPSSPP, true) ||
                 request.packageName.lowercase(Locale.ROOT).contains("ppsspp")
 
         override fun launch(context: Context, request: LaunchRequest): Boolean {
@@ -151,7 +151,7 @@ internal object ExternalGameLaunchers {
     private object CitraStrategy : BaseStrategy(EngineType.NINTENDO_3DS) {
         override fun supports(request: LaunchRequest): Boolean {
             val pkg = request.packageName.lowercase(Locale.ROOT)
-            return pkg == "internal.citra" || pkg == "io.github.azaharplus.android" ||
+            return pkg == EnginePackages.INTERNAL_CITRA || pkg == EnginePackages.EXTERNAL_AZAHAR ||
                 pkg == "org.citra.citra_emu" || pkg == "org.azahar_emu.azahar" ||
                 "lime3ds" in pkg || "citra" in pkg || "azahar" in pkg
         }
@@ -166,7 +166,7 @@ internal object ExternalGameLaunchers {
 
     private object EdenStrategy : BaseStrategy(EngineType.NINTENDO_SWITCH) {
         override fun supports(request: LaunchRequest): Boolean =
-            request.packageName.equals("dev.eden.eden_emulator", true)
+            request.packageName.equals(EnginePackages.EXTERNAL_EDEN, true)
 
         override fun launch(context: Context, request: LaunchRequest): Boolean {
             if (!HandheldLaunchers.isEdenInstalled(context)) return false

@@ -107,7 +107,7 @@ object LauncherRepositoryBridge {
 
     /**
      * 返回最近完成的游玩会话，按时间降序。
-     * 使用 [RecentActivity] 字段进行展示，而非 GameRepository.PlayActivity。
+     * 使用 [RecentActivity] 字段进行展示，而非 PlaySessionRepository.PlayActivity。
      */
     @JvmStatic
     fun getRecentPlayActivities(context: Context?, limit: Int): List<RecentActivity> {
@@ -137,7 +137,7 @@ object LauncherRepositoryBridge {
     }
 
     /**
-     * 等价于 GameRepository.PlayActivity 的值类，
+     * 等价于 PlaySessionRepository.PlayActivity 的值类，
      * 使 com.apps 无需导入核心数据层。
      */
     class RecentActivity(

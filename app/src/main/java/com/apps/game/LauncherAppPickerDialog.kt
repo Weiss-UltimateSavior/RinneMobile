@@ -155,9 +155,11 @@ internal object LauncherAppPickerDialog {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.item_launcher_app_picker, parent, false)
             LauncherTabletPortraitScaler.apply(view)
+            val context = parent.context
+            val scale = LauncherTabletPortraitScaler.scaleFor(view)
             val params = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
-                Math.round(68 * parent.resources.displayMetrics.density * LauncherTabletPortraitScaler.scaleFor(view)))
-            params.setMargins(0, 0, 0, (7 * parent.resources.displayMetrics.density).toInt())
+                LauncherTheme.dp(context, 68f * scale))
+            params.setMargins(0, 0, 0, LauncherTheme.dp(context, 7f))
             view.layoutParams = params
             return Holder(view, callback)
         }

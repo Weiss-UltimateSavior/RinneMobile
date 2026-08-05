@@ -128,7 +128,9 @@ object HttpClient {
         for (fmt in HTTP_DATE_FORMATS) {
             try {
                 return SimpleDateFormat(fmt, Locale.US).parse(dateStr)?.time ?: 0
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+                // 日期格式解析失败时忽略，尝试下一格式（全部失败返回 0）
+            }
         }
         return 0
     }
@@ -145,7 +147,9 @@ object HttpClient {
             body?.close()
             val errBody = response.errorBody()
             if (errBody != null && errBody !== body) errBody.close()
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+            // 响应体关闭失败可安全忽略（OkHttp 连接最终由池回收）
+        }
     }
 
     private fun sleep(ms: Long) {

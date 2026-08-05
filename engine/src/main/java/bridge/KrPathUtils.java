@@ -57,7 +57,9 @@ public final class KrPathUtils {
                     if (root != null) p = replacePrefixIgnoreCase(p, root.getAbsolutePath());
                 }
             }
-        } catch (Throwable ignored) { }
+        } catch (Throwable ignored) {
+            // 路径规范化失败时返回原路径，由后续文件操作兜底（尽力而为）
+        }
         return p;
     }
 
