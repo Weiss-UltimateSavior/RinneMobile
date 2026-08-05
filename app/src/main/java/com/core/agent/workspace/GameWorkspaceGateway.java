@@ -12,7 +12,6 @@ import com.core.model.Game;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,13 +20,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.CharsetEncoder;
 import java.security.MessageDigest;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -35,7 +28,6 @@ import java.util.Locale;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -100,7 +92,7 @@ public final class GameWorkspaceGateway {
         if (file == null || !file.exists()) return error("NOT_FOUND", "文件不存在");
         if (!file.isFile()) return error("NOT_FILE", "目标不是文件");
         byte[] bytes = readBounded(context, file, MAX_READ_BYTES, cancellation);
-        Decoded decoded = decode(bytes, encoding);
+        WorkspaceEncoding.Decoded decoded = WorkspaceEncoding.decode(bytes, encoding);
         return new JSONObject().put("game_id", gameId).put("relative_path", path)
                 .put("encoding", decoded.encoding).put("sha256", sha256(bytes))
                 .put("byte_length", bytes.length).put("content", decoded.text).toString();
@@ -194,13 +186,13 @@ public final class GameWorkspaceGateway {
     public static String jsonGet(Context context, long gameId, String relativePath, String encoding,
                           String pointer, CancellationProbe cancellation) throws Exception {
         TextDocument source = loadText(context, gameId, relativePath, encoding, cancellation);
-        Object current = parseJsonRoot(source.decoded.text);
+        Object current = WorkspaceJson.parseRoot(source.decoded.text);
         if (!pointer.isEmpty()) {
             if (!pointer.startsWith("/")) throw new IllegalArgumentException("pointer 必须为空或以 / 开头");
             String[] tokens = pointer.substring(1).split("/", -1);
             for (String raw : tokens) {
                 checkActive(cancellation);
-                String token = decodeJsonPointerToken(raw);
+                String token = WorkspaceJson.decodePointerToken(raw);
                 if (current instanceof JSONObject object) {
                     if (!object.has(token)) return error("JSON_POINTER_NOT_FOUND", "JSON Pointer 指向的成员不存在");
                     current = object.get(token);
@@ -213,7 +205,7 @@ public final class GameWorkspaceGateway {
                 } else return error("JSON_POINTER_NOT_FOUND", "JSON Pointer 穿过了基础值");
             }
         }
-        return source.base().put("pointer", pointer).put("value_type", jsonType(current))
+        return source.base().put("pointer", pointer).put("value_type", WorkspaceJson.jsonType(current))
                 .put("value", current).toString();
     }
 
@@ -221,8 +213,8 @@ public final class GameWorkspaceGateway {
                                CancellationProbe cancellation) throws Exception {
         TextDocument source = loadText(context, gameId, relativePath, encoding, cancellation);
         try {
-            Object root = parseJsonRoot(source.decoded.text);
-            return source.base().put("valid", true).put("root_type", jsonType(root)).toString();
+            Object root = WorkspaceJson.parseRoot(source.decoded.text);
+            return source.base().put("valid", true).put("root_type", WorkspaceJson.jsonType(root)).toString();
         } catch (Exception error) {
             return source.base().put("valid", false).put("message", safeText(error.getMessage(), 400)).toString();
         }
@@ -320,23 +312,23 @@ public final class GameWorkspaceGateway {
                                  CancellationProbe cancellation) throws Exception {
         TextDocument source = loadText(context, gameId, relativePath, "encoding-detect", cancellation);
         JSONArray candidates = new JSONArray();
-        String selected = detectBom(source.bytes);
+        String selected = WorkspaceEncoding.detectBom(source.bytes);
         if (selected != null) {
             candidates.put(new JSONObject().put("encoding", selected).put("confidence", 1.0));
         } else {
-            List<EncodingCandidate> values = encodingCandidates(source.bytes);
-            for (EncodingCandidate value : values) candidates.put(new JSONObject()
+            List<WorkspaceEncoding.EncodingCandidate> values = WorkspaceEncoding.encodingCandidates(source.bytes);
+            for (WorkspaceEncoding.EncodingCandidate value : values) candidates.put(new JSONObject()
                     .put("encoding", value.encoding).put("confidence", value.confidence));
             selected = values.isEmpty() ? "unknown" : values.get(0).encoding;
         }
         String preview = "";
         if (!"unknown".equals(selected)) {
-            try { preview = decode(source.bytes, selected.replace("-bom", "")).text; }
+            try { preview = WorkspaceEncoding.decode(source.bytes, selected.replace("-bom", "")).text; }
             catch (Exception e) { Log.w(TAG, "diagnostic-preview-decode-failed", e); }
         }
         if (preview.length() > 240) preview = preview.substring(0, 240) + "…";
         return source.baseWithoutEncoding().put("selected_encoding", selected).put("candidates", candidates)
-                .put("binary_likely", looksBinary(source.bytes)).put("preview", preview).toString();
+                .put("binary_likely", WorkspaceEncoding.looksBinary(source.bytes)).put("preview", preview).toString();
     }
 
     public static String textCount(Context context, long gameId, String relativePath, String encoding,
@@ -403,9 +395,9 @@ public final class GameWorkspaceGateway {
             try { bytes = readBounded(context, node.file, MAX_SEARCH_FILE_BYTES, cancellation); }
             catch (IOException | SecurityException ignored) { continue; }
             bytesRead += bytes.length;
-            Decoded decoded;
+            WorkspaceEncoding.Decoded decoded;
             // 单文件解码失败隔离，跳过该文件不影响整体搜索
-            try { decoded = decode(bytes, encoding); } catch (Exception ignored) { continue; }
+            try { decoded = WorkspaceEncoding.decode(bytes, encoding); } catch (Exception ignored) { continue; }
             String[] lines = decoded.text.split("\\R", -1);
             for (int i = 0; i < lines.length && matches.length() < maxMatches; i++) {
                 int column = lines[i].indexOf(query);
@@ -444,8 +436,8 @@ public final class GameWorkspaceGateway {
         byte[] before = readBounded(context, file, MAX_READ_BYTES);
         String actualHash = sha256(before);
         if (!actualHash.equalsIgnoreCase(expectedSha256)) throw new IOException("文件已发生变化，请重新读取后再修改");
-        Decoded decoded = decode(before, encoding);
-        if (!Arrays.equals(before, encode(decoded.text, decoded.encoding))) {
+        WorkspaceEncoding.Decoded decoded = WorkspaceEncoding.decode(before, encoding);
+        if (!Arrays.equals(before, WorkspaceEncoding.encode(decoded.text, decoded.encoding))) {
             throw new IOException("该文件编码无法无损往返，已拒绝自动修改");
         }
         int first = decoded.text.indexOf(oldText);
@@ -454,7 +446,7 @@ public final class GameWorkspaceGateway {
             throw new IOException("原文本出现多次，请提供更完整且唯一的上下文");
         }
         String changed = decoded.text.substring(0, first) + newText + decoded.text.substring(first + oldText.length());
-        byte[] after = encode(changed, decoded.encoding);
+        byte[] after = WorkspaceEncoding.encode(changed, decoded.encoding);
         if (after.length > MAX_READ_BYTES) throw new IOException("修改后的文件超过 65536 字节安全上限");
         String preview = "游戏：" + safeDisplay(workspace.title) + "\n文件：" + safeDisplay(path) + "\n编码：" + decoded.encoding
                 + "\n原始 SHA-256：" + actualHash + "\n\n删除内容（完整）：\n" + diffLines(oldText, "- ")
@@ -587,7 +579,7 @@ public final class GameWorkspaceGateway {
                                          CancellationProbe cancellation) throws Exception {
         TextDocument raw = loadRaw(context, gameId, relativePath, cancellation);
         if ("encoding-detect".equals(encoding)) return raw;
-        return new TextDocument(raw.gameId, raw.path, raw.bytes, decode(raw.bytes, encoding));
+        return new TextDocument(raw.gameId, raw.path, raw.bytes, WorkspaceEncoding.decode(raw.bytes, encoding));
     }
 
     private static TextDocument loadRaw(Context context, long gameId, String relativePath,
@@ -623,39 +615,6 @@ public final class GameWorkspaceGateway {
         return last == '\n' || last == '\r' || last == '\u0085' || last == '\u2028' || last == '\u2029';
     }
 
-    private static Object parseJsonRoot(String text) throws Exception {
-        JSONTokener tokener = new JSONTokener(text);
-        Object value = tokener.nextValue();
-        if (!(value instanceof JSONObject) && !(value instanceof JSONArray)) {
-            throw new IllegalArgumentException("JSON 根节点必须是对象或数组");
-        }
-        if (tokener.nextClean() != 0) throw new IllegalArgumentException("JSON 根节点后存在多余内容");
-        return value;
-    }
-
-    private static String decodeJsonPointerToken(String raw) {
-        StringBuilder decoded = new StringBuilder(raw.length());
-        for (int i = 0; i < raw.length(); i++) {
-            char c = raw.charAt(i);
-            if (c != '~') { decoded.append(c); continue; }
-            if (++i >= raw.length()) throw new IllegalArgumentException("JSON Pointer 转义格式错误");
-            char escaped = raw.charAt(i);
-            if (escaped == '0') decoded.append('~');
-            else if (escaped == '1') decoded.append('/');
-            else throw new IllegalArgumentException("JSON Pointer 转义格式错误");
-        }
-        return decoded.toString();
-    }
-
-    private static String jsonType(Object value) {
-        if (value == null || value == JSONObject.NULL) return "null";
-        if (value instanceof JSONObject) return "object";
-        if (value instanceof JSONArray) return "array";
-        if (value instanceof Boolean) return "boolean";
-        if (value instanceof Number) return "number";
-        return "string";
-    }
-
     private static DocumentBuilderFactory secureXmlFactory() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
@@ -689,91 +648,6 @@ public final class GameWorkspaceGateway {
                 || (value[2] == 7 && value[3] == 8));
     }
 
-    private static String detectBom(byte[] bytes) {
-        if (bytes.length >= 3 && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) return "utf-8-bom";
-        if (bytes.length >= 2 && bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xFE) return "utf-16le-bom";
-        if (bytes.length >= 2 && bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xFF) return "utf-16be-bom";
-        return null;
-    }
-
-    private static List<EncodingCandidate> encodingCandidates(byte[] bytes) {
-        List<EncodingCandidate> candidates = new ArrayList<>();
-        boolean ascii = true;
-        for (byte value : bytes) if ((value & 0x80) != 0) { ascii = false; break; }
-        try {
-            String utf8 = decode(bytes, "utf-8").text;
-            candidates.add(new EncodingCandidate("utf-8", ascii ? 0.90 : 0.99, languageScore(utf8)));
-        } catch (Exception e) { Log.w(TAG, "diagnostic-utf8-decode-failed", e); }
-        int evenZero = 0, oddZero = 0;
-        for (int i = 0; i < bytes.length; i++) if (bytes[i] == 0) { if ((i & 1) == 0) evenZero++; else oddZero++; }
-        if (evenZero > bytes.length / 8 || oddZero > bytes.length / 8) {
-            addEncodingCandidate(candidates, bytes, oddZero >= evenZero ? "utf-16le" : "utf-16be", 0.88);
-        }
-        if (!ascii) {
-            addEncodingCandidate(candidates, bytes, "gb18030", 0.62);
-            addEncodingCandidate(candidates, bytes, "shift_jis", 0.60);
-        }
-        candidates.sort((a, b) -> {
-            int confidence = Double.compare(b.confidence, a.confidence);
-            return confidence != 0 ? confidence : Integer.compare(b.languageScore, a.languageScore);
-        });
-        return candidates;
-    }
-
-    private static void addEncodingCandidate(List<EncodingCandidate> values, byte[] bytes,
-                                             String encoding, double baseConfidence) {
-        try {
-            String text = decode(bytes, encoding).text;
-            int score = languageScore(text);
-            double confidence = Math.min(0.89, baseConfidence + Math.min(0.20, score / 1000.0));
-            values.add(new EncodingCandidate(encoding, confidence, score));
-        } catch (Exception e) { Log.w(TAG, "diagnostic-encoding-candidate-failed", e); }
-    }
-
-    private static int languageScore(String text) {
-        int score = 0;
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if ((c >= '\u4E00' && c <= '\u9FFF') || (c >= '\u3040' && c <= '\u30FF')) score += 3;
-            else if (c == '\n' || c == '\r' || c == '\t' || !Character.isISOControl(c)) score++;
-            else score -= 20;
-        }
-        return score;
-    }
-
-    private static boolean looksBinary(byte[] bytes) {
-        if (bytes.length == 0) return false;
-        int controls = 0, zeros = 0;
-        for (byte value : bytes) {
-            int c = value & 0xff;
-            if (c == 0) zeros++;
-            if ((c < 0x09 || (c > 0x0D && c < 0x20)) && c != 0) controls++;
-        }
-        boolean utf16Pattern = zeros > bytes.length / 8;
-        return !utf16Pattern && controls > Math.max(2, bytes.length / 20);
-    }
-
-    private static byte[] encode(String text, String encoding) throws CharacterCodingException {
-        Charset charset;
-        byte[] bom = new byte[0];
-        if ("utf-8-bom".equals(encoding)) { charset = StandardCharsets.UTF_8; bom = new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}; }
-        else if ("utf-16le-bom".equals(encoding)) { charset = StandardCharsets.UTF_16LE; bom = new byte[]{(byte) 0xFF, (byte) 0xFE}; }
-        else if ("utf-16be-bom".equals(encoding)) { charset = StandardCharsets.UTF_16BE; bom = new byte[]{(byte) 0xFE, (byte) 0xFF}; }
-        else if ("gb18030".equals(encoding)) charset = Charset.forName("GB18030");
-        else if ("shift_jis".equals(encoding)) charset = Charset.forName("Shift_JIS");
-        else if ("utf-16le".equals(encoding)) charset = StandardCharsets.UTF_16LE;
-        else if ("utf-16be".equals(encoding)) charset = StandardCharsets.UTF_16BE;
-        else charset = StandardCharsets.UTF_8;
-        CharsetEncoder encoder = charset.newEncoder().onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT);
-        ByteBuffer encoded = encoder.encode(CharBuffer.wrap(text));
-        byte[] body = new byte[encoded.remaining()];
-        encoded.get(body);
-        byte[] result = Arrays.copyOf(bom, bom.length + body.length);
-        System.arraycopy(body, 0, result, bom.length, body.length);
-        return result;
-    }
-
     private static String diffLines(String value, String prefix) {
         String visible = (value == null ? "" : value).replace("\r\n", "\\r\n").replace("\r", "\\r");
         return prefix + visible.replace("\n", "\n" + prefix);
@@ -785,7 +659,7 @@ public final class GameWorkspaceGateway {
 
     private static String fullContentPreview(byte[] bytes, String encoding, String prefix) {
         try {
-            String text = decode(bytes, encoding).text;
+            String text = WorkspaceEncoding.decode(bytes, encoding).text;
             if (containsUnsafePreviewCharacters(text)) return fullHexPreview(bytes, prefix);
             return diffLines(text, prefix);
         }
@@ -813,31 +687,6 @@ public final class GameWorkspaceGateway {
             if (i % 16 == 15 || i == bytes.length - 1) hex.append('\n'); else hex.append(' ');
         }
         return hex.toString();
-    }
-
-    private static Decoded decode(byte[] bytes, String requested) throws CharacterCodingException {
-        String mode = requested == null ? "auto" : requested.toLowerCase(Locale.ROOT);
-        int offset = 0;
-        Charset charset;
-        String label;
-        if (bytes.length >= 3 && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
-            charset = StandardCharsets.UTF_8; label = "utf-8-bom"; offset = 3;
-        } else if (bytes.length >= 2 && bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xFE) {
-            charset = StandardCharsets.UTF_16LE; label = "utf-16le-bom"; offset = 2;
-        } else if (bytes.length >= 2 && bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xFF) {
-            charset = StandardCharsets.UTF_16BE; label = "utf-16be-bom"; offset = 2;
-        } else {
-            if ("auto".equals(mode) || "utf-8".equals(mode)) { charset = StandardCharsets.UTF_8; label = "utf-8"; }
-            else if ("gb18030".equals(mode)) { charset = Charset.forName("GB18030"); label = "gb18030"; }
-            else if ("shift_jis".equals(mode)) { charset = Charset.forName("Shift_JIS"); label = "shift_jis"; }
-            else if ("utf-16le".equals(mode)) { charset = StandardCharsets.UTF_16LE; label = "utf-16le"; }
-            else if ("utf-16be".equals(mode)) { charset = StandardCharsets.UTF_16BE; label = "utf-16be"; }
-            else throw new IllegalArgumentException("不支持的 encoding");
-        }
-        CharBuffer chars = charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(bytes, offset, bytes.length - offset));
-        return new Decoded(chars.toString(), label);
     }
 
     private static String sha256(byte[] value) throws Exception {
@@ -873,16 +722,9 @@ public final class GameWorkspaceGateway {
 
     private static final class Workspace { final DocumentFile root; final String title; final String rootIdentity; Workspace(DocumentFile root, String title, String rootIdentity) { this.root = root; this.title = title; this.rootIdentity = rootIdentity; } }
     private static final class Node { final DocumentFile file; final String path; final int level; Node(DocumentFile file, String path, int level) { this.file = file; this.path = path; this.level = level; } }
-    private static final class Decoded { final String text; final String encoding; Decoded(String text, String encoding) { this.text = text; this.encoding = encoding; } }
-    private static final class EncodingCandidate {
-        final String encoding; final double confidence; final int languageScore;
-        EncodingCandidate(String encoding, double confidence, int languageScore) {
-            this.encoding = encoding; this.confidence = confidence; this.languageScore = languageScore;
-        }
-    }
     private static final class TextDocument {
-        final long gameId; final String path; final byte[] bytes; final Decoded decoded;
-        TextDocument(long gameId, String path, byte[] bytes, Decoded decoded) {
+        final long gameId; final String path; final byte[] bytes; final WorkspaceEncoding.Decoded decoded;
+        TextDocument(long gameId, String path, byte[] bytes, WorkspaceEncoding.Decoded decoded) {
             this.gameId = gameId; this.path = path; this.bytes = bytes; this.decoded = decoded;
         }
         JSONObject base() throws Exception {

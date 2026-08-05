@@ -7,8 +7,8 @@ import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.apps.LauncherActivity
 import com.apps.LauncherThemeStyle
+import com.apps.LauncherUiMode
 import com.core.R
 import kotlin.math.max
 import kotlin.math.min
@@ -17,7 +17,7 @@ import kotlin.math.min
 internal object LauncherThemeParts {
 
     internal fun uiContext(context: Context): Context {
-        val wrapped = LauncherActivity.wrapLauncherUiMode(context)
+        val wrapped = LauncherUiMode.wrap(context)
         return wrapped ?: context
     }
 

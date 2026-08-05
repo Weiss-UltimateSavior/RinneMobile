@@ -221,24 +221,8 @@ class LauncherAppSettingsFragment : Fragment() {
         lifecycleScope.launch {
             val saved = withContext(Dispatchers.IO) {
                 val destination = LauncherActivity.customSplashImageFile(context)
-                val pending = File(destination.parentFile, "${destination.name}.pending")
-                try {
-                    context.contentResolver.openInputStream(uri)?.use { input ->
-                        pending.outputStream().use { output -> input.copyTo(output) }
-                    } ?: return@withContext false
-                    moveReplacingAtomically(pending, destination)
-                    true
-                } catch (error: CancellationException) {
-                    throw error
-                } catch (error: IOException) {
-                    false
-                } catch (error: SecurityException) {
-                    false
-                } catch (error: IllegalArgumentException) {
-                    false
-                } finally {
-                    if (pending.exists()) pending.delete()
-                }
+                // 与竖屏背景共用带像素上限（100M）的原子拷贝，防磁盘膨胀/OOM（审计 B 阶段 132）
+                copyUriAtomically(uri, destination)
             }
             if (saved) {
                 renderSplashImageState()

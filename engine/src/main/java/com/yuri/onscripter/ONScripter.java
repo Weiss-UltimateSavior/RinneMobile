@@ -486,9 +486,25 @@ public class ONScripter extends SDLActivity {
         if (v.startsWith("content://")) {
             try {
                 Uri uri = Uri.parse(v);
-                String docId;
-                try { docId = android.provider.DocumentsContract.getTreeDocumentId(uri); } catch (Throwable ignored) { docId = null; }
-                if (docId == null || docId.isEmpty()) docId = android.provider.DocumentsContract.getDocumentId(uri);
+                String docId = null;
+                // tree-document 混合 URI（tree/<treeId>/document/<docId>）与纯 document URI：
+                // DocumentsContract.getDocumentId 只接受纯 document 形式，混合形式（游戏目录以
+                // 子文档挂在游戏库 tree 下，如 tree/primary:lib/game/document/primary:lib/game/<dir>）
+                // 会抛 IllegalArgumentException；此处取 /document/ 之后的编码段解码得完整子文档 id，
+                // 避免回退 getTreeDocumentId 只取到 tree 根目录（Artemis 等严格按目录加载的引擎会因此崩溃）。
+                String encodedPath = uri.getEncodedPath();
+                if (encodedPath != null) {
+                    int marker = encodedPath.indexOf("/document/");
+                    if (marker >= 0) {
+                        try { docId = Uri.decode(encodedPath.substring(marker + "/document/".length())); } catch (Throwable ignored) { }
+                    }
+                }
+                if (docId == null || docId.isEmpty()) {
+                    try { docId = android.provider.DocumentsContract.getTreeDocumentId(uri); } catch (Throwable ignored) { docId = null; }
+                }
+                if (docId == null || docId.isEmpty()) {
+                    try { docId = android.provider.DocumentsContract.getDocumentId(uri); } catch (Throwable ignored) { docId = null; }
+                }
                 String path = docIdToPath(docId);
                 if (path != null) return path;
             } catch (Throwable ignored) { }

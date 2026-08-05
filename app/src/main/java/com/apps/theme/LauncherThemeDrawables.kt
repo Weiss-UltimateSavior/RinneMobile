@@ -7,13 +7,14 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.widget.ImageView
 import androidx.core.graphics.ColorUtils
-import com.apps.LauncherActivity
+import com.apps.LauncherPreferences
+import com.apps.LauncherThemeStyle
 
 /** 主题背景/图形 drawable 构建（按钮、圆形、渐变卡片、下拉 scrim 等）。 */
 internal object LauncherThemeDrawables {
 
     internal fun primaryButton(context: Context, radiusDp: Float): GradientDrawable {
-        if (LauncherActivity.isXinhaitianTheme(context)) {
+        if (LauncherThemeStyle.isXinhaitian(context)) {
             return LauncherThemeParts.xinhaitianGradient(context, radiusDp, false)
         }
         return solidPrimary(context, radiusDp)
@@ -76,7 +77,7 @@ internal object LauncherThemeDrawables {
     }
 
     internal fun circle(context: Context): GradientDrawable {
-        if (LauncherActivity.isXinhaitianTheme(context)) {
+        if (LauncherThemeStyle.isXinhaitian(context)) {
             return LauncherThemeParts.xinhaitianGradient(context, 0f, true)
         }
         return circle(context, LauncherThemeColors.primary(context))
@@ -104,7 +105,7 @@ internal object LauncherThemeDrawables {
     internal fun applyCardCircleIcon(view: ImageView?, context: Context) {
         if (view == null) return
         view.background = cardCircle(context)
-        if (LauncherActivity.isLauncherDarkMode(context)) {
+        if (LauncherPreferences.isDarkMode(context)) {
             view.setColorFilter(Color.WHITE)
         } else {
             view.clearColorFilter()

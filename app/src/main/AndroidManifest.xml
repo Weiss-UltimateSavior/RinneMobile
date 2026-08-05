@@ -117,13 +117,6 @@
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize" />
 
         <activity
-            android:name="com.apps.HDModel.HdChatSelectActivity"
-            android:exported="false"
-            android:screenOrientation="sensorLandscape"
-            android:theme="@style/Theme.YukiHub.Launcher"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize" />
-
-        <activity
             android:name="com.apps.settings.ResourceStationActivity"
             android:exported="false"
             android:screenOrientation="portrait"

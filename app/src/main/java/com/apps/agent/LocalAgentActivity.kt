@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.Window
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.ColorUtils
@@ -41,10 +40,6 @@ class LocalAgentActivity : AppCompatActivity() {
     /** 本地智能体关闭入口（原返回按钮 LauncherMotion.finish 语义；runtime.cancel 由 Fragment onDestroyView 覆盖）。 */
     fun finishLocalAgent() {
         LauncherMotion.finish(this)
-    }
-
-    override fun onBackPressed() {
-        finishLocalAgent()
     }
 
     private fun configureEdgeToEdgeWindow() {

@@ -1,14 +1,14 @@
 package com.apps.theme
 
 import android.content.Context
-import com.apps.LauncherActivity
+import com.apps.LauncherThemeStyle
 import com.core.R
 
 /** 主题色值解析：统一经 LauncherThemeParts.color 走 UI mode 包装的资源解析。 */
 internal object LauncherThemeColors {
 
     internal fun primary(context: Context): Int {
-        return LauncherActivity.launcherPrimaryColor(context)
+        return LauncherThemeStyle.primaryColor(context)
     }
 
     internal fun onPrimary(context: Context): Int = LauncherThemeParts.color(context, R.color.launcher_on_primary_color)

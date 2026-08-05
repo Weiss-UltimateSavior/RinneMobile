@@ -272,14 +272,6 @@ class HdModeActivity : AppCompatActivity() {
             .commit()
     }
 
-    internal fun showProfileDetail(id: String, intent: android.content.Intent): Boolean {
-        val profile = supportFragmentManager
-            .findFragmentById(R.id.hdFragmentContainer) as? HdProfileFragment
-            ?: return false
-        profile.showEmbeddedActivity(id, intent)
-        return true
-    }
-
     override fun finishFromChild(child: Activity) {
         val owner = currentEmbeddedOwner()
         if (owner != null) {

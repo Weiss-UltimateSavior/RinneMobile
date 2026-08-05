@@ -269,10 +269,9 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private fun enterNativeKrkr() {
         try {
             startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(requireContext()))
-        } catch (error: ActivityNotFoundException) {
-            DevLogger.w("LauncherKrkrSettings", "Failed to open native KRKR settings", error)
-            Toast.makeText(requireContext(), R.string.settings_native_krkr_unavailable, Toast.LENGTH_SHORT).show()
-        } catch (error: IllegalArgumentException) {
+        } catch (error: Exception) {
+            // Kotlin 无 multi-catch：守卫收窄为预期的两个具体异常（ActivityNotFoundException|IllegalArgumentException），其余继续抛（§8:313）
+            if (error !is ActivityNotFoundException && error !is IllegalArgumentException) throw error
             DevLogger.w("LauncherKrkrSettings", "Failed to open native KRKR settings", error)
             Toast.makeText(requireContext(), R.string.settings_native_krkr_unavailable, Toast.LENGTH_SHORT).show()
         }

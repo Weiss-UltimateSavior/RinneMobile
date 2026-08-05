@@ -9,12 +9,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
-import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.apps.HDModel.HdEmbeddedActivityOwner
+import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -85,6 +87,13 @@ class LocalAgentFragment : Fragment() {
         bindActions()
         loadHistory()
         renderConfigState()
+        // 硬件返回：按承载宿主关闭（对齐薄宿主模式；原 LocalAgentActivity 废弃 onBackPressed 已移除）。
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() { requestClose() }
+            },
+        )
     }
 
     override fun onDestroyView() {
@@ -92,6 +101,15 @@ class LocalAgentFragment : Fragment() {
         if (::runtime.isInitialized) runtime.close()
         binding = null
         super.onDestroyView()
+    }
+
+    /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
+    private fun requestClose() {
+        when (val host = activity) {
+            is LocalAgentActivity -> host.finishLocalAgent()
+            is HdModeActivity -> (parentFragment as? HdEmbeddedActivityOwner)?.closeEmbeddedActivity()
+            else -> Unit
+        }
     }
 
     private fun bindTheme() {

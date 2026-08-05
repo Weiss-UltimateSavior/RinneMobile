@@ -1,7 +1,6 @@
 package com.apps.HDModel
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import com.apps.account.LauncherAccountSettingsFragment
+import com.apps.chat.LauncherChatSelectFragment
 import com.apps.leaderboard.LauncherLeaderboardFragment
 import com.apps.profile.LauncherModuleCompatibilityFragment
 import com.apps.profile.LauncherProfileEditFragment
@@ -19,14 +19,12 @@ import com.core.R
 /**
  * HD 个人页：复用账户资料业务，以双栏内容适配大屏容器。
  *
- * 重构计划 9.9 阶段 111：5 个设置目标（资料编辑/账号设置/模块兼容/翻译设置/排行榜）
- * 迁子 Fragment 承载；聊天流（[HdChatSelectActivity] 路由到任意聊天 Activity）暂保留
- * embeddedHost 承载（聊天目标为大型 Activity，迁子 Fragment 留待后续阶段）。
+ * 重构计划 9.9 阶段 111/129：5 个设置目标（资料编辑/账号设置/模块兼容/翻译设置/排行榜）
+ * 与聊天流（[LauncherChatSelectFragment] 选择 → 聊天子 Fragment）全部迁子 Fragment 承载，
+ * embeddedHost（LocalActivityManager 嵌入）已整体移除（阶段 129，W-3 收官）。
  */
-@Suppress("DEPRECATION")
 class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
-    private var embeddedHost: HdEmbeddedActivityHost? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,30 +37,12 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        embeddedHost = HdEmbeddedActivityHost(requireActivity()).also { it.onCreate(savedInstanceState) }
         detailContainer = view.findViewById(R.id.hdProfileDetailContainer)
         super.onViewCreated(view, savedInstanceState)
         openAccountSettings()
     }
 
-    override fun onResume() {
-        super.onResume()
-        embeddedHost?.onResume()
-    }
-
-    override fun onPause() {
-        embeddedHost?.onPause()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        embeddedHost?.onStop()
-        super.onStop()
-    }
-
     override fun onDestroyView() {
-        embeddedHost?.onDestroyView()
-        embeddedHost = null
         detailContainer = null
         super.onDestroyView()
     }
@@ -84,7 +64,7 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun openChatRoom() {
-        showEmbeddedActivity("hd_chat_room", HdChatSelectActivity::class.java)
+        showChildFragment(CHILD_CHAT_SELECT_TAG, LauncherChatSelectFragment())
     }
 
     override fun openModuleCompatibility() {
@@ -110,26 +90,16 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
             .commit()
     }
 
-    private fun showEmbeddedActivity(id: String, activityClass: Class<*>) {
-        showEmbeddedActivity(id, Intent(requireContext(), activityClass))
-    }
-
-    internal fun showEmbeddedActivity(id: String, intent: Intent) {
-        val host = embeddedHost ?: return
-        val container = detailContainer ?: return
-        val content = host.start(
-            id,
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-        ) ?: return
-        HdPageMotion.showEmbedded(container, content)
-    }
-
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
+        // 子 Fragment 路径（8 个目标：资料编辑/账号设置/模块兼容/翻译设置/排行榜/聊天选择/AI 聊天/公共聊天）
         val existing = childFragmentManager.findFragmentByTag(CHILD_PROFILE_EDIT_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_ACCOUNT_SETTINGS_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_MODULE_COMPAT_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_TRANSLATION_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_LEADERBOARD_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_CHAT_SELECT_TAG)
+            ?: childFragmentManager.findFragmentByTag(LauncherChatSelectFragment.CHILD_CHAT_AI_TAG)
+            ?: childFragmentManager.findFragmentByTag(LauncherChatSelectFragment.CHILD_CHAT_PUBLIC_TAG)
         if (existing != null) {
             childFragmentManager.beginTransaction()
                 .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
@@ -137,15 +107,7 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
                 .commit()
             return true
         }
-        // 聊天流仍由 embeddedHost 承载（HdChatSelectActivity 路由到任意聊天 Activity）。
-        val host = embeddedHost
-        val id = host?.beginClose(child) ?: return false
-        detailContainer?.apply {
-            HdPageMotion.closeEmbedded(this) {
-                post { host.destroy(id) }
-            }
-        }
-        return true
+        return false
     }
 
     companion object {
@@ -154,5 +116,6 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
         private const val CHILD_MODULE_COMPAT_TAG = "hd_module_compatibility"
         private const val CHILD_TRANSLATION_TAG = "hd_translation_settings"
         private const val CHILD_LEADERBOARD_TAG = "hd_leaderboard"
+        private const val CHILD_CHAT_SELECT_TAG = "hd_chat_select"
     }
 }

@@ -497,9 +497,17 @@ public class KR2Activity extends Cocos2dxActivity {
         try {
             android.net.Uri uri = android.net.Uri.parse(value);
             String docId = null;
-            String path = uri.getPath();
-            if (path != null && path.contains("/document/")) {
-                try { docId = android.provider.DocumentsContract.getDocumentId(uri); } catch (Throwable ignored) { }
+            // tree-document 混合 URI（tree/<treeId>/document/<docId>）与纯 document URI：
+            // DocumentsContract.getDocumentId 只接受纯 document 形式，混合形式（游戏目录以
+            // 子文档挂在游戏库 tree 下，如 tree/primary:lib/game/document/primary:lib/game/<dir>）
+            // 会抛 IllegalArgumentException；此处取 /document/ 之后的编码段解码得完整子文档 id，
+            // 避免回退 getTreeDocumentId 只取到 tree 根目录。
+            String encodedPath = uri.getEncodedPath();
+            if (encodedPath != null) {
+                int marker = encodedPath.indexOf("/document/");
+                if (marker >= 0) {
+                    try { docId = android.net.Uri.decode(encodedPath.substring(marker + "/document/".length())); } catch (Throwable ignored) { }
+                }
             }
             if (docId == null || docId.isEmpty()) {
                 try { docId = android.provider.DocumentsContract.getTreeDocumentId(uri); } catch (Throwable ignored) { }
