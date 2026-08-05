@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -160,7 +160,7 @@ class LauncherPasswordResetFragment : Fragment() {
     }
 
     private fun showResultDialog(title: String, message: String) {
-        LauncherDialogFactory.showInfo(requireContext(), title, message)
+        LauncherDialogRouter.showInfo(requireContext(), title, message)
     }
 
     private fun textOf(view: TextView): String =

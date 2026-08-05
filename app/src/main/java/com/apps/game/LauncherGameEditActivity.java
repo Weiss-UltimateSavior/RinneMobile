@@ -264,12 +264,12 @@ public class LauncherGameEditActivity extends AppCompatActivity {
                 ? originalEngine
                 : (opt != null ? opt.engine : EngineType.UNKNOWN);
         String emuPkg = binding.editEmulator.getText().toString().trim();
-        // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>。
+        // 若用户未手动改 emulatorPackage，根据选中子引擎自动填 internal.<subtype>（前缀单源见 EnginePackageResolver.internalPackage）。
         if (emuPkg.isEmpty() && opt != null
                 && (opt.engine == EngineType.RPGMAKER || opt.engine == EngineType.RENPY
                     || opt.engine == EngineType.GODOT)
                 && opt.rpgMakerSubtype != null && !opt.rpgMakerSubtype.isEmpty()) {
-            emuPkg = "internal." + opt.rpgMakerSubtype;
+            emuPkg = EnginePackageResolver.internalPackage(opt.rpgMakerSubtype);
         }
         game.emulatorPackage = emuPkg;
         game.launchTarget = binding.editLaunchTarget.getText().toString().trim();

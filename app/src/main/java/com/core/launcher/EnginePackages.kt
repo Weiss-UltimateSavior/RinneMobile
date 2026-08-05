@@ -1,5 +1,7 @@
 package com.core.launcher
 
+import java.util.Locale
+
 /**
  * 内置引擎包名路由常量单源（com_apps_refactor_plan.md §9.12）。
  * 各模块的引擎包判断（startsWith / 历史别名）统一收敛于此，避免字面量漂移。
@@ -56,4 +58,15 @@ object EnginePackages {
     /** internal.artemis 及全部兼容后缀变体。 */
     @JvmStatic
     fun isInternalArtemis(pkg: String?): Boolean = pkg?.startsWith(INTERNAL_ARTEMIS) == true
+
+    /** Winlator 系模拟器包名关键词（判定而非完整包名，I-1 单源）。 */
+    @JvmField
+    val WINLATOR_PACKAGE_KEYWORDS: List<String> = listOf("winlator", "glibc", "proot", "mobox", "winalator")
+
+    /** Winlator 系模拟器包名判定：包名（小写）包含任一关键词。 */
+    @JvmStatic
+    fun isWinlatorPackage(pkg: String?): Boolean {
+        val value = pkg?.lowercase(Locale.ROOT) ?: return false
+        return WINLATOR_PACKAGE_KEYWORDS.any(value::contains)
+    }
 }

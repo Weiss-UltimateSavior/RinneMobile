@@ -9,7 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.apps.LauncherPreferences
 import com.apps.sync.LauncherSyncScheduler
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -108,7 +108,7 @@ class LauncherAccountSettingsFragment : Fragment() {
     }
 
     private fun showEmailSubscriptionConfirmDialog() {
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             requireContext(),
             getString(R.string.social_enable_subscription),
             getString(R.string.social_enable_subscription_message),
@@ -185,7 +185,7 @@ class LauncherAccountSettingsFragment : Fragment() {
     }
 
     private fun showRealtimePlaytimeConfirmDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.social_realtime_play_time),
             getString(R.string.social_realtime_play_time_message),
@@ -198,7 +198,7 @@ class LauncherAccountSettingsFragment : Fragment() {
     }
 
     private fun showSyncConfirmDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.social_config_sync),
             getString(R.string.social_config_sync_message),
@@ -289,7 +289,7 @@ class LauncherAccountSettingsFragment : Fragment() {
     }
 
     private fun showLoadingDialog(titleText: String, hintText: String): AlertDialog {
-        return LauncherDialogFactory.showLoading(requireContext(), titleText, hintText)
+        return LauncherDialogRouter.showLoading(requireContext(), titleText, hintText)
     }
 
     private fun dismissLoading() {
@@ -300,7 +300,7 @@ class LauncherAccountSettingsFragment : Fragment() {
     }
 
     private fun showResultDialog(title: String, message: String) {
-        LauncherDialogFactory.showInfo(requireContext(), title, message)
+        LauncherDialogRouter.showInfo(requireContext(), title, message)
     }
 
     private fun renderAllChips() {

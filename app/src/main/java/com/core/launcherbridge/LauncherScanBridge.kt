@@ -348,7 +348,7 @@ object LauncherScanBridge {
      * 探测设备上已安装的 Winlator 系应用包名。
      *
      * 匹配规则与主分支 MainActivity.guessInstalledWinlatorPackage 一致，
-     * 关键词集合与 [com.core.launcher.WinlatorLauncher] 的 isWinlatorPackage 同源：
+     * 关键词集合统一收敛于 [com.core.launcher.EnginePackages.WINLATOR_PACKAGE_KEYWORDS]（I-1 单源）：
      * 包名或应用名包含 winlator / glibc / proot / mobox / winalator，且存在 Launcher Intent。
      * 优先返回包名含 "cmod" 的改版；其次返回首个命中项；未命中返回空串。
      */
@@ -368,9 +368,10 @@ object LauncherScanBridge {
                     // 个别应用标签解析失败忽略，回退空串
                     ""
                 }
-                val hit = pkg.contains("winlator") || label.contains("winlator")
-                    || pkg.contains("glibc") || pkg.contains("proot")
-                    || pkg.contains("mobox") || pkg.contains("winalator")
+                // 关键词集合统一收敛于 EnginePackages.WINLATOR_PACKAGE_KEYWORDS（I-1 单源，见 4.4）。
+                val hit = EnginePackages.WINLATOR_PACKAGE_KEYWORDS.any { keyword ->
+                    pkg.contains(keyword) || label.contains(keyword)
+                }
                 if (!hit) continue
                 if (pm.getLaunchIntentForPackage(app.packageName) == null) continue
                 if (pkg.contains("cmod")) return app.packageName

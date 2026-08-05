@@ -10,6 +10,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -213,7 +214,7 @@ object PotatoVnImporter {
                 if (d != null) {
                     return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(d)
                 }
-            } catch (ignored: Exception) {
+            } catch (ignored: ParseException) {
                 // 日期格式解析失败时忽略，尝试下一格式（全部失败回退原字符串）
             }
         }
@@ -255,7 +256,7 @@ object PotatoVnImporter {
             try {
                 val d = SimpleDateFormat(fmt, Locale.US).parse(raw)
                 if (d != null) return d.time
-            } catch (ignored: Exception) {
+            } catch (ignored: ParseException) {
                 // 时间格式解析失败时忽略，尝试下一格式（全部失败回退当前时间）
             }
         }

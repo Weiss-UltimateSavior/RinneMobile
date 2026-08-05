@@ -7,6 +7,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.zip.ZipInputStream
@@ -359,7 +360,7 @@ object LunaBoxImporter {
             try {
                 val d = SimpleDateFormat(fmt, Locale.US).parse(cleaned)
                 if (d != null) return d.time
-            } catch (ignored: Exception) {
+            } catch (ignored: ParseException) {
                 // 时间格式解析失败时忽略，尝试下一格式（全部失败走下方兜底）
             }
         }
@@ -370,7 +371,7 @@ object LunaBoxImporter {
                 val d = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(simplified)
                 if (d != null) return d.time
             }
-        } catch (ignored: Exception) {
+        } catch (ignored: ParseException) {
             // 兜底解析失败时忽略（最终回退当前时间）
         }
         Log.w(TAG, "无法解析时间，fallback 当前时间: $raw")

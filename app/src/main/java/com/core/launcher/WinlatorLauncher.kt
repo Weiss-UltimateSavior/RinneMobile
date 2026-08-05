@@ -15,10 +15,8 @@ import java.util.Locale
  */
 internal object WinlatorLauncher {
 
-    fun isWinlatorPackage(pkg: String?): Boolean {
-        val value = pkg?.lowercase(Locale.ROOT) ?: return false
-        return listOf("winlator", "glibc", "proot", "mobox", "winalator").any(value::contains)
-    }
+    /** 委托 EnginePackages 关键词单源（I-1）。 */
+    fun isWinlatorPackage(pkg: String?): Boolean = EnginePackages.isWinlatorPackage(pkg)
 
     fun isWinlatorTarget(target: String?): Boolean {
         val value = target?.trim()?.lowercase(Locale.ROOT) ?: return false

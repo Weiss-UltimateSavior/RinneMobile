@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -204,7 +204,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     // ----- 长按：跳转浏览器下载 -----
 
     private fun promptDownload(module: ModuleType) {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.module_download_title, module.shortName),
             getString(R.string.module_download_message),
@@ -216,7 +216,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
 
     private fun openModule(module: ModuleType) {
         if (isModuleInstalled(module)) {
-            LauncherDialogFactory.showStandardConfirm(
+            LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(module.nameRes),
                 if (isModuleEnabled(module)) {
@@ -229,7 +229,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             )
             return
         }
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.module_install_title, module.shortName),
             getString(R.string.module_install_message),
@@ -245,7 +245,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             return
         }
         if (isModuleEnabled(module)) {
-            LauncherDialogFactory.showStandardConfirm(
+            LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.module_disable_title, module.shortName),
                 getString(R.string.module_disable_message, module.shortName),
@@ -261,7 +261,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                 )
             }
         } else {
-            LauncherDialogFactory.showStandardConfirm(
+            LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.module_enable_title, module.shortName),
                 getString(R.string.module_enable_message, module.shortName),
@@ -291,7 +291,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         }
         if (!opened) {
             // 打开失败弹窗提示同前（成功打开同前）。
-            LauncherDialogFactory.showInfo(
+            LauncherDialogRouter.showInfo(
                 requireContext(),
                 getString(R.string.module_cannot_open_browser),
                 getString(R.string.module_try_again_later),

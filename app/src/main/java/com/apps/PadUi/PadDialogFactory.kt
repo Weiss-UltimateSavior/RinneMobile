@@ -211,6 +211,30 @@ object PadDialogFactory {
         setContent(dialog, root, WIDTH_COMPACT_DP)
     }
 
+    /** 动作选项（无 danger 标记）：等价 dangerIndex=-1，供 LauncherDialogRouter 4 参路由。 */
+    @JvmStatic
+    fun showActionChoices(
+        context: Context,
+        title: String?,
+        choices: Array<CharSequence>?,
+        listener: ChoiceListener?
+    ) {
+        showActionChoices(context, title, choices, -1, listener)
+    }
+
+    /** 滚动长消息确认：对齐 LauncherDialogConfirm.showLongMessageConfirm 语义（resolved 防重 + 外部取消回调 onCancel）。 */
+    @JvmStatic
+    fun showLongMessageConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+        onCancel: Runnable?
+    ): AlertDialog {
+        return PadLongMessageDialog.showLongMessageConfirm(context, title, message, confirmText, onConfirm, onCancel)
+    }
+
     @JvmStatic
     fun showMessageActionChoices(
         context: Context,
@@ -363,7 +387,7 @@ object PadDialogFactory {
         return max(0, min(densityWidth, availableWidth))
     }
 
-    private fun open(context: Context, widthDp: Int, cancelable: Boolean): AlertDialog {
+    internal fun open(context: Context, widthDp: Int, cancelable: Boolean): AlertDialog {
         val dialog = AlertDialog.Builder(context).create()
         dialog.setCancelable(cancelable)
         dialog.setCanceledOnTouchOutside(cancelable)
@@ -377,7 +401,7 @@ object PadDialogFactory {
         return dialog
     }
 
-    private fun setContent(dialog: AlertDialog, content: View, widthDp: Int) {
+    internal fun setContent(dialog: AlertDialog, content: View, widthDp: Int) {
         val window = dialog.window ?: return
         content.background = LauncherTheme.secondaryButton(content.context, 20f)
         LauncherTheme.applyPrimaryTone(content)
@@ -385,14 +409,14 @@ object PadDialogFactory {
         window.setLayout(dialogWidthPx(content.context, widthDp), WindowManager.LayoutParams.WRAP_CONTENT)
     }
 
-    private fun root(context: Context): LinearLayout {
+    internal fun root(context: Context): LinearLayout {
         val root = LinearLayout(context)
         root.orientation = LinearLayout.VERTICAL
         root.setPadding(LauncherTheme.dp(context, 22), LauncherTheme.dp(context, 20), LauncherTheme.dp(context, 22), LauncherTheme.dp(context, 16))
         return root
     }
 
-    private fun title(context: Context, text: String?): TextView {
+    internal fun title(context: Context, text: String?): TextView {
         val view = TextView(context)
         view.text = text
         view.gravity = android.view.Gravity.CENTER
@@ -402,7 +426,7 @@ object PadDialogFactory {
         return view
     }
 
-    private fun message(context: Context, text: String?): TextView {
+    internal fun message(context: Context, text: String?): TextView {
         val view = TextView(context)
         view.text = text
         view.gravity = android.view.Gravity.CENTER
@@ -412,7 +436,7 @@ object PadDialogFactory {
         return view
     }
 
-    private fun button(context: Context, text: CharSequence?, primary: Boolean): TextView {
+    internal fun button(context: Context, text: CharSequence?, primary: Boolean): TextView {
         val view = TextView(context)
         view.text = text
         view.gravity = android.view.Gravity.CENTER
@@ -439,7 +463,7 @@ object PadDialogFactory {
         return view
     }
 
-    private fun cancelButton(context: Context): TextView =
+    internal fun cancelButton(context: Context): TextView =
         button(context, context.getString(R.string.core_cancel), false)
 
     private fun styleInlineAction(view: TextView) {
@@ -449,7 +473,7 @@ object PadDialogFactory {
         view.minHeight = LauncherTheme.dp(view.context, 38)
     }
 
-    private fun topMargin(context: Context, topMarginDp: Int): LinearLayout.LayoutParams {
+    internal fun topMargin(context: Context, topMarginDp: Int): LinearLayout.LayoutParams {
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         )
@@ -457,7 +481,7 @@ object PadDialogFactory {
         return params
     }
 
-    private fun fixedHeightTopMargin(
+    internal fun fixedHeightTopMargin(
         context: Context,
         topMarginDp: Int,
         heightDp: Int

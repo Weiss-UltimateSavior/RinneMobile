@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -126,7 +126,7 @@ class LauncherMetadataSourceFragment : Fragment() {
     }
 
     private fun showMetadataSourcePicker() {
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.settings_choose_metadata_source),
             metadataSourceLabels(),

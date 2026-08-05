@@ -9,6 +9,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -209,7 +210,7 @@ object VniteImporter {
                 if (fmt.endsWith("'Z'")) sdf.timeZone = TimeZone.getTimeZone("UTC")
                 val d = sdf.parse(raw)
                 if (d != null) return d.time
-            } catch (ignored: Exception) {
+            } catch (ignored: ParseException) {
                 // 时间格式解析失败时忽略，尝试下一格式（全部失败回退当前时间）
             }
         }

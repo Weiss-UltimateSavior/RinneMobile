@@ -318,6 +318,9 @@ final class AgentToolInvocation {
             JSONObject value = new JSONObject(result);
             return "文件=" + value.optString("relative_path") + "；快照=" + value.optString("snapshot_id")
                     + "；新SHA-256=" + value.optString("after_sha256");
-        } catch (JSONException ignored) { return "修改结果已本地记录"; }
+        } catch (JSONException ignored) {
+            // JSON 解析失败仅影响「修改结果」展示文本；变更已本地记录，此处返回兜底文案即可安全忽略（§8:313）
+            return "修改结果已本地记录";
+        }
     }
 }

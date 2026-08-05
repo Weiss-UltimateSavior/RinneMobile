@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -226,7 +226,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
     }
 
     private fun showEngineVersionPicker() {
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.settings_choose_kr_engine_version),
             engineVersionLabels(),
@@ -243,7 +243,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
     }
 
     private fun showOnsEncodingPicker() {
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.settings_ons_text_encoding),
             Array<CharSequence>(ONS_ENCODING_LABELS.size) { ONS_ENCODING_LABELS[it] },

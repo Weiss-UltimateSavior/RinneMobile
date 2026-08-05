@@ -1,0 +1,198 @@
+package com.apps.HDModel
+
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.appcompat.app.AlertDialog
+import com.apps.PadUi.PadDialogFactory
+import com.apps.theme.LauncherDialogFactory
+
+/**
+ * 弹窗上下文路由器（W8，阶段 117/118）：HD 大屏壳（[HdModeActivity]）内承载的子 Fragment
+ * 弹窗路由到 Pad 大屏弹窗工厂，竖屏保持 Launcher 弹窗工厂，解决新业务 Fragment
+ * HD 嵌入时仍用竖屏弹窗上下文的视觉不一致（com_apps_refactor_plan.md 4.5 W8）。
+ *
+ * 全部 API（含 showLongMessageConfirm 审批 onCancel 关键路径）均已路由 Pad，
+ * 无 HD 回退 Launcher 的残留重载（W-2 已删除无调用方的 showInfo 4 参版本）。
+ */
+object LauncherDialogRouter {
+    /** 判断弹窗上下文是否处于 HD 大屏壳（HdModeActivity），沿 ContextWrapper 链向上查找。 */
+    private fun isHd(context: Context): Boolean {
+        var current: Context? = context
+        while (current is ContextWrapper) {
+            if (current is HdModeActivity) return true
+            current = current.baseContext
+        }
+        return false
+    }
+
+    @JvmStatic
+    fun showConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showConfirm(context, title, message, confirmText, onConfirm)
+        } else {
+            LauncherDialogFactory.showConfirm(context, title, message, confirmText, onConfirm)
+        }
+    }
+
+    @JvmStatic
+    fun showStandardConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showStandardConfirm(context, title, message, confirmText, onConfirm)
+        } else {
+            LauncherDialogFactory.showStandardConfirm(context, title, message, confirmText, onConfirm)
+        }
+    }
+
+    @JvmStatic
+    fun showInfo(context: Context, title: String?, message: String?) {
+        if (isHd(context)) {
+            PadDialogFactory.showInfo(context, title, message)
+        } else {
+            LauncherDialogFactory.showInfo(context, title, message)
+        }
+    }
+
+    @JvmStatic
+    fun showLoading(context: Context, title: String?, hint: String?): AlertDialog {
+        return if (isHd(context)) {
+            PadDialogFactory.showLoading(context, title, hint)
+        } else {
+            LauncherDialogFactory.showLoading(context, title, hint)
+        }
+    }
+
+    /** 滚动长消息确认（无取消回调）：HD 路由 Pad 滚动版。 */
+    @JvmStatic
+    fun showLongMessageConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+    ): AlertDialog {
+        return if (isHd(context)) {
+            PadDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm, null)
+        } else {
+            LauncherDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm)
+        }
+    }
+
+    /** 滚动长消息确认（带取消回调）：审批关键路径（responder.resolve(false)），HD 路由 Pad 滚动版（onCancel 语义对齐）。 */
+    @JvmStatic
+    fun showLongMessageConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+        onCancel: Runnable?,
+    ): AlertDialog {
+        return if (isHd(context)) {
+            PadDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm, onCancel)
+        } else {
+            LauncherDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm, onCancel)
+        }
+    }
+
+    @JvmStatic
+    fun showDangerConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        dangerText: String?,
+        onConfirm: Runnable?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showDangerConfirm(context, title, message, dangerText, onConfirm)
+        } else {
+            LauncherDialogFactory.showDangerConfirm(context, title, message, dangerText, onConfirm)
+        }
+    }
+
+    /** 动作选项（无 danger 标记）：HD 路由 Pad（等价 dangerIndex=-1）。 */
+    @JvmStatic
+    fun showActionChoices(
+        context: Context,
+        title: String?,
+        choices: Array<CharSequence>?,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showActionChoices(context, title, choices, listener?.let { PadDialogFactory.ChoiceListener(it) })
+        } else {
+            LauncherDialogFactory.showActionChoices(context, title, choices, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
+        }
+    }
+
+    @JvmStatic
+    fun showActionChoices(
+        context: Context,
+        title: String?,
+        choices: Array<CharSequence>?,
+        dangerIndex: Int,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
+        } else {
+            LauncherDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
+        }
+    }
+
+    /** 标准动作选项菜单：Pad 侧用 showActionChoices 视觉近似（宽度/样式差异说明性接受）。 */
+    @JvmStatic
+    fun showStandardActionChoices(
+        context: Context,
+        title: String?,
+        choices: Array<CharSequence>?,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showActionChoices(context, title, choices, -1, listener?.let { PadDialogFactory.ChoiceListener(it) })
+        } else {
+            LauncherDialogFactory.showStandardActionChoices(context, title, choices, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
+        }
+    }
+
+    @JvmStatic
+    fun showStandardActionChoices(
+        context: Context,
+        title: String?,
+        choices: Array<CharSequence>?,
+        dangerIndex: Int,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
+        } else {
+            LauncherDialogFactory.showStandardActionChoices(context, title, choices, dangerIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
+        }
+    }
+
+    @JvmStatic
+    fun showSingleChoice(
+        context: Context,
+        title: String?,
+        choices: Array<CharSequence>?,
+        checkedIndex: Int,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showSingleChoice(context, title, choices, checkedIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
+        } else {
+            LauncherDialogFactory.showSingleChoice(context, title, choices, checkedIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
+        }
+    }
+}

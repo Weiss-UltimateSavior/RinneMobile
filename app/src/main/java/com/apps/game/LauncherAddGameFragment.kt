@@ -15,22 +15,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
 import com.core.databinding.ActivityLauncherAddGameBinding
 import com.core.launcher.EnginePackages
-import com.core.launcherbridge.LauncherCoverBridge
 import com.core.launcherbridge.LauncherGameHubShortcutBridge
-import com.core.launcherbridge.LauncherRepositoryBridge
-import com.core.launcherbridge.LauncherScanBridge
 import com.core.model.EngineType
-import com.core.model.Game
 import com.core.util.AppExecutors
 import com.core.util.DevLogger
 import rikka.shizuku.Shizuku
@@ -206,7 +201,7 @@ class LauncherAddGameFragment : Fragment() {
                     break
                 }
             }
-            LauncherDialogFactory.showSingleChoice(
+            LauncherDialogRouter.showSingleChoice(
                 requireContext(),
                 getString(R.string.game_select_engine_title),
                 labels,
@@ -315,7 +310,7 @@ class LauncherAddGameFragment : Fragment() {
                 val labels = Array<CharSequence>(shortcuts.size) {
                     shortcuts[it].displayLabel + "\n" + shortcuts[it].localGameId
                 }
-                LauncherDialogFactory.showActionChoices(
+                LauncherDialogRouter.showActionChoices(
                     requireContext(),
                     getString(R.string.game_gamehub_choose_shortcut),
                     labels,
@@ -363,83 +358,21 @@ class LauncherAddGameFragment : Fragment() {
         currentBinding.addGameSave.setText(R.string.game_common_saving)
 
         val appContext = requireContext().applicationContext
-        val selectedEngine = selectedEngine()
-        // 在 UI 线程读取选择器的 RPGMAKER 子类型（rpgmxp/rpgmvx/rpgmvxace/mkxp-z），
-        // 用户显式选择时优先于此值，避免被扫描器误判的 detected.rpgMakerSubtype 覆盖。
-        val userRpgSubtype = selectedRpgMakerSubtype()
-        val selectedLaunchTarget = launchTargetName
-        val selectedEmulator = textOf(currentBinding.addGameEmulatorInput)
-        val selectedGameHubId = textOf(currentBinding.addGameGameHubIdInput)
-        val selectedDescription = textOf(currentBinding.addGameDescriptionInput)
         val selectedGameDir = gameDirUri ?: return
-        val selectedCover = coverUri
+        // UI 线程收集输入后交由 AddGameSavePipeline 在 IO 线程执行（阶段 119 拆分）。
+        val input = AddGameSavePipeline.Input(
+            title = title,
+            engine = selectedEngine(),
+            rpgSubtype = selectedRpgMakerSubtype(),
+            launchTarget = launchTargetName,
+            emulatorInput = textOf(currentBinding.addGameEmulatorInput),
+            gameHubId = textOf(currentBinding.addGameGameHubIdInput),
+            description = textOf(currentBinding.addGameDescriptionInput),
+            gameDir = selectedGameDir,
+            cover = coverUri,
+        )
         AppExecutors.runOnSingle {
-            var detected: LauncherScanBridge.DetectionResult? = null
-            // AUTO 让扫描器决定引擎；RPGMAKER 也走一次扫描以拿到具体子类型（rpgmxp/rpgmvx/rpgmvxace/mkxp-z），
-            // 子类型用于选择对应的 mkxp native 库，但不会覆盖用户选择的 EngineType。
-            if (selectedEngine == EngineType.AUTO || selectedEngine == EngineType.RPGMAKER) {
-                try {
-                    val root = DocumentFile.fromTreeUri(appContext, selectedGameDir)
-                    detected = LauncherScanBridge.detectEngine(root, 2)
-                } catch (error: Exception) {
-                    DevLogger.w("LauncherAddGame", "Engine detection failed; using selected engine", error)
-                }
-            }
-            var finalEngine = selectedEngine
-            if (selectedEngine == EngineType.AUTO && detected != null &&
-                detected.confidence > 0 && detected.engine != EngineType.UNKNOWN
-            ) {
-                finalEngine = detected.engine
-            }
-
-            val game = Game()
-            game.title = title
-            game.engine = finalEngine
-            game.rootUri = selectedGameDir.toString()
-            // 走共享桥接实现：bounds 采样解码（内存友好）+ 720dp 封顶 + covers 目录落盘（§5.2 下沉）。
-            val copiedCover = if (selectedCover == null) {
-                null
-            } else {
-                LauncherScanBridge.copyCoverToInternalStorage(appContext, selectedCover.toString())
-            }
-            game.coverUri = copiedCover
-            game.coverPersistUri = copiedCover
-            game.coverSourceType = if (copiedCover == null) 0 else 1
-            game.launchTarget = textOrDefault(
-                selectedLaunchTarget,
-                if (detected != null && detected.launchTarget != null &&
-                    detected.launchTarget.trim().isNotEmpty()
-                ) {
-                    detected.launchTarget
-                } else {
-                    "[游戏目录]"
-                },
-            )
-            // emulatorPackage 优先级：用户手动填的 binding.addGameEmulatorInput > 用户在选择器显式选的子类型
-            // （RPGMAKER 的 rpgmxp/rpgmvx/rpgmvxace/mkxp-z 或 RENPY 的 renpy）
-            // > 扫描器检测到的子类型 > 引擎默认包名。
-            // 关键：用户显式选了 RPG Maker XP/VX/VX Ace/mkxp-z 时，必须用对应的 mkxp native 库
-            // （libmkxp18/19/30.so），否则会出现 Ruby 1.8 语法在 Ruby 3.x 下报 SyntaxError 等问题。
-            val emulatorFallback: String
-            if ((finalEngine == EngineType.RPGMAKER || finalEngine == EngineType.RENPY) &&
-                userRpgSubtype.isNotEmpty()
-            ) {
-                emulatorFallback = "internal.$userRpgSubtype"
-            } else {
-                emulatorFallback = EnginePackageResolver.forDetection(finalEngine, detected)
-            }
-            game.emulatorPackage = textOrDefault(selectedEmulator, emulatorFallback)
-            game.description = selectedDescription
-            game.gamehubLocalGameId = selectedGameHubId
-            if (game.engine == EngineType.GAMEHUB && selectedGameHubId.isEmpty()) {
-                game.gamehubLaunchMode = "program"
-            }
-
-            val id = LauncherRepositoryBridge.insertGameIfNotExists(appContext, game)
-            if (id > 0 && copiedCover == null) {
-                game.id = id
-                LauncherCoverBridge.fetchCoverForGameAsync(appContext, game)
-            }
+            val id = AddGameSavePipeline.save(appContext, input)
             activity?.runOnUiThread {
                 if (!isAdded || binding == null) return@runOnUiThread
                 val current = binding ?: return@runOnUiThread
@@ -537,9 +470,6 @@ class LauncherAddGameFragment : Fragment() {
 
     private fun textOf(textView: TextView?): String =
         if (textView == null || textView.text == null) "" else textView.text.toString().trim()
-
-    private fun textOrDefault(value: String?, fallback: String): String =
-        if (value == null || value.trim().isEmpty()) fallback else value.trim()
 
     private fun showAppPicker(target: TextView) {
         val hostActivity = activity as? AppCompatActivity ?: return

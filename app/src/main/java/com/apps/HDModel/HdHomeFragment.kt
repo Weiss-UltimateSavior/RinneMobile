@@ -10,11 +10,21 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.fragment.app.Fragment
+import com.apps.account.LauncherDisclaimerActivity
+import com.apps.account.LauncherDisclaimerFragment
+import com.apps.agent.LocalAgentFragment
 import com.apps.data.LauncherRepository
 import com.apps.game.LauncherSaveCategoryActivity
 import com.apps.home.LauncherHomeFragment
+import com.apps.settings.LauncherAppSettingsActivity
+import com.apps.settings.LauncherAppSettingsFragment
+import com.apps.settings.LauncherToolboxActivity
+import com.apps.settings.LauncherToolboxFragment
 import com.apps.settings.ResourceStationActivity
 import com.apps.theme.LauncherTheme
+import com.apps.theme.LauncherThemeMenuActivity
+import com.apps.theme.LauncherThemeMenuFragment
 import com.apps.widget.LauncherCoverLoader
 import com.core.R
 import com.core.databinding.FragmentLauncherHomeBinding
@@ -135,11 +145,36 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun startLauncherActivity(intent: Intent) {
-        if (intent.component?.className == LauncherSaveCategoryActivity::class.java.name) {
+        val className = intent.component?.className
+        if (className == LauncherSaveCategoryActivity::class.java.name) {
             (activity as? HdModeActivity)?.showSaveManagerFragment()
             return
         }
-        if (intent.component?.className == ResourceStationActivity::class.java.name) {
+        // 菜单目标迁子 Fragment（9.9 ②HdHome）：设置/主题/免责声明/工具箱/本地智能体
+        when (className) {
+            LauncherAppSettingsActivity::class.java.name -> {
+                showChildFragment(CHILD_APP_SETTINGS_TAG, LauncherAppSettingsFragment())
+                return
+            }
+            LauncherThemeMenuActivity::class.java.name -> {
+                showChildFragment(CHILD_THEME_MENU_TAG, LauncherThemeMenuFragment())
+                return
+            }
+            LauncherDisclaimerActivity::class.java.name -> {
+                showChildFragment(CHILD_DISCLAIMER_TAG, LauncherDisclaimerFragment())
+                return
+            }
+            LauncherToolboxActivity::class.java.name -> {
+                showChildFragment(CHILD_TOOLBOX_TAG, LauncherToolboxFragment())
+                return
+            }
+            com.apps.agent.LocalAgentActivity::class.java.name -> {
+                showChildFragment(CHILD_LOCAL_AGENT_TAG, LocalAgentFragment())
+                return
+            }
+        }
+        // 其余目标（ResourceStation/未知 intent）保持嵌入路径
+        if (className == ResourceStationActivity::class.java.name) {
             intent.putExtra(ResourceStationActivity.EXTRA_HD_EMBEDDED, true)
         }
         val host = embeddedHost
@@ -148,7 +183,7 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
             super.startLauncherActivity(intent)
             return
         }
-        val activityName = intent.component?.className.orEmpty()
+        val activityName = className.orEmpty()
         val id = "hd_home_${activityName.substringAfterLast('.').ifEmpty { "detail" }}"
         val content = host.start(
             id,
@@ -158,10 +193,42 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         HdPageMotion.showEmbedded(container, content)
         val hostActivity = requireActivity() as? HdModeActivity
         hostActivity?.refreshNavigationChrome()
-        container.post { hostActivity?.refreshNavigationChrome() }
+        // I-2 守卫（阶段 120）：post 延迟执行期间宿主 Activity 可能已销毁，幂等刷新前校验状态。
+        container.post {
+            if (hostActivity != null && !hostActivity.isFinishing && !hostActivity.isDestroyed) {
+                hostActivity.refreshNavigationChrome()
+            }
+        }
+    }
+
+    private fun showChildFragment(tag: String, fragment: Fragment) {
+        if (!isAdded || detailContainer == null) return
+        detailContainer?.visibility = View.VISIBLE
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+            )
+            .replace(R.id.hdHomeDetailContainer, fragment, tag)
+            .commit()
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
+        // 子 Fragment 路径（5 个菜单目标）
+        val existing = childFragmentManager.findFragmentByTag(CHILD_APP_SETTINGS_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_THEME_MENU_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_DISCLAIMER_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_TOOLBOX_TAG)
+            ?: childFragmentManager.findFragmentByTag(CHILD_LOCAL_AGENT_TAG)
+        if (existing != null) {
+            childFragmentManager.beginTransaction()
+                .setCustomAnimations(R.anim.launcher_fragment_enter, R.anim.launcher_fragment_exit)
+                .remove(existing)
+                .commit()
+            detailContainer?.visibility = View.GONE
+            return true
+        }
+        // embeddedHost 回退（ResourceStation/未知 intent）
         val host = embeddedHost ?: return false
         val id = host.beginClose(child) ?: return false
         detailContainer?.apply {
@@ -218,4 +285,11 @@ class HdHomeFragment : LauncherHomeFragment(), HdEmbeddedActivityOwner {
         action.getChildAt(1).visibility = View.GONE
     }
 
+    companion object {
+        private const val CHILD_APP_SETTINGS_TAG = "hd_home_app_settings"
+        private const val CHILD_THEME_MENU_TAG = "hd_home_theme_settings"
+        private const val CHILD_DISCLAIMER_TAG = "hd_home_disclaimer"
+        private const val CHILD_TOOLBOX_TAG = "hd_home_toolbox"
+        private const val CHILD_LOCAL_AGENT_TAG = "hd_home_local_agent"
+    }
 }

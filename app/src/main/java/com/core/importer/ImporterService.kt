@@ -11,6 +11,7 @@ import com.core.model.Game
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -305,7 +306,7 @@ class ImporterService(context: Context) {
                         time = parsed
                         set(Calendar.HOUR_OF_DAY, 12)
                     }.timeInMillis
-                } catch (_: Exception) {
+                } catch (_: ParseException) {
                     // Try the next supported representation.
                 }
             }
@@ -331,7 +332,7 @@ class ImporterService(context: Context) {
                     if ("'Z'" in format) parser.timeZone = TimeZone.getTimeZone("UTC")
                     val parsed: Date = parser.parse(raw) ?: continue
                     return parsed.time
-                } catch (_: Exception) {
+                } catch (_: ParseException) {
                     // Try the next supported representation.
                 }
             }

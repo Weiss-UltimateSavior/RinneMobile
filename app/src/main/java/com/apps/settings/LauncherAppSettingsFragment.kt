@@ -16,7 +16,7 @@ import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.LauncherActivity
 import com.apps.home.HomeStyle
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -103,7 +103,7 @@ class LauncherAppSettingsFragment : Fragment() {
 
     private fun showLanguagePicker() {
         val labels = languageLabels()
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.app_language_dialog_title),
             Array(labels.size) { labels[it] },
@@ -117,7 +117,7 @@ class LauncherAppSettingsFragment : Fragment() {
     }
 
     private fun showSplashImageConfirmDialog() {
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(R.string.app_splash_image_label),
             arrayOf(
@@ -133,7 +133,7 @@ class LauncherAppSettingsFragment : Fragment() {
     }
 
     private fun showPortraitBackgroundChoices() {
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(R.string.app_portrait_background_label),
             arrayOf(
@@ -164,7 +164,7 @@ class LauncherAppSettingsFragment : Fragment() {
             getString(R.string.app_start_page_portrait),
             getString(R.string.app_start_page_landscape),
         )
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.app_start_page_dialog_title),
             labels,
@@ -178,7 +178,7 @@ class LauncherAppSettingsFragment : Fragment() {
     private fun showHomeStylePicker() {
         val styles = HomeStyle.entries.toTypedArray()
         val labels = Array<CharSequence>(styles.size) { getString(styles[it].labelResId) }
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.app_home_style_dialog_title),
             labels,
@@ -197,7 +197,7 @@ class LauncherAppSettingsFragment : Fragment() {
             getString(R.string.app_navigation_style_card),
             getString(R.string.app_navigation_style_liquid_glass),
         )
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             requireContext(),
             getString(R.string.app_navigation_style_dialog_title),
             labels,

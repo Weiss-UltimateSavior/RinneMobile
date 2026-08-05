@@ -2,7 +2,6 @@ package com.apps.HDModel
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
@@ -291,23 +290,9 @@ class HdModeActivity : AppCompatActivity() {
         super.finishFromChild(child)
     }
 
-    /**
-     * 嵌入到 LocalActivityManager 中的 Activity 无法收到 Activity Result 回调，
-     * 因此由本 Activity 把请求转发给当前持有嵌入 Activity 的 [HdEmbeddedActivityOwner]，
-     * 让宿主 Fragment 使用自身的 ActivityResultRegistry 启动系统图片选择器。
-     */
-    fun launchSplashImagePicker(callback: (android.net.Uri?) -> Unit): Boolean {
-        return currentEmbeddedOwner()?.launchSplashImagePicker(callback) ?: false
-    }
-
-    fun launchTranslationProjection(callback: (resultCode: Int, data: Intent?) -> Unit): Boolean {
-        return currentEmbeddedOwner()?.launchTranslationProjection(callback) ?: false
-    }
-
-    fun requestTranslationNotificationPermission(callback: (Boolean) -> Unit): Boolean {
-        return currentEmbeddedOwner()?.requestTranslationNotificationPermission(callback) ?: false
-    }
-
+    // 9.9 ③ 代理路径清理（阶段 115）：原 launchSplashImagePicker/launchTranslationProjection/
+    // requestTranslationNotificationPermission 转发方法已随 9.9 ② 各目标迁子 Fragment 而无调用方，
+    // 一并删除（Fragment 自有 ActivityResultRegistry 直接接管）。
     @Deprecated("Deprecated in Android")
     override fun onBackPressed() {
         if (currentEmbeddedOwner()?.closeEmbeddedActivity() == true) return

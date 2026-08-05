@@ -10,7 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -146,7 +146,7 @@ class LauncherSaveGameListFragment : Fragment() {
     }
 
     private fun showNoSaveImportDialog(game: Game) {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.game_save_none),
             getString(R.string.game_save_none_message, safeTitle(game)),
@@ -158,7 +158,7 @@ class LauncherSaveGameListFragment : Fragment() {
     }
 
     private fun showSaveActionsDialog(game: Game) {
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(R.string.game_save_game_title, abbreviateGameTitle(game)),
             arrayOf(
@@ -176,7 +176,7 @@ class LauncherSaveGameListFragment : Fragment() {
     }
 
     private fun showOverwriteConfirmDialog(game: Game) {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.game_save_overwrite_import),
             getString(R.string.game_save_overwrite_short_message),
@@ -260,7 +260,7 @@ class LauncherSaveGameListFragment : Fragment() {
     private fun showError(title: String, error: Exception) {
         activity?.runOnUiThread {
             if (!isAdded) return@runOnUiThread
-            LauncherDialogFactory.showInfo(
+            LauncherDialogRouter.showInfo(
                 requireContext(),
                 title,
                 error.message ?: getString(R.string.game_common_unknown_error),

@@ -7,6 +7,10 @@ import java.util.Locale
 
 /** Single source of truth for default emulator package/subtype routing. */
 internal object EnginePackageResolver {
+    /** "internal." 前缀单源：内部引擎包名（internal.rpgmxp 等）统一在此拼接，禁止调用方散落拼接。 */
+    @JvmStatic
+    fun internalPackage(subtype: String): String = "internal." + subtype
+
     @JvmStatic
     fun defaultPackage(engine: EngineType): String {
         if (engine == EngineType.KIRIKIRI) return EnginePackages.INTERNAL_KRKR
@@ -36,14 +40,14 @@ internal object EnginePackageResolver {
             subtype = detected.godotSubtype
         }
         if (subtype == null || subtype.trim().isEmpty()) return fallback
-        return "internal." + subtype.trim()
+        return internalPackage(subtype.trim())
     }
 
     @JvmStatic
     fun forOption(option: EngineOption?): String {
         if (option == null) return ""
         val subtype = subtypeForOption(option)
-        if (subtype.isNotEmpty()) return "internal." + subtype
+        if (subtype.isNotEmpty()) return internalPackage(subtype)
         return defaultPackage(option.engine)
     }
 
@@ -75,8 +79,8 @@ internal object EnginePackageResolver {
                     if (fallback == null) fallback = option
                     continue
                 }
-                val alias = "internal." + subtype
-                if (alias == pkg || "internal." + subtype.replace("-", "")
+                val alias = internalPackage(subtype)
+                if (alias == pkg || internalPackage(subtype.replace("-", ""))
                     == pkg.replace("-", "")) {
                     return option
                 }

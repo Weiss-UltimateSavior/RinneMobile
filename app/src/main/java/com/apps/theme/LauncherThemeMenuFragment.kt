@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.LauncherActivity
 import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
@@ -191,7 +192,7 @@ class LauncherThemeMenuFragment : Fragment() {
                 }
             }
         }
-        LauncherDialogFactory.showSingleChoice(
+        LauncherDialogRouter.showSingleChoice(
             context,
             getString(R.string.theme_particle_style_title),
             labels,
