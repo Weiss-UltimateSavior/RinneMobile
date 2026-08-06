@@ -1,15 +1,16 @@
-# `com.apps` UI 协作规范
+# `app/src/main/java` 代码协作规范
 
-本文件是 `com.apps` 后续界面改动的执行基线。先遵循现有页面的业务路径与资源命名；仅在同类组件已经重复出现时抽公共层，不为一次性界面建立平行体系。
+本文件是 `app/src/main/java` 后续改动的执行基线：第 1～7 章为 `com.apps.*` 界面层规则（UI 改动优先适用），第 8 章为 `com.apps.*` 与 `com.core.*` 通用代码规范。先遵循现有页面的业务路径与资源命名；仅在同类组件已经重复出现时抽公共层，不为一次性界面建立平行体系。
 
-`Launcher_UI_Specification.md` 仍负责页面、布局和命名约定；本文件补充已落地的组件、弹窗与 PadUi 规则。
+（历史说明：早期版本曾声明页面/布局/命名约定由 `Launcher_UI_Specification.md` 负责、本文件仅补充组件与弹窗规则；该文档已不存在，页面与布局规范并入本文件 §4/§6 及既有 UI 资源体系，此声明不再适用。）
 
 ## 1. 通用原则
 
 - 保持 `LauncherActivity.wrapLauncherUiMode()`、`LauncherTheme` 与 `LauncherMotion` 的既有主题/动效链路。
 - 主题/色调/偏好等全局静态 API 的主源已落在独立 `object`（`LauncherPreferences`、`LauncherThemeStyle`、`LauncherUiMode`、`LauncherSplash`、`LauncherNavigationMetrics`）；`LauncherActivity` 的 companion 仅保留 `@JvmStatic` 委托方法与少量 `const val` 兼容常量。Phase 2 已清零 `@JvmField val` 兼容常量；仍保留的 `const val` 仅限 Intent extra/action、偏好键、Splash 时长三类，作为独立技术债阶段清理（具体清单见重构计划文档），不在功能改动中混提。新增静态 API 直接写入对应 object，不再向 `LauncherActivity` companion 添加实现或常量。
 - **常量单一来源**：SharedPreferences 名（`APP_PREFS`/`ACCOUNT_SETTINGS_PREFS`/`PROFILE_PREFS`）、偏好键（`KEY_LAUNCHER_DARK_MODE`/`KEY_LAUNCHER_PARTICLES_ENABLED`/`KEY_LAUNCHER_PARTICLE_STYLE`/`KEY_LAUNCHER_THEME_STYLE`）、粒子样式（`PARTICLE_STYLE_*`）、主题风格（`THEME_STYLE_*`）、主题主色（`*_PRIMARY_COLOR`，`@JvmField`）均以 `LauncherPreferences`/`LauncherThemeStyle` 为唯一来源；禁止在 Activity/Fragment 内定义同名局部常量或硬编码字面量。`com.core` 模块如需引用这些名称，通过 core 侧镜像常量或下沉到 `com.core` 公共常量 object，不在 core 侧硬编码字面量。
-- **工具方法单一来源**：dp 转换统一用 `LauncherTheme.dp(context, value)`（Int/Float 重载），禁止在 Activity/Fragment/Adapter/Dialog 内保留本地 `dp()` 副本；需额外缩放因子（如平板竖屏缩放）时包装 `LauncherTheme.dp()` 并保持单次舍入语义（`Math.round(value * density * scale)`，不两次舍入）。沉浸式窗口配置统一用 `LauncherEdgeToEdgeHelper.apply(activity)` 或 `apply(activity, adjustResize=true)`，禁止内联 `configureEdgeToEdgeWindow()` 实现；luminance 模式（chat 类页面按主色亮度决定 LIGHT_STATUS_BAR）需扩展 helper 重载或保留独立实现并注释差异。外部 URL 打开统一用 `LauncherUrlOpener.open(context, url)`，禁止裸 `startActivity(Intent.ACTION_VIEW)` 不带 catch。
+- **工具方法单一来源**：dp 转换统一用 `LauncherTheme.dp(context, value)`（Int/Float 重载），禁止在 Activity/Fragment/Adapter/Dialog 内保留本地 `dp()` 副本；需额外缩放因子（如平板竖屏缩放）时包装 `LauncherTheme.dp()` 并保持单次舍入语义（`Math.round(value * density * scale)`，不两次舍入）。沉浸式窗口配置统一用 `LauncherEdgeToEdgeHelper.apply(activity)` 或 `apply(activity, adjustResize=true)`，禁止内联 `configureEdgeToEdgeWindow()` 实现；luminance 模式（chat 类页面按主色亮度决定 LIGHT_STATUS_BAR）需扩展 helper 重载或保留独立实现并注释差异。外部 URL 打开统一用 `LauncherUrlOpener.open(context, url)`，禁止裸 `startActivity(Intent.ACTION_VIEW)` 不带 catch。**系统栏 insets 应用**（捕获目标 View 原始 padding + systemBars inset 累加）统一用 `com.apps.common.LauncherInsetsHelper`（`applyTopInset`/`applyTopAndBottomInsets`/`applyInsets`/3 参 bottomPadding 变体），新页面禁止自实现 `setOnApplyWindowInsetsListener` + `systemWindowInset*` 累加组合；已登记的多 target/复杂形态存量（`LauncherProfileFragment`/`AvatarCropActivity`/`LauncherLibraryFragment`/`LauncherRegisterFragment`，见重构计划 4.5）渐进迁移。**聊天消息布局 insets/overlay padding**（顶部 overlay/标题栏/输入条 + IME）统一用 `com.apps.chat.ChatInsetsHelper`（`install(root, layout, baseBottomPadding)`，返回重排回调）。**弹窗上下文路由**：新业务 Fragment 弹窗统一经 `com.apps.HDModel.LauncherDialogRouter`（沿 ContextWrapper 判断 HdModeActivity 壳，HD/Pad 路由 `PadDialogFactory`、竖屏委托 `LauncherDialogFactory`），新 Fragment 禁止直接调用 `LauncherDialogFactory`。
+- **统一工具入口（com.apps）**：图片 URI 加载统一用 `com.core.util.SafeImageLoader`（`loadUri`/`invalidateUri`/`clearMemoryCache`，IO 线程解码 + 12MB LruCache + 32MB 源字节上限）；游戏封面专用 `com.apps.widget.LauncherCoverLoader`（`loadInto`/`clear`/`clearMemoryCache`，480×432 降采样上限），两者分工：封面走 CoverLoader、背景/头像走 SafeImageLoader。页面/弹窗动效统一用 `com.apps.theme.LauncherMotion`（`applyActivityOpen`/`applyActivityClose`/`finish`/`applyDialogMotion`/`pulse`/`recreateWithToneOverlay`/`runAfterPulse`），禁止裸 `overridePendingTransition`。竖屏平板布局缩放统一用 `com.apps.widget.LauncherTabletPortraitScaler`（`apply`/`scaleFor`/`dp`/`libraryGridColumns`/`libraryPageSize`），禁止自行乘密度系数。游玩状态/引擎名/时长/标题等纯格式化统一用 `com.apps.game.GameMetadataFormatter`（`safeTitle`/`playStatusText`/`engineText`/`parseDuration`/`normalizePlayStatus`/`parseDevelopers`）。"internal." 引擎前缀拼接统一用 `com.apps.game.EnginePackageResolver.internalPackage`；引擎选择器选项统一用 `com.apps.game.EngineOptionCatalog.create`。游戏分类构建统一用 `com.apps.game.GameCategoryBuilder`；游戏密码锁定统一用 `com.apps.game.GamePasswordLock`。底部导航内容避让统一用 `LauncherNavigationMetrics.overlayBottomPadding`/`navigationOverlayBottomPadding(fallback)`。更新弹窗文案统一用 `com.apps.theme.LauncherUpdateFormatter`（`buildUpdateMessage`/`resolveUpdateUrl`）。桌面快捷方式统一用 `com.apps.game.PinnedGameShortcut`（`requestPinShortcut`/`launchPinnedGame`/`clearIconCache`）。Launcher 启动 Intent action/extra 键统一用 `com.apps.LauncherIntents`。头像文件持久化统一用 `com.apps.util.LauncherAvatarPersistence`（键主源 `com.core.CorePreferences.KEY_PROFILE_AVATAR`）。**内存缓存清空三件套**：`SafeImageLoader.clearMemoryCache()`/`LauncherCoverLoader.clearMemoryCache()`/`PinnedGameShortcut.clearIconCache()` 由 `LauncherActivity.onTrimMemory` 统一调用，新增图片缓存必须在三件套登记清空入口。
 - 新增普通 Activity/Fragment 使用 ViewBinding；Fragment 在 `onDestroyView()` 解除 listener 并置空 binding。
 - 不以静态颜色或静态圆角 drawable 覆盖运行时主题。优先调用 `LauncherTheme`。
 - 修改 UI 时只调整用户指定的层级，不顺带改动引擎启动、存档、账户同步或列表数据流。
@@ -43,6 +44,7 @@
 - 不滥用 `!!`；可空值用 `?.` 或 `?:` 兜底。
 - 单方法接口使用 `fun interface`；Java 枚举迁移使用 `enum class` + `companion object` + `@JvmStatic fromString`。存量 Java 单方法接口在所在文件因业务改动被打开时一并迁 `fun interface`，不专项发起大规模迁移（候选清单见重构计划文档）。
 - `@Volatile` 仅用于跨线程可见性需求；只在 `@Synchronized` 方法内访问的字段不需要 `@Volatile`。
+- **JavaBean 访问器 API 的类迁 Kotlin 时保留显式 Java 风格函数**：状态 getter/setter 用显式函数（`isLoading()`/`setDataLoaded()`/`getVisibleGames()`）而非 Kotlin 属性（阶段 60 实证：Kotlin 属性语法下 `obj.setDataLoaded(true)`/`obj.getVisibleGames()` 编译失败，报 Unresolved reference）。原 Kotlin 调用方的「属性读」语法（如 `obj.isDataLoaded`）须机械改为方法调用（`obj.isDataLoaded()`）。
 
 ### ViewModel 与 Fragment 通信
 
@@ -167,7 +169,9 @@
 ### 表单与列表
 
 - 普通单行输入优先用 `LauncherTheme.formInputs()`；竖屏单行高度 45dp、正文 14sp、左右 13dp。
+- 自定义 `EditText` 子类必须显式传 `defStyleAttr = android.R.attr.editTextStyle`，否则 Java→Kotlin 迁移后可能丢失可编辑行为（参考 `LauncherEditText`）。
 - 多行输入与聊天编辑器独立处理；聊天输入框不纳入普通表单规范。
+- 设置/取消/输入密码弹窗（`GamePasswordDialog`）仅保留动态消息，不显示 subtitle 与 hint 文案；竖屏高度 `WRAP_CONTENT`，横屏 90% 屏高 + ScrollView。颜色一律走 `LauncherTheme` 工厂。
 - 选择器入口可复用表单外观，但保留“选择目录/封面/引擎”等业务语义，不能伪装为保存按钮。
 - 列表功能行按语义区分：设置行、主题选择行、聊天入口行、游戏内容项各自保留原行高与信息层级。
 
@@ -277,6 +281,8 @@ grep -rn "configureEdgeToEdgeWindow\|FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS" app/src/
 grep -rn "LauncherDialogFactory.show" app/src/main/java/com/apps/HDModel app/src/main/java/com/apps/PadUi
 # 裸 startActivity(ACTION_VIEW) 未走 LauncherUrlOpener
 grep -rn "ACTION_VIEW" app/src/main/java/com/apps --include="*.kt" --include="*.java" | grep -v "LauncherUrlOpener"
+# 废弃 insets 属性（应仅命中已登记特化存量：LauncherProfileFragment/LauncherLibraryFragment/LauncherRegisterFragment/AvatarCropActivity）
+grep -rn "systemWindowInset\|getSystemWindowInset" app/src/main/java/com/apps --include="*.kt" --include="*.java"
 ```
 
 ## 8. `app/src/main/java` 通用代码规范
@@ -303,9 +309,11 @@ grep -rn "ACTION_VIEW" app/src/main/java/com/apps --include="*.kt" --include="*.
 - Repository/Bridge 返回领域结果或 `Result`；UI 层只负责加载、成功、空态和失败态渲染。不要让 Activity/Fragment 同时处理 HTTP、文件读写、持久化和复杂业务决策。
 - **UI 层文件 IO 下沉**：Activity/Fragment/Adapter 不得在主线程执行 `ContentResolver.openInputStream`、`BitmapFactory.decode*`、`Files.copy`、`File.listFiles` 等可能阻塞或 OOM 的 IO。头像解码、封面拷贝、URI 可读性探测等必须切到 `AppExecutors.runOnIo`/`Dispatchers.IO`，结果回主线程时按下方守卫规则校验生命周期。文件写入下沉到 `LauncherScanBridge`/`LauncherImageBridge` 等 core 层 API，UI 层只传入来源 URI 与目标路径，不直接持有流。批量 IO 必须带大小上限（参考 ImporterIO 的 `MAX_ENTRY_BYTES`/`MAX_TOTAL_BYTES`/`MAX_ENTRY_COUNT`），避免 ZIP/压缩放大攻击。
 - **core 内所有 IO 路径强制字节上限**：`com.core.*` 内所有 `read()`/`FileInputStream`/`HttpURLConnection`/`BitmapFactory` 读取必须有显式字节上限（参照 `ImporterIO.MAX_ENTRY_BYTES`/`LauncherUserData.readText(file, maxBytes, label)` 模式），禁止无界 `read()`/`available()`；截图/Bitmap 路径除像素维上限外补字节上限。`LauncherUserData` 的 `MAX_SETTINGS_BYTES`/`MAX_PLAY_SQL_BYTES` 等各自定义的限额保留，命名后续可统一。
-- **postDelayed 清理**：凡 `Handler`/`RxMainScheduler.postDelayed`/`mainQueue.postDelayed` 的延迟任务必须持有 disposable/callback 引用，并在 `onDestroy`/`onDestroyView` 清理；`View.postDelayed` 可豁免（View 销毁时自动清理）。lambda 内仍须加回主线程守卫作为兜底。参照 `LauncherPublicChatActivity.cancelHeartbeat`、`GameSessionController.removeCallbacks`、`LauncherParticleView.removeCallbacks` 为合规实现。
+- **postDelayed 清理**：凡 `Handler`/`RxMainScheduler.postDelayed`/`mainQueue.postDelayed` 的延迟任务必须持有 disposable/callback 引用，并在 `onDestroy`/`onDestroyView` 清理；`View.postDelayed` 可豁免（View 销毁时自动清理）。lambda 内仍须加回主线程守卫作为兜底。参照 `LauncherPublicChatFragment.cancelHeartbeat`、`GameSessionController.removeCallbacks`、`LauncherParticleView.removeCallbacks` 为合规实现。
 - **core 长生命周期监听器释放**：`com.core.*` 内 `FileObserver`/`HandlerThread` 须提供显式 `stop()`/`release()`/`quit()` 入口并在 Service/Launcher 销毁时调用，避免泄漏（具体位置见重构计划文档）。
 - 共享状态仅在确有并发访问时使用 `@Volatile`、锁或原子类型；说明其保护的状态与线程边界，避免以全局可变单例代替状态所有权。`@Volatile` 仅用于跨线程可见性需求；只在 `@Synchronized` 方法内访问的字段、或仅主线程访问的字段不需要 `@Volatile`，误加会误导读者以为存在跨线程访问。已识别的 `@Volatile` 误用存量见重构计划文档，相关功能改动时删除。
+- **长运行任务防重入**：导入、初始化、同步等长运行任务必须使用显式进行中标志（如 `importInProgress`）阻止重复触发；入口先检查标志置位则直接返回，完成/失败收尾时复位。禁止依赖 UI 禁用态或隐式时序防重入。
+- **临时目录/临时文件显式清理**：临时目录用显式递归删除（`deleteOnExit()` 不可靠），在 `finally` 块与取消回调中执行；解压/解包类操作先做大小/条目数上限检查再写入，防止部分写入残留。
 
 ### 异常、日志与数据处理
 
@@ -332,6 +340,23 @@ grep -rn "ACTION_VIEW" app/src/main/java/com/apps --include="*.kt" --include="*.
 - **持有 Activity 的渲染/协调类**：导航渲染、Splash 等 UI 协调类需要访问 Activity 状态时可持有 Activity 引用，但须满足：生命周期严格被 Activity 包裹（在 `onCreate`/`showLauncherContent` 等创建，Activity 销毁即释放）；对 Activity 私有字段的访问通过 `internal` getter 暴露（如 `internal val launcherBinding`），不直接改为 `public`；`lateinit` 字段必须在访问前用 `binding != null` 等守卫保证已初始化，避免在 splash 等异步阶段触发未初始化访问。
 - 新增公共 API 需有 KDoc/Javadoc：说明用途、线程要求、可空约定、失败方式及 Java 互操作约束（若适用）。不要为显而易见的私有实现添加噪声注释。
 - 保持 import 分组和格式化一致；不引入与文件现有语言无关的 Java/Kotlin 互操作包装。新业务类优先 Kotlin，Java 文件仅维护既有实现或确有互操作必要的代码。
+
+### 工具方法单一来源（com.core 与引擎侧）
+
+- **按包名启动**统一用 `com.core.launcher.PackageLauncher.launchPackage`（阶段 124 单源，`ExternalGameLaunchers.launchPackage` 委托），禁止调用方自拼 Intent 回退链。
+- **内置引擎 URI→路径解析**统一用 `com.core.launcher.ScriptEngineLaunchers`（`uriToFilePath`/`stripFileScheme`/`resolve*GameDirectory`/`resolve*SaveLocation`/`build*Intent`，tree/document 混合 SAF URI 解析），KRKR/Artemis/ONS/Tyrano/Winlator 路径解析与 `GameRepository.normalizeRootUriKey`（companion @JvmStatic，rootUri 身份键单源，games.root_uri_key 唯一索引来源）同思路。
+- **引擎启动**：Java 调用方稳定门面用 `com.core.launcher.EmulatorLauncher` companion（全部 @JvmStatic 委托，新增启动能力只扩展实现类不新增门面方法）；策略注册/分发用 `com.core.launcher.ExternalGameLaunchers`（`registerStrategy`/`launchGame`）；各引擎实现单源——`KrkrLauncher`（含 `normalizeEngineVersion` 版本归一化）、`ArtemisLauncher`（含 `fallbackStage`；`stopSaveSync` 为 §8 监听器释放原则落地）、`WinlatorLauncher`（`.desktop`/`.exe` 解析，`isWinlatorPackage` 委托 `EnginePackages`）、`HandheldLaunchers`（PSP/Citra/Eden）、`EngineSaveLocations`（各引擎实际存档目录聚合）；包名/关键词判定统一用 `EnginePackages`（含 `WINLATOR_PACKAGE_KEYWORDS`/`isWinlatorPackage`/`isInternal*`）。
+- **引擎类型字符串解析**统一用 `com.core.model.EngineType.fromString`（未知回退 UNKNOWN，与 `HomeStyle.fromStorage` 同模式）。
+- **存档传输**：`com.core.data.SaveFileUtils`（复制/校验/`safeZipEntryName` 路径穿越防护/`rejectGamePayloadEntry` 原语 + `MAX_SAVE_ZIP_BYTES`/`MAX_SAVE_ZIP_FILES`）、`SaveZipTransfer`（ZIP 打包/解压）、`SaveDocumentTransfer`（SAF 树↔本地目录复制），经 `GameSaveFileManager` 组合使用。
+- **同步/备份编解码**统一用 `com.core.sync.SyncSnapshotCodec`（`snapshotToText`/`compressGzip`/`decompressIfGzip` + `MAX_REMOTE_SNAPSHOT_BYTES`/`MAX_LOCAL_BACKUP_BYTES` 解压放大防护）。
+- **IO 原语与临时清理**：带上限读取、`registerTempDir`/`cleanupAllTempDirs`/`deleteRecursively` 统一用 `com.core.importer.ImporterIO`；Bitmap 消费侧字节上限用 `com.core.util.BoundedInputStream` + `MAX_BITMAP_SOURCE_BYTES`（挂 §8 core IO 字节上限原则）。
+- **游玩记录/会话**：上传缓冲与本地↔服务端会话映射用 `com.core.userdata.LauncherPlayRecords`；`com.core.data.PlaySessionRepository` 与 `GameRepository` 共享同一 `YukiDatabaseHelper` 实例（`DB_NAME`/`DB_VERSION` 单源）保证跨表事务原子性；游玩状态归一化用 `PlaySessionRepository` 顶层 `normalizePlayStatus`。
+- **数据层访问**：com.apps 新代码经 `com.core.launcherbridge.LauncherRepositoryBridge`（GameRepository 门面）/`LauncherScanBridge`/`LauncherGameLaunchBridge`（启动 gate + play_session 生命周期）/`LauncherModuleBridge`（外部插件包名判定 + 模块开关）访问 core，禁止直接 import `com.core.data` 内部类；`LauncherUiBridge` 是 core 读主题色/重启/覆盖层确认的边界。
+- **诊断/日志**：启动/存储事故诊断时间线用 `com.core.diagnostics.GameDiagnostics`；开发者日志统一用 `com.core.util.DevLogger`（日志输出单源）。
+- **工作区/agent 域**：文本编码探测用 `com.core.agent.workspace.WorkspaceEncoding`、JSON 根/指针解析用 `WorkspaceJson`、模型相对路径校验/敏感文件判定用 `AgentRelativePath`。
+- **偏好键镜像与常量**：com.core 侧偏好键统一用 `com.core.prefs.LauncherMainKeys`/`ScanRootKeys`、`com.core.launcher.EngineSaveKeys`（主源见 §8 跨模块技术债口径）；备份文件命名前缀用 `com.core.CoreBackup.FILE_PREFIX`；`LauncherUserData.readText(file, maxBytes, label)` 为带字节上限文件读取模式参照。
+- **Importer 时间解析**：`com.core.importer.ImporterService.parseIsoTime`（与 `TimeFormatUtil` 展示格式化互补）。
+- **UI 缩放偏好**：`com.core.util.UiScaleUtil`（`getUiScale`/`setUiScale`/`wrap`/`clamp`）。
 
 ### 自动检查与提交要求
 
