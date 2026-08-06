@@ -509,8 +509,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         options.add(arrayOf(getString(com.core.R.string.pad_rematch_vndb), "rematch"))
         options.add(arrayOf(getString(com.core.R.string.pad_custom_search_vndb), "custom_vndb"))
         options.add(arrayOf(getString(com.core.R.string.pad_sync_cover), "sync"))
-        // ONS/KRKR 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
+        // ONS/KRKR/Artemis 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
         val hasEngineSettings = game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI
+                || game.engine == EngineType.ARTEMIS
         if (hasEngineSettings) {
             options.add(arrayOf(getString(com.core.R.string.pad_engine_settings), "engine_settings"))
         }

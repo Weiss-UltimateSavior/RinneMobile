@@ -241,7 +241,6 @@ class SyncManager(context: Context) {
         settings.put("background_video_sound", appPrefs.getBoolean(KEY_BACKGROUND_VIDEO_SOUND, false))
         settings.put("kr_engine_version", appPrefs.getString(CorePreferences.KEY_KR_ENGINE_VERSION, "auto"))
         settings.put("kr_scoped_save_dir", appPrefs.getBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, false))
-        settings.put("artemis_scoped_save_dir", appPrefs.getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, false))
         settings.put("tyrano_scoped_save_dir", appPrefs.getBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, true))
         settings.put("tyrano_external_network", appPrefs.getBoolean(EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK, false))
         settings.put("ui_font_scale", appPrefs.getFloat(KEY_UI_FONT_SCALE, 1.0f))
@@ -335,7 +334,6 @@ class SyncManager(context: Context) {
                 if ("auto" == krVersion || "1.3.9" == krVersion || "1.3.4" == krVersion) prefsEditor.putString(CorePreferences.KEY_KR_ENGINE_VERSION, krVersion)
             }
             if (settings.has("kr_scoped_save_dir")) prefsEditor.putBoolean(EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR, settings.optBoolean("kr_scoped_save_dir", false))
-            if (settings.has("artemis_scoped_save_dir")) prefsEditor.putBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, settings.optBoolean("artemis_scoped_save_dir", false))
             if (settings.has("tyrano_scoped_save_dir")) prefsEditor.putBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, settings.optBoolean("tyrano_scoped_save_dir", true))
             if (settings.has("tyrano_external_network")) prefsEditor.putBoolean(EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK, settings.optBoolean("tyrano_external_network", false))
             if (settings.has("ui_font_scale")) prefsEditor.putFloat(KEY_UI_FONT_SCALE, Math.max(0.85, Math.min(1.30, settings.optDouble("ui_font_scale", 1.0))).toFloat())

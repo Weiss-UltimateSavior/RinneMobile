@@ -308,6 +308,7 @@
     <string name="game_manage_title">管理</string>
     <string name="game_manage_cover_settings">封面设置</string>
     <string name="game_manage_engine_settings">引擎设置</string>
+    <string name="game_manage_artemis_settings">Artemis 引擎设置</string>
     <string name="game_manage_scan_directories">扫描目录</string>
     <string name="game_manage_no_scan_directories">还没有添加扫描目录</string>
     <string name="game_manage_recent_scan_results">最近扫描结果</string>

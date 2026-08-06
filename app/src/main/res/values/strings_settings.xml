@@ -22,7 +22,15 @@
         <item>1.2.6</item>
     </string-array>
     <string name="settings_krkr_unified_save">KRKR 统一存档目录</string>
-    <string name="settings_artemis_unified_save">Artemis 统一存档目录</string>
+    <string name="settings_artemis_engine_version">Artemis 引擎版本</string>
+    <!-- Artemis 引擎版本下拉选项：首项复用 settings_auto，保持多语言回退一致 -->
+    <string-array name="artemis_engine_version_options">
+        <item>@string/settings_auto</item>
+        <item>引擎 V1</item>
+        <item>引擎 V2</item>
+        <item>引擎 V3</item>
+    </string-array>
+    <string name="settings_artemis_rotate_screen">反转游戏画面（180°）</string>
     <string name="settings_tyrano_unified_save">Tyrano 统一存档目录</string>
     <string name="settings_tyrano_external_resources">Tyrano 允许外部网络资源</string>
     <string name="settings_ons_unified_save">ONS 统一存档目录</string>

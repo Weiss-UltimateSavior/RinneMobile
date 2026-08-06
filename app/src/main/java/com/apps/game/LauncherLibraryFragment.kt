@@ -494,8 +494,8 @@ open class LauncherLibraryFragment : Fragment(),
         options.add(arrayOf(getString(R.string.game_action_rematch_vndb), "rematch"))
         options.add(arrayOf(getString(R.string.game_action_custom_vndb), "custom_vndb"))
         options.add(arrayOf(getString(R.string.game_action_sync_cover), "sync"))
-        // ONS/KRKR 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
-        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI) {
+        // ONS/KRKR/Artemis 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
+        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS) {
             options.add(arrayOf(getString(R.string.game_action_engine_settings), "engine_settings"))
         }
         options.add(arrayOf(getString(R.string.game_action_delete), "delete"))

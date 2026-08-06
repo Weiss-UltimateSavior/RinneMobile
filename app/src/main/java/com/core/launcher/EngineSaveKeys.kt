@@ -6,7 +6,6 @@ package com.core.launcher
  */
 object EngineSaveKeys {
     const val KEY_KR_SCOPED_SAVE_DIR = "kr_scoped_save_dir"
-    const val KEY_ARTEMIS_SCOPED_SAVE_DIR = "artemis_scoped_save_dir"
     const val KEY_TYRANO_SCOPED_SAVE_DIR = "tyrano_scoped_save_dir"
     const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
 }

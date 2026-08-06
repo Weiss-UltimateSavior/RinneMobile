@@ -531,7 +531,7 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
         addMoreOption(ids, labels, "rematch", getString(R.string.game_action_rematch_vndb));
         addMoreOption(ids, labels, "custom_vndb", getString(R.string.game_action_custom_vndb));
         addMoreOption(ids, labels, "sync", getString(R.string.game_action_sync_cover));
-        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI) {
+        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS) {
             addMoreOption(ids, labels, "engine_settings", getString(R.string.game_action_engine_settings));
         }
         addMoreOption(ids, labels, "delete", getString(R.string.game_action_delete));

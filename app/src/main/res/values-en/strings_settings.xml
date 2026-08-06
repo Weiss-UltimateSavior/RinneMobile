@@ -22,7 +22,15 @@
         <item>1.2.6</item>
     </string-array>
     <string name="settings_krkr_unified_save">Unified Save Directory for KRKR</string>
-    <string name="settings_artemis_unified_save">Unified Save Directory for Artemis</string>
+    <string name="settings_artemis_engine_version">Artemis Engine Version</string>
+    <!-- Artemis engine version dropdown options: first item reuses settings_auto for locale fallback consistency -->
+    <string-array name="artemis_engine_version_options">
+        <item>@string/settings_auto</item>
+        <item>Engine V1</item>
+        <item>Engine V2</item>
+        <item>Engine V3</item>
+    </string-array>
+    <string name="settings_artemis_rotate_screen">Rotate Game Screen (180°)</string>
     <string name="settings_tyrano_unified_save">Unified Save Directory for Tyrano</string>
     <string name="settings_tyrano_external_resources">Allow External Network Resources in Tyrano</string>
     <string name="settings_ons_unified_save">Unified Save Directory for ONS</string>

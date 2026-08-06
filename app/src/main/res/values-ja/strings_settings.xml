@@ -22,7 +22,15 @@
         <item>1.2.6</item>
     </string-array>
     <string name="settings_krkr_unified_save">KRKR 共通セーブディレクトリ</string>
-    <string name="settings_artemis_unified_save">Artemis 共通セーブディレクトリ</string>
+    <string name="settings_artemis_engine_version">Artemis エンジンバージョン</string>
+    <!-- Artemis エンジンバージョン候補：先頭項目は settings_auto を参照しロケール回退を維持 -->
+    <string-array name="artemis_engine_version_options">
+        <item>@string/settings_auto</item>
+        <item>エンジン V1</item>
+        <item>エンジン V2</item>
+        <item>エンジン V3</item>
+    </string-array>
+    <string name="settings_artemis_rotate_screen">ゲーム画面を反転（180°）</string>
     <string name="settings_tyrano_unified_save">Tyrano 共通セーブディレクトリ</string>
     <string name="settings_tyrano_external_resources">Tyrano の外部ネットワークリソースを許可</string>
     <string name="settings_ons_unified_save">ONS 共通セーブディレクトリ</string>

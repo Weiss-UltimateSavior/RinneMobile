@@ -162,7 +162,6 @@ public class PadSettingsActivity extends AppCompatActivity {
         setEngineVersionSelection(restoredState != null && restoredState.containsKey(STATE_ENGINE_VERSION_INDEX)
                 ? restoredState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
         binding.padKrScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
-        binding.padArtemisScopedSwitch.setChecked(LauncherKrkrBridge.isArtemisScopedSaveDir(this));
         OnsSettings onsSettings = OnsSettings.load(this);
         binding.padOnsScopedSwitch.setChecked(onsSettings.scopedSaveDir);
         binding.padOnsStretchSwitch.setChecked(onsSettings.stretchFull);
@@ -438,7 +437,6 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.secondaryButton(binding.padSettingsBackButton);
         LauncherTheme.textPrimary(binding.padSettingsPageTitle);
         LauncherTheme.styleMaterialSwitch(binding.padKrScopedSwitch);
-        LauncherTheme.styleMaterialSwitch(binding.padArtemisScopedSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padOnsScopedSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padOnsStretchSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padOnsCutoutSwitch);
@@ -616,7 +614,6 @@ public class PadSettingsActivity extends AppCompatActivity {
 
         LauncherKrkrBridge.setEngineVersion(this, version);
         LauncherKrkrBridge.setKrScopedSaveDir(this, binding.padKrScopedSwitch.isChecked());
-        LauncherKrkrBridge.setArtemisScopedSaveDir(this, binding.padArtemisScopedSwitch.isChecked());
         OnsSettings onsSettings = OnsSettings.load(this);
         onsSettings.scopedSaveDir = binding.padOnsScopedSwitch.isChecked();
         onsSettings.stretchFull = binding.padOnsStretchSwitch.isChecked();

@@ -58,17 +58,17 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
 
     @Override
     protected void onDestroy() {
-        boolean retrying = maybeRetryWithCompatibleArtemis();
+        // 兼容回退改为「先写 pref + 拉起下一版本（独立进程），再终结当前进程」：
+        // V2/V3 在各自独立进程（:artemis.compat / :artemis.compat.v2）启动，当前进程
+        // （无论正常退出还是早退回退）都直接终结，避免引擎 native 进程级全局状态
+        // （android_app/音频/GL/dlopen lib）被二次初始化污染——同进程二次 init 挂起黑屏
+        // 是部分设备黑屏/闪退的根因，与 KRKR 退出即杀进程同策略。
+        maybeRetryWithCompatibleArtemis();
         super.onDestroy();
-        // 终结专用 :artemis 进程：引擎 native 持有进程级全局状态（android_app/音频/GL/dlopen lib），
-        // 活动销毁后复用同一进程会让二次启动在 Init screen 后挂起黑屏（与 KRKR 退出即杀进程同策略）。
-        // 兼容回退已交棒给下一 Activity 时保留进程，交由新实例接管。
-        if (!retrying) {
-            try {
-                android.os.Process.killProcess(android.os.Process.myPid());
-            } catch (Throwable ignored) {
-                // 进程终结失败可安全忽略：系统会回收进程，下次启动仍为全新进程
-            }
+        try {
+            android.os.Process.killProcess(android.os.Process.myPid());
+        } catch (Throwable ignored) {
+            // 进程终结失败可安全忽略：系统会回收进程，下次启动仍为全新进程
         }
     }
 

@@ -51,20 +51,6 @@ object LauncherKrkrBridge {
     }
 
     @JvmStatic
-    fun isArtemisScopedSaveDir(context: Context?): Boolean {
-        if (context == null) return true
-        // Keep the current safe default for new installs, but honour an
-        // explicit user choice to run Artemis against its original directory.
-        return prefs(context).getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
-    }
-
-    @JvmStatic
-    fun setArtemisScopedSaveDir(context: Context?, enabled: Boolean) {
-        if (context == null) return
-        prefs(context).edit().putBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, enabled).apply()
-    }
-
-    @JvmStatic
     fun isTyranoScopedSaveDir(context: Context?): Boolean {
         if (context == null) return true
         return prefs(context).getBoolean(EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR, true)

@@ -16,6 +16,7 @@ import com.core.R;
  */
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     public static final String EXTRA_GAME_ID = LauncherKrkrSettingsFragment.EXTRA_GAME_ID;
+    public static final String EXTRA_ARTEMIS_ONLY = LauncherKrkrSettingsFragment.EXTRA_ARTEMIS_ONLY;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -25,8 +26,12 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_launcher_manage_host);
         if (savedInstanceState == null) {
             long gameId = getIntent().getLongExtra(EXTRA_GAME_ID, 0L);
+            boolean artemisOnly = getIntent().getBooleanExtra(EXTRA_ARTEMIS_ONLY, false);
+            LauncherKrkrSettingsFragment fragment = artemisOnly
+                    ? LauncherKrkrSettingsFragment.newArtemisOnlyInstance()
+                    : LauncherKrkrSettingsFragment.newInstance(gameId);
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.manageHostContainer, LauncherKrkrSettingsFragment.newInstance(gameId))
+                    .replace(R.id.manageHostContainer, fragment)
                     .commit();
         }
     }

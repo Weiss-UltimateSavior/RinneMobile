@@ -150,20 +150,23 @@ object LauncherGameLaunchBridge {
      */
     private fun isActiveGameStillRunning(context: Context, active: ActiveGameGate): Boolean {
         if (System.currentTimeMillis() - active.startedAt < ACTIVE_PROCESS_GRACE_MS) return true
-        val target = activeProcessName(context, active.emulatorPackage)
-        return isProcessRunning(context, target)
+        // Artemis 三个引擎版本各自独立进程（:artemis / :artemis.compat / :artemis.compat.v2），
+        // 任一存活都视为游戏仍在运行。
+        val targets = activeProcessNames(context, active.emulatorPackage)
+        return targets.any { isProcessRunning(context, it) }
     }
 
-    private fun activeProcessName(context: Context, emulatorPackage: String): String {
+    private fun activeProcessNames(context: Context, emulatorPackage: String): List<String> {
         val pkg = emulatorPackage.trim().lowercase(Locale.ROOT)
         val ownPackage = context.packageName
         return when {
-            EnginePackages.isInternalKrkr(pkg) -> "$ownPackage:kirikiri2"
-            EnginePackages.isInternalTyrano(pkg) -> "$ownPackage:tyrano"
-            EnginePackages.isInternalOns(pkg) -> "$ownPackage:ons"
-            EnginePackages.isInternalArtemis(pkg) -> "$ownPackage:artemis"
-            pkg.startsWith(EnginePackages.INTERNAL_PSP) -> EnginePackages.EXTERNAL_PPSSPP
-            else -> emulatorPackage.trim()
+            EnginePackages.isInternalArtemis(pkg) ->
+                listOf("$ownPackage:artemis", "$ownPackage:artemis.compat", "$ownPackage:artemis.compat.v2")
+            EnginePackages.isInternalKrkr(pkg) -> listOf("$ownPackage:kirikiri2")
+            EnginePackages.isInternalTyrano(pkg) -> listOf("$ownPackage:tyrano")
+            EnginePackages.isInternalOns(pkg) -> listOf("$ownPackage:ons")
+            pkg.startsWith(EnginePackages.INTERNAL_PSP) -> listOf(EnginePackages.EXTERNAL_PPSSPP)
+            else -> listOf(emulatorPackage.trim())
         }
     }
 
@@ -374,7 +377,15 @@ object LauncherGameLaunchBridge {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalOnsIntent(context, game.rootUri, launchTarget, game.id))
             }
             if (EnginePackages.isInternalArtemis(pkg)) {
-                return startActivitySafely(context, EmulatorLauncher.buildInternalArtemisIntent(context, pkg, game.rootUri, launchTarget))
+                // 应用级/游戏级 Artemis 设置：引擎版本（确定性选择，替代纯试错）+ 画面反转。
+                val settings = LauncherArtemisGameSettingsBridge.load(context, game.id)
+                return startActivitySafely(
+                    context,
+                    EmulatorLauncher.buildInternalArtemisIntent(
+                        context, pkg, game.rootUri, launchTarget,
+                        settings.engineVersion, settings.rotateScreen,
+                    ),
+                )
             }
             if (pkg.startsWith(EnginePackages.INTERNAL_PSP) || pkg == EnginePackages.EXTERNAL_PPSSPP) {
                 if (!EmulatorLauncher.isPPSSPPInstalled(context)) {

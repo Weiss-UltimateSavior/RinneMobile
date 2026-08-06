@@ -294,6 +294,7 @@
     <string name="game_manage_title">管理</string>
     <string name="game_manage_cover_settings">カバー設定</string>
     <string name="game_manage_engine_settings">エンジン設定</string>
+    <string name="game_manage_artemis_settings">Artemis エンジン設定</string>
     <string name="game_manage_scan_directories">スキャンフォルダー</string>
     <string name="game_manage_no_scan_directories">スキャンフォルダーが追加されていません</string>
     <string name="game_manage_recent_scan_results">最近のスキャン結果</string>

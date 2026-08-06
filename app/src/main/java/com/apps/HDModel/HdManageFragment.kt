@@ -60,6 +60,10 @@ class HdManageFragment : LauncherManageFragment(), HdEmbeddedActivityOwner {
         showChildFragment(CHILD_ENGINE_SETTINGS_TAG, LauncherKrkrSettingsFragment.newInstance(0L))
     }
 
+    override fun openArtemisSettings() {
+        showChildFragment(CHILD_ENGINE_SETTINGS_TAG, LauncherKrkrSettingsFragment.newArtemisOnlyInstance())
+    }
+
     override fun openSyncCenter() {
         showChildFragment(CHILD_SYNC_CENTER_TAG, LauncherSyncCenterFragment())
     }

@@ -23,33 +23,57 @@ internal object ArtemisLauncher {
     private const val PREFS_NAME = CorePreferences.APP_PREFS
     private const val ENGINE_PREF_PREFIX = "artemis_engine."
 
+    /** 引擎版本取值（应用级/游戏级设置，主源）：自动（V1 起 + 试错回退）/ 固定 1/2/3。 */
+    const val ENGINE_VERSION_AUTO = "auto"
+    const val ENGINE_VERSION_V1 = "1"
+    const val ENGINE_VERSION_V2 = "2"
+    const val ENGINE_VERSION_V3 = "3"
+
+    /** SCREEN_ORIENTATION_* 常量（避免直接硬编码 6/8）。 */
+    private const val ORIENTATION_SENSOR_LANDSCAPE = 6
+    private const val ORIENTATION_REVERSE_LANDSCAPE = 8
+
     data class SaveLocation(
         @JvmField val directory: File?,
         @JvmField val description: String,
         @JvmField val available: Boolean,
     )
 
+    /**
+     * @param engineVersion 应用级/游戏级解析后的引擎版本（auto/1/2/3），
+     *                      仅当 packageName 为内部自动包名（internal.artemis）时生效；
+     *                      显式版本直接启动对应引擎，不做试错回退（参考 tyranor 确定性选择）。
+     * @param rotateScreen  true 时强制反向横屏（orientation=8），修复画面倒置游戏。
+     */
     @JvmStatic
     fun buildIntent(
         context: Context,
         packageName: String?,
         gamePath: String?,
         launchTarget: String?,
+        engineVersion: String = ENGINE_VERSION_AUTO,
+        rotateScreen: Boolean = false,
     ): Intent {
         val resolvedPath = resolveGamePath(gamePath, launchTarget)
         val rootPath = ScriptEngineLaunchers.stripFileScheme(resolvedPath)
         // 非 scoped：引擎直接跑游戏目录（symlink 镜像会导致二次启动黑屏，见类注释）。
         val launchPath = rootPath
         val requestedPackage = packageName?.trim().orEmpty()
-        val autoFallback = requestedPackage.equals(EnginePackages.INTERNAL_ARTEMIS, ignoreCase = true)
-        val effectivePackage = if (autoFallback) {
-            preferredPackage(context, requestedPackage, rootPath)
-        } else {
-            requestedPackage
+        val autoCandidate = requestedPackage.equals(EnginePackages.INTERNAL_ARTEMIS, ignoreCase = true)
+        val (effectivePackage, autoFallback) = when {
+            // 用户显式指定非自动包名（添加游戏时选择）：尊重选择，不做试错回退
+            !autoCandidate -> requestedPackage to false
+            // 设置显式指定引擎版本：直接启动对应版本
+            engineVersion == ENGINE_VERSION_V1 -> EnginePackages.INTERNAL_ARTEMIS to false
+            engineVersion == ENGINE_VERSION_V2 -> EnginePackages.ARTEMIS_COMPAT to false
+            engineVersion == ENGINE_VERSION_V3 -> EnginePackages.ARTEMIS_COMPAT_V2 to false
+            // 自动：V1 起 + 启动失败早退回退链 + 跨启动版本记忆
+            else -> preferredPackage(context, requestedPackage, rootPath) to true
         }
         val activityClass = chooseActivity(effectivePackage)
         logInfo(
             "ARTEMIS_NONSCOPED pkg=$requestedPackage effectivePkg=$effectivePackage " +
+                "engineVersion=$engineVersion rotate=$rotateScreen " +
                 "activity=${activityClass.simpleName} root=$gamePath target=$launchTarget " +
                 "resolved=$resolvedPath path=$launchPath",
         )
@@ -61,7 +85,7 @@ internal object ArtemisLauncher {
             putExtra("rootUri", gamePath)
             putExtra("launchTarget", launchTarget)
             putExtra("launchMode", EnginePackages.INTERNAL_ARTEMIS)
-            putExtra("orientation", 6)
+            putExtra("orientation", if (rotateScreen) ORIENTATION_REVERSE_LANDSCAPE else ORIENTATION_SENSOR_LANDSCAPE)
             putExtra("scopedSaveDir", false)
             putExtra("artemisAutoFallback", autoFallback)
             putExtra("artemisFallbackStage", fallbackStage(effectivePackage))

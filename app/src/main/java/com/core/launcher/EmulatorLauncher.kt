@@ -153,6 +153,18 @@ class EmulatorLauncher {
         )
 
         @JvmStatic
+        fun buildInternalArtemisIntent(
+            context: Context?,
+            packageName: String?,
+            gamePath: String?,
+            launchTarget: String?,
+            engineVersion: String,
+            rotateScreen: Boolean,
+        ): Intent = ArtemisLauncher.buildIntent(
+            requireNotNull(context), packageName, gamePath, launchTarget, engineVersion, rotateScreen,
+        )
+
+        @JvmStatic
         fun resolveActualSaveLocation(
             context: Context?,
             engine: EngineType?,
