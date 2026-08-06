@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -20,9 +21,7 @@ class LauncherPendingActivity : AppCompatActivity() {
         setContentView(binding.root)
         LauncherTabletPortraitScaler.applyActivityContent(this)
         val content = binding.pendingContent
-        val left = content.paddingLeft; val top = content.paddingTop; val right = content.paddingRight; val bottom = content.paddingBottom
-        binding.root.setOnApplyWindowInsetsListener { _, insets -> content.setPadding(left, top + insets.systemWindowInsetTop, right, bottom + insets.systemWindowInsetBottom); insets }
-        binding.root.requestApplyInsets()
+        LauncherInsetsHelper.applyTopAndBottomInsets(binding.root, content)
         LauncherTheme.applyPrimaryTone(binding.root); LauncherTheme.longActionButton(binding.pendingClose)
         (content.getChildAt(1) as? ViewGroup)?.let { group -> repeat(group.childCount) { group.getChildAt(it).background = LauncherTheme.circle(this) } }
         binding.pendingClose.setOnClickListener { finish() }

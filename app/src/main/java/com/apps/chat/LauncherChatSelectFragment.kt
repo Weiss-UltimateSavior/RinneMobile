@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdModeActivity
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -38,7 +39,7 @@ class LauncherChatSelectFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.chatSelectScroll)
         currentBinding.publicChatRow.setOnClickListener { selectChat(CHAT_PUBLIC) }
         currentBinding.yukiAiRow.setOnClickListener { selectChat(CHAT_YUKI) }
         currentBinding.rinmiAiRow.setOnClickListener { selectChat(CHAT_RINNE) }
@@ -52,20 +53,6 @@ class LauncherChatSelectFragment : Fragment() {
     override fun onDestroyView() {
         binding = null
         super.onDestroyView()
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val scroll = currentBinding.chatSelectScroll
-        val left = scroll.paddingLeft
-        val top = scroll.paddingTop
-        val right = scroll.paddingRight
-        val bottom = scroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            scroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     private fun applyIconTone() {

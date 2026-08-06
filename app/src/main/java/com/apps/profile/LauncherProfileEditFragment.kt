@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -39,7 +40,7 @@ class LauncherProfileEditFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.profileEditScroll)
         bindActions()
         LauncherTheme.applyPrimaryTone(view)
         LauncherTheme.longActionButton(currentBinding.profileEditBack)
@@ -50,24 +51,6 @@ class LauncherProfileEditFragment : Fragment() {
     override fun onDestroyView() {
         binding = null
         super.onDestroyView()
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val originalLeft = currentBinding.profileEditScroll.paddingLeft
-        val originalTop = currentBinding.profileEditScroll.paddingTop
-        val originalRight = currentBinding.profileEditScroll.paddingRight
-        val originalBottom = currentBinding.profileEditScroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.profileEditScroll.setPadding(
-                originalLeft,
-                originalTop + insets.systemWindowInsetTop,
-                originalRight,
-                originalBottom,
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     private fun bindActions() {

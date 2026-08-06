@@ -12,6 +12,7 @@ import com.apps.HDModel.LauncherDialogRouter
 import com.apps.LauncherActivity
 import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
+import com.apps.common.LauncherInsetsHelper
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
 import com.core.databinding.ActivityLauncherThemeMenuBinding
@@ -40,7 +41,7 @@ class LauncherThemeMenuFragment : Fragment() {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         selectedTheme = LauncherActivity.getLauncherThemeStyle(requireContext())
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.themeMenuScroll)
         bindActions()
         LauncherTheme.applyPrimaryTone(view)
         LauncherTheme.longActionButton(currentBinding.themeMenuApply)
@@ -52,24 +53,6 @@ class LauncherThemeMenuFragment : Fragment() {
     override fun onDestroyView() {
         binding = null
         super.onDestroyView()
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val originalLeft = currentBinding.themeMenuScroll.paddingLeft
-        val originalTop = currentBinding.themeMenuScroll.paddingTop
-        val originalRight = currentBinding.themeMenuScroll.paddingRight
-        val originalBottom = currentBinding.themeMenuScroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.themeMenuScroll.setPadding(
-                originalLeft,
-                originalTop + insets.systemWindowInsetTop,
-                originalRight,
-                originalBottom,
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     private fun bindActions() {

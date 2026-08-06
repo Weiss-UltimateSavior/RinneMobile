@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -40,7 +41,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.moduleCompatibilityScroll)
         LauncherTheme.applyPrimaryTone(view)
         ModuleType.entries.forEach { module ->
             // 行点击：已安装提示状态，未安装前往安装页。
@@ -297,26 +298,6 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                 getString(R.string.module_try_again_later),
             )
         }
-    }
-
-    // ----- 窗口 / 主题 -----
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val left = currentBinding.moduleCompatibilityScroll.paddingLeft
-        val top = currentBinding.moduleCompatibilityScroll.paddingTop
-        val right = currentBinding.moduleCompatibilityScroll.paddingRight
-        val bottom = currentBinding.moduleCompatibilityScroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.moduleCompatibilityScroll.setPadding(
-                left,
-                top + insets.systemWindowInsetTop,
-                right,
-                bottom,
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     /** 各模块的静态差异：名称/详情资源、安装页 URL、用于弹窗标题的简称。 */

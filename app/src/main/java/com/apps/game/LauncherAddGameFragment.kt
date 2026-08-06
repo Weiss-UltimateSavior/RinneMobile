@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -105,7 +106,7 @@ class LauncherAddGameFragment : Fragment() {
         val currentBinding = binding ?: return
         bindViews()
         restoreTransientState(savedInstanceState)
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.addGameScroll)
         setupEnginePicker()
         bindActions()
         applyThemeTone()
@@ -170,24 +171,6 @@ class LauncherAddGameFragment : Fragment() {
             DevLogger.w("LauncherAddGame", "Invalid saved URI state", error)
             null
         }
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val originalLeft = currentBinding.addGameScroll.paddingLeft
-        val originalTop = currentBinding.addGameScroll.paddingTop
-        val originalRight = currentBinding.addGameScroll.paddingRight
-        val originalBottom = currentBinding.addGameScroll.paddingBottom
-        currentBinding.addGameScroll.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.addGameScroll.setPadding(
-                originalLeft,
-                originalTop + insets.systemWindowInsetTop,
-                originalRight,
-                originalBottom,
-            )
-            insets
-        }
-        currentBinding.addGameScroll.requestApplyInsets()
     }
 
     private fun setupEnginePicker() {

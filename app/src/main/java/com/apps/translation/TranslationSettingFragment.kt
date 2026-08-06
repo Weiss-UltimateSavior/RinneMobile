@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -61,7 +62,7 @@ class TranslationSettingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.translationScroll)
 
         // 冷启动时 projectionData 静态变量丢失，截屏权限已失效，
         // 自动关闭启用开关并停止可能残留的 Service，让用户手动重新授权开启。
@@ -358,19 +359,4 @@ class TranslationSettingFragment : Fragment() {
         }
     }
 
-    /**
-     * 将系统状态栏高度应用为 ScrollView 的顶部 padding，避免内容被状态栏遮挡。
-     */
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val left = currentBinding.translationScroll.paddingLeft
-        val top = currentBinding.translationScroll.paddingTop
-        val right = currentBinding.translationScroll.paddingRight
-        val bottom = currentBinding.translationScroll.paddingBottom
-        currentBinding.translationScroll.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.translationScroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
-            insets
-        }
-        currentBinding.translationScroll.requestApplyInsets()
-    }
 }

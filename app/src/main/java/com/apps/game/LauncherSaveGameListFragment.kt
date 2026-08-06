@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -66,7 +67,7 @@ class LauncherSaveGameListFragment : Fragment() {
             R.string.game_save_engine_games,
             LauncherSaveCategoryActivity.engineLabel(requireContext(), engine),
         )
-        applySystemBarInsets(currentBinding)
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.saveGameListScroll)
         LauncherTheme.applyPrimaryTone(view)
         loadGames()
     }
@@ -297,18 +298,6 @@ class LauncherSaveGameListFragment : Fragment() {
             return "$time · ${TimeFormatUtil.playTime(game.totalPlayTime)}"
         }
         return getString(R.string.game_save_never_played)
-    }
-
-    private fun applySystemBarInsets(currentBinding: ActivityLauncherSaveGameListBinding) {
-        val left = currentBinding.saveGameListScroll.paddingLeft
-        val top = currentBinding.saveGameListScroll.paddingTop
-        val right = currentBinding.saveGameListScroll.paddingRight
-        val bottom = currentBinding.saveGameListScroll.paddingBottom
-        currentBinding.saveGameListScroll.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.saveGameListScroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
-            insets
-        }
-        currentBinding.saveGameListScroll.requestApplyInsets()
     }
 
     companion object {

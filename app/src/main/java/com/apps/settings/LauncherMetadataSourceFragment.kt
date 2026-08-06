@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -40,7 +41,7 @@ class LauncherMetadataSourceFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.sourceScroll)
         bindActions()
         applyThemeTone()
         loadConfig(savedInstanceState)
@@ -54,19 +55,6 @@ class LauncherMetadataSourceFragment : Fragment() {
     override fun onDestroyView() {
         binding = null
         super.onDestroyView()
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val left = currentBinding.sourceScroll.paddingLeft
-        val top = currentBinding.sourceScroll.paddingTop
-        val right = currentBinding.sourceScroll.paddingRight
-        val bottom = currentBinding.sourceScroll.paddingBottom
-        currentBinding.sourceScroll.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.sourceScroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
-            insets
-        }
-        currentBinding.sourceScroll.requestApplyInsets()
     }
 
     private fun bindActions() {

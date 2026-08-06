@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -36,7 +37,7 @@ class LauncherPasswordResetFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.passwordResetScroll)
         LauncherTheme.applyPrimaryTone(view)
         LauncherTheme.formInputs(
             currentBinding.resetEmail,
@@ -165,24 +166,6 @@ class LauncherPasswordResetFragment : Fragment() {
 
     private fun textOf(view: TextView): String =
         view.text?.toString()?.trim().orEmpty()
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val left = currentBinding.passwordResetScroll.paddingLeft
-        val top = currentBinding.passwordResetScroll.paddingTop
-        val right = currentBinding.passwordResetScroll.paddingRight
-        val bottom = currentBinding.passwordResetScroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.passwordResetScroll.setPadding(
-                left,
-                top + insets.systemWindowInsetTop,
-                right,
-                bottom,
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
-    }
 
     /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
     private fun requestClose(resultOk: Boolean) {

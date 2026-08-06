@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -36,20 +37,7 @@ class LauncherDisclaimerFragment : Fragment() {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         val content = currentBinding.disclaimerContent
-        val left = content.paddingLeft
-        val top = content.paddingTop
-        val right = content.paddingRight
-        val bottom = content.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            content.setPadding(
-                left,
-                top + insets.systemWindowInsetTop,
-                right,
-                bottom + insets.systemWindowInsetBottom,
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
+        LauncherInsetsHelper.applyTopAndBottomInsets(currentBinding.root, currentBinding.disclaimerContent)
         LauncherTheme.applyPrimaryTone(view)
         LauncherTheme.longActionButton(currentBinding.disclaimerClose)
         (content.getChildAt(1) as? ViewGroup)?.let { group ->

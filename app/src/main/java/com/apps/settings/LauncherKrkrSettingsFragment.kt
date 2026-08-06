@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -48,7 +49,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         gameId = arguments?.getLong(EXTRA_GAME_ID, 0L) ?: 0L
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.krkrScroll)
         bindActions()
         applyThemeTone()
         if (isPerGameMode()) {
@@ -96,19 +97,6 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherOnsGameSettingsBridge.clearOverride(requireContext(), gameId)
         Toast.makeText(requireContext(), R.string.settings_ons_global_restored, Toast.LENGTH_SHORT).show()
         requestClose()
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val left = currentBinding.krkrScroll.paddingLeft
-        val top = currentBinding.krkrScroll.paddingTop
-        val right = currentBinding.krkrScroll.paddingRight
-        val bottom = currentBinding.krkrScroll.paddingBottom
-        currentBinding.krkrScroll.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.krkrScroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
-            insets
-        }
-        currentBinding.krkrScroll.requestApplyInsets()
     }
 
     private fun bindActions() {

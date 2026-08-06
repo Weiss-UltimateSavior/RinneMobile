@@ -34,6 +34,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.apps.common.LauncherInsetsHelper
 import com.apps.game.CategoryBuildResult
 import com.apps.game.CategoryOption
 import com.apps.game.GameActionMenuFactory
@@ -123,7 +124,8 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         applyPadContentSpacing()
-        applySystemBarInsets()
+        val currentBinding = _binding ?: return
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.libraryContent)
         LauncherTheme.applyPrimaryTone(binding.root)
         binding.libraryTitle.setText(com.core.R.string.pad_game_repository)
         pageSize = GRID_COLUMNS * (if (isTabletLayout()) 2 else 1)
@@ -224,25 +226,6 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         super.onDestroyView()
         _binding = null
         adapter = null
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = _binding ?: return
-        val originalLeft = currentBinding.libraryContent.paddingLeft
-        val originalTop = currentBinding.libraryContent.paddingTop
-        val originalRight = currentBinding.libraryContent.paddingRight
-        val originalBottom = currentBinding.libraryContent.paddingBottom
-
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.libraryContent.setPadding(
-                originalLeft,
-                originalTop + insets.systemWindowInsetTop,
-                originalRight,
-                originalBottom
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     private fun setupRecycler() {

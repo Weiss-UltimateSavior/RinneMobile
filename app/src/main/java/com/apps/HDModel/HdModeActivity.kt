@@ -17,6 +17,7 @@ import com.apps.LauncherNavRenderer
 import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
 import com.apps.PadUi.PadDialogFactory
+import com.apps.common.LauncherInsetsHelper
 import com.apps.data.LauncherViewModel
 import com.apps.theme.LauncherTheme
 import com.core.R
@@ -58,7 +59,7 @@ class HdModeActivity : AppCompatActivity() {
             ?.let { value -> HdNavItem.entries.firstOrNull { it.name == value } }
             ?: HdNavItem.HOME
         appliedThemeStyle = LauncherActivity.getLauncherThemeStyle(this)
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyInsets(binding.root, binding.hdModeContent)
         applyTheme()
         renderParticles()
         binding.hdNavA.setOnClickListener { showHomeFragment() }
@@ -159,24 +160,6 @@ class HdModeActivity : AppCompatActivity() {
             } else {
                 0
             }
-    }
-
-    private fun applySystemBarInsets() {
-        val content = binding.hdModeContent
-        val left = content.paddingLeft
-        val top = content.paddingTop
-        val right = content.paddingRight
-        val bottom = content.paddingBottom
-        binding.root.setOnApplyWindowInsetsListener { _, insets ->
-            content.setPadding(
-                left + insets.systemWindowInsetLeft,
-                top + insets.systemWindowInsetTop,
-                right + insets.systemWindowInsetRight,
-                bottom + insets.systemWindowInsetBottom,
-            )
-            insets
-        }
-        binding.root.requestApplyInsets()
     }
 
     private fun applyTheme() {

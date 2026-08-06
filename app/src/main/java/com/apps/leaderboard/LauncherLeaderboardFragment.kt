@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -42,15 +43,7 @@ class LauncherLeaderboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        val left = view.paddingLeft
-        val top = view.paddingTop
-        val right = view.paddingRight
-        val bottom = view.paddingBottom
-        view.setOnApplyWindowInsetsListener { v, insets ->
-            v.setPadding(left, top + insets.systemWindowInsetTop, right, bottom + insets.systemWindowInsetBottom)
-            insets
-        }
-        view.requestApplyInsets()
+        LauncherInsetsHelper.applyTopAndBottomInsets(view, view)
         LauncherTheme.applyPrimaryTone(view)
         val listAdapter = LauncherLeaderboardAdapter()
         adapter = listAdapter

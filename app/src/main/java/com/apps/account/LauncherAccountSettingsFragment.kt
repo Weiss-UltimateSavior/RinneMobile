@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.apps.LauncherPreferences
 import com.apps.sync.LauncherSyncScheduler
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -44,7 +45,7 @@ class LauncherAccountSettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.accountSettingsScroll)
         LauncherTheme.applyPrimaryTone(view)
         LauncherTheme.styleMaterialSwitch(currentBinding.chipSyncConfig)
         LauncherTheme.styleMaterialSwitch(currentBinding.chipRealtimePlaytime)
@@ -323,21 +324,4 @@ class LauncherAccountSettingsFragment : Fragment() {
         else -> false
     }
 
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val originalLeft = currentBinding.accountSettingsScroll.paddingLeft
-        val originalTop = currentBinding.accountSettingsScroll.paddingTop
-        val originalRight = currentBinding.accountSettingsScroll.paddingRight
-        val originalBottom = currentBinding.accountSettingsScroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.accountSettingsScroll.setPadding(
-                originalLeft,
-                originalTop + insets.systemWindowInsetTop,
-                originalRight,
-                originalBottom,
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
-    }
 }

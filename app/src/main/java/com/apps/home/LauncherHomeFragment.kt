@@ -18,6 +18,7 @@ import com.apps.navigationOverlayBottomPadding
 import com.apps.refreshNavigationOverlayInsets
 import com.apps.account.LauncherDisclaimerActivity
 import com.apps.agent.LocalAgentActivity
+import com.apps.common.LauncherInsetsHelper
 import com.apps.data.LauncherRepository
 import com.apps.data.LauncherViewModel
 import com.apps.game.GameSessionController
@@ -79,7 +80,7 @@ open class LauncherHomeFragment : Fragment() {
         )
 
         if (applyHomeSystemBarInsets()) {
-            applySystemBarInsets()
+            LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.contentScroll) { navigationOverlayBottomPadding(it) }
         }
         setupRecentList()
         currentBinding.launcherAvatarContainer.clipToOutline = true
@@ -112,25 +113,6 @@ open class LauncherHomeFragment : Fragment() {
         binding?.root?.setOnApplyWindowInsetsListener(null)
         super.onDestroyView()
         binding = null
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val originalLeft = currentBinding.contentScroll.paddingLeft
-        val originalTop = currentBinding.contentScroll.paddingTop
-        val originalRight = currentBinding.contentScroll.paddingRight
-        val originalBottom = currentBinding.contentScroll.paddingBottom
-
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            currentBinding.contentScroll.setPadding(
-                originalLeft,
-                originalTop + insets.systemWindowInsetTop,
-                originalRight,
-                navigationOverlayBottomPadding(originalBottom)
-            )
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     private fun bindActions() {

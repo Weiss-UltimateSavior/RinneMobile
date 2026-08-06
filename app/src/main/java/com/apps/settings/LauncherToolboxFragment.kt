@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
+import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -35,7 +36,7 @@ class LauncherToolboxFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
-        applySystemBarInsets()
+        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.toolboxScroll)
         LauncherTheme.applyPrimaryTone(view)
         LauncherTheme.longActionButton(currentBinding.toolboxBack)
         currentBinding.toolUsefulUnpack.setOnClickListener {
@@ -77,20 +78,6 @@ class LauncherToolboxFragment : Fragment() {
                 Toast.makeText(requireContext(), R.string.home_cannot_open_link, Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    private fun applySystemBarInsets() {
-        val currentBinding = binding ?: return
-        val scroll = currentBinding.toolboxScroll
-        val left = scroll.paddingLeft
-        val top = scroll.paddingTop
-        val right = scroll.paddingRight
-        val bottom = scroll.paddingBottom
-        currentBinding.root.setOnApplyWindowInsetsListener { _, insets ->
-            scroll.setPadding(left, top + insets.systemWindowInsetTop, right, bottom)
-            insets
-        }
-        currentBinding.root.requestApplyInsets()
     }
 
     /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
