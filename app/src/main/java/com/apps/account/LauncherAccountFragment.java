@@ -17,6 +17,7 @@ import com.core.launcherbridge.AuthCallback;
 import com.core.launcherbridge.LauncherAuthBridge;
 import com.core.prefs.LauncherMainKeys;
 import com.apps.LauncherPreferences;
+import com.apps.common.LauncherInsetsHelper;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.theme.LauncherDialogFactory;
@@ -62,7 +63,7 @@ public class LauncherAccountFragment extends Fragment {
             collapseTabletSubmitSpacer();
         }
         if (applyAccountSystemBarInsets()) {
-            applySystemBarInsets();
+            LauncherInsetsHelper.applyTopInset(binding.getRoot(), binding.accountScroll, original -> LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, original));
         }
         bindActions();
         renderMode();
@@ -91,25 +92,6 @@ public class LauncherAccountFragment extends Fragment {
         }
         super.onDestroyView();
         binding = null;
-    }
-
-    private void applySystemBarInsets() {
-        FragmentLauncherAccountBinding currentBinding = binding;
-        int originalLeft = currentBinding.accountScroll.getPaddingLeft();
-        int originalTop = currentBinding.accountScroll.getPaddingTop();
-        int originalRight = currentBinding.accountScroll.getPaddingRight();
-        int originalBottom = currentBinding.accountScroll.getPaddingBottom();
-
-        currentBinding.getRoot().setOnApplyWindowInsetsListener((v, insets) -> {
-            currentBinding.accountScroll.setPadding(
-                    originalLeft,
-                    originalTop + insets.getSystemWindowInsetTop(),
-                    originalRight,
-                    LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, originalBottom)
-            );
-            return insets;
-        });
-        currentBinding.getRoot().requestApplyInsets();
     }
 
     /** Keep the form usable above the Launcher bottom navigation after its controls are enlarged. */

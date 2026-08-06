@@ -25,6 +25,7 @@ import com.core.model.Game;
 import com.core.util.AppExecutors;
 import com.core.util.DevLogger;
 import com.apps.LauncherActivity;
+import com.apps.common.LauncherInsetsHelper;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
@@ -112,7 +113,7 @@ public class LauncherGameEditActivity extends AppCompatActivity {
         LauncherTabletPortraitScaler.applyActivityContent(this);
         bindViews();
         restoreTransientState(savedInstanceState);
-        applySystemBarInsets();
+        LauncherInsetsHelper.applyTopInset(binding.getRoot(), binding.editScroll);
         bindActions();
         applyThemeTone();
         try {
@@ -473,18 +474,6 @@ public class LauncherGameEditActivity extends AppCompatActivity {
 
     private int boundedEngineOptionIndex(int index) {
         return index >= 0 && index < engineOptions.length ? index : 0;
-    }
-
-    private void applySystemBarInsets() {
-        int left = binding.editScroll.getPaddingLeft();
-        int top = binding.editScroll.getPaddingTop();
-        int right = binding.editScroll.getPaddingRight();
-        int bottom = binding.editScroll.getPaddingBottom();
-        binding.editScroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            binding.editScroll.setPadding(left, top + insets.getSystemWindowInsetTop(), right, bottom);
-            return insets;
-        });
-        binding.editScroll.requestApplyInsets();
     }
 
     private boolean isUiUnavailable() {

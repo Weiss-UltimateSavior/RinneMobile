@@ -23,6 +23,7 @@ import androidx.core.os.LocaleListCompat;
 import com.apps.LauncherActivity;
 import com.apps.LauncherPreferences;
 import com.apps.LauncherThemeStyle;
+import com.apps.common.LauncherInsetsHelper;
 import com.apps.home.HomeStyle;
 import com.apps.theme.LauncherMotion;
 import com.apps.sync.LauncherSyncScheduler;
@@ -79,7 +80,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding = ActivityPadSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         restoredState = savedInstanceState;
-        applySystemBarInsets();
+        LauncherInsetsHelper.applyInsets(binding.getRoot(), binding.padSettingsContent);
         restoreSelectedTheme();
         setupKrkrControls();
         setupMetadataControls();
@@ -424,22 +425,6 @@ public class PadSettingsActivity extends AppCompatActivity {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         }
         window.getDecorView().setSystemUiVisibility(flags);
-    }
-
-    private void applySystemBarInsets() {
-        final int left = binding.padSettingsContent.getPaddingLeft();
-        final int top = binding.padSettingsContent.getPaddingTop();
-        final int right = binding.padSettingsContent.getPaddingRight();
-        final int bottom = binding.padSettingsContent.getPaddingBottom();
-        binding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
-            binding.padSettingsContent.setPadding(
-                    left + insets.getSystemWindowInsetLeft(),
-                    top + insets.getSystemWindowInsetTop(),
-                    right + insets.getSystemWindowInsetRight(),
-                    bottom + insets.getSystemWindowInsetBottom());
-            return insets;
-        });
-        binding.getRoot().requestApplyInsets();
     }
 
     private void applyTheme() {

@@ -8,10 +8,10 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.apps.LauncherActivity;
+import com.apps.common.LauncherInsetsHelper;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 import com.core.R;
@@ -47,7 +47,7 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
         saveManager = new GameSaveFileManager(this);
-        applySystemBarInsets();
+        LauncherInsetsHelper.applyTopInset(binding.getRoot(), binding.saveManagerScroll);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         LauncherTheme.shortSecondaryActionButton(binding.btnExportSave);
         LauncherTheme.shortActionButton(binding.btnOverwriteSave);
@@ -172,18 +172,6 @@ public class LauncherSaveManagerActivity extends AppCompatActivity {
 
     private boolean isUiUnavailable() {
         return isFinishing() || isDestroyed() || binding == null;
-    }
-
-    private void applySystemBarInsets() {
-        int left = binding.saveManagerScroll.getPaddingLeft();
-        int top = binding.saveManagerScroll.getPaddingTop();
-        int right = binding.saveManagerScroll.getPaddingRight();
-        int bottom = binding.saveManagerScroll.getPaddingBottom();
-        binding.saveManagerScroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            binding.saveManagerScroll.setPadding(left, top + insets.getSystemWindowInsetTop(), right, bottom);
-            return insets;
-        });
-        binding.saveManagerScroll.requestApplyInsets();
     }
 
     @Override

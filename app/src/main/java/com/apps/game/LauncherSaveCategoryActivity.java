@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.apps.LauncherActivity;
+import com.apps.common.LauncherInsetsHelper;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -38,7 +39,7 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
         binding = ActivityLauncherSaveCategoryBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         LauncherTabletPortraitScaler.applyActivityContent(this);
-        applySystemBarInsets();
+        LauncherInsetsHelper.applyTopInset(binding.getRoot(), binding.saveCategoryScroll);
         LauncherTheme.applyPrimaryTone(binding.getRoot());
         loadCategories();
     }
@@ -141,18 +142,6 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
         if (engine == EngineType.ONS) return "O";
         if (engine == EngineType.TYRANO) return "T";
         return "G";
-    }
-
-    private void applySystemBarInsets() {
-        int left = binding.saveCategoryScroll.getPaddingLeft();
-        int top = binding.saveCategoryScroll.getPaddingTop();
-        int right = binding.saveCategoryScroll.getPaddingRight();
-        int bottom = binding.saveCategoryScroll.getPaddingBottom();
-        binding.saveCategoryScroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            binding.saveCategoryScroll.setPadding(left, top + insets.getSystemWindowInsetTop(), right, bottom);
-            return insets;
-        });
-        binding.saveCategoryScroll.requestApplyInsets();
     }
 
     @Override

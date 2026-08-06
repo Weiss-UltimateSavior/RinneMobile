@@ -21,6 +21,7 @@ import com.core.databinding.FragmentLauncherManageBinding;
 import com.core.util.RxMainQueue;
 
 import com.apps.LauncherPreferences;
+import com.apps.common.LauncherInsetsHelper;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.settings.LauncherMetadataSourceActivity;
@@ -117,7 +118,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
             applyTabletPortraitLayout();
         }
         if (applyManageSystemBarInsets()) {
-            applySystemBarInsets();
+            LauncherInsetsHelper.applyTopInset(binding.getRoot(), binding.manageScroll, original -> LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, original));
         }
 
         // 创建 Controllers
@@ -163,25 +164,6 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
     }
 
     // ==================== UI 布局 ====================
-
-    private void applySystemBarInsets() {
-        FragmentLauncherManageBinding currentBinding = binding;
-        int originalLeft = currentBinding.manageScroll.getPaddingLeft();
-        int originalTop = currentBinding.manageScroll.getPaddingTop();
-        int originalRight = currentBinding.manageScroll.getPaddingRight();
-        int originalBottom = currentBinding.manageScroll.getPaddingBottom();
-
-        currentBinding.getRoot().setOnApplyWindowInsetsListener((view, insets) -> {
-            currentBinding.manageScroll.setPadding(
-                    originalLeft,
-                    originalTop + insets.getSystemWindowInsetTop(),
-                    originalRight,
-                    LauncherNavigationMetricsKt.navigationOverlayBottomPadding(this, originalBottom)
-            );
-            return insets;
-        });
-        currentBinding.getRoot().requestApplyInsets();
-    }
 
     private void bindActions() {
         binding.actionAddDirectory.setOnClickListener(view -> scanDirectoryController.confirmAddDirectory());
