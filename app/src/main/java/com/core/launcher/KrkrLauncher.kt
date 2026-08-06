@@ -36,6 +36,7 @@ internal object KrkrLauncher {
         originMode: Boolean = false,
         engineVersion: String? = "auto",
         safFileFallback: Boolean = false,
+        scopedSaveDir: Boolean? = null,
     ): Intent {
         val resolvedPath = if (originMode) null else resolvePath(context, gamePath, launchTarget)
         val rawRootPath = ScriptEngineLaunchers.stripFileScheme(
@@ -44,7 +45,8 @@ internal object KrkrLauncher {
         val path = ScriptEngineLaunchers.stripFileScheme(resolvedPath)
         val rootPath = rootForPath(rawRootPath, path)
         val globalScoped = isScopedSaveEnabled(context)
-        val scoped = globalScoped
+        // null 表示跟随全局独立存档开关；非 null 为 per-game 覆盖值。
+        val scoped = scopedSaveDir ?: globalScoped
         val autoSdCardMirror = false
         val saveLocation = if (originMode) null else resolveSaveLocation(
             context,

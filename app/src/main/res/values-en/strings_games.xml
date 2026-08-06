@@ -171,9 +171,9 @@
     <string name="game_action_rematch_vndb">Rematch VNDB metadata</string>
     <string name="game_action_custom_vndb">Custom VNDB search</string>
     <string name="game_action_sync_cover">Sync metadata cover to card</string>
-    <string name="game_action_ons_settings">ONS engine settings</string>
+    <string name="game_action_engine_settings">Engine Settings</string>
     <string name="game_action_delete">Delete game</string>
-    <string name="game_action_ons_open_failed">Could not open ONS engine settings</string>
+    <string name="game_action_engine_open_failed">Could not open engine settings</string>
     <string name="game_vndb_searching">Searching VNDB…</string>
     <string name="game_metadata_updated">Metadata updated</string>
     <string name="game_metadata_not_found">No matching metadata found</string>

@@ -3,6 +3,7 @@ package com.core.launcher
 import android.content.Context
 import android.util.Log
 import com.core.CorePreferences
+import com.core.launcherbridge.LauncherKrkrGameSettingsBridge
 import com.core.launcherbridge.LauncherOnsGameSettingsBridge
 import com.core.model.EngineType
 import java.io.File
@@ -41,7 +42,7 @@ internal object EngineSaveLocations {
                         context,
                         rootUri,
                         launchTarget,
-                        KrkrLauncher.isScopedSaveEnabled(context),
+                        LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, gameId),
                     )
                     Location(location.directory, location.description, location.available)
                 }
@@ -98,7 +99,7 @@ internal object EngineSaveLocations {
         gameId: Long = 0L,
     ): List<File> {
         val candidates = mutableListOf(resolve(context, engine, rootUri, launchTarget, gameId).directory)
-        if (engine == EngineType.KIRIKIRI && KrkrLauncher.isScopedSaveEnabled(context)) {
+        if (engine == EngineType.KIRIKIRI && LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, gameId)) {
             try {
                 val resolved = KrkrLauncher.resolvePath(context, rootUri, launchTarget)
                 val rawRoot = ScriptEngineLaunchers.stripFileScheme(

@@ -531,8 +531,8 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
         addMoreOption(ids, labels, "rematch", getString(R.string.game_action_rematch_vndb));
         addMoreOption(ids, labels, "custom_vndb", getString(R.string.game_action_custom_vndb));
         addMoreOption(ids, labels, "sync", getString(R.string.game_action_sync_cover));
-        if (game.engine == EngineType.ONS) {
-            addMoreOption(ids, labels, "ons_settings", getString(R.string.game_action_ons_settings));
+        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI) {
+            addMoreOption(ids, labels, "engine_settings", getString(R.string.game_action_engine_settings));
         }
         addMoreOption(ids, labels, "delete", getString(R.string.game_action_delete));
         int deleteIndex = ids.indexOf("delete");
@@ -559,7 +559,7 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
                         case "sync":
                             syncMetadataToCard(game);
                             break;
-                        case "ons_settings":
+                        case "engine_settings":
                             openOnsGameSettings(game);
                             break;
                         case "delete":
@@ -638,7 +638,7 @@ public class PadGameFragment extends Fragment implements GameActionMenuFactory.A
             startActivity(intent);
         } catch (ActivityNotFoundException | IllegalArgumentException error) {
             DevLogger.w(TAG, "Failed to open ONS game settings", error);
-            Toast.makeText(requireContext(), R.string.game_action_ons_open_failed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.game_action_engine_open_failed, Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -31,11 +31,11 @@
     <string name="pad_rematch_vndb">重新匹配 VNDB 元数据</string>
     <string name="pad_custom_search_vndb">自定义搜索 VNDB</string>
     <string name="pad_sync_cover">同步元数据封面到卡片</string>
-    <string name="pad_ons_settings">ONS 引擎设置</string>
+    <string name="pad_engine_settings">引擎设置</string>
     <string name="pad_remove_password">取消密码</string>
     <string name="pad_password_lock">密码锁定</string>
     <string name="pad_delete_game">删除游戏</string>
-    <string name="pad_cannot_open_ons_settings">无法打开 ONS 引擎设置</string>
+    <string name="pad_cannot_open_engine_settings">无法打开引擎设置</string>
     <string name="pad_delete_game_message">要删除「%1$s」吗？此操作仅移除游戏库，不会删除实际文件。</string>
     <string name="pad_remove">移除</string>
     <string name="pad_delete_failed">删除失败，请稍后重试</string>

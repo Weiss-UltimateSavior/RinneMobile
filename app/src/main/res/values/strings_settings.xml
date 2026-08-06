@@ -133,9 +133,8 @@
 
     <!-- 动态设置文案 -->
     <string name="settings_restore_global_defaults">恢复全局默认</string>
-    <string name="settings_ons_engine_title">ONS 引擎设置</string>
-    <string name="settings_ons_game_override_summary">以下设置将完整覆盖该 ONS 游戏的全局默认；可使用“恢复全局默认”取消覆盖。下次启动该游戏时生效。</string>
-    <string name="settings_ons_global_restored">已恢复全局 ONS 设置</string>
+    <string name="settings_ons_game_override_summary">以下设置将完整覆盖该游戏的全局默认；可使用“恢复全局默认”取消覆盖。下次启动该游戏时生效。</string>
+    <string name="settings_ons_global_restored">已恢复全局设置</string>
     <string name="settings_ons_game_saved">已保存该游戏的 ONS 设置</string>
     <string name="settings_engine_saved">引擎设置已保存：%1$s</string>
     <string name="settings_choose_kr_engine_version">选择 KR 引擎版本</string>

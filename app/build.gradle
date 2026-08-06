@@ -14,8 +14,8 @@ android {
         applicationId "com.yuki.yukihub.rinne"
         minSdk 26
         targetSdk 33
-        versionCode 6
-        versionName "0.9.9.9.9.1"
+        versionCode 7
+        versionName "0.9.9.9.9.2"
 
         vectorDrawables {
             useSupportLibrary true

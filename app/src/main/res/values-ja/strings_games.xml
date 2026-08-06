@@ -171,9 +171,9 @@
     <string name="game_action_rematch_vndb">VNDB メタデータを再照合</string>
     <string name="game_action_custom_vndb">VNDB をカスタム検索</string>
     <string name="game_action_sync_cover">メタデータのカバーをカードに同期</string>
-    <string name="game_action_ons_settings">ONS エンジン設定</string>
+    <string name="game_action_engine_settings">エンジン設定</string>
     <string name="game_action_delete">ゲームを削除</string>
-    <string name="game_action_ons_open_failed">ONS エンジン設定を開けませんでした</string>
+    <string name="game_action_engine_open_failed">エンジン設定を開けませんでした</string>
     <string name="game_vndb_searching">VNDB を検索中…</string>
     <string name="game_metadata_updated">メタデータを更新しました</string>
     <string name="game_metadata_not_found">一致するメタデータが見つかりません</string>

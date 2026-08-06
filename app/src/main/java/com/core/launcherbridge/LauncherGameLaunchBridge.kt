@@ -5,7 +5,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import androidx.documentfile.provider.DocumentFile
-import com.core.CorePreferences
 import com.core.R
 import com.core.diagnostics.GameDiagnostics
 import com.core.data.GameRepository
@@ -361,9 +360,15 @@ object LauncherGameLaunchBridge {
         val pkg = emulatorPackage.trim()
         try {
             if (EnginePackages.isInternalKrkr(pkg)) {
-                val prefs = context.yukiPrefs()
-                val krEngineVersion = prefs.getString(CorePreferences.KEY_KR_ENGINE_VERSION, "auto")
-                return startActivitySafely(context, EmulatorLauncher.buildInternalKrkrIntent(context, game.rootUri, launchTarget, false, krEngineVersion, false))
+                // per-game 覆盖优先，无覆盖时回退全局引擎版本与独立存档开关。
+                val krEngineVersion = LauncherKrkrGameSettingsBridge.resolveEngineVersion(context, game.id)
+                val krScopedSaveDir = LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, game.id)
+                return startActivitySafely(
+                    context,
+                    EmulatorLauncher.buildInternalKrkrIntent(
+                        context, game.rootUri, launchTarget, false, krEngineVersion, false, krScopedSaveDir,
+                    ),
+                )
             }
             if (EnginePackages.isInternalTyrano(pkg)) {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalTyranoIntent(context, game.rootUri, launchTarget))

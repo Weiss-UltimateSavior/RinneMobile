@@ -178,9 +178,9 @@
     <string name="game_action_rematch_vndb">重新匹配 VNDB 元数据</string>
     <string name="game_action_custom_vndb">自定义搜索 VNDB</string>
     <string name="game_action_sync_cover">同步元数据封面到卡片</string>
-    <string name="game_action_ons_settings">ONS 引擎设置</string>
+    <string name="game_action_engine_settings">引擎设置</string>
     <string name="game_action_delete">删除游戏</string>
-    <string name="game_action_ons_open_failed">无法打开 ONS 引擎设置</string>
+    <string name="game_action_engine_open_failed">无法打开引擎设置</string>
     <string name="game_vndb_searching">正在搜索 VNDB…</string>
     <string name="game_metadata_updated">元数据已更新</string>
     <string name="game_metadata_not_found">未找到匹配的元数据</string>

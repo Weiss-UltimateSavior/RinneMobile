@@ -226,6 +226,20 @@ class EmulatorLauncher {
         )
 
         @JvmStatic
+        fun buildInternalKrkrIntent(
+            context: Context?,
+            gamePath: String?,
+            launchTarget: String?,
+            originMode: Boolean,
+            engineVersion: String?,
+            safFileFallback: Boolean,
+            scopedSaveDir: Boolean?,
+        ): Intent = KrkrLauncher.buildIntent(
+            requireNotNull(context), gamePath, launchTarget, originMode, engineVersion, safFileFallback,
+            scopedSaveDir,
+        )
+
+        @JvmStatic
         fun buildInternalPspIntent(
             context: Context,
             gameUri: String?,

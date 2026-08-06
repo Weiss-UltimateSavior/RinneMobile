@@ -494,9 +494,9 @@ open class LauncherLibraryFragment : Fragment(),
         options.add(arrayOf(getString(R.string.game_action_rematch_vndb), "rematch"))
         options.add(arrayOf(getString(R.string.game_action_custom_vndb), "custom_vndb"))
         options.add(arrayOf(getString(R.string.game_action_sync_cover), "sync"))
-        // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
-        if (game.engine == EngineType.ONS) {
-            options.add(arrayOf(getString(R.string.game_action_ons_settings), "ons_settings"))
+        // ONS/KRKR 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
+        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI) {
+            options.add(arrayOf(getString(R.string.game_action_engine_settings), "engine_settings"))
         }
         options.add(arrayOf(getString(R.string.game_action_delete), "delete"))
         val deleteIndex = options.indexOfFirst { it[1] == "delete" }
@@ -512,7 +512,7 @@ open class LauncherLibraryFragment : Fragment(),
                 "rematch" -> syncController.rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
                 "sync" -> syncController.syncMetadataToCard(game)
-                "ons_settings" -> openOnsGameSettings(game)
+                "engine_settings" -> openOnsGameSettings(game)
                 "delete" -> confirmDeleteGame(game)
             }
         }
@@ -525,7 +525,7 @@ open class LauncherLibraryFragment : Fragment(),
             startActivity(intent)
         } catch (error: Exception) {
             Log.w(TAG, "Failed to open ONS game settings", error)
-            Toast.makeText(requireContext(), R.string.game_action_ons_open_failed, Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), R.string.game_action_engine_open_failed, Toast.LENGTH_SHORT).show()
         }
     }
 

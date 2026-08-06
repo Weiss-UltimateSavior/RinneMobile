@@ -17,8 +17,10 @@ import com.core.R
 import com.core.databinding.ActivityLauncherKrkrSettingsBinding
 import com.core.launcherbridge.LauncherGameLaunchBridge
 import com.core.launcherbridge.LauncherKrkrBridge
+import com.core.launcherbridge.LauncherKrkrGameSettingsBridge
 import com.core.launcherbridge.LauncherOnsGameSettingsBridge
 import com.core.launcherbridge.LauncherRepositoryBridge
+import com.core.model.EngineType
 import com.core.ons.OnsSettings
 import com.core.util.DevLogger
 
@@ -34,6 +36,8 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private var selectedEngineVersionIndex = 0
     private var selectedOnsEncodingIndex = 0
     private var gameId = 0L
+    /** per-game 模式下目标游戏的引擎类型；全局模式为 null。 */
+    private var perGameEngine: EngineType? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,6 +53,9 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         gameId = arguments?.getLong(EXTRA_GAME_ID, 0L) ?: 0L
+        if (isPerGameMode()) {
+            perGameEngine = LauncherRepositoryBridge.findGameById(requireContext(), gameId)?.engine
+        }
         LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.krkrScroll)
         bindActions()
         applyThemeTone()
@@ -71,14 +78,20 @@ class LauncherKrkrSettingsFragment : Fragment() {
 
     private fun isPerGameMode(): Boolean = gameId > 0L
 
-    /** Per-game 模式下隐藏与 ONS 无关的全局区段，仅保留 ONS 配置。 */
+    /**
+     * Per-game 模式下按目标游戏引擎显示对应区段：KRKR 显示引擎版本 + 独立存档，
+     * ONS 显示 ONS 配置；其余引擎区段与无关联区段一律隐藏。
+     */
     private fun applyPerGameLayout() {
         val currentBinding = binding ?: return
-        currentBinding.krVersionSection.visibility = View.GONE
-        currentBinding.krScopedSection.visibility = View.GONE
+        val isKrkr = perGameEngine == EngineType.KIRIKIRI
+        val isOns = perGameEngine == EngineType.ONS
+        currentBinding.krVersionSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
+        currentBinding.krScopedSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
         currentBinding.artemisScopedSection.visibility = View.GONE
         currentBinding.tyranoScopedSection.visibility = View.GONE
         currentBinding.tyranoExternalNetworkSection.visibility = View.GONE
+        currentBinding.onsSection.visibility = if (isOns) View.VISIBLE else View.GONE
         currentBinding.btnNativeKrkr.setText(R.string.settings_restore_global_defaults)
         currentBinding.btnNativeKrkr.setOnClickListener { clearPerGameSettings() }
 
@@ -87,14 +100,18 @@ class LauncherKrkrSettingsFragment : Fragment() {
         val title = if (rawTitle != null && rawTitle.trim().isNotEmpty()) {
             rawTitle.trim()
         } else {
-            getString(R.string.settings_ons_engine_title)
+            getString(R.string.settings_engine_title)
         }
         currentBinding.krkrSectionTitle.text = title
         currentBinding.krkrSectionDescription.setText(R.string.settings_ons_game_override_summary)
     }
 
     private fun clearPerGameSettings() {
-        LauncherOnsGameSettingsBridge.clearOverride(requireContext(), gameId)
+        when (perGameEngine) {
+            EngineType.KIRIKIRI -> LauncherKrkrGameSettingsBridge.clearOverride(requireContext(), gameId)
+            EngineType.ONS -> LauncherOnsGameSettingsBridge.clearOverride(requireContext(), gameId)
+            else -> Unit
+        }
         Toast.makeText(requireContext(), R.string.settings_ons_global_restored, Toast.LENGTH_SHORT).show()
         requestClose()
     }
@@ -128,7 +145,12 @@ class LauncherKrkrSettingsFragment : Fragment() {
 
     private fun loadConfig(savedInstanceState: Bundle?) {
         val currentBinding = binding ?: return
-        val version = LauncherKrkrBridge.getEngineVersion(requireContext())
+        val isKrkrGame = isPerGameMode() && perGameEngine == EngineType.KIRIKIRI
+        val version = if (isKrkrGame) {
+            LauncherKrkrGameSettingsBridge.load(requireContext(), gameId).engineVersion
+        } else {
+            LauncherKrkrBridge.getEngineVersion(requireContext())
+        }
         var selection = 0
         if (LauncherKrkrBridge.ENGINE_VERSION_139 == version) selection = 1
         else if (LauncherKrkrBridge.ENGINE_VERSION_134 == version) selection = 2
@@ -140,7 +162,11 @@ class LauncherKrkrSettingsFragment : Fragment() {
                 selection
             },
         )
-        currentBinding.krScopedSwitch.isChecked = LauncherKrkrBridge.isKrScopedSaveDir(requireContext())
+        currentBinding.krScopedSwitch.isChecked = if (isKrkrGame) {
+            LauncherKrkrGameSettingsBridge.load(requireContext(), gameId).scopedSaveDir
+        } else {
+            LauncherKrkrBridge.isKrScopedSaveDir(requireContext())
+        }
         currentBinding.artemisScopedSwitch.isChecked = LauncherKrkrBridge.isArtemisScopedSaveDir(requireContext())
         val onsSettings = if (isPerGameMode()) {
             LauncherOnsGameSettingsBridge.load(requireContext(), gameId)
@@ -172,17 +198,35 @@ class LauncherKrkrSettingsFragment : Fragment() {
         else if (pos == 3) version = LauncherKrkrBridge.ENGINE_VERSION_126
 
         if (isPerGameMode()) {
-            // Per-game 模式：仅写入该游戏的 ONS 覆盖；KR/Tyrano/Artemis 等全局项保持原值。
-            val perGame = LauncherOnsGameSettingsBridge.load(requireContext(), gameId)
-            perGame.scopedSaveDir = currentBinding.onsScopedSwitch.isChecked
-            perGame.stretchFull = currentBinding.onsStretchSwitch.isChecked
-            perGame.ignoreCutout = currentBinding.onsCutoutSwitch.isChecked
-            perGame.disableVideo = currentBinding.onsDisableVideoSwitch.isChecked
-            perGame.sharpness = currentBinding.onsSharpnessSwitch.isChecked
-            perGame.sharpnessValue = currentBinding.onsSharpnessValueInput.text?.toString()?.trim().orEmpty()
-            perGame.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex]
-            LauncherOnsGameSettingsBridge.save(requireContext(), gameId, perGame)
-            Toast.makeText(requireContext(), R.string.settings_ons_game_saved, Toast.LENGTH_SHORT).show()
+            // Per-game 模式：仅写入该游戏的引擎覆盖；其他引擎与全局项保持原值。
+            when (perGameEngine) {
+                EngineType.KIRIKIRI -> {
+                    val perGame = LauncherKrkrGameSettingsBridge.load(requireContext(), gameId)
+                    perGame.engineVersion = version
+                    perGame.scopedSaveDir = currentBinding.krScopedSwitch.isChecked
+                    LauncherKrkrGameSettingsBridge.save(requireContext(), gameId, perGame)
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.settings_engine_saved, engineVersionLabels()[selectedEngineVersionIndex]),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+
+                EngineType.ONS -> {
+                    val perGame = LauncherOnsGameSettingsBridge.load(requireContext(), gameId)
+                    perGame.scopedSaveDir = currentBinding.onsScopedSwitch.isChecked
+                    perGame.stretchFull = currentBinding.onsStretchSwitch.isChecked
+                    perGame.ignoreCutout = currentBinding.onsCutoutSwitch.isChecked
+                    perGame.disableVideo = currentBinding.onsDisableVideoSwitch.isChecked
+                    perGame.sharpness = currentBinding.onsSharpnessSwitch.isChecked
+                    perGame.sharpnessValue = currentBinding.onsSharpnessValueInput.text?.toString()?.trim().orEmpty()
+                    perGame.encoding = ONS_ENCODING_LABELS[selectedOnsEncodingIndex]
+                    LauncherOnsGameSettingsBridge.save(requireContext(), gameId, perGame)
+                    Toast.makeText(requireContext(), R.string.settings_ons_game_saved, Toast.LENGTH_SHORT).show()
+                }
+
+                else -> Unit
+            }
             requestClose()
             return
         }

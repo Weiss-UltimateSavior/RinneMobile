@@ -509,10 +509,10 @@ class PadManageFragment : Fragment(), GameListController.Listener,
         options.add(arrayOf(getString(com.core.R.string.pad_rematch_vndb), "rematch"))
         options.add(arrayOf(getString(com.core.R.string.pad_custom_search_vndb), "custom_vndb"))
         options.add(arrayOf(getString(com.core.R.string.pad_sync_cover), "sync"))
-        // ONS 引擎游戏支持单独配置 ONS 引擎参数（编码/拉伸/锐化/视频/独立存档目录等）
-        val isOns = game.engine == EngineType.ONS
-        if (isOns) {
-            options.add(arrayOf(getString(com.core.R.string.pad_ons_settings), "ons_settings"))
+        // ONS/KRKR 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
+        val hasEngineSettings = game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI
+        if (hasEngineSettings) {
+            options.add(arrayOf(getString(com.core.R.string.pad_engine_settings), "engine_settings"))
         }
         val hasPassword = GamePasswordLock.hasPassword(game)
         options.add(arrayOf(getString(if (hasPassword) com.core.R.string.pad_remove_password else com.core.R.string.pad_password_lock), "password"))
@@ -529,7 +529,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
                 "rematch" -> syncController?.rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
                 "sync" -> syncController?.syncMetadataToCard(game)
-                "ons_settings" -> openOnsGameSettings(game)
+                "engine_settings" -> openOnsGameSettings(game)
                 "password" -> {
                     if (hasPassword) GamePasswordLock.clearPassword(this, game, null)
                     else GamePasswordLock.setPassword(this, game, null)
@@ -546,7 +546,7 @@ class PadManageFragment : Fragment(), GameListController.Listener,
             startActivity(intent)
         } catch (error: ActivityNotFoundException) {
             Log.w("PadManageFragment", "Failed to open ONS game settings", error)
-            Toast.makeText(requireContext(), com.core.R.string.pad_cannot_open_ons_settings, Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), com.core.R.string.pad_cannot_open_engine_settings, Toast.LENGTH_SHORT).show()
         }
     }
 

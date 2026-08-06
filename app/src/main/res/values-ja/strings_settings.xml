@@ -132,9 +132,8 @@
     <string name="translation_screen_capture_permission">画面キャプチャ権限</string>
 
     <string name="settings_restore_global_defaults">グローバル既定値に戻す</string>
-    <string name="settings_ons_engine_title">ONS エンジン設定</string>
-    <string name="settings_ons_game_override_summary">この設定は、この ONS ゲームのグローバル既定値をすべて上書きします。「グローバル既定値に戻す」で上書きを解除できます。次回起動時に反映されます。</string>
-    <string name="settings_ons_global_restored">グローバル ONS 設定に戻しました</string>
+    <string name="settings_ons_game_override_summary">以下の設定はこのゲームのグローバル既定値をすべて上書きします。「グローバル既定値に戻す」で上書きを解除できます。次回起動時に反映されます。</string>
+    <string name="settings_ons_global_restored">グローバル設定に戻しました</string>
     <string name="settings_ons_game_saved">このゲームの ONS 設定を保存しました</string>
     <string name="settings_engine_saved">エンジン設定を保存しました：%1$s</string>
     <string name="settings_choose_kr_engine_version">KR エンジンバージョンを選択</string>

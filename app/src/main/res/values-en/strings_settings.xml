@@ -132,9 +132,8 @@
     <string name="translation_screen_capture_permission">Screen Capture Permission</string>
 
     <string name="settings_restore_global_defaults">Restore Global Defaults</string>
-    <string name="settings_ons_engine_title">ONS Engine Settings</string>
-    <string name="settings_ons_game_override_summary">These settings completely override the global defaults for this ONS game. Use “Restore Global Defaults” to remove the override. Changes take effect the next time the game starts.</string>
-    <string name="settings_ons_global_restored">Global ONS settings restored</string>
+    <string name="settings_ons_game_override_summary">These settings completely override the global defaults for this game. Use “Restore Global Defaults” to remove the override. Changes take effect the next time the game starts.</string>
+    <string name="settings_ons_global_restored">Global settings restored</string>
     <string name="settings_ons_game_saved">ONS settings saved for this game</string>
     <string name="settings_engine_saved">Engine settings saved: %1$s</string>
     <string name="settings_choose_kr_engine_version">Choose KR Engine Version</string>

@@ -59,7 +59,10 @@ object LauncherRepositoryBridge {
         if (context == null || id <= 0) return 0
         val app = context.applicationContext
         val deleted = GameRepository(app).delete(id)
-        if (deleted > 0) LauncherOnsGameSettingsBridge.clearOverride(app, id)
+        if (deleted > 0) {
+            LauncherOnsGameSettingsBridge.clearOverride(app, id)
+            LauncherKrkrGameSettingsBridge.clearOverride(app, id)
+        }
         return deleted
     }
 
@@ -79,7 +82,10 @@ object LauncherRepositoryBridge {
             e.printStackTrace()
             return -1
         }
-        if (deleted > 0) LauncherOnsGameSettingsBridge.clearAllOverrides(app)
+        if (deleted > 0) {
+            LauncherOnsGameSettingsBridge.clearAllOverrides(app)
+            LauncherKrkrGameSettingsBridge.clearAllOverrides(app)
+        }
         return deleted
     }
 
@@ -245,6 +251,7 @@ object LauncherRepositoryBridge {
         if (imported) {
             // SQL 快照携带本地主键，但不携带独立 prefs；旧覆盖不能安全映射到新 games 表。
             LauncherOnsGameSettingsBridge.clearAllOverrides(context.applicationContext)
+            LauncherKrkrGameSettingsBridge.clearAllOverrides(context.applicationContext)
         }
         return imported
     }
