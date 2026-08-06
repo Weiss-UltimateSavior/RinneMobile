@@ -2,25 +2,26 @@ package com.core.launcher
 
 import android.content.Context
 import android.content.Intent
-import android.os.FileObserver
-import android.system.Os
 import android.util.Log
 import com.akira.tyranoemu.remote.ArtemisActivityV1
 import com.akira.tyranoemu.remote.ArtemisActivityV2
 import com.akira.tyranoemu.remote.ArtemisActivityV3
 import com.core.CorePreferences
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.util.Locale
 
-/** Artemis 引擎的作用域镜像、存档同步和 Activity 路由。 */
+/**
+ * Artemis 引擎的入口解析、兼容版本路由与存档位置解析。
+ *
+ * 不采用 scoped 镜像：Artemis 引擎（Rev.3049）在 symlink 镜像数据根上二次启动会挂起黑屏
+ * （实机对照实验确认——镜像数据根 + 引擎自身 system.dat 即挂起；直跑游戏目录则带存档多次
+ * 启动均正常）。因此固定直跑游戏目录（非 scoped），引擎存档写入游戏目录根
+ * （autosave/saveg/system/saveXXXX.dat），由存档管理通过 [isResourceName] 过滤游戏资源条目。
+ */
 internal object ArtemisLauncher {
     private const val TAG = "EmulatorLauncher"
     private const val PREFS_NAME = CorePreferences.APP_PREFS
     private const val ENGINE_PREF_PREFIX = "artemis_engine."
-    private val observerLock = Any()
-    private val saveObservers = mutableMapOf<String, FileObserver>()
 
     data class SaveLocation(
         @JvmField val directory: File?,
@@ -37,18 +38,8 @@ internal object ArtemisLauncher {
     ): Intent {
         val resolvedPath = resolveGamePath(gamePath, launchTarget)
         val rootPath = ScriptEngineLaunchers.stripFileScheme(resolvedPath)
-        var launchPath = rootPath
-        val scoped = isScopedSaveEnabled(context)
-        var saveName = safeSaveName(rootPath)
-        if (scoped) {
-            val save = resolveSaveLocation(context, rootPath, true)
-            check(save.available && save.directory != null) { save.description }
-            saveName = save.directory.name
-            launchPath = prepareScopedMirror(context, rootPath, saveName)
-                ?: throw IllegalStateException("无法创建 Artemis 应用独立存档目录")
-            logInfo("internal Artemis scoped mirror root=$rootPath -> $launchPath")
-        }
-
+        // 非 scoped：引擎直接跑游戏目录（symlink 镜像会导致二次启动黑屏，见类注释）。
+        val launchPath = rootPath
         val requestedPackage = packageName?.trim().orEmpty()
         val autoFallback = requestedPackage.equals(EnginePackages.INTERNAL_ARTEMIS, ignoreCase = true)
         val effectivePackage = if (autoFallback) {
@@ -58,9 +49,9 @@ internal object ArtemisLauncher {
         }
         val activityClass = chooseActivity(effectivePackage)
         logInfo(
-            "ARTEMIS_SCOPED_V2 pkg=$requestedPackage effectivePkg=$effectivePackage " +
+            "ARTEMIS_NONSCOPED pkg=$requestedPackage effectivePkg=$effectivePackage " +
                 "activity=${activityClass.simpleName} root=$gamePath target=$launchTarget " +
-                "resolved=$resolvedPath path=$launchPath scoped=$scoped saveName=$saveName",
+                "resolved=$resolvedPath path=$launchPath",
         )
         return Intent(context, activityClass).apply {
             if (!launchPath.isNullOrEmpty()) {
@@ -71,8 +62,7 @@ internal object ArtemisLauncher {
             putExtra("launchTarget", launchTarget)
             putExtra("launchMode", EnginePackages.INTERNAL_ARTEMIS)
             putExtra("orientation", 6)
-            putExtra("scopedSaveDir", scoped)
-            putExtra("scopedSaveName", saveName)
+            putExtra("scopedSaveDir", false)
             putExtra("artemisAutoFallback", autoFallback)
             putExtra("artemisFallbackStage", fallbackStage(effectivePackage))
             addFlags(engineIntentFlags())
@@ -88,147 +78,22 @@ internal object ArtemisLauncher {
         return root
     }
 
+    /**
+     * 解析 Artemis 存档位置：非 scoped 下引擎存档直接写在游戏目录根。
+     * 存档管理操作须经 [isResourceName] 排除游戏资源（root.pfs/system/movie 等）。
+     */
     @JvmStatic
-    fun resolveSaveLocation(context: Context?, rootPath: String?, scoped: Boolean): SaveLocation {
-        if (!scoped) {
-            return SaveLocation(
-                null,
-                "Artemis 已使用游戏原始目录，无法安全识别存档文件",
-                false,
-            )
-        }
+    fun resolveSaveLocation(context: Context?, rootPath: String?): SaveLocation {
         if (rootPath.isNullOrBlank() || rootPath.startsWith("content://")) {
             return SaveLocation(null, "无法解析游戏本地目录", false)
         }
-        val external = context?.getExternalFilesDir(null)
-            ?: return SaveLocation(null, "应用独立存储目录不可用", false)
-        return SaveLocation(
-            File(File(external, "save"), safeSaveName(rootPath)),
-            "Artemis 独立存档目录",
-            true,
-        )
+        return SaveLocation(File(rootPath), "Artemis 游戏目录存档", true)
     }
 
     /**
-     * 计算 Artemis scoped 镜像目录（游戏实际运行并写入存档的目录）。
-     * 镜像内资源为指向原游戏目录的符号链接；rootPath 不可解析时返回 null。
+     * Artemis 游戏资源条目判定：镜像/游戏目录中这些条目属于游戏本体，存档管理必须跳过。
+     * 存档文件（autosave/saveg/system/saveXXXX.dat 及 png 缩略图）不命中本列表。
      */
-    @JvmStatic
-    fun resolveMirrorDirectory(context: Context?, rootPath: String?): File? {
-        if (rootPath.isNullOrBlank() || rootPath.startsWith("content://")) return null
-        val internal = context?.filesDir ?: return null
-        return File(File(internal, "artemis_mirror"), safeSaveName(rootPath))
-    }
-
-    private fun prepareScopedMirror(context: Context, rootPath: String?, saveName: String?): String? {
-        if (rootPath.isNullOrBlank()) return null
-        return try {
-            val sourceRoot = File(rootPath)
-            if (!sourceRoot.isDirectory) return null
-            val internal = context.filesDir ?: return null
-            val external = context.getExternalFilesDir(null) ?: return null
-            val name = saveName?.takeIf(String::isNotBlank) ?: safeSaveName(rootPath)
-            val mirrorRoot = File(File(internal, "artemis_mirror"), name)
-            val saveRoot = File(File(external, "save"), name)
-            if (!ensureDirectory(mirrorRoot) || !ensureDirectory(saveRoot)) return null
-
-            val imported = copyRegularFiles(saveRoot, mirrorRoot, onlyNewer = false)
-            if (imported > 0) {
-                logInfo("Artemis imported external saves count=$imported from=$saveRoot to=$mirrorRoot")
-            }
-            val children = sourceRoot.listFiles()
-            var linkCount = 0
-            var skippedSaveCount = 0
-            children?.forEach { child ->
-                val childName = child?.name
-                if (childName.isNullOrEmpty()) return@forEach
-                val link = File(mirrorRoot, childName)
-                if (!isResourceName(childName)) {
-                    if (isSymlink(link)) deleteRecursively(link)
-                    skippedSaveCount++
-                } else if (ensureSymlink(link, child)) {
-                    linkCount++
-                }
-            }
-            if (!children.isNullOrEmpty() && linkCount == 0) return null
-            startSaveObserver(mirrorRoot, saveRoot)
-            logInfo(
-                "Artemis scoped mirror ready source=$rootPath mirror=${mirrorRoot.absolutePath} " +
-                    "save=${saveRoot.absolutePath} links=$linkCount skippedSave=$skippedSaveCount",
-            )
-            mirrorRoot.absolutePath
-        } catch (error: Exception) {
-            logWarn("prepare Artemis scoped mirror failed root=$rootPath", error)
-            null
-        }
-    }
-
-    private fun startSaveObserver(mirrorRoot: File, saveRoot: File) {
-        try {
-            val mirrorPath = mirrorRoot.absolutePath
-            val savePath = saveRoot.absolutePath
-            val previous: FileObserver?
-            synchronized(observerLock) {
-                previous = saveObservers.remove(mirrorPath)
-                saveObservers.values.forEach { runCatching { it.stopWatching() } }
-                saveObservers.clear()
-            }
-            previous?.stopWatching()
-            val observer = object : FileObserver(
-                mirrorPath,
-                CLOSE_WRITE or MOVED_TO or CREATE,
-            ) {
-                override fun onEvent(event: Int, path: String?) {
-                    try {
-                        copyRegularFiles(File(mirrorPath), File(savePath), onlyNewer = true)
-                    } catch (error: Exception) {
-                        logWarn("Artemis realtime save export failed", error)
-                    }
-                }
-            }
-            observer.startWatching()
-            synchronized(observerLock) { saveObservers[mirrorPath] = observer }
-            logInfo("Artemis save observer started mirror=$mirrorPath save=$savePath")
-        } catch (error: Exception) {
-            logWarn("Artemis save observer start failed mirror=$mirrorRoot save=$saveRoot", error)
-        }
-    }
-
-    /** 停止全部存档同步 FileObserver 并清空集合；游戏会话结束时调用，避免长生命周期监听器残留。 */
-    @JvmStatic
-    fun stopSaveSync() {
-        synchronized(observerLock) {
-            saveObservers.values.forEach { runCatching { it.stopWatching() } }
-            saveObservers.clear()
-        }
-    }
-
-    private fun copyRegularFiles(fromDirectory: File?, toDirectory: File?, onlyNewer: Boolean): Int {
-        if (fromDirectory?.isDirectory != true || toDirectory == null) return 0
-        if (!ensureDirectory(toDirectory)) return 0
-        return fromDirectory.listFiles()?.count { source ->
-            if (source?.isFile != true || isSymlink(source)) return@count false
-            val destination = File(toDirectory, source.name)
-            if (onlyNewer && destination.exists() &&
-                destination.lastModified() >= source.lastModified() &&
-                destination.length() == source.length()
-            ) return@count false
-            copyFile(source, destination)
-        } ?: 0
-    }
-
-    private fun copyFile(source: File, destination: File): Boolean = try {
-        destination.parentFile?.let { if (!ensureDirectory(it)) return false }
-        FileInputStream(source).use { input ->
-            FileOutputStream(destination, false).use { output -> input.copyTo(output, 64 * 1024) }
-        }
-        destination.setLastModified(source.lastModified())
-        true
-    } catch (error: Exception) {
-        logWarn("copy file failed $source -> $destination", error)
-        false
-    }
-
     @JvmStatic
     fun isResourceName(name: String?): Boolean {
         val normalized = name?.trim()?.lowercase(Locale.ROOT) ?: return false
@@ -249,6 +114,10 @@ internal object ArtemisLauncher {
         }
     }
 
+    /**
+     * 读取该游戏记忆的兼容引擎版本。非 scoped 下引擎侧 retry 写入的键与 launcher 读取键一致
+     * （都以游戏目录路径 hashCode 为键），跨启动版本记忆稳定。
+     */
     private fun preferredPackage(context: Context, requestedPackage: String, rootPath: String?): String {
         if (rootPath.isNullOrBlank()) return requestedPackage
         val saved = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -262,60 +131,6 @@ internal object ArtemisLauncher {
             1 -> ArtemisActivityV2::class.java
             else -> ArtemisActivityV1::class.java
         }
-
-    private fun isScopedSaveEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
-
-    private fun safeSaveName(rootPath: String?): String {
-        if (rootPath.isNullOrBlank()) return "default"
-        return try {
-            var name = File(rootPath).name
-            if (name.isBlank()) name = kotlin.math.abs(rootPath.hashCode()).toString()
-            name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifEmpty { "default" }
-        } catch (_: Exception) {
-            // 尽力而为：名称规范化失败时回退默认值
-            "default"
-        }
-    }
-
-    private fun ensureDirectory(directory: File): Boolean =
-        directory.isDirectory || (!directory.exists() && directory.mkdirs())
-
-    private fun ensureSymlink(link: File, target: File): Boolean {
-        return try {
-            if (link.exists()) {
-                if (isSymlinkTo(link, target)) return true
-                deleteRecursively(link)
-            }
-            Os.symlink(target.absolutePath, link.absolutePath)
-            isSymlinkTo(link, target)
-        } catch (error: Exception) {
-            logWarn("symlink failed $link -> $target", error)
-            false
-        }
-    }
-
-    private fun isSymlinkTo(link: File, target: File): Boolean = try {
-        Os.readlink(link.absolutePath) == target.absolutePath
-    } catch (_: Exception) {
-        // 尽力而为：readlink 失败视为非目标符号链接
-        false
-    }
-
-    private fun isSymlink(file: File): Boolean = try {
-        Os.readlink(file.absolutePath)
-        true
-    } catch (_: Exception) {
-        // 尽力而为：readlink 失败视为非符号链接
-        false
-    }
-
-    private fun deleteRecursively(file: File) {
-        if (!file.exists()) return
-        if (file.isDirectory && !isSymlink(file)) file.listFiles()?.forEach(::deleteRecursively)
-        if (!file.delete()) logWarn("delete failed ${file.absolutePath}")
-    }
 
     private fun appendThemeColors(intent: Intent, context: Context) {
         try {

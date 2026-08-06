@@ -46,6 +46,24 @@ internal object SaveFileUtils {
         }
     }
 
+    /**
+     * 收集文件并跳过命中 exclude 的条目（任意层级）。
+     * 用于 Artemis 非 scoped 存档管理：排除 root.pfs/system/movie 等游戏资源。
+     */
+    fun collectFilesExcluding(
+        directory: File,
+        output: MutableList<File>,
+        exclude: (String) -> Boolean,
+    ) {
+        val children = directory.listFiles() ?: return
+        for (child in children) {
+            val name = child.name ?: continue
+            if (name.isEmpty() || exclude(name)) continue
+            if (child.isDirectory) collectFilesExcluding(child, output, exclude)
+            else if (child.isFile) output.add(child)
+        }
+    }
+
     @Throws(IOException::class)
     fun safeZipEntryName(name: String?): String {
         // 保留 Java 行为：null 入参抛 IOException（非 NPE），保持调用方 catch 类型一致。
@@ -96,18 +114,25 @@ internal object SaveFileUtils {
     }
 
     @Throws(IOException::class)
-    fun copyDirectoryContents(source: File, destination: File, replaceExisting: Boolean): Int {
+    fun copyDirectoryContents(
+        source: File,
+        destination: File,
+        replaceExisting: Boolean,
+        exclude: (String) -> Boolean = { false },
+    ): Int {
         val children = source.listFiles() ?: return 0
         var copied = 0
         for (child in children) {
-            val target = File(destination, child.name)
+            val name = child.name ?: continue
+            if (name.isEmpty() || exclude(name)) continue
+            val target = File(destination, name)
             if (child.isDirectory) {
                 if (target.exists() && !target.isDirectory) {
                     if (!replaceExisting) throw IOException("目标文件已存在：$target")
                     deleteRecursively(target)
                 }
                 if (!target.exists() && !target.mkdirs()) throw IOException("无法创建目录：$target")
-                copied += copyDirectoryContents(child, target, replaceExisting)
+                copied += copyDirectoryContents(child, target, replaceExisting, exclude)
             } else if (child.isFile) {
                 if (target.exists() && !replaceExisting) throw IOException("目标文件已存在：$target")
                 copyFile(child, target)
@@ -148,10 +173,21 @@ internal object SaveFileUtils {
      * 不能误删其目标文件），符号链接条目本身会被删除。
      */
     @Throws(IOException::class)
-    fun clearDirectoryContents(directory: File): Int {
+    fun clearDirectoryContents(directory: File): Int =
+        clearDirectoryContentsExcluding(directory) { false }
+
+    /**
+     * 清空目录内容（跳过命中 exclude 的条目），返回删除的顶层条目数，保留目录本身。
+     * 用于 Artemis 非 scoped 存档管理：只删存档文件，跳过 root.pfs/system/movie 等游戏资源。
+     * 删除不跟随符号链接。
+     */
+    @Throws(IOException::class)
+    fun clearDirectoryContentsExcluding(directory: File, exclude: (String) -> Boolean): Int {
         val children = directory.listFiles() ?: return 0
         var deleted = 0
         for (child in children) {
+            val name = child.name ?: continue
+            if (name.isEmpty() || exclude(name)) continue
             if (deleteEntrySkippingSymlinks(child)) deleted++
         }
         return deleted

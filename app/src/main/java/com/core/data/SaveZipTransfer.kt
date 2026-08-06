@@ -18,9 +18,17 @@ import java.util.zip.ZipOutputStream
  */
 internal class SaveZipTransfer(private val context: Context) {
 
-    /** 将多个源目录打包写入目标 URI；无文件时抛 IOException（语义与原实现一致）。 */
+    /**
+     * 将多个源目录打包写入目标 URI；无文件时抛 IOException（语义与原实现一致）。
+     * @param exclude 非空时按条目名过滤（Artemis 游戏目录排除 root.pfs/system/movie 等资源），
+     *                且跳过整体 payload 校验（游戏目录本身含资源，整体校验会误拒）。
+     */
     @Throws(IOException::class)
-    fun exportToZip(sources: List<File>, destinationUri: Uri): Int {
+    fun exportToZip(
+        sources: List<File>,
+        destinationUri: Uri,
+        exclude: ((String) -> Boolean)? = null,
+    ): Int {
         val raw = context.contentResolver.openOutputStream(destinationUri, "w")
             ?: throw IOException("无法创建导出压缩包")
         return ZipOutputStream(raw).use { zip ->
@@ -28,8 +36,8 @@ internal class SaveZipTransfer(private val context: Context) {
             val entries = mutableSetOf<String>()
             for (source in sources) {
                 if (!source.isDirectory) continue
-                SaveFileUtils.rejectGamePayload(source)
-                written += writeZipContents(source, source, zip, entries)
+                if (exclude == null) SaveFileUtils.rejectGamePayload(source)
+                written += writeZipContents(source, source, zip, entries, exclude)
             }
             if (written == 0) throw IOException("暂未发现可导出的存档文件")
             written
@@ -103,13 +111,19 @@ internal class SaveZipTransfer(private val context: Context) {
 
     @Throws(IOException::class)
     private fun writeZipContents(
-        root: File, directory: File, zip: ZipOutputStream, entries: MutableSet<String>
+        root: File,
+        directory: File,
+        zip: ZipOutputStream,
+        entries: MutableSet<String>,
+        exclude: ((String) -> Boolean)?,
     ): Int {
         val children = directory.listFiles() ?: return 0
         var written = 0
         for (child in children) {
+            val name = child.name ?: continue
+            if (name.isEmpty() || exclude?.invoke(name) == true) continue
             if (child.isDirectory) {
-                written += writeZipContents(root, child, zip, entries)
+                written += writeZipContents(root, child, zip, entries, exclude)
             } else if (child.isFile) {
                 val relative = root.toPath().relativize(child.toPath()).toString()
                     .replace(File.separatorChar, '/')

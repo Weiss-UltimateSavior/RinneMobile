@@ -58,8 +58,18 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
 
     @Override
     protected void onDestroy() {
-        maybeRetryWithCompatibleArtemis();
+        boolean retrying = maybeRetryWithCompatibleArtemis();
         super.onDestroy();
+        // 终结专用 :artemis 进程：引擎 native 持有进程级全局状态（android_app/音频/GL/dlopen lib），
+        // 活动销毁后复用同一进程会让二次启动在 Init screen 后挂起黑屏（与 KRKR 退出即杀进程同策略）。
+        // 兼容回退已交棒给下一 Activity 时保留进程，交由新实例接管。
+        if (!retrying) {
+            try {
+                android.os.Process.killProcess(android.os.Process.myPid());
+            } catch (Throwable ignored) {
+                // 进程终结失败可安全忽略：系统会回收进程，下次启动仍为全新进程
+            }
+        }
     }
 
     /**
@@ -67,16 +77,18 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
      * revision returns to the launcher almost immediately without a Java exception.
      * Retry only that short startup failure, and never override a user-selected
      * revision or a normal, longer-running game exit.
+     *
+     * @return true 表示已启动兼容回退 Activity（进程不得终结）；false 表示正常退出
      */
-    private void maybeRetryWithCompatibleArtemis() {
+    private boolean maybeRetryWithCompatibleArtemis() {
         Intent source = getIntent();
         if (source == null || userRequestedFinish
                 || !source.getBooleanExtra("artemisAutoFallback", false)
-                || SystemClock.elapsedRealtime() - createdAtElapsed > EARLY_EXIT_WINDOW_MS) return;
+                || SystemClock.elapsedRealtime() - createdAtElapsed > EARLY_EXIT_WINDOW_MS) return false;
         int stage = source.getIntExtra("artemisFallbackStage", 0);
         String nextPackage = stage == 0 ? "internal.artemis.compat" : stage == 1 ? "internal.artemis.compat.v2" : null;
         String path = source.getStringExtra("path");
-        if (nextPackage == null || path == null || path.trim().isEmpty()) return;
+        if (nextPackage == null || path == null || path.trim().isEmpty()) return false;
 
         getSharedPreferences(EnginePrefs.APP_PREFS, MODE_PRIVATE).edit()
                 .putString(KEY_ARTEMIS_ENGINE_PREFIX + Integer.toHexString(path.hashCode()), nextPackage)
@@ -92,6 +104,8 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
             startActivity(retry);
         } catch (Throwable t) {
             Log.e("YukiArtemis", "Artemis compatibility retry failed", t);
+            return false;
         }
+        return true;
     }
 }

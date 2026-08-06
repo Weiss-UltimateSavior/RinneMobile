@@ -16,20 +16,26 @@ internal class SaveDocumentTransfer(private val context: Context) {
 
     /** 将本地目录内容递归复制到 SAF 目标树；同名文件已存在时抛 IOException。 */
     @Throws(IOException::class)
-    fun copyDirectoryContentsToDocument(source: File, destination: DocumentFile): Int {
+    fun copyDirectoryContentsToDocument(
+        source: File,
+        destination: DocumentFile,
+        exclude: (String) -> Boolean = { false },
+    ): Int {
         val children = source.listFiles() ?: return 0
         var copied = 0
         for (child in children) {
-            var target = destination.findFile(child.name)
+            val name = child.name ?: continue
+            if (name.isEmpty() || exclude(name)) continue
+            var target = destination.findFile(name)
             if (child.isDirectory) {
-                if (target != null && !target.isDirectory) throw IOException("导出目录已存在同名文件：" + child.name)
-                if (target == null) target = destination.createDirectory(child.name)
-                if (target == null) throw IOException("无法创建导出目录：" + child.name)
-                copied += copyDirectoryContentsToDocument(child, target)
+                if (target != null && !target.isDirectory) throw IOException("导出目录已存在同名文件：" + name)
+                if (target == null) target = destination.createDirectory(name)
+                if (target == null) throw IOException("无法创建导出目录：" + name)
+                copied += copyDirectoryContentsToDocument(child, target, exclude)
             } else if (child.isFile) {
-                if (target != null) throw IOException("导出目录已存在同名文件：" + child.name)
-                target = destination.createFile("application/octet-stream", child.name)
-                if (target == null) throw IOException("无法创建导出文件：" + child.name)
+                if (target != null) throw IOException("导出目录已存在同名文件：" + name)
+                target = destination.createFile("application/octet-stream", name)
+                if (target == null) throw IOException("无法创建导出文件：" + name)
                 copyFileToDocument(child, target)
                 copied++
             }
@@ -39,17 +45,21 @@ internal class SaveDocumentTransfer(private val context: Context) {
 
     /** 将 SAF 源树内容递归复制到本地目录；同名文件已存在时抛 IOException。 */
     @Throws(IOException::class)
-    fun copyDocumentContentsToDirectory(source: DocumentFile, destination: File): Int {
+    fun copyDocumentContentsToDirectory(
+        source: DocumentFile,
+        destination: File,
+        exclude: (String) -> Boolean = { false },
+    ): Int {
         val children = source.listFiles() ?: return 0
         var copied = 0
         for (child in children) {
             val name = child.name ?: continue
-            if (name.trim().isEmpty()) continue
+            if (name.trim().isEmpty() || exclude(name)) continue
             val target = File(destination, name)
             if (child.isDirectory) {
                 if (target.exists() && !target.isDirectory) throw IOException("游戏存档目录已存在同名文件：$name")
                 if (!target.exists() && !target.mkdirs()) throw IOException("无法创建存档目录：$name")
-                copied += copyDocumentContentsToDirectory(child, target)
+                copied += copyDocumentContentsToDirectory(child, target, exclude)
             } else if (child.isFile) {
                 if (target.exists()) throw IOException("游戏存档目录已存在同名文件：$name")
                 copyDocumentToFile(child, target)

@@ -8,7 +8,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.core.R
 import com.core.diagnostics.GameDiagnostics
 import com.core.data.GameRepository
-import com.core.launcher.ArtemisLauncher
 import com.core.launcher.EmulatorLauncher
 import com.core.launcher.EnginePackages
 import com.core.model.EngineType
@@ -102,8 +101,6 @@ object LauncherGameLaunchBridge {
             maxDuration
         )
         releaseLaunchGate(appContext, sessionId)
-        // 会话结束即停止 Artemis 存档同步监听器，避免 FileObserver 残留（§9.6）。
-        ArtemisLauncher.stopSaveSync()
     }
 
     private fun acquireLaunchGate(

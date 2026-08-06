@@ -48,12 +48,11 @@ internal object EngineSaveLocations {
                 }
 
                 EngineType.ARTEMIS -> {
+                    // 非 scoped：存档位置即游戏目录本身，管理操作须过滤游戏资源条目。
                     val rootPath = ScriptEngineLaunchers.stripFileScheme(
                         ArtemisLauncher.resolveGamePath(rootUri, launchTarget),
                     )
-                    val scoped = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                        .getBoolean(EngineSaveKeys.KEY_ARTEMIS_SCOPED_SAVE_DIR, true)
-                    val location = ArtemisLauncher.resolveSaveLocation(context, rootPath, scoped)
+                    val location = ArtemisLauncher.resolveSaveLocation(context, rootPath)
                     Location(location.directory, location.description, location.available)
                 }
 

@@ -8,7 +8,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.core.launcher.ArtemisLauncher
 import com.core.launcher.EmulatorLauncher
 import com.core.launcher.EnginePackages
-import com.core.launcher.ScriptEngineLaunchers
 import com.core.model.EngineType
 import com.core.model.Game
 import java.io.File
@@ -61,8 +60,9 @@ class GameSaveFileManager(context: Context) {
         val location = resolveInternalSaveLocation(game)
         if (!location.available || location.directory == null) return emptyList()
         val files = mutableListOf<File>()
+        val exclude = saveEntryExclude(game.engine)
         for (directory in resolveInternalSaveDirectories(game, location)) {
-            if (directory.isDirectory) SaveFileUtils.collectFiles(directory, files)
+            if (directory.isDirectory) SaveFileUtils.collectFilesExcluding(directory, files, exclude)
         }
         return files
     }
@@ -73,10 +73,10 @@ class GameSaveFileManager(context: Context) {
         val location = resolveInternalSaveLocation(game)
         if (!location.available || location.directory == null) throw IOException(location.reason)
         val source = SaveFileUtils.requireExistingDirectory(location.directory, "游戏存档目录")
-        SaveFileUtils.rejectGamePayload(source)
+        if (game.engine != EngineType.ARTEMIS) SaveFileUtils.rejectGamePayload(source)
         val destination = SaveFileUtils.requireDirectory(destinationDirectory, "导出目录")
         SaveFileUtils.rejectNestedDirectories(source, destination)
-        return SaveFileUtils.copyDirectoryContents(source, destination, false)
+        return SaveFileUtils.copyDirectoryContents(source, destination, false, saveEntryExclude(game.engine))
     }
 
     /** Exports the resolved save files into a directory selected through the system picker. */
@@ -85,12 +85,12 @@ class GameSaveFileManager(context: Context) {
         val location = resolveInternalSaveLocation(game)
         if (!location.available || location.directory == null) throw IOException(location.reason)
         val source = SaveFileUtils.requireExistingDirectory(location.directory, "游戏存档目录")
-        SaveFileUtils.rejectGamePayload(source)
+        if (game.engine != EngineType.ARTEMIS) SaveFileUtils.rejectGamePayload(source)
         if (destinationTreeUri == null) throw IOException("导出目录不可用")
         val destination = DocumentFile.fromTreeUri(context, destinationTreeUri)
             ?: throw IOException("无法打开导出目录")
         if (!destination.isDirectory) throw IOException("无法打开导出目录")
-        return documentTransfer.copyDirectoryContentsToDocument(source, destination)
+        return documentTransfer.copyDirectoryContentsToDocument(source, destination, saveEntryExclude(game.engine))
     }
 
     /** Exports all real save files as one ZIP archive selected through the system file picker. */
@@ -100,7 +100,7 @@ class GameSaveFileManager(context: Context) {
         if (!location.available || location.directory == null) throw IOException(location.reason)
         if (destinationUri == null) throw IOException("导出文件不可用")
         val sources = resolveInternalSaveDirectories(game, location)
-        return zipTransfer.exportToZip(sources, destinationUri)
+        return zipTransfer.exportToZip(sources, destinationUri, saveEntryExclude(game.engine))
     }
 
     /** Imports into the automatically resolved built-in save directory. */
@@ -112,8 +112,12 @@ class GameSaveFileManager(context: Context) {
         val destination = SaveFileUtils.requireDirectory(location.directory, "游戏存档目录")
         SaveFileUtils.rejectNestedDirectories(source, destination)
         if (SaveFileUtils.samePath(source, destination)) throw IOException("导入目录与游戏存档目录相同")
-        if (overwrite) SaveFileUtils.clearDirectory(destination)
-        return SaveFileUtils.copyDirectoryContents(source, destination, false)
+        val exclude = saveEntryExclude(game.engine)
+        if (overwrite) {
+            if (game.engine == EngineType.ARTEMIS) SaveFileUtils.clearDirectoryContentsExcluding(destination, exclude)
+            else SaveFileUtils.clearDirectory(destination)
+        }
+        return SaveFileUtils.copyDirectoryContents(source, destination, false, exclude)
     }
 
     /** Imports from a directory selected through the system picker. */
@@ -126,8 +130,12 @@ class GameSaveFileManager(context: Context) {
             ?: throw IOException("无法打开导入目录")
         if (!source.isDirectory) throw IOException("无法打开导入目录")
         val destination = SaveFileUtils.requireDirectory(location.directory, "游戏存档目录")
-        if (overwrite) SaveFileUtils.clearDirectory(destination)
-        return documentTransfer.copyDocumentContentsToDirectory(source, destination)
+        val exclude = saveEntryExclude(game.engine)
+        if (overwrite) {
+            if (game.engine == EngineType.ARTEMIS) SaveFileUtils.clearDirectoryContentsExcluding(destination, exclude)
+            else SaveFileUtils.clearDirectory(destination)
+        }
+        return documentTransfer.copyDocumentContentsToDirectory(source, destination, exclude)
     }
 
     /** Imports a ZIP archive selected through the system file picker. */
@@ -142,9 +150,16 @@ class GameSaveFileManager(context: Context) {
             if (!location.available || location.directory == null) throw IOException(location.reason)
             val destinations = resolveInternalSaveDirectories(game, location)
             if (destinations.isEmpty()) throw IOException("无法解析实际存档目录")
+            val exclude = saveEntryExclude(game.engine)
             for (destination in destinations) {
                 SaveFileUtils.requireDirectory(destination, "游戏存档目录")
-                if (overwrite) SaveFileUtils.clearDirectory(destination)
+                if (overwrite) {
+                    if (game.engine == EngineType.ARTEMIS) {
+                        SaveFileUtils.clearDirectoryContentsExcluding(destination, exclude)
+                    } else {
+                        SaveFileUtils.clearDirectory(destination)
+                    }
+                }
             }
             var copied = 0
             for (destination in destinations) {
@@ -153,7 +168,8 @@ class GameSaveFileManager(context: Context) {
                     SaveFileUtils.copyDirectoryContents(
                         temporaryDirectory,
                         SaveFileUtils.requireDirectory(destination, "游戏存档目录"),
-                        false
+                        false,
+                        exclude,
                     )
                 )
             }
@@ -175,23 +191,17 @@ class GameSaveFileManager(context: Context) {
         val directories = resolveInternalSaveDirectories(game, location)
         if (directories.isEmpty()) throw IOException("无法解析实际存档目录")
         var deleted = 0
+        val exclude = saveEntryExclude(game.engine)
         for (directory in directories) {
             val existing = SaveFileUtils.requireExistingDirectory(directory, "游戏存档目录")
-            deleted += SaveFileUtils.clearDirectoryContents(existing)
-        }
-        // Artemis scoped：引擎在 mirrorRoot 中运行并写入存档，saveRoot 仅是 FileObserver
-        // 实时同步的备份；只清 saveRoot 会遗留 mirror 中的存档，再次启动游戏时存档依旧存在。
-        // mirror 内资源为指向原游戏目录的符号链接，clearDirectoryContents 不跟随，仅删链接本身。
-        if (game.engine == EngineType.ARTEMIS) {
-            val rootPath = ScriptEngineLaunchers.stripFileScheme(
-                ArtemisLauncher.resolveGamePath(game.rootUri, game.launchTarget),
-            )
-            val mirror = ArtemisLauncher.resolveMirrorDirectory(context, rootPath)
-            if (mirror != null && mirror.isDirectory) {
-                deleted += SaveFileUtils.clearDirectoryContents(mirror)
-            }
+            deleted += SaveFileUtils.clearDirectoryContentsExcluding(existing, exclude)
         }
         return deleted
+    }
+
+    /** Artemis 非 scoped 存档管理：游戏目录中跳过游戏资源条目（root.pfs/system/movie 等）。 */
+    private fun saveEntryExclude(engine: EngineType?): (String) -> Boolean = { name ->
+        engine == EngineType.ARTEMIS && ArtemisLauncher.isResourceName(name)
     }
 
     data class SaveLocation internal constructor(
