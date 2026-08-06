@@ -174,7 +174,6 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
         binding.actionDiagnostics.setOnClickListener(view -> diagnosticsController.showDiagnosticsPrivacyDialog());
         binding.actionMetadataSource.setOnClickListener(view -> openMetadataSource());
         binding.actionKrkrSettings.setOnClickListener(view -> openKrkrSettings());
-        binding.actionArtemisSettings.setOnClickListener(view -> openArtemisSettings());
     }
 
     protected void openAddGame() {
@@ -187,12 +186,6 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
 
     protected void openKrkrSettings() {
         startActivity(new Intent(requireContext(), LauncherKrkrSettingsActivity.class));
-    }
-
-    protected void openArtemisSettings() {
-        Intent intent = new Intent(requireContext(), LauncherKrkrSettingsActivity.class);
-        intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_ARTEMIS_ONLY, true);
-        startActivity(intent);
     }
 
     protected void openSyncCenter() {

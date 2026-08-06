@@ -30,7 +30,8 @@ import com.core.util.DevLogger
  *
  * 竖屏由 [LauncherKrkrSettingsActivity] 薄宿主承载，HD 由
  * [com.apps.HDModel.HdManageFragment] 作为子 Fragment 承载；
- * per-game 模式经 [EXTRA_GAME_ID] 参数进入；Artemis 应用级页面经 [EXTRA_ARTEMIS_ONLY] 进入。
+ * per-game 模式经 [EXTRA_GAME_ID] 参数进入；全局模式（gameId=0）统一配置各引擎
+ * （含 Artemis）应用级默认。
  */
 class LauncherKrkrSettingsFragment : Fragment() {
     private var binding: ActivityLauncherKrkrSettingsBinding? = null
@@ -41,8 +42,6 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private var gameId = 0L
     /** per-game 模式下目标游戏的引擎类型；全局模式为 null。 */
     private var perGameEngine: EngineType? = null
-    /** Artemis 应用级设置页（仅显示 Artemis 区段，配置全局默认）。 */
-    private var artemisOnly = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,17 +57,13 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         gameId = arguments?.getLong(EXTRA_GAME_ID, 0L) ?: 0L
-        artemisOnly = arguments?.getBoolean(EXTRA_ARTEMIS_ONLY, false) ?: false
         if (isPerGameMode()) {
             perGameEngine = LauncherRepositoryBridge.findGameById(requireContext(), gameId)?.engine
         }
         LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.krkrScroll)
         bindActions()
         applyThemeTone()
-        when {
-            artemisOnly -> applyArtemisOnlyLayout()
-            isPerGameMode() -> applyPerGameLayout()
-        }
+        if (isPerGameMode()) applyPerGameLayout()
         loadConfig(savedInstanceState)
     }
 
@@ -87,35 +82,8 @@ class LauncherKrkrSettingsFragment : Fragment() {
 
     private fun isPerGameMode(): Boolean = gameId > 0L
 
-    /** Artemis 应用级设置页：仅显示 Artemis 区段，配置全局默认。 */
-    private fun applyArtemisOnlyLayout() {
-        val currentBinding = binding ?: return
-        currentBinding.krVersionSection.visibility = View.GONE
-        currentBinding.krScopedSection.visibility = View.GONE
-        currentBinding.tyranoScopedSection.visibility = View.GONE
-        currentBinding.tyranoExternalNetworkSection.visibility = View.GONE
-        currentBinding.onsSection.visibility = View.GONE
-        currentBinding.artemisSection.visibility = View.VISIBLE
-        currentBinding.krkrSectionTitle.setText(R.string.settings_engine_title)
-        currentBinding.krkrSectionDescription.setText(R.string.settings_engine_summary)
-        currentBinding.btnNativeKrkr.setText(R.string.settings_restore_global_defaults)
-        currentBinding.btnNativeKrkr.setOnClickListener { clearArtemisDefaults() }
-    }
-
-    /** 恢复 Artemis 应用级默认（自动引擎 + 不反转 + 每次询问补丁）。 */
-    private fun clearArtemisDefaults() {
-        LauncherArtemisGameSettingsBridge.setDefaultEngineVersion(
-            requireContext(),
-            LauncherArtemisGameSettingsBridge.ENGINE_VERSION_AUTO,
-        )
-        LauncherArtemisGameSettingsBridge.setDefaultRotateScreen(requireContext(), false)
-        LauncherArtemisGameSettingsBridge.setDefaultAutoPatch(
-            requireContext(),
-            LauncherArtemisGameSettingsBridge.AUTO_PATCH_ASK,
-        )
-        Toast.makeText(requireContext(), R.string.settings_ons_global_restored, Toast.LENGTH_SHORT).show()
-        requestClose()
-    }
+    /** 全局模式（非 per-game）：统一配置各引擎应用级全局默认。 */
+    private fun isGlobalMode(): Boolean = gameId <= 0L
 
     /**
      * Per-game 模式下按目标游戏引擎显示对应区段：KRKR 显示引擎版本 + 独立存档，
@@ -287,28 +255,6 @@ class LauncherKrkrSettingsFragment : Fragment() {
             return
         }
 
-        if (artemisOnly) {
-            LauncherArtemisGameSettingsBridge.setDefaultEngineVersion(
-                requireContext(),
-                artemisVersionForIndex(selectedArtemisEngineVersionIndex),
-            )
-            LauncherArtemisGameSettingsBridge.setDefaultRotateScreen(
-                requireContext(),
-                currentBinding.artemisRotateSwitch.isChecked,
-            )
-            LauncherArtemisGameSettingsBridge.setDefaultAutoPatch(
-                requireContext(),
-                artemisAutoPatchForIndex(selectedArtemisAutoPatchIndex),
-            )
-            Toast.makeText(
-                requireContext(),
-                getString(R.string.settings_engine_saved, artemisEngineVersionLabels()[selectedArtemisEngineVersionIndex]),
-                Toast.LENGTH_SHORT,
-            ).show()
-            requestClose()
-            return
-        }
-
         LauncherKrkrBridge.setEngineVersion(requireContext(), version)
         LauncherKrkrBridge.setKrScopedSaveDir(requireContext(), currentBinding.krScopedSwitch.isChecked)
         val onsSettings = OnsSettings.load(requireContext())
@@ -324,6 +270,19 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherKrkrBridge.setTyranoExternalNetworkEnabled(
             requireContext(),
             currentBinding.tyranoExternalNetworkSwitch.isChecked,
+        )
+        // Artemis 全局默认并入引擎设置页。
+        LauncherArtemisGameSettingsBridge.setDefaultEngineVersion(
+            requireContext(),
+            artemisVersionForIndex(selectedArtemisEngineVersionIndex),
+        )
+        LauncherArtemisGameSettingsBridge.setDefaultRotateScreen(
+            requireContext(),
+            currentBinding.artemisRotateSwitch.isChecked,
+        )
+        LauncherArtemisGameSettingsBridge.setDefaultAutoPatch(
+            requireContext(),
+            artemisAutoPatchForIndex(selectedArtemisAutoPatchIndex),
         )
 
         Toast.makeText(
@@ -351,15 +310,16 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.engineVersionText.setText(labels[selectedEngineVersionIndex])
     }
 
-    /** 加载 Artemis 区段配置（per-game 覆盖或应用级默认）。 */
+    /** 加载 Artemis 区段配置（per-game 覆盖或应用级全局默认）。 */
     private fun loadArtemisConfig(savedInstanceState: Bundle?) {
         val currentBinding = binding ?: return
-        val isArtemisPage = artemisOnly || (isPerGameMode() && perGameEngine == EngineType.ARTEMIS)
-        if (!isArtemisPage) return
-        val settings = if (artemisOnly) {
-            null
-        } else {
+        // 仅 per-game Artemis 或全局模式需加载 Artemis 区段；per-game KRKR/ONS 时该区段已隐藏。
+        val isPerGameArtemis = isPerGameMode() && perGameEngine == EngineType.ARTEMIS
+        if (!isGlobalMode() && !isPerGameArtemis) return
+        val settings = if (isPerGameArtemis) {
             LauncherArtemisGameSettingsBridge.load(requireContext(), gameId)
+        } else {
+            null
         }
         val version = settings?.engineVersion ?: LauncherArtemisGameSettingsBridge.getDefaultEngineVersion(requireContext())
         val rotate = settings?.rotateScreen ?: LauncherArtemisGameSettingsBridge.getDefaultRotateScreen(requireContext())
@@ -502,7 +462,6 @@ class LauncherKrkrSettingsFragment : Fragment() {
         private const val INDEX_AUTO_PATCH_AUTO = 1
         private const val INDEX_AUTO_PATCH_OFF = 2
         const val EXTRA_GAME_ID = "extra_game_id"
-        const val EXTRA_ARTEMIS_ONLY = "extra_artemis_only"
         private const val STATE_ENGINE_VERSION_INDEX = "engine_version_index"
         private const val STATE_ARTEMIS_ENGINE_VERSION_INDEX = "artemis_engine_version_index"
         private const val STATE_ARTEMIS_AUTO_PATCH_INDEX = "artemis_auto_patch_index"
@@ -513,12 +472,6 @@ class LauncherKrkrSettingsFragment : Fragment() {
         fun newInstance(gameId: Long): LauncherKrkrSettingsFragment =
             LauncherKrkrSettingsFragment().apply {
                 arguments = Bundle().apply { putLong(EXTRA_GAME_ID, gameId) }
-            }
-
-        @JvmStatic
-        fun newArtemisOnlyInstance(): LauncherKrkrSettingsFragment =
-            LauncherKrkrSettingsFragment().apply {
-                arguments = Bundle().apply { putBoolean(EXTRA_ARTEMIS_ONLY, true) }
             }
     }
 }

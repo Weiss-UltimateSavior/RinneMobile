@@ -13,10 +13,10 @@ import com.core.R;
  *
  * 全部逻辑抽取至 {@link LauncherKrkrSettingsFragment}，本类仅承载竖屏独立启动路径
  * （含 Pad/Library 的 per-game EXTRA_GAME_ID 入口；HD 由 HdManageFragment 以子 Fragment 承载）。
+ * Artemis 全局设置已并入引擎设置页，无独立入口。
  */
 public class LauncherKrkrSettingsActivity extends AppCompatActivity {
     public static final String EXTRA_GAME_ID = LauncherKrkrSettingsFragment.EXTRA_GAME_ID;
-    public static final String EXTRA_ARTEMIS_ONLY = LauncherKrkrSettingsFragment.EXTRA_ARTEMIS_ONLY;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,10 +26,7 @@ public class LauncherKrkrSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_launcher_manage_host);
         if (savedInstanceState == null) {
             long gameId = getIntent().getLongExtra(EXTRA_GAME_ID, 0L);
-            boolean artemisOnly = getIntent().getBooleanExtra(EXTRA_ARTEMIS_ONLY, false);
-            LauncherKrkrSettingsFragment fragment = artemisOnly
-                    ? LauncherKrkrSettingsFragment.newArtemisOnlyInstance()
-                    : LauncherKrkrSettingsFragment.newInstance(gameId);
+            LauncherKrkrSettingsFragment fragment = LauncherKrkrSettingsFragment.newInstance(gameId);
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.manageHostContainer, fragment)
                     .commit();

@@ -188,25 +188,6 @@
                         android:contentDescription="@null"
                         android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/actionArtemisSettings"
-                    style="@style/LauncherManageItem">
-
-                    <ImageView
-                        style="@style/LauncherProfileActionIcon"
-                        android:contentDescription="@null"
-                        android:src="@drawable/launcher_manage_action_engine_settings" />
-
-                    <TextView
-                        style="@style/LauncherManageTitle"
-                        android:text="@string/game_manage_artemis_settings" />
-
-                    <ImageView
-                        style="@style/LauncherManageArrowIcon"
-                        android:contentDescription="@null"
-                        android:src="@drawable/launcher_manage_arrow" />
-                </LinearLayout>
             </LinearLayout>
 
             <TextView
