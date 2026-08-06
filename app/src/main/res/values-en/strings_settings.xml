@@ -31,6 +31,20 @@
         <item>Engine V3</item>
     </string-array>
     <string name="settings_artemis_rotate_screen">Rotate Game Screen (180°)</string>
+    <string name="settings_artemis_auto_patch">Auto-Apply Base Patch</string>
+    <!-- Artemis auto patch strategy options (ask/auto/off) -->
+    <string name="settings_auto_patch_ask">Ask each time</string>
+    <string name="settings_auto_patch_auto">Unpack automatically</string>
+    <string name="settings_auto_patch_off">Off</string>
+    <string-array name="artemis_auto_patch_options">
+        <item>@string/settings_auto_patch_ask</item>
+        <item>@string/settings_auto_patch_auto</item>
+        <item>@string/settings_auto_patch_off</item>
+    </string-array>
+    <!-- Artemis auto patch "ask" confirmation dialog before launch -->
+    <string name="artemis_patch_confirm_title">Apply Base Patch</string>
+    <string name="artemis_patch_confirm_message">This game is missing system.ini, so engine-required files must be unpacked from the package before it can start.\n\nUnpack now?</string>
+    <string name="artemis_patch_confirm_unpack">Unpack Now</string>
     <string name="settings_tyrano_unified_save">Unified Save Directory for Tyrano</string>
     <string name="settings_tyrano_external_resources">Allow External Network Resources in Tyrano</string>
     <string name="settings_ons_unified_save">Unified Save Directory for ONS</string>

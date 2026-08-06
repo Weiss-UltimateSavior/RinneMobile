@@ -31,6 +31,20 @@
         <item>エンジン V3</item>
     </string-array>
     <string name="settings_artemis_rotate_screen">ゲーム画面を反転（180°）</string>
+    <string name="settings_artemis_auto_patch">ベースパッチを自動適用</string>
+    <!-- Artemis 自動パッチ方針の選択肢（ask/auto/off） -->
+    <string name="settings_auto_patch_ask">毎回確認</string>
+    <string name="settings_auto_patch_auto">自動で展開</string>
+    <string name="settings_auto_patch_off">オフ</string>
+    <string-array name="artemis_auto_patch_options">
+        <item>@string/settings_auto_patch_ask</item>
+        <item>@string/settings_auto_patch_auto</item>
+        <item>@string/settings_auto_patch_off</item>
+    </string-array>
+    <!-- Artemis 自動パッチ ask 方針の起動前確認ダイアログ -->
+    <string name="artemis_patch_confirm_title">ベースパッチを適用</string>
+    <string name="artemis_patch_confirm_message">このゲームには system.ini がなく、起動前にパッケージからエンジン必須ファイルを展開する必要があります。\n\n今すぐ展開しますか？</string>
+    <string name="artemis_patch_confirm_unpack">今すぐ展開</string>
     <string name="settings_tyrano_unified_save">Tyrano 共通セーブディレクトリ</string>
     <string name="settings_tyrano_external_resources">Tyrano の外部ネットワークリソースを許可</string>
     <string name="settings_ons_unified_save">ONS 共通セーブディレクトリ</string>

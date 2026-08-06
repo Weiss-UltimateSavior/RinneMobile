@@ -60,6 +60,7 @@ object LauncherUserData {
             CorePreferences.KEY_KR_ENGINE_VERSION,
             CorePreferences.KEY_ARTEMIS_ENGINE_VERSION,
             CorePreferences.KEY_ARTEMIS_ROTATE_SCREEN,
+            CorePreferences.KEY_ARTEMIS_AUTO_PATCH,
             EngineSaveKeys.KEY_KR_SCOPED_SAVE_DIR,
             EngineSaveKeys.KEY_TYRANO_SCOPED_SAVE_DIR,
             EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK

@@ -112,6 +112,10 @@ object PinnedGameShortcut {
                 return@runOnIo
             }
             if (sessionController == null) {
+                // 无会话宿主时无 Activity 上下文可弹 ask 确认框：ask 策略回退为静默解包，避免功能回退。
+                if (LauncherGameLaunchBridge.needsArtemisBasePatchConfirmation(appContext, game)) {
+                    LauncherGameLaunchBridge.applyArtemisBasePatch(game)
+                }
                 val result = LauncherGameLaunchBridge.launch(appContext, game)
                 RxMainScheduler.post { callback?.onResult(result) }
                 return@runOnIo

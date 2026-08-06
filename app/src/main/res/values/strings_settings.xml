@@ -31,6 +31,20 @@
         <item>引擎 V3</item>
     </string-array>
     <string name="settings_artemis_rotate_screen">反转游戏画面（180°）</string>
+    <string name="settings_artemis_auto_patch">自动应用基础补丁</string>
+    <!-- Artemis 自动补丁策略下拉选项（ask/auto/off） -->
+    <string name="settings_auto_patch_ask">每次询问</string>
+    <string name="settings_auto_patch_auto">自动解包</string>
+    <string name="settings_auto_patch_off">关闭</string>
+    <string-array name="artemis_auto_patch_options">
+        <item>@string/settings_auto_patch_ask</item>
+        <item>@string/settings_auto_patch_auto</item>
+        <item>@string/settings_auto_patch_off</item>
+    </string-array>
+    <!-- Artemis 自动补丁 ask 策略的启动前确认对话框 -->
+    <string name="artemis_patch_confirm_title">应用基础补丁</string>
+    <string name="artemis_patch_confirm_message">该游戏缺少 system.ini，需从封包中解出引擎必需文件后才能启动。\n\n是否立即解包？</string>
+    <string name="artemis_patch_confirm_unpack">立即解包</string>
     <string name="settings_tyrano_unified_save">Tyrano 统一存档目录</string>
     <string name="settings_tyrano_external_resources">Tyrano 允许外部网络资源</string>
     <string name="settings_ons_unified_save">ONS 统一存档目录</string>

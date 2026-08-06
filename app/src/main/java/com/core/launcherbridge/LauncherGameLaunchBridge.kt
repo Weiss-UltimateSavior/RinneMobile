@@ -8,8 +8,11 @@ import androidx.documentfile.provider.DocumentFile
 import com.core.R
 import com.core.diagnostics.GameDiagnostics
 import com.core.data.GameRepository
+import com.core.launcher.ArtemisLauncher
+import com.core.launcher.ArtemisPfsUnpacker
 import com.core.launcher.EmulatorLauncher
 import com.core.launcher.EnginePackages
+import com.core.launcher.ScriptEngineLaunchers
 import com.core.model.EngineType
 import com.core.model.Game
 import com.core.util.AppExecutors
@@ -377,8 +380,9 @@ object LauncherGameLaunchBridge {
                 return startActivitySafely(context, EmulatorLauncher.buildInternalOnsIntent(context, game.rootUri, launchTarget, game.id))
             }
             if (EnginePackages.isInternalArtemis(pkg)) {
-                // 应用级/游戏级 Artemis 设置：引擎版本（确定性选择，替代纯试错）+ 画面反转。
+                // 应用级/游戏级 Artemis 设置：引擎版本（确定性选择，替代纯试错）+ 画面反转 + 基础补丁策略。
                 val settings = LauncherArtemisGameSettingsBridge.load(context, game.id)
+                applyArtemisBasePatchIfNeeded(game, settings.autoPatch)
                 return startActivitySafely(
                     context,
                     EmulatorLauncher.buildInternalArtemisIntent(
@@ -418,6 +422,55 @@ object LauncherGameLaunchBridge {
             // SAF 遍历失败时回退到根目录 URI
         }
         return rootUri
+    }
+
+    /**
+     * Artemis 基础补丁：目录缺少 system.ini 且存在 .pfs 封包时，按策略解包引擎必需文件。
+     * off 跳过；auto 静默解包；ask 交由 app 层确认后调用 [applyArtemisBasePatch]
+     * （core 层不依赖 app 的 LauncherDialogFactory，见 com_apps_refactor_plan.md 注意事项）。
+     */
+    private fun applyArtemisBasePatchIfNeeded(game: Game, strategy: String) {
+        if (LauncherArtemisGameSettingsBridge.AUTO_PATCH_ASK == strategy) return
+        if (LauncherArtemisGameSettingsBridge.AUTO_PATCH_OFF == strategy) return
+        val rootPath = artemisRootPath(game) ?: return
+        if (!ArtemisPfsUnpacker.needsBasePatch(rootPath)) return
+        ArtemisPfsUnpacker.applyBasePatch(rootPath)
+    }
+
+    /** 解析 Artemis 游戏数据根目录（去 file:// 前缀）；非法或 content:// 返回 null。 */
+    private fun artemisRootPath(game: Game?): String? {
+        if (game == null) return null
+        val rootPath = ScriptEngineLaunchers.stripFileScheme(
+            ArtemisLauncher.resolveGamePath(game.rootUri, game.launchTarget),
+        )
+        if (rootPath.isNullOrBlank() || rootPath.startsWith("content://")) return null
+        return rootPath
+    }
+
+    /**
+     * 该游戏是否需要「启动前询问」基础补丁：最终生效策略为 ask，且目录缺 system.ini 且存在 .pfs。
+     * 供 app 层在启动前弹出确认对话框（应在 IO 线程调用，避免主线程目录遍历）。
+     */
+    @JvmStatic
+    fun needsArtemisBasePatchConfirmation(context: Context?, game: Game?): Boolean {
+        if (context == null || game == null) return false
+        if (LauncherArtemisGameSettingsBridge.AUTO_PATCH_ASK !=
+            LauncherArtemisGameSettingsBridge.resolveAutoPatch(context, game.id)
+        ) {
+            return false
+        }
+        val rootPath = artemisRootPath(game) ?: return false
+        return ArtemisPfsUnpacker.needsBasePatch(rootPath)
+    }
+
+    /**
+     * 立即应用 Artemis 基础补丁（幂等）。由 app 层在用户确认、或找不到 Activity 宿主时调用。
+     * 失败不抛异常，不阻塞后续启动。
+     */
+    @JvmStatic
+    fun applyArtemisBasePatch(game: Game?): Boolean {
+        val rootPath = artemisRootPath(game) ?: return false
+        return ArtemisPfsUnpacker.applyBasePatch(rootPath)
     }
 
     private fun startActivitySafely(context: Context?, intent: Intent?): StartAttempt {

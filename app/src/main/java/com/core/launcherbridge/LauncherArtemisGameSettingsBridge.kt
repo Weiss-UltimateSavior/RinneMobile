@@ -32,10 +32,16 @@ object LauncherArtemisGameSettingsBridge {
     const val ENGINE_VERSION_V2 = ArtemisLauncher.ENGINE_VERSION_V2
     const val ENGINE_VERSION_V3 = ArtemisLauncher.ENGINE_VERSION_V3
 
+    /** 自动应用基础补丁策略：ask=启动时询问（默认）/ auto=静默解包 / off=跳过（参考 tyranor artemisAutoPatch）。 */
+    const val AUTO_PATCH_ASK = "ask"
+    const val AUTO_PATCH_AUTO = "auto"
+    const val AUTO_PATCH_OFF = "off"
+
     /** 单款 Artemis 游戏最终生效配置（应用级默认叠加游戏覆盖）。 */
     class ArtemisEngineSettings(
         @JvmField var engineVersion: String = ENGINE_VERSION_AUTO,
         @JvmField var rotateScreen: Boolean = false,
+        @JvmField var autoPatch: String = AUTO_PATCH_ASK,
     )
 
     private fun prefs(context: Context): SharedPreferences =
@@ -74,6 +80,20 @@ object LauncherArtemisGameSettingsBridge {
         appPrefs(context).edit().putBoolean(CorePreferences.KEY_ARTEMIS_ROTATE_SCREEN, rotate).apply()
     }
 
+    /** 应用级默认自动补丁策略（ask/auto/off）。 */
+    @JvmStatic
+    fun getDefaultAutoPatch(context: Context?): String {
+        if (context == null) return AUTO_PATCH_ASK
+        return normalizeAutoPatch(appPrefs(context).getString(CorePreferences.KEY_ARTEMIS_AUTO_PATCH, null))
+    }
+
+    /** 写入应用级默认自动补丁策略。 */
+    @JvmStatic
+    fun setDefaultAutoPatch(context: Context?, strategy: String) {
+        if (context == null) return
+        appPrefs(context).edit().putString(CorePreferences.KEY_ARTEMIS_AUTO_PATCH, normalizeAutoPatch(strategy)).apply()
+    }
+
     // ---------- 游戏级覆盖 ----------
 
     /** 游戏是否存在自己的覆盖配置。 */
@@ -92,6 +112,7 @@ object LauncherArtemisGameSettingsBridge {
         val settings = ArtemisEngineSettings(
             engineVersion = getDefaultEngineVersion(context),
             rotateScreen = getDefaultRotateScreen(context),
+            autoPatch = getDefaultAutoPatch(context),
         )
         if (context == null || gameId <= 0) return settings
         try {
@@ -146,6 +167,21 @@ object LauncherArtemisGameSettingsBridge {
         return load(context, gameId).rotateScreen
     }
 
+    /** 该游戏最终生效的自动补丁策略；gameId <= 0 时回退应用级默认。 */
+    @JvmStatic
+    fun resolveAutoPatch(context: Context?, gameId: Long): String {
+        if (gameId <= 0) return getDefaultAutoPatch(context)
+        return load(context, gameId).autoPatch
+    }
+
+    /** 归一化自动补丁策略：ask/auto/off（兼容历史别名写法）。 */
+    @JvmStatic
+    fun normalizeAutoPatch(value: String?): String = when (value?.trim()?.lowercase(Locale.ROOT)) {
+        "auto", "true", "1", "yes", "always" -> AUTO_PATCH_AUTO
+        "off", "false", "0", "no", "never", "skip" -> AUTO_PATCH_OFF
+        else -> AUTO_PATCH_ASK
+    }
+
     /** 归一化引擎版本取值：auto/1/2/3（兼容历史包名与别名写法）。 */
     @JvmStatic
     fun normalizeEngineVersion(value: String?): String = when (value?.trim()?.lowercase(Locale.ROOT)) {
@@ -162,6 +198,7 @@ object LauncherArtemisGameSettingsBridge {
         val o = JSONObject()
         o.put("engine_version", normalizeEngineVersion(settings.engineVersion))
         o.put("rotate_screen", settings.rotateScreen)
+        o.put("auto_patch", normalizeAutoPatch(settings.autoPatch))
         return o
     }
 
@@ -173,5 +210,6 @@ object LauncherArtemisGameSettingsBridge {
             settings.engineVersion = normalizeEngineVersion(o.optString("engine_version"))
         }
         if (o.has("rotate_screen")) settings.rotateScreen = o.optBoolean("rotate_screen")
+        if (o.has("auto_patch")) settings.autoPatch = normalizeAutoPatch(o.optString("auto_patch"))
     }
 }

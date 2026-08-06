@@ -1,9 +1,13 @@
 package com.apps.game
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.LauncherPreferences
+import com.core.R
 import com.core.launcher.EnginePackages
 import com.core.launcherbridge.LauncherAuthBridge
 import com.core.launcherbridge.LauncherGameLaunchBridge
@@ -85,9 +89,72 @@ class GameSessionController(
     /**
      * 统一的无 Fragment 启动入口。成功后始终接管本地与服务端会话，
      * 以便首页、横屏旧页和桌面快捷方式不会绕开实时游玩时间链路。
+     *
+     * Artemis 自动补丁策略为 ask 时，先弹「是否立即解包」确认对话框：确认后解包再启动，
+     * 取消则不解包直接启动；找不到 Activity 宿主（如桌面快捷方式）时无法展示对话框，
+     * 回退为静默解包后启动，避免功能回退。
      */
     fun launchGame(context: Context, game: Game?, callback: LaunchListener?) {
         if (game == null) return
+        AppExecutors.runOnIo {
+            val needsConfirm = LauncherGameLaunchBridge.needsArtemisBasePatchConfirmation(context, game)
+            mainQueue.post {
+                if (isContextDestroyed(context)) return@post
+                if (needsConfirm) {
+                    val activity = findActivityContext(context)
+                    if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
+                        showArtemisPatchConfirm(activity, game, callback)
+                    } else {
+                        applyArtemisPatchThenLaunch(context, game, callback)
+                    }
+                } else {
+                    doLaunchGame(context, game, callback)
+                }
+            }
+        }
+    }
+
+    /** 沿 ContextWrapper 链向上查找最近的 Activity 宿主；无则返回 null。 */
+    private fun findActivityContext(context: Context): Activity? {
+        var current: Context? = context
+        while (current is ContextWrapper) {
+            if (current is Activity) return current
+            current = current.baseContext
+        }
+        return null
+    }
+
+    /** 回主线程守卫：宿主 Activity 已 finishing/destroyed 时返回 true，不再执行 UI 联动。 */
+    private fun isContextDestroyed(context: Context): Boolean {
+        val activity = findActivityContext(context) ?: return false
+        return activity.isFinishing || activity.isDestroyed
+    }
+
+    /** ask 策略弹「是否立即解包」确认；取消则不解包直接启动。 */
+    private fun showArtemisPatchConfirm(activity: Activity, game: Game, callback: LaunchListener?) {
+        LauncherDialogRouter.showLongMessageConfirm(
+            activity,
+            activity.getString(R.string.artemis_patch_confirm_title),
+            activity.getString(R.string.artemis_patch_confirm_message),
+            activity.getString(R.string.artemis_patch_confirm_unpack),
+            Runnable { applyArtemisPatchThenLaunch(activity, game, callback) },
+            Runnable { doLaunchGame(activity, game, callback) },
+        )
+    }
+
+    /** 在 IO 线程解包基础补丁后回到主线程启动游戏。 */
+    private fun applyArtemisPatchThenLaunch(context: Context, game: Game, callback: LaunchListener?) {
+        AppExecutors.runOnIo {
+            LauncherGameLaunchBridge.applyArtemisBasePatch(game)
+            mainQueue.post {
+                if (isContextDestroyed(context)) return@post
+                doLaunchGame(context, game, callback)
+            }
+        }
+    }
+
+    /** 实际发起启动（原 launchGame 主流程）。 */
+    private fun doLaunchGame(context: Context, game: Game, callback: LaunchListener?) {
         LauncherGameLaunchBridge.launchAsync(context, game, object : LauncherGameLaunchBridge.LaunchCallback {
             override fun onResult(result: LauncherGameLaunchBridge.LaunchResult) {
                 if (result.success) {

@@ -16,6 +16,9 @@ object CorePreferences {
     /** Artemis 游戏画面反转偏好键（应用级默认，true=旋转 180°，主源）。 */
     const val KEY_ARTEMIS_ROTATE_SCREEN = "artemis_rotate_screen"
 
+    /** Artemis 自动应用基础补丁偏好键（应用级默认，取值 ask/auto/off，主源）。 */
+    const val KEY_ARTEMIS_AUTO_PATCH = "artemis_auto_patch"
+
     /** 主页头像偏好键主源（原 com.core.sync.SyncManager 与 com.apps.util.LauncherAvatarPersistence 两处并存，4.4 单源化）。 */
     const val KEY_PROFILE_AVATAR = "profile_avatar"
 }

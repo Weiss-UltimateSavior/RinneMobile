@@ -62,13 +62,14 @@ object LauncherRepositoryBridge {
         if (deleted > 0) {
             LauncherOnsGameSettingsBridge.clearOverride(app, id)
             LauncherKrkrGameSettingsBridge.clearOverride(app, id)
+            LauncherArtemisGameSettingsBridge.clearOverride(app, id)
         }
         return deleted
     }
 
     /**
      * 清空游戏库：删除 games 表全部记录（仅数据库记录，不删除实际文件）。
-     * 同时清理 ONS 引擎的 game-level 覆盖配置，防止旧 gameId 串到新游戏。
+     * 同时清理各引擎（ONS/KRKR/Artemis）的 game-level 覆盖配置，防止旧 gameId 串到新游戏。
      *
      * @return 删除的行数；-1 表示执行失败
      */
@@ -85,6 +86,7 @@ object LauncherRepositoryBridge {
         if (deleted > 0) {
             LauncherOnsGameSettingsBridge.clearAllOverrides(app)
             LauncherKrkrGameSettingsBridge.clearAllOverrides(app)
+            LauncherArtemisGameSettingsBridge.clearAllOverrides(app)
         }
         return deleted
     }
@@ -252,6 +254,7 @@ object LauncherRepositoryBridge {
             // SQL 快照携带本地主键，但不携带独立 prefs；旧覆盖不能安全映射到新 games 表。
             LauncherOnsGameSettingsBridge.clearAllOverrides(context.applicationContext)
             LauncherKrkrGameSettingsBridge.clearAllOverrides(context.applicationContext)
+            LauncherArtemisGameSettingsBridge.clearAllOverrides(context.applicationContext)
         }
         return imported
     }

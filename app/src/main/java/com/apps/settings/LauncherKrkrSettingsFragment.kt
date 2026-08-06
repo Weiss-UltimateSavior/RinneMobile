@@ -36,6 +36,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private var binding: ActivityLauncherKrkrSettingsBinding? = null
     private var selectedEngineVersionIndex = 0
     private var selectedArtemisEngineVersionIndex = 0
+    private var selectedArtemisAutoPatchIndex = 0
     private var selectedOnsEncodingIndex = 0
     private var gameId = 0L
     /** per-game 模式下目标游戏的引擎类型；全局模式为 null。 */
@@ -75,6 +76,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         super.onSaveInstanceState(outState)
         outState.putInt(STATE_ENGINE_VERSION_INDEX, selectedEngineVersionIndex)
         outState.putInt(STATE_ARTEMIS_ENGINE_VERSION_INDEX, selectedArtemisEngineVersionIndex)
+        outState.putInt(STATE_ARTEMIS_AUTO_PATCH_INDEX, selectedArtemisAutoPatchIndex)
         outState.putInt(STATE_ONS_ENCODING_INDEX, selectedOnsEncodingIndex)
     }
 
@@ -100,13 +102,17 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.btnNativeKrkr.setOnClickListener { clearArtemisDefaults() }
     }
 
-    /** 恢复 Artemis 应用级默认（自动引擎 + 不反转）。 */
+    /** 恢复 Artemis 应用级默认（自动引擎 + 不反转 + 每次询问补丁）。 */
     private fun clearArtemisDefaults() {
         LauncherArtemisGameSettingsBridge.setDefaultEngineVersion(
             requireContext(),
             LauncherArtemisGameSettingsBridge.ENGINE_VERSION_AUTO,
         )
         LauncherArtemisGameSettingsBridge.setDefaultRotateScreen(requireContext(), false)
+        LauncherArtemisGameSettingsBridge.setDefaultAutoPatch(
+            requireContext(),
+            LauncherArtemisGameSettingsBridge.AUTO_PATCH_ASK,
+        )
         Toast.makeText(requireContext(), R.string.settings_ons_global_restored, Toast.LENGTH_SHORT).show()
         requestClose()
     }
@@ -158,6 +164,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.btnNativeKrkr.setOnClickListener { enterNativeKrkr() }
         currentBinding.engineVersionText.setOnClickListener { showEngineVersionPicker() }
         currentBinding.artemisEngineVersionText.setOnClickListener { showArtemisEngineVersionPicker() }
+        currentBinding.artemisAutoPatchText.setOnClickListener { showArtemisAutoPatchPicker() }
         currentBinding.onsEncodingText.setOnClickListener { showOnsEncodingPicker() }
     }
 
@@ -265,6 +272,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
                     val perGame = LauncherArtemisGameSettingsBridge.load(requireContext(), gameId)
                     perGame.engineVersion = artemisVersionForIndex(selectedArtemisEngineVersionIndex)
                     perGame.rotateScreen = currentBinding.artemisRotateSwitch.isChecked
+                    perGame.autoPatch = artemisAutoPatchForIndex(selectedArtemisAutoPatchIndex)
                     LauncherArtemisGameSettingsBridge.save(requireContext(), gameId, perGame)
                     Toast.makeText(
                         requireContext(),
@@ -287,6 +295,10 @@ class LauncherKrkrSettingsFragment : Fragment() {
             LauncherArtemisGameSettingsBridge.setDefaultRotateScreen(
                 requireContext(),
                 currentBinding.artemisRotateSwitch.isChecked,
+            )
+            LauncherArtemisGameSettingsBridge.setDefaultAutoPatch(
+                requireContext(),
+                artemisAutoPatchForIndex(selectedArtemisAutoPatchIndex),
             )
             Toast.makeText(
                 requireContext(),
@@ -351,12 +363,18 @@ class LauncherKrkrSettingsFragment : Fragment() {
         }
         val version = settings?.engineVersion ?: LauncherArtemisGameSettingsBridge.getDefaultEngineVersion(requireContext())
         val rotate = settings?.rotateScreen ?: LauncherArtemisGameSettingsBridge.getDefaultRotateScreen(requireContext())
+        val autoPatch = settings?.autoPatch ?: LauncherArtemisGameSettingsBridge.getDefaultAutoPatch(requireContext())
         var sel = artemisVersionIndex(version)
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_ARTEMIS_ENGINE_VERSION_INDEX)) {
             sel = savedInstanceState.getInt(STATE_ARTEMIS_ENGINE_VERSION_INDEX, sel)
         }
         setArtemisEngineVersionSelection(sel)
         currentBinding.artemisRotateSwitch.isChecked = rotate
+        var patchSel = artemisAutoPatchIndex(autoPatch)
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_ARTEMIS_AUTO_PATCH_INDEX)) {
+            patchSel = savedInstanceState.getInt(STATE_ARTEMIS_AUTO_PATCH_INDEX, patchSel)
+        }
+        setArtemisAutoPatchSelection(patchSel)
     }
 
     private fun showArtemisEngineVersionPicker() {
@@ -393,6 +411,40 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private fun artemisEngineVersionLabels(): Array<CharSequence> {
         val values = resources.getStringArray(R.array.artemis_engine_version_options)
         return Array(values.size) { values[it] }
+    }
+
+    private fun showArtemisAutoPatchPicker() {
+        LauncherDialogRouter.showSingleChoice(
+            requireContext(),
+            getString(R.string.settings_artemis_auto_patch),
+            artemisAutoPatchLabels(),
+            selectedArtemisAutoPatchIndex,
+            ::setArtemisAutoPatchSelection,
+        )
+    }
+
+    private fun setArtemisAutoPatchSelection(index: Int) {
+        val currentBinding = binding ?: return
+        val labels = artemisAutoPatchLabels()
+        selectedArtemisAutoPatchIndex = if (index in labels.indices) index else INDEX_AUTO_PATCH_ASK
+        currentBinding.artemisAutoPatchText.setText(labels[selectedArtemisAutoPatchIndex])
+    }
+
+    private fun artemisAutoPatchLabels(): Array<CharSequence> {
+        val values = resources.getStringArray(R.array.artemis_auto_patch_options)
+        return Array(values.size) { values[it] }
+    }
+
+    private fun artemisAutoPatchIndex(strategy: String): Int = when (strategy) {
+        LauncherArtemisGameSettingsBridge.AUTO_PATCH_AUTO -> INDEX_AUTO_PATCH_AUTO
+        LauncherArtemisGameSettingsBridge.AUTO_PATCH_OFF -> INDEX_AUTO_PATCH_OFF
+        else -> INDEX_AUTO_PATCH_ASK
+    }
+
+    private fun artemisAutoPatchForIndex(index: Int): String = when (index) {
+        INDEX_AUTO_PATCH_AUTO -> LauncherArtemisGameSettingsBridge.AUTO_PATCH_AUTO
+        INDEX_AUTO_PATCH_OFF -> LauncherArtemisGameSettingsBridge.AUTO_PATCH_OFF
+        else -> LauncherArtemisGameSettingsBridge.AUTO_PATCH_ASK
     }
 
     private fun showOnsEncodingPicker() {
@@ -445,10 +497,15 @@ class LauncherKrkrSettingsFragment : Fragment() {
     }
 
     companion object {
+        // artemis_auto_patch_options 数组顺序：ask/auto/off（三语文案一致，见 strings_settings.xml）。
+        private const val INDEX_AUTO_PATCH_ASK = 0
+        private const val INDEX_AUTO_PATCH_AUTO = 1
+        private const val INDEX_AUTO_PATCH_OFF = 2
         const val EXTRA_GAME_ID = "extra_game_id"
         const val EXTRA_ARTEMIS_ONLY = "extra_artemis_only"
         private const val STATE_ENGINE_VERSION_INDEX = "engine_version_index"
         private const val STATE_ARTEMIS_ENGINE_VERSION_INDEX = "artemis_engine_version_index"
+        private const val STATE_ARTEMIS_AUTO_PATCH_INDEX = "artemis_auto_patch_index"
         private const val STATE_ONS_ENCODING_INDEX = "ons_encoding_index"
         private val ONS_ENCODING_LABELS = arrayOf("gbk", "sjis", "utf8")
 

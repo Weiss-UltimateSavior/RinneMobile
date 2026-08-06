@@ -146,6 +146,29 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="13dp"
+                    android:text="@string/settings_artemis_auto_patch"
+                    android:textColor="@color/launcher_text_color"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/artemisAutoPatchText"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/launcher_account_input"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:padding="9dp"
+                    android:text="@string/settings_auto_patch_ask"
+                    android:textColor="@color/launcher_text_muted_color"
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <LinearLayout
