@@ -165,13 +165,55 @@ class LauncherSaveGameListFragment : Fragment() {
             arrayOf(
                 getString(R.string.game_save_export_zip),
                 getString(R.string.game_save_import_zip),
+                getString(R.string.game_save_delete),
             ),
         ) { index ->
-            if (index == 0) {
-                selectedSaveGame = game
-                exportZipPicker.launch(buildArchiveFileName(game))
-            } else {
-                showOverwriteConfirmDialog(game)
+            when (index) {
+                0 -> {
+                    selectedSaveGame = game
+                    exportZipPicker.launch(buildArchiveFileName(game))
+                }
+                1 -> showOverwriteConfirmDialog(game)
+                else -> showDeleteSaveConfirmDialog(game)
+            }
+        }
+    }
+
+    private fun showDeleteSaveConfirmDialog(game: Game) {
+        LauncherDialogRouter.showDangerConfirm(
+            requireContext(),
+            getString(R.string.game_save_delete),
+            getString(R.string.game_save_delete_message, safeTitle(game)),
+            getString(R.string.game_save_delete),
+        ) { deleteSaves(game) }
+    }
+
+    private fun deleteSaves(game: Game) {
+        val appContext = requireContext().applicationContext
+        val saveManager = saveManager ?: return
+        AppExecutors.runOnSingle {
+            try {
+                val count = saveManager.deleteInternalSave(game)
+                activity?.runOnUiThread {
+                    if (!isAdded) return@runOnUiThread
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.game_save_deleted, count),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    loadGames()
+                }
+            } catch (error: Exception) {
+                GameDiagnostics.record(
+                    appContext,
+                    "save_exception",
+                    game,
+                    getString(
+                        R.string.game_save_delete_failed_detail,
+                        error.message ?: getString(R.string.game_common_unknown_error),
+                    ),
+                )
+                showError(getString(R.string.game_save_delete_failed), error)
             }
         }
     }

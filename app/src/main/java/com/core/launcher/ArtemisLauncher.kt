@@ -109,6 +109,17 @@ internal object ArtemisLauncher {
         )
     }
 
+    /**
+     * 计算 Artemis scoped 镜像目录（游戏实际运行并写入存档的目录）。
+     * 镜像内资源为指向原游戏目录的符号链接；rootPath 不可解析时返回 null。
+     */
+    @JvmStatic
+    fun resolveMirrorDirectory(context: Context?, rootPath: String?): File? {
+        if (rootPath.isNullOrBlank() || rootPath.startsWith("content://")) return null
+        val internal = context?.filesDir ?: return null
+        return File(File(internal, "artemis_mirror"), safeSaveName(rootPath))
+    }
+
     private fun prepareScopedMirror(context: Context, rootPath: String?, saveName: String?): String? {
         if (rootPath.isNullOrBlank()) return null
         return try {

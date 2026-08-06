@@ -318,6 +318,11 @@
     <string name="game_save_none_message">「%1$s」には管理可能なセーブファイルがありません。ZIP バックアップから復元できます。</string>
     <string name="game_save_import_zip">ZIP をインポート</string>
     <string name="game_save_export_zip">ZIP をエクスポート</string>
+    <string name="game_save_delete">セーブを削除</string>
+    <string name="game_save_delete_message">「%1$s」のセーブファイルをすべて削除します。元に戻せません。続行しますか？</string>
+    <string name="game_save_delete_failed">セーブの削除に失敗しました</string>
+    <string name="game_save_delete_failed_detail">セーブの削除に失敗しました：%1$s</string>
+    <string name="game_save_deleted">%1$d 件のセーブファイルを削除しました</string>
     <string name="game_save_game_title">%1$s のセーブ</string>
     <string name="game_save_overwrite_short_message">現在の実セーブを消去してから ZIP バックアップをインポートします。</string>
     <string name="game_save_never_played">まだプレイしていません</string>

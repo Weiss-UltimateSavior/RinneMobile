@@ -332,6 +332,11 @@
     <string name="game_save_none_message">“%1$s”当前没有可管理的存档文件。可从 ZIP 备份恢复存档。</string>
     <string name="game_save_import_zip">导入 ZIP</string>
     <string name="game_save_export_zip">导出 ZIP</string>
+    <string name="game_save_delete">删除存档</string>
+    <string name="game_save_delete_message">将删除「%1$s」的全部存档文件，此操作不可恢复。是否继续？</string>
+    <string name="game_save_delete_failed">删除存档失败</string>
+    <string name="game_save_delete_failed_detail">删除存档失败：%1$s</string>
+    <string name="game_save_deleted">已删除 %1$d 个存档文件</string>
     <string name="game_save_game_title">%1$s 存档</string>
     <string name="game_save_overwrite_short_message">将清空当前游戏的真实存档，再从 ZIP 备份导入。</string>
     <string name="game_save_never_played">尚未游玩</string>

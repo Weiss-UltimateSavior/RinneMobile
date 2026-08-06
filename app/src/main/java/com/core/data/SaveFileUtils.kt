@@ -4,6 +4,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.file.Files
 import java.util.Locale
 
 /**
@@ -139,6 +140,36 @@ internal object SaveFileUtils {
     fun clearDirectory(directory: File) {
         val children = directory.listFiles() ?: return
         for (child in children) deleteRecursively(child)
+    }
+
+    /**
+     * 清空目录内容并返回删除的顶层条目数，保留目录本身。
+     * 删除时**不跟随符号链接**（Artemis 镜像目录中指向游戏资源的 symlink
+     * 不能误删其目标文件），符号链接条目本身会被删除。
+     */
+    @Throws(IOException::class)
+    fun clearDirectoryContents(directory: File): Int {
+        val children = directory.listFiles() ?: return 0
+        var deleted = 0
+        for (child in children) {
+            if (deleteEntrySkippingSymlinks(child)) deleted++
+        }
+        return deleted
+    }
+
+    private fun deleteEntrySkippingSymlinks(file: File): Boolean {
+        if (Files.isSymbolicLink(file.toPath())) {
+            if (!file.delete()) throw IOException("无法删除：$file")
+            return true
+        }
+        if (file.isDirectory) {
+            val children = file.listFiles()
+            if (children != null) for (child in children) deleteEntrySkippingSymlinks(child)
+            if (!file.delete()) throw IOException("无法删除：$file")
+            return true
+        }
+        if (!file.delete()) throw IOException("无法删除：$file")
+        return true
     }
 
     @Throws(IOException::class)

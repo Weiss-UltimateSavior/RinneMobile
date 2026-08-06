@@ -5,8 +5,10 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
 import androidx.documentfile.provider.DocumentFile
+import com.core.launcher.ArtemisLauncher
 import com.core.launcher.EmulatorLauncher
 import com.core.launcher.EnginePackages
+import com.core.launcher.ScriptEngineLaunchers
 import com.core.model.EngineType
 import com.core.model.Game
 import java.io.File
@@ -163,6 +165,33 @@ class GameSaveFileManager(context: Context) {
                 // 临时目录清理失败可安全忽略（残留由系统/后续操作兜底）
             }
         }
+    }
+
+    /** 删除自动解析的内置存档位置中的全部存档文件（保留存档目录本身）。返回删除的顶层条目数。 */
+    @Throws(IOException::class)
+    fun deleteInternalSave(game: Game): Int {
+        val location = resolveInternalSaveLocation(game)
+        if (!location.available || location.directory == null) throw IOException(location.reason)
+        val directories = resolveInternalSaveDirectories(game, location)
+        if (directories.isEmpty()) throw IOException("无法解析实际存档目录")
+        var deleted = 0
+        for (directory in directories) {
+            val existing = SaveFileUtils.requireExistingDirectory(directory, "游戏存档目录")
+            deleted += SaveFileUtils.clearDirectoryContents(existing)
+        }
+        // Artemis scoped：引擎在 mirrorRoot 中运行并写入存档，saveRoot 仅是 FileObserver
+        // 实时同步的备份；只清 saveRoot 会遗留 mirror 中的存档，再次启动游戏时存档依旧存在。
+        // mirror 内资源为指向原游戏目录的符号链接，clearDirectoryContents 不跟随，仅删链接本身。
+        if (game.engine == EngineType.ARTEMIS) {
+            val rootPath = ScriptEngineLaunchers.stripFileScheme(
+                ArtemisLauncher.resolveGamePath(game.rootUri, game.launchTarget),
+            )
+            val mirror = ArtemisLauncher.resolveMirrorDirectory(context, rootPath)
+            if (mirror != null && mirror.isDirectory) {
+                deleted += SaveFileUtils.clearDirectoryContents(mirror)
+            }
+        }
+        return deleted
     }
 
     data class SaveLocation internal constructor(
