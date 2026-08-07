@@ -215,6 +215,36 @@
 - 本章同时约束 `PadUi`（Pad 横屏）与 `HDModel`（HD 横屏）两个横屏场景。HD 横屏页面（`HdSettingsFragment`、`HdModeActivity`、`HdSaveManagerFragment`、`HdHomeFragment` 等）的弹窗、取色、宽度兜底与 PadUi 一致，不要因为命名不同而回退到竖屏 `LauncherDialogFactory`。
 - 横屏与竖屏的弹窗工厂严格分库：竖屏页面只用 `LauncherDialogFactory`，横屏页面（Pad/HD）只用 `PadDialogFactory`。HD 横屏页面调用竖屏 `LauncherDialogFactory` 会导致宽度/字号/缩放不一致，属于必纠缺陷。
 
+### HD 页面构成与承载模式
+
+HD 大屏横屏由 `com.apps.HDModel.HdModeActivity` 外壳承载：
+
+- 左侧导航栏 `hdNavigationRail`（76dp，`launcher_white_card` 背景），主内容容器 `hdFragmentContainer`（`marginStart=90dp`、`launcher_white_card` 24dp 圆角、`clipToOutline`+`clipChildren`+`clipToPadding`、`padding=12dp`），背景装饰 `LauncherParticleView`。
+- `LauncherInsetsHelper.applyInsets(binding.root, binding.hdModeContent)` 统一处理系统栏 insets；窗口走 HD 专用 `configureLandscapeWindow()`（全出血、系统栏着色为页面背景、刘海短边裁切、关闭对比度增强），与 `LauncherEdgeToEdgeHelper` 语义不同，属豁免实现。
+- 5 个主导航项（HOME/LIBRARY/MANAGE/ACCOUNT/SETTINGS）经 `showRootFragment()` 用 `replace` 进 `hdFragmentContainer`，按左右方向选进出场动画；切换栏目或弹出回退栈时先 `popBackStackImmediate(..., INCLUSIVE)` 清残留详情页。
+- 弹窗统一经 `LauncherDialogRouter`（沿 ContextWrapper 链识别 `HdModeActivity` 壳 → `PadDialogFactory`；竖屏 → `LauncherDialogFactory`），新业务 Fragment 弹窗禁止直接调用 `LauncherDialogFactory`。
+
+HD 页面有三种承载模式：
+
+1. **主导航根 Fragment**：`HdHomeFragment`/`HdGameLibraryFragment`/`HdManageFragment`/`HdAccountFragment`/`HdProfileFragment` 直接 `replace` 进 `hdFragmentContainer`，继承对应竖屏 Fragment，覆写 `usePortraitXxxScaler()=false`、`applyXxxSystemBarInsets()=false`，用独立 `fragment_hd_xxx.xml` 分栏布局（复用竖屏业务逻辑与交互）。`HdSettingsFragment` 为特例：直接继承 `Fragment`（非竖屏 Fragment），自行构建横屏布局，不覆写上述两方法。
+2. **子 Fragment 嵌入明细容器**：各根 Fragment 实现 `HdEmbeddedActivityOwner` 接口（接口仅声明 `closeEmbeddedActivity(child: Activity? = null): Boolean`），并在各自内部实现私有 `showChildFragment(tag, frag)`（`childFragmentManager.replace(R.id.hdXxxDetailContainer, frag, tag)` + 进出动画）承载竖屏子 Fragment（如 `LauncherAppSettingsFragment`/`LauncherThemeMenuFragment`/`LauncherProfileEditFragment` 等）；明细容器背景 `launcher_chat_option_bg`（10dp 圆角）+ `clipToOutline`；`closeEmbeddedActivity()` 按 tag 移除子 Fragment 并 return true。返回键由 `HdModeActivity.onBackPressed` → `currentEmbeddedOwner()?.closeEmbeddedActivity()` 优先关闭子 Fragment。
+3. **主容器回退栈压栈**：`HdSaveManagerFragment`（`showSaveManagerFragment`）、`LauncherGameEditFragment`（`HdModeActivity.showDetailFragment(fragment, tag)`）用 `replace + addToBackStack` 压栈，返回键弹回、保留左侧导航；页面自关闭对薄宿主调 `finishXxx()`、对 HD 回退栈用 `activity.onBackPressedDispatcher.onBackPressed()` 弹栈。注：`LauncherKrkrSettingsFragment` 存在双重承载——库页（HdGameLibraryFragment）经 `showDetailFragment` 压栈，管理页（HdManageFragment）作为子 Fragment 嵌入明细容器，两处入口按 L237 承载模式选择原则各自成立。
+
+### 竖屏 → HD 适配规范
+
+从竖屏页面新增 HD 适配时，遵循以下步骤与约束：
+
+- **承载模式选择**：主导航页做根 Fragment（模式 1）；从某页菜单/长按进入的独立详情页做子 Fragment（模式 2，随宿主返回统一关闭）或回退栈压栈（模式 3，需独立返回语义时）。
+- **文件归属与命名**：HD Fragment 放 `com.apps.HDModel`，命名 `HdXxxFragment`，继承对应竖屏 Fragment（复用业务逻辑与交互，仅改布局为横屏分栏）；新布局 `fragment_hd_xxx.xml` 用 `snake_case`。
+- **关闭竖屏专用适配**：覆写对应竖屏 Fragment 的 `usePortraitXxxScaler()=false`、`applyXxxSystemBarInsets()=false`；禁止把竖屏平板缩放器（`LauncherTabletPortraitScaler`）直接套到 HD。
+- **明细容器承载子 Fragment**：实现 `HdEmbeddedActivityOwner`（接口仅含 `closeEmbeddedActivity`）；各根 Fragment 内部实现私有 `showChildFragment(tag, frag)`，统一用 `childFragmentManager.replace(R.id.hdXxxDetailContainer, ...)` + 进出动画；`closeEmbeddedActivity()` 按 tag 移除并 return true；`onViewCreated` 里 `detailContainer = view.findViewById(...)`，`onDestroyView` 置空并解除监听。
+- **弹窗**：新业务 Fragment 弹窗一律经 `LauncherDialogRouter` 自动路由 Pad/竖屏工厂；HD 下禁止直接调 `LauncherDialogFactory`，避免宽度/字号/缩放不一致（必纠缺陷）。
+- **嵌入式页面圆角**：嵌入主容器/明细容器的页面，根布局若自带不透明背景（如 `launcher_bg`）会盖住宿主容器圆角白卡；在 `onViewCreated` 中 `if (activity is HdModeActivity) view.background = null` 露出宿主圆角。主容器圆角 24dp（`launcher_white_card`），明细容器圆角 10dp（`launcher_chat_option_bg`）。
+- **回退栈压栈**：详情页经 `HdModeActivity.showDetailFragment(fragment, tag)` 压栈；关闭时对薄宿主（竖屏 Activity）调对应 `finishXxx()`、对 HD 回退栈用 `activity.onBackPressedDispatcher.onBackPressed()` 弹栈。若压栈用 `replace` 导致根 Fragment 重建，须在基类用 `onSaveInstanceState` 保存待刷新状态（如 `pendingEditGameId`）并在 `onCreate` 恢复。
+- **ActivityResult**：HD 子 Fragment 自行注册 `registerForActivityResult`，不再经 LocalActivityManager/宿主转发（`LocalActivityManager` 已废弃禁用）。
+- **复用竖屏子 Fragment**：明细容器优先复用既有竖屏 Fragment，不新建 HD 专属副本；仅需特定 HD 背景/视觉时通过构造参数或运行时判断适配（参照 `ResourceStationFragment.newInstance(hdEmbedded=true)`、本文件 §8 大文件拆分与重复删除纪律）。
+- **长按 Action 迁 HD**：竖屏长按弹窗触发的独立 Activity（如编辑游戏/引擎设置）迁为薄宿主 + Fragment 后，HD 侧在对应根 Fragment 覆写入口方法（基类改 `protected open`），经 `showDetailFragment` 压入主容器，而非跳独立 Activity。
+
 ### 布局与按钮
 
 - `PadUi` 保持横屏信息密度，普通行内操作高度为 **38dp**、13sp、粗体、20dp 圆角、间距 8dp。
