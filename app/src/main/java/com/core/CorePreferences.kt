@@ -10,6 +10,9 @@ object CorePreferences {
     /** KRKR 引擎版本偏好键（原 LauncherGameLaunchBridge/LauncherKrkrBridge/SyncManager 各持字面量副本，§9.12 单源化）。 */
     const val KEY_KR_ENGINE_VERSION = "kr_engine_version"
 
+    /** KRKR 引擎内核偏好键（krkrsdl3 集成，值 = auto/kirikiri2/krkrsdl3，默认 auto）。 */
+    const val KEY_KR_ENGINE_KERNEL = "kr_engine_kernel"
+
     /** Artemis 引擎版本偏好键（应用级默认，取值 auto/1/2/3，主源）。 */
     const val KEY_ARTEMIS_ENGINE_VERSION = "artemis_engine_version"
 

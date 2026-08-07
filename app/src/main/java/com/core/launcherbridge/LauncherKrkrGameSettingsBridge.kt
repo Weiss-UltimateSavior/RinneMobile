@@ -24,6 +24,7 @@ object LauncherKrkrGameSettingsBridge {
     class KrkrEngineSettings(
         @JvmField var engineVersion: String = LauncherKrkrBridge.ENGINE_VERSION_AUTO,
         @JvmField var scopedSaveDir: Boolean = true,
+        @JvmField var engineKernel: String = LauncherKrkrBridge.KERNEL_AUTO,
     )
 
     private fun prefs(context: Context): SharedPreferences =
@@ -45,6 +46,7 @@ object LauncherKrkrGameSettingsBridge {
         val settings = KrkrEngineSettings(
             engineVersion = LauncherKrkrBridge.getEngineVersion(context),
             scopedSaveDir = LauncherKrkrBridge.isKrScopedSaveDir(context),
+            engineKernel = LauncherKrkrBridge.getEngineKernel(context),
         )
         if (context == null || gameId <= 0) return settings
         try {
@@ -99,6 +101,13 @@ object LauncherKrkrGameSettingsBridge {
         return load(context, gameId).scopedSaveDir
     }
 
+    /** 该游戏最终生效的 KRKR 引擎内核；gameId <= 0 时回退全局。 */
+    @JvmStatic
+    fun resolveEngineKernel(context: Context?, gameId: Long): String {
+        if (gameId <= 0) return LauncherKrkrBridge.getEngineKernel(context)
+        return load(context, gameId).engineKernel
+    }
+
     private fun key(gameId: Long): String = "$KEY_PREFIX$gameId"
 
     @Throws(JSONException::class)
@@ -106,6 +115,7 @@ object LauncherKrkrGameSettingsBridge {
         val o = JSONObject()
         o.put("engine_version", LauncherKrkrBridge.normalizeEngineVersion(settings.engineVersion))
         o.put("scoped_save_dir", settings.scopedSaveDir)
+        o.put("engine_kernel", LauncherKrkrBridge.normalizeEngineKernel(settings.engineKernel))
         return o
     }
 
@@ -117,5 +127,8 @@ object LauncherKrkrGameSettingsBridge {
             settings.engineVersion = LauncherKrkrBridge.normalizeEngineVersion(o.optString("engine_version"))
         }
         if (o.has("scoped_save_dir")) settings.scopedSaveDir = o.optBoolean("scoped_save_dir")
+        if (o.has("engine_kernel")) {
+            settings.engineKernel = LauncherKrkrBridge.normalizeEngineKernel(o.optString("engine_kernel"))
+        }
     }
 }

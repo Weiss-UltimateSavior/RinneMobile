@@ -9,6 +9,7 @@ import java.util.Locale
 object EnginePackages {
     const val INTERNAL_KRKR = "internal.krkr"
     const val INTERNAL_KRKR_ORIGIN = "internal.krkr.origin"
+    const val INTERNAL_KRKR_KRKRSDL3 = "internal.krkr.krkrsdl3"
     const val LEGACY_KRKR = "org.tvp.kirikiri2.internal"
 
     const val INTERNAL_ONS = "internal.ons"
@@ -40,7 +41,7 @@ object EnginePackages {
     const val INTERNAL_RPGMAKER_XP = "internal.rpgmxp"
     const val INTERNAL_GODOT = "internal.godot"
 
-    /** internal.krkr（含 .origin 后缀）或历史 tvp 包名。 */
+    /** internal.krkr（含 .origin / .krkrsdl3 后缀）或历史 tvp 包名。 */
     @JvmStatic
     fun isInternalKrkr(pkg: String?): Boolean =
         pkg?.startsWith(INTERNAL_KRKR) == true || pkg == LEGACY_KRKR

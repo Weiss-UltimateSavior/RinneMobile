@@ -1,0 +1,2 @@
+# 原生二进制库：禁止文本 diff/合并（engine/src/main/jniLibs 下的 libgame*.so / libkrkrsdl3.so / libSDL*.so 等）
+*.so binary

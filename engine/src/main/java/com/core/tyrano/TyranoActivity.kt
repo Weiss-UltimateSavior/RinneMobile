@@ -30,6 +30,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.core.engine.EnginePrefs
+import com.core.engine.EngineThemeColors
 import com.core.engine.R
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -428,7 +429,7 @@ class TyranoActivity : Activity() {
      *
      * engine 模块不依赖 app 的 LauncherDialogFactory/LauncherTheme，但 Launcher 通过
      * Intent extras 传入了主题色（primaryColor / themeColorCard / themeColorText 等，
-     * 见 ScriptEngineLaunchers.appendThemeColors）。此处用这些颜色在 engine 内复刻
+     * 见 LauncherUiBridge.appendEngineThemeExtrasSafely）。此处用这些颜色在 engine 内复刻
      * LauncherDialogFactory.showConfirm 的视觉效果：圆角卡片背景 + 药丸形按钮，
      * 与 app 内其他确认弹窗保持一致。
      */
@@ -444,7 +445,7 @@ class TyranoActivity : Activity() {
 
         val density = resources.displayMetrics.density
         val dp = { value: Float -> (value * density + 0.5f).toInt() }
-        val colors = ThemeColors.fromIntent(intent)
+        val colors = EngineThemeColors.fromIntent(intent)
 
         // 根容器：圆角卡片，padding 22dp
         val root = LinearLayout(this).apply {
@@ -538,35 +539,6 @@ class TyranoActivity : Activity() {
         confirmBtn.setOnClickListener {
             dialog.dismiss()
             onConfirm()
-        }
-    }
-
-    /** 从 Intent extras 读取 Launcher 主题色，缺失时按 darkMode 回落到默认值。 */
-    private data class ThemeColors(
-        val primary: Int,
-        val onPrimary: Int,
-        val card: Int,
-        val text: Int,
-        val textMuted: Int,
-    ) {
-        companion object {
-            fun fromIntent(intent: Intent): ThemeColors {
-                val extras = intent.extras
-                val dark = extras?.getBoolean("darkMode", false) ?: false
-                // 缺失 Intent extras 时按 darkMode 回落到 Launcher 默认色值
-                val primary = if (dark) 0x22D88E else 0x18B978
-                val onPrimary = if (dark) 0x06120D else 0xFFFFFF
-                val card = if (dark) 0x1E1F1F else 0xFFFFFF
-                val text = if (dark) 0xF0F0F0 else 0x14221B
-                val textMuted = if (dark) 0x9A9A9A else 0x82908A
-                return ThemeColors(
-                    primary = extras?.getInt("primaryColor", primary) ?: primary,
-                    onPrimary = extras?.getInt("themeColorOnPrimary", onPrimary) ?: onPrimary,
-                    card = extras?.getInt("themeColorCard", card) ?: card,
-                    text = extras?.getInt("themeColorText", text) ?: text,
-                    textMuted = extras?.getInt("themeColorTextMuted", textMuted) ?: textMuted,
-                )
-            }
         }
     }
 

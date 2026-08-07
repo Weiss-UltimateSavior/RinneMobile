@@ -14,6 +14,9 @@
 
     <style name="AppTheme" parent="Base.AppTheme" />
 
+    <!-- krkrsdl3 引擎宿主：SDL3 java 层继承 AppCompatActivity，必须使用 AppCompat 系主题（区别于非 AppCompat 的 Kirikiroid2 主题）。 -->
+    <style name="Theme.YukiHub.Krkrsdl3" parent="Base.AppTheme" />
+
     <style name="Theme.YukiHub.Kirikiroid2" parent="android:style/Theme.Material.NoActionBar.Fullscreen">
 <item name="android:backgroundDimAmount">1.0</item>
 <item name="android:backgroundDimEnabled">true</item>

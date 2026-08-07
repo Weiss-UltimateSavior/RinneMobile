@@ -90,7 +90,7 @@ internal object ArtemisLauncher {
             putExtra("artemisAutoFallback", autoFallback)
             putExtra("artemisFallbackStage", fallbackStage(effectivePackage))
             addFlags(engineIntentFlags())
-            appendThemeColors(this, context)
+            LauncherUiBridge.appendEngineThemeExtrasSafely(this, context)
         }
     }
 
@@ -156,23 +156,11 @@ internal object ArtemisLauncher {
             else -> ArtemisActivityV1::class.java
         }
 
-    private fun appendThemeColors(intent: Intent, context: Context) {
-        try {
-            LauncherUiBridge.appendEngineThemeExtras(intent, context)
-        } catch (error: Exception) {
-            logWarn("appendThemeColors failed", error)
-        }
-    }
-
     private fun engineIntentFlags(): Int = Intent.FLAG_ACTIVITY_NEW_TASK or
         Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
         Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
 
     private fun logInfo(message: String) {
         runCatching { Log.i(TAG, message) }
-    }
-
-    private fun logWarn(message: String, error: Throwable? = null) {
-        runCatching { if (error == null) Log.w(TAG, message) else Log.w(TAG, message, error) }
     }
 }

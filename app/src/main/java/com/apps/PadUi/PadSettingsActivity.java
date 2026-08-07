@@ -62,6 +62,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private String selectedTheme = THEME_DEFAULT_LABEL;
     private AlertDialog accountLoadingDialog;
     private boolean emailSubscriptionUpdating;
+    private boolean kernelSwitchConfirming;
     private int selectedEngineVersionIndex;
     private int selectedMetadataSourceIndex;
     private int selectedOnsEncodingIndex;
@@ -137,6 +138,12 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padAppStartPageText.setOnClickListener(view -> showStartPagePicker());
         binding.padAppHomeStyleText.setOnClickListener(view -> showHomeStylePicker());
         binding.padAppNavigationStyleText.setOnClickListener(view -> showNavigationStylePicker());
+        // krkrsdl3 内核开关：开启需确认（全新引擎内核，稳定性不可预测）。
+        binding.padKrEngineKernelSwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (kernelSwitchConfirming || !checked) return;
+            binding.padKrEngineKernelSwitch.setChecked(false);
+            showKrEngineKernelConfirmDialog();
+        });
         LauncherTheme.styleMaterialSwitch(binding.padFollowSystemToneSwitch);
         binding.padFollowSystemToneSwitch.setChecked(LauncherActivity.isFollowingSystemTone(this));
         binding.padFollowSystemToneSwitch.setOnCheckedChangeListener((button, checked) -> {
@@ -161,6 +168,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         else if (LauncherKrkrBridge.ENGINE_VERSION_126.equals(version)) selection = 3;
         setEngineVersionSelection(restoredState != null && restoredState.containsKey(STATE_ENGINE_VERSION_INDEX)
                 ? restoredState.getInt(STATE_ENGINE_VERSION_INDEX, 0) : selection);
+        String kernel = LauncherKrkrBridge.getEngineKernel(this);
+        binding.padKrEngineKernelSwitch.setChecked(LauncherKrkrBridge.KERNEL_KRKRSDL3.equals(kernel));
         binding.padKrScopedSwitch.setChecked(LauncherKrkrBridge.isKrScopedSaveDir(this));
         OnsSettings onsSettings = OnsSettings.load(this);
         binding.padOnsScopedSwitch.setChecked(onsSettings.scopedSaveDir);
@@ -207,6 +216,17 @@ public class PadSettingsActivity extends AppCompatActivity {
     private void showOnsEncodingPicker() {
         PadDialogFactory.showSingleChoice(this, getString(R.string.pad_select_ons_encoding), ONS_ENCODING_LABELS,
                 selectedOnsEncodingIndex, this::setOnsEncodingSelection);
+    }
+
+    /** krkrsdl3 内核开关开启确认：全新引擎内核，稳定性不可预测。 */
+    private void showKrEngineKernelConfirmDialog() {
+        PadDialogFactory.showStandardConfirm(this, getString(R.string.settings_kr_kernel_switch_title),
+                getString(R.string.settings_kr_kernel_switch_message),
+                getString(R.string.settings_kr_kernel_switch_confirm), () -> {
+                    kernelSwitchConfirming = true;
+                    binding.padKrEngineKernelSwitch.setChecked(true);
+                    kernelSwitchConfirming = false;
+                });
     }
 
     private void setOnsEncodingSelection(int index) {
@@ -437,6 +457,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         LauncherTheme.secondaryButton(binding.padSettingsBackButton);
         LauncherTheme.textPrimary(binding.padSettingsPageTitle);
         LauncherTheme.styleMaterialSwitch(binding.padKrScopedSwitch);
+        LauncherTheme.styleMaterialSwitch(binding.padKrEngineKernelSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padOnsScopedSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padOnsStretchSwitch);
         LauncherTheme.styleMaterialSwitch(binding.padOnsCutoutSwitch);
@@ -613,6 +634,9 @@ public class PadSettingsActivity extends AppCompatActivity {
         else if (position == 3) version = LauncherKrkrBridge.ENGINE_VERSION_126;
 
         LauncherKrkrBridge.setEngineVersion(this, version);
+        String kernel = binding.padKrEngineKernelSwitch.isChecked()
+                ? LauncherKrkrBridge.KERNEL_KRKRSDL3 : LauncherKrkrBridge.KERNEL_AUTO;
+        LauncherKrkrBridge.setEngineKernel(this, kernel);
         LauncherKrkrBridge.setKrScopedSaveDir(this, binding.padKrScopedSwitch.isChecked());
         OnsSettings onsSettings = OnsSettings.load(this);
         onsSettings.scopedSaveDir = binding.padOnsScopedSwitch.isChecked();

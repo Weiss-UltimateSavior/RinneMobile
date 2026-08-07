@@ -7,6 +7,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import com.core.R
+import com.core.util.DevLogger
 
 /**
  * Core-facing UI boundary. com.core code can request launcher UI values or events through this
@@ -91,6 +92,19 @@ object LauncherUiBridge {
         intent.putExtra(EXTRA_THEME_COLOR_TEXT, text(context))
         intent.putExtra(EXTRA_THEME_COLOR_TEXT_MUTED, textMuted(context))
         intent.putExtra(EXTRA_UI_LANGUAGE_TAG, languageTag(context))
+    }
+
+    /**
+     * [appendEngineThemeExtras] 的安全封装：各引擎启动器（Krkr/Artemis/ScriptEngine/Krkrsdl3）统一走此入口，
+     * 异常经 DevLogger 记录，避免每个启动器重复实现 try/catch。
+     */
+    @JvmStatic
+    fun appendEngineThemeExtrasSafely(intent: Intent, context: Context) {
+        try {
+            appendEngineThemeExtras(intent, context)
+        } catch (error: Exception) {
+            DevLogger.w("LauncherUiBridge", "appendEngineThemeExtras failed", error)
+        }
     }
 
     fun restartLauncher(activity: Activity): Boolean =

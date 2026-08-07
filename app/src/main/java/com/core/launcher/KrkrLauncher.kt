@@ -110,7 +110,7 @@ internal object KrkrLauncher {
             scopedSaveRoot?.let { putExtra("scopedSaveRoot", it) }
             putExtra("safFileFallback", safFileFallback)
             addFlags(engineIntentFlags())
-            appendThemeColors(this, context)
+            LauncherUiBridge.appendEngineThemeExtrasSafely(this, context)
         }
     }
 
@@ -357,17 +357,11 @@ internal object KrkrLauncher {
         }
     }
 
-    private fun appendThemeColors(intent: Intent, context: Context) {
-        try {
-            LauncherUiBridge.appendEngineThemeExtras(intent, context)
-        } catch (error: Exception) {
-            logWarn("appendThemeColors failed", error)
-        }
-    }
-
     private fun engineIntentFlags(): Int = Intent.FLAG_ACTIVITY_NEW_TASK or
-        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
-        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+        Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+        Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
 
     private fun logInfo(message: String) {
         runCatching { Log.i(TAG, message) }

@@ -252,6 +252,36 @@ class EmulatorLauncher {
         )
 
         @JvmStatic
+        fun buildKrkrsdl3Intent(
+            context: Context?,
+            gamePath: String?,
+            launchTarget: String?,
+        ): Intent = Krkrsdl3Launcher.buildIntent(
+            requireNotNull(context), gamePath, launchTarget,
+        )
+
+        @JvmStatic
+        fun buildKrkrsdl3Intent(
+            context: Context?,
+            gamePath: String?,
+            launchTarget: String?,
+            scopedSaveDir: Boolean,
+        ): Intent = Krkrsdl3Launcher.buildIntent(
+            requireNotNull(context), gamePath, launchTarget, scopedSaveDir,
+        )
+
+        @JvmStatic
+        fun buildKrkrsdl3Intent(
+            context: Context?,
+            gamePath: String?,
+            launchTarget: String?,
+            scopedSaveDir: Boolean,
+            scopedSaveRoot: String?,
+        ): Intent = Krkrsdl3Launcher.buildIntent(
+            requireNotNull(context), gamePath, launchTarget, scopedSaveDir, scopedSaveRoot,
+        )
+
+        @JvmStatic
         fun buildInternalPspIntent(
             context: Context,
             gameUri: String?,

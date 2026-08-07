@@ -20,7 +20,7 @@ import com.core.engine.EngineUiText;
 /**
  * 统一弹窗样式 — KRKR / Artemis 共用。
  *
- * <p>从启动 Activity 的 Intent extras 读取主题色（由 EmulatorLauncher.appendThemeColors
+ * <p>从启动 Activity 的 Intent extras 读取主题色（由 LauncherUiBridge.appendEngineThemeExtras
  * 注入），使引擎弹窗在视觉上与 Launcher 主题一致。无 extras 时回退到 Material 深色默认值。</p>
  *
  * <p>样式规格遵循 agent.md：20dp 卡片圆角、20dp 按钮圆角、16sp bold 标题、

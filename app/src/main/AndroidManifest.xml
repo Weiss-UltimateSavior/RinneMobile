@@ -339,6 +339,18 @@
             android:windowSoftInputMode="adjustPan"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection" />
 
+        <!-- krkrsdl3 引擎（独立入口，独立进程，与 :kirikiri2 的 SDL2 原生符号隔离）。
+             SDL3 java 层继承 AppCompatActivity，必须使用 AppCompat 系主题 Theme.YukiHub.Krkrsdl3。 -->
+        <activity
+            android:name="com.core.krkrsdl3.Krkrsdl3Activity"
+            android:exported="false"
+            android:process=":krkrsdl3"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.core.Krkrsdl3"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.YukiHub.Krkrsdl3"
+            android:configChanges="screenSize|orientation|keyboardHidden|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection" />
+
         <activity
             android:name="com.core.tyrano.TyranoActivity"
             android:exported="false"

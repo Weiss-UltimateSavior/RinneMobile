@@ -21,6 +21,10 @@
         <item>1.3.4</item>
         <item>1.2.6</item>
     </string-array>
+    <string name="settings_kr_engine_kernel">Krkrsdl3 引擎内核</string>
+    <string name="settings_kr_kernel_switch_title">启用 krkrsdl3 内核？</string>
+    <string name="settings_kr_kernel_switch_message">krkrsdl3 是全新的引擎内核，稳定性不可预测，可能与部分游戏不兼容。确认切换？</string>
+    <string name="settings_kr_kernel_switch_confirm">确认切换</string>
     <string name="settings_krkr_unified_save">KRKR 统一存档目录</string>
     <string name="settings_artemis_engine_version">Artemis 引擎版本</string>
     <!-- Artemis 引擎版本下拉选项：首项复用 settings_auto，保持多语言回退一致 -->

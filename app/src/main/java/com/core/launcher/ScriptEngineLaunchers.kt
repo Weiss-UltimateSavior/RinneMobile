@@ -49,7 +49,7 @@ internal object ScriptEngineLaunchers {
             putExtra("scopedSaveDir", scoped)
             putExtra("scopedSaveRoot", save.directory.absolutePath)
             addFlags(engineIntentFlags())
-            appendThemeColors(this, context)
+            LauncherUiBridge.appendEngineThemeExtrasSafely(this, context)
         }
     }
 
@@ -230,14 +230,6 @@ internal object ScriptEngineLaunchers {
         }
         if (!directory.isDirectory || !directory.canWrite()) {
             throw IllegalStateException("$engine 存档目录不可写：${directory.absolutePath}")
-        }
-    }
-
-    private fun appendThemeColors(intent: Intent, context: Context) {
-        try {
-            LauncherUiBridge.appendEngineThemeExtras(intent, context)
-        } catch (error: Exception) {
-            Log.w(TAG, "appendThemeColors failed", error)
         }
     }
 

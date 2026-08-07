@@ -165,7 +165,7 @@ object LauncherGameLaunchBridge {
         return when {
             EnginePackages.isInternalArtemis(pkg) ->
                 listOf("$ownPackage:artemis", "$ownPackage:artemis.compat", "$ownPackage:artemis.compat.v2")
-            EnginePackages.isInternalKrkr(pkg) -> listOf("$ownPackage:kirikiri2")
+            EnginePackages.isInternalKrkr(pkg) -> listOf("$ownPackage:kirikiri2", "$ownPackage:krkrsdl3")
             EnginePackages.isInternalTyrano(pkg) -> listOf("$ownPackage:tyrano")
             EnginePackages.isInternalOns(pkg) -> listOf("$ownPackage:ons")
             pkg.startsWith(EnginePackages.INTERNAL_PSP) -> listOf(EnginePackages.EXTERNAL_PPSSPP)
@@ -363,7 +363,18 @@ object LauncherGameLaunchBridge {
         val pkg = emulatorPackage.trim()
         try {
             if (EnginePackages.isInternalKrkr(pkg)) {
-                // per-game 覆盖优先，无覆盖时回退全局引擎版本与独立存档开关。
+                // 内核决策：per-game 覆盖优先，无覆盖时回退全局。
+                val krEngineKernel = LauncherKrkrGameSettingsBridge.resolveEngineKernel(context, game.id)
+                if (krEngineKernel == LauncherKrkrBridge.KERNEL_KRKRSDL3) {
+                    val krScopedSaveDir = LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, game.id)
+                    return startActivitySafely(
+                        context,
+                        EmulatorLauncher.buildKrkrsdl3Intent(
+                            context, game.rootUri, launchTarget, krScopedSaveDir,
+                        ),
+                    )
+                }
+                // Kirikiroid2 路由（内核=auto/kirikiri2 时走原有逻辑）
                 val krEngineVersion = LauncherKrkrGameSettingsBridge.resolveEngineVersion(context, game.id)
                 val krScopedSaveDir = LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, game.id)
                 return startActivitySafely(

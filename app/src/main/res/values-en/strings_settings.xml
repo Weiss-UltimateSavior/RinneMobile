@@ -21,6 +21,10 @@
         <item>1.3.4</item>
         <item>1.2.6</item>
     </string-array>
+    <string name="settings_kr_engine_kernel">Krkrsdl3 Engine Kernel</string>
+    <string name="settings_kr_kernel_switch_title">Enable krkrsdl3 kernel?</string>
+    <string name="settings_kr_kernel_switch_message">krkrsdl3 is a brand-new engine kernel with unpredictable stability and may be incompatible with some games. Switch anyway?</string>
+    <string name="settings_kr_kernel_switch_confirm">Switch</string>
     <string name="settings_krkr_unified_save">Unified Save Directory for KRKR</string>
     <string name="settings_artemis_engine_version">Artemis Engine Version</string>
     <!-- Artemis engine version dropdown options: first item reuses settings_auto for locale fallback consistency -->

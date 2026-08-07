@@ -39,6 +39,8 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private var selectedArtemisEngineVersionIndex = 0
     private var selectedArtemisAutoPatchIndex = 0
     private var selectedOnsEncodingIndex = 0
+    /** 内核开关确认弹窗回调中程序化置位开关时抑制重复弹窗。 */
+    private var kernelSwitchConfirming = false
     private var gameId = 0L
     /** per-game 模式下目标游戏的引擎类型；全局模式为 null。 */
     private var perGameEngine: EngineType? = null
@@ -97,6 +99,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         val isOns = perGameEngine == EngineType.ONS
         val isArtemis = perGameEngine == EngineType.ARTEMIS
         currentBinding.krVersionSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
+        currentBinding.krKernelSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
         currentBinding.krScopedSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
         currentBinding.artemisSection.visibility = if (isArtemis) View.VISIBLE else View.GONE
         currentBinding.tyranoScopedSection.visibility = View.GONE
@@ -136,11 +139,28 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.artemisEngineVersionText.setOnClickListener { showArtemisEngineVersionPicker() }
         currentBinding.artemisAutoPatchText.setOnClickListener { showArtemisAutoPatchPicker() }
         currentBinding.onsEncodingText.setOnClickListener { showOnsEncodingPicker() }
+        // krkrsdl3 内核开关：开启需确认（全新引擎内核，稳定性不可预测）。
+        currentBinding.krEngineKernelSwitch.setOnCheckedChangeListener { _, checked ->
+            if (kernelSwitchConfirming) return@setOnCheckedChangeListener
+            if (!checked || !isAdded) return@setOnCheckedChangeListener
+            currentBinding.krEngineKernelSwitch.isChecked = false
+            LauncherDialogRouter.showStandardConfirm(
+                requireContext(),
+                getString(R.string.settings_kr_kernel_switch_title),
+                getString(R.string.settings_kr_kernel_switch_message),
+                getString(R.string.settings_kr_kernel_switch_confirm),
+            ) {
+                kernelSwitchConfirming = true
+                currentBinding.krEngineKernelSwitch.isChecked = true
+                kernelSwitchConfirming = false
+            }
+        }
     }
 
     private fun applyThemeTone() {
         val currentBinding = binding ?: return
         LauncherTheme.styleMaterialSwitch(currentBinding.krScopedSwitch)
+        LauncherTheme.styleMaterialSwitch(currentBinding.krEngineKernelSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.artemisRotateSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.onsScopedSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.onsStretchSwitch)
@@ -180,6 +200,17 @@ class LauncherKrkrSettingsFragment : Fragment() {
         } else {
             LauncherKrkrBridge.isKrScopedSaveDir(requireContext())
         }
+        // KRKR 引擎内核：开关开启 = krkrsdl3，关闭 = 自动（吉里吉里2）。
+        // 初始状态回填不触发确认弹窗（仅在用户点击开关时询问）。
+        val kernel = if (isKrkrGame) {
+            LauncherKrkrGameSettingsBridge.load(requireContext(), gameId).engineKernel
+        } else {
+            LauncherKrkrBridge.getEngineKernel(requireContext())
+        }
+        kernelSwitchConfirming = true
+        currentBinding.krEngineKernelSwitch.isChecked =
+            LauncherKrkrBridge.KERNEL_KRKRSDL3 == kernel
+        kernelSwitchConfirming = false
         loadArtemisConfig(savedInstanceState)
         val onsSettings = if (isPerGameMode()) {
             LauncherOnsGameSettingsBridge.load(requireContext(), gameId)
@@ -209,6 +240,11 @@ class LauncherKrkrSettingsFragment : Fragment() {
         if (pos == 1) version = LauncherKrkrBridge.ENGINE_VERSION_139
         else if (pos == 2) version = LauncherKrkrBridge.ENGINE_VERSION_134
         else if (pos == 3) version = LauncherKrkrBridge.ENGINE_VERSION_126
+        val kernel = if (currentBinding.krEngineKernelSwitch.isChecked) {
+            LauncherKrkrBridge.KERNEL_KRKRSDL3
+        } else {
+            LauncherKrkrBridge.KERNEL_AUTO
+        }
 
         if (isPerGameMode()) {
             // Per-game 模式：仅写入该游戏的引擎覆盖；其他引擎与全局项保持原值。
@@ -216,6 +252,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
                 EngineType.KIRIKIRI -> {
                     val perGame = LauncherKrkrGameSettingsBridge.load(requireContext(), gameId)
                     perGame.engineVersion = version
+                    perGame.engineKernel = kernel
                     perGame.scopedSaveDir = currentBinding.krScopedSwitch.isChecked
                     LauncherKrkrGameSettingsBridge.save(requireContext(), gameId, perGame)
                     Toast.makeText(
@@ -258,6 +295,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         }
 
         LauncherKrkrBridge.setEngineVersion(requireContext(), version)
+        LauncherKrkrBridge.setEngineKernel(requireContext(), kernel)
         LauncherKrkrBridge.setKrScopedSaveDir(requireContext(), currentBinding.krScopedSwitch.isChecked)
         val onsSettings = OnsSettings.load(requireContext())
         onsSettings.scopedSaveDir = currentBinding.onsScopedSwitch.isChecked

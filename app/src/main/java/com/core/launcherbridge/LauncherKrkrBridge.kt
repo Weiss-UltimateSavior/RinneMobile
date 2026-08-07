@@ -15,6 +15,11 @@ object LauncherKrkrBridge {
     const val ENGINE_VERSION_134 = "1.3.4"
     const val ENGINE_VERSION_126 = "1.2.6"
 
+    /** KRKR 引擎内核常量。 */
+    const val KERNEL_AUTO = "auto"
+    const val KERNEL_KIRIKIRI2 = "kirikiri2"
+    const val KERNEL_KRKRSDL3 = "krkrsdl3"
+
     // Keep this bridge independently compilable in every build variant.  Some release source
     // sets do not expose the launcher extension helpers, while this preference file is shared
     // by all launcher and engine components.
@@ -92,6 +97,44 @@ object LauncherKrkrBridge {
             ENGINE_VERSION_139 -> "1.3.9"
             ENGINE_VERSION_134 -> "1.3.4"
             ENGINE_VERSION_126 -> "1.2.6"
+            else -> "自动"
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // KRKR 引擎内核
+    // ──────────────────────────────────────────────
+
+    @JvmStatic
+    fun getEngineKernel(context: Context?): String {
+        if (context == null) return KERNEL_AUTO
+        val v = prefs(context).getString(CorePreferences.KEY_KR_ENGINE_KERNEL, KERNEL_AUTO)
+        return normalizeEngineKernel(v)
+    }
+
+    @JvmStatic
+    fun setEngineKernel(context: Context?, kernel: String?) {
+        if (context == null) return
+        prefs(context).edit()
+            .putString(CorePreferences.KEY_KR_ENGINE_KERNEL, normalizeEngineKernel(kernel))
+            .apply()
+    }
+
+    @JvmStatic
+    fun normalizeEngineKernel(value: String?): String {
+        val v = value?.trim()?.lowercase() ?: KERNEL_AUTO
+        return when (v) {
+            KERNEL_KIRIKIRI2 -> KERNEL_KIRIKIRI2
+            KERNEL_KRKRSDL3 -> KERNEL_KRKRSDL3
+            else -> KERNEL_AUTO
+        }
+    }
+
+    @JvmStatic
+    fun engineKernelLabel(value: String?): String {
+        return when (normalizeEngineKernel(value)) {
+            KERNEL_KIRIKIRI2 -> "吉里吉里2"
+            KERNEL_KRKRSDL3 -> "krkrsdl3"
             else -> "自动"
         }
     }
