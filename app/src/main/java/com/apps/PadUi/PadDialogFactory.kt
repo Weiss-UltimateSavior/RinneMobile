@@ -13,6 +13,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.apps.theme.LauncherDialogFactory
+import com.apps.theme.LauncherDialogParts
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.core.R
@@ -307,6 +308,8 @@ object PadDialogFactory {
         val screenHeight = context.resources.displayMetrics.heightPixels
         scrollParams.height = min(LauncherTheme.dp(context, 220), max(LauncherTheme.dp(context, 80), screenHeight - LauncherTheme.dp(context, 210)))
         root.addView(scroll, scrollParams)
+        // 消息短于预留高度时收紧到内容高度，避免短消息时在描述与选项之间出现大片空白
+        LauncherDialogParts.shrinkScrollToContent(scroll)
 
         if (choices != null) {
             for (i in choices.indices) {

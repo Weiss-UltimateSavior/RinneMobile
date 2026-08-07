@@ -8,6 +8,7 @@ import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -141,6 +142,25 @@ internal object LauncherDialogParts {
         val params = topMargin(context, marginDp)
         params.height = LauncherTheme.dp(context, heightDp)
         return params
+    }
+
+    /**
+     * 将 ScrollView 高度收紧到与内容一致（上限不变），消除短内容时在描述与下方
+     * 列表/按钮之间预留的固定高度造成的空白。布局完成后 post 执行。
+     *
+     * 守卫：窗口 attach 已断开、或内容高度为 0（空消息/布局未完成）时跳过，
+     * 避免把 ScrollView 压成 0 高度。
+     */
+    internal fun shrinkScrollToContent(scroll: ScrollView) {
+        scroll.post {
+            if (!scroll.isAttachedToWindow) return@post
+            val content = scroll.getChildAt(0) ?: return@post
+            val contentHeight = content.height
+            if (contentHeight <= 0) return@post
+            val lp = scroll.layoutParams ?: return@post
+            lp.height = minOf(lp.height, contentHeight)
+            scroll.layoutParams = lp
+        }
     }
 
     internal fun dialogWidthPx(context: Context, widthDp: Int): Int {

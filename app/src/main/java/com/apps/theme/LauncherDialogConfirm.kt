@@ -113,6 +113,8 @@ internal object LauncherDialogConfirm {
         val scrollParams = LauncherDialogParts.topMargin(context, 13)
         scrollParams.height = LauncherTheme.dp(context, 220)
         root.addView(scroll, scrollParams)
+        // 消息短于预留高度时收紧到内容高度，避免短消息时在描述与按钮之间出现大片空白
+        LauncherDialogParts.shrinkScrollToContent(scroll)
 
         val confirm = LauncherDialogParts.button(context, confirmText, true)
         confirm.setOnClickListener {

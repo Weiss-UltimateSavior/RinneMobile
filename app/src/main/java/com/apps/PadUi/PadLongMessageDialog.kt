@@ -3,6 +3,7 @@ package com.apps.PadUi
 import android.content.Context
 import android.widget.ScrollView
 import androidx.appcompat.app.AlertDialog
+import com.apps.theme.LauncherDialogParts
 import com.apps.theme.LauncherTheme
 
 /**
@@ -33,6 +34,8 @@ object PadLongMessageDialog {
         val scrollParams = PadDialogFactory.topMargin(context, 13)
         scrollParams.height = LauncherTheme.dp(context, 220)
         root.addView(scroll, scrollParams)
+        // 消息短于预留高度时收紧到内容高度，避免短消息时在描述与按钮之间出现大片空白
+        LauncherDialogParts.shrinkScrollToContent(scroll)
 
         val confirm = PadDialogFactory.button(context, confirmText, true)
         confirm.setOnClickListener {
