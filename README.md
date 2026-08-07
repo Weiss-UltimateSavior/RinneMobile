@@ -303,11 +303,13 @@
 
 - KRKR游戏中涉及文字输入弹窗功能，不可用。测试发现会导致游戏闪避
   反编译hook发现为原生动态库驱动中的win32dialog.dll缺少游戏所需的 Header、allBitmaps、finalize 函数。
-- TF 卡中的 KRKR 游戏现可通过镜像目录启动，存档位置与独立存档模式保持一致。
-- 华为等设备的存储访问兼容性已改善：可尝试启用“外部私有存档”或轻量级 SAF。若仍有问题，欢迎反馈设备与复现信息。
-- 带有旧存档的 ty ar 游戏在关闭统一存档时无法打开游戏，在rinne开始存档的游戏不受影响
 
-欢迎有能力的开发者提交 Pull Request。😽
+- 其他带有模拟器功能的app会覆盖或是删除rinne游玩过的游戏的配置文件
+  其他app模拟器内核hook层对于游戏配置文件的处理与映射方式与rinne不同
+
+- 不要尝试在rinne中使用kr模拟器启动未经移植的PC端kr引擎游戏，部分系统会导致app崩溃
+
+- 发现问题请反馈至交流群或提交 Pull Request。
 
 ***
 
@@ -420,16 +422,14 @@
 
 ## 致谢
 
-本项目参考或学习了以下项目：
+本项目参考或学习及使用了以下项目：
 
 - krkr2
+- <a href="https://github.com/krkrsdl3/krkrsdl3">krkrsdl3</a>
 - YukiHub
 - Tyranor
-- Beacon
 - <a href="https://github.com/Saramanda9988/LunaBox">LunaBox</a>
-- Playnite
 - <a href="https://github.com/YuriSizuku/OnscripterYuri">OnscripterYuri</a>
-- <a href="https://github.com/hrydgard/ppsspp">ppsspp</a>
 
 同时感谢所有参与测试、反馈与提出建议的用户。
 
