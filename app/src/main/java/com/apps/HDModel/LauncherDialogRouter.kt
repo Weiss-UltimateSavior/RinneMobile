@@ -73,6 +73,22 @@ object LauncherDialogRouter {
         }
     }
 
+    /** 非可取消加载壳 + 带 tag 的进度文本（同步流程更新 tagged view 用）；HD 路由 Pad 对应实现。 */
+    @JvmStatic
+    fun showProgressLoading(
+        context: Context,
+        title: String?,
+        progressText: String?,
+        hint: String?,
+        progressTag: String?,
+    ): AlertDialog {
+        return if (isHd(context)) {
+            PadDialogFactory.showProgressLoading(context, title, progressText, hint, progressTag)
+        } else {
+            LauncherDialogFactory.showProgressLoading(context, title, progressText, hint, progressTag)
+        }
+    }
+
     /** 滚动长消息确认（无取消回调）：HD 路由 Pad 滚动版。 */
     @JvmStatic
     fun showLongMessageConfirm(

@@ -102,7 +102,7 @@ class LauncherAddGameFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         engineOptions = EngineOptionCatalog.create(requireContext(), false)
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         bindViews()
         restoreTransientState(savedInstanceState)

@@ -214,6 +214,20 @@ class HdModeActivity : AppCompatActivity() {
             .commit()
     }
 
+    /** 将详情 Fragment 压入主容器回退栈（保留左侧导航），返回键可弹回。 */
+    internal fun showDetailFragment(fragment: Fragment, tag: String) {
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.launcher_fragment_enter,
+                R.anim.launcher_fragment_exit,
+                R.anim.launcher_fragment_enter_back,
+                R.anim.launcher_fragment_exit_back,
+            )
+            .replace(R.id.hdFragmentContainer, fragment, tag)
+            .addToBackStack(null)
+            .commit()
+    }
+
     private fun showRootFragment(item: HdNavItem, fragment: Fragment, tag: String) {
         val current = supportFragmentManager.findFragmentById(R.id.hdFragmentContainer)
         // 重复点击已选中栏目时不重建页面，避免视觉闪屏。

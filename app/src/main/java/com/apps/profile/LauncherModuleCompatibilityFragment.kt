@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
 import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
@@ -39,7 +40,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.moduleCompatibilityScroll)
         LauncherTheme.applyPrimaryTone(view)

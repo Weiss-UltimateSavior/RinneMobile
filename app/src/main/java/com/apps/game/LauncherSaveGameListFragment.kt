@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
 import com.apps.common.LauncherInsetsHelper
 import com.apps.theme.LauncherTheme
@@ -58,7 +59,7 @@ class LauncherSaveGameListFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         saveManager = GameSaveFileManager(requireContext())
         engineName = arguments?.getString(EXTRA_ENGINE)

@@ -87,7 +87,7 @@ class LauncherAiChatFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         if (closedEarly) return
         val currentBinding = binding ?: return
         val rawTitle = arguments?.getString(EXTRA_TITLE)

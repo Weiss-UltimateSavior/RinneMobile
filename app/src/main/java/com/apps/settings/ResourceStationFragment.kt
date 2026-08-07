@@ -67,7 +67,7 @@ class ResourceStationFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val url = requireArguments().getString(EXTRA_URL)?.trim()?.takeIf { it.isNotEmpty() } ?: DEFAULT_URL
         webView?.loadUrl(url)
         // 硬件返回：WebView 可回退则 goBack，否则按承载宿主关闭（原 Activity onBackPressed 语义，双上下文统一）。

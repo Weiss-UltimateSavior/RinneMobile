@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -23,7 +22,7 @@ import com.apps.navigationOverlayBottomPadding
 import com.apps.refreshNavigationOverlayInsets
 import com.apps.settings.LauncherCustomVndbSearchDialog
 import com.apps.settings.LauncherKrkrSettingsActivity
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.databinding.FragmentLauncherLibraryBinding
@@ -31,6 +30,7 @@ import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.EngineType
 import com.core.model.Game
 import com.core.util.AppExecutors
+import com.core.util.DevLogger
 import com.core.util.RxMainQueue
 
 open class LauncherLibraryFragment : Fragment(),
@@ -43,10 +43,10 @@ open class LauncherLibraryFragment : Fragment(),
 
     private val mainQueue = RxMainQueue()
 
-    /** Library 偏好使用 LauncherDialogFactory 的单选实现。 */
+    /** Library 弹窗统一经 LauncherDialogRouter（HD 路由 Pad、竖屏委托 Launcher 工厂）。 */
     private val subDialogFactory =
         GameActionMenuFactory.SubDialogFactory { ctx, title, labels, checked, onChoice ->
-            LauncherDialogFactory.showSingleChoice(ctx, title, labels, checked) { index ->
+            LauncherDialogRouter.showSingleChoice(ctx, title, labels, checked) { index ->
                 onChoice.accept(index)
             }
         }
@@ -54,7 +54,7 @@ open class LauncherLibraryFragment : Fragment(),
     /** Library 同步对话框工厂：自绘对话框，使用 launcher_dialog_bg 背景，252dp 宽度。 */
     private val syncDialogFactory = object : GameSyncController.DialogFactory {
         override fun showSyncConfirmDialog(onConfirm: Runnable) {
-            LauncherDialogFactory.showStandardConfirm(
+            LauncherDialogRouter.showStandardConfirm(
                 requireContext(), getString(R.string.game_library_sync_title),
                 getString(R.string.game_library_sync_message),
                 getString(R.string.game_library_sync_confirm), onConfirm
@@ -62,7 +62,7 @@ open class LauncherLibraryFragment : Fragment(),
         }
 
         override fun createSyncLoadingDialog(title: String?, hint: String?): AlertDialog {
-            return LauncherDialogFactory.showProgressLoading(
+            return LauncherDialogRouter.showProgressLoading(
                 requireContext(),
                 title,
                 getString(R.string.game_sync_progress, 0, 0),
@@ -74,7 +74,7 @@ open class LauncherLibraryFragment : Fragment(),
         override fun showSyncResultDialog(synced: Int, failed: Int) {
             val message = getString(R.string.game_library_sync_complete_count, synced) +
                 if (failed > 0) "\n" + getString(R.string.game_library_sync_failed_count, failed) else ""
-            LauncherDialogFactory.showInfo(requireContext(), getString(R.string.game_sync_complete), message)
+            LauncherDialogRouter.showInfo(requireContext(), getString(R.string.game_sync_complete), message)
         }
     }
 
@@ -88,7 +88,10 @@ open class LauncherLibraryFragment : Fragment(),
     private var selectedCategory: String = ""
     private var searchQuery: String = ""
     // 编辑卡片后回退时，仅就地刷新被编辑的那张卡片，避免 loadGames() 重置分页与滑动位置。
-    private var pendingEditGameId: Long = -1L
+    // protected：HD 子类覆写 startEditGameActivity 时也需设置；经 onSaveInstanceState 保存以
+    // 支持 Activity 重建时恢复待刷新卡片（replace + addToBackStack 后根 Fragment 仅 view 重建，
+    // Fragment 实例不重建，此标记在重建后仍保留）。
+    protected var pendingEditGameId: Long = -1L
     private var posterGridStyle: Boolean = false
     private lateinit var pagingHelper: LibraryPagingHelper
     private lateinit var swipeGesture: LibrarySwipeGesture
@@ -129,6 +132,7 @@ open class LauncherLibraryFragment : Fragment(),
         private const val TAG = "LauncherLibrary"
         internal const val LIBRARY_PREFS = "launcher_library_preferences"
         private const val KEY_POSTER_GRID_STYLE = "poster_grid_style"
+        private const val STATE_PENDING_EDIT_GAME_ID = "pending_edit_game_id"
     }
 
     /**
@@ -193,6 +197,17 @@ open class LauncherLibraryFragment : Fragment(),
         return binding.root
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // 主容器回退栈重建后恢复待刷新卡片（HD 编辑游戏 replace+popBackStack 场景）。
+        pendingEditGameId = savedInstanceState?.getLong(STATE_PENDING_EDIT_GAME_ID, -1L) ?: -1L
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putLong(STATE_PENDING_EDIT_GAME_ID, pendingEditGameId)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (usePortraitLibraryScaler()) {
@@ -240,7 +255,7 @@ open class LauncherLibraryFragment : Fragment(),
     private fun checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= 30) {
             if (!Environment.isExternalStorageManager()) {
-                LauncherDialogFactory.showStandardConfirm(
+                LauncherDialogRouter.showStandardConfirm(
                     requireContext(),
                     getString(R.string.game_library_permission_title),
                     getString(R.string.game_library_permission_message),
@@ -265,11 +280,11 @@ open class LauncherLibraryFragment : Fragment(),
                 )
             )
         } catch (first: Exception) {
-            Log.w(TAG, "app-specific all files settings unavailable; falling back", first)
+            DevLogger.w(TAG, "app-specific all files settings unavailable; falling back", first)
             try {
                 startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
             } catch (second: Exception) {
-                Log.w(TAG, "all files settings unavailable", second)
+                DevLogger.w(TAG, "all files settings unavailable", second)
             }
         }
     }
@@ -433,7 +448,7 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun confirmLaunchGame(game: Game?) {
         if (game == null) return
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             requireContext(),
             getString(R.string.game_launch_title),
             getString(R.string.game_launch_message, GameMetadataFormatter.safeTitle(requireContext(), game)),
@@ -500,7 +515,7 @@ open class LauncherLibraryFragment : Fragment(),
         }
         options.add(arrayOf(getString(R.string.game_action_delete), "delete"))
         val deleteIndex = options.indexOfFirst { it[1] == "delete" }
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(R.string.game_action_more),
             options.map { it[0] as CharSequence }.toTypedArray(),
@@ -518,13 +533,13 @@ open class LauncherLibraryFragment : Fragment(),
         }
     }
 
-    private fun openOnsGameSettings(game: Game) {
+    protected open fun openOnsGameSettings(game: Game) {
         try {
             val intent = Intent(requireContext(), LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
         } catch (error: Exception) {
-            Log.w(TAG, "Failed to open ONS game settings", error)
+            DevLogger.w(TAG, "Failed to open ONS game settings", error)
             Toast.makeText(requireContext(), R.string.game_action_engine_open_failed, Toast.LENGTH_SHORT).show()
         }
     }
@@ -542,7 +557,7 @@ open class LauncherLibraryFragment : Fragment(),
                     }
                 }
             } catch (e: Exception) {
-                Log.w("LauncherLibraryFragment", "Failed to toggle favorite", e)
+                DevLogger.w(TAG, "Failed to toggle favorite", e)
             }
             val result = updated
             mainQueue.post {
@@ -553,7 +568,7 @@ open class LauncherLibraryFragment : Fragment(),
     }
 
     private fun confirmDeleteGame(game: Game) {
-        LauncherDialogFactory.showDangerConfirm(
+        LauncherDialogRouter.showDangerConfirm(
             requireContext(),
             getString(R.string.game_action_delete),
             getString(R.string.game_delete_message,
@@ -569,7 +584,7 @@ open class LauncherLibraryFragment : Fragment(),
             val deleted = try {
                 LauncherRepositoryBridge.deleteGame(app, game.id) > 0
             } catch (e: Exception) {
-                Log.w("LauncherLibraryFragment", "Failed to delete game", e)
+                DevLogger.w(TAG, "Failed to delete game", e)
                 false
             }
             mainQueue.post {
@@ -585,7 +600,7 @@ open class LauncherLibraryFragment : Fragment(),
     }
 
     private fun confirmClearList() {
-        LauncherDialogFactory.showDangerConfirm(
+        LauncherDialogRouter.showDangerConfirm(
             requireContext(),
             getString(R.string.game_library_clear),
             getString(R.string.game_library_clear_message),
@@ -600,7 +615,7 @@ open class LauncherLibraryFragment : Fragment(),
             val deleted = try {
                 LauncherRepositoryBridge.deleteAllGames(app)
             } catch (e: Exception) {
-                Log.w("LauncherLibraryFragment", "Failed to clear game list", e)
+                DevLogger.w(TAG, "Failed to clear game list", e)
                 -1
             }
             mainQueue.post {
@@ -647,7 +662,7 @@ open class LauncherLibraryFragment : Fragment(),
         applyFilters(true)
     }
 
-    private fun startEditGameActivity(game: Game) {
+    protected open fun startEditGameActivity(game: Game) {
         pendingEditGameId = game.id
         val intent = Intent(requireContext(), LauncherGameEditActivity::class.java)
         intent.putExtra(LauncherGameEditActivity.EXTRA_GAME_ID, game.id)

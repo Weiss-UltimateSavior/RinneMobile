@@ -54,7 +54,9 @@ class LauncherKrkrSettingsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        // HD 容器内嵌（管理页明细容器或库直压主容器）：清除布局自带不透明背景，露出宿主圆角白卡。
+        if (activity is HdModeActivity) view.background = null
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         gameId = arguments?.getLong(EXTRA_GAME_ID, 0L) ?: 0L
         if (isPerGameMode()) {
@@ -447,11 +449,21 @@ class LauncherKrkrSettingsFragment : Fragment() {
         return Array(values.size) { values[it] }
     }
 
-    /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
+    /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment；直压主容器回退栈则弹栈。 */
     private fun requestClose() {
         when (val host = activity) {
             is LauncherKrkrSettingsActivity -> host.finishKrkrSettings()
-            is HdModeActivity -> (parentFragment as? HdEmbeddedActivityOwner)?.closeEmbeddedActivity()
+            is HdModeActivity -> {
+                val owner = parentFragment as? HdEmbeddedActivityOwner
+                if (owner == null) {
+                    // 游戏库直压主容器回退栈（parentFragment==null）：弹回退栈返回 Library。
+                    host.onBackPressedDispatcher.onBackPressed()
+                } else if (!owner.closeEmbeddedActivity()) {
+                    // HdManageFragment 子 Fragment 承载：owner 关闭失败（竞态）时 no-op，
+                    // 避免回退到 onBackPressed 误弹空主栈。
+                    Unit
+                }
+            }
             else -> Unit
         }
     }

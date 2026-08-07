@@ -16,8 +16,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.apps.HDModel.HdModeActivity
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.common.LauncherInsetsHelper
-import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -60,7 +61,7 @@ class TranslationSettingFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.translationScroll)
 
@@ -199,7 +200,7 @@ class TranslationSettingFragment : Fragment() {
         val effectiveModel = model.takeIf { it.isNotEmpty() }
             ?: TranslationConfigStore.get(requireContext()).model
         if (effectiveUrl.isEmpty() || effectiveModel.isEmpty()) {
-            LauncherDialogFactory.showInfo(
+            LauncherDialogRouter.showInfo(
                 requireContext(),
                 getString(R.string.translation_test_failed),
                 getString(R.string.translation_enter_api_and_model),
@@ -207,7 +208,7 @@ class TranslationSettingFragment : Fragment() {
             return
         }
         if (!TranslationConfigStore.get(requireContext()).hasApiKey) {
-            LauncherDialogFactory.showInfo(
+            LauncherDialogRouter.showInfo(
                 requireContext(),
                 getString(R.string.translation_test_failed),
                 getString(R.string.translation_save_api_key_first),
@@ -218,7 +219,7 @@ class TranslationSettingFragment : Fragment() {
         try {
             TranslationConfigStore.validateBaseUrl(effectiveUrl)
         } catch (e: Exception) {
-            LauncherDialogFactory.showInfo(
+            LauncherDialogRouter.showInfo(
                 requireContext(),
                 getString(R.string.translation_test_failed),
                 getString(R.string.translation_invalid_api_address),
@@ -226,7 +227,7 @@ class TranslationSettingFragment : Fragment() {
             return
         }
 
-        val loadingDialog = LauncherDialogFactory.showLoading(
+        val loadingDialog = LauncherDialogRouter.showLoading(
             requireContext(),
             getString(R.string.translation_testing),
             getString(R.string.translation_sending_test_image),
@@ -242,13 +243,13 @@ class TranslationSettingFragment : Fragment() {
                 val current = binding ?: return@runOnUiThread
                 current.translationTestButton.isEnabled = true
                 if (result.success) {
-                    LauncherDialogFactory.showInfo(
+                    LauncherDialogRouter.showInfo(
                         requireContext(),
                         getString(R.string.translation_test_success),
                         getString(R.string.translation_test_success_message, result.text),
                     )
                 } else {
-                    LauncherDialogFactory.showInfo(
+                    LauncherDialogRouter.showInfo(
                         requireContext(),
                         getString(R.string.translation_test_failed),
                         result.text,

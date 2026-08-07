@@ -5,12 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.apps.game.LauncherGameAdapter
+import com.apps.game.LauncherGameEditFragment
 import com.apps.game.LauncherLibraryFragment
+import com.apps.settings.LauncherKrkrSettingsFragment
 import com.core.R
+import com.core.model.Game
 
 /**
  * HD 游戏库：沿用手机游戏库的搜索、分类、同步、启动与长按菜单，
  * 仅替换为适合大屏容器的六列三行分页布局。
+ *
+ * 长按「编辑游戏」/「引擎设置」不跳独立 Activity，而是压入主容器回退栈
+ * （[HdModeActivity.showDetailFragment]），保留左侧导航与 HD 容器视觉。
  */
 class HdGameLibraryFragment : LauncherLibraryFragment() {
     override fun onCreateView(
@@ -43,4 +49,23 @@ class HdGameLibraryFragment : LauncherLibraryFragment() {
     override fun getFixedGridRows(): Int = 3
 
     override fun usesHorizontalPaging(): Boolean = true
+
+    override fun startEditGameActivity(game: Game) {
+        val host = activity
+        if (host is HdModeActivity) {
+            pendingEditGameId = game.id
+            host.showDetailFragment(LauncherGameEditFragment.newInstance(game.id), "hd_edit_game")
+            return
+        }
+        super.startEditGameActivity(game)
+    }
+
+    override fun openOnsGameSettings(game: Game) {
+        val host = activity
+        if (host is HdModeActivity) {
+            host.showDetailFragment(LauncherKrkrSettingsFragment.newInstance(game.id), "hd_library_engine_settings")
+            return
+        }
+        super.openOnsGameSettings(game)
+    }
 }

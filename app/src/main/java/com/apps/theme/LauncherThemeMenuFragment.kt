@@ -38,7 +38,7 @@ class LauncherThemeMenuFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         selectedTheme = LauncherActivity.getLauncherThemeStyle(requireContext())
         LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.themeMenuScroll)

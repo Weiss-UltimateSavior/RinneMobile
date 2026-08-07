@@ -69,7 +69,7 @@ class LocalAgentFragment : Fragment() {
         // 防止 EditText 自动获焦弹起键盘：根布局已设 focusable+focusableInTouchMode 抢占焦点。
         // loadHistory 异步回调会让 EditText 从 disabled 切到 enabled，那才是真正触发自动获焦
         // 的时机，由 renderRunning() 中的 clearFocus + hideSoftInput 兜底处理。
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         repository = AgentConversationRepository(requireContext())
         runtime = LocalAgentRuntime(requireContext())
         adapter = LocalAgentMessageAdapter(messages)

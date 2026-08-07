@@ -73,7 +73,7 @@ class LauncherPublicChatFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        LauncherTabletPortraitScaler.apply(view)
+        if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
         val currentBinding = binding ?: return
         connectionState = getString(R.string.social_connecting)
         relayoutOverlay = ChatInsetsHelper.install(
