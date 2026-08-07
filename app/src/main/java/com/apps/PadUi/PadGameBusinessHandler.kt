@@ -114,7 +114,7 @@ class PadGameBusinessHandler(
                 "rematch" -> rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(fragment, game) { onReloadSingleGame(game.id) }
                 "sync" -> syncMetadataToCard(game)
-                "engine_settings" -> openOnsGameSettings(game)
+                "engine_settings" -> openEngineSettings(game)
                 "delete" -> confirmDeleteGame(game)
             }
         }
@@ -184,7 +184,7 @@ class PadGameBusinessHandler(
             })
     }
 
-    private fun openOnsGameSettings(game: Game) {
+    private fun openEngineSettings(game: Game) {
         try {
             val intent = Intent(context, LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)

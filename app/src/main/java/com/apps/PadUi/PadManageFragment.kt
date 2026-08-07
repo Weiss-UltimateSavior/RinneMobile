@@ -44,6 +44,7 @@ import com.apps.game.GameMetadataFormatter
 import com.apps.game.GamePasswordLock
 import com.apps.game.GameSessionController
 import com.apps.game.GameSyncController
+import com.apps.game.PinnedGameShortcut
 import com.apps.settings.LauncherCustomVndbSearchDialog
 import com.apps.settings.LauncherKrkrSettingsActivity
 import com.apps.theme.LauncherMotion
@@ -445,24 +446,11 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
     private fun showGameActionMenu(game: Game?) {
         if (game == null) return
-        PadDialogFactory.showActionChoices(
-            requireContext(),
-            GameMetadataFormatter.safeTitle(requireContext(), game),
-            arrayOf(
-                getString(com.core.R.string.game_action_details),
-                getString(com.core.R.string.game_action_status),
-                getString(com.core.R.string.game_action_edit_duration),
-                getString(com.core.R.string.game_action_more),
-            ),
-            -1,
-        ) { index ->
-            when (index) {
-                0 -> onShowGameDetail(game)
-                1 -> onShowPlayStatus(game)
-                2 -> onEditPlayTime(game)
-                3 -> onShowMoreOptions(game)
-            }
-        }
+        val config = GameActionMenuFactory.ActionMenuConfig()
+        // Pad 偏好：动作菜单不展示编辑项，宽度 270dp（与 PadGameFragment 一致）。
+        config.includeEditAction = false
+        config.dialogWidthDp = 270
+        GameActionMenuFactory.showGameActionMenu(this, game, config, this)
     }
 
     // ===== GameActionMenuFactory.ActionMenuCallbacks =====
@@ -501,52 +489,50 @@ class PadManageFragment : Fragment(), GameListController.Listener,
 
     private fun showMoreOptionsDialog(game: Game?) {
         if (game == null) return
-        val favoriteLabel = getString(
-            if (game.favorite) com.core.R.string.pad_remove_favorite else com.core.R.string.pad_add_favorite
-        )
-        val options: MutableList<Array<String>> = ArrayList()
-        options.add(arrayOf(favoriteLabel, "favorite"))
-        options.add(arrayOf(getString(com.core.R.string.pad_rematch_vndb), "rematch"))
-        options.add(arrayOf(getString(com.core.R.string.pad_custom_search_vndb), "custom_vndb"))
-        options.add(arrayOf(getString(com.core.R.string.pad_sync_cover), "sync"))
+        val ids = ArrayList<String>()
+        val labels = ArrayList<CharSequence>()
+        // 更多选项内容与 PadGameFragment/竖屏 LauncherLibraryFragment 保持一致
+        addMoreOption(ids, labels, "edit_play_time", getString(com.core.R.string.game_action_edit_duration))
+        addMoreOption(ids, labels, "pin_shortcut", getString(com.core.R.string.game_action_pin_shortcut))
+        addMoreOption(ids, labels, "rematch", getString(com.core.R.string.game_action_rematch_vndb))
+        addMoreOption(ids, labels, "custom_vndb", getString(com.core.R.string.game_action_custom_vndb))
+        addMoreOption(ids, labels, "sync", getString(com.core.R.string.game_action_sync_cover))
         // ONS/KRKR/Artemis 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
-        val hasEngineSettings = game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI
-                || game.engine == EngineType.ARTEMIS
-        if (hasEngineSettings) {
-            options.add(arrayOf(getString(com.core.R.string.pad_engine_settings), "engine_settings"))
+        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS) {
+            addMoreOption(ids, labels, "engine_settings", getString(com.core.R.string.game_action_engine_settings))
         }
-        val hasPassword = GamePasswordLock.hasPassword(game)
-        options.add(arrayOf(getString(if (hasPassword) com.core.R.string.pad_remove_password else com.core.R.string.pad_password_lock), "password"))
-        options.add(arrayOf(getString(com.core.R.string.pad_delete_game), "delete"))
-
+        addMoreOption(ids, labels, "delete", getString(com.core.R.string.game_action_delete))
+        val deleteIndex = ids.indexOf("delete")
         PadDialogFactory.showActionChoices(
             requireContext(),
-            getString(com.core.R.string.pad_more_options),
-            options.map { it[0] }.toTypedArray(),
-            options.indexOfFirst { it[1] == "delete" },
+            getString(com.core.R.string.game_action_more),
+            labels.toTypedArray(),
+            deleteIndex,
         ) { index ->
-            when (options[index][1]) {
-                "favorite" -> toggleFavorite(game)
+            when (ids[index]) {
+                "edit_play_time" -> GameActionMenuFactory.showEditPlayTimeDialog(this, game) { updateSingleGame(it) }
+                "pin_shortcut" -> PinnedGameShortcut.requestPinShortcut(requireContext(), game)
                 "rematch" -> syncController?.rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
                 "sync" -> syncController?.syncMetadataToCard(game)
-                "engine_settings" -> openOnsGameSettings(game)
-                "password" -> {
-                    if (hasPassword) GamePasswordLock.clearPassword(this, game, null)
-                    else GamePasswordLock.setPassword(this, game, null)
-                }
+                "engine_settings" -> openEngineSettings(game)
                 "delete" -> confirmDeleteGame(game)
             }
         }
     }
 
-    private fun openOnsGameSettings(game: Game) {
+    private fun addMoreOption(ids: MutableList<String>, labels: MutableList<CharSequence>, id: String, label: CharSequence) {
+        ids.add(id)
+        labels.add(label)
+    }
+
+    private fun openEngineSettings(game: Game) {
         try {
             val intent = Intent(requireContext(), LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
         } catch (error: ActivityNotFoundException) {
-            Log.w("PadManageFragment", "Failed to open ONS game settings", error)
+            Log.w("PadManageFragment", "Failed to open engine settings", error)
             Toast.makeText(requireContext(), com.core.R.string.pad_cannot_open_engine_settings, Toast.LENGTH_SHORT).show()
         }
     }
@@ -577,9 +563,9 @@ class PadManageFragment : Fragment(), GameListController.Listener,
     private fun confirmDeleteGame(game: Game?) {
         if (game == null) return
         PadDialogFactory.showDangerConfirm(
-            requireContext(), getString(com.core.R.string.pad_delete_game),
-            getString(com.core.R.string.pad_delete_game_message, GameMetadataFormatter.safeTitle(game)),
-            getString(com.core.R.string.pad_remove)
+            requireContext(), getString(com.core.R.string.game_action_delete),
+            getString(com.core.R.string.game_delete_message, GameMetadataFormatter.safeTitle(game)),
+            getString(com.core.R.string.game_common_remove)
         ) { deleteGame(game) }
     }
 

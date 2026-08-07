@@ -527,13 +527,13 @@ open class LauncherLibraryFragment : Fragment(),
                 "rematch" -> syncController.rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
                 "sync" -> syncController.syncMetadataToCard(game)
-                "engine_settings" -> openOnsGameSettings(game)
+                "engine_settings" -> openEngineSettings(game)
                 "delete" -> confirmDeleteGame(game)
             }
         }
     }
 
-    protected open fun openOnsGameSettings(game: Game) {
+    protected open fun openEngineSettings(game: Game) {
         try {
             val intent = Intent(requireContext(), LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)

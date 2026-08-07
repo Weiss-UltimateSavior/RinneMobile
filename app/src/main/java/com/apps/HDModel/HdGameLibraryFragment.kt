@@ -60,12 +60,12 @@ class HdGameLibraryFragment : LauncherLibraryFragment() {
         super.startEditGameActivity(game)
     }
 
-    override fun openOnsGameSettings(game: Game) {
+    override fun openEngineSettings(game: Game) {
         val host = activity
         if (host is HdModeActivity) {
             host.showDetailFragment(LauncherKrkrSettingsFragment.newInstance(game.id), "hd_library_engine_settings")
             return
         }
-        super.openOnsGameSettings(game)
+        super.openEngineSettings(game)
     }
 }
