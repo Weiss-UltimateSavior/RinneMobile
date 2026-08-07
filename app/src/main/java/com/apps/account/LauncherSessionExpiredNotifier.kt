@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.apps.LauncherActivity
 import com.apps.LauncherIntents
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.launcherbridge.LauncherAuthBridge
 import java.lang.ref.WeakReference
@@ -40,7 +40,7 @@ object LauncherSessionExpiredNotifier : LauncherAuthBridge.SessionExpiredListene
     override fun onSessionRestored() { promptVisible = false }
 
     private fun showDialog(activity: Activity) {
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             activity,
             activity.getString(R.string.social_session_expired_title),
             activity.getString(R.string.social_session_expired_message),

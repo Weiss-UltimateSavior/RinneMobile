@@ -11,6 +11,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import com.core.launcherbridge.LauncherUpdateBridge
+import com.apps.HDModel.LauncherDialogRouter
 
 /**
  * 统一的 Launcher 主题入口（薄协调层）。
@@ -220,6 +221,6 @@ object LauncherTheme {
         context: Context, info: LauncherUpdateBridge.UpdateInfo?,
         currentVersion: String?, hasUpdate: Boolean, error: String?
     ) {
-        LauncherDialogFactory.showUpdateResult(context, info, currentVersion, hasUpdate, error)
+        LauncherDialogRouter.showUpdateResult(context, info, currentVersion, hasUpdate, error)
     }
 }

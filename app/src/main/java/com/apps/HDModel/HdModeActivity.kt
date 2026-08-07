@@ -16,7 +16,6 @@ import com.apps.LauncherActivity
 import com.apps.LauncherNavRenderer
 import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
-import com.apps.PadUi.PadDialogFactory
 import com.apps.common.LauncherInsetsHelper
 import com.apps.data.LauncherViewModel
 import com.apps.theme.LauncherTheme
@@ -89,7 +88,7 @@ class HdModeActivity : AppCompatActivity() {
                     ) {
                         if (isFinishing || isDestroyed) return
                         if (hasUpdate) {
-                            PadDialogFactory.showUpdateResult(
+                            LauncherDialogRouter.showUpdateResult(
                                 this@HdModeActivity,
                                 info,
                                 currentVersion,

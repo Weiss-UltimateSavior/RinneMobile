@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
@@ -169,7 +170,7 @@ object GameActionMenuFactory {
         val title = activeGameTitle?.trim().takeUnless { it.isNullOrEmpty() }
             ?: context.getString(R.string.core_current_game)
         try {
-            LauncherDialogFactory.showInfo(
+            LauncherDialogRouter.showInfo(
                 context,
                 context.getString(R.string.core_active_game_title),
                 context.getString(R.string.core_active_game_dialog_message, title)

@@ -3,7 +3,7 @@ package com.apps.game
 import android.util.Log
 import android.widget.Toast
 
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.launcherbridge.LauncherDiagnosticsBridge
 import com.core.util.AppExecutors
@@ -30,7 +30,7 @@ class DiagnosticsController(private val host: ManageHost) {
     }
 
     private fun showDiagnosticsOptions() {
-        LauncherDialogFactory.showMessageActionChoices(
+        LauncherDialogRouter.showMessageActionChoices(
             host.requireContext(),
             host.getString(R.string.game_diagnostics_title),
             host.getString(

@@ -13,7 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.launcherbridge.LauncherScanBridge
@@ -109,7 +109,7 @@ class ScanDirectoryController(
             1, 2, 3, 4, LauncherScanBridge.SCAN_ALL_LEVELS, LauncherScanBridge.SCAN_UNTIL_GAME_MATCH
         )
 
-        LauncherDialogFactory.showScanDepthChoices(
+        LauncherDialogRouter.showScanDepthChoices(
             host.requireContext(),
             host.getString(R.string.game_scan_title),
             host.getString(R.string.game_scan_mode_quick),

@@ -9,8 +9,8 @@ import com.apps.agent.LocalAgentActivity
 import com.apps.data.LauncherRepository
 import com.apps.data.LauncherViewModel
 import com.apps.game.LauncherSaveCategoryActivity
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.settings.LauncherToolboxActivity
-import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.databinding.ItemLauncherSquareFavoriteBinding
@@ -50,7 +50,7 @@ class LauncherSquareGridHomeFragment : LauncherHomeFragment() {
             getString(com.core.R.string.launcher_action_agent),
             getString(com.core.R.string.home_square_more_settings),
         )
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(com.core.R.string.home_quick_features),
             choices,

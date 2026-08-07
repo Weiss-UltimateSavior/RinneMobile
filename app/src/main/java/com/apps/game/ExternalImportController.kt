@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.importer.ImportGameData
 import com.core.importer.ImportResult
@@ -35,7 +35,7 @@ class ExternalImportController(
 
     fun showExternalImportDialog() {
         if (host.isImportInProgress) return
-        LauncherDialogFactory.showMessageActionChoices(
+        LauncherDialogRouter.showMessageActionChoices(
             host.requireContext(),
             host.getString(R.string.game_import_cross_platform),
             host.getString(R.string.game_import_source_message),
@@ -113,7 +113,7 @@ class ExternalImportController(
 
     private fun showImportLoading(hint: String) {
         dismissImportLoading()
-        val dialog = LauncherDialogFactory.showLoading(
+        val dialog = LauncherDialogRouter.showLoading(
             host.requireContext(),
             host.getString(R.string.game_import_importing),
             hint

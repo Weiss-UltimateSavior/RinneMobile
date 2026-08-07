@@ -11,7 +11,6 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.apps.LauncherActivity
-import com.apps.PadUi.PadDialogFactory
 import com.apps.account.LauncherDisclaimerFragment
 import com.apps.home.LauncherHomeAccountBottomSheet
 import com.apps.settings.LauncherAppSettingsFragment
@@ -112,7 +111,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
         if (LauncherActivity.isFollowingSystemTone(requireContext())) return
         val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
         val nextTone = getString(if (darkMode) R.string.home_light_mode else R.string.home_dark_mode)
-        PadDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             requireContext(),
             getString(R.string.home_switch_tone),
             getString(R.string.home_switch_tone_message, nextTone),
@@ -135,7 +134,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
                     hasUpdate: Boolean,
                 ) {
                     if (!isAdded) return
-                    PadDialogFactory.showUpdateResult(
+                    LauncherDialogRouter.showUpdateResult(
                         requireContext(),
                         info,
                         currentVersion,
@@ -146,7 +145,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
 
                 override fun onError(message: String) {
                     if (!isAdded) return
-                    PadDialogFactory.showUpdateResult(
+                    LauncherDialogRouter.showUpdateResult(
                         requireContext(),
                         null,
                         "",
@@ -159,7 +158,7 @@ class HdSettingsFragment : Fragment(), HdEmbeddedActivityOwner {
     }
 
     private fun showFeedbackOptions() {
-        PadDialogFactory.showActionChoices(
+        LauncherDialogRouter.showActionChoices(
             requireContext(),
             getString(R.string.home_feedback),
             arrayOf(

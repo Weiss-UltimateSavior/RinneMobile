@@ -27,7 +27,7 @@ import com.apps.settings.LauncherToolboxActivity
 import com.apps.settings.LauncherAppSettingsActivity
 import com.apps.settings.ResourceStationActivity
 import com.apps.settings.ResourceStationFragment
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
@@ -208,7 +208,7 @@ open class LauncherHomeFragment : Fragment() {
             getString(com.core.R.string.home_resource_shinnku) to "https://www.shinnku.com/",
             getString(com.core.R.string.home_resource_touch_gal) to "https://www.touchgal.ink/",
         )
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(com.core.R.string.home_resource_station),
             Array<CharSequence>(resourceOptions.size) { resourceOptions[it].first },
@@ -228,7 +228,7 @@ open class LauncherHomeFragment : Fragment() {
             getString(com.core.R.string.home_qq_group) to
                 "https://qun.qq.com/universal-share/share?ac=1&authKey=nZMa0s3mxxG1A0f%2BY0nAWmBYpul7FWTEDI6UWrzqb2IgKC4aDkUhvkV2AekAkW%2F1&busi_data=eyJncm91cENvZGUiOiIxNjM2MDM2MzUiLCJ0b2tlbiI6Im93eFRyY0tqNDdxK3FGQXlVZ0lhMEZGbWZWemphZnpYYW1kWWpPN1ViL3A0SkRUd1dEclMwZkM1bWI0UEYxME4iLCJ1aW4iOiIzMDg2Njc4NzU1In0%3D&data=bwoLG7XAPzqsvtfneNCQUUlu-HpX1yCn-6dkgd8ubDeBJKEPgd7wKYa6ym-EbW07Vapc3xm_o-iy0GbFHhZk5Q&svctype=4&tempid=h5_group_info",
         )
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             requireContext(),
             getString(com.core.R.string.home_feedback),
             Array<CharSequence>(feedbackOptions.size) { feedbackOptions[it].first },
@@ -244,7 +244,7 @@ open class LauncherHomeFragment : Fragment() {
         val nextTone = getString(
             if (darkMode) com.core.R.string.home_light_mode else com.core.R.string.home_dark_mode
         )
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             requireContext(),
             getString(com.core.R.string.home_switch_tone),
             getString(com.core.R.string.home_switch_tone_message, nextTone),
@@ -325,7 +325,7 @@ open class LauncherHomeFragment : Fragment() {
         } else {
             title
         }
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             requireContext(),
             getString(com.core.R.string.home_open_game),
             getString(com.core.R.string.home_open_game_message, displayTitle),
@@ -366,7 +366,7 @@ open class LauncherHomeFragment : Fragment() {
         } else {
             item.title
         }
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
             requireContext(),
             getString(com.core.R.string.home_delete_activity),
             getString(com.core.R.string.home_delete_activity_message, displayTitle),

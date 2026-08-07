@@ -11,7 +11,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
@@ -82,7 +82,7 @@ internal class LibraryToolbarUi(private val fragment: LauncherLibraryFragment) {
     private fun showLibrarySettingsMenu() {
         val styleLabel = fragment.getString(if (fragment.libraryPosterGridStyle)
             R.string.game_library_horizontal_cards else R.string.game_library_poster_grid)
-        LauncherDialogFactory.showStandardActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             fragment.requireContext(), fragment.getString(R.string.game_library_settings),
             arrayOf(fragment.getString(R.string.game_library_sync_all), styleLabel,
                 fragment.getString(R.string.game_library_clear))

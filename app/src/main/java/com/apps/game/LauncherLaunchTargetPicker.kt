@@ -6,7 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.model.EngineType
 import com.core.util.AppExecutors
@@ -27,9 +27,9 @@ internal object LauncherLaunchTargetPicker {
             Toast.makeText(activity, R.string.game_directory_required, Toast.LENGTH_SHORT).show()
             return
         }
-        // 弹窗外壳（透明 window / card 背景 / 动效 / 宽度兜底）统一走 LauncherDialogFactory。
+        // 弹窗外壳（透明 window / card 背景 / 动效 / 宽度兜底）统一走 LauncherDialogRouter。
         // 第一阶段：loading 外壳（标题 + “正在扫描”提示），不可取消，生命周期由本方法管理。
-        val loading = LauncherDialogFactory.showLoading(
+        val loading = LauncherDialogRouter.showLoading(
             activity,
             activity.getString(R.string.game_launch_choose_file),
             activity.getString(R.string.game_launch_scanning))
@@ -42,7 +42,7 @@ internal object LauncherLaunchTargetPicker {
                 loading.dismiss()
                 if (targets.isEmpty()) {
                     // 无可用目标：沿用“未找到游戏文件”提示语义。
-                    LauncherDialogFactory.showInfo(
+                    LauncherDialogRouter.showInfo(
                         activity,
                         activity.getString(R.string.game_launch_choose_file),
                         activity.getString(R.string.game_launch_no_file))
@@ -51,7 +51,7 @@ internal object LauncherLaunchTargetPicker {
                 val labels = Array<CharSequence>(targets.size) { targets[it].label }
                 // 第二阶段：工厂单选列表外壳（checkedIndex 传 -1 表示全部未选中），
                 // 选中索引回映射为目标值后走原回调，语义与原实现一致。
-                LauncherDialogFactory.showSingleChoice(
+                LauncherDialogRouter.showSingleChoice(
                     activity,
                     activity.getString(R.string.game_launch_choose_file),
                     labels,

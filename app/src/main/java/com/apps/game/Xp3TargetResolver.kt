@@ -3,7 +3,7 @@ package com.apps.game
 import android.util.Log
 import android.text.TextUtils
 import androidx.appcompat.app.AlertDialog
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.launcherbridge.LauncherScanBridge
 import com.core.scanner.ScanReport
@@ -33,7 +33,7 @@ class Xp3TargetResolver(private val host: ManageHost) {
     private fun scanAndResolveXp3Targets(roots: List<String>, depth: Int, fullRefresh: Boolean) {
         val request = ScanRequest.defaults(depth, !fullRefresh)
         activeScanRequest = request
-        val dialog = LauncherDialogFactory.showLoading(
+        val dialog = LauncherDialogRouter.showLoading(
             host.requireContext(),
             host.getString(R.string.game_scan_scanning),
             host.getString(R.string.game_scan_wait_hint)
@@ -137,7 +137,7 @@ class Xp3TargetResolver(private val host: ManageHost) {
     }
 
     private fun showXp3TargetDialog(results: MutableList<ScanResult>, index: Int, result: ScanResult) {
-        LauncherDialogFactory.showTextChoicesWithSkip(
+        LauncherDialogRouter.showTextChoicesWithSkip(
             host.requireContext(),
             host.getString(R.string.game_xp3_choose_entry),
             host.getString(R.string.game_xp3_multiple_files, result.title),
@@ -157,7 +157,7 @@ class Xp3TargetResolver(private val host: ManageHost) {
     }
 
     private fun importResolvedScanResults(results: List<ScanResult>?) {
-        scanLoadingDialog = LauncherDialogFactory.showLoading(
+        scanLoadingDialog = LauncherDialogRouter.showLoading(
             host.requireContext(),
             host.getString(R.string.game_import_importing),
             host.getString(R.string.game_import_writing_library)

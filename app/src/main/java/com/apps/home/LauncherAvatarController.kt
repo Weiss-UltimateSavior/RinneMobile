@@ -10,7 +10,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.apps.LauncherPreferences
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.util.LauncherAvatarPersistence
 import com.apps.widget.AvatarCropActivity
 import com.core.R
@@ -55,7 +55,7 @@ internal class LauncherAvatarController(
     }
 
     fun showChangeAvatarDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
             fragment.requireContext(),
             fragment.getString(R.string.home_change_avatar),
             fragment.getString(R.string.home_change_avatar_message),

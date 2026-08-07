@@ -56,7 +56,7 @@ import com.apps.account.LauncherAccountSettingsActivity;
 import com.apps.data.LauncherViewModel;
 import com.apps.chat.LauncherChatSelectActivity;
 import com.apps.leaderboard.LauncherLeaderboardActivity;
-import com.apps.theme.LauncherDialogFactory;
+import com.apps.HDModel.LauncherDialogRouter;
 import com.apps.theme.LauncherMotion;
 import com.apps.theme.LauncherTheme;
 import com.apps.translation.TranslationSettingActivity;
@@ -147,7 +147,7 @@ public class LauncherProfileFragment extends Fragment {
                 openModuleCompatibility();
                 return;
             }
-            LauncherDialogFactory.showConfirm(requireContext(),
+            LauncherDialogRouter.showConfirm(requireContext(),
                     getString(R.string.profile_module_permission_title),
                     getString(R.string.profile_module_permission_message),
                     getString(R.string.settings_confirm),
@@ -319,7 +319,7 @@ public class LauncherProfileFragment extends Fragment {
             Toast.makeText(requireContext(), R.string.profile_not_logged_in, Toast.LENGTH_SHORT).show();
             return;
         }
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.profile_restore_configuration),
                 getString(R.string.profile_restore_configuration_message),
@@ -329,7 +329,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showLeaderboardConfirmDialog() {
-        LauncherDialogFactory.showConfirm(
+        LauncherDialogRouter.showConfirm(
                 requireContext(),
                 getString(R.string.profile_site_leaderboard),
                 getString(R.string.profile_site_leaderboard_message),
@@ -387,7 +387,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private AlertDialog showLoadingDialog(String titleText, String hintText) {
-        return LauncherDialogFactory.showLoading(requireContext(), titleText, hintText);
+        return LauncherDialogRouter.showLoading(requireContext(), titleText, hintText);
     }
 
     private void dismissLoadingDialog() {
@@ -398,7 +398,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showResultDialog(String title, String message) {
-        LauncherDialogFactory.showInfo(
+        LauncherDialogRouter.showInfo(
                 requireContext(),
                 title,
                 message,
@@ -413,7 +413,7 @@ public class LauncherProfileFragment extends Fragment {
         }
         final String nickname = LauncherAuthBridge.getNickname(requireContext());
         final String savedEmail = LauncherAuthBridge.getEmail(requireContext());
-        LauncherDialogFactory.showDangerConfirm(
+        LauncherDialogRouter.showDangerConfirm(
                 requireContext(),
                 getString(R.string.profile_logout),
                 nickname != null && !nickname.isEmpty()
@@ -447,7 +447,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showChangeCoverDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.profile_change_background),
                 getString(R.string.profile_choose_background_message),
@@ -460,7 +460,7 @@ public class LauncherProfileFragment extends Fragment {
     }
 
     private void showChangeAvatarDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.profile_change_avatar),
                 getString(R.string.profile_choose_avatar_message),

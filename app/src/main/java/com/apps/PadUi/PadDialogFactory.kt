@@ -3,6 +3,7 @@ package com.apps.PadUi
 import android.content.Context
 import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
@@ -11,6 +12,7 @@ import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.apps.theme.LauncherDialogFactory
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.core.R
@@ -54,6 +56,40 @@ object PadDialogFactory {
         setContent(dialog, content, WIDTH_CONFIRM_DP)
     }
 
+    /** 双按钮确认（带取消文案与关闭回调）：会话过期等需区分「稍后」与「关闭」的场景。 */
+    @JvmStatic
+    fun showConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+        cancelText: CharSequence?,
+        onDismiss: Runnable?,
+    ): AlertDialog {
+        val dialog = open(context, WIDTH_CONFIRM_DP, true)
+        val content = LayoutInflater.from(context).inflate(R.layout.dialog_launcher_confirm, null)
+        val titleView = content.findViewById<TextView>(R.id.dialogTitle)
+        val messageView = content.findViewById<TextView>(R.id.dialogMessage)
+        val cancel = content.findViewById<TextView>(R.id.dialogBtnCancel)
+        val confirm = content.findViewById<TextView>(R.id.dialogBtnConfirm)
+        titleView.text = title
+        messageView.text = message
+        confirm.text = confirmText
+        // cancelText 为 null 时显式设默认，与 Launcher 版 showConfirm 对齐（LauncherDialogConfirm.kt:42）。
+        cancel.text = cancelText ?: context.getString(R.string.core_cancel)
+        LauncherTheme.dialogButtons(cancel, confirm)
+        // onDismiss 语义与 Launcher 版对齐：任何 dismiss（含 confirm 点击）都触发。
+        dialog.setOnDismissListener { onDismiss?.run() }
+        cancel.setOnClickListener { dialog.dismiss() }
+        confirm.setOnClickListener {
+            dialog.dismiss()
+            onConfirm?.run()
+        }
+        setContent(dialog, content, WIDTH_CONFIRM_DP)
+        return dialog
+    }
+
     @JvmStatic
     fun showStandardConfirm(
         context: Context,
@@ -89,6 +125,23 @@ object PadDialogFactory {
 
         val acknowledge = button(context, context.getString(R.string.pad_acknowledge), true)
         acknowledge.setOnClickListener { dialog.dismiss() }
+        root.addView(acknowledge, fixedHeightTopMargin(context, 11, 36))
+        setContent(dialog, root, WIDTH_COMPACT_DP)
+    }
+
+    /** 信息提示 + 确认回调（onAcknowledge）。 */
+    @JvmStatic
+    fun showInfo(context: Context, title: String?, message: String?, onAcknowledge: Runnable?) {
+        val dialog = open(context, WIDTH_COMPACT_DP, true)
+        val root = root(context)
+        root.addView(title(context, title))
+        root.addView(message(context, message), topMargin(context, 13))
+
+        val acknowledge = button(context, context.getString(R.string.pad_acknowledge), true)
+        acknowledge.setOnClickListener {
+            dialog.dismiss()
+            onAcknowledge?.run()
+        }
         root.addView(acknowledge, fixedHeightTopMargin(context, 11, 36))
         setContent(dialog, root, WIDTH_COMPACT_DP)
     }
@@ -271,6 +324,103 @@ object PadDialogFactory {
         cancel.setOnClickListener { dialog.dismiss() }
         root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
         setContent(dialog, root, WIDTH_CONFIRM_DP)
+    }
+
+    /** 扫描深度选择（快速/完整切换 + 深度选项）：HD 下 Pad 视觉对应 Launcher 版。 */
+    @JvmStatic
+    fun showScanDepthChoices(
+        context: Context,
+        title: String?,
+        quickModeText: String?,
+        fullModeText: String?,
+        labels: Array<CharSequence>?,
+        depthValues: IntArray?,
+        currentDepth: Int,
+        listener: LauncherDialogFactory.ScanDepthListener?,
+    ) {
+        val dialog = open(context, WIDTH_COMPACT_DP, true)
+        val root = root(context)
+        root.addView(title(context, title))
+        val fullRefresh = booleanArrayOf(false)
+        val scanMode = button(context, quickModeText, false)
+        scanMode.setOnClickListener {
+            fullRefresh[0] = !fullRefresh[0]
+            scanMode.text = if (fullRefresh[0]) fullModeText else quickModeText
+        }
+        root.addView(scanMode, fixedHeightTopMargin(context, 11, 36))
+        if (labels != null && depthValues != null) {
+            val count = Math.min(labels.size, depthValues.size)
+            for (i in 0 until count) {
+                val depth = depthValues[i]
+                val selected = depth == currentDepth
+                val option = compactChoice(context, labels[i], selected)
+                option.setOnClickListener {
+                    dialog.dismiss()
+                    listener?.onChoice(depth, fullRefresh[0])
+                }
+                root.addView(option, fixedHeightTopMargin(context, 11, 36))
+            }
+        }
+        val cancel = cancelButton(context)
+        cancel.setOnClickListener { dialog.dismiss() }
+        root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
+        setContent(dialog, root, WIDTH_COMPACT_DP)
+    }
+
+    /** 文本选择 + 跳过/取消（xp3 目标解析等）：HD 下 Pad 视觉对应 Launcher 版。 */
+    @JvmStatic
+    fun showTextChoicesWithSkip(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: List<String>?,
+        skipText: String?,
+        cancelText: String?,
+        listener: LauncherDialogFactory.TextChoiceListener?,
+        onSkip: Runnable?,
+        onCancel: Runnable?,
+    ) {
+        val dialog = open(context, WIDTH_COMPACT_DP, false)
+        val root = root(context)
+        root.addView(title(context, title))
+        root.addView(message(context, message), topMargin(context, 10))
+        val scroll = ScrollView(context)
+        val list = LinearLayout(context)
+        list.orientation = LinearLayout.VERTICAL
+        choices?.forEach { candidate ->
+            val option = compactChoice(context, candidate, false)
+            option.ellipsize = TextUtils.TruncateAt.MIDDLE
+            option.setOnClickListener {
+                dialog.dismiss()
+                listener?.onChoice(candidate)
+            }
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(context, 38))
+            params.setMargins(0, LauncherTheme.dp(context, 8), 0, 0)
+            list.addView(option, params)
+        }
+        scroll.addView(list)
+        val scrollParams = topMargin(context, 4)
+        val count = choices?.size ?: 0
+        scrollParams.height = Math.min(LauncherTheme.dp(context, 250), LauncherTheme.dp(context, 8 + count * 46))
+        root.addView(scroll, scrollParams)
+        val buttons = LinearLayout(context)
+        buttons.orientation = LinearLayout.HORIZONTAL
+        val skip = button(context, skipText, false)
+        skip.setOnClickListener {
+            dialog.dismiss()
+            onSkip?.run()
+        }
+        buttons.addView(skip, LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 36), 1f))
+        val cancel = button(context, cancelText, false)
+        cancel.setOnClickListener {
+            dialog.dismiss()
+            onCancel?.run()
+        }
+        val cancelParams = LinearLayout.LayoutParams(0, LauncherTheme.dp(context, 36), 1f)
+        cancelParams.setMargins(LauncherTheme.dp(context, 8), 0, 0, 0)
+        buttons.addView(cancel, cancelParams)
+        root.addView(buttons, fixedHeightTopMargin(context, 12, 36))
+        setContent(dialog, root, WIDTH_COMPACT_DP)
     }
 
     @JvmStatic

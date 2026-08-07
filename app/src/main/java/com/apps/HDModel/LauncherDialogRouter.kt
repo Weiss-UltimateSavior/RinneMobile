@@ -5,14 +5,15 @@ import android.content.ContextWrapper
 import androidx.appcompat.app.AlertDialog
 import com.apps.PadUi.PadDialogFactory
 import com.apps.theme.LauncherDialogFactory
+import com.core.launcherbridge.LauncherUpdateBridge
 
 /**
  * 弹窗上下文路由器（W8，阶段 117/118）：HD 大屏壳（[HdModeActivity]）内承载的子 Fragment
  * 弹窗路由到 Pad 大屏弹窗工厂，竖屏保持 Launcher 弹窗工厂，解决新业务 Fragment
  * HD 嵌入时仍用竖屏弹窗上下文的视觉不一致（com_apps_refactor_plan.md 4.5 W8）。
  *
- * 全部 API（含 showLongMessageConfirm 审批 onCancel 关键路径）均已路由 Pad，
- * 无 HD 回退 Launcher 的残留重载（W-2 已删除无调用方的 showInfo 4 参版本）。
+ * 全部 API（含 showLongMessageConfirm 审批 onCancel、R5 showInfo 4 参 onAcknowledge、
+ * R3 扫描深度 / R4 跳过选择等关键路径）均已路由 Pad，无 HD 回退 Launcher 的残留重载。
  */
 object LauncherDialogRouter {
     /** 判断弹窗上下文是否处于 HD 大屏壳（HdModeActivity），沿 ContextWrapper 链向上查找。 */
@@ -40,6 +41,24 @@ object LauncherDialogRouter {
         }
     }
 
+    /** 双按钮确认（带取消文案与关闭回调）：会话过期等需区分「稍后」与「关闭」的场景。 */
+    @JvmStatic
+    fun showConfirm(
+        context: Context,
+        title: String?,
+        message: String?,
+        confirmText: String?,
+        onConfirm: Runnable?,
+        cancelText: CharSequence?,
+        onDismiss: Runnable?,
+    ): AlertDialog {
+        return if (isHd(context)) {
+            PadDialogFactory.showConfirm(context, title, message, confirmText, onConfirm, cancelText, onDismiss)
+        } else {
+            LauncherDialogFactory.showConfirm(context, title, message, confirmText, onConfirm, cancelText, onDismiss)
+        }
+    }
+
     @JvmStatic
     fun showStandardConfirm(
         context: Context,
@@ -55,12 +74,23 @@ object LauncherDialogRouter {
         }
     }
 
+    /** 信息提示：HD 路由 Pad。 */
     @JvmStatic
     fun showInfo(context: Context, title: String?, message: String?) {
         if (isHd(context)) {
             PadDialogFactory.showInfo(context, title, message)
         } else {
             LauncherDialogFactory.showInfo(context, title, message)
+        }
+    }
+
+    /** 信息提示 + 确认回调：HD 路由 Pad。 */
+    @JvmStatic
+    fun showInfo(context: Context, title: String?, message: String?, onAcknowledge: Runnable?) {
+        if (isHd(context)) {
+            PadDialogFactory.showInfo(context, title, message, onAcknowledge)
+        } else {
+            LauncherDialogFactory.showInfo(context, title, message, onAcknowledge)
         }
     }
 
@@ -164,6 +194,120 @@ object LauncherDialogRouter {
             PadDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
         } else {
             LauncherDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
+        }
+    }
+
+    /** 消息 + 动作选择菜单（无自定义取消文案）。 */
+    @JvmStatic
+    fun showMessageActionChoices(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: Array<CharSequence>?,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showMessageActionChoices(
+                context, title, message, choices, null,
+                listener?.let { PadDialogFactory.ChoiceListener(it) },
+            )
+        } else {
+            LauncherDialogFactory.showMessageActionChoices(
+                context, title, message, choices,
+                listener?.let { LauncherDialogFactory.ChoiceListener(it) },
+            )
+        }
+    }
+
+    /** 消息 + 动作选择菜单（带自定义取消文案）。 */
+    @JvmStatic
+    fun showMessageActionChoices(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: Array<CharSequence>?,
+        cancelText: CharSequence?,
+        listener: ((Int) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showMessageActionChoices(
+                context, title, message, choices, cancelText,
+                listener?.let { PadDialogFactory.ChoiceListener(it) },
+            )
+        } else {
+            LauncherDialogFactory.showMessageActionChoices(
+                context, title, message, choices, cancelText,
+                listener?.let { LauncherDialogFactory.ChoiceListener(it) },
+            )
+        }
+    }
+
+    /** 扫描深度选择（快速/完整切换 + 深度选项）：HD 路由 Pad。 */
+    @JvmStatic
+    fun showScanDepthChoices(
+        context: Context,
+        title: String?,
+        quickModeText: String?,
+        fullModeText: String?,
+        labels: Array<CharSequence>?,
+        depthValues: IntArray?,
+        currentDepth: Int,
+        listener: ((depth: Int, fullRefresh: Boolean) -> Unit)?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showScanDepthChoices(
+                context, title, quickModeText, fullModeText, labels, depthValues, currentDepth,
+                listener?.let { LauncherDialogFactory.ScanDepthListener(it) },
+            )
+        } else {
+            LauncherDialogFactory.showScanDepthChoices(
+                context, title, quickModeText, fullModeText, labels, depthValues, currentDepth,
+                listener?.let { LauncherDialogFactory.ScanDepthListener(it) },
+            )
+        }
+    }
+
+    /** 文本选择 + 跳过/取消（xp3 目标解析等）：HD 路由 Pad。 */
+    @JvmStatic
+    fun showTextChoicesWithSkip(
+        context: Context,
+        title: String?,
+        message: String?,
+        choices: List<String>?,
+        skipText: String?,
+        cancelText: String?,
+        listener: ((String) -> Unit)?,
+        onSkip: Runnable?,
+        onCancel: Runnable?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showTextChoicesWithSkip(
+                context, title, message, choices, skipText, cancelText,
+                listener?.let { LauncherDialogFactory.TextChoiceListener(it) },
+                onSkip, onCancel,
+            )
+        } else {
+            LauncherDialogFactory.showTextChoicesWithSkip(
+                context, title, message, choices, skipText, cancelText,
+                listener?.let { LauncherDialogFactory.TextChoiceListener(it) },
+                onSkip, onCancel,
+            )
+        }
+    }
+
+    /** 更新结果弹窗：HD 路由 Pad。 */
+    @JvmStatic
+    fun showUpdateResult(
+        context: Context,
+        info: LauncherUpdateBridge.UpdateInfo?,
+        currentVersion: String?,
+        hasUpdate: Boolean,
+        error: String?,
+    ) {
+        if (isHd(context)) {
+            PadDialogFactory.showUpdateResult(context, info, currentVersion, hasUpdate, error)
+        } else {
+            LauncherDialogFactory.showUpdateResult(context, info, currentVersion, hasUpdate, error)
         }
     }
 

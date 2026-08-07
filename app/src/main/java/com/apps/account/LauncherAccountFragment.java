@@ -20,7 +20,7 @@ import com.apps.LauncherPreferences;
 import com.apps.common.LauncherInsetsHelper;
 import com.apps.profile.LauncherProfileFragment;
 import com.apps.LauncherNavigationMetricsKt;
-import com.apps.theme.LauncherDialogFactory;
+import com.apps.HDModel.LauncherDialogRouter;
 import com.apps.theme.LauncherTheme;
 import com.apps.util.LauncherUrlOpener;
 import com.apps.widget.LauncherTabletPortraitScaler;
@@ -205,11 +205,11 @@ public class LauncherAccountFragment extends Fragment {
 
     private void showAuthResultDialog(String title, String message) {
         if (getContext() == null) return;
-        LauncherDialogFactory.showInfo(requireContext(), title, message);
+        LauncherDialogRouter.showInfo(requireContext(), title, message);
     }
 
     private void showQQGroupDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.social_qq_group),
                 getString(R.string.social_open_qq_message),
@@ -219,7 +219,7 @@ public class LauncherAccountFragment extends Fragment {
     }
 
     private void showGitHubDialog() {
-        LauncherDialogFactory.showStandardConfirm(
+        LauncherDialogRouter.showStandardConfirm(
                 requireContext(),
                 getString(R.string.social_official_site),
                 getString(R.string.social_open_github_message),

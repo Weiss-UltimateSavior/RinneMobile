@@ -25,7 +25,7 @@ import com.apps.common.LauncherInsetsHelper;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.settings.LauncherMetadataSourceActivity;
-import com.apps.theme.LauncherDialogFactory;
+import com.apps.HDModel.LauncherDialogRouter;
 import com.apps.theme.LauncherTheme;
 import com.apps.widget.LauncherTabletPortraitScaler;
 
@@ -248,7 +248,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
 
     @Override
     public void showConfirmDialog(String title, String message, String confirmText, Runnable onConfirm) {
-        LauncherDialogFactory.showConfirm(requireContext(), title, message, confirmText, onConfirm);
+        LauncherDialogRouter.showConfirm(requireContext(), title, message, confirmText, onConfirm);
     }
 
     @Override

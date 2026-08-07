@@ -3,7 +3,7 @@ package com.apps.game
 import android.text.format.DateFormat
 import android.widget.Toast
 
-import com.apps.theme.LauncherDialogFactory
+import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.launcherbridge.LauncherSyncBridge
 
@@ -27,7 +27,7 @@ class SyncSettingsController(
     }
 
     fun showSyncOptions() {
-        LauncherDialogFactory.showMessageActionChoices(
+        LauncherDialogRouter.showMessageActionChoices(
             host.requireContext(),
             host.getString(R.string.game_sync_cloud),
             syncStatusText(),
