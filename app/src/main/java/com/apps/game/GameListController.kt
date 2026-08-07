@@ -150,7 +150,8 @@ class GameListController(
             val loadedDevelopers = developers
             val loadedCategories = builtCategories
             mainQueue.post {
-                if (disposed || listener.isBindingNull()) return@post
+                if (disposed || listener.isBindingNull()) {return@post
+                }
                 allGames.clear()
                 allGames.addAll(loadedGames)
                 libraryState.replaceAll(loadedGames)
@@ -284,7 +285,9 @@ class GameListController(
     private fun matchGame(game: Game, query: String, category: String): Boolean {
         val normalized = query.trim().lowercase(Locale.ROOT)
         return (normalized.isEmpty()
-                || GameMetadataFormatter.safeTitle(game).lowercase(Locale.ROOT).contains(normalized))
+                || GameMetadataFormatter.safeTitle(game).lowercase(Locale.ROOT).contains(normalized)
+                || game.originalTitle?.lowercase(Locale.ROOT)?.contains(normalized) == true
+                || game.tags?.lowercase(Locale.ROOT)?.contains(normalized) == true)
                 && (category.trim().isEmpty()
                 || GameCategoryBuilder.matches(game, category, listener.getGameDevelopers()))
     }
