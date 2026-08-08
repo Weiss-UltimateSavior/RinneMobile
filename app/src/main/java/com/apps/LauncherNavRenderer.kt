@@ -257,18 +257,20 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
         val anriTheme = LauncherThemeStyle.isAnri(host)
         val xinhaitianTheme = LauncherThemeStyle.isXinhaitian(host)
         val natsumeTheme = LauncherThemeStyle.isNatsume(host)
-        applyCenterLogoScale(b.navLaunchCenterText, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme)
+        val izumiTheme = LauncherThemeStyle.isIzumi(host)
+        applyCenterLogoScale(b.navLaunchCenterText, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme, izumiTheme)
         b.navPillLaunchCenterIcon.apply {
             when {
                 rinneTheme -> setImageResource(R.drawable.launcher_theme_rinne_def)
                 anriTheme -> setImageResource(R.drawable.launcher_theme_anri_def)
                 xinhaitianTheme -> setImageResource(R.drawable.launcher_theme_xinhaitian_def)
                 natsumeTheme -> setImageResource(R.drawable.launcher_theme_natsume_def)
+                izumiTheme -> setImageResource(R.drawable.launcher_theme_izumi_def)
                 else -> setImageResource(R.drawable.launcher_game_center_default)
             }
             setColorFilter(LauncherTheme.primary(host))
         }
-        applyCenterLogoScale(b.navPillLaunchCenterIcon, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme)
+        applyCenterLogoScale(b.navPillLaunchCenterIcon, rinneTheme, anriTheme, xinhaitianTheme, natsumeTheme, izumiTheme)
     }
 
     fun refreshLiquidGlassThemeState() {
@@ -279,6 +281,7 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
             LauncherThemeStyle.isAnri(host) -> R.drawable.launcher_theme_anri_def
             LauncherThemeStyle.isXinhaitian(host) -> R.drawable.launcher_theme_xinhaitian_def
             LauncherThemeStyle.isNatsume(host) -> R.drawable.launcher_theme_natsume_def
+            LauncherThemeStyle.isIzumi(host) -> R.drawable.launcher_theme_izumi_def
             else -> R.drawable.launcher_game_center_default
         }
         liquidGlassDarkMode.value = LauncherPreferences.isDarkMode(host)
@@ -293,13 +296,15 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
         rinneTheme: Boolean,
         anriTheme: Boolean,
         xinhaitianTheme: Boolean,
-        natsumeTheme: Boolean
+        natsumeTheme: Boolean,
+        izumiTheme: Boolean
     ) {
         val scale = when {
             rinneTheme -> 1.09f
             anriTheme -> 1.29f
             xinhaitianTheme -> 1.14f
             natsumeTheme -> 1.02f
+            izumiTheme -> 1f
             else -> 1f
         }
         logo.scaleX = scale
@@ -334,7 +339,8 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
             val anriTheme = LauncherThemeStyle.isAnri(context)
             val xinhaitianTheme = LauncherThemeStyle.isXinhaitian(context)
             val natsumeTheme = LauncherThemeStyle.isNatsume(context)
-            val themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme
+            val izumiTheme = LauncherThemeStyle.isIzumi(context)
+            val themedIcon = rinneTheme || anriTheme || xinhaitianTheme || natsumeTheme || izumiTheme
             logoImage.visibility = if (themedIcon) View.GONE else View.VISIBLE
             logoText.visibility = if (themedIcon) View.VISIBLE else View.GONE
             when {
@@ -358,6 +364,12 @@ class LauncherNavRenderer(private val host: LauncherActivity) {
                 }
                 natsumeTheme -> {
                     logoText.setImageResource(R.drawable.launcher_theme_natsume_def)
+                    logoImage.clearColorFilter()
+                    // 主题图标白色 tint，属混合用途。
+                    logoText.setColorFilter(Color.WHITE)
+                }
+                izumiTheme -> {
+                    logoText.setImageResource(R.drawable.launcher_theme_izumi_def)
                     logoImage.clearColorFilter()
                     // 主题图标白色 tint，属混合用途。
                     logoText.setColorFilter(Color.WHITE)

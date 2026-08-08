@@ -542,6 +542,10 @@ class LauncherActivity : AppCompatActivity() {
             LauncherThemeStyle.isNatsume(context)
 
         @JvmStatic
+        fun isIzumiTheme(context: android.content.Context): Boolean =
+            LauncherThemeStyle.isIzumi(context)
+
+        @JvmStatic
         fun launcherPrimaryColor(context: android.content.Context): Int =
             LauncherThemeStyle.primaryColor(context)
 

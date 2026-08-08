@@ -128,6 +128,8 @@
     <string name="theme_xinhaitian_description">澄んだ心に、やさしい空の光</string>
     <string name="theme_natsume_display_name">四季ナツメ（スタイル）</string>
     <string name="theme_natsume_description">季節は巡り、夏はいつまでも</string>
+    <string name="theme_izumi_display_name">和泉妃愛（スタイル）</string>
+    <string name="theme_izumi_description">お金持ちの妹は嫌いですか？</string>
     <string name="theme_dynamic_particles">ダイナミックパーティクル</string>
     <string name="theme_particles_description">Launcher 背景のドットエフェクトを設定します</string>
     <string name="theme_apply">適用</string>
@@ -226,6 +228,7 @@
     <string name="theme_anri_applied">鷹倉杏璃スタイルを適用しました</string>
     <string name="theme_xinhaitian_applied">新海天スタイルを適用しました</string>
     <string name="theme_natsume_applied">四季ナツメスタイルを適用しました</string>
+    <string name="theme_izumi_applied">和泉妃愛スタイルを適用しました</string>
     <string name="theme_default_restored">既定のテーマに戻しました</string>
     <string name="theme_not_available">%1$s はまだ利用できません</string>
     <string name="theme_particle_floating">浮遊ライト</string>

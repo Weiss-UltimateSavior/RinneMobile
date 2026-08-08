@@ -62,6 +62,7 @@ class LauncherThemeMenuFragment : Fragment() {
         currentBinding.pinkThemeRow.setOnClickListener { selectTheme(LauncherThemeStyle.THEME_STYLE_ANRI) }
         currentBinding.xinhaitianThemeRow.setOnClickListener { selectTheme(LauncherThemeStyle.THEME_STYLE_XINHAITIAN) }
         currentBinding.natsumeThemeRow.setOnClickListener { selectTheme(LauncherThemeStyle.THEME_STYLE_NATSUME) }
+        currentBinding.izumiThemeRow.setOnClickListener { selectTheme(LauncherThemeStyle.THEME_STYLE_IZUMI) }
         currentBinding.particleToggleRow.setOnClickListener { showParticleStyleDialog() }
         currentBinding.themeMenuApply.setOnClickListener { applySelectedTheme() }
     }
@@ -78,6 +79,8 @@ class LauncherThemeMenuFragment : Fragment() {
         currentBinding.xinhaitianThemeLogo.clipToOutline = true
         currentBinding.natsumeThemeLogo.background = LauncherTheme.circle(requireContext(), LauncherThemeStyle.NATSUME_PRIMARY_COLOR)
         currentBinding.natsumeThemeLogo.clipToOutline = true
+        currentBinding.izumiThemeLogo.background = LauncherTheme.circle(requireContext(), LauncherThemeStyle.IZUMI_PRIMARY_COLOR)
+        currentBinding.izumiThemeLogo.clipToOutline = true
         currentBinding.particleToggleIcon.background = LauncherTheme.circle(requireContext())
     }
 
@@ -93,6 +96,7 @@ class LauncherThemeMenuFragment : Fragment() {
         val pinkSelected = LauncherThemeStyle.THEME_STYLE_ANRI == selectedTheme
         val xinhaitianSelected = LauncherThemeStyle.THEME_STYLE_XINHAITIAN == selectedTheme
         val natsumeSelected = LauncherThemeStyle.THEME_STYLE_NATSUME == selectedTheme
+        val izumiSelected = LauncherThemeStyle.THEME_STYLE_IZUMI == selectedTheme
 
         currentBinding.freshThemeRow.setBackgroundResource(if (freshSelected) 0 else R.drawable.launcher_chat_option_bg)
         if (freshSelected) currentBinding.freshThemeRow.background = LauncherTheme.selectedOption(requireContext())
@@ -104,12 +108,15 @@ class LauncherThemeMenuFragment : Fragment() {
         if (xinhaitianSelected) currentBinding.xinhaitianThemeRow.background = LauncherTheme.selectedOption(requireContext())
         currentBinding.natsumeThemeRow.setBackgroundResource(if (natsumeSelected) 0 else R.drawable.launcher_chat_option_bg)
         if (natsumeSelected) currentBinding.natsumeThemeRow.background = LauncherTheme.selectedOption(requireContext())
+        currentBinding.izumiThemeRow.setBackgroundResource(if (izumiSelected) 0 else R.drawable.launcher_chat_option_bg)
+        if (izumiSelected) currentBinding.izumiThemeRow.background = LauncherTheme.selectedOption(requireContext())
 
         currentBinding.freshThemeCheck.visibility = if (freshSelected) View.VISIBLE else View.INVISIBLE
         currentBinding.nightThemeCheck.visibility = if (nightSelected) View.VISIBLE else View.INVISIBLE
         currentBinding.pinkThemeCheck.visibility = if (pinkSelected) View.VISIBLE else View.INVISIBLE
         currentBinding.xinhaitianThemeCheck.visibility = if (xinhaitianSelected) View.VISIBLE else View.INVISIBLE
         currentBinding.natsumeThemeCheck.visibility = if (natsumeSelected) View.VISIBLE else View.INVISIBLE
+        currentBinding.izumiThemeCheck.visibility = if (izumiSelected) View.VISIBLE else View.INVISIBLE
     }
 
     private fun applySelectedTheme() {
@@ -130,6 +137,10 @@ class LauncherThemeMenuFragment : Fragment() {
             LauncherThemeStyle.THEME_STYLE_NATSUME -> {
                 LauncherThemeStyle.setThemeStyle(context, LauncherThemeStyle.THEME_STYLE_NATSUME)
                 Toast.makeText(context, R.string.theme_natsume_applied, Toast.LENGTH_SHORT).show()
+            }
+            LauncherThemeStyle.THEME_STYLE_IZUMI -> {
+                LauncherThemeStyle.setThemeStyle(context, LauncherThemeStyle.THEME_STYLE_IZUMI)
+                Toast.makeText(context, R.string.theme_izumi_applied, Toast.LENGTH_SHORT).show()
             }
             LauncherThemeStyle.THEME_STYLE_DEFAULT -> {
                 LauncherThemeStyle.setThemeStyle(context, LauncherThemeStyle.THEME_STYLE_DEFAULT)

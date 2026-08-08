@@ -128,6 +128,8 @@
     <string name="theme_xinhaitian_description">A clear heart beneath a gentle sky</string>
     <string name="theme_natsume_display_name">Natsume Shiki (Style)</string>
     <string name="theme_natsume_description">Seasons turn, while summer remains</string>
+    <string name="theme_izumi_display_name">Izumi Iria (Style)</string>
+    <string name="theme_izumi_description">Don\'t you like a rich-girl little sister?</string>
     <string name="theme_dynamic_particles">Dynamic Particles</string>
     <string name="theme_particles_description">Controls the dot effects in the Launcher background</string>
     <string name="theme_apply">Apply</string>
@@ -226,6 +228,7 @@
     <string name="theme_anri_applied">Anri Takakura style applied</string>
     <string name="theme_xinhaitian_applied">Xinhaitian style applied</string>
     <string name="theme_natsume_applied">Natsume Shiki style applied</string>
+    <string name="theme_izumi_applied">Izumi Iria style applied</string>
     <string name="theme_default_restored">Default theme restored</string>
     <string name="theme_not_available">%1$s is not available yet</string>
     <string name="theme_particle_floating">Floating Lights</string>

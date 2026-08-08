@@ -44,6 +44,7 @@ private object AppLauncherUiDelegate : LauncherUiBridge.Delegate {
         LauncherThemeStyle.isAnri(context) -> com.core.R.drawable.launcher_theme_anri_def
         LauncherThemeStyle.isXinhaitian(context) -> com.core.R.drawable.launcher_theme_xinhaitian_def
         LauncherThemeStyle.isNatsume(context) -> com.core.R.drawable.launcher_theme_natsume_def
+        LauncherThemeStyle.isIzumi(context) -> com.core.R.drawable.launcher_theme_izumi_def
         else -> com.core.R.drawable.launcher_game_center_default
     }
 

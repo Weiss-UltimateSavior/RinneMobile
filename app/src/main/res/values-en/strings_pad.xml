@@ -41,6 +41,7 @@
     <string name="pad_theme_xinhaitian_content_description">Xinhaitian theme</string>
     <string name="pad_theme_xinhaitian_display_name">Xinhaitian (Style)</string>
     <string name="pad_theme_natsume_content_description">Natsume theme</string>
+    <string name="pad_theme_izumi_content_description">Izumi theme</string>
     <string name="pad_metadata_notice">Use a Bangumi account registered for over three months when applying for a Token. YueMu Gal uses a public API and needs no Token. After switching sources, rematch a game to refresh its metadata and cover.</string>
     <string name="pad_select_kr_version">Select KR Engine Version</string>
     <string name="pad_select_ons_encoding">ONS Text Encoding</string>
@@ -63,6 +64,7 @@
     <string name="pad_theme_anri_applied">Anri theme applied</string>
     <string name="pad_theme_xinhaitian_applied">Xinhaitian theme applied</string>
     <string name="pad_theme_natsume_applied">Natsume theme applied</string>
+    <string name="pad_theme_izumi_applied">Izumi theme applied</string>
     <string name="pad_theme_default_restored">Default theme restored</string>
     <string name="pad_engine_saved">Engine settings saved: %1$s</string>
     <string name="pad_native_krkr_failed">Unable to enter native KRKR</string>

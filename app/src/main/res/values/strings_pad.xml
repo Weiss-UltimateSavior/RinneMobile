@@ -41,6 +41,7 @@
     <string name="pad_theme_xinhaitian_content_description">心海天主题</string>
     <string name="pad_theme_xinhaitian_display_name">心海天（风格）</string>
     <string name="pad_theme_natsume_content_description">四季夏目主题</string>
+    <string name="pad_theme_izumi_content_description">和泉妃爱主题</string>
     <string name="pad_metadata_notice">Bangumi Token 建议使用注册超过三个月的账号申请。月幕 Gal 使用公开 API，无需 Token。切换资料源后，可对当前游戏重新匹配以刷新资料与封面。</string>
     <string name="pad_select_kr_version">选择 KR 引擎版本</string>
     <string name="pad_select_ons_encoding">ONS 文本编码</string>
@@ -63,6 +64,7 @@
     <string name="pad_theme_anri_applied">已应用鹰仓杏璃风格</string>
     <string name="pad_theme_xinhaitian_applied">已应用心海天风格</string>
     <string name="pad_theme_natsume_applied">已应用四季夏目风格</string>
+    <string name="pad_theme_izumi_applied">已应用和泉妃爱风格</string>
     <string name="pad_theme_default_restored">已恢复默认主题</string>
     <string name="pad_engine_saved">引擎设置已保存：%1$s</string>
     <string name="pad_native_krkr_failed">无法进入原生 KRKR</string>

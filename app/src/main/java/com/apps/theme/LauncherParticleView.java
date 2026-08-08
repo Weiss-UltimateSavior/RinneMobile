@@ -372,13 +372,15 @@ public class LauncherParticleView extends View {
         boolean anriTheme = LauncherThemeStyle.isAnri(getContext());
         boolean xinhaitianTheme = LauncherThemeStyle.isXinhaitian(getContext());
         boolean natsumeTheme = LauncherThemeStyle.isNatsume(getContext());
-        if (!rinneTheme && !anriTheme && !xinhaitianTheme && !natsumeTheme) {
+        boolean izumiTheme = LauncherThemeStyle.isIzumi(getContext());
+        if (!rinneTheme && !anriTheme && !xinhaitianTheme && !natsumeTheme && !izumiTheme) {
             return particleColors[Math.abs(index) % particleColors.length];
         }
         int baseColor = rinneTheme ? LauncherThemeStyle.RINNE_PRIMARY_COLOR
                 : anriTheme ? LauncherThemeStyle.ANRI_PRIMARY_COLOR
                 : xinhaitianTheme ? LauncherThemeStyle.XINHAITIAN_PRIMARY_COLOR
-                : LauncherThemeStyle.NATSUME_PRIMARY_COLOR;
+                : natsumeTheme ? LauncherThemeStyle.NATSUME_PRIMARY_COLOR
+                : LauncherThemeStyle.IZUMI_PRIMARY_COLOR;
         float[] hsv = new float[3];
         Color.colorToHSV(baseColor, hsv);
         hsv[1] = Math.max(0.22f, hsv[1] - 0.08f);

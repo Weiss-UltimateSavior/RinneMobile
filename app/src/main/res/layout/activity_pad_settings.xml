@@ -886,6 +886,63 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/padIzumiThemeRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/launcher_chat_option_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <ImageView
+                        android:id="@+id/padIzumiThemeLogo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:clipToOutline="true"
+                        android:contentDescription="@string/pad_theme_izumi_content_description"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/launcher_theme_izumi_logo" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/theme_izumi_display_name"
+                            android:textColor="@color/launcher_text_color"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/theme_izumi_description"
+                            android:textColor="@color/launcher_text_muted_color"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/padIzumiThemeCheck"
+                        android:layout_width="22dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="✓"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/padParticleToggleRow"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"

@@ -51,6 +51,7 @@ public class PadSettingsActivity extends AppCompatActivity {
     private static final String THEME_ANRI_LABEL = LauncherThemeStyle.THEME_STYLE_ANRI;
     private static final String THEME_XINHAITIAN_LABEL = LauncherThemeStyle.THEME_STYLE_XINHAITIAN;
     private static final String THEME_NATSUME_LABEL = LauncherThemeStyle.THEME_STYLE_NATSUME;
+    private static final String THEME_IZUMI_LABEL = LauncherThemeStyle.THEME_STYLE_IZUMI;
     private static final String[] ONS_ENCODING_LABELS = {"gbk", "sjis", "utf8"};
     private static final String STATE_ENGINE_VERSION_INDEX = "engine_version_index";
     private static final String STATE_METADATA_SOURCE_INDEX = "metadata_source_index";
@@ -123,6 +124,7 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padAnriThemeRow.setOnClickListener(view -> selectTheme(THEME_ANRI_LABEL));
         binding.padXinhaitianThemeRow.setOnClickListener(view -> selectTheme(THEME_XINHAITIAN_LABEL));
         binding.padNatsumeThemeRow.setOnClickListener(view -> selectTheme(THEME_NATSUME_LABEL));
+        binding.padIzumiThemeRow.setOnClickListener(view -> selectTheme(THEME_IZUMI_LABEL));
         binding.padParticleToggleRow.setOnClickListener(view -> showParticleStyleDialog());
         binding.padThemeApply.setOnClickListener(view -> applySelectedTheme());
         binding.padKrkrSaveButton.setOnClickListener(view -> saveKrkrConfig());
@@ -373,6 +375,8 @@ public class PadSettingsActivity extends AppCompatActivity {
             selectedTheme = THEME_XINHAITIAN_LABEL;
         } else if (LauncherThemeStyle.THEME_STYLE_NATSUME.equals(style)) {
             selectedTheme = THEME_NATSUME_LABEL;
+        } else if (LauncherThemeStyle.THEME_STYLE_IZUMI.equals(style)) {
+            selectedTheme = THEME_IZUMI_LABEL;
         } else {
             selectedTheme = THEME_DEFAULT_LABEL;
         }
@@ -517,6 +521,8 @@ public class PadSettingsActivity extends AppCompatActivity {
         binding.padXinhaitianThemeLogo.setClipToOutline(true);
         binding.padNatsumeThemeLogo.setBackground(LauncherTheme.circle(this, LauncherThemeStyle.NATSUME_PRIMARY_COLOR));
         binding.padNatsumeThemeLogo.setClipToOutline(true);
+        binding.padIzumiThemeLogo.setBackground(LauncherTheme.circle(this, LauncherThemeStyle.IZUMI_PRIMARY_COLOR));
+        binding.padIzumiThemeLogo.setClipToOutline(true);
         binding.padParticleToggleIcon.setBackground(LauncherTheme.circle(this));
         binding.padParticleToggleIcon.setTextColor(LauncherTheme.onPrimary(this));
         PadDialogFactory.primaryInlineAction(binding.padThemeApply);
@@ -533,22 +539,26 @@ public class PadSettingsActivity extends AppCompatActivity {
         boolean anriSelected = THEME_ANRI_LABEL.equals(selectedTheme);
         boolean xinhaitianSelected = THEME_XINHAITIAN_LABEL.equals(selectedTheme);
         boolean natsumeSelected = THEME_NATSUME_LABEL.equals(selectedTheme);
+        boolean izumiSelected = THEME_IZUMI_LABEL.equals(selectedTheme);
         styleThemeRow(binding.padFreshThemeRow, freshSelected);
         styleThemeRow(binding.padRinneThemeRow, rinneSelected);
         styleThemeRow(binding.padAnriThemeRow, anriSelected);
         styleThemeRow(binding.padXinhaitianThemeRow, xinhaitianSelected);
         styleThemeRow(binding.padNatsumeThemeRow, natsumeSelected);
+        styleThemeRow(binding.padIzumiThemeRow, izumiSelected);
         binding.padFreshThemeCheck.setVisibility(freshSelected ? View.VISIBLE : View.INVISIBLE);
         binding.padRinneThemeCheck.setVisibility(rinneSelected ? View.VISIBLE : View.INVISIBLE);
         binding.padAnriThemeCheck.setVisibility(anriSelected ? View.VISIBLE : View.INVISIBLE);
         binding.padXinhaitianThemeCheck.setVisibility(xinhaitianSelected ? View.VISIBLE : View.INVISIBLE);
         binding.padNatsumeThemeCheck.setVisibility(natsumeSelected ? View.VISIBLE : View.INVISIBLE);
+        binding.padIzumiThemeCheck.setVisibility(izumiSelected ? View.VISIBLE : View.INVISIBLE);
         int primary = LauncherTheme.primary(this);
         binding.padFreshThemeCheck.setTextColor(primary);
         binding.padRinneThemeCheck.setTextColor(primary);
         binding.padAnriThemeCheck.setTextColor(primary);
         binding.padXinhaitianThemeCheck.setTextColor(primary);
         binding.padNatsumeThemeCheck.setTextColor(primary);
+        binding.padIzumiThemeCheck.setTextColor(primary);
     }
 
     private void styleThemeRow(View row, boolean selected) {
@@ -617,6 +627,9 @@ public class PadSettingsActivity extends AppCompatActivity {
         } else if (THEME_NATSUME_LABEL.equals(selectedTheme)) {
             style = LauncherThemeStyle.THEME_STYLE_NATSUME;
             message = getString(R.string.pad_theme_natsume_applied);
+        } else if (THEME_IZUMI_LABEL.equals(selectedTheme)) {
+            style = LauncherThemeStyle.THEME_STYLE_IZUMI;
+            message = getString(R.string.pad_theme_izumi_applied);
         } else {
             style = LauncherThemeStyle.THEME_STYLE_DEFAULT;
             message = getString(R.string.pad_theme_default_restored);

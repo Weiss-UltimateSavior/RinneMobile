@@ -13,6 +13,7 @@ object LauncherThemeStyle {
     const val THEME_STYLE_ANRI = "anri"
     const val THEME_STYLE_XINHAITIAN = "xinhaitian"
     const val THEME_STYLE_NATSUME = "natsume"
+    const val THEME_STYLE_IZUMI = "izumi"
 
     @JvmField
     val RINNE_PRIMARY_COLOR: Int = Color.rgb(216, 169, 201)
@@ -24,6 +25,9 @@ object LauncherThemeStyle {
     val XINHAITIAN_ACCENT_COLOR: Int = Color.rgb(237, 173, 201)
     @JvmField
     val NATSUME_PRIMARY_COLOR: Int = Color.rgb(197, 57, 58)
+    /** 和泉妃爱（主题色调 #d6a826）。 */
+    @JvmField
+    val IZUMI_PRIMARY_COLOR: Int = Color.rgb(214, 168, 38)
 
     @JvmStatic
     fun setThemeStyle(context: Context, style: String?) {
@@ -31,6 +35,7 @@ object LauncherThemeStyle {
             || THEME_STYLE_ANRI == style
             || THEME_STYLE_XINHAITIAN == style
             || THEME_STYLE_NATSUME == style
+            || THEME_STYLE_IZUMI == style
         ) style else THEME_STYLE_DEFAULT
         context.applicationContext
             .getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
@@ -67,11 +72,17 @@ object LauncherThemeStyle {
     }
 
     @JvmStatic
+    fun isIzumi(context: Context): Boolean {
+        return THEME_STYLE_IZUMI == getThemeStyle(context)
+    }
+
+    @JvmStatic
     fun primaryColor(context: Context): Int {
         if (isRinne(context)) return RINNE_PRIMARY_COLOR
         if (isAnri(context)) return ANRI_PRIMARY_COLOR
         if (isXinhaitian(context)) return XINHAITIAN_PRIMARY_COLOR
         if (isNatsume(context)) return NATSUME_PRIMARY_COLOR
+        if (isIzumi(context)) return IZUMI_PRIMARY_COLOR
         return ContextCompat.getColor(LauncherUiMode.wrap(context)!!, R.color.launcher_primary_color)
     }
 
@@ -83,6 +94,7 @@ object LauncherThemeStyle {
             isAnri(context) -> R.drawable.launcher_home_stats_bg_anri
             isXinhaitian(context) -> R.drawable.launcher_home_stats_xinhaitian_bg
             isNatsume(context) -> R.drawable.launcher_home_stats_natsume_bg
+            isIzumi(context) -> R.drawable.launcher_home_stats_izumi_bg
             else -> R.drawable.launcher_home_stats_bg
         }
     }

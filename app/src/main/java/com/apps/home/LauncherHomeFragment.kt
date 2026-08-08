@@ -194,6 +194,7 @@ open class LauncherHomeFragment : Fragment() {
             && !LauncherActivity.isAnriTheme(requireContext())
             && !LauncherActivity.isXinhaitianTheme(requireContext())
             && !LauncherActivity.isNatsumeTheme(requireContext())
+            && !LauncherActivity.isIzumiTheme(requireContext())
         if (isDefault) {
             currentBinding.homeStatsScrim.setBackgroundResource(com.core.R.drawable.launcher_home_stats_scrim)
         } else {

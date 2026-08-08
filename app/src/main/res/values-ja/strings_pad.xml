@@ -41,6 +41,7 @@
     <string name="pad_theme_xinhaitian_content_description">心海天テーマ</string>
     <string name="pad_theme_xinhaitian_display_name">心海天（スタイル）</string>
     <string name="pad_theme_natsume_content_description">四季夏目テーマ</string>
+    <string name="pad_theme_izumi_content_description">和泉妃愛テーマ</string>
     <string name="pad_metadata_notice">Bangumi Token は登録から3か月以上のアカウントで申請することを推奨します。月幕 Gal は公開 API のため Token は不要です。資料元の切り替え後、ゲームを再検索すると情報とカバーを更新できます。</string>
     <string name="pad_select_kr_version">KR エンジンのバージョンを選択</string>
     <string name="pad_select_ons_encoding">ONS テキストエンコード</string>
@@ -63,6 +64,7 @@
     <string name="pad_theme_anri_applied">鷹倉杏璃スタイルを適用しました</string>
     <string name="pad_theme_xinhaitian_applied">心海天スタイルを適用しました</string>
     <string name="pad_theme_natsume_applied">四季夏目スタイルを適用しました</string>
+    <string name="pad_theme_izumi_applied">和泉妃愛スタイルを適用しました</string>
     <string name="pad_theme_default_restored">デフォルトテーマに戻しました</string>
     <string name="pad_engine_saved">エンジン設定を保存しました：%1$s</string>
     <string name="pad_native_krkr_failed">ネイティブ KRKR を開けません</string>

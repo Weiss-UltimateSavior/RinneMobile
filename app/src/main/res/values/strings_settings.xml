@@ -128,6 +128,8 @@
     <string name="theme_xinhaitian_description">心海澄澈，天光温柔</string>
     <string name="theme_natsume_display_name">四季夏目（风格）</string>
     <string name="theme_natsume_description">四季流转，夏日常驻</string>
+    <string name="theme_izumi_display_name">和泉妃爱（风格）</string>
+    <string name="theme_izumi_description">难道你不喜欢富婆妹吗？</string>
     <string name="theme_dynamic_particles">动态粒子</string>
     <string name="theme_particles_description">控制 Launcher 背景的小圆点特效</string>
     <string name="theme_apply">应用</string>
@@ -229,6 +231,7 @@
     <string name="theme_anri_applied">已应用鹰仓杏璃风格</string>
     <string name="theme_xinhaitian_applied">已应用新海天风格</string>
     <string name="theme_natsume_applied">已应用四季夏目风格</string>
+    <string name="theme_izumi_applied">已应用和泉妃爱风格</string>
     <string name="theme_default_restored">已恢复默认主题</string>
     <string name="theme_not_available">%1$s 待接入</string>
     <string name="theme_particle_floating">漂浮光点</string>
