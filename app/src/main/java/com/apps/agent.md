@@ -139,6 +139,34 @@
 - 按键瀑布样式通过 `radius <= 0` 标记休眠粒子（index >= `SAKURA_ACTIVE_COUNT`），`updateSakura` 与 `drawSakura` 需在开头跳过休眠粒子；活跃粒子大小固定不随机。
 - 新增粒子样式时，必须同步扩展 `LauncherActivity.setLauncherParticleStyle()`/`getLauncherParticleStyle()` 的 `safeStyle` 校验、`LauncherParticleView.setParticleStyle()` 与 `isXxxStyle()` 分支，以及 `PadSettingsActivity` 与 `LauncherThemeMenuActivity` 的样式选择弹窗。
 
+### 新增主题风格：完整清单与路径
+
+新增主题风格（如「和泉妃爱/izumi」）时，以下改动缺一即视为主题未完成。以 `izumi` 为主题风格存储值为例，`rinne/anri/xinhaitian/natsume/izumi` 五个存量主题均已按本清单落地，可作对照蓝本。
+
+1. **主题源 object** —— `com.apps.LauncherThemeStyle`（偏好/主色唯一来源，禁止在 Activity/Fragment 定义同名局部常量）：
+   - 常量 `const val THEME_STYLE_IZUMI = "izumi"`（持久化存储值，发布后不得改动）
+   - 主色 `@JvmField val IZUMI_PRIMARY_COLOR = Color.rgb(…)`（主题色调，如 `#d6a826` → `Color.rgb(214, 168, 38)`）
+   - `setThemeStyle` 的白名单 `when` 加入该风格
+   - 新增 `isIzumi()`，并在 `primaryColor()`、`homeStatsImageRes()` 各加对应分支
+2. **图片素材** —— 复制到 `app/src/main/res/drawable-nodpi/`，命名规范：
+   - 主题菜单 logo → `launcher_theme_izumi_logo.png`
+   - 导航栏/悬浮翻译主题 logo → `launcher_theme_izumi_def.png`
+   - 卡片容器/首页资料统计背景 → `launcher_home_stats_izumi_bg.png`
+3. **导航 logo 接入**：
+   - `com.apps.LauncherApplication.themeLogoRes` 加 `isIzumi -> launcher_theme_izumi_def`
+   - `com.apps.LauncherNavRenderer` 三处：`navPillLaunchCenterIcon`、`liquidGlassLandscapeIcon` 的资源分支，`applyThemeLogoTone()` 的 `themedIcon` 与 logo 分支，以及 `applyCenterLogoScale()` 参数与缩放分支
+4. **首页资料统计**：`com.apps.home.LauncherHomeFragment` 的 `isDefault` 表达式追加 `&& !LauncherActivity.isIzumiTheme(requireContext())`
+5. **Activity 兼容委托**：`com.apps.LauncherActivity` companion 增加 `@JvmStatic isIzumiTheme(context)`（仅委托 `LauncherThemeStyle.isIzumi`，不加实现）
+6. **粒子取色**：`com.apps.theme.LauncherParticleView.particleColor()` 增加 izumi 分支，以 `IZUMI_PRIMARY_COLOR` 为基色生成变体（默认主题除外）
+7. **竖屏主题菜单 UI**：`com.apps.theme.LauncherThemeMenuFragment`（行点击、logo 圆底、选中态、`applySelectedTheme` 分支）+ `res/layout/activity_launcher_theme_menu.xml` 新增行（logo/名称/简介/勾选 ✓）。HD 设置复用该 fragment，自动生效，无需另改。
+8. **Pad 设置 UI**：`com.apps.PadUi.PadSettingsActivity`（`THEME_IZUMI_LABEL`、`bindActions`、`restoreSelectedTheme`、`applyThemeMenuTone`、`renderThemeSelection`、`applySelectedTheme`）+ `res/layout/activity_pad_settings.xml` 新增行
+9. **三语文案**（zh/en/ja 缺一视为未完成）：
+   - `res/values*/strings_settings.xml`：`theme_izumi_display_name`、`theme_izumi_description`、`theme_izumi_applied`
+   - `res/values*/strings_pad.xml`：`pad_theme_izumi_applied`、`pad_theme_izumi_content_description`
+10. **验证**：`./gradlew :app:compileDebugJavaWithJavac :app:compileDebugKotlin`（或 `:app:assembleDebug`）+ `git diff --check`
+
+> 原则同 §3「动态粒子与主题色」：新增主题只改变 primary tone；粒子必须同步取该主题 primary 为基色。禁止只改按钮主色、菜单图标而不改粒子与资料统计背景。
+
 ## 4. 竖屏 Launcher 组件
 
 ### 首页风格切换
