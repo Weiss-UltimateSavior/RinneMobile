@@ -31,7 +31,12 @@ internal object Krkrsdl3Launcher {
         scopedSaveRoot: String? = null,
         renderer: String = DEFAULT_RENDERER,
     ): Intent {
-        val resolvedPath = KrkrLauncher.resolvePath(context, gamePath, launchTarget)
+        val initiallyResolvedPath = KrkrLauncher.resolvePath(context, gamePath, launchTarget)
+        val resolvedPath = KrkrLauncher.preferEmbeddedStartupExecutable(
+            gamePath,
+            launchTarget,
+            initiallyResolvedPath,
+        )
         val rawRootPath = ScriptEngineLaunchers.stripFileScheme(
             ScriptEngineLaunchers.uriToFilePath(gamePath),
         )
@@ -58,7 +63,8 @@ internal object Krkrsdl3Launcher {
 
         DevLogger.w(
             TAG,
-            "krkrsdl3 intent gamePath=$gamePath target=$launchTarget resolved=$resolvedPath " +
+            "krkrsdl3 intent gamePath=$gamePath target=$launchTarget initial=$initiallyResolvedPath " +
+                "resolved=$resolvedPath " +
                 "rootPath=$rootPath scopedSaveDir=$scopedSaveDir saveDir=$saveDir renderer=$renderer",
         )
 

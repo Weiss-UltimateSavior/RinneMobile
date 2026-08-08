@@ -179,6 +179,37 @@ internal object KrkrLauncher {
     }
 
     /**
+     * Some commercial KRKR games put their patched startup runtime inside the Windows executable
+     * and keep bulk assets in data.xp3. Starting data.xp3 directly silently bypasses that runtime.
+     */
+    @JvmStatic
+    fun preferEmbeddedStartupExecutable(
+        rootUri: String?,
+        launchTarget: String?,
+        resolvedPath: String?,
+    ): String? {
+        val target = launchTarget?.trim().orEmpty()
+        val isAutomaticDataTarget = target.equals("data.xp3", ignoreCase = true) ||
+            target.equals("XP3_FIRST", ignoreCase = true)
+        if (!isAutomaticDataTarget || resolvedPath?.endsWith(".exe", ignoreCase = true) == true) {
+            return resolvedPath
+        }
+        val rootPath = ScriptEngineLaunchers.stripFileScheme(
+            ScriptEngineLaunchers.uriToFilePath(rootUri),
+        ) ?: return resolvedPath
+        val root = File(rootPath)
+        if (!root.isDirectory) return resolvedPath
+        val candidates = root.listFiles()?.asSequence()
+            ?.filter { it.isFile && it.name.endsWith(".exe", ignoreCase = true) }
+            ?.sortedBy { it.name.lowercase(Locale.ROOT) }
+            ?.take(16)
+            ?.filter(EmbeddedXp3Probe::containsStartupScript)
+            ?.toList()
+            .orEmpty()
+        return if (candidates.size == 1) candidates.single().absolutePath else resolvedPath
+    }
+
+    /**
      * Directory selection is an engine protocol value. Accept translated labels written by the
      * affected builds, plus bracketed display placeholders, before resolving an XP3 path.
      */
