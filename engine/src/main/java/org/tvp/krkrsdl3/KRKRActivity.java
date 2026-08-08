@@ -32,7 +32,15 @@ public class KRKRActivity extends SDLActivity {
 
     @Override
     protected String[] getArguments() {
-        return m_gameargs.toArray(new String[0]);
+        // 兼容两种 extra 形态：启动器传 StringArrayList（getStringArrayListExtra），
+        // adb 调试传 String[]（--esa → getStringArrayExtra）。两者皆缺省时给空参数，
+        // 由引擎 TVPTryStartupFromArchives 自行定位 startup.tjs。
+        if (m_gameargs != null)
+            return m_gameargs.toArray(new String[0]);
+        String[] arr = getIntent().getStringArrayExtra(SHAREDPREF_GAMECONFIG);
+        if (arr != null)
+            return arr;
+        return new String[] { "" };
     }
 
     @Override
