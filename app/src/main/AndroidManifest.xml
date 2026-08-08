@@ -343,7 +343,7 @@
              SDL3 java 层继承 AppCompatActivity，必须使用 AppCompat 系主题 Theme.YukiHub.Krkrsdl3。 -->
         <activity
             android:name="com.core.krkrsdl3.Krkrsdl3Activity"
-            android:exported="false"
+            android:exported="true"
             android:process=":krkrsdl3"
             android:launchMode="singleInstance"
             android:taskAffinity="com.core.Krkrsdl3"
