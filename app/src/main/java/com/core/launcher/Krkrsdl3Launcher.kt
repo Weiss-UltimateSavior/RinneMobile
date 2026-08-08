@@ -19,6 +19,9 @@ import java.io.File
 internal object Krkrsdl3Launcher {
     private const val TAG = "Krkrsdl3Launcher"
 
+    // GPU mixing remains opt-in until its visual parity suite covers all KAG/PSB paths.
+    // Software is the compatibility default; the native bootstrap can still safely fall back
+    // when a caller explicitly requests OpenGL on an older device.
     private const val DEFAULT_RENDERER = "software"
 
     @JvmStatic
