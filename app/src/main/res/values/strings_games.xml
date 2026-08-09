@@ -157,6 +157,8 @@
     <string name="game_action_status">游戏状态</string>
     <string name="game_action_favorite_add">添加收藏</string>
     <string name="game_action_favorite_remove">取消收藏</string>
+    <string name="game_action_showcase_add">添加橱窗</string>
+    <string name="game_action_showcase_remove">取消橱窗</string>
     <string name="game_action_password_lock">密码锁定</string>
     <string name="game_action_password_remove">取消密码</string>
     <string name="game_action_more">更多选项</string>

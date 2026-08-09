@@ -17,6 +17,9 @@
     <string name="pad_search">Search</string>
     <string name="pad_next_page">Next page</string>
     <string name="pad_loading_games">Loading games…</string>
+    <string name="pad_device_status">%1$d%% · %2$s</string>
+    <string name="pad_device_status_unavailable">— · %1$s</string>
+    <string name="pad_disable_follow_system_tone_first">Turn off Follow System Theme first</string>
     <string name="pad_sync_data">Sync Data</string>
     <string name="pad_sync_all_message">Syncing everything may take some time. Refresh metadata and covers for all games now?</string>
     <string name="pad_confirm_sync">Sync Now</string>
@@ -28,6 +31,8 @@
     <string name="pad_cannot_open_engine_settings">Unable to open engine settings</string>
     <string name="pad_delete_failed">Delete failed. Try again later.</string>
     <string name="pad_deleted">Deleted</string>
+    <string name="pad_showcase_full">Showcase is full</string>
+    <string name="pad_showcase_add_symbol">+</string>
     <string name="pad_progress_complete">%1$d/%2$d complete</string>
     <string name="pad_all">All</string>
     <string name="pad_general_settings">General Settings</string>

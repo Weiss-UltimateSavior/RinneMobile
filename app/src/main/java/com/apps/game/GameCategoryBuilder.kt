@@ -11,7 +11,7 @@ import java.util.TreeMap
 /**
  * 游戏分类构建器（数据层，无 UI）。
  *
- * 来源：LauncherLibraryFragment / PadManageFragment 重复的 rebuildCategories /
+ * 来源：LauncherLibraryFragment 的 rebuildCategories /
  * buildCategoriesInBackground / matchesCategory / containsCategoryValue / sortGamesByTitle
  * 五处方法。仅 buildCategoriesInBackground / matchesCategory / containsCategoryValue 在调用链中被
  * 实际使用；rebuildCategories / sortGamesByTitle 是死代码，迁移时不再保留。

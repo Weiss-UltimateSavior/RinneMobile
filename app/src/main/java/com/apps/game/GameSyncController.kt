@@ -14,9 +14,9 @@ import com.core.util.AppExecutors
 import com.core.util.RxMainQueue
 
 /**
- * 游戏同步控制器：统一封装 Library / Pad 两个 Fragment 中重复的批量同步与单卡元数据/封面同步逻辑。
+ * 游戏同步控制器：统一封装游戏库的批量同步与单卡元数据/封面同步逻辑。
  *
- * 来源：LauncherLibraryFragment / PadManageFragment 重复的 showSyncDataConfirmDialog /
+ * 来源：LauncherLibraryFragment 的 showSyncDataConfirmDialog /
  * performBatchSync / showSyncLoadingDialog / dismissSyncLoadingDialog / showSyncResultDialog /
  * rematchMetadata / syncMetadataToCard 共 7 处方法。
  *

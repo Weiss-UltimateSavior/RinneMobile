@@ -25,7 +25,7 @@ import com.core.util.TimeFormatUtil
 import java.util.function.Consumer
 
 /**
- * 抽取自 [LauncherLibraryFragment] 与 `PadManageFragment` 的公共游戏动作菜单与
+ * 抽取自游戏库页面的公共游戏动作菜单与
  * 子对话框逻辑。两个 Fragment 通过 [SubDialogFactory] 注入各自偏好的单选对话框实现，
  * 通过 [ActionMenuConfig] 控制动作菜单可选项，通过 [ActionMenuCallbacks] 把菜单
  * 事件回传给 Fragment 自身实现。
@@ -53,6 +53,7 @@ object GameActionMenuFactory {
         fun onEditPlayTime(game: Game)
         fun onToggleFavorite(game: Game)
         fun onTogglePassword(game: Game)
+        fun onToggleShowcase(game: Game) = Unit
         fun onShowMoreOptions(game: Game)
     }
 
@@ -62,7 +63,7 @@ object GameActionMenuFactory {
         @JvmField var includeEditPlayTimeAction: Boolean = false
         @JvmField var includeFavoriteAction: Boolean = true
         @JvmField var includePasswordAction: Boolean = true
-        @JvmField var dialogWidthDp: Int = 252
+        @JvmField var showcaseActionLabel: CharSequence? = null
     }
 
     // ===== 静态 UI 元素 =====
@@ -99,34 +100,6 @@ object GameActionMenuFactory {
         title.textSize = 16f
         title.setTypeface(null, Typeface.BOLD)
         return title
-    }
-
-    /** 创建主/次操作按钮，点击后先关闭对话框再执行 action。 */
-    @JvmStatic
-    fun createDialogButton(
-        ctx: Context, text: String?, primary: Boolean,
-        action: Runnable, dialog: AlertDialog
-    ): TextView {
-        val btn = TextView(ctx)
-        btn.text = text
-        btn.gravity = Gravity.CENTER
-        btn.textSize = 13f
-        btn.setTypeface(null, Typeface.BOLD)
-        if (primary) {
-            LauncherTheme.primaryButton(btn)
-        } else {
-            LauncherTheme.secondaryButton(btn)
-        }
-        btn.setOnClickListener {
-            dialog.dismiss()
-            action.run()
-        }
-        val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(ctx, 38)
-        )
-        lp.setMargins(0, LauncherTheme.dp(ctx, 9), 0, 0)
-        btn.layoutParams = lp
-        return btn
     }
 
     /** 创建圆角 chip 风格的取消按钮。 */
@@ -190,55 +163,41 @@ object GameActionMenuFactory {
     ) {
         if (game == null) return
         val ctx = fragment.requireContext()
-        val dialog = createLauncherDialog(ctx)
-        val root = createDialogRoot(ctx)
-        root.addView(createDialogTitle(ctx, GameMetadataFormatter.safeTitle(ctx, game)))
-
-        addActionOption(ctx, root, ctx.getString(R.string.game_action_details), dialog) { callbacks.onShowGameDetail(game) }
-        if (config.includeEditAction) {
-            addActionOption(ctx, root, ctx.getString(R.string.game_action_edit), dialog) { callbacks.onEditGame(game) }
+        val labels = mutableListOf<CharSequence>()
+        val actions = mutableListOf<() -> Unit>()
+        fun addAction(label: CharSequence, action: () -> Unit) {
+            labels += label
+            actions += action
         }
-        addActionOption(ctx, root, ctx.getString(R.string.game_action_status), dialog) { callbacks.onShowPlayStatus(game) }
+
+        addAction(ctx.getString(R.string.game_action_details)) { callbacks.onShowGameDetail(game) }
+        if (config.includeEditAction) {
+            addAction(ctx.getString(R.string.game_action_edit)) { callbacks.onEditGame(game) }
+        }
+        addAction(ctx.getString(R.string.game_action_status)) { callbacks.onShowPlayStatus(game) }
         if (config.includeEditPlayTimeAction) {
-            addActionOption(ctx, root, ctx.getString(R.string.game_action_edit_duration), dialog) { callbacks.onEditPlayTime(game) }
+            addAction(ctx.getString(R.string.game_action_edit_duration)) { callbacks.onEditPlayTime(game) }
         }
         if (config.includeFavoriteAction) {
             val favoriteLabel = ctx.getString(if (game.favorite)
                 R.string.game_action_favorite_remove else R.string.game_action_favorite_add)
-            addActionOption(ctx, root, favoriteLabel, dialog) { callbacks.onToggleFavorite(game) }
+            addAction(favoriteLabel) { callbacks.onToggleFavorite(game) }
+        }
+        config.showcaseActionLabel?.let { label ->
+            addAction(label) { callbacks.onToggleShowcase(game) }
         }
         if (config.includePasswordAction) {
             val passwordLabel = ctx.getString(if (GamePasswordLock.hasPassword(game))
                 R.string.game_action_password_remove else R.string.game_action_password_lock)
-            addActionOption(ctx, root, passwordLabel, dialog) { callbacks.onTogglePassword(game) }
+            addAction(passwordLabel) { callbacks.onTogglePassword(game) }
         }
-        addActionOption(ctx, root, ctx.getString(R.string.game_action_more), dialog) { callbacks.onShowMoreOptions(game) }
+        addAction(ctx.getString(R.string.game_action_more)) { callbacks.onShowMoreOptions(game) }
 
-        root.addView(createDialogCancelButton(ctx, dialog))
-        setDialogContent(dialog, root, config.dialogWidthDp)
-    }
-
-    /** 内部辅助：往 root 中追加一个菜单选项 TextView。 */
-    private fun addActionOption(
-        ctx: Context, root: LinearLayout, label: String?,
-        dialog: AlertDialog, action: Runnable
-    ) {
-        val option = TextView(ctx)
-        option.text = label
-        option.gravity = Gravity.CENTER
-        option.setSingleLine(true)
-        option.textSize = 13f
-        option.setTypeface(null, Typeface.BOLD)
-        LauncherTheme.menuItem(option)
-        option.setOnClickListener {
-            dialog.dismiss()
-            action.run()
-        }
-        val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LauncherTheme.dp(ctx, 36)
-        )
-        lp.setMargins(0, LauncherTheme.dp(ctx, 11), 0, 0)
-        root.addView(option, lp)
+        LauncherDialogRouter.showActionChoices(
+            ctx,
+            GameMetadataFormatter.safeTitle(ctx, game),
+            labels.toTypedArray(),
+        ) { index -> actions.getOrNull(index)?.invoke() }
     }
 
     // ===== 子对话框 =====

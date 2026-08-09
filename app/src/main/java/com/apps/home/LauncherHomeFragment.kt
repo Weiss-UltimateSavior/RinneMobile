@@ -31,6 +31,7 @@ import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherMotion
 import com.apps.theme.LauncherTheme
 import com.apps.theme.LauncherThemeMenuActivity
+import com.apps.theme.LauncherToneSwitcher
 import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.databinding.FragmentLauncherHomeBinding
@@ -240,21 +241,7 @@ open class LauncherHomeFragment : Fragment() {
     }
 
     private fun confirmToggleTone() {
-        if (LauncherActivity.isFollowingSystemTone(requireContext())) return
-        val darkMode = LauncherActivity.isLauncherDarkMode(requireContext())
-        val nextTone = getString(
-            if (darkMode) com.core.R.string.home_light_mode else com.core.R.string.home_dark_mode
-        )
-        LauncherDialogRouter.showConfirm(
-            requireContext(),
-            getString(com.core.R.string.home_switch_tone),
-            getString(com.core.R.string.home_switch_tone_message, nextTone),
-            getString(com.core.R.string.core_confirm)
-        ) {
-            LauncherMotion.recreateWithToneOverlay(requireActivity()) {
-                LauncherActivity.setLauncherDarkMode(requireContext(), !darkMode)
-            }
-        }
+        LauncherToneSwitcher.confirmToggle(activity)
     }
 
     private fun setupRecentList() {

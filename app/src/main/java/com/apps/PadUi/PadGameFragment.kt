@@ -1,41 +1,48 @@
 package com.apps.PadUi
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.view.GestureDetector
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.Gravity
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.apps.game.GameActionMenuFactory
 import com.apps.game.GameListController
 import com.apps.game.GameSessionController
 import com.apps.theme.LauncherTheme
+import com.apps.widget.LauncherCoverLoader
 import com.core.R
 import com.core.databinding.FragmentPadGameBinding
+import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.Game
 import com.core.util.RxMainQueue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 /**
- * 横屏游戏库 GAME 页：接入共享 [GameListController] 管线，保留 GAME 页专属头部 UI 与行为。
- * 手机每页 1 行 × 5 列，平板每页 2 行 × 5 列，横向手势切换分页。
+ * 横屏游戏库 GAME 页：复用竖屏首页动态列表样式，纵向滚动时居中条目放大。
  */
 class PadGameFragment : Fragment(), GameListController.Listener,
     GameActionMenuFactory.ActionMenuCallbacks {
 
     companion object {
         private const val TAG = "PadGameFragment"
-        private const val GRID_COLUMNS = 5
-        private const val PHONE_GRID_ROWS = 1
-        private const val TABLET_GRID_ROWS = 2
-        private const val TABLET_MIN_SMALLEST_WIDTH_DP = 600
+        // 一次提供完整列表，避免追加分页在视觉缩放列表中形成间距接缝。
+        private const val LIST_PAGE_SIZE = 1_000
+        private const val NORMAL_ITEM_HEIGHT_DP = 63
     }
 
     private var _binding: FragmentPadGameBinding? = null
@@ -45,14 +52,29 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     private var listController: GameListController? = null
     private var sessionController: GameSessionController? = null
     private var adapter: PadGameListAdapter? = null
+    private lateinit var showcaseStore: PadGameShowcaseStore
+    private var showcaseGames: List<Game?> = List(PadGameShowcaseStore.MAX_SHOWCASE_SIZE) { null }
     private var searchQuery: String = ""
-    private var gridRows: Int = PHONE_GRID_ROWS
-    private var pageSize: Int = GRID_COLUMNS * PHONE_GRID_ROWS
-    private var pageAnimating: Boolean = false
-    private var pendingPageAnim: Boolean = false
-    private var pageAnimForward: Boolean = true
-    private var swipeConsumed = false
     private var needsRefresh: Boolean = false
+    private var shouldCenterInitialItem = true
+    private val shortcutCardLayoutChangeListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        updateShortcutCardSizing()
+    }
+    private val recyclerLayoutChangeListener = View.OnLayoutChangeListener {
+            _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+        if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) {
+            updateListViewport()
+        }
+    }
+    private val recyclerScrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            updateFocusedItemScale()
+            val manager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+            if (dy > 0 && manager.findLastVisibleItemPosition() >= (adapter?.itemCount ?: 0) - 3) {
+                listController?.loadNextPage()
+            }
+        }
+    }
 
     private val headerRenderer: PadGameHeaderRenderer by lazy { PadGameHeaderRenderer(this, binding) }
     private val businessHandler: PadGameBusinessHandler by lazy {
@@ -73,8 +95,6 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         LauncherTheme.applyPrimaryTone(binding.root)
         applyToolbarIconTone()
         binding.padAvatarContainer.clipToOutline = true
-        gridRows = if (isTabletLayout()) TABLET_GRID_ROWS else PHONE_GRID_ROWS
-        pageSize = GRID_COLUMNS * gridRows
         sessionController = GameSessionController(
             requireContext(), mainQueue,
             object : GameSessionController.Listener {
@@ -90,11 +110,9 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         listController = GameListController(mainQueue, this)
         headerRenderer.renderAvatar()
         headerRenderer.renderAccountInfo()
+        setupShortcutCards()
         setupRecycler()
         setupSearch()
-        setupSettingsButton()
-        setupNextPageButton()
-        setupPagingGesture()
         needsRefresh = true
         loadGames()
     }
@@ -102,6 +120,8 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     override fun onResume() {
         super.onResume()
         applyToolbarIconTone()
+        adapter?.refreshThemeTone()
+        renderShowcaseCards()
         headerRenderer.renderAvatar()
         headerRenderer.renderAccountInfo()
         val sc = sessionController
@@ -119,7 +139,16 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         sessionController?.cleanup()
         listController?.cleanup()
         _binding?.let { b ->
+            b.padGameShortcutContainer.removeOnLayoutChangeListener(shortcutCardLayoutChangeListener)
+            b.padGameRecycler.removeOnLayoutChangeListener(recyclerLayoutChangeListener)
+            b.padGameRecycler.removeOnScrollListener(recyclerScrollListener)
             b.padGameRecycler.adapter = null
+            listOf(
+                b.padGameShowcaseImageOne,
+                b.padGameShowcaseImageTwo,
+                b.padGameShowcaseImageThree,
+                b.padGameShowcaseImageFour,
+            ).forEach(LauncherCoverLoader::clear)
             b.root.setOnTouchListener(null)
         }
         super.onDestroyView()
@@ -132,8 +161,110 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     private fun applyToolbarIconTone() {
         val primary = LauncherTheme.primary(requireContext())
         binding.padSearchIcon.setColorFilter(primary)
-        binding.padGameNextPage.setColorFilter(primary)
-        binding.padGameSettingsButton.setColorFilter(primary)
+        binding.padGameLoading.setTextColor(primary)
+    }
+
+    private fun setupShortcutCards() {
+        showcaseStore = PadGameShowcaseStore(requireContext())
+        showcaseCards().forEachIndexed { index, card ->
+            card.setOnClickListener {
+                showcaseGames.getOrNull(index)?.let { game -> businessHandler.confirmLaunchGame(game) }
+            }
+        }
+        binding.padGameShortcutContainer.addOnLayoutChangeListener(shortcutCardLayoutChangeListener)
+        binding.padGameShortcutContainer.post {
+            if (!isAdded || _binding == null) return@post
+            updateShortcutCardSizing()
+        }
+        refreshShowcaseCards()
+    }
+
+    private fun showcaseCards() = listOf(
+        binding.padGameShortcutOne,
+        binding.padGameShortcutTwo,
+        binding.padGameShortcutThree,
+        binding.padGameShortcutFour,
+    )
+
+    private fun showcaseImages() = listOf<ImageView>(
+        binding.padGameShowcaseImageOne,
+        binding.padGameShowcaseImageTwo,
+        binding.padGameShowcaseImageThree,
+        binding.padGameShowcaseImageFour,
+    )
+
+    private fun showcaseAddLabels() = listOf<TextView>(
+        binding.padGameShowcaseAddOne,
+        binding.padGameShowcaseAddTwo,
+        binding.padGameShowcaseAddThree,
+        binding.padGameShowcaseAddFour,
+    )
+
+    private fun refreshShowcaseCards() {
+        if (!::showcaseStore.isInitialized) return
+        val ids = showcaseStore.gameIds()
+        val appContext = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val games = withContext(Dispatchers.IO) {
+                ids.mapNotNull { gameId -> LauncherRepositoryBridge.findGameById(appContext, gameId) }.also {
+                    showcaseStore.retainExisting(it.map { game -> game.id })
+                }
+            }
+            if (!isAdded || _binding == null) return@launch
+            showcaseGames = games + List(PadGameShowcaseStore.MAX_SHOWCASE_SIZE - games.size) { null }
+            renderShowcaseCards()
+        }
+    }
+
+    private fun renderShowcaseCards() {
+        val images = showcaseImages()
+        val addLabels = showcaseAddLabels()
+        images.indices.forEach { index ->
+            val game = showcaseGames[index]
+            val image = images[index]
+            addLabels[index].setTextColor(LauncherTheme.primary(requireContext()))
+            LauncherCoverLoader.clear(image)
+            if (game == null) {
+                image.visibility = View.GONE
+                addLabels[index].visibility = View.VISIBLE
+                return@forEach
+            }
+            addLabels[index].visibility = View.GONE
+            image.visibility = View.VISIBLE
+            image.background = LauncherTheme.primaryGradientCard(requireContext(), 8f)
+            val persistedCover = game.coverPersistUri?.trim().orEmpty()
+            val cover = if (persistedCover.isNotEmpty()) persistedCover else game.coverUri?.trim().orEmpty()
+            if (cover.isNotEmpty()) LauncherCoverLoader.loadInto(image, cover, null)
+        }
+    }
+
+    /** 与竖屏游戏库的海报模式一致：卡片高度为宽度的 1.42 倍。 */
+    private fun updateShortcutCardSizing() {
+        val container = _binding?.padGameShortcutContainer ?: return
+        if (container.width <= 0) return
+        val gap = LauncherTheme.dp(requireContext(), 8)
+        val usableWidth = container.width - container.paddingStart - container.paddingEnd
+        val cardWidth = ((usableWidth - gap * 3) / 4).coerceAtLeast(1)
+        val cardHeight = (cardWidth * 1.42f).toInt()
+        val containerHeight = cardHeight + container.paddingTop + container.paddingBottom
+        val containerParams = container.layoutParams
+        if (containerParams.height != containerHeight) {
+            containerParams.height = containerHeight
+            container.layoutParams = containerParams
+        }
+        val cards = listOf(
+            binding.padGameShortcutOne,
+            binding.padGameShortcutTwo,
+            binding.padGameShortcutThree,
+            binding.padGameShortcutFour,
+        )
+        cards.forEach { card ->
+            val params = card.layoutParams as LinearLayout.LayoutParams
+            if (params.height != cardHeight) {
+                params.height = cardHeight
+                card.layoutParams = params
+            }
+        }
     }
 
     // ===== Recycler setup =====
@@ -142,55 +273,89 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         val newAdapter = PadGameListAdapter()
         newAdapter.setOnGameCardListener(object : PadGameListAdapter.OnGameCardListener {
             override fun onGameClick(game: Game?) {
-                if (swipeConsumed) { swipeConsumed = false; return }
                 if (game != null) businessHandler.confirmLaunchGame(game)
             }
 
             override fun onGameLongClick(game: Game?) {
-                if (swipeConsumed) { swipeConsumed = false; return }
-                if (game != null) businessHandler.showGameActionMenu(game, this@PadGameFragment)
+                if (game != null) {
+                    val label = getString(
+                        if (showcaseStore.contains(game.id)) R.string.game_action_showcase_remove
+                        else R.string.game_action_showcase_add
+                    )
+                    businessHandler.showGameActionMenu(game, this@PadGameFragment, label)
+                }
             }
         })
         adapter = newAdapter
-        binding.padGameRecycler.layoutManager = GridLayoutManager(requireContext(), GRID_COLUMNS)
-        binding.padGameRecycler.adapter = newAdapter
-        binding.padGameRecycler.itemAnimator = null
-        binding.padGameRecycler.setHasFixedSize(true)
-        binding.padGameRecycler.setItemViewCacheSize(pageSize)
-        binding.padGameRecycler.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-            if (right - left != oldRight - oldLeft) updateCardHeight()
-        }
-        binding.padGameRecycler.post {
+        val recyclerView = binding.padGameRecycler
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = newAdapter
+        recyclerView.itemAnimator = null
+        recyclerView.clipToPadding = false
+        recyclerView.setItemViewCacheSize(5)
+        recyclerView.addOnLayoutChangeListener(recyclerLayoutChangeListener)
+        recyclerView.addOnScrollListener(recyclerScrollListener)
+        recyclerView.post {
             if (!isAdded || _binding == null) return@post
-            updateCardHeight()
+            updateListViewport()
         }
     }
 
-    private fun updateCardHeight() {
+    private fun updateListViewport() {
         val b = _binding ?: return
-        val currentAdapter = adapter ?: return
         val recyclerView = b.padGameRecycler
-        val availableWidth = recyclerView.width - recyclerView.paddingLeft - recyclerView.paddingRight
-        if (availableWidth <= 0) return
         val parent = recyclerView.parent as? View ?: return
-        val availableHeight = parent.height - parent.paddingTop - parent.paddingBottom
-        if (availableHeight <= 0) return
-
-        val horizontalMarginTotal = LauncherTheme.dp(requireContext(), 10) * GRID_COLUMNS
-        val cardWidth = maxOf(1, (availableWidth - horizontalMarginTotal) / GRID_COLUMNS)
-        val heightByRatio = maxOf(1, Math.round(cardWidth * 5f / 3f))
-        val heightByRows = maxOf(1, (availableHeight - LauncherTheme.dp(requireContext(), 10) * gridRows) / gridRows)
-        val cardHeight = maxOf(LauncherTheme.dp(requireContext(), 34), minOf(heightByRatio, heightByRows))
-        currentAdapter.setFixedCardHeight(cardHeight)
-
-        // 垂直居中：计算内容高度并设置顶部 padding
-        val contentHeight = cardHeight * gridRows + LauncherTheme.dp(requireContext(), 10) * (gridRows - 1)
-        val topPadding = maxOf(0, (availableHeight - contentHeight) / 2)
-        recyclerView.setPadding(recyclerView.paddingLeft, topPadding, recyclerView.paddingRight, recyclerView.paddingBottom)
+        if (parent.width <= 0 || recyclerView.height <= 0) return
+        val params = recyclerView.layoutParams as? ViewGroup.MarginLayoutParams ?: return
+        // 原三分之一宽度增加五分之一，即占内容区的 40%。
+        val targetWidth = maxOf(1, parent.width * 2 / 5)
+        // 顶部搜索区由布局中的 60% Guideline 直接限定在列表左侧。
+        val targetEndMargin = 0
+        if (params.width != targetWidth || params.marginEnd != targetEndMargin) {
+            params.width = targetWidth
+            params.marginEnd = targetEndMargin
+            recyclerView.layoutParams = params
+        }
+        val emptyParams = b.padGameEmpty.layoutParams as? FrameLayout.LayoutParams
+        if (emptyParams != null && (emptyParams.width != targetWidth ||
+                emptyParams.gravity != (Gravity.END or Gravity.CENTER_VERTICAL))) {
+            emptyParams.width = targetWidth
+            emptyParams.gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            b.padGameEmpty.layoutParams = emptyParams
+        }
+        val horizontalPadding = LauncherTheme.dp(requireContext(), 15)
+        // 末项自带 12dp 底边距，顶部补同等留白以保持列表首尾一致。
+        val topPadding = LauncherTheme.dp(requireContext(), 12)
+        if (recyclerView.paddingStart != horizontalPadding || recyclerView.paddingEnd != 0
+            || recyclerView.paddingTop != topPadding || recyclerView.paddingBottom != 0) {
+            recyclerView.setPaddingRelative(
+                horizontalPadding,
+                topPadding,
+                0,
+                0,
+            )
+        }
+        updateFocusedItemScale()
     }
 
-    private fun isTabletLayout(): Boolean {
-        return resources.configuration.smallestScreenWidthDp >= TABLET_MIN_SMALLEST_WIDTH_DP
+    private fun updateFocusedItemScale() {
+        val recyclerView = _binding?.padGameRecycler ?: return
+        if (recyclerView.height <= 0) return
+        val normalHeight = LauncherTheme.dp(requireContext(), NORMAL_ITEM_HEIGHT_DP)
+        for (index in 0 until recyclerView.childCount) {
+            val child = recyclerView.getChildAt(index) ?: continue
+            // 所有条目保持完全一致的尺寸，不使用聚焦缩放或其他视觉效果。
+            child.scaleX = 1f
+            child.scaleY = 1f
+            child.alpha = 1f
+            child.translationZ = 0f
+            val params = child.layoutParams
+            if (params.width != ViewGroup.LayoutParams.MATCH_PARENT || params.height != normalHeight) {
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT
+                params.height = normalHeight
+                child.layoutParams = params
+            }
+        }
     }
 
     // ===== Search =====
@@ -207,93 +372,12 @@ class PadGameFragment : Fragment(), GameListController.Listener,
 
     private fun applySearch() {
         val b = _binding ?: return
-        // Reset any ongoing page animation
-        b.padGameRecycler.animate().cancel()
-        b.padGameRecycler.translationX = 0f
-        pageAnimating = false
         searchQuery = (b.padSearchInput.text?.toString()?.trim()?.lowercase(Locale.ROOT) ?: "")
+        shouldCenterInitialItem = true
         listController?.applyFilters()
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         imm?.hideSoftInputFromWindow(b.padSearchInput.windowToken, 0)
         b.padSearchInput.clearFocus()
-    }
-
-    // ===== Paging =====
-
-    private fun setupNextPageButton() {
-        binding.padGameNextPage.setOnClickListener {
-            it.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-            showNextPage()
-        }
-    }
-
-    private fun showNextPage() {
-        if (pageAnimating) return
-        pendingPageAnim = true
-        pageAnimForward = true
-        if (listController?.showNextPage() != true) {
-            pendingPageAnim = false
-        }
-    }
-
-    private fun showPreviousPage() {
-        if (pageAnimating) return
-        pendingPageAnim = true
-        pageAnimForward = false
-        if (listController?.showPreviousPage() != true) {
-            pendingPageAnim = false
-        }
-    }
-
-    // ===== Paging gesture =====
-
-    private fun setupPagingGesture() {
-        val detector = GestureDetector(requireContext(),
-            object : GestureDetector.SimpleOnGestureListener() {
-                override fun onDown(event: MotionEvent): Boolean = true
-
-                override fun onFling(first: MotionEvent?, second: MotionEvent,
-                                    velocityX: Float, velocityY: Float): Boolean {
-                    if (first == null) return false
-                    val deltaX = second.x - first.x
-                    val deltaY = second.y - first.y
-                    if (Math.abs(deltaX) <= Math.abs(deltaY)
-                        || Math.abs(deltaX) < LauncherTheme.dp(requireContext(), 64)
-                        || Math.abs(velocityX) < LauncherTheme.dp(requireContext(), 180)) {
-                        return false
-                    }
-                    swipeConsumed = true
-                    binding.padGameRecycler.postDelayed({ swipeConsumed = false }, 250L)
-                    if (deltaX < 0) showNextPage() else showPreviousPage()
-                    return true
-                }
-            })
-
-        binding.padGameRecycler.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-            override fun onInterceptTouchEvent(rv: RecyclerView, event: MotionEvent): Boolean {
-                detector.onTouchEvent(event)
-                return false
-            }
-
-            override fun onTouchEvent(rv: RecyclerView, event: MotionEvent) {
-                detector.onTouchEvent(event)
-            }
-
-            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
-        })
-        binding.root.setOnTouchListener { _, event ->
-            detector.onTouchEvent(event)
-            true
-        }
-    }
-
-    // ===== Settings button =====
-
-    private fun setupSettingsButton() {
-        binding.padGameSettingsButton.setOnClickListener {
-            it.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-            startActivity(Intent(requireContext(), PadSettingsActivity::class.java))
-        }
     }
 
     // ===== Load / Filter =====
@@ -329,11 +413,11 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     }
 
     override fun getPageSize(): Int {
-        return pageSize
+        return LIST_PAGE_SIZE
     }
 
     override fun usesHorizontalPaging(): Boolean {
-        return true
+        return false
     }
 
     override fun onDataLoaded(categories: List<com.apps.game.CategoryOption>, developers: Map<Long, List<String>>) {
@@ -343,29 +427,12 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     override fun onVisibleGamesChanged(forceFullRefresh: Boolean) {
         val lc = listController ?: return
         val b = _binding ?: return
-
-        if (pendingPageAnim) {
-            pendingPageAnim = false
-            pageAnimating = true
-            val distance = maxOf(b.padGameRecycler.width.toFloat(), b.padGamePanel.width.toFloat()).coerceAtLeast(1f)
-            val exitX = if (pageAnimForward) -distance else distance
-            b.padGameRecycler.animate().cancel()
-            b.padGameRecycler.animate()
-                .translationX(exitX)
-                .setDuration(180L)
-                .withEndAction {
-                    if (!isAdded || _binding == null) return@withEndAction
-                    adapter?.submit(ArrayList(lc.getVisibleGames()), forceFullRefresh)
-                    b.padGameRecycler.translationX = -exitX
-                    b.padGameRecycler.animate()
-                        .translationX(0f)
-                        .setDuration(220L)
-                        .withEndAction { pageAnimating = false }
-                        .start()
-                }
-                .start()
-        } else {
-            adapter?.submit(ArrayList(lc.getVisibleGames()), forceFullRefresh)
+        adapter?.submit(ArrayList(lc.getVisibleGames()), forceFullRefresh)
+        b.padGameRecycler.post {
+            if (!isAdded || _binding == null) return@post
+            updateListViewport()
+            centerInitialItemIfNeeded()
+            updateFocusedItemScale()
         }
     }
 
@@ -380,9 +447,19 @@ class PadGameFragment : Fragment(), GameListController.Listener,
             else R.string.pad_no_matching_games
         )
         b.padGameLoading.visibility = if (!hasGames && lc.isLoading()) View.VISIBLE else View.GONE
-        b.padGameNextPage.visibility = if (hasGames && !lc.isFullyLoaded()) View.VISIBLE else View.GONE
-        // 数据加载后重新计算卡片高度和居中
-        if (hasGames) updateCardHeight()
+        if (hasGames) updateListViewport()
+    }
+
+    private fun centerInitialItemIfNeeded() {
+        if (!shouldCenterInitialItem) return
+        val recyclerView = _binding?.padGameRecycler ?: return
+        val manager = recyclerView.layoutManager as? LinearLayoutManager ?: return
+        val itemCount = adapter?.itemCount ?: return
+        if (itemCount <= 0 || recyclerView.height <= 0) return
+        val itemHeight = LauncherTheme.dp(requireContext(), NORMAL_ITEM_HEIGHT_DP)
+        val initialPosition = minOf(2, itemCount - 1)
+        manager.scrollToPositionWithOffset(initialPosition, (recyclerView.height - itemHeight) / 2)
+        shouldCenterInitialItem = false
     }
 
     // ===== GameActionMenuFactory.ActionMenuCallbacks =====
@@ -409,6 +486,21 @@ class PadGameFragment : Fragment(), GameListController.Listener,
 
     override fun onTogglePassword(game: Game) {
         businessHandler.onTogglePassword(game)
+    }
+
+    override fun onToggleShowcase(game: Game) {
+        if (showcaseStore.contains(game.id)) {
+            showcaseStore.remove(game.id)
+            refreshShowcaseCards()
+            return
+        }
+        when (showcaseStore.add(game.id)) {
+            PadGameShowcaseStore.AddResult.ADDED -> refreshShowcaseCards()
+            PadGameShowcaseStore.AddResult.FULL -> Toast.makeText(
+                requireContext(), R.string.pad_showcase_full, Toast.LENGTH_SHORT
+            ).show()
+            PadGameShowcaseStore.AddResult.ALREADY_ADDED -> Unit
+        }
     }
 
     override fun onShowMoreOptions(game: Game) {

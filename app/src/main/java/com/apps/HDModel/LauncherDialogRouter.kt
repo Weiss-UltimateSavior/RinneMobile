@@ -3,6 +3,7 @@ package com.apps.HDModel
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.appcompat.app.AlertDialog
+import com.apps.PadUi.PadGameModeActivity
 import com.apps.PadUi.PadDialogFactory
 import com.apps.theme.LauncherDialogFactory
 import com.core.launcherbridge.LauncherUpdateBridge
@@ -16,11 +17,11 @@ import com.core.launcherbridge.LauncherUpdateBridge
  * R3 扫描深度 / R4 跳过选择等关键路径）均已路由 Pad，无 HD 回退 Launcher 的残留重载。
  */
 object LauncherDialogRouter {
-    /** 判断弹窗上下文是否处于 HD 大屏壳（HdModeActivity），沿 ContextWrapper 链向上查找。 */
-    private fun isHd(context: Context): Boolean {
+    /** 判断弹窗上下文是否处于 HD 或 Pad 横屏壳，沿 ContextWrapper 链向上查找。 */
+    private fun isLandscapeShell(context: Context): Boolean {
         var current: Context? = context
         while (current is ContextWrapper) {
-            if (current is HdModeActivity) return true
+            if (current is HdModeActivity || current is PadGameModeActivity) return true
             current = current.baseContext
         }
         return false
@@ -34,7 +35,7 @@ object LauncherDialogRouter {
         confirmText: String?,
         onConfirm: Runnable?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showConfirm(context, title, message, confirmText, onConfirm)
         } else {
             LauncherDialogFactory.showConfirm(context, title, message, confirmText, onConfirm)
@@ -52,7 +53,7 @@ object LauncherDialogRouter {
         cancelText: CharSequence?,
         onDismiss: Runnable?,
     ): AlertDialog {
-        return if (isHd(context)) {
+        return if (isLandscapeShell(context)) {
             PadDialogFactory.showConfirm(context, title, message, confirmText, onConfirm, cancelText, onDismiss)
         } else {
             LauncherDialogFactory.showConfirm(context, title, message, confirmText, onConfirm, cancelText, onDismiss)
@@ -67,7 +68,7 @@ object LauncherDialogRouter {
         confirmText: String?,
         onConfirm: Runnable?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showStandardConfirm(context, title, message, confirmText, onConfirm)
         } else {
             LauncherDialogFactory.showStandardConfirm(context, title, message, confirmText, onConfirm)
@@ -77,7 +78,7 @@ object LauncherDialogRouter {
     /** 信息提示：HD 路由 Pad。 */
     @JvmStatic
     fun showInfo(context: Context, title: String?, message: String?) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showInfo(context, title, message)
         } else {
             LauncherDialogFactory.showInfo(context, title, message)
@@ -87,7 +88,7 @@ object LauncherDialogRouter {
     /** 信息提示 + 确认回调：HD 路由 Pad。 */
     @JvmStatic
     fun showInfo(context: Context, title: String?, message: String?, onAcknowledge: Runnable?) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showInfo(context, title, message, onAcknowledge)
         } else {
             LauncherDialogFactory.showInfo(context, title, message, onAcknowledge)
@@ -96,7 +97,7 @@ object LauncherDialogRouter {
 
     @JvmStatic
     fun showLoading(context: Context, title: String?, hint: String?): AlertDialog {
-        return if (isHd(context)) {
+        return if (isLandscapeShell(context)) {
             PadDialogFactory.showLoading(context, title, hint)
         } else {
             LauncherDialogFactory.showLoading(context, title, hint)
@@ -112,7 +113,7 @@ object LauncherDialogRouter {
         hint: String?,
         progressTag: String?,
     ): AlertDialog {
-        return if (isHd(context)) {
+        return if (isLandscapeShell(context)) {
             PadDialogFactory.showProgressLoading(context, title, progressText, hint, progressTag)
         } else {
             LauncherDialogFactory.showProgressLoading(context, title, progressText, hint, progressTag)
@@ -128,7 +129,7 @@ object LauncherDialogRouter {
         confirmText: String?,
         onConfirm: Runnable?,
     ): AlertDialog {
-        return if (isHd(context)) {
+        return if (isLandscapeShell(context)) {
             PadDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm, null)
         } else {
             LauncherDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm)
@@ -145,7 +146,7 @@ object LauncherDialogRouter {
         onConfirm: Runnable?,
         onCancel: Runnable?,
     ): AlertDialog {
-        return if (isHd(context)) {
+        return if (isLandscapeShell(context)) {
             PadDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm, onCancel)
         } else {
             LauncherDialogFactory.showLongMessageConfirm(context, title, message, confirmText, onConfirm, onCancel)
@@ -160,7 +161,7 @@ object LauncherDialogRouter {
         dangerText: String?,
         onConfirm: Runnable?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showDangerConfirm(context, title, message, dangerText, onConfirm)
         } else {
             LauncherDialogFactory.showDangerConfirm(context, title, message, dangerText, onConfirm)
@@ -175,7 +176,7 @@ object LauncherDialogRouter {
         choices: Array<CharSequence>?,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showActionChoices(context, title, choices, listener?.let { PadDialogFactory.ChoiceListener(it) })
         } else {
             LauncherDialogFactory.showActionChoices(context, title, choices, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
@@ -190,7 +191,7 @@ object LauncherDialogRouter {
         dangerIndex: Int,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
         } else {
             LauncherDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
@@ -206,7 +207,7 @@ object LauncherDialogRouter {
         choices: Array<CharSequence>?,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showMessageActionChoices(
                 context, title, message, choices, null,
                 listener?.let { PadDialogFactory.ChoiceListener(it) },
@@ -229,7 +230,7 @@ object LauncherDialogRouter {
         cancelText: CharSequence?,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showMessageActionChoices(
                 context, title, message, choices, cancelText,
                 listener?.let { PadDialogFactory.ChoiceListener(it) },
@@ -254,7 +255,7 @@ object LauncherDialogRouter {
         currentDepth: Int,
         listener: ((depth: Int, fullRefresh: Boolean) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showScanDepthChoices(
                 context, title, quickModeText, fullModeText, labels, depthValues, currentDepth,
                 listener?.let { LauncherDialogFactory.ScanDepthListener(it) },
@@ -280,7 +281,7 @@ object LauncherDialogRouter {
         onSkip: Runnable?,
         onCancel: Runnable?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showTextChoicesWithSkip(
                 context, title, message, choices, skipText, cancelText,
                 listener?.let { LauncherDialogFactory.TextChoiceListener(it) },
@@ -304,7 +305,7 @@ object LauncherDialogRouter {
         hasUpdate: Boolean,
         error: String?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showUpdateResult(context, info, currentVersion, hasUpdate, error)
         } else {
             LauncherDialogFactory.showUpdateResult(context, info, currentVersion, hasUpdate, error)
@@ -319,7 +320,7 @@ object LauncherDialogRouter {
         choices: Array<CharSequence>?,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showActionChoices(context, title, choices, -1, listener?.let { PadDialogFactory.ChoiceListener(it) })
         } else {
             LauncherDialogFactory.showStandardActionChoices(context, title, choices, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
@@ -334,7 +335,7 @@ object LauncherDialogRouter {
         dangerIndex: Int,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showActionChoices(context, title, choices, dangerIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
         } else {
             LauncherDialogFactory.showStandardActionChoices(context, title, choices, dangerIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })
@@ -349,7 +350,7 @@ object LauncherDialogRouter {
         checkedIndex: Int,
         listener: ((Int) -> Unit)?,
     ) {
-        if (isHd(context)) {
+        if (isLandscapeShell(context)) {
             PadDialogFactory.showSingleChoice(context, title, choices, checkedIndex, listener?.let { PadDialogFactory.ChoiceListener(it) })
         } else {
             LauncherDialogFactory.showSingleChoice(context, title, choices, checkedIndex, listener?.let { LauncherDialogFactory.ChoiceListener(it) })

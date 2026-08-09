@@ -150,6 +150,8 @@
     <string name="game_action_status">プレイ状態</string>
     <string name="game_action_favorite_add">お気に入りに追加</string>
     <string name="game_action_favorite_remove">お気に入りから削除</string>
+    <string name="game_action_showcase_add">ショーケースに追加</string>
+    <string name="game_action_showcase_remove">ショーケースから削除</string>
     <string name="game_action_password_lock">パスワードロック</string>
     <string name="game_action_password_remove">パスワードを解除</string>
     <string name="game_action_more">その他のオプション</string>

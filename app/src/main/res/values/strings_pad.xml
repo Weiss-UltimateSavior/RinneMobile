@@ -17,6 +17,9 @@
     <string name="pad_search">搜索</string>
     <string name="pad_next_page">下一页</string>
     <string name="pad_loading_games">正在加载游戏…</string>
+    <string name="pad_device_status">%1$d%% · %2$s</string>
+    <string name="pad_device_status_unavailable">— · %1$s</string>
+    <string name="pad_disable_follow_system_tone_first">请关闭跟随系统自动色调开关</string>
     <string name="pad_sync_data">同步数据</string>
     <string name="pad_sync_all_message">全部同步需要一定时间，是否一键同步刷新所有游戏的元数据与封面？</string>
     <string name="pad_confirm_sync">确定同步</string>
@@ -28,6 +31,8 @@
     <string name="pad_cannot_open_engine_settings">无法打开引擎设置</string>
     <string name="pad_delete_failed">删除失败，请稍后重试</string>
     <string name="pad_deleted">已删除</string>
+    <string name="pad_showcase_full">橱窗已满无法添加</string>
+    <string name="pad_showcase_add_symbol">+</string>
     <string name="pad_progress_complete">%1$d/%2$d 已完成</string>
     <string name="pad_all">全部</string>
     <string name="pad_general_settings">常规设置</string>

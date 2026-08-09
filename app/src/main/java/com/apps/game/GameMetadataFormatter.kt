@@ -11,7 +11,7 @@ import java.util.regex.Pattern
 /**
  * 游戏元数据格式化与解析的纯静态工具集。
  *
- * 来源：LauncherLibraryFragment / PadManageFragment / PadGameFragment 三处重复实现。
+ * 来源：LauncherLibraryFragment / PadGameFragment 的重复实现。
  * 全部为无状态纯函数，可被任意 Fragment / Controller / Adapter 调用。
  */
 object GameMetadataFormatter {

@@ -17,6 +17,9 @@
     <string name="pad_search">検索</string>
     <string name="pad_next_page">次のページ</string>
     <string name="pad_loading_games">ゲームを読み込んでいます…</string>
+    <string name="pad_device_status">%1$d%% · %2$s</string>
+    <string name="pad_device_status_unavailable">— · %1$s</string>
+    <string name="pad_disable_follow_system_tone_first">先に「システムテーマに従う」をオフにしてください</string>
     <string name="pad_sync_data">データを同期</string>
     <string name="pad_sync_all_message">すべての同期には時間がかかります。全ゲームのメタデータとカバーを更新しますか？</string>
     <string name="pad_confirm_sync">同期する</string>
@@ -28,6 +31,8 @@
     <string name="pad_cannot_open_engine_settings">エンジン設定を開けません</string>
     <string name="pad_delete_failed">削除に失敗しました。後でもう一度お試しください。</string>
     <string name="pad_deleted">削除しました</string>
+    <string name="pad_showcase_full">ショーケースがいっぱいです</string>
+    <string name="pad_showcase_add_symbol">+</string>
     <string name="pad_progress_complete">%1$d/%2$d 完了</string>
     <string name="pad_all">すべて</string>
     <string name="pad_general_settings">一般設定</string>

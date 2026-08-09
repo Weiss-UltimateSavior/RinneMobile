@@ -22,7 +22,7 @@ import java.util.Locale
 /**
  * 游戏会话控制器：管理本地 session 与服务端 session 的启动、心跳、收尾。
  *
- * 来源：LauncherLibraryFragment / PadManageFragment 重复的 launchGameDirectly /
+ * 来源：LauncherLibraryFragment 的 launchGameDirectly /
  * finishDirectPlaySessionIfNeeded / startServerPlaySession / heartbeatServerPlaySession /
  * finishServerPlaySession / resolveLaunchTypeForRecord / playSessionHeartbeat 共 7 处方法。
  *

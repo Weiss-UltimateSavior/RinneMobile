@@ -28,7 +28,7 @@ import com.core.prefs.ScanRootKeys
  */
 class ScanDirectoryController(
     private val host: ManageHost,
-    private val scanDirectoryPicker: ActivityResultLauncher<Uri>,
+    private val scanDirectoryPicker: ActivityResultLauncher<in Uri?>,
     private val scanListener: OnScanRequestedListener,
     private val directoryList: ViewGroup?,
     private val directoryEmpty: View?

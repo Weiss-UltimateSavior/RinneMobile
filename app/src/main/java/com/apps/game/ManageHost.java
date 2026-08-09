@@ -19,9 +19,7 @@ public interface ManageHost {
     Context requireContext();
 
     /** Resolve localized UI text through the current Fragment context. */
-    default String getString(int resId, Object... formatArgs) {
-        return requireContext().getString(resId, formatArgs);
-    }
+    String getString(int resId, Object... formatArgs);
 
     /** 后台线程使用的应用级 Context（即 requireContext().getApplicationContext()）。 */
     Context getAppContext();

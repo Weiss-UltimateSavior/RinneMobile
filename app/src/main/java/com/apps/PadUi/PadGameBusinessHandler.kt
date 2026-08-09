@@ -34,10 +34,14 @@ class PadGameBusinessHandler(
         private const val TAG = "PadGameBusinessHandler"
     }
 
-    fun showGameActionMenu(game: Game, callbacks: GameActionMenuFactory.ActionMenuCallbacks) {
+    fun showGameActionMenu(
+        game: Game,
+        callbacks: GameActionMenuFactory.ActionMenuCallbacks,
+        showcaseActionLabel: CharSequence,
+    ) {
         val config = GameActionMenuFactory.ActionMenuConfig()
         config.includeEditAction = false
-        config.dialogWidthDp = 270
+        config.showcaseActionLabel = showcaseActionLabel
         GameActionMenuFactory.showGameActionMenu(fragment, game, config, callbacks)
     }
 

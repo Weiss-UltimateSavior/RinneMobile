@@ -150,6 +150,8 @@
     <string name="game_action_status">Play status</string>
     <string name="game_action_favorite_add">Add to favorites</string>
     <string name="game_action_favorite_remove">Remove from favorites</string>
+    <string name="game_action_showcase_add">Add to showcase</string>
+    <string name="game_action_showcase_remove">Remove from showcase</string>
     <string name="game_action_password_lock">Password lock</string>
     <string name="game_action_password_remove">Remove password</string>
     <string name="game_action_more">More options</string>

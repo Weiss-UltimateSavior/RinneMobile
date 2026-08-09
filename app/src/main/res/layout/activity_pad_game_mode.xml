@@ -19,119 +19,92 @@
         android:id="@+id/padFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <FrameLayout
-        android:id="@+id/bottomNav"
+    <LinearLayout
+        android:id="@+id/padQuickActions"
         android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:background="@drawable/pad_bottom_bar"
-        android:layout_marginBottom="2dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingStart="11dp"
-        android:paddingEnd="11dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="30dp"
+        android:paddingEnd="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.266667">
+        app:layout_constraintStart_toStartOf="parent">
 
-        <View
-            android:id="@+id/navSelectionIndicator"
-            android:layout_width="0dp"
-            android:layout_height="44dp"
-            android:layout_gravity="center_vertical|start"
-            android:background="@drawable/pad_nav_selected" />
-
-        <LinearLayout
-            android:id="@+id/bottomNavItems"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+        <ImageView
+            android:id="@+id/navLaunchCenterIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:clickable="true"
+            android:contentDescription="@string/game_center"
             android:focusable="true"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/pad_game_home_surface_icon" />
 
-            <LinearLayout
-                android:id="@+id/navGame"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:background="@drawable/launcher_nav_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical">
+        <ImageView
+            android:id="@+id/navSettingsIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:contentDescription="@string/home_settings"
+            android:focusable="true"
+            android:padding="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/pad_game_settings_button" />
 
-                <ImageView
-                    android:id="@+id/navGameIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:contentDescription="@string/core_home"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/launcher_nav_home" />
-            </LinearLayout>
+        <ImageView
+            android:id="@+id/navScanGamesIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:contentDescription="@string/game_scan_title"
+            android:focusable="true"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/pad_game_scan_icon" />
 
-            <LinearLayout
-                android:id="@+id/navLaunchCenter"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_weight="1"
-                android:clickable="true"
-                android:clipChildren="false"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical">
+        <ImageView
+            android:id="@+id/navDiagnosticsIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:contentDescription="@string/game_diagnostics_title"
+            android:focusable="true"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/pad_game_diagnostics_icon" />
 
-                <FrameLayout
-                     android:id="@+id/navLaunchCenterCircle"
-                     android:layout_width="44dp"
-                     android:layout_height="44dp"
-                     android:background="@drawable/launcher_icon_circle_green">
+        <ImageView
+            android:id="@+id/navToneSwitchIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:contentDescription="@string/home_switch_tone"
+            android:focusable="true"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/pad_game_tone_icon" />
 
-                    <ImageView
-                        android:id="@+id/navLaunchCenterImage"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="@string/game_center"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/launcher_game_center_default" />
-
-                    <ImageView
-                        android:id="@+id/navLaunchCenterText"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="@string/game_center"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/launcher_theme_rinne_def"
-                        android:visibility="gone" />
-                </FrameLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/navManage"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:background="@drawable/launcher_nav_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:id="@+id/navManageIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:contentDescription="@string/core_games"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/launcher_nav_game" />
-            </LinearLayout>
-        </LinearLayout>
-    </FrameLayout>
+        <TextView
+            android:id="@+id/padDeviceStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:gravity="center_vertical"
+            android:singleLine="true"
+            android:textColor="@color/launcher_text_muted_color"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
