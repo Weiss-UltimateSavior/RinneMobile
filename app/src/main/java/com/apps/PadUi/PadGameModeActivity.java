@@ -62,6 +62,7 @@ public class PadGameModeActivity extends AppCompatActivity {
 
         binding = ActivityPadGameModeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        configureParticleLayer();
         renderParticles();
         bindActions();
         ensureScanFragment();
@@ -125,6 +126,12 @@ public class PadGameModeActivity extends AppCompatActivity {
         binding.navScanGamesIcon.setOnClickListener(view -> openScanGames());
         binding.navDiagnosticsIcon.setOnClickListener(view -> openDiagnostics());
         binding.navToneSwitchIcon.setOnClickListener(view -> openToneSwitch());
+    }
+
+    private void configureParticleLayer() {
+        binding.padLauncherParticleView.setFocusable(false);
+        binding.padLauncherParticleView.setClickable(false);
+        binding.padLauncherParticleView.setFocusableInTouchMode(false);
     }
 
     private void renderParticles() {
