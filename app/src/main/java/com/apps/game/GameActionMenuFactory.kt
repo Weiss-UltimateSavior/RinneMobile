@@ -193,7 +193,7 @@ object GameActionMenuFactory {
         }
         addAction(ctx.getString(R.string.game_action_more)) { callbacks.onShowMoreOptions(game) }
 
-        LauncherDialogRouter.showActionChoices(
+        LauncherDialogRouter.showStandardActionChoices(
             ctx,
             GameMetadataFormatter.safeTitle(ctx, game),
             labels.toTypedArray(),

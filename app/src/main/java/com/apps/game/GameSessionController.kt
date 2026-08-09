@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment
 import com.apps.HDModel.LauncherDialogRouter
 import com.apps.LauncherPreferences
 import com.core.R
-import com.core.launcher.EnginePackages
 import com.core.launcherbridge.LauncherAuthBridge
 import com.core.launcherbridge.LauncherGameLaunchBridge
 import com.core.launcherbridge.PlaySession
@@ -17,14 +16,13 @@ import com.core.model.Game
 import com.core.userdata.LauncherUserData
 import com.core.util.AppExecutors
 import com.core.util.RxMainQueue
-import java.util.Locale
 
 /**
  * 游戏会话控制器：管理本地 session 与服务端 session 的启动、心跳、收尾。
  *
  * 来源：LauncherLibraryFragment 的 launchGameDirectly /
  * finishDirectPlaySessionIfNeeded / startServerPlaySession / heartbeatServerPlaySession /
- * finishServerPlaySession / resolveLaunchTypeForRecord / playSessionHeartbeat 共 7 处方法。
+ * finishServerPlaySession / playSessionHeartbeat 共 6 处方法。
  *
  * 状态归属：原 Fragment 持有的 runningSessionId / runningGameId 等运行态字段全部迁移至本控制器。
  * Fragment 通过 Listener 接口接收 UI 刷新回调。
@@ -52,17 +50,40 @@ class GameSessionController(
 
     private val appContext: Context = context.applicationContext
 
+    @Volatile private var destroyed = false
     private var runningSessionId = -1L
     private var runningGameId = -1L
-    private var runningGameTitle = ""
-    private var runningSessionStart = 0L
+    private var runningGame: Game? = null
     private var runningServerSessionId = ""
-    private var runningLaunchType = "external"
+    private var serverSessionStartInFlight = false
+    private var serverSessionFinishInFlight = false
+    private var serverSessionRestartRequested = false
+    private var pendingServerSessionIdForFinish = ""
+    private var pendingLocalSessionIdForFinish = -1L
+    private var serverFinishRetryCount = 0
+    private val localPlayTimer = GameSessionTimer(
+        appContext,
+        mainQueue,
+        onScreenPaused = ::pauseServerPlaySession,
+        onScreenResumed = ::resumeServerPlaySession,
+    )
 
     private val playSessionHeartbeat = object : Runnable {
         override fun run() {
+            if (destroyed) return
             heartbeatServerPlaySession()
             mainQueue.postDelayed(this, PLAY_SESSION_HEARTBEAT_MS)
+        }
+    }
+
+    private val serverFinishRetry = object : Runnable {
+        override fun run() {
+            if (destroyed || pendingServerSessionIdForFinish.isBlank()) return
+            finishServerPlaySession(
+                pendingLocalSessionIdForFinish,
+                pendingServerSessionIdForFinish,
+                restartAfterFinish = serverSessionRestartRequested,
+            )
         }
     }
 
@@ -99,7 +120,7 @@ class GameSessionController(
         AppExecutors.runOnIo {
             val needsConfirm = LauncherGameLaunchBridge.needsArtemisBasePatchConfirmation(context, game)
             mainQueue.post {
-                if (isContextDestroyed(context)) return@post
+                if (destroyed || isContextDestroyed(context)) return@post
                 if (needsConfirm) {
                     val activity = findActivityContext(context)
                     if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
@@ -147,7 +168,7 @@ class GameSessionController(
         AppExecutors.runOnIo {
             LauncherGameLaunchBridge.applyArtemisBasePatch(game)
             mainQueue.post {
-                if (isContextDestroyed(context)) return@post
+                if (destroyed || isContextDestroyed(context)) return@post
                 doLaunchGame(context, game, callback)
             }
         }
@@ -155,14 +176,15 @@ class GameSessionController(
 
     /** 实际发起启动（原 launchGame 主流程）。 */
     private fun doLaunchGame(context: Context, game: Game, callback: LaunchListener?) {
+        if (destroyed) return
         LauncherGameLaunchBridge.launchAsync(context, game, object : LauncherGameLaunchBridge.LaunchCallback {
             override fun onResult(result: LauncherGameLaunchBridge.LaunchResult) {
+                if (destroyed) return
                 if (result.success) {
                     runningSessionId = result.sessionId
                     runningGameId = game.id
-                    runningGameTitle = GameMetadataFormatter.safeTitle(game)
-                    runningSessionStart = System.currentTimeMillis()
-                    runningLaunchType = resolveLaunchTypeForRecord(game)
+                    runningGame = game
+                    localPlayTimer.start()
                     startServerPlaySession(game, result.sessionId)
                 }
                 callback?.onResult(result)
@@ -184,18 +206,23 @@ class GameSessionController(
     fun finishDirectPlaySessionIfNeeded(context: Context) {
         if (runningSessionId <= 0L) return
         // 1) 主项目会话收尾（写入 play_sessions 表 + 累加 total_play_time）
-        LauncherGameLaunchBridge.finishSession(context, runningSessionId, MIN_PLAY_SESSION_MS, MAX_PLAY_SESSION_MS)
+        LauncherGameLaunchBridge.finishSessionWithDuration(
+            context,
+            runningSessionId,
+            localPlayTimer.finish(),
+            MIN_PLAY_SESSION_MS,
+            MAX_PLAY_SESSION_MS,
+        )
         // 2) 线上实际游玩时长只结束服务端 session，不提交本地 duration。
+        serverSessionRestartRequested = false
         finishServerPlaySession(runningSessionId)
         // 捕获刚结束会话的游戏 id，用于就地刷新单张卡片；
         // 不能调用 loadGames()，否则会重置分页并丢失滑动位置。
         val finishedGameId = runningGameId
         runningSessionId = -1L
         runningGameId = -1L
-        runningGameTitle = ""
-        runningSessionStart = 0L
+        runningGame = null
         runningServerSessionId = ""
-        runningLaunchType = "external"
         if (finishedGameId > 0L) {
             listener.reloadGame(finishedGameId)
         } else {
@@ -205,9 +232,12 @@ class GameSessionController(
 
     private fun startServerPlaySession(game: Game?, localSessionId: Long) {
         if (game == null || localSessionId <= 0L) return
+        if (serverSessionStartInFlight || serverSessionFinishInFlight || runningServerSessionId.isNotBlank()
+            || pendingServerSessionIdForFinish.isNotBlank()) return
         if (!LauncherAuthBridge.isLoggedIn(appContext)) return
         val prefs = appContext.getSharedPreferences(LauncherPreferences.ACCOUNT_SETTINGS_PREFS, Context.MODE_PRIVATE)
         if (!prefs.getBoolean("realtime_playtime", true)) return
+        serverSessionStartInFlight = true
         val deviceId = LauncherUserData.getRealtimePlaytimeDeviceId(appContext)
         LauncherAuthBridge.startPlayTimeSession(
             appContext, game.id, GameMetadataFormatter.safeTitle(game), deviceId,
@@ -219,9 +249,19 @@ class GameSessionController(
                     // 仍可能写入已结束会话的 serverSessionId，导致后续心跳发往无效会话。
                     // 切回主线程执行可保证状态读写的串行化与原子性。
                     mainQueue.post {
+                        if (destroyed) return@post
+                        serverSessionStartInFlight = false
                         if (session.sessionId.trim().isEmpty()) return@post
-                        if (runningSessionId != localSessionId) return@post
+                        if (runningSessionId != localSessionId) {
+                            finishServerPlaySession(localSessionId, session.sessionId, restartAfterFinish = true)
+                            return@post
+                        }
+                        if (localPlayTimer.isPausedForScreenOff() || serverSessionRestartRequested) {
+                            finishServerPlaySession(localSessionId, session.sessionId, restartAfterFinish = true)
+                            return@post
+                        }
                         runningServerSessionId = session.sessionId
+                        serverSessionRestartRequested = false
                         LauncherUserData.rememberServerPlaySession(
                             appContext, localSessionId, game.id,
                             GameMetadataFormatter.safeTitle(game), session.sessionId
@@ -231,6 +271,10 @@ class GameSessionController(
                 }
 
                 override fun onError(message: String) {
+                    mainQueue.post(Runnable {
+                        if (destroyed) return@Runnable
+                        serverSessionStartInFlight = false
+                    })
                     // 静默失败：不能回退到本地 duration 上传。
                 }
             }
@@ -258,25 +302,60 @@ class GameSessionController(
         )
     }
 
-    private fun finishServerPlaySession(localSessionId: Long) {
+    private fun finishServerPlaySession(
+        localSessionId: Long,
+        serverSessionIdOverride: String? = null,
+        restartAfterFinish: Boolean = false,
+    ) {
         mainQueue.removeCallbacks(playSessionHeartbeat)
-        val serverSessionId = if (runningServerSessionId.isNullOrEmpty() || runningServerSessionId.trim().isEmpty()) {
+        if (restartAfterFinish) serverSessionRestartRequested = true
+        if (serverSessionFinishInFlight) return
+        val serverSessionId = serverSessionIdOverride?.takeIf { it.isNotBlank() } ?: if (runningServerSessionId.isNullOrEmpty() || runningServerSessionId.trim().isEmpty()) {
             LauncherUserData.findServerPlaySessionId(appContext, localSessionId)
         } else {
             runningServerSessionId
         }
         if (serverSessionId.isNullOrEmpty() || serverSessionId.trim().isEmpty()) return
+        serverSessionFinishInFlight = true
+        pendingLocalSessionIdForFinish = localSessionId
+        pendingServerSessionIdForFinish = serverSessionId
+        if (runningServerSessionId == serverSessionId) runningServerSessionId = ""
         LauncherAuthBridge.finishPlayTimeSession(
             appContext, serverSessionId,
             object : PlaySessionCallback {
                 override fun onSuccess(session: PlaySession) {
                     // 该回调已回主线程，removeServerPlaySession 内部 synchronized + 读写 JSON 文件，
                     // 属主线程阻塞 IO；回调仅做文件移除、无 UI 更新，下沉到单线程池执行安全。
-                    AppExecutors.runOnSingle { LauncherUserData.removeServerPlaySession(appContext, localSessionId) }
+                    mainQueue.post(Runnable {
+                        if (destroyed) return@Runnable
+                        AppExecutors.runOnSingle {
+                            if (destroyed) return@runOnSingle
+                            LauncherUserData.removeServerPlaySession(appContext, localSessionId, serverSessionId)
+                        }
+                        serverSessionFinishInFlight = false
+                        clearPendingServerFinish()
+                        if (serverSessionRestartRequested && !localPlayTimer.isPausedForScreenOff() && runningSessionId > 0L) {
+                            serverSessionRestartRequested = false
+                            startServerPlaySession(runningGame, runningSessionId)
+                        }
+                    })
                 }
 
                 override fun onError(message: String) {
                     // finish 可重试；失败时保留 session_id 映射，等待后续恢复流程处理。
+                    mainQueue.post(Runnable {
+                        if (destroyed) return@Runnable
+                        serverSessionFinishInFlight = false
+                        if (serverSessionRestartRequested && runningSessionId > 0L
+                            && serverFinishRetryCount < MAX_SERVER_FINISH_RETRIES
+                        ) {
+                            serverFinishRetryCount += 1
+                            mainQueue.postDelayed(serverFinishRetry, SERVER_FINISH_RETRY_MS)
+                        } else {
+                            clearPendingServerFinish()
+                            serverSessionRestartRequested = false
+                        }
+                    })
                 }
             }
         )
@@ -284,7 +363,40 @@ class GameSessionController(
 
     /** 在 Fragment.onDestroyView 中调用，移除心跳回调避免泄漏。 */
     fun cleanup() {
+        destroyed = true
         mainQueue.removeCallbacks(playSessionHeartbeat)
+        mainQueue.removeCallbacks(serverFinishRetry)
+        localPlayTimer.cleanup()
+    }
+
+    private fun pauseServerPlaySession() {
+        if (destroyed || runningSessionId <= 0L) return
+        finishServerPlaySession(runningSessionId, restartAfterFinish = true)
+    }
+
+    private fun resumeServerPlaySession() {
+        if (destroyed || runningSessionId <= 0L) return
+        if (pendingServerSessionIdForFinish.isNotBlank()) {
+            finishServerPlaySession(
+                pendingLocalSessionIdForFinish,
+                pendingServerSessionIdForFinish,
+                restartAfterFinish = true,
+            )
+        } else if (!serverSessionFinishInFlight) {
+            if (serverSessionStartInFlight) {
+                // 启动请求跨越熄屏/解锁时，等其返回后先结束旧会话再重建。
+                serverSessionRestartRequested = true
+            } else {
+                serverSessionRestartRequested = false
+                startServerPlaySession(runningGame, runningSessionId)
+            }
+        }
+    }
+
+    private fun clearPendingServerFinish() {
+        pendingLocalSessionIdForFinish = -1L
+        pendingServerSessionIdForFinish = ""
+        serverFinishRetryCount = 0
     }
 
     companion object {
@@ -292,25 +404,7 @@ class GameSessionController(
         private const val MIN_PLAY_SESSION_MS = 0L
         private const val MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L
         private const val PLAY_SESSION_HEARTBEAT_MS = 60L * 1000L
-
-        /**
-         * 与 LauncherGameLaunchBridge.resolveLaunchType 保持一致的启动类型推导，
-         * 仅用于实际游玩记录的 launchType 字段标记，便于后续上传区分启动方式。
-         */
-        @JvmStatic
-        fun resolveLaunchTypeForRecord(game: Game?): String {
-            if (game == null) return "external"
-            val emulatorPackage = game.emulatorPackage ?: return "external"
-            val pkg = emulatorPackage.trim().lowercase(Locale.ROOT)
-            if (EnginePackages.isInternalKrkr(pkg)) return EnginePackages.INTERNAL_KRKR
-            // ons/tyrano 有意不用共享谓词（isInternalOns/Tyrano 含 com.yuki.yukihub.* 历史别名）：
-            // 本方法只标记游玩记录 launchType，保持与既有记录格式一致，避免引入历史别名匹配。
-            if (pkg.startsWith(EnginePackages.INTERNAL_ONS) || pkg == EnginePackages.LEGACY_ONS) return EnginePackages.INTERNAL_ONS
-            if (pkg.startsWith(EnginePackages.INTERNAL_TYRANO) || pkg == EnginePackages.LEGACY_TYRANO) return EnginePackages.INTERNAL_TYRANO
-            if (EnginePackages.isInternalArtemis(pkg)) return pkg
-            if (pkg.startsWith(EnginePackages.INTERNAL_PSP) || pkg == EnginePackages.EXTERNAL_PPSSPP) return EnginePackages.INTERNAL_PSP
-            if (pkg.startsWith(EnginePackages.INTERNAL_CITRA) || pkg == EnginePackages.EXTERNAL_AZAHAR) return EnginePackages.INTERNAL_CITRA
-            return "external"
-        }
+        private const val SERVER_FINISH_RETRY_MS = 10_000L
+        private const val MAX_SERVER_FINISH_RETRIES = 3
     }
 }

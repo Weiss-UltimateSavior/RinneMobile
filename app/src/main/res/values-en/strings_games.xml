@@ -231,8 +231,8 @@
     <string name="game_scan_deeper">Deeper scan (4 levels)</string>
     <string name="game_scan_all">Traverse all levels</string>
     <string name="game_scan_recursive">Recursive scan (matches)</string>
-    <string name="game_scan_mode_quick">Mode: Quick scan (incremental cache)</string>
-    <string name="game_scan_mode_full">Mode: Full rescan (ignore cache)</string>
+    <string name="game_scan_mode_quick">Quick scan</string>
+    <string name="game_scan_mode_full">Full rescan</string>
     <string name="game_scan_disable">Disable</string>
     <string name="game_scan_enable">Enable</string>
     <string name="game_scan_remove_title">Remove scan folder</string>

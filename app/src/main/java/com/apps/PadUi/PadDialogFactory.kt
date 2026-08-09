@@ -329,47 +329,6 @@ object PadDialogFactory {
         setContent(dialog, root, WIDTH_CONFIRM_DP)
     }
 
-    /** 扫描深度选择（快速/完整切换 + 深度选项）：HD 下 Pad 视觉对应 Launcher 版。 */
-    @JvmStatic
-    fun showScanDepthChoices(
-        context: Context,
-        title: String?,
-        quickModeText: String?,
-        fullModeText: String?,
-        labels: Array<CharSequence>?,
-        depthValues: IntArray?,
-        currentDepth: Int,
-        listener: LauncherDialogFactory.ScanDepthListener?,
-    ) {
-        val dialog = open(context, WIDTH_COMPACT_DP, true)
-        val root = root(context)
-        root.addView(title(context, title))
-        val fullRefresh = booleanArrayOf(false)
-        val scanMode = button(context, quickModeText, false)
-        scanMode.setOnClickListener {
-            fullRefresh[0] = !fullRefresh[0]
-            scanMode.text = if (fullRefresh[0]) fullModeText else quickModeText
-        }
-        root.addView(scanMode, fixedHeightTopMargin(context, 11, 36))
-        if (labels != null && depthValues != null) {
-            val count = Math.min(labels.size, depthValues.size)
-            for (i in 0 until count) {
-                val depth = depthValues[i]
-                val selected = depth == currentDepth
-                val option = compactChoice(context, labels[i], selected)
-                option.setOnClickListener {
-                    dialog.dismiss()
-                    listener?.onChoice(depth, fullRefresh[0])
-                }
-                root.addView(option, fixedHeightTopMargin(context, 11, 36))
-            }
-        }
-        val cancel = cancelButton(context)
-        cancel.setOnClickListener { dialog.dismiss() }
-        root.addView(cancel, fixedHeightTopMargin(context, 9, 36))
-        setContent(dialog, root, WIDTH_COMPACT_DP)
-    }
-
     /** 文本选择 + 跳过/取消（xp3 目标解析等）：HD 下 Pad 视觉对应 Launcher 版。 */
     @JvmStatic
     fun showTextChoicesWithSkip(

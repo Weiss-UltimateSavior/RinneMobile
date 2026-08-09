@@ -31,6 +31,7 @@ object LauncherGameLaunchBridge {
     private const val KEY_ACTIVE_STARTED_AT = "active_started_at"
     private const val ACTIVE_PROCESS_GRACE_MS = 5_000L
     private const val MAX_PLAY_SESSION_MS = 12L * 60L * 60L * 1000L
+    private const val MAX_RECOVERED_PLAY_SESSION_MS = 30L * 60L * 1000L
     private val launchGateLock = Any()
 
     interface LaunchCallback {
@@ -93,15 +94,25 @@ object LauncherGameLaunchBridge {
         return LaunchResult.failure(message)
     }
 
+    /**
+     * 按单调时钟累计的有效时长结算会话；结束时刻仍使用墙上时间供历史排序与展示。
+     */
     @JvmStatic
-    fun finishSession(context: Context?, sessionId: Long, minDuration: Long, maxDuration: Long) {
+    fun finishSessionWithDuration(
+        context: Context?,
+        sessionId: Long,
+        effectiveDuration: Long,
+        minDuration: Long,
+        maxDuration: Long,
+    ) {
         if (context == null || sessionId <= 0L) return
         val appContext = context.applicationContext
         GameRepository(appContext).finishPlaySession(
             sessionId,
             System.currentTimeMillis(),
+            effectiveDuration,
             minDuration,
-            maxDuration
+            maxDuration,
         )
         releaseLaunchGate(appContext, sessionId)
     }
@@ -118,7 +129,7 @@ object LauncherGameLaunchBridge {
             if (isActiveGameStillRunning(context, active)) return@synchronized GateAcquireResult(conflict = active)
             // The launcher process may have died while the game was open.  Once its process is
             // gone, close that persisted session before admitting the next game.
-            repository.finishPlaySession(active.sessionId, System.currentTimeMillis(), 0L, MAX_PLAY_SESSION_MS)
+            repository.finishPlaySession(active.sessionId, System.currentTimeMillis(), 0L, MAX_RECOVERED_PLAY_SESSION_MS)
             clearActiveGate(prefs)
         }
 

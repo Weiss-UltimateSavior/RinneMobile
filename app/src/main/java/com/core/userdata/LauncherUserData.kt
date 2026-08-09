@@ -476,6 +476,13 @@ object LauncherUserData {
         LauncherPlayRecords.removeServerPlaySession(context, localSessionId)
 
     @JvmStatic
+    fun removeServerPlaySession(
+        context: Context?,
+        localSessionId: Long,
+        expectedServerSessionId: String?,
+    ): Boolean = LauncherPlayRecords.removeServerPlaySession(context, localSessionId, expectedServerSessionId)
+
+    @JvmStatic
     fun getServerSessionsFile(context: Context): File = LauncherPlayRecords.getServerSessionsFile(context)
 
     // ══════════════════════════════════════════════════

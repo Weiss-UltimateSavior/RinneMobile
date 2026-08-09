@@ -16,10 +16,6 @@ object LauncherDialogFactory {
         fun onChoice(index: Int)
     }
 
-    fun interface ScanDepthListener {
-        fun onChoice(depth: Int, fullRefresh: Boolean)
-    }
-
     fun interface TextChoiceListener {
         fun onChoice(value: String)
     }
@@ -178,20 +174,6 @@ object LauncherDialogFactory {
     fun showSingleChoice(context: Context, title: String?, choices: Array<CharSequence>?,
                          checkedIndex: Int, listener: ChoiceListener?) {
         LauncherDialogChoice.showSingleChoice(context, title, choices, checkedIndex, listener)
-    }
-
-    @JvmStatic
-    fun showScanDepthChoices(
-        context: Context,
-        title: String?,
-        quickModeText: String?,
-        fullModeText: String?,
-        labels: Array<CharSequence>?,
-        depthValues: IntArray?,
-        currentDepth: Int,
-        listener: ScanDepthListener?
-    ) {
-        LauncherDialogChoice.showScanDepthChoices(context, title, quickModeText, fullModeText, labels, depthValues, currentDepth, listener)
     }
 
     @JvmStatic

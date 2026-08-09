@@ -216,6 +216,14 @@ class GameRepository(context: Context) {
     fun finishPlaySession(sessionId: Long, end: Long, minDuration: Long, maxDuration: Long) =
         playSessions.finishPlaySession(sessionId, end, minDuration, maxDuration)
 
+    fun finishPlaySession(
+        sessionId: Long,
+        end: Long,
+        effectiveDuration: Long,
+        minDuration: Long,
+        maxDuration: Long,
+    ) = playSessions.finishPlaySession(sessionId, end, effectiveDuration, minDuration, maxDuration)
+
     fun finishUnfinishedPlaySessions(end: Long, minDuration: Long, maxDuration: Long) {
         playSessions.finishUnfinishedPlaySessions(end, minDuration, maxDuration)
     }

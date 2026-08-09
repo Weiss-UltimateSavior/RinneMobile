@@ -231,8 +231,8 @@
     <string name="game_scan_deeper">より深いスキャン（4 階層）</string>
     <string name="game_scan_all">全階層を走査</string>
     <string name="game_scan_recursive">再帰スキャン（ヒット）</string>
-    <string name="game_scan_mode_quick">方式：高速スキャン（増分キャッシュ）</string>
-    <string name="game_scan_mode_full">方式：完全再スキャン（キャッシュを無視）</string>
+    <string name="game_scan_mode_quick">高速スキャン</string>
+    <string name="game_scan_mode_full">完全再スキャン</string>
     <string name="game_scan_disable">無効化</string>
     <string name="game_scan_enable">有効化</string>
     <string name="game_scan_remove_title">スキャンフォルダーを削除</string>

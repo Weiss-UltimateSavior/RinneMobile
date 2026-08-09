@@ -188,14 +188,21 @@ object LauncherPlayRecords {
     }
 
     @JvmStatic
-    fun removeServerPlaySession(context: Context?, localSessionId: Long): Boolean {
+    fun removeServerPlaySession(
+        context: Context?,
+        localSessionId: Long,
+        expectedServerSessionId: String? = null,
+    ): Boolean {
         if (context == null || localSessionId <= 0L) return false
         synchronized(SERVER_SESSIONS_LOCK) {
             val arr = readServerSessionsArray(context)
             val kept = JSONArray()
             for (i in 0 until arr.length()) {
                 val item = arr.optJSONObject(i)
-                if (item == null || item.optLong("localSessionId", -1L) == localSessionId) continue
+                val belongsToSession = item != null && item.optLong("localSessionId", -1L) == localSessionId
+                val matchesExpectedServerSession = expectedServerSessionId.isNullOrBlank()
+                    || item?.optString("serverSessionId", "") == expectedServerSessionId
+                if (item == null || (belongsToSession && matchesExpectedServerSession)) continue
                 kept.put(item)
             }
             return writeServerSessionsFile(getServerSessionsFile(context), kept)

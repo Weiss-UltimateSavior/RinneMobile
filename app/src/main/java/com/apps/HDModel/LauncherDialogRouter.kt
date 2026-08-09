@@ -243,7 +243,7 @@ object LauncherDialogRouter {
         }
     }
 
-    /** 扫描深度选择（快速/完整切换 + 深度选项）：HD 路由 Pad。 */
+    /** 扫描模式与深度：均使用可滚动的统一单选列表，避免窄屏截断。 */
     @JvmStatic
     fun showScanDepthChoices(
         context: Context,
@@ -255,16 +255,16 @@ object LauncherDialogRouter {
         currentDepth: Int,
         listener: ((depth: Int, fullRefresh: Boolean) -> Unit)?,
     ) {
-        if (isLandscapeShell(context)) {
-            PadDialogFactory.showScanDepthChoices(
-                context, title, quickModeText, fullModeText, labels, depthValues, currentDepth,
-                listener?.let { LauncherDialogFactory.ScanDepthListener(it) },
-            )
-        } else {
-            LauncherDialogFactory.showScanDepthChoices(
-                context, title, quickModeText, fullModeText, labels, depthValues, currentDepth,
-                listener?.let { LauncherDialogFactory.ScanDepthListener(it) },
-            )
+        if (labels == null || depthValues == null) return
+        val count = minOf(labels.size, depthValues.size)
+        if (count == 0) return
+        val scanModes = arrayOf<CharSequence>(quickModeText.orEmpty(), fullModeText.orEmpty())
+        showSingleChoice(context, title, scanModes, -1) { modeIndex ->
+            val depthLabels = Array<CharSequence>(count) { labels[it] ?: "" }
+            val selectedIndex = depthValues.indexOf(currentDepth).takeIf { it in 0 until count } ?: -1
+            showSingleChoice(context, title, depthLabels, selectedIndex) { depthIndex ->
+                listener?.invoke(depthValues[depthIndex], modeIndex == 1)
+            }
         }
     }
 

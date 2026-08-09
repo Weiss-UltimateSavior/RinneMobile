@@ -164,45 +164,6 @@ internal object LauncherDialogChoice {
         LauncherDialogParts.setContent(dialog, root, LauncherDialogFactory.WIDTH_COMPACT_DP)
     }
 
-    internal fun showScanDepthChoices(
-        context: Context,
-        title: String?,
-        quickModeText: String?,
-        fullModeText: String?,
-        labels: Array<CharSequence>?,
-        depthValues: IntArray?,
-        currentDepth: Int,
-        listener: LauncherDialogFactory.ScanDepthListener?
-    ) {
-        val dialog = LauncherDialogParts.open(context, LauncherDialogFactory.WIDTH_COMPACT_DP)
-        val root = LauncherDialogParts.root(context, false)
-        root.addView(LauncherDialogParts.standardTitle(context, title))
-        val fullRefresh = booleanArrayOf(false)
-        val scanMode = LauncherDialogParts.button(context, quickModeText, false)
-        scanMode.setOnClickListener {
-            fullRefresh[0] = !fullRefresh[0]
-            scanMode.text = if (fullRefresh[0]) fullModeText else quickModeText
-        }
-        root.addView(scanMode, LauncherDialogParts.fixedHeightTopMargin(context, 11, 36))
-        if (labels != null && depthValues != null) {
-            val count = Math.min(labels.size, depthValues.size)
-            for (i in 0 until count) {
-                val depth = depthValues[i]
-                val selected = depth == currentDepth
-                val option = LauncherDialogParts.compactChoice(context, labels[i], selected)
-                option.setOnClickListener {
-                    dialog.dismiss()
-                    listener?.onChoice(depth, fullRefresh[0])
-                }
-                root.addView(option, LauncherDialogParts.fixedHeightTopMargin(context, 11, 36))
-            }
-        }
-        val cancel = LauncherDialogParts.cancelButton(context)
-        cancel.setOnClickListener { dialog.dismiss() }
-        root.addView(cancel, LauncherDialogParts.fixedHeightTopMargin(context, 9, 36))
-        LauncherDialogParts.setContent(dialog, root, LauncherDialogFactory.WIDTH_COMPACT_DP)
-    }
-
     internal fun showTextChoicesWithSkip(
         context: Context,
         title: String?,

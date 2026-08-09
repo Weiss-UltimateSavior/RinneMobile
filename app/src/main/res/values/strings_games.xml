@@ -242,8 +242,8 @@
     <string name="game_scan_deeper">深度扫描（4 层）</string>
     <string name="game_scan_all">遍历扫描（全部层级）</string>
     <string name="game_scan_recursive">递归扫描（命中）</string>
-    <string name="game_scan_mode_quick">扫描方式：快速扫描（使用增量缓存）</string>
-    <string name="game_scan_mode_full">扫描方式：完整重新扫描（忽略缓存）</string>
+    <string name="game_scan_mode_quick">快速扫描（增量缓存）</string>
+    <string name="game_scan_mode_full">完整扫描（忽略缓存）</string>
     <string name="game_scan_disable">停用</string>
     <string name="game_scan_enable">启用</string>
     <string name="game_scan_remove_title">移除扫描目录</string>

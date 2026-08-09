@@ -54,6 +54,20 @@ class PlaySessionRepository(private val helper: YukiDatabaseHelper) {
     }
 
     fun finishPlaySession(sessionId: Long, end: Long, minDuration: Long, maxDuration: Long) {
+        finishPlaySession(sessionId, end, null, minDuration, maxDuration)
+    }
+
+    /**
+     * 结算会话。传入 [effectiveDuration] 时使用单调时钟累计的有效游玩时长，
+     * 避免锁屏、系统校时等墙上时间变化被误计入时长。
+     */
+    fun finishPlaySession(
+        sessionId: Long,
+        end: Long,
+        effectiveDuration: Long?,
+        minDuration: Long,
+        maxDuration: Long,
+    ) {
         if (sessionId <= 0) return
         val db = helper.writableDatabase
         db.beginTransaction()
@@ -66,7 +80,7 @@ class PlaySessionRepository(private val helper: YukiDatabaseHelper) {
                 gameId = it.getLong(0)
                 start = it.getLong(1)
             }
-            val rawDuration = Math.max(0L, end - start)
+            val rawDuration = effectiveDuration?.coerceAtLeast(0L) ?: Math.max(0L, end - start)
             if (rawDuration < minDuration) {
                 if (db.delete("play_sessions", "id=?", arrayOf(sessionId.toString())) != 1) {
                     throw IllegalStateException("删除无效游玩会话失败: $sessionId")
