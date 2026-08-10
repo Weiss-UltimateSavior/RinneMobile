@@ -65,7 +65,7 @@
 
 - 深/浅模式由 `LauncherActivity.applySavedToneMode()` 和 `wrapLauncherUiMode()` 决定；新 Activity 必须在 `super.onCreate()` 前应用保存的模式，并在 `attachBaseContext()` 包装 Context。
 - 页面根、普通内容卡片、文本与分割线只引用 `launcher_*` 语义资源。颜色值由 `values/colors.xml` 与 `values-night/colors.xml` 分别提供，禁止在 `com.apps` 页面硬编码 `#RRGGBB`。
-- 用户主题风格只改变 **primary tone**：`default`、`rinne`、`anri`、`xinhaitian`。必须通过 `LauncherTheme.primary()` / `LauncherActivity.launcherPrimaryColor()` 读取，不能直接引用默认绿 `launcher_primary_color` 作为运行时颜色。
+- 用户主题风格只改变 **primary tone**：`default`、`rinne`、`anri`、`xinhaitian`、`natsume`、`izumi`（共 6 项，由 `LauncherThemeStyle.THEME_STYLE_*` 单一定义）。必须通过 `LauncherTheme.primary()` / `LauncherActivity.launcherPrimaryColor()` 读取，不能直接引用默认绿 `launcher_primary_color` 作为运行时颜色。
 - 心海天风格的主操作和圆形图标是双颜色渐变；因此需要主色背景时必须调用 `LauncherTheme.primaryButton()`、`circle()` 或 `primaryGradientCard()`，不能自行 new 单色 `GradientDrawable`。
 - `LauncherTheme.applyPrimaryTone(root)` 负责已声明为默认主色文本、Switch/CompoundButton tint 以及已识别按钮 ID 的运行时替换。它不是任意 View 的万能着色器：新控件仍须显式调用对应主题方法，或使用现有公共 XML style。
 - 所有页面创建完成、绑定数据后应对页面 root 调用 `LauncherTheme.applyPrimaryTone()`；弹窗由对应 DialogFactory 负责，不重复套竖屏缩放或背景。
@@ -418,7 +418,7 @@ grep -rn "systemWindowInset\|getSystemWindowInset" app/src/main/java/com/apps --
 
 - 新增或迁移代码应通过 Android Lint、Kotlin 格式检查和静态分析；在引入工具前，至少执行构建与 `git diff --check`。建议逐步接入 Ktlint/Spotless 与 Detekt，并先对新增问题设为阻断。
 - 涉及分层调整时，检查 `com.core` 不新增 `import com.apps`；涉及线程调整时，验证页面销毁后没有 UI 更新或任务泄漏。
-- **跨模块技术债处理口径**：`com.core` 内既存的 `"yukihub_prefs"`、`"kr_engine_version"`、`LauncherUserData.MAIN_PREF_KEYS` 偏好键等与 `com.apps.LauncherPreferences` 重复的字面量属于历史技术债，非阻塞但不扩散。需设立 `com.core.CorePreferences`（或 `com.core.util.PrefConstants`）object 作为 core 侧偏好名/键单一来源，注明主源在 `LauncherPreferences`；新增 `com.core` 代码必须引用该镜像常量，不得新增字面量。引擎包名路由字符串下沉到 `com.core.launcher.EnginePackages`（或 `EngineType` 伴生）作单一来源。批量清理作为独立技术债阶段处理，不与 UI 改动混在同一提交（具体位置与计数见重构计划文档）。
+- **跨模块技术债处理口径**：`com.core` 内既存的 `"yukihub_prefs"`、`"kr_engine_version"`、`LauncherUserData.MAIN_PREF_KEYS` 偏好键等与 `com.apps.LauncherPreferences` 重复的字面量属于历史技术债，非阻塞但不扩散。`com.core.CorePreferences` object 已设立作为 core 侧偏好名/键单一来源（主源在 `LauncherPreferences`，core 侧以镜像常量引用）；新增 `com.core` 代码必须引用该镜像常量，不得新增字面量。引擎包名路由字符串下沉到 `com.core.launcher.EnginePackages`（或 `EngineType` 伴生）作单一来源。批量清理作为独立技术债阶段处理，不与 UI 改动混在同一提交（具体位置与计数见重构计划文档）。
 - 最低验证命令保持如下；涉及 core 逻辑时同时补充或运行对应单元测试：
 
 ```bash
