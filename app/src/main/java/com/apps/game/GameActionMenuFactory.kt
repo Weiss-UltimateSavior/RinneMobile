@@ -50,7 +50,6 @@ object GameActionMenuFactory {
         fun onShowGameDetail(game: Game)
         fun onEditGame(game: Game)
         fun onShowPlayStatus(game: Game)
-        fun onEditPlayTime(game: Game)
         fun onToggleFavorite(game: Game)
         fun onTogglePassword(game: Game)
         fun onToggleShowcase(game: Game) = Unit
@@ -60,7 +59,6 @@ object GameActionMenuFactory {
     /** 动作菜单可选项配置。 */
     class ActionMenuConfig {
         @JvmField var includeEditAction: Boolean = true
-        @JvmField var includeEditPlayTimeAction: Boolean = false
         @JvmField var includeFavoriteAction: Boolean = true
         @JvmField var includePasswordAction: Boolean = true
         @JvmField var showcaseActionLabel: CharSequence? = null
@@ -175,9 +173,6 @@ object GameActionMenuFactory {
             addAction(ctx.getString(R.string.game_action_edit)) { callbacks.onEditGame(game) }
         }
         addAction(ctx.getString(R.string.game_action_status)) { callbacks.onShowPlayStatus(game) }
-        if (config.includeEditPlayTimeAction) {
-            addAction(ctx.getString(R.string.game_action_edit_duration)) { callbacks.onEditPlayTime(game) }
-        }
         if (config.includeFavoriteAction) {
             val favoriteLabel = ctx.getString(if (game.favorite)
                 R.string.game_action_favorite_remove else R.string.game_action_favorite_add)
@@ -300,14 +295,5 @@ object GameActionMenuFactory {
 
         root.addView(createDialogCancelButton(ctx, dialog))
         setDialogContent(dialog, root, 288)
-    }
-
-    /** 显示修改游玩时长对话框（实现已拆分至 [EditPlayTimeDialog]，见 §5.1）。 */
-    @JvmStatic
-    fun showEditPlayTimeDialog(
-        fragment: Fragment, game: Game?,
-        callback: GameUpdateCallback
-    ) {
-        EditPlayTimeDialog.show(fragment, game, callback)
     }
 }

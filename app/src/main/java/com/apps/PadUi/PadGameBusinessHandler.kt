@@ -65,13 +65,6 @@ class PadGameBusinessHandler(
         )
     }
 
-    fun onEditPlayTime(game: Game) {
-        GameActionMenuFactory.showEditPlayTimeDialog(
-            fragment, game,
-            GameActionMenuFactory.GameUpdateCallback { updated -> listController?.updateSingleGame(updated) }
-        )
-    }
-
     fun onToggleFavorite(game: Game) {
         toggleFavorite(game)
     }
@@ -93,7 +86,6 @@ class PadGameBusinessHandler(
     private fun showMoreOptionsDialog(game: Game) {
         val ids = ArrayList<String>()
         val labels = ArrayList<CharSequence>()
-        addMoreOption(ids, labels, "edit_play_time", context.getString(R.string.game_action_edit_duration))
         addMoreOption(ids, labels, "pin_shortcut", context.getString(R.string.game_action_pin_shortcut))
         addMoreOption(ids, labels, "rematch", context.getString(R.string.game_action_rematch_vndb))
         addMoreOption(ids, labels, "custom_vndb", context.getString(R.string.game_action_custom_vndb))
@@ -110,10 +102,6 @@ class PadGameBusinessHandler(
             deleteIndex,
         ) { index ->
             when (ids[index]) {
-                "edit_play_time" -> GameActionMenuFactory.showEditPlayTimeDialog(
-                    fragment, game,
-                    GameActionMenuFactory.GameUpdateCallback { updated -> listController?.updateSingleGame(updated) }
-                )
                 "pin_shortcut" -> PinnedGameShortcut.requestPinShortcut(context, game)
                 "rematch" -> rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(fragment, game) { onReloadSingleGame(game.id) }

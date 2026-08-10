@@ -156,15 +156,6 @@
     <string name="game_action_password_remove">パスワードを解除</string>
     <string name="game_action_more">その他のオプション</string>
     <string name="game_action_set_status">プレイ状態を設定</string>
-    <string name="game_action_edit_duration">プレイ時間を変更</string>
-    <string name="game_action_current_duration">現在の合計：%1$s\n最近のプレイ：%2$s</string>
-    <string name="game_action_none">なし</string>
-    <string name="game_action_set_total_duration">新しい合計プレイ時間</string>
-    <string name="game_action_total_duration_hint">例：3h 20m / 200m / 7200s / 2.5h</string>
-    <string name="game_action_add_duration">プレイ時間を追加</string>
-    <string name="game_action_add_duration_hint">例：30m / 1h30m / 0.5h</string>
-    <string name="game_action_duration_units_hint">d/h/m/s を組み合わせて入力できます。数字だけの場合は分です</string>
-    <string name="game_action_invalid_duration">有効な時間を入力してください</string>
     <string name="game_action_edit_failed">変更に失敗しました</string>
     <string name="game_detail_format">状態：%1$s\nエンジン：%2$s\n合計時間：%3$s\n最近のプレイ：%4$s</string>
     <string name="game_detail_emulator">エミュレーター：%1$s</string>

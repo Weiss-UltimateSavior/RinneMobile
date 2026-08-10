@@ -203,48 +203,6 @@ class PlaySessionRepository(private val helper: YukiDatabaseHelper) {
         }
     }
 
-    fun setManualPlayTimeForGame(gameId: Long, totalDuration: Long) {
-        if (gameId <= 0) return
-        val db = helper.writableDatabase
-        val now = System.currentTimeMillis()
-        val safeDuration = Math.max(0L, totalDuration)
-        db.beginTransaction()
-        try {
-            db.delete("play_sessions", "game_id=?", arrayOf(gameId.toString()))
-            var lastPlayed = 0L
-            if (safeDuration > 0) {
-                lastPlayed = now
-                val start = Math.max(0L, now - safeDuration)
-                val session = ContentValues()
-                session.put("game_id", gameId)
-                session.put("start_time", start)
-                session.put("end_time", now)
-                session.put("duration", safeDuration)
-                session.put("launch_type", "manual")
-                session.put("session_uuid", UUID.randomUUID().toString())
-                session.put("device_id", "local")
-                session.put("created_at", now)
-                session.put("updated_at", now)
-                session.put("dirty", 1)
-                session.put("deleted", 0)
-                if (db.insert("play_sessions", null, session) <= 0) {
-                    throw IllegalStateException("写入手动总时长记录失败: $gameId")
-                }
-            }
-            val v = ContentValues()
-            v.put("total_play_time", safeDuration)
-            v.put("last_played_at", lastPlayed)
-            v.put("playtime_reset_at", now)
-            v.put("updated_at", now)
-            if (db.update("games", v, "id=?", arrayOf(gameId.toString())) != 1) {
-                throw IllegalStateException("设置手动总时长时找不到游戏: $gameId")
-            }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
-        }
-    }
-
     data class PlayActivity(
         var sessionId: Long = 0L,
         var sessionUuid: String? = null,

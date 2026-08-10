@@ -156,15 +156,6 @@
     <string name="game_action_password_remove">Remove password</string>
     <string name="game_action_more">More options</string>
     <string name="game_action_set_status">Set play status</string>
-    <string name="game_action_edit_duration">Edit play time</string>
-    <string name="game_action_current_duration">Current total: %1$s\nLast played: %2$s</string>
-    <string name="game_action_none">None</string>
-    <string name="game_action_set_total_duration">Set new total play time</string>
-    <string name="game_action_total_duration_hint">For example: 3h 20m / 200m / 7200s / 2.5h</string>
-    <string name="game_action_add_duration">Add play time</string>
-    <string name="game_action_add_duration_hint">For example: 30m / 1h30m / 0.5h</string>
-    <string name="game_action_duration_units_hint">Combine d/h/m/s units; plain numbers are minutes</string>
-    <string name="game_action_invalid_duration">Enter a valid duration</string>
     <string name="game_action_edit_failed">Update failed</string>
     <string name="game_detail_format">Status: %1$s\nEngine: %2$s\nTotal play time: %3$s\nLast played: %4$s</string>
     <string name="game_detail_emulator">Emulator: %1$s</string>

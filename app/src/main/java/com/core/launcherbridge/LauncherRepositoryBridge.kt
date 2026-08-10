@@ -103,17 +103,6 @@ object LauncherRepositoryBridge {
     }
 
     /**
-     * 用给定时长替换某游戏的总游玩时间。清除该游戏所有已有 play_sessions，
-     * 当 duration > 0 时插入一条合成手动会话。
-     */
-    @JvmStatic
-    fun setManualPlayTimeForGame(context: Context?, gameId: Long, totalDurationMs: Long) {
-        if (context == null || gameId <= 0) return
-        GameRepository(context.applicationContext)
-            .setManualPlayTimeForGame(gameId, totalDurationMs)
-    }
-
-    /**
      * 返回最近完成的游玩会话，按时间降序。
      * 使用 [RecentActivity] 字段进行展示，而非 PlaySessionRepository.PlayActivity。
      */

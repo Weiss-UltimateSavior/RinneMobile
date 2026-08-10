@@ -476,10 +476,6 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         businessHandler.onShowPlayStatus(game)
     }
 
-    override fun onEditPlayTime(game: Game) {
-        businessHandler.onEditPlayTime(game)
-    }
-
     override fun onToggleFavorite(game: Game) {
         businessHandler.onToggleFavorite(game)
     }

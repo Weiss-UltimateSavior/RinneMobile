@@ -481,10 +481,6 @@ open class LauncherLibraryFragment : Fragment(),
         GameActionMenuFactory.showPlayStatusDialog(this, game, subDialogFactory) { updateSingleGame(it) }
     }
 
-    override fun onEditPlayTime(game: Game) {
-        GameActionMenuFactory.showEditPlayTimeDialog(this, game) { updateSingleGame(it) }
-    }
-
     override fun onToggleFavorite(game: Game) {
         toggleFavorite(game)
     }
@@ -504,7 +500,6 @@ open class LauncherLibraryFragment : Fragment(),
     private fun showMoreOptionsDialog(game: Game?) {
         if (game == null) return
         val options = mutableListOf<Array<String>>()
-        options.add(arrayOf(getString(R.string.game_action_edit_duration), "edit_play_time"))
         options.add(arrayOf(getString(R.string.game_action_pin_shortcut), "pin_shortcut"))
         options.add(arrayOf(getString(R.string.game_action_rematch_vndb), "rematch"))
         options.add(arrayOf(getString(R.string.game_action_custom_vndb), "custom_vndb"))
@@ -522,7 +517,6 @@ open class LauncherLibraryFragment : Fragment(),
             deleteIndex
         ) { index ->
             when (options[index][1]) {
-                "edit_play_time" -> GameActionMenuFactory.showEditPlayTimeDialog(this, game) { updateSingleGame(it) }
                 "pin_shortcut" -> PinnedGameShortcut.requestPinShortcut(requireContext(), game)
                 "rematch" -> syncController.rematchMetadata(game)
                 "custom_vndb" -> LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }

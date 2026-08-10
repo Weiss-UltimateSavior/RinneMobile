@@ -246,9 +246,6 @@ class GameRepository(context: Context) {
     fun addManualPlayTime(gameId: Long, duration: Long, end: Long) =
         playSessions.addManualPlayTime(gameId, duration, end)
 
-    fun setManualPlayTimeForGame(gameId: Long, totalDuration: Long) =
-        playSessions.setManualPlayTimeForGame(gameId, totalDuration)
-
     fun getPlayDurationsBetween(startInclusive: Long, endExclusive: Long): Map<String, Long> =
         playSessions.getPlayDurationsBetween(startInclusive, endExclusive)
 

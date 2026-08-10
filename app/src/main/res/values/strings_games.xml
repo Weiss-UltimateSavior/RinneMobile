@@ -163,15 +163,6 @@
     <string name="game_action_password_remove">取消密码</string>
     <string name="game_action_more">更多选项</string>
     <string name="game_action_set_status">设置游玩状态</string>
-    <string name="game_action_edit_duration">修改游玩时长</string>
-    <string name="game_action_current_duration">当前总时长：%1$s\n最近游玩：%2$s</string>
-    <string name="game_action_none">无</string>
-    <string name="game_action_set_total_duration">设置新的总时长</string>
-    <string name="game_action_total_duration_hint">例如 3h 20m / 200m / 7200s / 2.5h</string>
-    <string name="game_action_add_duration">追加游玩时长</string>
-    <string name="game_action_add_duration_hint">例如 30m / 1h30m / 0.5h</string>
-    <string name="game_action_duration_units_hint">可填 d/h/m/s 单位组合，纯数字视为分钟</string>
-    <string name="game_action_invalid_duration">请输入有效时长</string>
     <string name="game_action_edit_failed">修改失败</string>
     <string name="game_detail_format">状态：%1$s\n引擎：%2$s\n总时长：%3$s\n最近游玩：%4$s</string>
     <string name="game_detail_emulator">模拟器：%1$s</string>

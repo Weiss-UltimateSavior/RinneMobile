@@ -6,7 +6,6 @@ import com.core.R
 import com.core.model.EngineType
 import com.core.model.Game
 import java.util.Locale
-import java.util.regex.Pattern
 
 /**
  * 游戏元数据格式化与解析的纯静态工具集。
@@ -49,41 +48,6 @@ object GameMetadataFormatter {
             else -> R.string.game_common_unknown
         }
     )
-
-    /**
-     * 解析时长字符串为分钟数。
-     * 支持 d/h/m/s 单位组合（如 "3h 20m"），纯数字视为分钟。
-     * 解析失败或为空时返回 null。
-     */
-    @JvmStatic
-    fun parseDuration(text: String?): Long? {
-        if (text == null || text.trim { it <= ' ' }.isEmpty()) return null
-        val normalized = text.trim { it <= ' ' }.lowercase(Locale.ROOT)
-        return try {
-            if (!normalized.matches(".*[dhms].*".toRegex())) {
-                return normalized.toDouble().toLong()
-            }
-            var total = 0L
-            val m = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*([dhms])").matcher(normalized)
-            var found = false
-            while (m.find()) {
-                found = true
-                val v = m.group(1)!!.toDouble()
-                val delta = when (m.group(2)) {
-                    "d" -> v * 1440
-                    "h" -> v * 60
-                    "m" -> v
-                    "s" -> v / 60
-                    else -> 0.0
-                }
-                total = (total + delta).toLong()
-            }
-            if (found) total else null
-        } catch (error: RuntimeException) {
-            // 时长字符串解析失败时返回 null，由调用方按无数据处理（契约见 KDoc），可安全忽略
-            null
-        }
-    }
 
     /**
      * 归一化游玩状态字符串为服务端可识别的三种值：playing / completed / unplayed。
