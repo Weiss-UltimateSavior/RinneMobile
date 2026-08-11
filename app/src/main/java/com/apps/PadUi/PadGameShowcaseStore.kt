@@ -3,7 +3,7 @@ package com.apps.PadUi
 import android.content.Context
 import com.apps.LauncherPreferences
 
-/** Pad 游戏页橱窗的本地持久化顺序，最多保存四个游戏。 */
+/** Pad 游戏页橱窗的本地持久化顺序，最多保存五个游戏。 */
 class PadGameShowcaseStore(context: Context) {
     enum class AddResult { ADDED, ALREADY_ADDED, FULL }
 
@@ -56,6 +56,6 @@ class PadGameShowcaseStore(context: Context) {
     }
 
     companion object {
-        const val MAX_SHOWCASE_SIZE = 4
+        const val MAX_SHOWCASE_SIZE = 5
     }
 }

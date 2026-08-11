@@ -13,10 +13,14 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.apps.LauncherActivity
+import com.apps.LauncherThemeStyle
+import com.apps.data.LauncherRepository
 import com.apps.game.GameActionMenuFactory
 import com.apps.game.GameListController
 import com.apps.game.GameSessionController
@@ -26,7 +30,9 @@ import com.core.R
 import com.core.databinding.FragmentPadGameBinding
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.Game
+import com.core.util.DevLogger
 import com.core.util.RxMainQueue
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -113,6 +119,8 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         setupShortcutCards()
         setupRecycler()
         setupSearch()
+        applyDetailDividerTone()
+        refreshStats()
         needsRefresh = true
         loadGames()
     }
@@ -120,10 +128,12 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     override fun onResume() {
         super.onResume()
         applyToolbarIconTone()
+        applyDetailDividerTone()
         adapter?.refreshThemeTone()
         renderShowcaseCards()
         headerRenderer.renderAvatar()
         headerRenderer.renderAccountInfo()
+        refreshStats()
         val sc = sessionController
         val lc = listController
         if (sc != null && sc.hasActiveSession()) {
@@ -148,6 +158,7 @@ class PadGameFragment : Fragment(), GameListController.Listener,
                 b.padGameShowcaseImageTwo,
                 b.padGameShowcaseImageThree,
                 b.padGameShowcaseImageFour,
+                b.padGameShowcaseImageFive,
             ).forEach(LauncherCoverLoader::clear)
             b.root.setOnTouchListener(null)
         }
@@ -162,6 +173,13 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         val primary = LauncherTheme.primary(requireContext())
         binding.padSearchIcon.setColorFilter(primary)
         binding.padGameLoading.setTextColor(primary)
+    }
+
+    /** 右容器十字分界线跟随主题线条色。 */
+    private fun applyDetailDividerTone() {
+        val lineColor = LauncherTheme.line(requireContext())
+        binding.padDetailHLine.setBackgroundColor(lineColor)
+        binding.padDetailVLine.setBackgroundColor(lineColor)
     }
 
     private fun setupShortcutCards() {
@@ -184,6 +202,7 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         binding.padGameShortcutTwo,
         binding.padGameShortcutThree,
         binding.padGameShortcutFour,
+        binding.padGameShortcutFive,
     )
 
     private fun showcaseImages() = listOf<ImageView>(
@@ -191,6 +210,7 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         binding.padGameShowcaseImageTwo,
         binding.padGameShowcaseImageThree,
         binding.padGameShowcaseImageFour,
+        binding.padGameShowcaseImageFive,
     )
 
     private fun showcaseAddLabels() = listOf<TextView>(
@@ -198,6 +218,23 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         binding.padGameShowcaseAddTwo,
         binding.padGameShowcaseAddThree,
         binding.padGameShowcaseAddFour,
+        binding.padGameShowcaseAddFive,
+    )
+
+    private fun showcaseTitleLabels() = listOf<TextView>(
+        binding.padGameShowcaseTitleOne,
+        binding.padGameShowcaseTitleTwo,
+        binding.padGameShowcaseTitleThree,
+        binding.padGameShowcaseTitleFour,
+        binding.padGameShowcaseTitleFive,
+    )
+
+    private fun showcaseOverlays() = listOf(
+        binding.padGameShowcaseOverlayOne,
+        binding.padGameShowcaseOverlayTwo,
+        binding.padGameShowcaseOverlayThree,
+        binding.padGameShowcaseOverlayFour,
+        binding.padGameShowcaseOverlayFive,
     )
 
     private fun refreshShowcaseCards() {
@@ -219,22 +256,70 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     private fun renderShowcaseCards() {
         val images = showcaseImages()
         val addLabels = showcaseAddLabels()
+        val titleLabels = showcaseTitleLabels()
+        val overlays = showcaseOverlays()
         images.indices.forEach { index ->
             val game = showcaseGames[index]
             val image = images[index]
+            val overlay = overlays[index]
             addLabels[index].setTextColor(LauncherTheme.primary(requireContext()))
+            titleLabels[index].setTextColor(LauncherTheme.text(requireContext()))
             LauncherCoverLoader.clear(image)
             if (game == null) {
                 image.visibility = View.GONE
+                image.background = null
+                overlay.visibility = View.GONE
                 addLabels[index].visibility = View.VISIBLE
+                titleLabels[index].visibility = View.GONE
                 return@forEach
             }
             addLabels[index].visibility = View.GONE
             image.visibility = View.VISIBLE
             image.background = LauncherTheme.primaryGradientCard(requireContext(), 8f)
+            titleLabels[index].text = com.apps.game.GameMetadataFormatter.safeTitle(game)
+            titleLabels[index].visibility = View.VISIBLE
+            overlay.visibility = View.VISIBLE
+            // 半透明遮罩跟随主题色调：主题色半透明遮罩 + 主题色上的文字色。
+            overlay.background = LauncherTheme.primaryTextOverlay(requireContext())
+            titleLabels[index].setTextColor(LauncherTheme.onPrimary(requireContext()))
             val persistedCover = game.coverPersistUri?.trim().orEmpty()
             val cover = if (persistedCover.isNotEmpty()) persistedCover else game.coverUri?.trim().orEmpty()
             if (cover.isNotEmpty()) LauncherCoverLoader.loadInto(image, cover, null)
+        }
+    }
+
+    /**
+     * 填充右侧竖屏游戏数据卡片：游戏数、总游玩时长、今日游玩时长，
+     * 并应用主题背景图与遮罩，与竖屏首页的统计卡片保持一致。
+     */
+    private fun refreshStats() {
+        val b = _binding ?: return
+        b.padStatsImage.setImageResource(LauncherThemeStyle.homeStatsImageRes(requireContext()))
+        val isDefault = !LauncherActivity.isRinneTheme(requireContext())
+            && !LauncherActivity.isAnriTheme(requireContext())
+            && !LauncherActivity.isXinhaitianTheme(requireContext())
+            && !LauncherActivity.isNatsumeTheme(requireContext())
+            && !LauncherActivity.isIzumiTheme(requireContext())
+        if (isDefault) {
+            b.padStatsScrim.setBackgroundResource(com.core.R.drawable.launcher_home_stats_scrim)
+        } else {
+            b.padStatsScrim.background = LauncherTheme.statsScrim(requireContext())
+        }
+        val app = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val snapshot = LauncherRepository(app).loadStatsSnapshot()
+                withContext(Dispatchers.Main) {
+                    val bb = _binding ?: return@withContext
+                    bb.padTvGameCount.text = snapshot.gameCount.toString()
+                    bb.padTvTotalPlayTime.text = snapshot.totalPlayTime
+                    bb.padTvTodayPlayTime.text = snapshot.todayPlayTime
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                DevLogger.w(TAG, "Failed to load stats snapshot", e)
+            }
         }
     }
 
@@ -242,9 +327,9 @@ class PadGameFragment : Fragment(), GameListController.Listener,
     private fun updateShortcutCardSizing() {
         val container = _binding?.padGameShortcutContainer ?: return
         if (container.width <= 0) return
-        val gap = LauncherTheme.dp(requireContext(), 8)
+        val gap = LauncherTheme.dp(requireContext(), 6)
         val usableWidth = container.width - container.paddingStart - container.paddingEnd
-        val cardWidth = ((usableWidth - gap * 3) / 4).coerceAtLeast(1)
+        val cardWidth = ((usableWidth - gap * 4) / 5).coerceAtLeast(1)
         val cardHeight = (cardWidth * 1.42f).toInt()
         val containerHeight = cardHeight + container.paddingTop + container.paddingBottom
         val containerParams = container.layoutParams
@@ -257,6 +342,7 @@ class PadGameFragment : Fragment(), GameListController.Listener,
             binding.padGameShortcutTwo,
             binding.padGameShortcutThree,
             binding.padGameShortcutFour,
+            binding.padGameShortcutFive,
         )
         cards.forEach { card ->
             val params = card.layoutParams as LinearLayout.LayoutParams
@@ -264,6 +350,19 @@ class PadGameFragment : Fragment(), GameListController.Listener,
                 params.height = cardHeight
                 card.layoutParams = params
             }
+        }
+        // 详情面板高度走 match-constraints：顶部到五卡片容器、底部到 padDetailBottomGuide。
+        // 底部导航图标 view 高 48dp（栏高 40dp + 4dp 下边距，图标向上伸出 4dp），其顶部位于
+        // 屏幕底部上方 48dp；guide 上移到该位置之上，保证按钮/数据卡片绝不覆盖底部功能图标。
+        val detail = _binding?.padGameDetailPanel ?: return
+        val guide = _binding?.padDetailBottomGuide ?: return
+        guide.setGuidelineEnd(LauncherTheme.dp(requireContext(), 54))
+        val detailParams = detail.layoutParams as ConstraintLayout.LayoutParams
+        if (detailParams.height != ConstraintLayout.LayoutParams.MATCH_CONSTRAINT ||
+            detailParams.matchConstraintMaxHeight != cardHeight) {
+            detailParams.height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
+            detailParams.matchConstraintMaxHeight = cardHeight
+            detail.layoutParams = detailParams
         }
     }
 
