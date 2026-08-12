@@ -241,6 +241,7 @@ object LauncherGameLaunchBridge {
     @JvmStatic
     fun buildInternalKrkrOriginIntent(context: Context?): Intent? {
         if (context == null) return null
+        if (LauncherModuleBridge.kirikiroid2ReadyCode(context) != "ready") return null
         return EmulatorLauncher.buildInternalKrkrIntent(context, "", "", true)
     }
 
@@ -288,6 +289,17 @@ object LauncherGameLaunchBridge {
             && !LauncherModuleBridge.isGodotModuleEnabled(context)
         ) {
             return context.getString(R.string.core_godot_module_disabled)
+        }
+        if (EnginePackages.isInternalKrkr(emulatorPackage)) {
+            val krEngineKernel = LauncherKrkrGameSettingsBridge.resolveEngineKernel(context, game.id)
+            if (krEngineKernel != LauncherKrkrBridge.KERNEL_KRKRSDL3) {
+                when (LauncherModuleBridge.kirikiroid2ReadyCode(context)) {
+                    "ready" -> Unit
+                    "disabled" -> return context.getString(R.string.core_kirikiroid2_module_disabled)
+                    "invalid" -> return context.getString(R.string.core_kirikiroid2_module_invalid)
+                    else -> return context.getString(R.string.core_kirikiroid2_module_required)
+                }
+            }
         }
         return null
     }

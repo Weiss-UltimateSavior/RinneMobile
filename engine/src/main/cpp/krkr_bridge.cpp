@@ -97,10 +97,12 @@ int64_t gFirstSceneUpdateNs = 0;
 constexpr int64_t kMenuShrinkWaitNs = 1200LL * 1000LL * 1000LL;
 
 bool supportedGameLibrary(const char* library) {
-    return library != nullptr
-            && (std::strcmp(library, "libgame.so") == 0
-                    || std::strcmp(library, "libgame134.so") == 0
-                    || std::strcmp(library, "libgame126.so") == 0);
+    if (library == nullptr || library[0] == '\0') return false;
+    const char* baseName = std::strrchr(library, '/');
+    baseName = baseName == nullptr ? library : baseName + 1;
+    return std::strcmp(baseName, "libgame.so") == 0
+            || std::strcmp(baseName, "libgame134.so") == 0
+            || std::strcmp(baseName, "libgame126.so") == 0;
 }
 
 bool isKrkrGameCaller(const char* callerPathName, void*) {

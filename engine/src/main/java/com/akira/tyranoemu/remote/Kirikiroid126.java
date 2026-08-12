@@ -1,5 +1,9 @@
 package com.akira.tyranoemu.remote;
 
+import android.util.Log;
+
+import com.core.nativeplugin.NativeLibraryLoader;
+
 /**
  * KRKR 引擎 1.2.6（beta4）启动器。
  *
@@ -15,8 +19,12 @@ package com.akira.tyranoemu.remote;
 public final class Kirikiroid126 extends KirikiroidLauncherBaseActivity {
     @Override
     public void onLoadNativeLibraries() {
-        System.loadLibrary("ffmpeg");
-        System.loadLibrary("game126");
+        String gameLibrary = NativeLibraryLoader.loadKirikiroid126(this);
+        if (gameLibrary == null) {
+            Log.e("Kirikiroid2", "Kirikiroid2 plugin missing or invalid for libgame126.so");
+            return;
+        }
+        setResolvedGameLibrary(gameLibrary);
         System.loadLibrary("krkr_bridge");
         super.onLoadNativeLibraries();
     }

@@ -8,7 +8,18 @@ package com.core.engine
  */
 object EnginePrefs {
     const val APP_PREFS = "yukihub_prefs"
+    const val NATIVE_PLUGIN_OVERRIDE_PREFS = "rinne_native_plugin_overrides"
 
     /** Tyrano 外部网络开关偏好键（镜像 app 模块 EngineSaveKeys.KEY_TYRANO_EXTERNAL_NETWORK）。 */
     const val KEY_TYRANO_EXTERNAL_NETWORK = "tyrano_external_network"
+
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_ENABLED = "native_plugin.kirikiroid2.enabled"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_INSTALLED = "native_plugin.kirikiroid2.installed"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_VERSION = "native_plugin.kirikiroid2.version"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_ABI = "native_plugin.kirikiroid2.abi"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_ZIP_SHA256 = "native_plugin.kirikiroid2.zip_sha256"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_INSTALLED_AT = "native_plugin.kirikiroid2.installed_at"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_BRIDGE_ABI = "native_plugin.kirikiroid2.bridge_abi"
+    const val KEY_NATIVE_PLUGIN_KIRIKIROID2_EXPECTED_ZIP_SHA256 =
+        "native_plugin.kirikiroid2.expected_zip_sha256"
 }

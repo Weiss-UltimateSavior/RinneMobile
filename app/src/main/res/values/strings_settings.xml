@@ -140,9 +140,11 @@
     <string name="module_rpgm_name">RPGM 模块</string>
     <string name="module_renpy_name">RenPy 模块</string>
     <string name="module_godot_name">Godot 模块</string>
+    <string name="module_kirikiroid2_name">Kirikiroid2 模块</string>
     <string name="module_rpgm_not_installed">未安装 - 提供 RPGM 游戏所需环境</string>
     <string name="module_renpy_not_installed">未安装 - 提供 RenPy 游戏所需环境</string>
     <string name="module_godot_not_installed">未安装 - 提供 Godot 游戏所需环境</string>
+    <string name="module_kirikiroid2_not_installed">未导入 - 提供 KRKR 游戏所需 native 运行库</string>
 
     <!-- 智能翻译 -->
     <string name="translation_title">智能翻译</string>
@@ -309,9 +311,11 @@
     <string name="module_rpgm_detail">提供 RPGM 游戏所需环境</string>
     <string name="module_renpy_detail">提供 RenPy 游戏所需环境</string>
     <string name="module_godot_detail">提供 Godot 游戏所需环境</string>
+    <string name="module_kirikiroid2_detail">提供 KRKR 游戏所需 native 运行库</string>
     <string name="module_status_not_installed">未安装 - %1$s</string>
     <string name="module_status_installed_enabled">已安装 · 已启用 - %1$s</string>
     <string name="module_status_installed_disabled">已安装 · 未启用 - %1$s</string>
+    <string name="module_status_invalid">插件损坏 - %1$s</string>
     <string name="module_download_title">下载 %1$s 模块</string>
     <string name="module_download_message">是否前往浏览器下载该模块？</string>
     <string name="module_installed_enabled_hint">该模块已安装并启用。点击右侧图标可禁用。</string>
@@ -325,6 +329,27 @@
     <string name="module_enable_title">启用 %1$s 模块</string>
     <string name="module_enable_message">启用后该模块可用于启动 %1$s 游戏。是否启用？</string>
     <string name="module_enable">启用</string>
+    <string name="module_native_import">导入插件</string>
+    <string name="module_native_delete">删除插件</string>
+    <string name="module_native_importing_title">正在导入插件</string>
+    <string name="module_native_importing_message">正在校验 zip SHA-256 并解压插件，请稍候。</string>
+    <string name="module_native_deleting_title">正在删除插件</string>
+    <string name="module_native_deleting_message">正在移除 Kirikiroid2 插件，请稍候。</string>
+    <string name="module_native_import_success_title">导入完成</string>
+    <string name="module_native_import_success_message">Kirikiroid2 插件已导入并启用。</string>
+    <string name="module_native_import_failed_title">导入失败</string>
+    <string name="module_native_import_failed_message">无法导入该插件，请确认文件完整后重试。</string>
+    <string name="module_native_import_expected_sha_missing">当前版本未配置 Kirikiroid2 插件 zip 的期望 SHA-256，已拒绝导入。</string>
+    <string name="module_native_import_sha_mismatch">zip SHA-256 不匹配，已拒绝导入。\n当前文件：%1$s</string>
+    <string name="module_native_import_invalid_structure">插件结构不正确，缺少 manifest 或必需 native 库。</string>
+    <string name="module_native_import_zip_rejected">插件 zip 路径不安全或无法解压，已拒绝导入。</string>
+    <string name="module_native_import_read_failed">无法读取所选 zip 文件。</string>
+    <string name="module_native_delete_title">删除 Kirikiroid2 插件</string>
+    <string name="module_native_delete_message">删除后 KRKR 游戏将无法使用 Kirikiroid2 内核启动，直到重新导入插件。是否删除？</string>
+    <string name="module_native_delete_success_title">已删除插件</string>
+    <string name="module_native_delete_success_message">Kirikiroid2 插件已删除。</string>
+    <string name="module_native_delete_failed_title">删除失败</string>
+    <string name="module_native_delete_failed_message">无法删除 Kirikiroid2 插件，请稍后重试。</string>
     <string name="module_cannot_open_browser">无法打开浏览器</string>
     <string name="module_try_again_later">请稍后重试。</string>
 

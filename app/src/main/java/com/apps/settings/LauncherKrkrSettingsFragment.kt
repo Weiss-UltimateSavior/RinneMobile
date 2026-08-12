@@ -473,7 +473,9 @@ class LauncherKrkrSettingsFragment : Fragment() {
 
     private fun enterNativeKrkr() {
         try {
-            startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(requireContext()))
+            val intent = LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(requireContext())
+                ?: throw IllegalArgumentException("Kirikiroid2 plugin is not ready")
+            startActivity(intent)
         } catch (error: Exception) {
             // Kotlin 无 multi-catch：守卫收窄为预期的两个具体异常（ActivityNotFoundException|IllegalArgumentException），其余继续抛（§8:313）
             if (error !is ActivityNotFoundException && error !is IllegalArgumentException) throw error

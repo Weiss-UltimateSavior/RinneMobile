@@ -669,7 +669,9 @@ public class PadSettingsActivity extends AppCompatActivity {
 
     private void enterNativeKrkr() {
         try {
-            startActivity(LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(this));
+            Intent intent = LauncherGameLaunchBridge.buildInternalKrkrOriginIntent(this);
+            if (intent == null) throw new IllegalArgumentException("Kirikiroid2 plugin is not ready");
+            startActivity(intent);
         } catch (ActivityNotFoundException | IllegalArgumentException throwable) {
             Toast.makeText(this, R.string.pad_native_krkr_failed, Toast.LENGTH_SHORT).show();
         }

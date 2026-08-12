@@ -10,7 +10,6 @@ import com.akira.tyranoemu.remote.Kirikiroid126
 import com.akira.tyranoemu.remote.Kirikiroid134
 import com.akira.tyranoemu.remote.Kirikiroid139
 import com.core.CorePreferences
-import org.tvp.kirikiri2.KR2Activity
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -76,7 +75,7 @@ internal object KrkrLauncher {
         val use126 = !originMode && resolvedVersion == "1.2.6"
         val use134 = !originMode && resolvedVersion == "1.3.4"
         val activityClass = when {
-            originMode -> KR2Activity::class.java
+            originMode -> Kirikiroid139::class.java
             use126 -> Kirikiroid126::class.java
             use134 -> Kirikiroid134::class.java
             else -> Kirikiroid139::class.java

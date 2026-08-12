@@ -15,6 +15,9 @@
     <string name="core_rpgm_module_disabled">RPGM モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
     <string name="core_renpy_module_disabled">Ren’Py モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
     <string name="core_godot_module_disabled">Godot モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
+    <string name="core_kirikiroid2_module_required">Kirikiroid2 モジュールが未インポートです。「モジュール互換性」画面でインポートしてからもう一度お試しください。</string>
+    <string name="core_kirikiroid2_module_disabled">Kirikiroid2 モジュールが無効です。「モジュール互換性」画面で有効にしてからもう一度お試しください。</string>
+    <string name="core_kirikiroid2_module_invalid">Kirikiroid2 モジュールが破損しています。「モジュール互換性」画面で再インポートしてください。</string>
     <string name="core_untitled_game">無題のゲーム</string>
 
     <string name="core_backup_empty">バックアップの内容が空です</string>

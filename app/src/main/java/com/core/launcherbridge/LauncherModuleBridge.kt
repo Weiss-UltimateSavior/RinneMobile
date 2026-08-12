@@ -1,10 +1,15 @@
 package com.core.launcherbridge
 
 import android.content.Context
+import android.net.Uri
 import com.core.launcher.EnginePackages
 import com.core.launcher.ExternalGodotPluginStrategy
 import com.core.launcher.ExternalRenPyPluginStrategy
 import com.core.launcher.ExternalRpgMakerPluginStrategy
+import com.core.nativeplugin.NativePluginImportResult
+import com.core.nativeplugin.NativePluginInstallState
+import com.core.nativeplugin.NativePluginInstaller
+import com.core.nativeplugin.NativePluginManager
 import java.util.Locale
 
 /**
@@ -70,6 +75,46 @@ object LauncherModuleBridge {
     fun setGodotModuleEnabled(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_GODOT_ENABLED, enabled).apply()
     }
+
+    // ----- 内置 native zip 插件：Kirikiroid2 -----
+
+    @JvmStatic
+    fun kirikiroid2ModuleState(context: Context): NativePluginInstallState =
+        NativePluginManager.kirikiroid2InstallState(context)
+
+    @JvmStatic
+    fun kirikiroid2ModuleStateCode(context: Context): String =
+        when (NativePluginManager.kirikiroid2InstallState(context)) {
+            NativePluginInstallState.NOT_INSTALLED -> "not_installed"
+            NativePluginInstallState.INSTALLED_ENABLED -> "installed_enabled"
+            NativePluginInstallState.INSTALLED_DISABLED -> "installed_disabled"
+            NativePluginInstallState.INVALID -> "invalid"
+        }
+
+    @JvmStatic
+    fun isKirikiroid2ModuleInstalled(context: Context): Boolean =
+        NativePluginManager.isKirikiroid2Installed(context)
+
+    @JvmStatic
+    fun isKirikiroid2ModuleEnabled(context: Context): Boolean =
+        NativePluginManager.isKirikiroid2Enabled(context)
+
+    @JvmStatic
+    fun setKirikiroid2ModuleEnabled(context: Context, enabled: Boolean) {
+        NativePluginManager.setKirikiroid2Enabled(context, enabled)
+    }
+
+    @JvmStatic
+    fun deleteKirikiroid2Module(context: Context): Boolean =
+        NativePluginManager.deleteKirikiroid2(context)
+
+    @JvmStatic
+    fun importKirikiroid2Module(context: Context, uri: Uri?): NativePluginImportResult =
+        NativePluginInstaller.importKirikiroid2(context, uri)
+
+    @JvmStatic
+    fun kirikiroid2ReadyCode(context: Context): String =
+        NativePluginManager.requireKirikiroid2Ready(context).code
 
     // ----- 包名匹配 -----
 

@@ -15,6 +15,9 @@
     <string name="core_rpgm_module_disabled">RPGM 模块未启用，请在「模块兼容」页面启用后再试。</string>
     <string name="core_renpy_module_disabled">RenPy 模块未启用，请在「模块兼容」页面启用后再试。</string>
     <string name="core_godot_module_disabled">Godot 模块未启用，请在「模块兼容」页面启用后再试。</string>
+    <string name="core_kirikiroid2_module_required">Kirikiroid2 模块未导入，请在「模块兼容」页面导入插件后再试。</string>
+    <string name="core_kirikiroid2_module_disabled">Kirikiroid2 模块未启用，请在「模块兼容」页面启用后再试。</string>
+    <string name="core_kirikiroid2_module_invalid">Kirikiroid2 模块已损坏，请在「模块兼容」页面重新导入插件。</string>
     <string name="core_untitled_game">未命名游戏</string>
 
     <string name="core_backup_empty">备份内容为空</string>

@@ -1,10 +1,92 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.security.DigestOutputStream
+import java.security.MessageDigest
+import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+def kirikiroid2PluginLibs = [
+        'libSDL2.so',
+        'libffmpeg.so',
+        'libgame.so',
+        'libgame134.so',
+        'libgame126.so',
+]
+
+def kirikiroid2PluginManifest = '''{
+  "engineId": "kirikiroid2",
+  "pluginVersion": 1,
+  "abi": "arm64-v8a",
+  "bridgeAbi": 1,
+  "libs": [
+    "libSDL2.so",
+    "libffmpeg.so",
+    "libgame.so",
+    "libgame134.so",
+    "libgame126.so"
+  ]
+}
+'''
+
+def writeKirikiroid2PluginZip = { OutputStream output ->
+    new ZipOutputStream(output).withCloseable { zip ->
+        def addEntry = { String name, byte[] bytes ->
+            def entry = new ZipEntry(name)
+            entry.time = 0L
+            zip.putNextEntry(entry)
+            zip.write(bytes)
+            zip.closeEntry()
+        }
+        def addFileEntry = { String name, File file ->
+            def entry = new ZipEntry(name)
+            entry.time = 0L
+            zip.putNextEntry(entry)
+            file.withInputStream { input ->
+                input.transferTo(zip)
+            }
+            zip.closeEntry()
+        }
+        addEntry('manifest.json', kirikiroid2PluginManifest.getBytes('UTF-8'))
+        kirikiroid2PluginLibs.each { lib ->
+            addFileEntry("arm64-v8a/${lib}", rootProject.file("engine/src/main/jniLibs/arm64-v8a/${lib}"))
+        }
+    }
+}
+
+def sha256Hex = { byte[] digestBytes ->
+    digestBytes
+            .collect { String.format('%02x', it & 0xff) }
+            .join()
+}
+
+def writeKirikiroid2PluginZipAndSha256 = { File zipFile ->
+    def digest = MessageDigest.getInstance('SHA-256')
+    zipFile.withOutputStream { fileOutput ->
+        new DigestOutputStream(fileOutput, digest).withCloseable { output ->
+            writeKirikiroid2PluginZip(output)
+        }
+    }
+    sha256Hex(digest.digest())
+}
+
+def readKirikiroid2PluginSha256File = { File shaFile ->
+    def hash = shaFile.text.trim().tokenize().first()
+    if (!(hash ==~ /(?i)[0-9a-f]{64}/)) {
+        throw new GradleException("Invalid Kirikiroid2 plugin SHA-256 file: ${shaFile}")
+    }
+    hash.toLowerCase(Locale.ROOT)
+}
+
+def kirikiroid2PluginOutputDir = layout.buildDirectory.dir('outputs/native-plugins')
+def kirikiroid2PluginZipFile = kirikiroid2PluginOutputDir.map { it.file('kirikiroid2-arm64-v1.zip') }
+def kirikiroid2PluginShaFile = kirikiroid2PluginOutputDir.map { it.file('kirikiroid2-arm64-v1.zip.sha256') }
+def kirikiroid2PluginGeneratedResDir = layout.buildDirectory.dir('generated/res/kirikiroid2Plugin')
 
 android {
     namespace 'com.core'
@@ -14,8 +96,8 @@ android {
         applicationId "com.yuki.yukihub.rinne"
         minSdk 26
         targetSdk 33
-        versionCode 7
-        versionName "0.9.9.9.9.8"
+        versionCode 8
+        versionName "0.9.9.9.9.8.1"
 
         vectorDrawables {
             useSupportLibrary true
@@ -60,12 +142,68 @@ android {
         compose true
     }
 
-    packaging {
-        pickFirst 'lib/arm64-v8a/libSDL2.so'
-        jniLibs {
-            useLegacyPackaging true
+    sourceSets {
+        main {
+            res.srcDir(kirikiroid2PluginGeneratedResDir)
         }
     }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging true
+            excludes += [
+                    '**/libSDL2.so',
+                    '**/libffmpeg.so',
+                    '**/libgame.so',
+                    '**/libgame134.so',
+                    '**/libgame126.so',
+            ]
+        }
+    }
+}
+
+tasks.register('packageKirikiroid2Plugin') {
+    group = 'rinne'
+    description = 'Builds the Kirikiroid2 native zip plugin and writes its SHA-256.'
+    outputs.file(kirikiroid2PluginZipFile)
+    outputs.file(kirikiroid2PluginShaFile)
+    inputs.files(kirikiroid2PluginLibs.collect {
+        rootProject.file("engine/src/main/jniLibs/arm64-v8a/${it}")
+    })
+    inputs.property('manifest', kirikiroid2PluginManifest)
+    doLast {
+        def zip = kirikiroid2PluginZipFile.get().asFile
+        zip.parentFile.mkdirs()
+        def hash = writeKirikiroid2PluginZipAndSha256(zip)
+        kirikiroid2PluginShaFile.get().asFile.text = "${hash}  ${zip.name}\n"
+        logger.lifecycle("Kirikiroid2 plugin: ${zip}")
+        logger.lifecycle("Kirikiroid2 plugin SHA-256: ${hash}")
+    }
+}
+
+tasks.register('generateKirikiroid2PluginShaRes') {
+    group = 'rinne'
+    description = 'Generates the Kirikiroid2 plugin SHA-256 string resource.'
+    dependsOn(tasks.named('packageKirikiroid2Plugin'))
+    inputs.file(kirikiroid2PluginShaFile)
+    inputs.property('overrideSha256', providers.gradleProperty('kirikiroid2PluginSha256').orElse(''))
+    outputs.dir(kirikiroid2PluginGeneratedResDir)
+    doLast {
+        def hash = providers.gradleProperty('kirikiroid2PluginSha256')
+                .getOrElse(readKirikiroid2PluginSha256File(kirikiroid2PluginShaFile.get().asFile))
+                .toLowerCase(Locale.ROOT)
+        if (!(hash ==~ /[0-9a-f]{64}/)) {
+            throw new GradleException("Invalid Kirikiroid2 plugin SHA-256: ${hash}")
+        }
+        def valuesDir = kirikiroid2PluginGeneratedResDir.get().asFile.toPath().resolve('values').toFile()
+        valuesDir.mkdirs()
+        new File(valuesDir, 'kirikiroid2_plugin_sha.xml').text =
+                """<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n    <string name=\"kirikiroid2_plugin_sha256\" translatable=\"false\">${hash}</string>\n</resources>\n"""
+    }
+}
+
+tasks.named('preBuild') {
+    dependsOn(tasks.named('generateKirikiroid2PluginShaRes'))
 }
 
 kotlin {

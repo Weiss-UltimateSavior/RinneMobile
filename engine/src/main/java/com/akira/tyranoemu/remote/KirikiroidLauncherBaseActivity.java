@@ -58,6 +58,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private volatile boolean launchDispatched;
     private volatile boolean launchSucceeded;
     private volatile boolean maskRevealRequested;
+    private volatile String resolvedGameLibrary;
     private int launchReadinessFrames;
     private String pendingGamePath;
     private boolean pendingMaps;
@@ -159,9 +160,10 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     }
     @Override
     public void onLoadNativeLibraries() {
-        boolean initialized = NativeBridge.initialize(soName());
+        String gameLibrary = gameLibraryForBridge();
+        boolean initialized = NativeBridge.initialize(gameLibrary);
         nativeBridgeInitialized = initialized;
-        Log.i(TAG, "native initialize result=" + initialized + " so=" + soName());
+        Log.i(TAG, "native initialize result=" + initialized + " so=" + gameLibrary);
         if (!initialized) {
             Log.e(TAG, "native bridge initialization failed; skip KRKR hook setup");
             return;
@@ -169,7 +171,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         // Do not bypass TVPMainScene's internal delay. It serializes teardown of
         // the selector UI before the game UI is created; forcing it to zero can
         // leave the KRKR shell above an otherwise running game.
-        Log.i(TAG, "direct game launch waits for native scene transition so=" + soName());
+        Log.i(TAG, "direct game launch waits for native scene transition so=" + gameLibrary);
         Intent intent = getIntent();
         boolean scopedSaveDir = intent != null && intent.getBooleanExtra("scopedSaveDir", false);
         boolean safFileFallback = intent != null && intent.getBooleanExtra("safFileFallback", false);
@@ -250,13 +252,13 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
 
     private synchronized void dispatchPendingLaunchOnGlThread() {
         if (!firstFrameRendered || launchDispatched || pendingGamePath == null || destroyed || isFinishing()) return;
-        if (!NativeBridge.isLaunchSceneReady(soName())) {
+        if (!NativeBridge.isLaunchSceneReady(gameLibraryForBridge())) {
             launchReadinessFrames++;
             return;
         }
         launchDispatched = true;
         try {
-            launchSucceeded = NativeBridge.launch(soName(), pendingGamePath, pendingMaps);
+            launchSucceeded = NativeBridge.launch(gameLibraryForBridge(), pendingGamePath, pendingMaps);
             Log.i(TAG, "renderer-ready launch result=" + launchSucceeded + " path=" + pendingGamePath
                     + " frames=" + launchReadinessFrames);
         } catch (Throwable t) {
@@ -297,6 +299,15 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             if (maskMessage != null) maskMessage.setText(message);
             if (maskHint != null) maskHint.setText(uiString(R.string.engine_return_and_retry));
         });
+    }
+
+    protected final void setResolvedGameLibrary(String library) {
+        resolvedGameLibrary = library;
+    }
+
+    protected final String gameLibraryForBridge() {
+        String library = resolvedGameLibrary;
+        return library != null && library.length() != 0 ? library : soName();
     }
 
     private int dp(int value) {

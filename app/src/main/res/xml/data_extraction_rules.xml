@@ -7,6 +7,7 @@
         <exclude domain="database" path="rinne_local_agent.db-journal" />
         <exclude domain="sharedpref" path="rinne_local_agent.xml" />
         <exclude domain="sharedpref" path="rinne_mcp_servers.xml" />
+        <exclude domain="sharedpref" path="rinne_native_plugin_overrides.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="database" path="rinne_local_agent.db" />
@@ -15,5 +16,6 @@
         <exclude domain="database" path="rinne_local_agent.db-journal" />
         <exclude domain="sharedpref" path="rinne_local_agent.xml" />
         <exclude domain="sharedpref" path="rinne_mcp_servers.xml" />
+        <exclude domain="sharedpref" path="rinne_native_plugin_overrides.xml" />
     </device-transfer>
 </data-extraction-rules>
