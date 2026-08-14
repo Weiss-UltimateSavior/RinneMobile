@@ -86,3 +86,10 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 log/
+
+# Docs
+/docs/
+/docs/*.md
+
+# Native engine plugins
+/native_plugins/
