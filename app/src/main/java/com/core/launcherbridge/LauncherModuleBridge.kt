@@ -156,6 +156,46 @@ object LauncherModuleBridge {
     fun onsReadyCode(context: Context): String =
         NativePluginManager.requireOnsReady(context).code
 
+    // ----- 内置 native zip 插件：Artemis -----
+
+    @JvmStatic
+    fun artemisModuleState(context: Context): NativePluginInstallState =
+        NativePluginManager.artemisInstallState(context)
+
+    @JvmStatic
+    fun artemisModuleStateCode(context: Context): String =
+        when (NativePluginManager.artemisInstallState(context)) {
+            NativePluginInstallState.NOT_INSTALLED -> "not_installed"
+            NativePluginInstallState.INSTALLED_ENABLED -> "installed_enabled"
+            NativePluginInstallState.INSTALLED_DISABLED -> "installed_disabled"
+            NativePluginInstallState.INVALID -> "invalid"
+        }
+
+    @JvmStatic
+    fun isArtemisModuleInstalled(context: Context): Boolean =
+        NativePluginManager.isArtemisInstalled(context)
+
+    @JvmStatic
+    fun isArtemisModuleEnabled(context: Context): Boolean =
+        NativePluginManager.isArtemisEnabled(context)
+
+    @JvmStatic
+    fun setArtemisModuleEnabled(context: Context, enabled: Boolean) {
+        NativePluginManager.setArtemisEnabled(context, enabled)
+    }
+
+    @JvmStatic
+    fun deleteArtemisModule(context: Context): Boolean =
+        NativePluginManager.deleteArtemis(context)
+
+    @JvmStatic
+    fun importArtemisModule(context: Context, uri: Uri?): NativePluginImportResult =
+        NativePluginInstaller.importArtemis(context, uri)
+
+    @JvmStatic
+    fun artemisReadyCode(context: Context): String =
+        NativePluginManager.requireArtemisReady(context).code
+
     // ----- 包名匹配 -----
 
     /**

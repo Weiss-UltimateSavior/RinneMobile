@@ -86,6 +86,7 @@ internal object ArtemisLauncher {
             putExtra("launchTarget", launchTarget)
             putExtra("launchMode", EnginePackages.INTERNAL_ARTEMIS)
             putExtra("orientation", if (rotateScreen) ORIENTATION_REVERSE_LANDSCAPE else ORIENTATION_SENSOR_LANDSCAPE)
+            putExtra("engineLibName", engineLibNameFor(activityClass))
             putExtra("scopedSaveDir", false)
             putExtra("artemisAutoFallback", autoFallback)
             putExtra("artemisFallbackStage", fallbackStage(effectivePackage))
@@ -154,6 +155,17 @@ internal object ArtemisLauncher {
             2 -> ArtemisActivityV3::class.java
             1 -> ArtemisActivityV2::class.java
             else -> ArtemisActivityV1::class.java
+        }
+
+    /**
+     * 各 revision Activity 对应的外置插件库名（bootstrap loader 据此 dlopen
+     * `engine_plugins/artemis/current/arm64-v8a/lib<engineLibName>.so`）。
+     */
+    private fun engineLibNameFor(activityClass: Class<out android.app.Activity>): String =
+        when (activityClass) {
+            ArtemisActivityV2::class.java -> "artemis-compatible"
+            ArtemisActivityV3::class.java -> "artemis-compatible-v2"
+            else -> "artemis"
         }
 
     private fun engineIntentFlags(): Int = Intent.FLAG_ACTIVITY_NEW_TASK or

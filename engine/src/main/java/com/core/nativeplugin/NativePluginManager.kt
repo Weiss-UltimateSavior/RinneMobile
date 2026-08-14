@@ -326,6 +326,143 @@ object NativePluginManager {
             .apply()
     }
 
+    // ----- Artemis 外置 native zip 插件 -----
+
+    @JvmStatic
+    fun artemisRootDir(context: Context): File =
+        File(File(context.applicationContext.filesDir, ROOT_DIR), NativePluginConstants.ENGINE_ARTEMIS)
+
+    @JvmStatic
+    fun artemisCurrentDir(context: Context): File = File(artemisRootDir(context), CURRENT_DIR)
+
+    @JvmStatic
+    fun isArtemisInstalled(context: Context): Boolean =
+        prefs(context).getBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED, false) &&
+            validateArtemisDirectory(artemisCurrentDir(context))
+
+    @JvmStatic
+    fun isArtemisEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ENABLED, false)
+
+    @JvmStatic
+    fun setArtemisEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ENABLED, enabled).apply()
+    }
+
+    @JvmStatic
+    fun artemisInstallState(context: Context): NativePluginInstallState {
+        val current = artemisCurrentDir(context)
+        if (!current.exists()) return NativePluginInstallState.NOT_INSTALLED
+        if (!validateArtemisDirectory(current)) return NativePluginInstallState.INVALID
+        return if (isArtemisEnabled(context)) {
+            NativePluginInstallState.INSTALLED_ENABLED
+        } else {
+            NativePluginInstallState.INSTALLED_DISABLED
+        }
+    }
+
+    @JvmStatic
+    fun requireArtemisReady(context: Context): NativePluginReadyResult {
+        val state = artemisInstallState(context)
+        return when (state) {
+            NativePluginInstallState.INSTALLED_ENABLED ->
+                NativePluginReadyResult(true, state, "ready")
+            NativePluginInstallState.INSTALLED_DISABLED ->
+                NativePluginReadyResult(false, state, "disabled")
+            NativePluginInstallState.INVALID ->
+                NativePluginReadyResult(false, state, "invalid")
+            NativePluginInstallState.NOT_INSTALLED ->
+                NativePluginReadyResult(false, state, "not_installed")
+        }
+    }
+
+    @JvmStatic
+    fun deleteArtemis(context: Context): Boolean {
+        val root = artemisRootDir(context)
+        prepareDirectoryForDelete(root)
+        val deleted = !root.exists() || root.deleteRecursively()
+        if (deleted) clearArtemisMetadata(context)
+        return deleted
+    }
+
+    @JvmStatic
+    fun artemisLibPath(context: Context, libName: String?): String? {
+        val safeName = libName?.trim() ?: return null
+        if (!NativePluginConstants.ARTEMIS_REQUIRED_LIBS.contains(safeName)) return null
+        val file = File(File(artemisCurrentDir(context), NativePluginConstants.ABI_ARM64), safeName)
+        return if (file.isFile) file.absolutePath else null
+    }
+
+    @JvmStatic
+    fun expectedArtemisZipSha256(context: Context): String? {
+        val override = overridePrefs(context).getString(
+            EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_EXPECTED_ZIP_SHA256,
+            null,
+        )
+            ?.trim()
+            ?.lowercase(Locale.ROOT)
+            ?.takeIf { it.matches(Regex("[0-9a-f]{64}")) }
+        if (override != null) return override
+        return try {
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getApplicationInfo(
+                    context.packageName,
+                    PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
+            }
+            expectedSha256FromMetaData(
+                context,
+                appInfo.metaData,
+                NativePluginConstants.META_ARTEMIS_EXPECTED_ZIP_SHA256,
+            )
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    internal fun validateArtemisDirectory(directory: File): Boolean {
+        if (!directory.isDirectory) return false
+        val abiDir = File(directory, NativePluginConstants.ABI_ARM64)
+        if (!abiDir.isDirectory) return false
+        for (lib in NativePluginConstants.ARTEMIS_REQUIRED_LIBS) {
+            if (!File(abiDir, lib).isFile) return false
+        }
+        return validateManifest(File(directory, MANIFEST_JSON), NativePluginConstants.ENGINE_ARTEMIS)
+    }
+
+    internal fun recordArtemisInstall(
+        context: Context,
+        zipSha256: String,
+        pluginVersion: Int,
+        bridgeAbi: Int,
+        installedAt: Long,
+    ) {
+        prefs(context).edit()
+            .putBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED, true)
+            .putBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ENABLED, true)
+            .putInt(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_VERSION, pluginVersion)
+            .putString(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ABI, NativePluginConstants.ABI_ARM64)
+            .putString(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ZIP_SHA256, zipSha256)
+            .putLong(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED_AT, installedAt)
+            .putInt(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_BRIDGE_ABI, bridgeAbi)
+            .apply()
+    }
+
+    internal fun clearArtemisMetadata(context: Context) {
+        prefs(context).edit()
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ENABLED)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_VERSION)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ABI)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_ZIP_SHA256)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED_AT)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ARTEMIS_BRIDGE_ABI)
+            .apply()
+    }
+
     internal fun prepareDirectoryForDelete(directory: File) {
         if (!directory.exists()) return
         directory.walkTopDown().forEach { file ->
@@ -355,6 +492,7 @@ object NativePluginManager {
         val bridgeAbi = when (engineId) {
             NativePluginConstants.ENGINE_ONS -> NativePluginConstants.ONS_BRIDGE_ABI
             NativePluginConstants.ENGINE_KIRIKIROID2 -> NativePluginConstants.KIRIKIROID2_BRIDGE_ABI
+            NativePluginConstants.ENGINE_ARTEMIS -> NativePluginConstants.ARTEMIS_BRIDGE_ABI
             else -> return false
         }
         if (manifest.optInt("bridgeAbi", -1) != bridgeAbi) return false

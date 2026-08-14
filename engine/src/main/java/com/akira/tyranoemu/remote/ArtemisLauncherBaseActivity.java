@@ -98,6 +98,9 @@ public abstract class ArtemisLauncherBaseActivity extends com.ies_net.artemis.Ar
                         : com.akira.tyranoemu.remote.ArtemisActivityV3.class);
         retry.putExtras(source);
         retry.putExtra("artemisFallbackStage", stage + 1);
+        // retry 到下一 revision 时，bootstrap loader 需加载对应的插件库名。
+        retry.putExtra("engineLibName",
+                stage == 0 ? "artemis-compatible" : "artemis-compatible-v2");
         retry.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Log.w("YukiArtemis", "Artemis exited during startup; retrying with " + nextPackage + " path=" + path);
         try {

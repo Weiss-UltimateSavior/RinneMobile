@@ -309,6 +309,14 @@ object LauncherGameLaunchBridge {
                 else -> return context.getString(R.string.core_ons_module_required)
             }
         }
+        if (EnginePackages.isInternalArtemis(emulatorPackage)) {
+            when (LauncherModuleBridge.artemisReadyCode(context)) {
+                "ready" -> Unit
+                "disabled" -> return context.getString(R.string.core_artemis_module_disabled)
+                "invalid" -> return context.getString(R.string.core_artemis_module_invalid)
+                else -> return context.getString(R.string.core_artemis_module_required)
+            }
+        }
         return null
     }
 

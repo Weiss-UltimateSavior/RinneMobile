@@ -142,11 +142,13 @@
     <string name="module_godot_name">Godot Module</string>
     <string name="module_kirikiroid2_name">Kirikiroid2 Module</string>
     <string name="module_ons_name">ONS Module</string>
+    <string name="module_artemis_name">Artemis Module</string>
     <string name="module_rpgm_not_installed">Not installed - Provides the environment required by RPGM games</string>
     <string name="module_renpy_not_installed">Not installed - Provides the environment required by RenPy games</string>
     <string name="module_godot_not_installed">Not installed - Provides the environment required by Godot games</string>
     <string name="module_kirikiroid2_not_installed">Not imported - Provides native libraries required for KRKR games</string>
     <string name="module_ons_not_installed">Not imported - Provides native libraries required for ONS games</string>
+    <string name="module_artemis_not_installed">Not imported - Provides native libraries required for Artemis games</string>
 
     <!-- Smart translation -->
     <string name="translation_title">Smart Translation</string>
@@ -310,6 +312,7 @@
     <string name="module_godot_detail">Provides the environment required by Godot games</string>
     <string name="module_kirikiroid2_detail">Provides native libraries required for KRKR games</string>
     <string name="module_ons_detail">Provides native libraries required for ONS games</string>
+    <string name="module_artemis_detail">Provides native libraries required for Artemis games</string>
     <string name="module_status_not_installed">Not installed - %1$s</string>
     <string name="module_status_installed_enabled">Installed · Enabled - %1$s</string>
     <string name="module_status_installed_disabled">Installed · Disabled - %1$s</string>
@@ -354,6 +357,12 @@
     <string name="module_ons_delete_success_message">The ONS plugin has been deleted.</string>
     <string name="module_ons_delete_failed_title">Delete failed</string>
     <string name="module_ons_delete_failed_message">Could not delete the ONS plugin. Try again later.</string>
+    <string name="module_artemis_delete_title">Delete Artemis plugin</string>
+    <string name="module_artemis_delete_message">After deletion, Artemis games cannot launch until the plugin is imported again. Delete it?</string>
+    <string name="module_artemis_delete_success_title">Plugin deleted</string>
+    <string name="module_artemis_delete_success_message">The Artemis plugin has been deleted.</string>
+    <string name="module_artemis_delete_failed_title">Delete failed</string>
+    <string name="module_artemis_delete_failed_message">Could not delete the Artemis plugin. Try again later.</string>
     <string name="module_cannot_open_browser">Unable to Open Browser</string>
     <string name="module_try_again_later">Please try again later.</string>
 

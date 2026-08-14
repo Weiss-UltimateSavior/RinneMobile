@@ -167,6 +167,75 @@ def onsPluginZipFile = onsPluginOutputDir.map { it.file('ons-arm64-v1.zip') }
 def onsPluginShaFile = onsPluginOutputDir.map { it.file('ons-arm64-v1.zip.sha256') }
 def onsPluginGeneratedResDir = layout.buildDirectory.dir('generated/res/onsPlugin')
 
+// ----- Artemis 外置 native zip 插件打包 -----
+
+def artemisPluginLibs = [
+        'libartemis.so',
+        'libartemis-compatible.so',
+        'libartemis-compatible-v2.so',
+]
+
+def artemisPluginManifest = '''{
+  "engineId": "artemis",
+  "pluginVersion": 1,
+  "abi": "arm64-v8a",
+  "bridgeAbi": 1,
+  "libs": [
+    "libartemis.so",
+    "libartemis-compatible.so",
+    "libartemis-compatible-v2.so"
+  ]
+}
+'''
+
+def writeArtemisPluginZip = { OutputStream output ->
+    new ZipOutputStream(output).withCloseable { zip ->
+        def addEntry = { String name, byte[] bytes ->
+            def entry = new ZipEntry(name)
+            entry.time = 0L
+            zip.putNextEntry(entry)
+            zip.write(bytes)
+            zip.closeEntry()
+        }
+        def addFileEntry = { String name, File file ->
+            def entry = new ZipEntry(name)
+            entry.time = 0L
+            zip.putNextEntry(entry)
+            file.withInputStream { input ->
+                input.transferTo(zip)
+            }
+            zip.closeEntry()
+        }
+        addEntry('manifest.json', artemisPluginManifest.getBytes('UTF-8'))
+        artemisPluginLibs.each { lib ->
+            addFileEntry("arm64-v8a/${lib}", rootProject.file("engine/src/main/nativeplugins/artemis/arm64-v8a/${lib}"))
+        }
+    }
+}
+
+def writeArtemisPluginZipAndSha256 = { File zipFile ->
+    def digest = MessageDigest.getInstance('SHA-256')
+    zipFile.withOutputStream { fileOutput ->
+        new DigestOutputStream(fileOutput, digest).withCloseable { output ->
+            writeArtemisPluginZip(output)
+        }
+    }
+    sha256Hex(digest.digest())
+}
+
+def readArtemisPluginSha256File = { File shaFile ->
+    def hash = shaFile.text.trim().tokenize().first()
+    if (!(hash ==~ /(?i)[0-9a-f]{64}/)) {
+        throw new GradleException("Invalid Artemis plugin SHA-256 file: ${shaFile}")
+    }
+    hash.toLowerCase(Locale.ROOT)
+}
+
+def artemisPluginOutputDir = layout.buildDirectory.dir('outputs/native-plugins')
+def artemisPluginZipFile = artemisPluginOutputDir.map { it.file('artemis-arm64-v1.zip') }
+def artemisPluginShaFile = artemisPluginOutputDir.map { it.file('artemis-arm64-v1.zip.sha256') }
+def artemisPluginGeneratedResDir = layout.buildDirectory.dir('generated/res/artemisPlugin')
+
 android {
     namespace 'com.core'
     compileSdk 36
@@ -223,7 +292,7 @@ android {
 
     sourceSets {
         main {
-            res.srcDirs(kirikiroid2PluginGeneratedResDir, onsPluginGeneratedResDir)
+            res.srcDirs(kirikiroid2PluginGeneratedResDir, onsPluginGeneratedResDir, artemisPluginGeneratedResDir)
         }
     }
 
@@ -284,6 +353,7 @@ tasks.register('generateKirikiroid2PluginShaRes') {
 tasks.named('preBuild') {
     dependsOn(tasks.named('generateKirikiroid2PluginShaRes'))
     dependsOn(tasks.named('generateOnsPluginShaRes'))
+    dependsOn(tasks.named('generateArtemisPluginShaRes'))
 }
 
 tasks.register('packageOnsPlugin') {
@@ -323,6 +393,46 @@ tasks.register('generateOnsPluginShaRes') {
         valuesDir.mkdirs()
         new File(valuesDir, 'ons_plugin_sha.xml').text =
                 """<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n    <string name=\"ons_plugin_sha256\" translatable=\"false\">${hash}</string>\n</resources>\n"""
+    }
+}
+
+tasks.register('packageArtemisPlugin') {
+    group = 'rinne'
+    description = 'Builds the Artemis native zip plugin and writes its SHA-256.'
+    outputs.file(artemisPluginZipFile)
+    outputs.file(artemisPluginShaFile)
+    inputs.files(artemisPluginLibs.collect {
+        rootProject.file("engine/src/main/nativeplugins/artemis/arm64-v8a/${it}")
+    })
+    inputs.property('manifest', artemisPluginManifest)
+    doLast {
+        def zip = artemisPluginZipFile.get().asFile
+        zip.parentFile.mkdirs()
+        def hash = writeArtemisPluginZipAndSha256(zip)
+        artemisPluginShaFile.get().asFile.text = "${hash}  ${zip.name}\n"
+        logger.lifecycle("Artemis plugin: ${zip}")
+        logger.lifecycle("Artemis plugin SHA-256: ${hash}")
+    }
+}
+
+tasks.register('generateArtemisPluginShaRes') {
+    group = 'rinne'
+    description = 'Generates the Artemis plugin SHA-256 string resource.'
+    dependsOn(tasks.named('packageArtemisPlugin'))
+    inputs.file(artemisPluginShaFile)
+    inputs.property('overrideSha256', providers.gradleProperty('artemisPluginSha256').orElse(''))
+    outputs.dir(artemisPluginGeneratedResDir)
+    doLast {
+        def hash = providers.gradleProperty('artemisPluginSha256')
+                .getOrElse(readArtemisPluginSha256File(artemisPluginShaFile.get().asFile))
+                .toLowerCase(Locale.ROOT)
+        if (!(hash ==~ /[0-9a-f]{64}/)) {
+            throw new GradleException("Invalid Artemis plugin SHA-256: ${hash}")
+        }
+        def valuesDir = artemisPluginGeneratedResDir.get().asFile.toPath().resolve('values').toFile()
+        valuesDir.mkdirs()
+        new File(valuesDir, 'artemis_plugin_sha.xml').text =
+                """<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n    <string name=\"artemis_plugin_sha256\" translatable=\"false\">${hash}</string>\n</resources>\n"""
     }
 }
 

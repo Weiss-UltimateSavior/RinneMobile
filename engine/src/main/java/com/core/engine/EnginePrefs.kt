@@ -32,4 +32,14 @@ object EnginePrefs {
     const val KEY_NATIVE_PLUGIN_ONS_BRIDGE_ABI = "native_plugin.ons.bridge_abi"
     const val KEY_NATIVE_PLUGIN_ONS_EXPECTED_ZIP_SHA256 =
         "native_plugin.ons.expected_zip_sha256"
+
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_ENABLED = "native_plugin.artemis.enabled"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED = "native_plugin.artemis.installed"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_VERSION = "native_plugin.artemis.version"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_ABI = "native_plugin.artemis.abi"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_ZIP_SHA256 = "native_plugin.artemis.zip_sha256"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_INSTALLED_AT = "native_plugin.artemis.installed_at"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_BRIDGE_ABI = "native_plugin.artemis.bridge_abi"
+    const val KEY_NATIVE_PLUGIN_ARTEMIS_EXPECTED_ZIP_SHA256 =
+        "native_plugin.artemis.expected_zip_sha256"
 }

@@ -32,6 +32,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     private var godotModuleEnabled = false
     private var kirikiroid2ModuleStateCode = "not_installed"
     private var onsModuleStateCode = "not_installed"
+    private var artemisModuleStateCode = "not_installed"
 
     private val kirikiroid2ImportLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument(),
@@ -43,6 +44,12 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         ActivityResultContracts.OpenDocument(),
     ) { uri: Uri? ->
         if (uri != null) importOnsPlugin(uri)
+    }
+
+    private val artemisImportLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri: Uri? ->
+        if (uri != null) importArtemisPlugin(uri)
     }
 
     override fun onCreateView(
@@ -69,6 +76,8 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                     launchKirikiroid2ImportPicker()
                 } else if (module == ModuleType.ONS) {
                     launchOnsImportPicker()
+                } else if (module == ModuleType.ARTEMIS) {
+                    launchArtemisImportPicker()
                 } else {
                     promptDownload(module)
                 }
@@ -105,6 +114,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             val godotEnabled = LauncherModuleBridge.isGodotModuleEnabled(appContext)
             val kirikiroid2State = LauncherModuleBridge.kirikiroid2ModuleStateCode(appContext)
             val onsState = LauncherModuleBridge.onsModuleStateCode(appContext)
+            val artemisState = LauncherModuleBridge.artemisModuleStateCode(appContext)
             activity?.runOnUiThread {
                 if (!isAdded || binding == null) return@runOnUiThread
                 rpgmModuleInstalled = rpgmInstalled
@@ -115,6 +125,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                 godotModuleEnabled = godotEnabled
                 kirikiroid2ModuleStateCode = kirikiroid2State
                 onsModuleStateCode = onsState
+                artemisModuleStateCode = artemisState
                 ModuleType.entries.forEach { module ->
                     getModuleRowView(module).isEnabled = true
                     getModuleRowView(module).alpha = 1f
@@ -136,6 +147,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         ModuleType.GODOT -> godotModuleInstalled
         ModuleType.KIRIKIROID2 -> kirikiroid2ModuleStateCode != "not_installed"
         ModuleType.ONS -> onsModuleStateCode != "not_installed"
+        ModuleType.ARTEMIS -> artemisModuleStateCode != "not_installed"
     }
 
     private fun isModuleEnabled(module: ModuleType): Boolean = when (module) {
@@ -144,11 +156,13 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         ModuleType.GODOT -> godotModuleEnabled
         ModuleType.KIRIKIROID2 -> kirikiroid2ModuleStateCode == "installed_enabled"
         ModuleType.ONS -> onsModuleStateCode == "installed_enabled"
+        ModuleType.ARTEMIS -> artemisModuleStateCode == "installed_enabled"
     }
 
     private fun isModuleInvalid(module: ModuleType): Boolean = when (module) {
         ModuleType.KIRIKIROID2 -> kirikiroid2ModuleStateCode == "invalid"
         ModuleType.ONS -> onsModuleStateCode == "invalid"
+        ModuleType.ARTEMIS -> artemisModuleStateCode == "invalid"
         else -> false
     }
 
@@ -174,6 +188,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                 LauncherModuleBridge.setOnsModuleEnabled(requireContext(), enabled)
                 onsModuleStateCode = if (enabled) "installed_enabled" else "installed_disabled"
             }
+            ModuleType.ARTEMIS -> {
+                LauncherModuleBridge.setArtemisModuleEnabled(requireContext(), enabled)
+                artemisModuleStateCode = if (enabled) "installed_enabled" else "installed_disabled"
+            }
         }
     }
 
@@ -185,6 +203,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             ModuleType.GODOT -> currentBinding.moduleGodotRow
             ModuleType.KIRIKIROID2 -> currentBinding.moduleKirikiroid2Row
             ModuleType.ONS -> currentBinding.moduleOnsRow
+            ModuleType.ARTEMIS -> currentBinding.moduleArtemisRow
         }
     }
 
@@ -196,6 +215,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             ModuleType.GODOT -> currentBinding.moduleGodotIcon
             ModuleType.KIRIKIROID2 -> currentBinding.moduleKirikiroid2Icon
             ModuleType.ONS -> currentBinding.moduleOnsIcon
+            ModuleType.ARTEMIS -> currentBinding.moduleArtemisIcon
         }
     }
 
@@ -207,6 +227,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             ModuleType.GODOT -> currentBinding.moduleGodotDescription
             ModuleType.KIRIKIROID2 -> currentBinding.moduleKirikiroid2Description
             ModuleType.ONS -> currentBinding.moduleOnsDescription
+            ModuleType.ARTEMIS -> currentBinding.moduleArtemisDescription
         }
     }
 
@@ -274,6 +295,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             launchOnsImportPicker()
             return
         }
+        if (module == ModuleType.ARTEMIS) {
+            launchArtemisImportPicker()
+            return
+        }
         LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.module_download_title, module.shortName),
@@ -291,6 +316,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         }
         if (module == ModuleType.ONS) {
             showOnsActions()
+            return
+        }
+        if (module == ModuleType.ARTEMIS) {
+            showArtemisActions()
             return
         }
         if (isModuleInstalled(module)) {
@@ -324,6 +353,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         }
         if (module == ModuleType.ONS) {
             showOnsActions()
+            return
+        }
+        if (module == ModuleType.ARTEMIS) {
+            showArtemisActions()
             return
         }
         if (!isModuleInstalled(module)) {
@@ -607,6 +640,116 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         }
     }
 
+    // ----- Artemis native zip 插件操作 -----
+
+    private fun showArtemisActions() {
+        val labels = mutableListOf<CharSequence>()
+        val actions = mutableListOf<() -> Unit>()
+        val installed = isModuleInstalled(ModuleType.ARTEMIS)
+        val invalid = isModuleInvalid(ModuleType.ARTEMIS)
+        if (!installed || invalid) {
+            labels += getString(R.string.module_native_import)
+            actions += { launchArtemisImportPicker() }
+        } else if (isModuleEnabled(ModuleType.ARTEMIS)) {
+            labels += getString(R.string.module_disable)
+            actions += {
+                setModuleEnabled(ModuleType.ARTEMIS, false)
+                refreshInstalledModules()
+            }
+        } else {
+            labels += getString(R.string.module_enable)
+            actions += {
+                setModuleEnabled(ModuleType.ARTEMIS, true)
+                refreshInstalledModules()
+            }
+        }
+        if (installed) {
+            labels += getString(R.string.module_native_delete)
+            actions += { confirmDeleteArtemisPlugin() }
+        }
+        if (installed && !invalid) {
+            labels += getString(R.string.module_native_import)
+            actions += { launchArtemisImportPicker() }
+        }
+        val dangerIndex = labels.indexOf(getString(R.string.module_native_delete))
+        LauncherDialogRouter.showStandardActionChoices(
+            requireContext(),
+            getString(R.string.module_artemis_name),
+            labels.toTypedArray(),
+            dangerIndex,
+        ) { index ->
+            actions.getOrNull(index)?.invoke()
+        }
+    }
+
+    private fun launchArtemisImportPicker() {
+        artemisImportLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+    }
+
+    private fun importArtemisPlugin(uri: Uri) {
+        val context = requireContext()
+        val loading = LauncherDialogRouter.showLoading(
+            context,
+            getString(R.string.module_native_importing_title),
+            getString(R.string.module_native_importing_message),
+        )
+        val appContext = context.applicationContext
+        AppExecutors.runOnIo {
+            val result = LauncherModuleBridge.importArtemisModule(appContext, uri)
+            activity?.runOnUiThread {
+                loading.dismiss()
+                if (!isAdded || binding == null) return@runOnUiThread
+                val title = if (result.success) {
+                    getString(R.string.module_native_import_success_title)
+                } else {
+                    getString(R.string.module_native_import_failed_title)
+                }
+                LauncherDialogRouter.showInfo(
+                    requireContext(),
+                    title,
+                    nativeImportMessage(result.code, result.zipSha256),
+                )
+                refreshInstalledModules()
+            }
+        }
+    }
+
+    private fun confirmDeleteArtemisPlugin() {
+        LauncherDialogRouter.showDangerConfirm(
+            requireContext(),
+            getString(R.string.module_artemis_delete_title),
+            getString(R.string.module_artemis_delete_message),
+            getString(R.string.module_native_delete),
+        ) {
+            val context = requireContext()
+            val loading = LauncherDialogRouter.showLoading(
+                context,
+                getString(R.string.module_native_deleting_title),
+                getString(R.string.module_native_deleting_message),
+            )
+            val appContext = context.applicationContext
+            AppExecutors.runOnIo {
+                val deleted = LauncherModuleBridge.deleteArtemisModule(appContext)
+                activity?.runOnUiThread {
+                    loading.dismiss()
+                    if (!isAdded || binding == null) return@runOnUiThread
+                    LauncherDialogRouter.showInfo(
+                        requireContext(),
+                        getString(
+                            if (deleted) R.string.module_artemis_delete_success_title
+                            else R.string.module_artemis_delete_failed_title,
+                        ),
+                        getString(
+                            if (deleted) R.string.module_artemis_delete_success_message
+                            else R.string.module_artemis_delete_failed_message,
+                        ),
+                    )
+                    refreshInstalledModules()
+                }
+            }
+        }
+    }
+
     // ----- 安装页跳转 -----
 
     private fun openInstallPage(installUrl: String) {
@@ -639,6 +782,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         GODOT(R.string.module_godot_name, R.string.module_godot_detail, GODOT_INSTALL_URL, "Godot"),
         KIRIKIROID2(R.string.module_kirikiroid2_name, R.string.module_kirikiroid2_detail, "", "Kirikiroid2"),
         ONS(R.string.module_ons_name, R.string.module_ons_detail, "", "ONS"),
+        ARTEMIS(R.string.module_artemis_name, R.string.module_artemis_detail, "", "Artemis"),
     }
 
     companion object {

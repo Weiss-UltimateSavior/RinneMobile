@@ -21,6 +21,9 @@
     <string name="core_ons_module_required">The ONS module has not been imported. Import it on the Module Compatibility page and try again.</string>
     <string name="core_ons_module_disabled">The ONS module is disabled. Enable it on the Module Compatibility page and try again.</string>
     <string name="core_ons_module_invalid">The ONS module is damaged. Re-import it on the Module Compatibility page.</string>
+    <string name="core_artemis_module_required">The Artemis module has not been imported. Import it on the Module Compatibility page and try again.</string>
+    <string name="core_artemis_module_disabled">The Artemis module is disabled. Enable it on the Module Compatibility page and try again.</string>
+    <string name="core_artemis_module_invalid">The Artemis module is damaged. Re-import it on the Module Compatibility page.</string>
     <string name="core_untitled_game">Untitled game</string>
 
     <string name="core_backup_empty">The backup is empty</string>

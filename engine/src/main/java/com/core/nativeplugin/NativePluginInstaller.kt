@@ -57,6 +57,20 @@ object NativePluginInstaller {
             NativePluginManager.recordOnsInstall(appContext, sha, version, abi, at)
         })
 
+    @JvmStatic
+    fun importArtemis(context: Context, uri: Uri?): NativePluginImportResult =
+        importPlugin(context, uri, engineName = "Artemis", expectedShaProvider = {
+            NativePluginManager.expectedArtemisZipSha256(context.applicationContext)
+        }, rootDirProvider = {
+            NativePluginManager.artemisRootDir(context.applicationContext)
+        }, currentDirProvider = {
+            NativePluginManager.artemisCurrentDir(context.applicationContext)
+        }, defaultBridgeAbi = NativePluginConstants.ARTEMIS_BRIDGE_ABI, validator = {
+            NativePluginManager.validateArtemisDirectory(it)
+        }, recorder = { appContext, sha, version, abi, at ->
+            NativePluginManager.recordArtemisInstall(appContext, sha, version, abi, at)
+        })
+
     private fun importPlugin(
         context: Context,
         uri: Uri?,

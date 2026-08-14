@@ -21,6 +21,9 @@
     <string name="core_ons_module_required">ONS 模块未导入，请在「模块兼容」页面导入插件后再试。</string>
     <string name="core_ons_module_disabled">ONS 模块未启用，请在「模块兼容」页面启用后再试。</string>
     <string name="core_ons_module_invalid">ONS 模块已损坏，请在「模块兼容」页面重新导入插件。</string>
+    <string name="core_artemis_module_required">Artemis 模块未导入，请在「模块兼容」页面导入插件后再试。</string>
+    <string name="core_artemis_module_disabled">Artemis 模块未启用，请在「模块兼容」页面启用后再试。</string>
+    <string name="core_artemis_module_invalid">Artemis 模块已损坏，请在「模块兼容」页面重新导入插件。</string>
     <string name="core_untitled_game">未命名游戏</string>
 
     <string name="core_backup_empty">备份内容为空</string>

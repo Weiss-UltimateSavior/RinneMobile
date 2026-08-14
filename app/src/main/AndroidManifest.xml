@@ -65,6 +65,10 @@
             android:name="rinne.ons.zip.sha256"
             android:resource="@string/ons_plugin_sha256" />
 
+        <meta-data
+            android:name="rinne.artemis.zip.sha256"
+            android:resource="@string/artemis_plugin_sha256" />
+
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
@@ -377,7 +381,7 @@
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection"
             android:windowSoftInputMode="adjustPan">
-            <meta-data android:name="android.app.lib_name" android:value="artemis" />
+            <meta-data android:name="android.app.lib_name" android:value="artemis_loader" />
         </activity>
 
         <activity
@@ -389,7 +393,7 @@
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection"
             android:windowSoftInputMode="adjustPan">
-            <meta-data android:name="android.app.lib_name" android:value="artemis-compatible" />
+            <meta-data android:name="android.app.lib_name" android:value="artemis_loader" />
         </activity>
 
         <activity
@@ -401,7 +405,7 @@
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection"
             android:windowSoftInputMode="adjustPan">
-            <meta-data android:name="android.app.lib_name" android:value="artemis-compatible-v2" />
+            <meta-data android:name="android.app.lib_name" android:value="artemis_loader" />
         </activity>
 
         <activity

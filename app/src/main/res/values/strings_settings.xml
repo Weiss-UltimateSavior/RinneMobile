@@ -147,6 +147,8 @@
     <string name="module_godot_not_installed">未安装 - 提供 Godot 游戏所需环境</string>
     <string name="module_kirikiroid2_not_installed">未导入 - 提供 KRKR 游戏所需 native 运行库</string>
     <string name="module_ons_not_installed">未导入 - 提供 ONS 游戏所需 native 运行库</string>
+    <string name="module_artemis_name">Artemis 模块</string>
+    <string name="module_artemis_not_installed">未导入 - 提供 Artemis 游戏所需 native 运行库</string>
 
     <!-- 智能翻译 -->
     <string name="translation_title">智能翻译</string>
@@ -315,6 +317,7 @@
     <string name="module_godot_detail">提供 Godot 游戏所需环境</string>
     <string name="module_kirikiroid2_detail">提供 KRKR 游戏所需 native 运行库</string>
     <string name="module_ons_detail">提供 ONS 游戏所需 native 运行库</string>
+    <string name="module_artemis_detail">提供 Artemis 游戏所需 native 运行库</string>
     <string name="module_status_not_installed">未安装 - %1$s</string>
     <string name="module_status_installed_enabled">已安装 · 已启用 - %1$s</string>
     <string name="module_status_installed_disabled">已安装 · 未启用 - %1$s</string>
@@ -359,6 +362,12 @@
     <string name="module_ons_delete_success_message">ONS 插件已删除。</string>
     <string name="module_ons_delete_failed_title">删除失败</string>
     <string name="module_ons_delete_failed_message">无法删除 ONS 插件，请稍后重试。</string>
+    <string name="module_artemis_delete_title">删除 Artemis 插件</string>
+    <string name="module_artemis_delete_message">删除后 Artemis 游戏将无法启动，直到重新导入插件。是否删除？</string>
+    <string name="module_artemis_delete_success_title">已删除插件</string>
+    <string name="module_artemis_delete_success_message">Artemis 插件已删除。</string>
+    <string name="module_artemis_delete_failed_title">删除失败</string>
+    <string name="module_artemis_delete_failed_message">无法删除 Artemis 插件，请稍后重试。</string>
     <string name="module_cannot_open_browser">无法打开浏览器</string>
     <string name="module_try_again_later">请稍后重试。</string>
 
