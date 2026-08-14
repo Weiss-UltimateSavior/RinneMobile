@@ -116,6 +116,46 @@ object LauncherModuleBridge {
     fun kirikiroid2ReadyCode(context: Context): String =
         NativePluginManager.requireKirikiroid2Ready(context).code
 
+    // ----- 内置 native zip 插件：ONS -----
+
+    @JvmStatic
+    fun onsModuleState(context: Context): NativePluginInstallState =
+        NativePluginManager.onsInstallState(context)
+
+    @JvmStatic
+    fun onsModuleStateCode(context: Context): String =
+        when (NativePluginManager.onsInstallState(context)) {
+            NativePluginInstallState.NOT_INSTALLED -> "not_installed"
+            NativePluginInstallState.INSTALLED_ENABLED -> "installed_enabled"
+            NativePluginInstallState.INSTALLED_DISABLED -> "installed_disabled"
+            NativePluginInstallState.INVALID -> "invalid"
+        }
+
+    @JvmStatic
+    fun isOnsModuleInstalled(context: Context): Boolean =
+        NativePluginManager.isOnsInstalled(context)
+
+    @JvmStatic
+    fun isOnsModuleEnabled(context: Context): Boolean =
+        NativePluginManager.isOnsEnabled(context)
+
+    @JvmStatic
+    fun setOnsModuleEnabled(context: Context, enabled: Boolean) {
+        NativePluginManager.setOnsEnabled(context, enabled)
+    }
+
+    @JvmStatic
+    fun deleteOnsModule(context: Context): Boolean =
+        NativePluginManager.deleteOns(context)
+
+    @JvmStatic
+    fun importOnsModule(context: Context, uri: Uri?): NativePluginImportResult =
+        NativePluginInstaller.importOns(context, uri)
+
+    @JvmStatic
+    fun onsReadyCode(context: Context): String =
+        NativePluginManager.requireOnsReady(context).code
+
     // ----- 包名匹配 -----
 
     /**

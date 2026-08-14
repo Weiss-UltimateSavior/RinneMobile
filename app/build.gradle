@@ -88,6 +88,85 @@ def kirikiroid2PluginZipFile = kirikiroid2PluginOutputDir.map { it.file('kirikir
 def kirikiroid2PluginShaFile = kirikiroid2PluginOutputDir.map { it.file('kirikiroid2-arm64-v1.zip.sha256') }
 def kirikiroid2PluginGeneratedResDir = layout.buildDirectory.dir('generated/res/kirikiroid2Plugin')
 
+// ----- ONS(Yuri runtime) 外置 native zip 插件打包 -----
+
+def onsPluginLibs = [
+        'libSDL2.so',
+        'liblua.so',
+        'libjpeg.so',
+        'libbz2.so',
+        'libSDL2_image.so',
+        'libSDL2_mixer.so',
+        'libSDL2_ttf.so',
+        'libonsyuri.so',
+]
+
+def onsPluginManifest = '''{
+  "engineId": "ons",
+  "pluginVersion": 1,
+  "abi": "arm64-v8a",
+  "bridgeAbi": 1,
+  "libs": [
+    "libSDL2.so",
+    "liblua.so",
+    "libjpeg.so",
+    "libbz2.so",
+    "libSDL2_image.so",
+    "libSDL2_mixer.so",
+    "libSDL2_ttf.so",
+    "libonsyuri.so"
+  ]
+}
+'''
+
+def writeOnsPluginZip = { OutputStream output ->
+    new ZipOutputStream(output).withCloseable { zip ->
+        def addEntry = { String name, byte[] bytes ->
+            def entry = new ZipEntry(name)
+            entry.time = 0L
+            zip.putNextEntry(entry)
+            zip.write(bytes)
+            zip.closeEntry()
+        }
+        def addFileEntry = { String name, File file ->
+            def entry = new ZipEntry(name)
+            entry.time = 0L
+            zip.putNextEntry(entry)
+            file.withInputStream { input ->
+                input.transferTo(zip)
+            }
+            zip.closeEntry()
+        }
+        addEntry('manifest.json', onsPluginManifest.getBytes('UTF-8'))
+        onsPluginLibs.each { lib ->
+            addFileEntry("arm64-v8a/${lib}", rootProject.file("engine/src/main/nativeplugins/ons/arm64-v8a/${lib}"))
+        }
+    }
+}
+
+def writeOnsPluginZipAndSha256 = { File zipFile ->
+    def digest = MessageDigest.getInstance('SHA-256')
+    zipFile.withOutputStream { fileOutput ->
+        new DigestOutputStream(fileOutput, digest).withCloseable { output ->
+            writeOnsPluginZip(output)
+        }
+    }
+    sha256Hex(digest.digest())
+}
+
+def readOnsPluginSha256File = { File shaFile ->
+    def hash = shaFile.text.trim().tokenize().first()
+    if (!(hash ==~ /(?i)[0-9a-f]{64}/)) {
+        throw new GradleException("Invalid ONS plugin SHA-256 file: ${shaFile}")
+    }
+    hash.toLowerCase(Locale.ROOT)
+}
+
+def onsPluginOutputDir = layout.buildDirectory.dir('outputs/native-plugins')
+def onsPluginZipFile = onsPluginOutputDir.map { it.file('ons-arm64-v1.zip') }
+def onsPluginShaFile = onsPluginOutputDir.map { it.file('ons-arm64-v1.zip.sha256') }
+def onsPluginGeneratedResDir = layout.buildDirectory.dir('generated/res/onsPlugin')
+
 android {
     namespace 'com.core'
     compileSdk 36
@@ -144,7 +223,7 @@ android {
 
     sourceSets {
         main {
-            res.srcDir(kirikiroid2PluginGeneratedResDir)
+            res.srcDirs(kirikiroid2PluginGeneratedResDir, onsPluginGeneratedResDir)
         }
     }
 
@@ -204,6 +283,47 @@ tasks.register('generateKirikiroid2PluginShaRes') {
 
 tasks.named('preBuild') {
     dependsOn(tasks.named('generateKirikiroid2PluginShaRes'))
+    dependsOn(tasks.named('generateOnsPluginShaRes'))
+}
+
+tasks.register('packageOnsPlugin') {
+    group = 'rinne'
+    description = 'Builds the ONS native zip plugin and writes its SHA-256.'
+    outputs.file(onsPluginZipFile)
+    outputs.file(onsPluginShaFile)
+    inputs.files(onsPluginLibs.collect {
+        rootProject.file("engine/src/main/nativeplugins/ons/arm64-v8a/${it}")
+    })
+    inputs.property('manifest', onsPluginManifest)
+    doLast {
+        def zip = onsPluginZipFile.get().asFile
+        zip.parentFile.mkdirs()
+        def hash = writeOnsPluginZipAndSha256(zip)
+        onsPluginShaFile.get().asFile.text = "${hash}  ${zip.name}\n"
+        logger.lifecycle("ONS plugin: ${zip}")
+        logger.lifecycle("ONS plugin SHA-256: ${hash}")
+    }
+}
+
+tasks.register('generateOnsPluginShaRes') {
+    group = 'rinne'
+    description = 'Generates the ONS plugin SHA-256 string resource.'
+    dependsOn(tasks.named('packageOnsPlugin'))
+    inputs.file(onsPluginShaFile)
+    inputs.property('overrideSha256', providers.gradleProperty('onsPluginSha256').orElse(''))
+    outputs.dir(onsPluginGeneratedResDir)
+    doLast {
+        def hash = providers.gradleProperty('onsPluginSha256')
+                .getOrElse(readOnsPluginSha256File(onsPluginShaFile.get().asFile))
+                .toLowerCase(Locale.ROOT)
+        if (!(hash ==~ /[0-9a-f]{64}/)) {
+            throw new GradleException("Invalid ONS plugin SHA-256: ${hash}")
+        }
+        def valuesDir = onsPluginGeneratedResDir.get().asFile.toPath().resolve('values').toFile()
+        valuesDir.mkdirs()
+        new File(valuesDir, 'ons_plugin_sha.xml').text =
+                """<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n    <string name=\"ons_plugin_sha256\" translatable=\"false\">${hash}</string>\n</resources>\n"""
+    }
 }
 
 kotlin {

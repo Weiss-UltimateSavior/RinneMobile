@@ -22,4 +22,14 @@ object EnginePrefs {
     const val KEY_NATIVE_PLUGIN_KIRIKIROID2_BRIDGE_ABI = "native_plugin.kirikiroid2.bridge_abi"
     const val KEY_NATIVE_PLUGIN_KIRIKIROID2_EXPECTED_ZIP_SHA256 =
         "native_plugin.kirikiroid2.expected_zip_sha256"
+
+    const val KEY_NATIVE_PLUGIN_ONS_ENABLED = "native_plugin.ons.enabled"
+    const val KEY_NATIVE_PLUGIN_ONS_INSTALLED = "native_plugin.ons.installed"
+    const val KEY_NATIVE_PLUGIN_ONS_VERSION = "native_plugin.ons.version"
+    const val KEY_NATIVE_PLUGIN_ONS_ABI = "native_plugin.ons.abi"
+    const val KEY_NATIVE_PLUGIN_ONS_ZIP_SHA256 = "native_plugin.ons.zip_sha256"
+    const val KEY_NATIVE_PLUGIN_ONS_INSTALLED_AT = "native_plugin.ons.installed_at"
+    const val KEY_NATIVE_PLUGIN_ONS_BRIDGE_ABI = "native_plugin.ons.bridge_abi"
+    const val KEY_NATIVE_PLUGIN_ONS_EXPECTED_ZIP_SHA256 =
+        "native_plugin.ons.expected_zip_sha256"
 }

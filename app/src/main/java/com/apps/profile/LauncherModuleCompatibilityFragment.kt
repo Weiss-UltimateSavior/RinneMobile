@@ -31,11 +31,18 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     private var renpyModuleEnabled = false
     private var godotModuleEnabled = false
     private var kirikiroid2ModuleStateCode = "not_installed"
+    private var onsModuleStateCode = "not_installed"
 
     private val kirikiroid2ImportLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri: Uri? ->
         if (uri != null) importKirikiroid2Plugin(uri)
+    }
+
+    private val onsImportLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri: Uri? ->
+        if (uri != null) importOnsPlugin(uri)
     }
 
     override fun onCreateView(
@@ -60,6 +67,8 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             getModuleRowView(module).setOnLongClickListener {
                 if (module == ModuleType.KIRIKIROID2) {
                     launchKirikiroid2ImportPicker()
+                } else if (module == ModuleType.ONS) {
+                    launchOnsImportPicker()
                 } else {
                     promptDownload(module)
                 }
@@ -95,6 +104,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             val renpyEnabled = LauncherModuleBridge.isRenPyModuleEnabled(appContext)
             val godotEnabled = LauncherModuleBridge.isGodotModuleEnabled(appContext)
             val kirikiroid2State = LauncherModuleBridge.kirikiroid2ModuleStateCode(appContext)
+            val onsState = LauncherModuleBridge.onsModuleStateCode(appContext)
             activity?.runOnUiThread {
                 if (!isAdded || binding == null) return@runOnUiThread
                 rpgmModuleInstalled = rpgmInstalled
@@ -104,6 +114,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                 renpyModuleEnabled = renpyEnabled
                 godotModuleEnabled = godotEnabled
                 kirikiroid2ModuleStateCode = kirikiroid2State
+                onsModuleStateCode = onsState
                 ModuleType.entries.forEach { module ->
                     getModuleRowView(module).isEnabled = true
                     getModuleRowView(module).alpha = 1f
@@ -124,6 +135,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         ModuleType.RENPY -> renpyModuleInstalled
         ModuleType.GODOT -> godotModuleInstalled
         ModuleType.KIRIKIROID2 -> kirikiroid2ModuleStateCode != "not_installed"
+        ModuleType.ONS -> onsModuleStateCode != "not_installed"
     }
 
     private fun isModuleEnabled(module: ModuleType): Boolean = when (module) {
@@ -131,10 +143,12 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         ModuleType.RENPY -> renpyModuleEnabled
         ModuleType.GODOT -> godotModuleEnabled
         ModuleType.KIRIKIROID2 -> kirikiroid2ModuleStateCode == "installed_enabled"
+        ModuleType.ONS -> onsModuleStateCode == "installed_enabled"
     }
 
     private fun isModuleInvalid(module: ModuleType): Boolean = when (module) {
         ModuleType.KIRIKIROID2 -> kirikiroid2ModuleStateCode == "invalid"
+        ModuleType.ONS -> onsModuleStateCode == "invalid"
         else -> false
     }
 
@@ -156,6 +170,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
                 LauncherModuleBridge.setKirikiroid2ModuleEnabled(requireContext(), enabled)
                 kirikiroid2ModuleStateCode = if (enabled) "installed_enabled" else "installed_disabled"
             }
+            ModuleType.ONS -> {
+                LauncherModuleBridge.setOnsModuleEnabled(requireContext(), enabled)
+                onsModuleStateCode = if (enabled) "installed_enabled" else "installed_disabled"
+            }
         }
     }
 
@@ -166,6 +184,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             ModuleType.RENPY -> currentBinding.moduleRenpyRow
             ModuleType.GODOT -> currentBinding.moduleGodotRow
             ModuleType.KIRIKIROID2 -> currentBinding.moduleKirikiroid2Row
+            ModuleType.ONS -> currentBinding.moduleOnsRow
         }
     }
 
@@ -176,6 +195,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             ModuleType.RENPY -> currentBinding.moduleRenpyIcon
             ModuleType.GODOT -> currentBinding.moduleGodotIcon
             ModuleType.KIRIKIROID2 -> currentBinding.moduleKirikiroid2Icon
+            ModuleType.ONS -> currentBinding.moduleOnsIcon
         }
     }
 
@@ -186,6 +206,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             ModuleType.RENPY -> currentBinding.moduleRenpyDescription
             ModuleType.GODOT -> currentBinding.moduleGodotDescription
             ModuleType.KIRIKIROID2 -> currentBinding.moduleKirikiroid2Description
+            ModuleType.ONS -> currentBinding.moduleOnsDescription
         }
     }
 
@@ -249,6 +270,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
             launchKirikiroid2ImportPicker()
             return
         }
+        if (module == ModuleType.ONS) {
+            launchOnsImportPicker()
+            return
+        }
         LauncherDialogRouter.showStandardConfirm(
             requireContext(),
             getString(R.string.module_download_title, module.shortName),
@@ -262,6 +287,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     private fun openModule(module: ModuleType) {
         if (module == ModuleType.KIRIKIROID2) {
             showKirikiroid2Actions()
+            return
+        }
+        if (module == ModuleType.ONS) {
+            showOnsActions()
             return
         }
         if (isModuleInstalled(module)) {
@@ -291,6 +320,10 @@ class LauncherModuleCompatibilityFragment : Fragment() {
     private fun handleModuleIconClick(module: ModuleType) {
         if (module == ModuleType.KIRIKIROID2) {
             showKirikiroid2Actions()
+            return
+        }
+        if (module == ModuleType.ONS) {
+            showOnsActions()
             return
         }
         if (!isModuleInstalled(module)) {
@@ -464,6 +497,116 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         }
     }
 
+    // ----- ONS native zip 插件操作 -----
+
+    private fun showOnsActions() {
+        val labels = mutableListOf<CharSequence>()
+        val actions = mutableListOf<() -> Unit>()
+        val installed = isModuleInstalled(ModuleType.ONS)
+        val invalid = isModuleInvalid(ModuleType.ONS)
+        if (!installed || invalid) {
+            labels += getString(R.string.module_native_import)
+            actions += { launchOnsImportPicker() }
+        } else if (isModuleEnabled(ModuleType.ONS)) {
+            labels += getString(R.string.module_disable)
+            actions += {
+                setModuleEnabled(ModuleType.ONS, false)
+                refreshInstalledModules()
+            }
+        } else {
+            labels += getString(R.string.module_enable)
+            actions += {
+                setModuleEnabled(ModuleType.ONS, true)
+                refreshInstalledModules()
+            }
+        }
+        if (installed) {
+            labels += getString(R.string.module_native_delete)
+            actions += { confirmDeleteOnsPlugin() }
+        }
+        if (installed && !invalid) {
+            labels += getString(R.string.module_native_import)
+            actions += { launchOnsImportPicker() }
+        }
+        val dangerIndex = labels.indexOf(getString(R.string.module_native_delete))
+        LauncherDialogRouter.showStandardActionChoices(
+            requireContext(),
+            getString(R.string.module_ons_name),
+            labels.toTypedArray(),
+            dangerIndex,
+        ) { index ->
+            actions.getOrNull(index)?.invoke()
+        }
+    }
+
+    private fun launchOnsImportPicker() {
+        onsImportLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+    }
+
+    private fun importOnsPlugin(uri: Uri) {
+        val context = requireContext()
+        val loading = LauncherDialogRouter.showLoading(
+            context,
+            getString(R.string.module_native_importing_title),
+            getString(R.string.module_native_importing_message),
+        )
+        val appContext = context.applicationContext
+        AppExecutors.runOnIo {
+            val result = LauncherModuleBridge.importOnsModule(appContext, uri)
+            activity?.runOnUiThread {
+                loading.dismiss()
+                if (!isAdded || binding == null) return@runOnUiThread
+                val title = if (result.success) {
+                    getString(R.string.module_native_import_success_title)
+                } else {
+                    getString(R.string.module_native_import_failed_title)
+                }
+                LauncherDialogRouter.showInfo(
+                    requireContext(),
+                    title,
+                    nativeImportMessage(result.code, result.zipSha256),
+                )
+                refreshInstalledModules()
+            }
+        }
+    }
+
+    private fun confirmDeleteOnsPlugin() {
+        LauncherDialogRouter.showDangerConfirm(
+            requireContext(),
+            getString(R.string.module_ons_delete_title),
+            getString(R.string.module_ons_delete_message),
+            getString(R.string.module_native_delete),
+        ) {
+            val context = requireContext()
+            val loading = LauncherDialogRouter.showLoading(
+                context,
+                getString(R.string.module_native_deleting_title),
+                getString(R.string.module_native_deleting_message),
+            )
+            val appContext = context.applicationContext
+            AppExecutors.runOnIo {
+                val deleted = LauncherModuleBridge.deleteOnsModule(appContext)
+                activity?.runOnUiThread {
+                    loading.dismiss()
+                    if (!isAdded || binding == null) return@runOnUiThread
+                    LauncherDialogRouter.showInfo(
+                        requireContext(),
+                        getString(
+                            if (deleted) R.string.module_ons_delete_success_title
+                            else R.string.module_ons_delete_failed_title,
+                        ),
+                        getString(
+                            if (deleted) R.string.module_ons_delete_success_message
+                            else R.string.module_ons_delete_failed_message,
+                        ),
+                    )
+                    refreshInstalledModules()
+                }
+            }
+        }
+    }
+
     // ----- 安装页跳转 -----
 
     private fun openInstallPage(installUrl: String) {
@@ -495,6 +638,7 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         RENPY(R.string.module_renpy_name, R.string.module_renpy_detail, RENPY_INSTALL_URL, "RenPy"),
         GODOT(R.string.module_godot_name, R.string.module_godot_detail, GODOT_INSTALL_URL, "Godot"),
         KIRIKIROID2(R.string.module_kirikiroid2_name, R.string.module_kirikiroid2_detail, "", "Kirikiroid2"),
+        ONS(R.string.module_ons_name, R.string.module_ons_detail, "", "ONS"),
     }
 
     companion object {

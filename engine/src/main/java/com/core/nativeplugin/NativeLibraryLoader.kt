@@ -40,6 +40,17 @@ object NativeLibraryLoader {
         return game
     }
 
+    @JvmStatic
+    fun loadOns(context: Context): String? {
+        // 先一次性预检全部 .so，任一缺失即整体失败，避免加载到一半无法回滚。
+        val paths = NativePluginConstants.ONS_REQUIRED_LIBS.map { lib ->
+            NativePluginManager.onsLibPath(context, lib) ?: return null
+        }
+        paths.forEach { loadPath(it) }
+        // ONS_REQUIRED_LIBS 末尾即 libonsyuri.so（主入口）。
+        return paths.last()
+    }
+
     @Synchronized
     private fun loadPath(path: String) {
         if (path !in loadedPaths) {

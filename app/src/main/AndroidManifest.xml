@@ -61,6 +61,10 @@
             android:name="rinne.kirikiroid2.zip.sha256"
             android:resource="@string/kirikiroid2_plugin_sha256" />
 
+        <meta-data
+            android:name="rinne.ons.zip.sha256"
+            android:resource="@string/ons_plugin_sha256" />
+
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"

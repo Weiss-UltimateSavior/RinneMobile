@@ -30,44 +30,80 @@ object NativePluginInstaller {
     private const val MAX_TOTAL_UNCOMPRESSED_BYTES = 512L * 1024L * 1024L
 
     @JvmStatic
-    fun importKirikiroid2(context: Context, uri: Uri?): NativePluginImportResult {
+    fun importKirikiroid2(context: Context, uri: Uri?): NativePluginImportResult =
+        importPlugin(context, uri, engineName = "Kirikiroid2", expectedShaProvider = {
+            NativePluginManager.expectedKirikiroid2ZipSha256(context.applicationContext)
+        }, rootDirProvider = {
+            NativePluginManager.kirikiroid2RootDir(context.applicationContext)
+        }, currentDirProvider = {
+            NativePluginManager.kirikiroid2CurrentDir(context.applicationContext)
+        }, defaultBridgeAbi = NativePluginConstants.KIRIKIROID2_BRIDGE_ABI, validator = {
+            NativePluginManager.validateKirikiroid2Directory(it)
+        }, recorder = { appContext, sha, version, abi, at ->
+            NativePluginManager.recordKirikiroid2Install(appContext, sha, version, abi, at)
+        })
+
+    @JvmStatic
+    fun importOns(context: Context, uri: Uri?): NativePluginImportResult =
+        importPlugin(context, uri, engineName = "ONS", expectedShaProvider = {
+            NativePluginManager.expectedOnsZipSha256(context.applicationContext)
+        }, rootDirProvider = {
+            NativePluginManager.onsRootDir(context.applicationContext)
+        }, currentDirProvider = {
+            NativePluginManager.onsCurrentDir(context.applicationContext)
+        }, defaultBridgeAbi = NativePluginConstants.ONS_BRIDGE_ABI, validator = {
+            NativePluginManager.validateOnsDirectory(it)
+        }, recorder = { appContext, sha, version, abi, at ->
+            NativePluginManager.recordOnsInstall(appContext, sha, version, abi, at)
+        })
+
+    private fun importPlugin(
+        context: Context,
+        uri: Uri?,
+        engineName: String,
+        expectedShaProvider: () -> String?,
+        rootDirProvider: () -> File,
+        currentDirProvider: () -> File,
+        defaultBridgeAbi: Int,
+        validator: (File) -> Boolean,
+        recorder: (Context, String, Int, Int, Long) -> Unit,
+    ): NativePluginImportResult {
         if (uri == null) return NativePluginImportResult(false, "uri_missing")
         val appContext = context.applicationContext
-        val expected = NativePluginManager.expectedKirikiroid2ZipSha256(appContext)
+        val expected = expectedShaProvider()
             ?: return NativePluginImportResult(false, "expected_sha256_missing")
         val actual = try {
             calculateSha256(appContext, uri)
         } catch (error: IOException) {
-            Log.w(TAG, "Failed to read Kirikiroid2 plugin zip for SHA-256", error)
+            Log.w(TAG, "Failed to read $engineName plugin zip for SHA-256", error)
             return NativePluginImportResult(false, "read_failed")
         } catch (error: SecurityException) {
-            Log.w(TAG, "No permission to read Kirikiroid2 plugin zip", error)
+            Log.w(TAG, "No permission to read $engineName plugin zip", error)
             return NativePluginImportResult(false, "read_failed")
         } catch (error: IllegalArgumentException) {
-            Log.w(TAG, "Invalid Kirikiroid2 plugin zip uri", error)
+            Log.w(TAG, "Invalid $engineName plugin zip uri", error)
             return NativePluginImportResult(false, "read_failed")
         }
         if (!expected.equals(actual, ignoreCase = true)) {
             return NativePluginImportResult(false, "sha256_mismatch", actual)
         }
 
-        val root = NativePluginManager.kirikiroid2RootDir(appContext)
+        val root = rootDirProvider()
         val staging = File(root, "staging-${System.currentTimeMillis()}")
         if (!staging.mkdirs()) return NativePluginImportResult(false, "staging_failed", actual)
         try {
             unzipSafely(appContext, uri, staging)
-            if (!NativePluginManager.validateKirikiroid2Directory(staging)) {
+            if (!validator(staging)) {
                 return NativePluginImportResult(false, "invalid_structure", actual)
             }
             hardenInstalledFiles(staging)
             val manifest = NativePluginManager.parseManifest(staging)
             val pluginVersion = manifest?.optInt("pluginVersion", 1) ?: 1
-            val bridgeAbi = manifest?.optInt("bridgeAbi", NativePluginConstants.KIRIKIROID2_BRIDGE_ABI)
-                ?: NativePluginConstants.KIRIKIROID2_BRIDGE_ABI
-            if (!replaceCurrent(appContext, staging)) {
+            val bridgeAbi = manifest?.optInt("bridgeAbi", defaultBridgeAbi) ?: defaultBridgeAbi
+            if (!replaceCurrent(staging, root, currentDirProvider())) {
                 return NativePluginImportResult(false, "replace_failed", actual)
             }
-            NativePluginManager.recordKirikiroid2Install(
+            recorder(
                 appContext,
                 actual.lowercase(Locale.ROOT),
                 pluginVersion,
@@ -76,16 +112,16 @@ object NativePluginInstaller {
             )
             return NativePluginImportResult(true, "ok", actual)
         } catch (error: ZipRejectedException) {
-            Log.w(TAG, "Rejected Kirikiroid2 plugin zip", error)
+            Log.w(TAG, "Rejected $engineName plugin zip", error)
             return NativePluginImportResult(false, "zip_rejected", actual)
         } catch (error: IOException) {
-            Log.w(TAG, "Failed to import Kirikiroid2 plugin zip", error)
+            Log.w(TAG, "Failed to import $engineName plugin zip", error)
             return NativePluginImportResult(false, "import_failed", actual)
         } catch (error: SecurityException) {
-            Log.w(TAG, "No permission to import Kirikiroid2 plugin zip", error)
+            Log.w(TAG, "No permission to import $engineName plugin zip", error)
             return NativePluginImportResult(false, "import_failed", actual)
         } catch (error: RuntimeException) {
-            Log.w(TAG, "Unexpected Kirikiroid2 plugin import failure", error)
+            Log.w(TAG, "Unexpected $engineName plugin import failure", error)
             return NativePluginImportResult(false, "import_failed", actual)
         } finally {
             if (staging.exists()) {
@@ -172,10 +208,8 @@ object NativePluginInstaller {
             }
     }
 
-    private fun replaceCurrent(context: Context, staging: File): Boolean {
-        val root = NativePluginManager.kirikiroid2RootDir(context)
+    private fun replaceCurrent(staging: File, root: File, current: File): Boolean {
         if (!root.exists() && !root.mkdirs()) return false
-        val current = NativePluginManager.kirikiroid2CurrentDir(context)
         val backup = File(root, "backup-delete")
         if (backup.exists()) {
             NativePluginManager.prepareDirectoryForDelete(backup)

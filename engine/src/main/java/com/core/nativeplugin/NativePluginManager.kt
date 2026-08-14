@@ -126,9 +126,149 @@ object NativePluginManager {
         }
     }
 
+    // ----- ONS 外置 native zip 插件 -----
+
+    @JvmStatic
+    fun onsRootDir(context: Context): File =
+        File(File(context.applicationContext.filesDir, ROOT_DIR), NativePluginConstants.ENGINE_ONS)
+
+    @JvmStatic
+    fun onsCurrentDir(context: Context): File = File(onsRootDir(context), CURRENT_DIR)
+
+    @JvmStatic
+    fun isOnsInstalled(context: Context): Boolean =
+        prefs(context).getBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_INSTALLED, false) &&
+            validateOnsDirectory(onsCurrentDir(context))
+
+    @JvmStatic
+    fun isOnsEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ENABLED, false)
+
+    @JvmStatic
+    fun setOnsEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ENABLED, enabled).apply()
+    }
+
+    @JvmStatic
+    fun onsInstallState(context: Context): NativePluginInstallState {
+        val current = onsCurrentDir(context)
+        if (!current.exists()) return NativePluginInstallState.NOT_INSTALLED
+        if (!validateOnsDirectory(current)) return NativePluginInstallState.INVALID
+        return if (isOnsEnabled(context)) {
+            NativePluginInstallState.INSTALLED_ENABLED
+        } else {
+            NativePluginInstallState.INSTALLED_DISABLED
+        }
+    }
+
+    @JvmStatic
+    fun requireOnsReady(context: Context): NativePluginReadyResult {
+        val state = onsInstallState(context)
+        return when (state) {
+            NativePluginInstallState.INSTALLED_ENABLED ->
+                NativePluginReadyResult(true, state, "ready")
+            NativePluginInstallState.INSTALLED_DISABLED ->
+                NativePluginReadyResult(false, state, "disabled")
+            NativePluginInstallState.INVALID ->
+                NativePluginReadyResult(false, state, "invalid")
+            NativePluginInstallState.NOT_INSTALLED ->
+                NativePluginReadyResult(false, state, "not_installed")
+        }
+    }
+
+    @JvmStatic
+    fun deleteOns(context: Context): Boolean {
+        val root = onsRootDir(context)
+        prepareDirectoryForDelete(root)
+        val deleted = !root.exists() || root.deleteRecursively()
+        if (deleted) clearOnsMetadata(context)
+        return deleted
+    }
+
+    @JvmStatic
+    fun onsLibPath(context: Context, libName: String?): String? {
+        val safeName = libName?.trim() ?: return null
+        if (!NativePluginConstants.ONS_REQUIRED_LIBS.contains(safeName)) return null
+        val file = File(File(onsCurrentDir(context), NativePluginConstants.ABI_ARM64), safeName)
+        return if (file.isFile) file.absolutePath else null
+    }
+
+    @JvmStatic
+    fun expectedOnsZipSha256(context: Context): String? {
+        val override = overridePrefs(context).getString(
+            EnginePrefs.KEY_NATIVE_PLUGIN_ONS_EXPECTED_ZIP_SHA256,
+            null,
+        )
+            ?.trim()
+            ?.lowercase(Locale.ROOT)
+            ?.takeIf { it.matches(Regex("[0-9a-f]{64}")) }
+        if (override != null) return override
+        return try {
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getApplicationInfo(
+                    context.packageName,
+                    PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
+            }
+            expectedSha256FromMetaData(context, appInfo.metaData, NativePluginConstants.META_ONS_EXPECTED_ZIP_SHA256)
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    internal fun validateOnsDirectory(directory: File): Boolean {
+        if (!directory.isDirectory) return false
+        val abiDir = File(directory, NativePluginConstants.ABI_ARM64)
+        if (!abiDir.isDirectory) return false
+        for (lib in NativePluginConstants.ONS_REQUIRED_LIBS) {
+            if (!File(abiDir, lib).isFile) return false
+        }
+        return validateManifest(File(directory, MANIFEST_JSON), NativePluginConstants.ENGINE_ONS)
+    }
+
+    internal fun recordOnsInstall(
+        context: Context,
+        zipSha256: String,
+        pluginVersion: Int,
+        bridgeAbi: Int,
+        installedAt: Long,
+    ) {
+        prefs(context).edit()
+            .putBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_INSTALLED, true)
+            .putBoolean(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ENABLED, true)
+            .putInt(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_VERSION, pluginVersion)
+            .putString(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ABI, NativePluginConstants.ABI_ARM64)
+            .putString(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ZIP_SHA256, zipSha256)
+            .putLong(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_INSTALLED_AT, installedAt)
+            .putInt(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_BRIDGE_ABI, bridgeAbi)
+            .apply()
+    }
+
+    internal fun clearOnsMetadata(context: Context) {
+        prefs(context).edit()
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_INSTALLED)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ENABLED)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_VERSION)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ABI)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_ZIP_SHA256)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_INSTALLED_AT)
+            .remove(EnginePrefs.KEY_NATIVE_PLUGIN_ONS_BRIDGE_ABI)
+            .apply()
+    }
+
     private fun expectedSha256FromMetaData(context: Context, metaData: android.os.Bundle?): String? {
+        return expectedSha256FromMetaData(context, metaData, NativePluginConstants.META_KIRIKIROID2_EXPECTED_ZIP_SHA256)
+    }
+
+    private fun expectedSha256FromMetaData(
+        context: Context,
+        metaData: android.os.Bundle?,
+        key: String,
+    ): String? {
         if (metaData == null) return null
-        val key = NativePluginConstants.META_KIRIKIROID2_EXPECTED_ZIP_SHA256
         val directValue = metaData.getString(key)
             ?.trim()
             ?.lowercase(Locale.ROOT)
@@ -153,7 +293,7 @@ object NativePluginManager {
         for (lib in NativePluginConstants.KIRIKIROID2_REQUIRED_LIBS) {
             if (!File(abiDir, lib).isFile) return false
         }
-        return validateManifest(File(directory, MANIFEST_JSON))
+        return validateManifest(File(directory, MANIFEST_JSON), NativePluginConstants.ENGINE_KIRIKIROID2)
     }
 
     internal fun recordKirikiroid2Install(
@@ -202,7 +342,7 @@ object NativePluginManager {
             null
         }
 
-    private fun validateManifest(file: File): Boolean {
+    internal fun validateManifest(file: File, engineId: String): Boolean {
         val manifest = try {
             JSONObject(file.readText(Charsets.UTF_8))
         } catch (_: IOException) {
@@ -210,9 +350,14 @@ object NativePluginManager {
         } catch (_: JSONException) {
             return false
         }
-        if (manifest.optString("engineId") != NativePluginConstants.ENGINE_KIRIKIROID2) return false
+        if (manifest.optString("engineId") != engineId) return false
         if (manifest.optString("abi") != NativePluginConstants.ABI_ARM64) return false
-        if (manifest.optInt("bridgeAbi", -1) != NativePluginConstants.KIRIKIROID2_BRIDGE_ABI) return false
+        val bridgeAbi = when (engineId) {
+            NativePluginConstants.ENGINE_ONS -> NativePluginConstants.ONS_BRIDGE_ABI
+            NativePluginConstants.ENGINE_KIRIKIROID2 -> NativePluginConstants.KIRIKIROID2_BRIDGE_ABI
+            else -> return false
+        }
+        if (manifest.optInt("bridgeAbi", -1) != bridgeAbi) return false
         return true
     }
 

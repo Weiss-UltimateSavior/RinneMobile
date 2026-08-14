@@ -301,6 +301,14 @@ object LauncherGameLaunchBridge {
                 }
             }
         }
+        if (EnginePackages.isInternalOns(emulatorPackage)) {
+            when (LauncherModuleBridge.onsReadyCode(context)) {
+                "ready" -> Unit
+                "disabled" -> return context.getString(R.string.core_ons_module_disabled)
+                "invalid" -> return context.getString(R.string.core_ons_module_invalid)
+                else -> return context.getString(R.string.core_ons_module_required)
+            }
+        }
         return null
     }
 

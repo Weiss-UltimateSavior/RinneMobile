@@ -18,6 +18,9 @@
     <string name="core_kirikiroid2_module_required">The Kirikiroid2 module has not been imported. Import it on the Module Compatibility page and try again.</string>
     <string name="core_kirikiroid2_module_disabled">The Kirikiroid2 module is disabled. Enable it on the Module Compatibility page and try again.</string>
     <string name="core_kirikiroid2_module_invalid">The Kirikiroid2 module is damaged. Re-import it on the Module Compatibility page.</string>
+    <string name="core_ons_module_required">The ONS module has not been imported. Import it on the Module Compatibility page and try again.</string>
+    <string name="core_ons_module_disabled">The ONS module is disabled. Enable it on the Module Compatibility page and try again.</string>
+    <string name="core_ons_module_invalid">The ONS module is damaged. Re-import it on the Module Compatibility page.</string>
     <string name="core_untitled_game">Untitled game</string>
 
     <string name="core_backup_empty">The backup is empty</string>

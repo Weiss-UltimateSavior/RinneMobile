@@ -141,10 +141,12 @@
     <string name="module_renpy_name">RenPy モジュール</string>
     <string name="module_godot_name">Godot モジュール</string>
     <string name="module_kirikiroid2_name">Kirikiroid2 モジュール</string>
+    <string name="module_ons_name">ONS モジュール</string>
     <string name="module_rpgm_not_installed">未インストール - RPGM ゲームに必要な環境を提供します</string>
     <string name="module_renpy_not_installed">未インストール - RenPy ゲームに必要な環境を提供します</string>
     <string name="module_godot_not_installed">未インストール - Godot ゲームに必要な環境を提供します</string>
     <string name="module_kirikiroid2_not_installed">未インポート - KRKR ゲームに必要な native ライブラリを提供します</string>
+    <string name="module_ons_not_installed">未インポート - ONS ゲームに必要な native ライブラリを提供します</string>
 
     <!-- スマート翻訳 -->
     <string name="translation_title">スマート翻訳</string>
@@ -307,6 +309,7 @@
     <string name="module_renpy_detail">RenPy ゲームに必要な環境を提供します</string>
     <string name="module_godot_detail">Godot ゲームに必要な環境を提供します</string>
     <string name="module_kirikiroid2_detail">KRKR ゲームに必要な native ライブラリを提供します</string>
+    <string name="module_ons_detail">ONS ゲームに必要な native ライブラリを提供します</string>
     <string name="module_status_not_installed">未インストール - %1$s</string>
     <string name="module_status_installed_enabled">インストール済み · 有効 - %1$s</string>
     <string name="module_status_installed_disabled">インストール済み · 無効 - %1$s</string>
@@ -329,12 +332,12 @@
     <string name="module_native_importing_title">プラグインをインポート中</string>
     <string name="module_native_importing_message">zip の SHA-256 を検証し、プラグインを展開しています。しばらくお待ちください。</string>
     <string name="module_native_deleting_title">プラグインを削除中</string>
-    <string name="module_native_deleting_message">Kirikiroid2 プラグインを削除しています。しばらくお待ちください。</string>
+    <string name="module_native_deleting_message">エンジンプラグインを削除しています。しばらくお待ちください。</string>
     <string name="module_native_import_success_title">インポート完了</string>
-    <string name="module_native_import_success_message">Kirikiroid2 プラグインをインポートし、有効化しました。</string>
+    <string name="module_native_import_success_message">プラグインをインポートし、有効化しました。</string>
     <string name="module_native_import_failed_title">インポート失敗</string>
     <string name="module_native_import_failed_message">このプラグインをインポートできませんでした。ファイルが完全か確認してから再試行してください。</string>
-    <string name="module_native_import_expected_sha_missing">このビルドには Kirikiroid2 プラグイン zip の期待 SHA-256 が設定されていないため、インポートを拒否しました。</string>
+    <string name="module_native_import_expected_sha_missing">このビルドにはプラグイン zip の期待 SHA-256 が設定されていないため、インポートを拒否しました。</string>
     <string name="module_native_import_sha_mismatch">zip の SHA-256 が一致しないため、インポートを拒否しました。\n現在のファイル: %1$s</string>
     <string name="module_native_import_invalid_structure">プラグイン構造が正しくありません。manifest または必須 native ライブラリが不足しています。</string>
     <string name="module_native_import_zip_rejected">プラグイン zip に安全でないパスが含まれるか、展開できなかったため拒否しました。</string>
@@ -345,6 +348,12 @@
     <string name="module_native_delete_success_message">Kirikiroid2 プラグインを削除しました。</string>
     <string name="module_native_delete_failed_title">削除失敗</string>
     <string name="module_native_delete_failed_message">Kirikiroid2 プラグインを削除できませんでした。しばらくしてから再試行してください。</string>
+    <string name="module_ons_delete_title">ONS プラグインを削除</string>
+    <string name="module_ons_delete_message">削除すると、再インポートするまで ONS ゲームを起動できません。削除しますか？</string>
+    <string name="module_ons_delete_success_title">プラグインを削除しました</string>
+    <string name="module_ons_delete_success_message">ONS プラグインを削除しました。</string>
+    <string name="module_ons_delete_failed_title">削除失敗</string>
+    <string name="module_ons_delete_failed_message">ONS プラグインを削除できませんでした。しばらくしてから再試行してください。</string>
     <string name="module_cannot_open_browser">ブラウザーを開けません</string>
     <string name="module_try_again_later">しばらくしてからもう一度お試しください。</string>
 

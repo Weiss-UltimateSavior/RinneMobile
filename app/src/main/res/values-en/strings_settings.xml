@@ -141,10 +141,12 @@
     <string name="module_renpy_name">RenPy Module</string>
     <string name="module_godot_name">Godot Module</string>
     <string name="module_kirikiroid2_name">Kirikiroid2 Module</string>
+    <string name="module_ons_name">ONS Module</string>
     <string name="module_rpgm_not_installed">Not installed - Provides the environment required by RPGM games</string>
     <string name="module_renpy_not_installed">Not installed - Provides the environment required by RenPy games</string>
     <string name="module_godot_not_installed">Not installed - Provides the environment required by Godot games</string>
     <string name="module_kirikiroid2_not_installed">Not imported - Provides native libraries required for KRKR games</string>
+    <string name="module_ons_not_installed">Not imported - Provides native libraries required for ONS games</string>
 
     <!-- Smart translation -->
     <string name="translation_title">Smart Translation</string>
@@ -307,6 +309,7 @@
     <string name="module_renpy_detail">Provides the environment required by RenPy games</string>
     <string name="module_godot_detail">Provides the environment required by Godot games</string>
     <string name="module_kirikiroid2_detail">Provides native libraries required for KRKR games</string>
+    <string name="module_ons_detail">Provides native libraries required for ONS games</string>
     <string name="module_status_not_installed">Not installed - %1$s</string>
     <string name="module_status_installed_enabled">Installed · Enabled - %1$s</string>
     <string name="module_status_installed_disabled">Installed · Disabled - %1$s</string>
@@ -329,12 +332,12 @@
     <string name="module_native_importing_title">Importing plugin</string>
     <string name="module_native_importing_message">Verifying the zip SHA-256 and extracting the plugin. Please wait.</string>
     <string name="module_native_deleting_title">Deleting plugin</string>
-    <string name="module_native_deleting_message">Removing the Kirikiroid2 plugin. Please wait.</string>
+    <string name="module_native_deleting_message">Removing the engine plugin. Please wait.</string>
     <string name="module_native_import_success_title">Import complete</string>
-    <string name="module_native_import_success_message">The Kirikiroid2 plugin has been imported and enabled.</string>
+    <string name="module_native_import_success_message">The plugin has been imported and enabled.</string>
     <string name="module_native_import_failed_title">Import failed</string>
     <string name="module_native_import_failed_message">Could not import this plugin. Check that the file is complete and try again.</string>
-    <string name="module_native_import_expected_sha_missing">This build has no expected Kirikiroid2 plugin zip SHA-256 configured, so the import was rejected.</string>
+    <string name="module_native_import_expected_sha_missing">This build has no expected plugin zip SHA-256 configured, so the import was rejected.</string>
     <string name="module_native_import_sha_mismatch">The zip SHA-256 does not match, so the import was rejected.\nCurrent file: %1$s</string>
     <string name="module_native_import_invalid_structure">The plugin structure is invalid. A manifest or required native library is missing.</string>
     <string name="module_native_import_zip_rejected">The plugin zip contains an unsafe path or could not be extracted, so it was rejected.</string>
@@ -345,6 +348,12 @@
     <string name="module_native_delete_success_message">The Kirikiroid2 plugin has been deleted.</string>
     <string name="module_native_delete_failed_title">Delete failed</string>
     <string name="module_native_delete_failed_message">Could not delete the Kirikiroid2 plugin. Try again later.</string>
+    <string name="module_ons_delete_title">Delete ONS plugin</string>
+    <string name="module_ons_delete_message">After deletion, ONS games cannot launch until the plugin is imported again. Delete it?</string>
+    <string name="module_ons_delete_success_title">Plugin deleted</string>
+    <string name="module_ons_delete_success_message">The ONS plugin has been deleted.</string>
+    <string name="module_ons_delete_failed_title">Delete failed</string>
+    <string name="module_ons_delete_failed_message">Could not delete the ONS plugin. Try again later.</string>
     <string name="module_cannot_open_browser">Unable to Open Browser</string>
     <string name="module_try_again_later">Please try again later.</string>
 
