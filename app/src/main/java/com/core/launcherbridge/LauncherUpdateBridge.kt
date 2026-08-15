@@ -122,7 +122,10 @@ object LauncherUpdateBridge {
     private fun normalizeVersion(value: String?): String {
         if (value == null) return ""
         var v = value.trim()
-        val m = Pattern.compile("(\\d+(?:\\.\\d+){1,5})").matcher(v)
+        // 匹配一个数字开头、以 . 分隔、任意段数的版本号（例如 0.9.9.9.9.8.3）。
+        // 注意：不能限制段数上限（旧版 {1,5} 会把 7 段的 RinneMobile 版本号截断，
+        // 导致 release 与当前版本比较时漏判最后一段，更新检测失效）。
+        val m = Pattern.compile("(\\d+(?:\\.\\d+)+)").matcher(v)
         if (m.find()) return m.group(1)!!
         v = v.replaceFirst(Regex("^[vV]"), "").replace(Regex("[^0-9.]"), "")
         while (v.startsWith(".")) v = v.substring(1)
