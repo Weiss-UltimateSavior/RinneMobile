@@ -720,7 +720,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/padDetailActionAgent"
+                        android:id="@+id/padDetailActionCrossSource"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_columnWeight="1"
@@ -734,15 +734,15 @@
                         <ImageView
                             android:layout_width="19dp"
                             android:layout_height="19dp"
-                            android:contentDescription="@string/launcher_action_agent"
+                            android:contentDescription="@string/pad_action_cross_source"
                             android:tint="@color/launcher_text_color"
-                            android:src="@drawable/launcher_action_agent" />
+                            android:src="@drawable/launcher_manage_action_cross_sync" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="5dp"
-                            android:text="@string/launcher_action_agent"
+                            android:text="@string/pad_action_cross_source"
                             android:textColor="@color/launcher_text_color"
                             android:textSize="11sp"
                             android:textStyle="bold" />

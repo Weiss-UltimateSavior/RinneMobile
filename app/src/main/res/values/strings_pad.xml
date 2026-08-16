@@ -99,4 +99,5 @@
     <string name="pad_upload_success_message">配置及游玩记录已同步到云端</string>
     <string name="pad_playdata_upload_failed">配置已上传，游玩记录上传失败：%1$s</string>
     <string name="pad_upload_failed">上传失败</string>
+    <string name="pad_action_cross_source">跨端源</string>
 </resources>

@@ -99,4 +99,5 @@
     <string name="pad_upload_success_message">Configuration and play history were synced to the cloud</string>
     <string name="pad_playdata_upload_failed">Configuration uploaded, but play history failed: %1$s</string>
     <string name="pad_upload_failed">Upload Failed</string>
+    <string name="pad_action_cross_source">Cross-platform source</string>
 </resources>

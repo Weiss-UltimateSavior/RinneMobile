@@ -2,7 +2,10 @@ package com.apps.PadUi
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,17 +17,23 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.apps.HDModel.LauncherDialogRouter
 import com.apps.LauncherActivity
+import com.apps.LauncherPreferences
 import com.apps.LauncherThemeStyle
 import com.apps.data.LauncherRepository
+import com.apps.game.ExternalImportController
 import com.apps.game.GameActionMenuFactory
 import com.apps.game.GameListController
 import com.apps.game.GameSessionController
+import com.apps.game.ManageHost
 import com.apps.settings.ResourceStationFragment
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherCoverLoader
@@ -44,7 +53,7 @@ import java.util.Locale
  * 横屏游戏库 GAME 页：复用竖屏首页动态列表样式，纵向滚动时居中条目放大。
  */
 class PadGameFragment : Fragment(), GameListController.Listener,
-    GameActionMenuFactory.ActionMenuCallbacks {
+    GameActionMenuFactory.ActionMenuCallbacks, ManageHost {
 
     companion object {
         private const val TAG = "PadGameFragment"
@@ -89,6 +98,28 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         PadGameBusinessHandler(requireContext(), mainQueue, listController, sessionController, this, ::reloadSingleGame)
     }
 
+    // ===== 跨端源（跨端同步导入） =====
+    private var externalImportController: ExternalImportController? = null
+    private var importInProgress = false
+
+    // ActivityResultLauncher 必须在 Fragment 中注册（复用竖屏 LauncherManageFragment 的接入方式）。
+    private val playniteImportLauncher: ActivityResultLauncher<Array<String>> =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) externalImportController?.doImportFromPlaynite(uri)
+        }
+    private val potatovnImportLauncher: ActivityResultLauncher<Array<String>> =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) externalImportController?.doImportFromPotatoVn(uri)
+        }
+    private val lunaboxImportLauncher: ActivityResultLauncher<Array<String>> =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) externalImportController?.doImportFromLunaBox(uri)
+        }
+    private val vniteImportLauncher: ActivityResultLauncher<Uri?> =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri != null) externalImportController?.doImportFromVnite(uri)
+        }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -122,6 +153,10 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         setupRecycler()
         setupSearch()
         setupDetailActions()
+        externalImportController = ExternalImportController(
+            this, playniteImportLauncher, potatovnImportLauncher,
+            vniteImportLauncher, lunaboxImportLauncher,
+        )
         applyDetailDividerTone()
         refreshStats()
         needsRefresh = true
@@ -151,6 +186,8 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         mainQueue.removeCallbacks(null)
         sessionController?.cleanup()
         listController?.cleanup()
+        externalImportController?.cleanup()
+        externalImportController = null
         _binding?.let { b ->
             b.padGameShortcutContainer.removeOnLayoutChangeListener(shortcutCardLayoutChangeListener)
             b.padGameRecycler.removeOnLayoutChangeListener(recyclerLayoutChangeListener)
@@ -462,7 +499,7 @@ class PadGameFragment : Fragment(), GameListController.Listener,
 
     // ===== Detail action buttons =====
 
-    /** 右容器动作按钮：存档点跳转横屏存档管理页；资讯站弹选择菜单后跳转横屏资讯站页；工具箱跳转横屏工具箱页。 */
+    /** 右容器动作按钮：存档点跳转横屏存档管理页；资讯站弹选择菜单后跳转横屏资讯站页；工具箱跳转横屏工具箱页；跨端源弹来源选择菜单。 */
     private fun setupDetailActions() {
         binding.padDetailActionSave.setOnClickListener {
             startActivity(Intent(requireContext(), PadSaveCategoryActivity::class.java))
@@ -470,6 +507,9 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         binding.padDetailActionResources.setOnClickListener { showResourceStationDialog() }
         binding.padDetailActionToolbox.setOnClickListener {
             startActivity(Intent(requireContext(), PadToolboxActivity::class.java))
+        }
+        binding.padDetailActionCrossSource.setOnClickListener {
+            externalImportController?.showExternalImportDialog()
         }
     }
 
@@ -638,5 +678,31 @@ class PadGameFragment : Fragment(), GameListController.Listener,
 
     override fun onShowMoreOptions(game: Game) {
         businessHandler.onShowMoreOptions(game)
+    }
+
+    // ===== ManageHost（跨端源导入桥接） =====
+    // requireContext() / getString() / isAdded() / startActivity() 由 Fragment 父类满足接口契约。
+
+    override fun getMainQueue(): RxMainQueue = mainQueue
+
+    override fun getPrefs(): SharedPreferences =
+        requireContext().getSharedPreferences(LauncherPreferences.APP_PREFS, Context.MODE_PRIVATE)
+
+    override fun showConfirmDialog(title: String, message: String, confirmText: String, onConfirm: Runnable?) {
+        LauncherDialogRouter.showConfirm(requireContext(), title, message, confirmText, onConfirm)
+    }
+
+    override fun isUiAvailable(): Boolean = isAdded && _binding != null
+
+    override fun isImportInProgress(): Boolean = importInProgress
+
+    override fun setImportInProgress(inProgress: Boolean) {
+        importInProgress = inProgress
+    }
+
+    override fun dp(value: Int): Int = LauncherTheme.dp(requireContext(), value)
+
+    override fun setResponsiveTextSize(view: TextView, baseSp: Float) {
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, baseSp)
     }
 }

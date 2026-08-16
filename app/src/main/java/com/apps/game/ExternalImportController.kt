@@ -27,7 +27,7 @@ class ExternalImportController(
     private val host: ManageHost,
     private val playniteLauncher: ActivityResultLauncher<Array<String>>,
     private val potatovnLauncher: ActivityResultLauncher<Array<String>>,
-    private val vniteLauncher: ActivityResultLauncher<Uri>,
+    private val vniteLauncher: ActivityResultLauncher<Uri?>,
     private val lunaboxLauncher: ActivityResultLauncher<Array<String>>
 ) {
 
