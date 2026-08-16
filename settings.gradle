@@ -22,7 +22,7 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "YukiHub"
+rootProject.name = "RinneMobile"
 
 include(":app")
 include(":engine")
