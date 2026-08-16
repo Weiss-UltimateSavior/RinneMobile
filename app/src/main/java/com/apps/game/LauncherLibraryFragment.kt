@@ -178,6 +178,9 @@ open class LauncherLibraryFragment : Fragment(),
 
     protected open fun applyLibrarySystemBarInsets(): Boolean = true
 
+    /** 竖屏库启用下拉刷新；HD 横屏沿用横向分页交互，不启用。 */
+    protected open fun enableLibraryPullRefresh(): Boolean = true
+
     protected open fun createLibraryAdapter(): LauncherGameAdapter = LauncherGameAdapter()
 
     protected open fun getPosterStylePreferenceKey(): String = KEY_POSTER_GRID_STYLE
@@ -231,6 +234,7 @@ open class LauncherLibraryFragment : Fragment(),
         listController = GameListController(mainQueue, this)
         pagingHelper = LibraryPagingHelper(this)
         setupRecycler()
+        setupPullRefresh()
         loadGames()
         swipeGesture = LibrarySwipeGesture(this)
         swipeGesture.setup()
@@ -400,6 +404,26 @@ open class LauncherLibraryFragment : Fragment(),
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) { }
         })
+    }
+
+    /**
+     * 下拉刷新（镜像首页 recentRefresh 模式）：触发全量重载，指示器由
+     * [onRenderStateRequested] 在加载完成后的状态渲染中统一收起。
+     * RecyclerView 是 SwipeRefreshLayout 直接子 View，默认 canChildScrollUp
+     * 即"列表回到顶部才可触发"，无需自定义 childScrollUp 回调。
+     */
+    private fun setupPullRefresh() {
+        val currentBinding = _binding ?: return
+        if (!enableLibraryPullRefresh()) {
+            currentBinding.libraryRefresh.isEnabled = false
+            return
+        }
+        currentBinding.libraryRefresh.setOnRefreshListener {
+            // 加载进行中时不重复触发；指示器由进行中加载的完成回调收起。
+            if (!listController.isLoading()) {
+                loadGames()
+            }
+        }
     }
 
     private fun applyNavigationOverlayPadding() {
@@ -706,5 +730,7 @@ open class LauncherLibraryFragment : Fragment(),
 
     override fun onRenderStateRequested() {
         pagingHelper.renderState()
+        // 加载完成（含下拉刷新触发的重载）都会走到这里；收起刷新指示器。
+        _binding?.libraryRefresh?.isRefreshing = false
     }
 }

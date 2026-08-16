@@ -101,14 +101,21 @@
             android:layout_marginTop="4dp"
             android:layout_weight="1">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/libraryRecycler"
+            <!-- 与竖屏布局保持相同 ID 结构（共享 FragmentLauncherLibraryBinding）；HD 侧代码禁用下拉刷新。 -->
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/libraryRefresh"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:paddingBottom="0dp"
-                android:scrollbars="none"
-                android:visibility="gone" />
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/libraryRecycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="0dp"
+                    android:scrollbars="none"
+                    android:visibility="gone" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
             <TextView
                 android:id="@+id/libraryEmpty"

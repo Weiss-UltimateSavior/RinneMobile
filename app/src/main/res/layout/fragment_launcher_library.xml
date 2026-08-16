@@ -98,14 +98,21 @@
             android:layout_marginTop="@dimen/launcher_library_list_margin_top"
             android:layout_weight="1">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/libraryRecycler"
+            <!-- 与首页 recentRefresh 相同的下拉刷新模式：仅包裹列表，空态文案保持兄弟节点。 -->
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/libraryRefresh"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:paddingBottom="@dimen/launcher_library_recycler_bottom_padding"
-                android:scrollbars="none"
-                android:visibility="gone" />
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/libraryRecycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="@dimen/launcher_library_recycler_bottom_padding"
+                    android:scrollbars="none"
+                    android:visibility="gone" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
             <TextView
                 android:id="@+id/libraryEmpty"

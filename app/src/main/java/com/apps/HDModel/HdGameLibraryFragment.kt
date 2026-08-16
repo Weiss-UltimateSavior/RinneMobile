@@ -33,6 +33,8 @@ class HdGameLibraryFragment : LauncherLibraryFragment() {
 
     override fun applyLibrarySystemBarInsets(): Boolean = false
 
+    override fun enableLibraryPullRefresh(): Boolean = false
+
     override fun createLibraryAdapter(): LauncherGameAdapter =
         LauncherGameAdapter(applyPortraitScaling = false)
 
