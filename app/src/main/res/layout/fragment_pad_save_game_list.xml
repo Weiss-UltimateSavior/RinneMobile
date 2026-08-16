@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/launcher_bg">
+
+    <LinearLayout
+        android:id="@+id/padSaveGameListContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="18dp">
+
+        <TextView
+            android:id="@+id/padSaveGameListTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/launcher_text_color"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/padSaveGameListStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:lineSpacingExtra="3dp"
+            android:text="@string/game_save_select_game"
+            android:textColor="@color/launcher_text_muted_color"
+            android:textSize="11sp" />
+
+        <com.apps.widget.LauncherClickableRowScrollView
+            android:id="@+id/padSaveGameListScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="18dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/padSaveGameList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </com.apps.widget.LauncherClickableRowScrollView>
+    </LinearLayout>
+</FrameLayout>

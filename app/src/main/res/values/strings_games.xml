@@ -101,6 +101,7 @@
     <string name="game_cover_choose">选择封面</string>
 
     <string name="game_save_manager_title">存档管理</string>
+    <string name="game_save_engine_type">模拟器类型</string>
     <string name="game_save_category_subtitle">按模拟器类型选择游戏，再管理对应的存档文件。</string>
     <string name="game_save_select_game">选择一个游戏管理其存档。</string>
     <string name="game_save_zip_description">导出与覆盖导入均使用 ZIP 压缩包。</string>

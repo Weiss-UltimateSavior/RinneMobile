@@ -122,6 +122,13 @@
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize" />
 
         <activity
+            android:name="com.apps.PadUi.PadSaveCategoryActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.YukiHub.Launcher"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize" />
+
+        <activity
             android:name="com.apps.HDModel.HdModeActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape"

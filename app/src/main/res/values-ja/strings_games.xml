@@ -97,6 +97,7 @@
     <string name="game_cover_selected">カバー：選択済み</string>
     <string name="game_cover_choose">カバーを選択</string>
     <string name="game_save_manager_title">セーブ管理</string>
+    <string name="game_save_engine_type">エミュレータータイプ</string>
     <string name="game_save_category_subtitle">エミュレーターの種類からゲームを選び、対応するセーブファイルを管理します。</string>
     <string name="game_save_select_game">セーブを管理するゲームを選択してください。</string>
     <string name="game_save_zip_description">エクスポートと上書きインポートには ZIP を使用します。</string>

@@ -1,6 +1,7 @@
 package com.apps.PadUi
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -119,6 +120,7 @@ class PadGameFragment : Fragment(), GameListController.Listener,
         setupShortcutCards()
         setupRecycler()
         setupSearch()
+        setupDetailActions()
         applyDetailDividerTone()
         refreshStats()
         needsRefresh = true
@@ -454,6 +456,15 @@ class PadGameFragment : Fragment(), GameListController.Listener,
                 params.height = normalHeight
                 child.layoutParams = params
             }
+        }
+    }
+
+    // ===== Detail action buttons =====
+
+    /** 右容器动作按钮：存档点跳转横屏存档管理页；其余按钮暂未接入。 */
+    private fun setupDetailActions() {
+        binding.padDetailActionSave.setOnClickListener {
+            startActivity(Intent(requireContext(), PadSaveCategoryActivity::class.java))
         }
     }
 

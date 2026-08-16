@@ -97,6 +97,7 @@
     <string name="game_cover_selected">Cover: image selected</string>
     <string name="game_cover_choose">Choose cover</string>
     <string name="game_save_manager_title">Save manager</string>
+    <string name="game_save_engine_type">Emulator type</string>
     <string name="game_save_category_subtitle">Choose a game by emulator type, then manage its save files.</string>
     <string name="game_save_select_game">Choose a game to manage its saves.</string>
     <string name="game_save_zip_description">Export and overwrite import both use ZIP archives.</string>
