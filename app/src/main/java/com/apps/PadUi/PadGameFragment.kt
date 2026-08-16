@@ -25,6 +25,7 @@ import com.apps.data.LauncherRepository
 import com.apps.game.GameActionMenuFactory
 import com.apps.game.GameListController
 import com.apps.game.GameSessionController
+import com.apps.settings.ResourceStationFragment
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherCoverLoader
 import com.core.R
@@ -461,10 +462,33 @@ class PadGameFragment : Fragment(), GameListController.Listener,
 
     // ===== Detail action buttons =====
 
-    /** 右容器动作按钮：存档点跳转横屏存档管理页；其余按钮暂未接入。 */
+    /** 右容器动作按钮：存档点跳转横屏存档管理页；资讯站弹选择菜单后跳转横屏资讯站页。 */
     private fun setupDetailActions() {
         binding.padDetailActionSave.setOnClickListener {
             startActivity(Intent(requireContext(), PadSaveCategoryActivity::class.java))
+        }
+        binding.padDetailActionResources.setOnClickListener { showResourceStationDialog() }
+    }
+
+    /** 与竖屏首页一致的资讯站入口：弹站源选择菜单后跳转 Pad 横屏资讯站页。 */
+    private fun showResourceStationDialog() {
+        val resourceOptions = arrayOf(
+            getString(com.core.R.string.home_resource_aggregated_search) to "https://searchgal.top",
+            getString(com.core.R.string.home_resource_kungal) to "https://www.kungal.com",
+            getString(com.core.R.string.home_resource_shinnku) to "https://www.shinnku.com/",
+            getString(com.core.R.string.home_resource_touch_gal) to "https://www.touchgal.ink/",
+        )
+        PadDialogFactory.showActionChoices(
+            requireContext(),
+            getString(com.core.R.string.home_resource_station),
+            Array<CharSequence>(resourceOptions.size) { resourceOptions[it].first },
+            -1,
+        ) { index ->
+            val resource = resourceOptions.getOrNull(index) ?: return@showActionChoices
+            val intent = Intent(requireContext(), PadResourceStationActivity::class.java)
+            intent.putExtra(ResourceStationFragment.EXTRA_URL, resource.second)
+            intent.putExtra(ResourceStationFragment.EXTRA_TITLE, resource.first)
+            startActivity(intent)
         }
     }
 

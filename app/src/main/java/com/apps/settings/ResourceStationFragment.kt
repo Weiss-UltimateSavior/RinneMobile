@@ -252,10 +252,11 @@ class ResourceStationFragment : Fragment() {
         return 0
     }
 
-    /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
+    /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment，Pad 横屏薄宿主 finish。 */
     private fun requestClose() {
         when (val host = activity) {
             is ResourceStationActivity -> host.finishResourceStation()
+            is com.apps.PadUi.PadResourceStationActivity -> host.finish()
             is HdModeActivity -> (parentFragment as? HdEmbeddedActivityOwner)?.closeEmbeddedActivity()
             else -> Unit
         }
