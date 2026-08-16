@@ -462,12 +462,15 @@ class PadGameFragment : Fragment(), GameListController.Listener,
 
     // ===== Detail action buttons =====
 
-    /** 右容器动作按钮：存档点跳转横屏存档管理页；资讯站弹选择菜单后跳转横屏资讯站页。 */
+    /** 右容器动作按钮：存档点跳转横屏存档管理页；资讯站弹选择菜单后跳转横屏资讯站页；工具箱跳转横屏工具箱页。 */
     private fun setupDetailActions() {
         binding.padDetailActionSave.setOnClickListener {
             startActivity(Intent(requireContext(), PadSaveCategoryActivity::class.java))
         }
         binding.padDetailActionResources.setOnClickListener { showResourceStationDialog() }
+        binding.padDetailActionToolbox.setOnClickListener {
+            startActivity(Intent(requireContext(), PadToolboxActivity::class.java))
+        }
     }
 
     /** 与竖屏首页一致的资讯站入口：弹站源选择菜单后跳转 Pad 横屏资讯站页。 */

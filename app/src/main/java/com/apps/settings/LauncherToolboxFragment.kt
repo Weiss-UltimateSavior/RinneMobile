@@ -15,55 +15,63 @@ import com.apps.util.LauncherUrlOpener
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
 import com.core.databinding.ActivityLauncherToolboxBinding
+import com.core.databinding.FragmentPadToolboxBinding
 
 /**
- * 工具箱页（重构计划 9.9 阶段 113）：自 [LauncherToolboxActivity] 抽取全部逻辑，
- * HD 由 [com.apps.HDModel.HdHomeFragment] 以子 Fragment 承载。
+ * 工具箱页（重构计划 9.9 阶段 113）：自 [LauncherToolboxActivity] 抽取全部逻辑。
+ *
+ * 承载方式：
+ * - 竖屏：由 [LauncherToolboxActivity] 以宿主方式承载，内容布局 activity_launcher_toolbox.xml；
+ * - Pad 横屏：由 [com.apps.PadUi.PadToolboxActivity] 承载，内容布局 fragment_pad_toolbox.xml；
+ * - HD：由 [com.apps.HDModel.HdHomeFragment] 以子 Fragment 承载。
+ *
+ * 两种内容布局视图 ID 一致，统一用 [findViewById] 访问，避免按宿主分支访问绑定。
  */
 class LauncherToolboxFragment : Fragment() {
-    private var binding: ActivityLauncherToolboxBinding? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        val currentBinding = ActivityLauncherToolboxBinding.inflate(inflater, container, false)
-        binding = currentBinding
-        return currentBinding.root
+        val isPad = activity is com.apps.PadUi.PadToolboxActivity
+        return if (isPad) {
+            FragmentPadToolboxBinding.inflate(inflater, container, false).root
+        } else {
+            ActivityLauncherToolboxBinding.inflate(inflater, container, false).root
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         if (activity !is HdModeActivity) LauncherTabletPortraitScaler.apply(view)
-        val currentBinding = binding ?: return
-        LauncherInsetsHelper.applyTopInset(currentBinding.root, currentBinding.toolboxScroll)
+        LauncherInsetsHelper.applyTopInset(view, view.findViewById(R.id.toolboxScroll))
         LauncherTheme.applyPrimaryTone(view)
-        LauncherTheme.longActionButton(currentBinding.toolboxBack)
-        currentBinding.toolUsefulUnpack.setOnClickListener {
+        LauncherTheme.longActionButton(view.findViewById(R.id.toolboxBack))
+        view.findViewById<View>(R.id.toolUsefulUnpack).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.USEFULUNPACK, USEFULUNPACK_URL)
         }
-        currentBinding.toolTermux.setOnClickListener {
+        view.findViewById<View>(R.id.toolTermux).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.TERMUX, TERMUX_URL)
         }
-        currentBinding.toolShizuku.setOnClickListener {
+        view.findViewById<View>(R.id.toolShizuku).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.SHIZUKU, SHIZUKU_URL)
         }
-        currentBinding.toolWinlator.setOnClickListener {
+        view.findViewById<View>(R.id.toolWinlator).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.WINLATOR, WINLATOR_URL)
         }
-        currentBinding.toolGaishi.setOnClickListener {
+        view.findViewById<View>(R.id.toolGaishi).setOnClickListener {
             confirmOpenExternalTool(getString(R.string.settings_tool_gaishi), GAISHI_URL)
         }
-        currentBinding.toolPpsspp.setOnClickListener {
+        view.findViewById<View>(R.id.toolPpsspp).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.PPSSPP, PPSSPP_URL)
         }
-        currentBinding.toolLunabox.setOnClickListener {
+        view.findViewById<View>(R.id.toolLunabox).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.LUNABOX, LUNABOX_URL)
         }
-        currentBinding.toolAzahar.setOnClickListener {
+        view.findViewById<View>(R.id.toolAzahar).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.AZAHARPLUS, AZAHARPLUS_URL)
         }
-        currentBinding.toolboxBack.setOnClickListener { requestClose() }
+        view.findViewById<View>(R.id.toolboxBack).setOnClickListener { requestClose() }
     }
 
     private fun confirmOpenExternalTool(name: String, url: String) {
@@ -80,18 +88,14 @@ class LauncherToolboxFragment : Fragment() {
         }
     }
 
-    /** 按承载宿主分派关闭：竖屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
+    /** 按承载宿主分派关闭：竖屏薄宿主 finish，Pad 横屏薄宿主 finish，HD 由父 Fragment 关闭子 Fragment。 */
     private fun requestClose() {
         when (val host = activity) {
             is LauncherToolboxActivity -> host.finishToolbox()
+            is com.apps.PadUi.PadToolboxActivity -> host.finish()
             is HdModeActivity -> (parentFragment as? HdEmbeddedActivityOwner)?.closeEmbeddedActivity()
             else -> Unit
         }
-    }
-
-    override fun onDestroyView() {
-        binding = null
-        super.onDestroyView()
     }
 
     companion object {
