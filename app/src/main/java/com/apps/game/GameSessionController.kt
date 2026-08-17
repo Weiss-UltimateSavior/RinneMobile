@@ -296,7 +296,17 @@ class GameSessionController(
                 }
 
                 override fun onError(message: String) {
-                    // 心跳 onError 失败等待下次心跳重试，静默忽略。
+                    mainQueue.post(Runnable {
+                        if (destroyed) return@Runnable
+                        val serverSessionId = runningServerSessionId
+                        val localSessionId = runningSessionId
+                        if (localSessionId > 0L && serverSessionId.isNotBlank()
+                            && (message.contains("400") || message.contains("已结束"))
+                        ) {
+                            finishServerPlaySession(localSessionId, serverSessionId, restartAfterFinish = true)
+                        }
+                    })
+                    // 网络抖动等其它心跳错误等待下次心跳重试，静默忽略。
                 }
             }
         )

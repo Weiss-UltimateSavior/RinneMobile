@@ -3,6 +3,7 @@ package com.akira.tyranoemu.remote;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -58,6 +59,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private volatile boolean launchDispatched;
     private volatile boolean launchSucceeded;
     private volatile boolean maskRevealRequested;
+    private volatile boolean launchOrientationGuardEnabled;
     private volatile String resolvedGameLibrary;
     private int launchReadinessFrames;
     private String pendingGamePath;
@@ -79,6 +81,8 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
 
     @Override
     public void onCreate(Bundle bundle) {
+        launchOrientationGuardEnabled = !getIntent().getBooleanExtra("originMode", false);
+        applyKrkrRequestedOrientation();
         doSetSystemUiVisibility();
         super.onCreate(bundle);
         app = this;
@@ -287,6 +291,8 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
                 Log.i(TAG, "hide KRKR launch mask after game-ready signal");
                 mask.animate().alpha(0.0f).setDuration(150L).withEndAction(() -> {
                     if (mask != null) mask.setVisibility(android.view.View.GONE);
+                    launchOrientationGuardEnabled = false;
+                    applyKrkrRequestedOrientation();
                 }).start();
             }
         });
@@ -464,7 +470,14 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     @Override
     public void onResume() {
         super.onResume();
-        setRequestedOrientation(getIntent().getIntExtra("orientation", 6));
+        applyKrkrRequestedOrientation();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        applyKrkrRequestedOrientation();
+        doSetSystemUiVisibility();
     }
 
     @Override
@@ -496,4 +509,26 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     }
 
     public abstract String soName();
+
+    private void applyKrkrRequestedOrientation() {
+        try {
+            setRequestedOrientation(currentKrkrRequestedOrientation());
+        } catch (Throwable t) {
+            Log.w(TAG, "apply KRKR orientation failed", t);
+        }
+    }
+
+    private int currentKrkrRequestedOrientation() {
+        int requested = getIntent() == null
+                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                : getIntent().getIntExtra("orientation", ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        if (!launchOrientationGuardEnabled) return requested;
+        // Kirikiroid2/Cocos is fragile while startupFrom/doStartup is still loading XP3/TJS.
+        // During the launch mask, freeze 180-degree sensor flips to avoid rapid surface
+        // resize/pause/resume cycles; restore the caller's orientation once the game is ready.
+        if (requested == ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE) {
+            return ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+        }
+        return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+    }
 }
