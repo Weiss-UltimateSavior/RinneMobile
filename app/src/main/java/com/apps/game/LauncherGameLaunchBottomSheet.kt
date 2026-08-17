@@ -121,8 +121,8 @@ class LauncherGameLaunchBottomSheet : BottomSheetDialogFragment() {
         private const val ARG_ENGINE = "game_engine"
         private const val TAG = "launcher_game_launch_sheet"
 
-        fun show(manager: FragmentManager, game: com.core.model.Game) {
-            if (manager.isStateSaved || manager.findFragmentByTag(TAG) != null) return
+        fun show(manager: FragmentManager, game: com.core.model.Game): Boolean {
+            if (manager.isStateSaved || manager.findFragmentByTag(TAG) != null) return false
             LauncherGameLaunchBottomSheet().apply {
                 arguments = Bundle().apply {
                     putLong(ARG_GAME_ID, game.id)
@@ -132,6 +132,7 @@ class LauncherGameLaunchBottomSheet : BottomSheetDialogFragment() {
                     putString(ARG_ENGINE, game.engine?.name)
                 }
             }.show(manager, TAG)
+            return true
         }
     }
 }

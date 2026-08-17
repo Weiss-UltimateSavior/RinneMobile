@@ -512,8 +512,9 @@ open class LauncherLibraryFragment : Fragment(),
                 }
             }
             if (!isAdded || _binding == null) return@launch
-            LauncherGameLaunchBottomSheet.show(parentFragmentManager, latest)
-            pendingLaunchGameId = latest.id
+            if (LauncherGameLaunchBottomSheet.show(parentFragmentManager, latest)) {
+                pendingLaunchGameId = latest.id
+            }
         }
     }
 
@@ -566,14 +567,35 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun showGameActionMenu(game: Game?) {
         if (game == null) return
-        val config = GameActionMenuFactory.ActionMenuConfig()
-        // 竖屏下编辑/收藏/密码已迁移到启动抽屉，长按菜单不再展示；HD 横屏保留。
         if (usesLaunchActionSheet()) {
-            config.includeEditAction = false
-            config.includeFavoriteAction = false
-            config.includePasswordAction = false
+            showPortraitGameActionMenu(game)
+            return
         }
+        val config = GameActionMenuFactory.ActionMenuConfig()
         GameActionMenuFactory.showGameActionMenu(this, game, config, this)
+    }
+
+    private fun showPortraitGameActionMenu(game: Game) {
+        val labels = mutableListOf<CharSequence>()
+        val actions = mutableListOf<() -> Unit>()
+        fun addAction(label: CharSequence, action: () -> Unit) {
+            labels += label
+            actions += action
+        }
+        addAction(getString(R.string.game_action_details)) { onShowGameDetail(game) }
+        addAction(getString(R.string.game_action_status)) { onShowPlayStatus(game) }
+        addAction(getString(R.string.game_action_rematch_vndb)) { syncController.rematchMetadata(game) }
+        addAction(getString(R.string.game_action_custom_vndb)) {
+            LauncherCustomVndbSearchDialog.show(this, game) { reloadSingleGame(game.id) }
+        }
+        addAction(getString(R.string.game_action_sync_cover)) { syncController.syncMetadataToCard(game) }
+        addAction(getString(R.string.game_action_delete)) { confirmDeleteGame(game) }
+        LauncherDialogRouter.showStandardActionChoices(
+            requireContext(),
+            GameMetadataFormatter.safeTitle(requireContext(), game),
+            labels.toTypedArray(),
+            labels.lastIndex,
+        ) { index -> actions.getOrNull(index)?.invoke() }
     }
 
     // ===== GameActionMenuFactory.ActionMenuCallbacks =====
