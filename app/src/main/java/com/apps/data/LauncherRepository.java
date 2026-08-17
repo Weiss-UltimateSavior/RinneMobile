@@ -26,7 +26,7 @@ public class LauncherRepository {
     public static final int FAVORITE_ITEM_LIMIT = 30;
     private static final int RECENT_ITEM_LIMIT = 18;
     private static final int RECENT_TITLE_MAX_CODE_POINTS = 19;
-    private static final String KEY_PROFILE_NAME = "profile_name";
+    private static final String KEY_PROFILE_NAME = LauncherPreferences.KEY_PROFILE_NAME;
     private static final String KEY_AUTH_ACCESS_TOKEN = "auth_access_token";
     private static final String KEY_AUTH_NICKNAME = "auth_nickname";
     private static final String KEY_AUTH_STATUS = "auth_status";
@@ -168,14 +168,15 @@ public class LauncherRepository {
         }
         String profileName = appPrefs.getString(KEY_PROFILE_NAME, "");
         if (profileName != null && !profileName.trim().isEmpty()) return profileName.trim();
-        return textContext().getString(R.string.home_local_player);
+        return LauncherPreferences.DEFAULT_PROFILE_NAME;
     }
 
     private String accountMode() {
         String status = appPrefs.getString(KEY_AUTH_STATUS, "");
         Context textContext = textContext();
-        if (AUTH_STATUS_EXPIRED.equals(status)) return textContext.getString(R.string.repo_local_expired);
+        // 未登录（含退出登录）优先显示本地模式；仅登录态下会话过期才提示登录过期。
         if (!LauncherAuthBridge.isLoggedIn(appContext)) return textContext.getString(R.string.home_local_mode);
+        if (AUTH_STATUS_EXPIRED.equals(status)) return textContext.getString(R.string.repo_local_expired);
         if (AUTH_STATUS_ONLINE.equals(status)) return textContext.getString(R.string.pad_online_mode);
         if (AUTH_STATUS_SYNCING.equals(status)) return textContext.getString(R.string.pad_online_syncing);
         return textContext.getString(R.string.pad_online_mode);

@@ -24,4 +24,10 @@ object CorePreferences {
 
     /** 主页头像偏好键主源（原 com.core.sync.SyncManager 与 com.apps.util.LauncherAvatarPersistence 两处并存，4.4 单源化）。 */
     const val KEY_PROFILE_AVATAR = "profile_avatar"
+
+    /** 本地玩家昵称偏好键（镜像 com.apps.LauncherPreferences.KEY_PROFILE_NAME，com.core 不得反向依赖 com.apps）。 */
+    const val KEY_PROFILE_NAME = "profile_name"
+
+    /** 本地玩家昵称默认值（镜像 com.apps.LauncherPreferences.DEFAULT_PROFILE_NAME）。 */
+    const val DEFAULT_PROFILE_NAME = "Rinne"
 }

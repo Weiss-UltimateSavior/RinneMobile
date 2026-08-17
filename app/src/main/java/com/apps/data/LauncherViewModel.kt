@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.apps.LauncherPreferences
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.util.RxMainScheduler
 import java.util.Collections
@@ -281,7 +282,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private fun emptyState(loading: Boolean): LauncherState = LauncherState(
         selectedItem = NavItem.HOME,
-        accountName = getApplication<Application>().getString(com.core.R.string.home_local_player),
+        accountName = LauncherPreferences.DEFAULT_PROFILE_NAME,
         accountMode = getApplication<Application>().getString(com.core.R.string.home_local_mode),
         syncStatus = getApplication<Application>().getString(com.core.R.string.repo_webdav_loading),
         gameCount = 0,

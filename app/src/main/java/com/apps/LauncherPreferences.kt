@@ -17,6 +17,12 @@ object LauncherPreferences {
     const val APP_PREFS = "yukihub_prefs"
     const val ACCOUNT_SETTINGS_PREFS = "launcher_account_settings"
     const val PROFILE_PREFS = "launcher_profile_prefs"
+    /** 本地玩家昵称（SyncManager/首页/Pad 头部共用，单源常量）。 */
+    const val KEY_PROFILE_NAME = "profile_name"
+    /** 本地玩家昵称默认值（未登录/退出登录后显示）。 */
+    const val DEFAULT_PROFILE_NAME = "Rinne"
+    /** 旧默认昵称迁移标志位（值迁移变体：旧键==新键，用标志位避免误伤用户主动改名）。 */
+    private const val KEY_LEGACY_NAME_MIGRATED = "legacy_name_migrated_v1"
     const val KEY_LAUNCHER_DARK_MODE = "launcher_dark_mode"
     private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
     private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
@@ -190,5 +196,23 @@ object LauncherPreferences {
             PARTICLE_STYLE_RIPPLES -> PARTICLE_STYLE_RIPPLES
             else -> PARTICLE_STYLE_FLOATING
         }
+    }
+
+    /**
+     * 存量迁移：旧版本默认昵称写入过 "Yuki"，未登录/退出登录后应显示 Rinne。
+     *
+     * 值迁移变体：旧键与新键同为 [KEY_PROFILE_NAME]，无法用 contains() 区分"旧默认值"与
+     * "用户主动改名"，故用 [KEY_LEGACY_NAME_MIGRATED] 标志位保证只迁移一次，
+     * 避免误伤用户主动改名为 "Yuki" 的情况（迁移后用户再改名不受影响）。
+     */
+    @JvmStatic
+    fun migrateLegacyProfileName(context: Context) {
+        val prefs = context.applicationContext.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_LEGACY_NAME_MIGRATED, false)) return
+        val editor = prefs.edit()
+        if (prefs.getString(KEY_PROFILE_NAME, "") == "Yuki") {
+            editor.putString(KEY_PROFILE_NAME, DEFAULT_PROFILE_NAME)
+        }
+        editor.putBoolean(KEY_LEGACY_NAME_MIGRATED, true).apply()
     }
 }

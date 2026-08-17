@@ -19,7 +19,7 @@ class PadGameHeaderRenderer(
     companion object {
         private const val TAG = "PadGameHeaderRenderer"
         private const val KEY_PROFILE_AVATAR = LauncherAvatarPersistence.KEY_PROFILE_AVATAR
-        private const val KEY_PROFILE_NAME = "profile_name"
+        private const val KEY_PROFILE_NAME = LauncherPreferences.KEY_PROFILE_NAME
         private const val KEY_AUTH_STATUS = "auth_status"
         private const val AUTH_STATUS_ONLINE = "online"
         private const val AUTH_STATUS_SYNCING = "syncing"
@@ -44,7 +44,7 @@ class PadGameHeaderRenderer(
         val nickname = if (LauncherAuthBridge.isLoggedIn(fragment.requireContext()))
             LauncherAuthBridge.getNickname(fragment.requireContext()) else ""
         val initial = if (!nickname.isNullOrBlank())
-            nickname.trim().first().uppercase() else "Y"
+            nickname.trim().first().uppercase() else fragment.getString(R.string.launcher_avatar_fallback_initial)
         binding.padAvatarInitial.text = initial
 
         if (avatar.isNullOrBlank()) {
@@ -86,7 +86,7 @@ class PadGameHeaderRenderer(
         }
         val profileName = appPrefs().getString(KEY_PROFILE_NAME, "")
         if (!profileName.isNullOrBlank()) return profileName.trim()
-        return fragment.getString(R.string.home_local_player)
+        return LauncherPreferences.DEFAULT_PROFILE_NAME
     }
 
     private fun accountMode(): String {

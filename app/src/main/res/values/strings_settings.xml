@@ -201,7 +201,7 @@
     <string name="settings_choose_source_result">选择 %1$s 匹配结果</string>
     <string name="settings_choose_source_result_summary">点选一个候选项后会保存 %1$s 元数据绑定。封面同步仍使用更多选项里的同步功能。</string>
     <string name="settings_unnamed">未命名</string>
-    <string name="launcher_avatar_fallback_initial">Y</string>
+    <string name="launcher_avatar_fallback_initial">R</string>
     <string name="settings_source_candidate">%1$s 候选</string>
     <string name="settings_metadata_bound">%1$s 元数据已绑定</string>
     <string name="settings_metadata_save_failed">%1$s 元数据保存失败</string>

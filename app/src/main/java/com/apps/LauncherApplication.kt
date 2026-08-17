@@ -19,6 +19,8 @@ class LauncherApplication : CoreApp() {
         // 初始化开发者日志（设置 logcat 文件路径；若上次开启过则恢复采集）。
         // 之前未调用导致 logcatFile 为 null，诊断界面大小恒显示 0B。
         DevLogger.init(applicationContext)
+        // 历史偏好迁移集中在 LauncherPreferences 内完成（规范 §4），Application 只调入口。
+        LauncherPreferences.migrateLegacyProfileName(applicationContext)
     }
 }
 

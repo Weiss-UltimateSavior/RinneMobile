@@ -200,7 +200,7 @@
     <string name="settings_choose_source_result">%1$s の一致結果を選択</string>
     <string name="settings_choose_source_result_summary">候補を選ぶと %1$s メタデータの関連付けが保存されます。カバーの同期は引き続き「その他のオプション」から行えます。</string>
     <string name="settings_unnamed">名称未設定</string>
-    <string name="launcher_avatar_fallback_initial">Y</string>
+    <string name="launcher_avatar_fallback_initial">R</string>
     <string name="settings_source_candidate">%1$s 候補</string>
     <string name="settings_metadata_bound">%1$s メタデータを関連付けました</string>
     <string name="settings_metadata_save_failed">%1$s メタデータを保存できませんでした</string>

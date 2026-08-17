@@ -220,7 +220,7 @@ class SyncManager(context: Context) {
         root.put("note", "Only text metadata is synced. No game files, save files, or binary cover images are embedded.")
 
         val profile = JSONObject()
-        profile.put("name", appPrefs.getString(KEY_PROFILE_NAME, "Yuki"))
+        profile.put("name", appPrefs.getString(CorePreferences.KEY_PROFILE_NAME, CorePreferences.DEFAULT_PROFILE_NAME))
         profile.put("signature", appPrefs.getString(KEY_PROFILE_SIGNATURE, ""))
         val avatarUri = appPrefs.getString(CorePreferences.KEY_PROFILE_AVATAR, "")
         // 只同步网络头像地址；本地 file/content 路径跨设备无效，也可能暴露本机目录。
@@ -312,7 +312,7 @@ class SyncManager(context: Context) {
             var incomingAvatar = profile.optString("avatar_uri", "") ?: ""
             if (!(incomingAvatar.startsWith("http://") || incomingAvatar.startsWith("https://"))) incomingAvatar = ""
             prefsEditor
-                .putString(KEY_PROFILE_NAME, profile.optString("name", appPrefs.getString(KEY_PROFILE_NAME, "Yuki")))
+                .putString(CorePreferences.KEY_PROFILE_NAME, profile.optString("name", appPrefs.getString(CorePreferences.KEY_PROFILE_NAME, CorePreferences.DEFAULT_PROFILE_NAME)))
                 .putString(KEY_PROFILE_SIGNATURE, profile.optString("signature", appPrefs.getString(KEY_PROFILE_SIGNATURE, "")))
                 .putString(CorePreferences.KEY_PROFILE_AVATAR, incomingAvatar)
         }
@@ -396,7 +396,6 @@ class SyncManager(context: Context) {
         private const val KEY_LAST_SYNC = "last_sync_time"
         private const val KEY_LAST_SYNC_HASH = "last_sync_hash"
 
-        private const val KEY_PROFILE_NAME = "profile_name"
         private const val KEY_PROFILE_SIGNATURE = "profile_signature"
         private const val KEY_METADATA_SOURCE = "metadata_source"
         private const val SOURCE_VNDB = "vndb"
