@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.apps.game.GameMetadataFormatter
 import com.apps.game.LauncherGameAdapter
 import com.apps.game.LauncherGameEditFragment
 import com.apps.game.LauncherLibraryFragment
@@ -55,6 +56,7 @@ class HdGameLibraryFragment : LauncherLibraryFragment() {
     override fun startEditGameActivity(game: Game) {
         val host = activity
         if (host is HdModeActivity) {
+            if (host.isFinishing || host.isDestroyed) return
             pendingEditGameId = game.id
             host.showDetailFragment(LauncherGameEditFragment.newInstance(game.id), "hd_edit_game")
             return
@@ -65,9 +67,30 @@ class HdGameLibraryFragment : LauncherLibraryFragment() {
     override fun openEngineSettings(game: Game) {
         val host = activity
         if (host is HdModeActivity) {
+            if (host.isFinishing || host.isDestroyed) return
             host.showDetailFragment(LauncherKrkrSettingsFragment.newInstance(game.id), "hd_library_engine_settings")
             return
         }
         super.openEngineSettings(game)
+    }
+
+    /** HD 横屏动作保留在长按菜单与更多选项中，不迁移到启动抽屉。 */
+    override fun usesLaunchActionSheet(): Boolean = false
+
+    /**
+     * HD 横屏不使用竖屏启动抽屉，保留原确认弹窗（经 Router 路由 Pad 工厂）。
+     * Activity finishing/destroyed 时不弹窗，避免 IllegalStateException。
+     */
+    override fun showLaunchEntry(game: Game) {
+        val host = activity
+        if (host != null && (host.isFinishing || host.isDestroyed)) return
+        LauncherDialogRouter.showConfirm(
+            requireContext(),
+            getString(R.string.game_launch_title),
+            getString(R.string.game_launch_message, GameMetadataFormatter.safeTitle(requireContext(), game)),
+            getString(R.string.core_confirm),
+        ) {
+            launchGameWithPasswordCheck(game)
+        }
     }
 }

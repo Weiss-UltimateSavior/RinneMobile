@@ -1,6 +1,7 @@
 package com.apps.game
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -15,8 +16,13 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.core.R
 import com.apps.navigationOverlayBottomPadding
 import com.apps.refreshNavigationOverlayInsets
@@ -92,6 +98,8 @@ open class LauncherLibraryFragment : Fragment(),
     // 支持 Activity 重建时恢复待刷新卡片（replace + addToBackStack 后根 Fragment 仅 view 重建，
     // Fragment 实例不重建，此标记在重建后仍保留）。
     protected var pendingEditGameId: Long = -1L
+    /** 启动抽屉打开期间记录目标游戏；抽屉回调时按 id 重新读取最新数据后启动。 */
+    private var pendingLaunchGameId: Long = -1L
     private var posterGridStyle: Boolean = false
     private lateinit var pagingHelper: LibraryPagingHelper
     private lateinit var swipeGesture: LibrarySwipeGesture
@@ -133,6 +141,7 @@ open class LauncherLibraryFragment : Fragment(),
         internal const val LIBRARY_PREFS = "launcher_library_preferences"
         private const val KEY_POSTER_GRID_STYLE = "poster_grid_style"
         private const val STATE_PENDING_EDIT_GAME_ID = "pending_edit_game_id"
+        private const val STATE_PENDING_LAUNCH_GAME_ID = "pending_launch_game_id"
     }
 
     /**
@@ -204,11 +213,13 @@ open class LauncherLibraryFragment : Fragment(),
         super.onCreate(savedInstanceState)
         // 主容器回退栈重建后恢复待刷新卡片（HD 编辑游戏 replace+popBackStack 场景）。
         pendingEditGameId = savedInstanceState?.getLong(STATE_PENDING_EDIT_GAME_ID, -1L) ?: -1L
+        pendingLaunchGameId = savedInstanceState?.getLong(STATE_PENDING_LAUNCH_GAME_ID, -1L) ?: -1L
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putLong(STATE_PENDING_EDIT_GAME_ID, pendingEditGameId)
+        outState.putLong(STATE_PENDING_LAUNCH_GAME_ID, pendingLaunchGameId)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -230,6 +241,12 @@ open class LauncherLibraryFragment : Fragment(),
             override fun reloadGame(gameId: Long) { reloadSingleGame(gameId) }
             override fun reloadAllGames() { loadGames() }
         })
+        parentFragmentManager.setFragmentResultListener(
+            LauncherGameLaunchBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            handleLaunchSheetAction(result.getString(LauncherGameLaunchBottomSheet.RESULT_ACTION))
+        }
         syncController = GameSyncController(mainQueue, this, syncDialogFactory)
         listController = GameListController(mainQueue, this)
         pagingHelper = LibraryPagingHelper(this)
@@ -472,14 +489,77 @@ open class LauncherLibraryFragment : Fragment(),
 
     private fun confirmLaunchGame(game: Game?) {
         if (game == null) return
-        LauncherDialogRouter.showConfirm(
-            requireContext(),
-            getString(R.string.game_launch_title),
-            getString(R.string.game_launch_message, GameMetadataFormatter.safeTitle(requireContext(), game)),
-            getString(R.string.core_confirm),
-        ) {
-            GamePasswordLock.interceptLaunch(this@LauncherLibraryFragment, game) {
-                sessionController?.launchGameDirectly(this@LauncherLibraryFragment, game)
+        showLaunchEntry(game)
+    }
+
+    /**
+     * 启动入口交互：竖屏弹出动作抽屉（[LauncherGameLaunchBottomSheet]，承载启动与原
+     * 长按菜单迁移来的编辑/收藏/密码/桌面/引擎设置），HD 横屏覆写为原确认弹窗。
+     * 展示前从数据库重读最新游戏数据，避免内存态过期（如密码锁定/收藏刚变更后）
+     * 导致抽屉动作文案与状态不符。
+     */
+    protected open fun showLaunchEntry(game: Game) {
+        val app = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val latest = withContext(Dispatchers.IO) {
+                try {
+                    LauncherRepositoryBridge.findGameById(app, game.id) ?: game
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    DevLogger.w(TAG, "Failed to reload game for launch sheet", e)
+                    game
+                }
+            }
+            if (!isAdded || _binding == null) return@launch
+            LauncherGameLaunchBottomSheet.show(parentFragmentManager, latest)
+            pendingLaunchGameId = latest.id
+        }
+    }
+
+    /**
+     * 是否由启动抽屉承载编辑/收藏/密码/桌面/引擎设置等动作。竖屏为 true（这些项从
+     * 长按菜单/更多选项移入抽屉）；HD 横屏覆写为 false，保留在长按菜单与更多选项中。
+     */
+    protected open fun usesLaunchActionSheet(): Boolean = true
+
+    /** 密码拦截后走统一启动链路；供启动抽屉回调与 HD 确认弹窗复用。 */
+    protected fun launchGameWithPasswordCheck(game: Game) {
+        GamePasswordLock.interceptLaunch(this, game) {
+            sessionController?.launchGameDirectly(this, game)
+        }
+    }
+
+    /** 抽屉动作回调：按 id 重新读取最新数据后分发到对应动作。 */
+    private fun handleLaunchSheetAction(action: String?) {
+        val gameId = pendingLaunchGameId
+        pendingLaunchGameId = -1L
+        if (action == null || gameId <= 0L || !isAdded) return
+        val app = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val game = withContext(Dispatchers.IO) {
+                try {
+                    LauncherRepositoryBridge.findGameById(app, gameId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    DevLogger.w(TAG, "Failed to load game for launch sheet", e)
+                    null
+                }
+            }
+            if (!isAdded || _binding == null || game == null) return@launch
+            when (action) {
+                LauncherGameLaunchBottomSheet.ACTION_LAUNCH -> launchGameWithPasswordCheck(game)
+                LauncherGameLaunchBottomSheet.ACTION_EDIT -> startEditGameActivity(game)
+                LauncherGameLaunchBottomSheet.ACTION_FAVORITE_ADD,
+                LauncherGameLaunchBottomSheet.ACTION_FAVORITE_REMOVE -> toggleFavorite(game)
+                LauncherGameLaunchBottomSheet.ACTION_PASSWORD_SET ->
+                    GamePasswordLock.setPassword(this@LauncherLibraryFragment, game, null)
+                LauncherGameLaunchBottomSheet.ACTION_PASSWORD_REMOVE ->
+                    GamePasswordLock.clearPassword(this@LauncherLibraryFragment, game, null)
+                LauncherGameLaunchBottomSheet.ACTION_PIN_SHORTCUT ->
+                    PinnedGameShortcut.requestPinShortcut(app, game)
+                LauncherGameLaunchBottomSheet.ACTION_ENGINE_SETTINGS -> openEngineSettings(game)
             }
         }
     }
@@ -487,7 +567,12 @@ open class LauncherLibraryFragment : Fragment(),
     private fun showGameActionMenu(game: Game?) {
         if (game == null) return
         val config = GameActionMenuFactory.ActionMenuConfig()
-        // Library 默认包含编辑/收藏/密码，宽度 252dp（与原实现一致）
+        // 竖屏下编辑/收藏/密码已迁移到启动抽屉，长按菜单不再展示；HD 横屏保留。
+        if (usesLaunchActionSheet()) {
+            config.includeEditAction = false
+            config.includeFavoriteAction = false
+            config.includePasswordAction = false
+        }
         GameActionMenuFactory.showGameActionMenu(this, game, config, this)
     }
 
@@ -524,12 +609,17 @@ open class LauncherLibraryFragment : Fragment(),
     private fun showMoreOptionsDialog(game: Game?) {
         if (game == null) return
         val options = mutableListOf<Array<String>>()
-        options.add(arrayOf(getString(R.string.game_action_pin_shortcut), "pin_shortcut"))
+        // 竖屏下「添加到桌面」「引擎设置」已迁移到启动抽屉；HD 横屏保留。
+        if (!usesLaunchActionSheet()) {
+            options.add(arrayOf(getString(R.string.game_action_pin_shortcut), "pin_shortcut"))
+        }
         options.add(arrayOf(getString(R.string.game_action_rematch_vndb), "rematch"))
         options.add(arrayOf(getString(R.string.game_action_custom_vndb), "custom_vndb"))
         options.add(arrayOf(getString(R.string.game_action_sync_cover), "sync"))
         // ONS/KRKR/Artemis 引擎游戏支持单独配置引擎参数（版本/独立存档/编码等）
-        if (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS) {
+        if (!usesLaunchActionSheet()
+            && (game.engine == EngineType.ONS || game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS)
+        ) {
             options.add(arrayOf(getString(R.string.game_action_engine_settings), "engine_settings"))
         }
         options.add(arrayOf(getString(R.string.game_action_delete), "delete"))
@@ -556,8 +646,8 @@ open class LauncherLibraryFragment : Fragment(),
             val intent = Intent(requireContext(), LauncherKrkrSettingsActivity::class.java)
             intent.putExtra(LauncherKrkrSettingsActivity.EXTRA_GAME_ID, game.id)
             startActivity(intent)
-        } catch (error: Exception) {
-            DevLogger.w(TAG, "Failed to open ONS game settings", error)
+        } catch (error: ActivityNotFoundException) {
+            DevLogger.w(TAG, "Failed to open engine settings", error)
             Toast.makeText(requireContext(), R.string.game_action_engine_open_failed, Toast.LENGTH_SHORT).show()
         }
     }

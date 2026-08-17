@@ -47,6 +47,19 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!-- 游戏启动抽屉标题：居中加粗，默认主题文字色（Kotlin 侧按主题覆盖）。 -->
+    <style name="LauncherSheetTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">16dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:textColor">@color/launcher_text_color</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="LauncherManageArrow">
         <item name="android:layout_width">22dp</item>
         <item name="android:layout_height">match_parent</item>
