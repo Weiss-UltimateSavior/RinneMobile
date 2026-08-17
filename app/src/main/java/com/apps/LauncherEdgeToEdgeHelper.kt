@@ -1,8 +1,10 @@
 package com.apps
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.view.View
+import android.view.Window
 import android.view.WindowManager
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
@@ -12,6 +14,20 @@ import com.core.R
 
 /** Shared edge-to-edge launcher Activity window setup. */
 object LauncherEdgeToEdgeHelper {
+    @JvmStatic
+    fun apply(window: Window, context: Context) {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = ContextCompat.getColor(context, R.color.launcher_bg_color)
+        var flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        val darkMode = LauncherPreferences.isDarkMode(context)
+        if (!darkMode) {
+            flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        }
+        window.decorView.systemUiVisibility = flags
+    }
+
     @JvmStatic
     fun apply(activity: Activity) {
         apply(activity, false)

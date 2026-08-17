@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.DrawableRes
 import androidx.fragment.app.FragmentManager
+import com.apps.LauncherEdgeToEdgeHelper
 import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ItemLauncherHomeAccountActionBinding
@@ -29,6 +30,7 @@ class LauncherGameLaunchBottomSheet : BottomSheetDialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val context = requireContext()
         val dialog = BottomSheetDialog(context, theme)
+        dialog.window?.let { LauncherEdgeToEdgeHelper.apply(it, context) }
         val binding = SheetLauncherGameLaunchBinding.inflate(LayoutInflater.from(context))
         val radius = LauncherTheme.dpFloat(context, 24f)
 

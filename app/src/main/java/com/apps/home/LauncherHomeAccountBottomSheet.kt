@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import androidx.annotation.DrawableRes
 import androidx.fragment.app.FragmentManager
 import com.apps.LauncherActivity
+import com.apps.LauncherEdgeToEdgeHelper
 import com.apps.theme.LauncherTheme
 import com.core.R
 import com.core.databinding.ItemLauncherHomeAccountActionBinding
@@ -24,6 +25,7 @@ class LauncherHomeAccountBottomSheet : BottomSheetDialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val context = requireContext()
         val dialog = BottomSheetDialog(context, theme)
+        dialog.window?.let { LauncherEdgeToEdgeHelper.apply(it, context) }
         val contentView = LayoutInflater.from(context)
             .inflate(R.layout.sheet_launcher_home_account, null, false)
         val density = resources.displayMetrics.density
