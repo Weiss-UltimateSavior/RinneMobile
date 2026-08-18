@@ -93,3 +93,5 @@ log/
 
 # Native engine plugins
 /native_plugins/
+
+.build_krkrsdl3/
