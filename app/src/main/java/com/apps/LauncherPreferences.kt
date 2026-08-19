@@ -27,6 +27,7 @@ object LauncherPreferences {
     private const val KEY_FOLLOW_SYSTEM_TONE = "launcher_follow_system_tone"
     private const val KEY_START_LANDSCAPE_PAGE = "launcher_start_landscape_page"
     private const val KEY_HD_MODE_STARTUP = "launcher_hd_mode_startup"
+    private const val KEY_HIDE_NSFW_GAMES = "launcher_hide_nsfw_games"
     private const val KEY_HOME_STYLE = "launcher_home_style"
     private const val LEGACY_KEY_FEATURED_HOME_STYLE = "launcher_featured_home_style"
     const val KEY_LAUNCHER_PARTICLES_ENABLED = "launcher_particles_enabled"
@@ -116,6 +117,20 @@ object LauncherPreferences {
         context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_HD_MODE_STARTUP, enabled)
+            .apply()
+    }
+
+    /** 游戏库是否隐藏涉成人内容（NSFW）的游戏；默认不隐藏（显示全部）。 */
+    @JvmStatic
+    fun isNsfwGamesHidden(context: Context): Boolean =
+        context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_HIDE_NSFW_GAMES, false)
+
+    @JvmStatic
+    fun setNsfwGamesHidden(context: Context, hidden: Boolean) {
+        context.getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_HIDE_NSFW_GAMES, hidden)
             .apply()
     }
 

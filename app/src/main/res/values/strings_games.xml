@@ -204,6 +204,10 @@
     <string name="game_library_clear">清除列表</string>
     <string name="game_library_switched_poster">已切换为海报网格</string>
     <string name="game_library_switched_horizontal">已切换为横向卡片</string>
+    <string name="game_library_nsfw_on">NSFW开启</string>
+    <string name="game_library_nsfw_off">NSFW关闭</string>
+    <string name="game_library_nsfw_switched_on">已开启隐藏成人内容</string>
+    <string name="game_library_nsfw_switched_off">已关闭隐藏成人内容</string>
     <string name="game_library_delete_retry">删除失败，请稍后重试</string>
     <string name="game_library_clear_message">将清空游戏库全部记录，不会实际删除游戏文件。是否继续？</string>
     <string name="game_library_clear_action">清除</string>

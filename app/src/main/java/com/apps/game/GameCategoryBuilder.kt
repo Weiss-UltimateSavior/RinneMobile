@@ -35,6 +35,7 @@ object GameCategoryBuilder {
     fun build(appContext: Context, games: List<Game>?): CategoryBuildResult {
         val cats = ArrayList<CategoryOption>()
         val devs = HashMap<Long, List<String>>()
+        val nsfwScores = HashMap<Long, Double>()
 
         var recentCount = 0
         var playingCount = 0
@@ -65,6 +66,7 @@ object GameCategoryBuilder {
                 val developers = GameMetadataFormatter.parseDevelopers(
                     LauncherMetadataBridge.getDeveloperOf(appContext, game.id))
                 devs[game.id] = developers
+                nsfwScores[game.id] = LauncherMetadataBridge.getNsfwScoreOf(appContext, game.id)
 
                 for (developer in developers) {
                     developerCounts[developer] = (developerCounts[developer] ?: 0) + 1
@@ -103,7 +105,7 @@ object GameCategoryBuilder {
             }
         }
 
-        return CategoryBuildResult(cats, devs)
+        return CategoryBuildResult(cats, devs, nsfwScores)
     }
 
     /**

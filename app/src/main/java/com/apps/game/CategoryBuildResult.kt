@@ -8,5 +8,6 @@ package com.apps.game
  */
 data class CategoryBuildResult(
     @JvmField val categories: List<CategoryOption>,
-    @JvmField val developers: Map<Long, List<String>>
+    @JvmField val developers: Map<Long, List<String>>,
+    @JvmField val nsfwScores: Map<Long, Double> = emptyMap()
 )

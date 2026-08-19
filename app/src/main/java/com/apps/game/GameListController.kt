@@ -3,6 +3,8 @@ package com.apps.game
 import android.content.Context
 import android.util.Log
 import androidx.fragment.app.Fragment
+import com.apps.LauncherPreferences
+import com.core.launcherbridge.LauncherMetadataBridge
 import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.Game
 import com.core.util.AppExecutors
@@ -67,10 +69,15 @@ class GameListController(
 
     private companion object {
         const val TAG = "GameListController"
+
+        /** 成人内容分级阈值：sexual/violence >= 该值视为 NSFW（VNDB 语义 0=无 / 1=部分 / 2=强烈）。 */
+        private const val NSFW_HIDE_THRESHOLD = 1.0
     }
 
     private val libraryState = GameLibraryState()
     private val allGames = ArrayList<Game>()
+    private var hideNsfw = false
+    private var nsfwScores: Map<Long, Double> = emptyMap()
 
     // volatile：在 IO 线程的 loadGames/reloadSingleGame 任务中检查，确保 cleanup() 后能立即观察到
     @Volatile
@@ -125,6 +132,7 @@ class GameListController(
             var games: List<Game> = emptyList()
             var developers: Map<Long, List<String>> = emptyMap()
             var builtCategories: List<CategoryOption> = emptyList()
+            var nsfwScoresBuilt: Map<Long, Double> = emptyMap()
             try {
                 games = LauncherRepositoryBridge.getAllGames(appContext)
             } catch (error: Error) {
@@ -139,6 +147,7 @@ class GameListController(
                 val result = GameCategoryBuilder.build(appContext, games)
                 developers = result.developers
                 builtCategories = result.categories
+                nsfwScoresBuilt = result.nsfwScores
             } catch (error: Error) {
                 throw error
             } catch (error: Exception) {
@@ -149,12 +158,14 @@ class GameListController(
             val loadedGames = games
             val loadedDevelopers = developers
             val loadedCategories = builtCategories
+            val loadedNsfwScores = nsfwScoresBuilt
             mainQueue.post {
                 if (disposed || listener.isBindingNull()) {return@post
                 }
                 allGames.clear()
                 allGames.addAll(loadedGames)
                 libraryState.replaceAll(loadedGames)
+                nsfwScores = loadedNsfwScores
                 listener.onDataLoaded(loadedCategories, loadedDevelopers)
                 setDataLoaded(true)
                 // 后台数据已经加载完成，必须先解除 loading 状态。
@@ -170,6 +181,7 @@ class GameListController(
     }
 
     fun applyFilters(forceFullRefresh: Boolean) {
+        hideNsfw = LauncherPreferences.isNsfwGamesHidden(listener.getAppContext())
         libraryState.setQuery(listener.getSearchQuery())
         libraryState.setCategory(listener.getSelectedCategory())
         libraryState.rebuild(::matchGame, ::compareGames,
@@ -274,15 +286,19 @@ class GameListController(
                 // DB 查询失败兜底，避免单卡刷新影响主流程
                 Log.w(TAG, "reloadSingleGame failed", e)
             }
+            // 元数据 rematch 等操作可能改变成人分级，主线程一并刷新该卡 nsfw 分数。
+            val refreshedScore = LauncherMetadataBridge.getNsfwScoreOf(appContext, gameId)
             val result = updated
             mainQueue.post {
                 if (disposed || listener.isBindingNull() || result == null) return@post
+                nsfwScores = nsfwScores + (gameId to refreshedScore)
                 updateSingleGame(result)
             }
         }
     }
 
     private fun matchGame(game: Game, query: String, category: String): Boolean {
+        if (hideNsfw && (nsfwScores[game.id] ?: 0.0) >= NSFW_HIDE_THRESHOLD) return false
         val normalized = query.trim().lowercase(Locale.ROOT)
         return (normalized.isEmpty()
                 || GameMetadataFormatter.safeTitle(game).lowercase(Locale.ROOT).contains(normalized)

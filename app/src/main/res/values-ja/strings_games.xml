@@ -196,6 +196,10 @@
     <string name="game_library_clear">一覧を消去</string>
     <string name="game_library_switched_poster">ポスターグリッドに切り替えました</string>
     <string name="game_library_switched_horizontal">横向きカードに切り替えました</string>
+    <string name="game_library_nsfw_on">NSFWオン</string>
+    <string name="game_library_nsfw_off">NSFWオフ</string>
+    <string name="game_library_nsfw_switched_on">成人コンテンツを隠すようになりました</string>
+    <string name="game_library_nsfw_switched_off">成人コンテンツを表示するようになりました</string>
     <string name="game_library_delete_retry">削除に失敗しました。しばらくしてからお試しください</string>
     <string name="game_library_clear_message">ゲームファイルを削除せず、ライブラリの全記録を消去します。続行しますか？</string>
     <string name="game_library_clear_action">消去</string>

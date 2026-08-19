@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.apps.LauncherPreferences
 import com.apps.HDModel.LauncherDialogRouter
 import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
@@ -82,17 +83,34 @@ internal class LibraryToolbarUi(private val fragment: LauncherLibraryFragment) {
     private fun showLibrarySettingsMenu() {
         val styleLabel = fragment.getString(if (fragment.libraryPosterGridStyle)
             R.string.game_library_horizontal_cards else R.string.game_library_poster_grid)
+        val nsfwLabel = fragment.getString(if (LauncherPreferences.isNsfwGamesHidden(fragment.requireContext()))
+            R.string.game_library_nsfw_off else R.string.game_library_nsfw_on)
         LauncherDialogRouter.showStandardActionChoices(
             fragment.requireContext(), fragment.getString(R.string.game_library_settings),
             arrayOf(fragment.getString(R.string.game_library_sync_all), styleLabel,
-                fragment.getString(R.string.game_library_clear))
+                fragment.getString(R.string.game_library_clear), nsfwLabel)
         ) { index ->
             when (index) {
                 0 -> fragment.librarySyncController.showSyncDataConfirmDialog()
                 1 -> togglePosterGridStyle()
                 2 -> fragment.libraryConfirmClearList()
+                3 -> toggleNsfwSetting()
             }
         }
+    }
+
+    private fun toggleNsfwSetting() {
+        val context = fragment.requireContext()
+        val nowHidden = LauncherPreferences.isNsfwGamesHidden(context)
+        LauncherPreferences.setNsfwGamesHidden(context, !nowHidden)
+        Toast.makeText(
+            context,
+            fragment.getString(if (!nowHidden)
+                R.string.game_library_nsfw_switched_on else R.string.game_library_nsfw_switched_off),
+            Toast.LENGTH_SHORT
+        ).show()
+        // 重跑过滤，使隐藏/显示 NSFW 游戏立即在列表生效。
+        fragment.libraryApplyFilters()
     }
 
     private fun togglePosterGridStyle() {

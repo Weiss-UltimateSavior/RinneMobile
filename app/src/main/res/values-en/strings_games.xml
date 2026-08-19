@@ -196,6 +196,10 @@
     <string name="game_library_clear">Clear list</string>
     <string name="game_library_switched_poster">Switched to poster grid</string>
     <string name="game_library_switched_horizontal">Switched to horizontal cards</string>
+    <string name="game_library_nsfw_on">NSFW On</string>
+    <string name="game_library_nsfw_off">NSFW Off</string>
+    <string name="game_library_nsfw_switched_on">Adult content hidden</string>
+    <string name="game_library_nsfw_switched_off">Adult content shown</string>
     <string name="game_library_delete_retry">Delete failed. Try again later.</string>
     <string name="game_library_clear_message">This clears all library records without deleting game files. Continue?</string>
     <string name="game_library_clear_action">Clear</string>

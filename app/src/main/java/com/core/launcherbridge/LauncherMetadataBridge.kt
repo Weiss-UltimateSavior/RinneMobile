@@ -241,6 +241,22 @@ object LauncherMetadataBridge {
         return meta?.developer?.trim() ?: ""
     }
 
+    /**
+     * 读取已保存的 VNDB 元数据成人内容分级分数（coverSexual 与 coverViolence 取较大值）。
+     *
+     * <p>仅 VNDB 元数据带 sexual/violence 分级（Bangumi/月幕 Gal 无此字段），其余来源按 0 处理。
+     * 该方法涉及 SQLite 读取，调用方应放在 IO 线程执行。</p>
+     *
+     * @param gameId 游戏 id；无效（&lt;=0）或无 VNDB 元数据时返回 0.0。
+     */
+    @JvmStatic
+    fun getNsfwScoreOf(context: Context?, gameId: Long): Double {
+        if (context == null || gameId <= 0) return 0.0
+        val meta = MetadataRepository(context.applicationContext).getVndb(gameId) ?: return 0.0
+        val score = maxOf(meta.coverSexual, meta.coverViolence)
+        return if (score.isFinite()) score else 0.0
+    }
+
     @JvmStatic
     fun syncCoverToGameAsync(context: Context?, game: Game?, callback: Callback?) {
         if (callback == null) return
