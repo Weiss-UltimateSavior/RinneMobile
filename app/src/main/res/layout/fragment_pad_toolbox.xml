@@ -31,6 +31,7 @@
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
+            <!-- 单一网格按顺序排布：一行固定 4 格，末行不足 4 格时用非交互占位格留空 -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -95,16 +96,6 @@
                         android:text="usefulunpack" />
                 </LinearLayout>
 
-            </GridLayout>
-
-            <GridLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
-                android:alignmentMode="alignMargins"
-                android:columnCount="4"
-                android:useDefaultMargins="false">
-
                 <LinearLayout
                     android:id="@+id/toolTermux"
                     style="@style/LauncherToolboxItem">
@@ -160,6 +151,55 @@
                         style="@style/LauncherToolboxTitle"
                         android:text="AzaharPlus" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/toolArmsx3"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="ARMSX3"
+                        android:src="@drawable/launcher_tool_icon_armsx3" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="ARMSX3" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/toolEden"
+                    style="@style/LauncherToolboxItem">
+
+                    <ImageView
+                        style="@style/LauncherToolboxIcon"
+                        android:contentDescription="Eden"
+                        android:src="@drawable/launcher_tool_icon_eden" />
+
+                    <TextView
+                        style="@style/LauncherToolboxTitle"
+                        android:text="Eden" />
+                </LinearLayout>
+
+                <!-- 末行不足 4 格时空出的位子：invisible 保留 1/4 列宽与行高，避免末行工具占满整行 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="74dp"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:visibility="invisible" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="74dp"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:visibility="invisible" />
 
             </GridLayout>
         </LinearLayout>

@@ -13,4 +13,6 @@ object ToolboxTool {
     const val PPSSPP = "PPSSPP"
     const val LUNABOX = "LunaBox"
     const val AZAHARPLUS = "AzaharPlus"
+    const val ARMSX3 = "ARMSX3"
+    const val EDEN = "Eden"
 }

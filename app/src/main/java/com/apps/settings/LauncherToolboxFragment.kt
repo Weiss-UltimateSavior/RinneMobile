@@ -71,6 +71,12 @@ class LauncherToolboxFragment : Fragment() {
         view.findViewById<View>(R.id.toolAzahar).setOnClickListener {
             confirmOpenExternalTool(ToolboxTool.AZAHARPLUS, AZAHARPLUS_URL)
         }
+        view.findViewById<View>(R.id.toolArmsx3).setOnClickListener {
+            confirmOpenExternalTool(ToolboxTool.ARMSX3, ARMSX3_URL)
+        }
+        view.findViewById<View>(R.id.toolEden).setOnClickListener {
+            confirmOpenExternalTool(ToolboxTool.EDEN, EDEN_URL)
+        }
         view.findViewById<View>(R.id.toolboxBack).setOnClickListener { requestClose() }
     }
 
@@ -107,5 +113,7 @@ class LauncherToolboxFragment : Fragment() {
         private const val PPSSPP_URL = "https://www.ppsspp.org/"
         private const val LUNABOX_URL = "https://github.com/Saramanda9988/LunaBox/releases"
         private const val AZAHARPLUS_URL = "https://github.com/AzaharPlus/AzaharPlus/releases"
+        private const val ARMSX3_URL = "https://github.com/ARMSX2/ARMSX3/releases"
+        private const val EDEN_URL = "https://git.eden-emu.dev/eden-emu/eden/releases"
     }
 }
