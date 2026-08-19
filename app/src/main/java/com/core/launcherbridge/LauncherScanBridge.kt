@@ -17,6 +17,7 @@ import com.core.scanner.GameScanner
 import com.core.scanner.ScanReport
 import com.core.scanner.ScanRequest
 import com.core.scanner.ScanResult
+import com.core.util.DevLogger
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -27,6 +28,8 @@ import java.util.Locale
  * 扫描桥接：引擎检测、目录扫描、游戏导入。
  */
 object LauncherScanBridge {
+
+    private const val TAG = "LauncherScanBridge"
 
     /** 扫描深度常量：扫描所有层级。对应 GameScanner.SCAN_ALL_LEVELS。 */
     const val SCAN_ALL_LEVELS = -1
@@ -149,9 +152,11 @@ object LauncherScanBridge {
                     batch.stopReason = report.stopReason
                     break
                 }
-            } catch (_: SecurityException) {
+            } catch (se: SecurityException) {
+                DevLogger.w(TAG, "扫描目录权限异常 root=$root: ${se.message}")
                 batch.errorsInternal.add("目录权限已失效，请重新添加：${simplifyUri(root)}")
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                DevLogger.w(TAG, "扫描目录失败 root=$root: ${e.message}", e)
                 batch.errorsInternal.add("扫描目录失败：${simplifyUri(root)}")
             }
         }
@@ -334,6 +339,7 @@ object LauncherScanBridge {
         EngineType.PSP -> EnginePackages.EXTERNAL_PPSSPP
         EngineType.NINTENDO_3DS -> EnginePackages.EXTERNAL_AZAHAR
         EngineType.NINTENDO_SWITCH -> EnginePackages.EXTERNAL_EDEN
+        EngineType.ARMSX3 -> EnginePackages.EXTERNAL_ARMSX3
         // 没有子类型的旧版/未来扫描结果保留保守的 RPG XP 回退。
         EngineType.RPGMAKER -> EnginePackages.INTERNAL_RPGMAKER_XP
         EngineType.RENPY -> EnginePackages.INTERNAL_RENPY

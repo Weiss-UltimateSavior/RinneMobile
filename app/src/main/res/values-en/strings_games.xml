@@ -38,6 +38,7 @@
     <string name="game_engine_psp">PSP</string>
     <string name="game_engine_nintendo_3ds">Nintendo 3DS</string>
     <string name="game_engine_nintendo_switch">Nintendo Switch (Eden)</string>
+    <string name="game_engine_armsx3">PS3 (ARMSX3)</string>
     <string name="game_engine_rpgmaker_xp">RPG Maker XP (RGSS1, Ruby 1.8)</string>
     <string name="game_engine_rpgmaker_vx">RPG Maker VX (RGSS2, Ruby 1.9)</string>
     <string name="game_engine_rpgmaker_vxace">RPG Maker VX Ace (RGSS3, Ruby 1.9)</string>
@@ -350,6 +351,8 @@
     <string name="game_scan_stop_generic">stopped</string>
     <string name="game_xp3_choose_entry">Choose XP3 entry</string>
     <string name="game_xp3_multiple_files">Multiple XP3 files were found for “%1$s”. Choose the launch entry.</string>
+    <string name="game_xp3_choose_engine">Select Engine Type</string>
+    <string name="game_xp3_multiple_engines">“%1$s” can run on multiple engines. Choose an engine type.</string>
     <string name="game_xp3_skip">Skip this game</string>
     <string name="game_import_writing_library">Writing to game library</string>
     <string name="game_scan_scanning">Scanning…</string>

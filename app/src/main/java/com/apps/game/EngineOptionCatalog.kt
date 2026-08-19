@@ -19,6 +19,7 @@ internal object EngineOptionCatalog {
             EngineOption(EngineType.PSP, context.getString(R.string.game_engine_psp), null),
             EngineOption(EngineType.NINTENDO_3DS, context.getString(R.string.game_engine_nintendo_3ds), null),
             EngineOption(EngineType.NINTENDO_SWITCH, context.getString(R.string.game_engine_nintendo_switch), null),
+            EngineOption(EngineType.ARMSX3, context.getString(R.string.game_engine_armsx3), null),
             EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_xp), "rpgmxp"),
             EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_vx), "rpgmvx"),
             EngineOption(EngineType.RPGMAKER, context.getString(R.string.game_engine_rpgmaker_vxace), "rpgmvxace"),

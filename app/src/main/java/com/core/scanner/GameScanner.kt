@@ -143,6 +143,7 @@ object GameScanner {
         val psp = ArrayList<ScanNode>()
         val n3ds = ArrayList<ScanNode>()
         val switch = ArrayList<ScanNode>()
+        val ps3 = ArrayList<ScanNode>()
         val desktops = ArrayList<ScanNode>()
         val childDirectories = ArrayList<ScanNode>()
         var bestCover: ScanNode? = null
@@ -160,6 +161,7 @@ object GameScanner {
                 isPspFile(lower) -> psp.add(node)
                 isN3dsFile(lower) -> n3ds.add(node)
                 isNintendoSwitchFile(lower) -> switch.add(node)
+                isPs3File(lower) -> ps3.add(node)
                 lower.endsWith(".desktop") -> desktops.add(node)
             }
             if (isImageFile(lower)) {
@@ -175,7 +177,7 @@ object GameScanner {
         var fileEntryMatched = false
         fileEntryMatched = emitFileGroup(
             report, seenUris, directory, selectedRoot, psp, EngineType.PSP,
-            "未命名PSP游戏", coverUri
+            "未命名PSP游戏", coverUri, ::ps3ConflictEngines
         ) || fileEntryMatched
         fileEntryMatched = emitFileGroup(
             report, seenUris, directory, selectedRoot, n3ds, EngineType.NINTENDO_3DS,
@@ -184,6 +186,10 @@ object GameScanner {
         fileEntryMatched = emitFileGroup(
             report, seenUris, directory, selectedRoot, switch, EngineType.NINTENDO_SWITCH,
             "未命名Switch游戏", coverUri
+        ) || fileEntryMatched
+        fileEntryMatched = emitFileGroup(
+            report, seenUris, directory, selectedRoot, ps3, EngineType.ARMSX3,
+            "未命名PS3游戏", coverUri
         ) || fileEntryMatched
         fileEntryMatched = emitDesktopGroup(
             report, seenUris, directory, selectedRoot, desktops, coverUri
@@ -237,7 +243,8 @@ object GameScanner {
         files: List<ScanNode>,
         engine: EngineType,
         unnamedTitle: String,
-        coverUri: String
+        coverUri: String,
+        ambiguousEngines: ((String) -> List<EngineType>)? = null
     ): Boolean {
         if (files.isEmpty()) return false
         for (file in files) {
@@ -246,6 +253,7 @@ object GameScanner {
             } else {
                 stripExtension(file.name)
             }.ifBlank { unnamedTitle }
+            val engineCandidates = ambiguousEngines?.invoke(file.name.lowercase(Locale.ROOT))?.takeIf { it.size >= 2 }
             addResult(
                 report,
                 seenUris,
@@ -255,7 +263,8 @@ object GameScanner {
                     engine = engine,
                     confidence = 95,
                     launchTarget = file.name,
-                    coverUri = coverUri
+                    coverUri = coverUri,
+                    engineCandidates = engineCandidates
                 )
             )
         }
@@ -314,13 +323,25 @@ object GameScanner {
         EngineType.ARTEMIS,
         EngineType.RPGMAKER,
         EngineType.RENPY,
-        EngineType.GODOT -> true
+        EngineType.GODOT,
+        EngineType.ARMSX3 -> true
         else -> false
     }
 
     private fun isPspFile(name: String): Boolean =
         name.endsWith(".iso") || name.endsWith(".cso") || name.endsWith(".chd") ||
             name.endsWith(".elf") || name.endsWith(".pbp")
+
+    /** PSP 与 PS3 共享 .iso/.chd/.elf 扩展名；这类文件挂双引擎候选，由用户在导入时选择。 */
+    private fun ps3ConflictEngines(name: String): List<EngineType> =
+        if (isPspFile(name) && hasPs3SharedExtension(name)) {
+            listOf(EngineType.PSP, EngineType.ARMSX3)
+        } else {
+            emptyList()
+        }
+
+    private fun hasPs3SharedExtension(name: String): Boolean =
+        name.endsWith(".iso") || name.endsWith(".chd") || name.endsWith(".elf")
 
     private fun isN3dsFile(name: String): Boolean =
         name.endsWith(".3ds") || name.endsWith(".cci") || name.endsWith(".zcci") ||
@@ -330,6 +351,10 @@ object GameScanner {
     private fun isNintendoSwitchFile(name: String): Boolean =
         name.endsWith(".xci") || name.endsWith(".nsp") ||
             name.endsWith(".nca") || name.endsWith(".nro")
+
+    // PS3 (ARMSX3/RPCS3)：.pkg 是 RPCS3 的安装包分发格式，与此处已占用的 PSP(.pbp)/Switch(.nsp) 均不冲突。
+    private fun isPs3File(name: String): Boolean =
+        name.endsWith(".pkg")
 
     private fun isImageFile(name: String): Boolean =
         name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") ||

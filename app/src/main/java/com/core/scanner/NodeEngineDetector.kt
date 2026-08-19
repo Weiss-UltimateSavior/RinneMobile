@@ -36,6 +36,10 @@ internal object NodeEngineDetector {
             state.relativeNames.add(relative)
             if (node.isDirectory) {
                 state.directories.add(lower)
+                when (lower) {
+                    "ps3_game" -> state.hasPs3GameDir = true
+                    "usrdir" -> state.hasUsrdirChild = true
+                }
                 directories.add(Candidate(node, lower, relative, originalRelative))
                 continue
             }
@@ -66,6 +70,9 @@ internal object NodeEngineDetector {
         )
         "system" -> state.hasSystemIni
         "game" -> true
+        // PS3 目录结构为 <根>/PS3_GAME/USRDIR/EBOOT.BIN + PARAM.SFO；PS3_GAME 是 RPCS3/PS3
+        // 独有目录名，必须下钻才能采集到 PARAM.SFO 与 USRDIR，作为 PS3 鉴定的组合依据。
+        "ps3_game" -> true
         else -> false
     }
 
@@ -89,7 +96,15 @@ internal object NodeEngineDetector {
             (s.hasAppAsar || s.hasElectronPak || "icudtl.dat" in s.names ||
                 "libegl.dll" in s.names || "libglesv2.dll" in s.names)
         val artemisRuntime = (s.hasSystemIni && s.hasFirstIet) || s.hasRootPfs || s.hasAnyPfs
-
+        // PS3 目录结构为 <根>/PS3_GAME/USRDIR/EBOOT.BIN + PARAM.SFO。收紧为「ps3_game 目录 +
+        // PARAM.SFO」组合：PS3_GAME 是 RPCS3/PS3 独有目录名（PSP 用 PSP_GAME，不冲突），配合
+        // PARAM.SFO 避免仅凭孤立 usrdir/param.sfo 误判。PS3_GAME 已入 shouldDescend，故其后
+        // 的 PARAM.SFO 与 USRDIR 能被采集到。
+        val isPs3Game = s.hasPs3GameDir && (s.hasParamSfo || s.hasUsrdirChild)
+        if (isPs3Game) {
+            set(result, EngineType.ARMSX3, 97, "[游戏目录]")
+            return result
+        }
         when {
             s.hasIndex && tyranoRuntime -> set(result, EngineType.TYRANO, 96, "[游戏目录]")
             s.hasAppAsar && (s.hasPackageJson || electronWrapper) ->
@@ -200,6 +215,9 @@ internal object NodeEngineDetector {
         var hasOptionsRpy = false
         var firstPck: String? = null
         var hasProjectGodot = false
+        var hasPs3GameDir = false
+        var hasUsrdirChild = false
+        var hasParamSfo = false
 
         fun recordFile(lower: String, relative: String, originalRelative: String) {
             if (lower == "index.html" || lower == "index.htm") hasIndex = true
@@ -216,6 +234,7 @@ internal object NodeEngineDetector {
             if (lower == "app.asar" || relative.endsWith("/app.asar")) hasAppAsar = true
             if (lower == "package.json" || relative.endsWith("/package.json")) hasPackageJson = true
             if (lower.startsWith("chrome_") && lower.endsWith(".pak")) hasElectronPak = true
+            if (lower == "param.sfo") hasParamSfo = true
             if (lower.endsWith(".xp3")) {
                 xp3Files.add(originalRelative)
                 if (lower.contains("游戏")) gameNamedXp3Files.add(originalRelative)

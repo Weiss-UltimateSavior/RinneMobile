@@ -36,6 +36,9 @@ object EnginePackages {
     const val INTERNAL_CITRA = "internal.citra"
     const val EXTERNAL_AZAHAR = "io.github.azaharplus.android"
     const val EXTERNAL_EDEN = "dev.eden.eden_emulator"
+    /** ARMSX3 (RPCS3 for Android) 的 applicationId。注意其主 Activity 类名仍沿用旧命名空间
+     *  com.armsx2（见 HandheldLaunchers.ARMSX3_ACTIVITY），包名 ≠ activity 前缀属上游合法配置。 */
+    const val EXTERNAL_ARMSX3 = "com.armsx3"
     const val EXTERNAL_GAMEHUB = "com.xiaoji.egggame"
     const val EXTERNAL_GAMEHUB_LEGACY = "com.xiaoji.egggamz"
     const val INTERNAL_RPGMAKER_XP = "internal.rpgmxp"

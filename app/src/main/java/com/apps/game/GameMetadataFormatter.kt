@@ -45,6 +45,7 @@ object GameMetadataFormatter {
             EngineType.PSP -> R.string.game_engine_psp
             EngineType.NINTENDO_3DS -> R.string.game_engine_nintendo_3ds
             EngineType.NINTENDO_SWITCH -> R.string.game_engine_nintendo_switch
+            EngineType.ARMSX3 -> R.string.game_engine_armsx3
             else -> R.string.game_common_unknown
         }
     )

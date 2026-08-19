@@ -20,6 +20,7 @@ internal object EnginePackageResolver {
         if (engine == EngineType.PSP) return EnginePackages.EXTERNAL_PPSSPP
         if (engine == EngineType.NINTENDO_3DS) return EnginePackages.EXTERNAL_AZAHAR
         if (engine == EngineType.NINTENDO_SWITCH) return EnginePackages.EXTERNAL_EDEN
+        if (engine == EngineType.ARMSX3) return EnginePackages.EXTERNAL_ARMSX3
         if (engine == EngineType.GAMEHUB) return EnginePackages.EXTERNAL_GAMEHUB
         if (engine == EngineType.RPGMAKER) return EnginePackages.INTERNAL_RPGMAKER_XP
         if (engine == EngineType.RENPY) return EnginePackages.INTERNAL_RENPY

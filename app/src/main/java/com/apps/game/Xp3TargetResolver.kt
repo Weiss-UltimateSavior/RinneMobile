@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog
 import com.apps.HDModel.LauncherDialogRouter
 import com.core.R
 import com.core.launcherbridge.LauncherScanBridge
+import com.core.model.EngineType
 import com.core.scanner.ScanReport
 import com.core.scanner.ScanRequest
 import com.core.scanner.ScanResult
@@ -129,11 +130,52 @@ class Xp3TargetResolver(private val host: ManageHost) {
         for (i in startIndex until results.size) {
             val result: ScanResult? = results[i]
             val candidates = result?.xp3Candidates
-            if (result == null || candidates == null || candidates.size < 2) continue
+            if (result == null) continue
+            if (!result.engineCandidates.isNullOrEmpty()) {
+                showEngineChoiceDialog(results, i, result)
+                return
+            }
+            if (candidates == null || candidates.size < 2) continue
             showXp3TargetDialog(results, i, result)
             return
         }
         importResolvedScanResults(results)
+    }
+
+    /** 同一文件可能被多个引擎运行（如 .iso 可作 PSP 或 PS3），导入前弹窗让用户选择引擎类型。 */
+    private fun showEngineChoiceDialog(results: MutableList<ScanResult>, index: Int, result: ScanResult) {
+        val candidates = result.engineCandidates ?: emptyList()
+        if (candidates.size < 2) {
+            resolveXp3Candidates(results, index + 1)
+            return
+        }
+        val labels = candidates.map { host.getString(engineNameRes(it)) }
+        // 与 showXp3TargetDialog 结构对齐：「跳过」= 移除当前项继续，「取消扫描」= 中止导入（空回调）。
+        LauncherDialogRouter.showTextChoicesWithSkip(
+            host.requireContext(),
+            host.getString(R.string.game_xp3_choose_engine),
+            host.getString(R.string.game_xp3_multiple_engines, result.title),
+            labels,
+            host.getString(R.string.game_xp3_skip),
+            host.getString(R.string.game_xp3_cancel_scan),
+            { chosen ->
+                val idx = labels.indexOf(chosen)
+                if (idx in candidates.indices) result.engine = candidates[idx]
+                result.engineCandidates = null
+                resolveXp3Candidates(results, index + 1)
+            },
+            {
+                results.removeAt(index)
+                resolveXp3Candidates(results, index)
+            },
+            {}
+        )
+    }
+
+    private fun engineNameRes(engine: EngineType): Int = when (engine) {
+        EngineType.PSP -> R.string.game_engine_psp
+        EngineType.ARMSX3 -> R.string.game_engine_armsx3
+        else -> R.string.game_common_unknown
     }
 
     private fun showXp3TargetDialog(results: MutableList<ScanResult>, index: Int, result: ScanResult) {

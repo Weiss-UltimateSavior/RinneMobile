@@ -11,6 +11,7 @@ enum class EngineType(val displayName: String) {
     PSP("PSP"),
     NINTENDO_3DS("Nintendo 3DS"),
     NINTENDO_SWITCH("Nintendo Switch"),
+    ARMSX3("ARMSX3"),
     RPGMAKER("RPG Maker"),
     RENPY("Ren'Py"),
     GODOT("Godot"),

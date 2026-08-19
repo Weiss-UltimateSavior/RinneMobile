@@ -344,6 +344,7 @@ object LauncherGameLaunchBridge {
         if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return EnginePackages.EXTERNAL_PPSSPP
         if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_3DS) return EnginePackages.EXTERNAL_AZAHAR
         if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_SWITCH) return EnginePackages.EXTERNAL_EDEN
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.ARMSX3) return EnginePackages.EXTERNAL_ARMSX3
         if (game.engine == EngineType.ARTEMIS && emulatorPackage.isEmpty()) return EnginePackages.INTERNAL_ARTEMIS
         return emulatorPackage
     }
@@ -361,6 +362,7 @@ object LauncherGameLaunchBridge {
         EngineType.PSP -> EnginePackages.EXTERNAL_PPSSPP
         EngineType.NINTENDO_3DS -> EnginePackages.EXTERNAL_AZAHAR
         EngineType.NINTENDO_SWITCH -> EnginePackages.EXTERNAL_EDEN
+        EngineType.ARMSX3 -> EnginePackages.EXTERNAL_ARMSX3
         EngineType.RPGMAKER -> "internal." + rpgMakerSubtype.ifBlank { "rpgmxp" }
         EngineType.RENPY -> "internal." + renpySubtype.ifBlank { "renpy" }
         EngineType.GODOT -> "internal." + godotSubtype.ifBlank { "godot4" }

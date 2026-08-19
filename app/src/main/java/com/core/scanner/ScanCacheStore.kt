@@ -13,9 +13,17 @@ import java.nio.charset.StandardCharsets
  * observed in the current directory listing, so deleted files/directories are never resurrected.
  */
 internal object ScanCacheStore {
-    private const val PREFS = "game_scan_result_cache_v2"
+    // v2→v3：新增 .pkg / PS3 目录签名识别与 engineCandidates 双候选后，schema 语义已变化。
+    // 若不递增键名，重扫同目录会命中旧缓存而看不到 PS3 识别结果；bump 命名即强制整体失效。
+    private const val PREFS = "game_scan_result_cache_v3"
+    /** 上一个缓存 schema 的 prefs 名，仅用于升级迁移清理。 */
+    private const val LEGACY_PREFS = "game_scan_result_cache_v2"
+
+    /** v2 旧缓存清理仅需一次；用内存标志避免每次 load 都重新 clear+写盘。 */
+    private var legacyPrefsCleared = false
 
     fun load(context: Context, rootUri: String, depth: Int): Map<String, ScanResult> {
+        cleanupLegacyPrefs(context)
         val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(key(rootUri, depth), null) ?: return emptyMap()
         return runCatching {
@@ -51,6 +59,8 @@ internal object ScanCacheStore {
         .put("launchTarget", result.launchTarget ?: "")
         .put("coverUri", result.coverUri ?: "")
         .put("xp3Candidates", JSONArray(result.xp3Candidates ?: emptyList<String>()))
+        .put("engineCandidates", JSONArray(
+            (result.engineCandidates ?: emptyList()).map { it.name }))
         .put("rpgMakerSubtype", result.rpgMakerSubtype ?: "")
         .put("renpySubtype", result.renpySubtype ?: "")
         .put("godotSubtype", result.godotSubtype ?: "")
@@ -65,6 +75,7 @@ internal object ScanCacheStore {
                 array.optString(index, "").takeIf { it.isNotBlank() }?.let(candidates::add)
             }
         }
+        val engineCandidates = optEngineCandidates(item)
         return ScanResult(
             title = item.optString("title", ""),
             uri = uri,
@@ -75,10 +86,25 @@ internal object ScanCacheStore {
             launchTarget = item.optString("launchTarget", ""),
             coverUri = item.optString("coverUri", ""),
             xp3Candidates = candidates,
+            engineCandidates = engineCandidates,
             rpgMakerSubtype = item.optString("rpgMakerSubtype", ""),
             renpySubtype = item.optString("renpySubtype", ""),
             godotSubtype = item.optString("godotSubtype", "")
         )
+    }
+
+    /** 读取 engineCandidates：仅接受 JSONArray 新格式字段。 */
+    private fun optEngineCandidates(item: JSONObject): List<EngineType> {
+        val names = ArrayList<String>()
+        val array = item.optJSONArray("engineCandidates")
+        if (array != null) {
+            for (index in 0 until array.length()) {
+                array.optString(index, "").takeIf { it.isNotBlank() }?.let(names::add)
+            }
+        }
+        return names.mapNotNull { name ->
+            runCatching { EngineType.valueOf(name) }.getOrNull()
+        }
     }
 
     private fun key(rootUri: String, depth: Int): String {
@@ -88,5 +114,15 @@ internal object ScanCacheStore {
             Base64.NO_WRAP or Base64.URL_SAFE
         )
         return "${depth}_$encoded"
+    }
+
+    /** 迁移清理：清除 v2 旧命名缓存，避免升级后残留无版本字段的旧结果。幂等 + 内存标志，进程内仅执行一次。 */
+    private fun cleanupLegacyPrefs(context: Context) {
+        if (legacyPrefsCleared) return
+        legacyPrefsCleared = true
+        context.getSharedPreferences(LEGACY_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
     }
 }
