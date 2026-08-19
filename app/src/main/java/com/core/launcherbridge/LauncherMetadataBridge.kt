@@ -15,6 +15,12 @@ import com.core.util.AppExecutors
  */
 object LauncherMetadataBridge {
 
+    /**
+     * NSFW 隐藏阈值：游戏 NSFW 评分大于等于该值即视为成人内容。
+     * 单一来源，游戏库与首页最近动态共用同一判定口径。
+     */
+    @JvmField
+    val NSFW_HIDE_THRESHOLD: Double = 1.0
 
     interface Callback {
         fun onResult(success: Boolean)

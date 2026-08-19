@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import com.apps.LauncherPreferences;
 import com.core.launcher.EnginePackages;
 import com.core.launcherbridge.LauncherAuthBridge;
+import com.core.launcherbridge.LauncherMetadataBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge;
 import com.core.launcherbridge.LauncherRepositoryBridge.RecentActivity;
 import com.core.launcherbridge.LauncherSyncBridge;
@@ -128,9 +129,15 @@ public class LauncherRepository {
         for (Game game : LauncherRepositoryBridge.findGamesByIds(appContext, gameIds)) {
             if (game != null && game.id > 0L) gamesById.put(game.id, game);
         }
+        boolean hideNsfw = LauncherPreferences.isNsfwGamesHidden(appContext);
         List<RecentItem> recentItems = new ArrayList<>();
         for (RecentActivity activity : activities) {
-            if (activity != null) recentItems.add(toRecentItem(activity, gamesById.get(activity.gameId)));
+            if (activity == null) continue;
+            if (hideNsfw && gamesById.get(activity.gameId) != null
+                    && LauncherMetadataBridge.getNsfwScoreOf(appContext, activity.gameId) >= LauncherMetadataBridge.NSFW_HIDE_THRESHOLD) {
+                continue;
+            }
+            recentItems.add(toRecentItem(activity, gamesById.get(activity.gameId)));
         }
         return recentItems;
     }

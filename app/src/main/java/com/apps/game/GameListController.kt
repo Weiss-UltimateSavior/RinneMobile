@@ -69,9 +69,6 @@ class GameListController(
 
     private companion object {
         const val TAG = "GameListController"
-
-        /** 成人内容分级阈值：sexual/violence >= 该值视为 NSFW（VNDB 语义 0=无 / 1=部分 / 2=强烈）。 */
-        private const val NSFW_HIDE_THRESHOLD = 1.0
     }
 
     private val libraryState = GameLibraryState()
@@ -298,7 +295,7 @@ class GameListController(
     }
 
     private fun matchGame(game: Game, query: String, category: String): Boolean {
-        if (hideNsfw && (nsfwScores[game.id] ?: 0.0) >= NSFW_HIDE_THRESHOLD) return false
+        if (hideNsfw && (nsfwScores[game.id] ?: 0.0) >= LauncherMetadataBridge.NSFW_HIDE_THRESHOLD) return false
         val normalized = query.trim().lowercase(Locale.ROOT)
         return (normalized.isEmpty()
                 || GameMetadataFormatter.safeTitle(game).lowercase(Locale.ROOT).contains(normalized)
