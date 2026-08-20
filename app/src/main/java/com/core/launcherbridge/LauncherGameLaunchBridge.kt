@@ -429,12 +429,16 @@ object LauncherGameLaunchBridge {
                     ?: LauncherKrkrBridge.isForceDefaultFont(context)
                 val fontScopeDefault = if (krkr.defaultFont != null) "game" else "global"
                 val fontScopeForce = if (krkr.forceDefaultFont != null) "game" else "global"
+                // 渲染/内存引擎偏好：从同一快照组装 JSON（覆盖优先、空值跟随全局、按键独立作用域）。
+                val enginePrefs = LauncherKrkrBridge.buildEnginePrefsJson(context) { key ->
+                    LauncherKrkrGameSettingsBridge.enginePrefOverride(krkr, key)
+                }
                 return startActivitySafely(
                     context,
                     EmulatorLauncher.buildInternalKrkrIntent(
                         context, game.rootUri, launchTarget, false, krkr.engineVersion, false,
                         krkr.scopedSaveDir, defaultFont, forceDefaultFont,
-                        fontScopeDefault, fontScopeForce,
+                        fontScopeDefault, fontScopeForce, enginePrefs,
                     ),
                 )
             }

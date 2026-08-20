@@ -11,6 +11,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Locale
 import kotlin.coroutines.cancellation.CancellationException
+import org.json.JSONObject
 
 /**
  * KRKR 引擎设置桥接：负责读取/保存主项目 yukihub_prefs 中的 KRKR 引擎相关配置。
@@ -196,6 +197,201 @@ object LauncherKrkrBridge {
     @JvmStatic
     fun normalizeFontPath(value: String?): String {
         return value?.trim().orEmpty()
+    }
+
+    // ──────────────────────────────────────────────
+    // KRKR 图形渲染 / 内存配置（Kirikiroid2 引擎）
+    //
+    // 全部键经引擎 IndividualConfigManager 读取（游戏目录 XML 优先，回退全局 XML），
+    // 与字体键同一注入通道。每个 normalize 做白名单校验：非法值回退空串 = launcher
+    // 不管理该键（保持引擎内置默认）。null=跟随全局只在 per-game 层表达，全局层
+    // 空串即表示未显式设置。
+    // ──────────────────────────────────────────────
+
+    const val RENDERER_SOFTWARE = "software"
+    const val RENDERER_OPENGL = "opengl"
+    const val MEMUSAGE_UNLIMITED = "unlimited"
+    const val MEMUSAGE_HIGH = "high"
+    const val MEMUSAGE_MEDIUM = "medium"
+    const val MEMUSAGE_LOW = "low"
+
+    // 渲染/内存引擎偏好键（与引擎 XML key 同名），单一来源：UI 层与组装链路
+    // 一律引用这些常量，避免键名字面量双源漂移（KRKR_ENGINE_PREF_KEYS 由它们派生）。
+    const val PREF_RENDERER = "renderer"
+    const val PREF_SOFTWARE_DRAW_THREAD = "software_draw_thread"
+    const val PREF_SOFTWARE_COMPRESS_TEX = "software_compress_tex"
+    const val PREF_OGL_COMPRESS_TEX = "ogl_compress_tex"
+    const val PREF_MEMUSAGE = "memusage"
+    const val PREF_OGL_MAX_TEXSIZE = "ogl_max_texsize"
+    const val PREF_OGL_ACCURATE_RENDER = "ogl_accurate_render"
+    const val PREF_FPS_LIMIT = "fps_limit"
+
+    /** 渲染/内存引擎偏好键，启动链路组装 JSON 依此枚举。 */
+    val KRKR_ENGINE_PREF_KEYS: List<String> = listOf(
+        PREF_RENDERER, PREF_SOFTWARE_DRAW_THREAD, PREF_SOFTWARE_COMPRESS_TEX,
+        PREF_OGL_COMPRESS_TEX, PREF_MEMUSAGE, PREF_OGL_MAX_TEXSIZE,
+        PREF_OGL_ACCURATE_RENDER, PREF_FPS_LIMIT,
+    )
+
+    @JvmStatic
+    fun normalizeRenderer(value: String?): String {
+        val v = value?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        return if (v == RENDERER_SOFTWARE || v == RENDERER_OPENGL) v else ""
+    }
+
+    @JvmStatic
+    fun normalizeSoftwareDrawThread(value: String?): String {
+        val n = value?.trim()?.toIntOrNull() ?: return ""
+        return if (n in 0..8) n.toString() else ""
+    }
+
+    @JvmStatic
+    fun normalizeSoftwareCompressTex(value: String?): String {
+        val v = value?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        return if (v == "none" || v == "halfline" || v == "lz4" || v == "lz4+tlg5") v else ""
+    }
+
+    @JvmStatic
+    fun normalizeOglCompressTex(value: String?): String {
+        val v = value?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        return if (v == "none" || v == "half" || v == "etc2" || v == "pvrtc") v else ""
+    }
+
+    @JvmStatic
+    fun normalizeMemUsage(value: String?): String {
+        val v = value?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        return if (
+            v == MEMUSAGE_UNLIMITED || v == MEMUSAGE_HIGH || v == MEMUSAGE_MEDIUM || v == MEMUSAGE_LOW
+        ) v else ""
+    }
+
+    @JvmStatic
+    fun normalizeOglMaxTexsize(value: String?): String {
+        val n = value?.trim()?.toIntOrNull() ?: return ""
+        return if (n == 0 || n in 1024..16384) n.toString() else ""
+    }
+
+    @JvmStatic
+    fun normalizeOglAccurateRender(value: String?): String {
+        return when (value?.trim()?.lowercase(Locale.ROOT).orEmpty()) {
+            "1", "true" -> "1"
+            "0", "false" -> "0"
+            else -> ""
+        }
+    }
+
+    @JvmStatic
+    fun normalizeFpsLimit(value: String?): String {
+        val v = value?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        return if (v == "60" || v == "45" || v == "30" || v == "15") v else ""
+    }
+
+    private fun readEnginePref(context: Context?, prefKey: String): String =
+        if (context == null) "" else (prefs(context).getString(prefKey, null) ?: "")
+
+    private fun writeEnginePref(context: Context?, prefKey: String, value: String?) {
+        if (context != null) {
+            prefs(context).edit().putString(prefKey, value?.trim().orEmpty()).apply()
+        }
+    }
+
+    @JvmStatic
+    fun getRenderer(context: Context?): String =
+        normalizeRenderer(readEnginePref(context, CorePreferences.KEY_KR_RENDERER))
+
+    @JvmStatic
+    fun setRenderer(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_RENDERER, normalizeRenderer(value))
+
+    @JvmStatic
+    fun getSoftwareDrawThread(context: Context?): String =
+        normalizeSoftwareDrawThread(readEnginePref(context, CorePreferences.KEY_KR_SOFTWARE_DRAW_THREAD))
+
+    @JvmStatic
+    fun setSoftwareDrawThread(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_SOFTWARE_DRAW_THREAD, normalizeSoftwareDrawThread(value))
+
+    @JvmStatic
+    fun getSoftwareCompressTex(context: Context?): String =
+        normalizeSoftwareCompressTex(readEnginePref(context, CorePreferences.KEY_KR_SOFTWARE_COMPRESS_TEX))
+
+    @JvmStatic
+    fun setSoftwareCompressTex(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_SOFTWARE_COMPRESS_TEX, normalizeSoftwareCompressTex(value))
+
+    @JvmStatic
+    fun getOglCompressTex(context: Context?): String =
+        normalizeOglCompressTex(readEnginePref(context, CorePreferences.KEY_KR_OGL_COMPRESS_TEX))
+
+    @JvmStatic
+    fun setOglCompressTex(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_OGL_COMPRESS_TEX, normalizeOglCompressTex(value))
+
+    @JvmStatic
+    fun getMemUsage(context: Context?): String =
+        normalizeMemUsage(readEnginePref(context, CorePreferences.KEY_KR_MEM_USAGE))
+
+    @JvmStatic
+    fun setMemUsage(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_MEM_USAGE, normalizeMemUsage(value))
+
+    @JvmStatic
+    fun getOglMaxTexsize(context: Context?): String =
+        normalizeOglMaxTexsize(readEnginePref(context, CorePreferences.KEY_KR_OGL_MAX_TEXSIZE))
+
+    @JvmStatic
+    fun setOglMaxTexsize(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_OGL_MAX_TEXSIZE, normalizeOglMaxTexsize(value))
+
+    @JvmStatic
+    fun getOglAccurateRender(context: Context?): String =
+        normalizeOglAccurateRender(readEnginePref(context, CorePreferences.KEY_KR_OGL_ACCURATE_RENDER))
+
+    @JvmStatic
+    fun setOglAccurateRender(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_OGL_ACCURATE_RENDER, normalizeOglAccurateRender(value))
+
+    @JvmStatic
+    fun getFpsLimit(context: Context?): String =
+        normalizeFpsLimit(readEnginePref(context, CorePreferences.KEY_KR_FPS_LIMIT))
+
+    @JvmStatic
+    fun setFpsLimit(context: Context?, value: String?) =
+        writeEnginePref(context, CorePreferences.KEY_KR_FPS_LIMIT, normalizeFpsLimit(value))
+
+    private fun readEnginePrefNormalized(context: Context, engineKey: String): String = when (engineKey) {
+        "renderer" -> getRenderer(context)
+        "software_draw_thread" -> getSoftwareDrawThread(context)
+        "software_compress_tex" -> getSoftwareCompressTex(context)
+        "ogl_compress_tex" -> getOglCompressTex(context)
+        "memusage" -> getMemUsage(context)
+        "ogl_max_texsize" -> getOglMaxTexsize(context)
+        "ogl_accurate_render" -> getOglAccurateRender(context)
+        "fps_limit" -> getFpsLimit(context)
+        else -> ""
+    }
+
+    /**
+     * 组装渲染/内存引擎偏好的 JSON（Intent extra: krkr_engine_prefs），结构
+     * {"<engineKey>":{"v":"值","s":"game|global"}}。s=global 表示该键仅由全局偏好决定
+     * （engine 侧写全局 XML 并清游戏目录残留键，保证跟随全局）；game 表示该游戏有覆盖
+     * （写入游戏目录 XML）。8 个键全部无条件写入——v 为空（两者皆空）时由引擎端
+     * value.isEmpty() ? null : value 的 unset 分支清理对应键的旧注入残留，杜绝
+     * "覆盖被清除但引擎 XML 残留旧值"的场景。因此返回值恒非空。
+     *
+     * @param gameOverride 取某引擎键的游戏级覆盖值，null = 跟随全局。
+     */
+    @JvmStatic
+    fun buildEnginePrefsJson(context: Context?, gameOverride: (engineKey: String) -> String?): String {
+        if (context == null) return ""
+        val json = JSONObject()
+        KRKR_ENGINE_PREF_KEYS.forEach { engineKey ->
+            val override = gameOverride(engineKey)
+            val global = readEnginePrefNormalized(context, engineKey)
+            val value = override ?: global
+            json.put(engineKey, JSONObject().put("v", value).put("s", if (override != null) "game" else "global"))
+        }
+        return json.toString()
     }
 
     /**

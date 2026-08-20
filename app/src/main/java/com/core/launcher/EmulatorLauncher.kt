@@ -237,7 +237,7 @@ class EmulatorLauncher {
             requireNotNull(context), gamePath, launchTarget, originMode, engineVersion, safFileFallback,
         )
 
-        /** 与上一签名等价，另注入 krkr2 字体偏好；两键作用域独立（scope 非空时空字体表示清除键）。 */
+        /** 与上一签名等价，另注入 krkr2 字体偏好与渲染/内存引擎偏好（enginePrefs 为 JSON）。 */
         @JvmStatic
         fun buildInternalKrkrIntent(
             context: Context?,
@@ -251,9 +251,10 @@ class EmulatorLauncher {
             forceDefaultFont: Boolean?,
             fontScopeDefault: String?,
             fontScopeForce: String?,
+            enginePrefs: String?,
         ): Intent = KrkrLauncher.buildIntent(
             requireNotNull(context), gamePath, launchTarget, originMode, engineVersion, safFileFallback,
-            scopedSaveDir, defaultFont, forceDefaultFont, fontScopeDefault, fontScopeForce,
+            scopedSaveDir, defaultFont, forceDefaultFont, fontScopeDefault, fontScopeForce, enginePrefs,
         )
 
         @JvmStatic

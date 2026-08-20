@@ -41,6 +41,7 @@ internal object KrkrLauncher {
         forceDefaultFont: Boolean? = null,
         fontScopeDefault: String? = null,
         fontScopeForce: String? = null,
+        enginePrefs: String? = null,
     ): Intent {
         val resolvedPath = if (originMode) null else resolvePath(context, gamePath, launchTarget)
         val rawRootPath = ScriptEngineLaunchers.stripFileScheme(
@@ -128,6 +129,9 @@ internal object KrkrLauncher {
                 putExtra("force_default_font", forceDefaultFont)
                 if (!fontScopeForce.isNullOrEmpty()) putExtra("font_scope_force", fontScopeForce)
             }
+            // 渲染/内存引擎偏好（krkr2 专用）：单 JSON extra 承载全部键，ECMAScript 风格
+            // {"key":{"v":值,"s":作用域}}。由 KirikiroidLauncherBaseActivity 解析后写 XML。
+            if (!enginePrefs.isNullOrEmpty()) putExtra("krkr_engine_prefs", enginePrefs)
             addFlags(engineIntentFlags())
             LauncherUiBridge.appendEngineThemeExtrasSafely(this, context)
         }

@@ -19,6 +19,30 @@ object CorePreferences {
     /** KRKR（Kirikiroid2）强制使用默认字体偏好键（主源）。 */
     const val KEY_KR_FORCE_DEFAULT_FONT = "kr_force_default_font"
 
+    /** KRKR（Kirikiroid2）图形渲染器偏好键（值 = software/opengl，主源）。 */
+    const val KEY_KR_RENDERER = "kr_renderer"
+
+    /** KRKR（Kirikiroid2）软件渲染线程数偏好键（"0"自动 ~ "8"，主源）。 */
+    const val KEY_KR_SOFTWARE_DRAW_THREAD = "kr_software_draw_thread"
+
+    /** KRKR（Kirikiroid2）软件纹理压缩偏好键（none/halfline/lz4/lz4+tlg5，主源）。 */
+    const val KEY_KR_SOFTWARE_COMPRESS_TEX = "kr_software_compress_tex"
+
+    /** KRKR（Kirikiroid2）OpenGL 纹理压缩偏好键（none/half/etc2/pvrtc，主源）。 */
+    const val KEY_KR_OGL_COMPRESS_TEX = "kr_ogl_compress_tex"
+
+    /** KRKR（Kirikiroid2）内存用量限制偏好键（unlimited/high/medium/low，主源）。 */
+    const val KEY_KR_MEM_USAGE = "kr_mem_usage"
+
+    /** KRKR（Kirikiroid2）OpenGL 最大纹理尺寸偏好键（"0"自动/1024~16384，主源）。 */
+    const val KEY_KR_OGL_MAX_TEXSIZE = "kr_ogl_max_texsize"
+
+    /** KRKR（Kirikiroid2）OpenGL 精确渲染模式偏好键（"1"/"0"，主源）。 */
+    const val KEY_KR_OGL_ACCURATE_RENDER = "kr_ogl_accurate_render"
+
+    /** KRKR（Kirikiroid2）FPS 限制偏好键（仅 1.3.9 消费；"60"/"45"/"30"/"15"，主源）。 */
+    const val KEY_KR_FPS_LIMIT = "kr_fps_limit"
+
     /** Artemis 引擎版本偏好键（应用级默认，取值 auto/1/2/3，主源）。 */
     const val KEY_ARTEMIS_ENGINE_VERSION = "artemis_engine_version"
 

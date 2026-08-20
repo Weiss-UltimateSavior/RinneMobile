@@ -28,11 +28,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlSerializer;
 
@@ -58,9 +61,6 @@ import org.tvp.kirikiri2.KR2Activity;
 public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private static final String TAG = "Kirikiroid2";
     private static final long SAFE_FALLBACK_REVEAL_MS = 20_000L;
-    /** Hidden Item keys tracking the font values this launcher injected into the engine XML. */
-    private static final String MARKER_FONT = "_rinne_injected_default_font";
-    private static final String MARKER_FORCE = "_rinne_injected_force_default_font";
     @SuppressLint("StaticFieldLeak") // Dedicated process activity; cleared immediately before process termination.
     public static Context app;
     private FrameLayout mask;
@@ -100,6 +100,7 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         doSetSystemUiVisibility();
         // Must run before super.onCreate (native library loading and preference singleton construction).
         applyFontPreferences();
+        applyEnginePreferences();
         super.onCreate(bundle);
         app = this;
         if (getIntent().getBooleanExtra("originMode", false)) {
@@ -218,11 +219,11 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             try {
                 String font = safeTrim(intent.getStringExtra("default_font"));
                 File target = fontTarget(intent, "font_scope_default", gameFile, globalFile);
-                boolean changed = applyFontItem(
-                        target, "default_font", MARKER_FONT, font.isEmpty() ? null : font);
+                boolean changed = applyPreferenceItem(
+                        target, "default_font", markerFor("default_font"), font.isEmpty() ? null : font);
                 Log.i(TAG, "font pref default_font='" + font + "' -> " + target
                         + (changed ? "" : " (unchanged)"));
-                clearStaleFontItem(target, gameFile, "default_font", MARKER_FONT);
+                clearStalePreferenceItem(target, gameFile, "default_font", markerFor("default_font"));
             } catch (Exception error) {
                 Log.w(TAG, "apply default_font failed", error);
             }
@@ -231,15 +232,65 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             try {
                 boolean force = intent.getBooleanExtra("force_default_font", false);
                 File target = fontTarget(intent, "font_scope_force", gameFile, globalFile);
-                boolean changed = applyFontItem(
-                        target, "force_default_font", MARKER_FORCE, force ? "1" : "0");
+                boolean changed = applyPreferenceItem(
+                        target, "force_default_font", markerFor("force_default_font"), force ? "1" : "0");
                 Log.i(TAG, "font pref force_default_font=" + force + " -> " + target
                         + (changed ? "" : " (unchanged)"));
-                clearStaleFontItem(target, gameFile, "force_default_font", MARKER_FORCE);
+                clearStalePreferenceItem(target, gameFile, "force_default_font", markerFor("force_default_font"));
             } catch (Exception error) {
                 Log.w(TAG, "apply force_default_font failed", error);
             }
         }
+    }
+
+    /**
+     * Applies the engine-level rendering/memory preferences carried in the single
+     * <code>krkr_engine_prefs</code> extra (a JSON object mapping engine preference key to
+     * {"v": value, "s": scope}, scope being game/global). This is the generalization of
+     * [applyFontPreferences]: same XML injection channel, same marker-based ownership tracking,
+     * except the marker is derived per split key and the scope comes from the JSON instead of a
+     * per-key extra. NaN/absent values or scope default to global; a key launcher does not manage
+     * is simply not present in the JSON and its XML entries are left untouched.
+     */
+    private void applyEnginePreferences() {
+        Intent intent = getIntent();
+        if (intent == null) return;
+        String enginePrefsJson = intent.getStringExtra("krkr_engine_prefs");
+        if (enginePrefsJson == null || enginePrefsJson.isEmpty()) return;
+        File globalFile = globalPreferenceFile();
+        if (globalFile == null) {
+            Log.w(TAG, "engine pref global file unavailable");
+            return;
+        }
+        File gameFile = gamePreferenceFile();
+        try {
+            JSONObject json = new JSONObject(enginePrefsJson);
+            Iterator<String> keys = json.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                try {
+                    JSONObject pref = json.getJSONObject(key);
+                    String value = safeTrim(pref.optString("v", ""));
+                    boolean gameScope = "game".equals(pref.optString("s", "global"));
+                    File target = scopeTarget(gameScope, gameFile, globalFile);
+                    boolean changed = applyPreferenceItem(
+                            target, key, markerFor(key), value.isEmpty() ? null : value);
+                    Log.i(TAG, "engine pref " + key + "='" + value + "' scope="
+                            + (gameScope ? "game" : "global") + " -> " + target
+                            + (changed ? "" : " (unchanged)"));
+                    clearStalePreferenceItem(target, gameFile, key, markerFor(key));
+                } catch (Exception error) {
+                    Log.w(TAG, "apply engine pref " + key + " failed", error);
+                }
+            }
+        } catch (JSONException error) {
+            Log.w(TAG, "parse engine prefs json failed", error);
+        }
+    }
+
+    /** Hidden Item key that records the value this launcher injected for the given engine pref key. */
+    private static String markerFor(String key) {
+        return "_rinne_injected_" + key;
     }
 
     /** {filesDir}/.preference/GlobalPreference.xml; null when the directory cannot be created. */
@@ -258,10 +309,12 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
 
     /** Resolves the target file for one key: the game directory when scoped to game, else global. */
     private static File fontTarget(Intent intent, String scopeExtra, File gameFile, File globalFile) {
-        if ("game".equals(intent.getStringExtra(scopeExtra)) && gameFile != null) {
-            return gameFile;
-        }
-        return globalFile;
+        return scopeTarget("game".equals(intent.getStringExtra(scopeExtra)), gameFile, globalFile);
+    }
+
+    /** Chooses the game directory XML for game scope (when available), otherwise the global XML. */
+    private static File scopeTarget(boolean gameScope, File gameFile, File globalFile) {
+        return gameScope && gameFile != null ? gameFile : globalFile;
     }
 
     /**
@@ -270,10 +323,10 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
      * follows the global value. Game files are launcher-managed: removal is
      * unconditional (legacy pre-marker builds wrote keys without markers).
      */
-    private static void clearStaleFontItem(File target, File gameFile, String name, String markerName)
+    private static void clearStalePreferenceItem(File target, File gameFile, String name, String markerName)
             throws Exception {
         if (target == gameFile || gameFile == null || !gameFile.isFile()) return;
-        applyFontItem(gameFile, name, markerName, null, false);
+        applyPreferenceItem(gameFile, name, markerName, null, false);
     }
 
     private String gameRootDir() {
@@ -302,12 +355,12 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
      *
      * @return whether the file content changed.
      */
-    private static boolean applyFontItem(
+    private static boolean applyPreferenceItem(
             File file, String name, String markerName, String value) throws Exception {
-        return applyFontItem(file, name, markerName, value, true);
+        return applyPreferenceItem(file, name, markerName, value, true);
     }
 
-    private static boolean applyFontItem(
+    private static boolean applyPreferenceItem(
             File file, String name, String markerName, String value, boolean trackOwnership)
             throws Exception {
         LinkedHashMap<String, String> items = new LinkedHashMap<>();

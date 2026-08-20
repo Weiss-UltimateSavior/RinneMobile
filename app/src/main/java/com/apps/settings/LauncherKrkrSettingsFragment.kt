@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.apps.HDModel.HdEmbeddedActivityOwner
@@ -59,6 +61,24 @@ class LauncherKrkrSettingsFragment : Fragment() {
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) onFontPicked(uri)
         }
+    /** 渲染区段回填开关初始状态时抑制写入，避免 load 触发 onCheckedChange 提前落盘。 */
+    private var renderConfigLoading = false
+
+    /**
+     * 单个渲染/内存引擎键的 UI 描述。作用域沿用字体可空覆盖语义：per-game 覆盖为 null 时
+     * 跟随全局；各键独立写盘（即时生效，不经 save()），绕过字体 force 键「保存时快照冻结
+     * 全局值」的坑。
+     */
+    private class RenderPref(
+        val engineKey: String,
+        @StringRes val labelRes: Int,
+        val values: List<Pair<String, () -> String>>,
+    ) {
+        fun indexOf(value: String?): Int = values.indexOfFirst { it.first == value }
+
+        fun label(value: String?): CharSequence =
+            values.firstOrNull { it.first == value }?.second?.invoke() ?: value.orEmpty()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -116,6 +136,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.krVersionSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
         currentBinding.krKernelSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
         currentBinding.krScopedSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
+        currentBinding.krRenderSection.visibility = if (isKrkr) View.VISIBLE else View.GONE
         currentBinding.artemisSection.visibility = if (isArtemis) View.VISIBLE else View.GONE
         currentBinding.tyranoScopedSection.visibility = View.GONE
         currentBinding.tyranoExternalNetworkSection.visibility = View.GONE
@@ -155,12 +176,13 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.artemisAutoPatchText.setOnClickListener { showArtemisAutoPatchPicker() }
         currentBinding.onsEncodingText.setOnClickListener { showOnsEncodingPicker() }
         currentBinding.krDefaultFontText.setOnClickListener { showDefaultFontChoices() }
+        bindRenderSection(currentBinding)
         // krkrsdl3 内核开关：开启需确认（全新引擎内核，稳定性不可预测）。
         currentBinding.krEngineKernelSwitch.setOnCheckedChangeListener { _, checked ->
             // 可见性重估必须先于 confirming guard：确认回调程序化置位 isChecked=true 时
-            // 会被 guard 拦截提前返回，若重估放在 guard 后，krkrsdl3 生效后字体区段
+            // 会被 guard 拦截提前返回，若重估放在 guard 后，krkrsdl3 生效后字体/渲染区段
             // 会残留显示（取消路径反而正常）。
-            updateKrFontSectionVisibility()
+            updateKrEngineSectionsVisibility()
             if (kernelSwitchConfirming) return@setOnCheckedChangeListener
             if (!checked || !isAdded) return@setOnCheckedChangeListener
             currentBinding.krEngineKernelSwitch.isChecked = false
@@ -182,6 +204,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherTheme.styleMaterialSwitch(currentBinding.krScopedSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.krEngineKernelSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.krForceDefaultFontSwitch)
+        LauncherTheme.styleMaterialSwitch(currentBinding.krOglAccurateRenderSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.artemisRotateSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.onsScopedSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.onsStretchSwitch)
@@ -232,8 +255,10 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.krEngineKernelSwitch.isChecked =
             LauncherKrkrBridge.KERNEL_KRKRSDL3 == kernel
         kernelSwitchConfirming = false
-        updateKrFontSectionVisibility()
+        updateKrEngineSectionsVisibility()
         loadKrkrFontConfig()
+        loadRenderConfig()
+        updateRenderSubSectionVisibility()
         loadArtemisConfig(savedInstanceState)
         val onsSettings = if (isPerGameMode()) {
             LauncherOnsGameSettingsBridge.load(requireContext(), gameId)
@@ -384,6 +409,18 @@ class LauncherKrkrSettingsFragment : Fragment() {
         selectedEngineVersionIndex = if (index in labels.indices) index else 0
         currentBinding.engineVersionText.setText(labels[selectedEngineVersionIndex])
         updateKrForceFontRowVisibility()
+        updateFpsLimitVisibility()
+    }
+
+    /** 1.2.6 / 1.3.4 引擎不支持 fps_limit（消费链缺失），隐藏该行（含标题）避免误导。 */
+    private fun updateFpsLimitVisibility() {
+        val currentBinding = binding ?: return
+        val isKrkr = !isPerGameMode() || perGameEngine == EngineType.KIRIKIRI
+        val supported = selectedEngineVersionIndex != INDEX_ENGINE_VERSION_126 &&
+            selectedEngineVersionIndex != INDEX_ENGINE_VERSION_134
+        val visible = isKrkr && supported
+        currentBinding.krFpsLimitLabel.visibility = if (visible) View.VISIBLE else View.GONE
+        currentBinding.krFpsLimitText.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     private fun loadKrkrFontConfig() {
@@ -404,15 +441,16 @@ class LauncherKrkrSettingsFragment : Fragment() {
     }
 
     /**
-     * 字体区段可见性：krkrsdl3 内核走 buildKrkrsdl3Intent 路由不注入字体参数，
+     * 字体/渲染区段可见性：krkrsdl3 内核走 buildKrkrsdl3Intent 路由不注入字体与渲染参数，
      * 设置无效，按当前内核开关状态隐藏避免误导（全局与 per-game 模式一致）。
      */
-    private fun updateKrFontSectionVisibility() {
+    private fun updateKrEngineSectionsVisibility() {
         val currentBinding = binding ?: return
         val isKrkr = !isPerGameMode() || perGameEngine == EngineType.KIRIKIRI
         val kernelSdl3 = currentBinding.krEngineKernelSwitch.isChecked
-        currentBinding.krFontSection.visibility =
-            if (isKrkr && !kernelSdl3) View.VISIBLE else View.GONE
+        val krkrVisible = isKrkr && !kernelSdl3
+        currentBinding.krFontSection.visibility = if (krkrVisible) View.VISIBLE else View.GONE
+        currentBinding.krRenderSection.visibility = if (krkrVisible) View.VISIBLE else View.GONE
     }
 
     /** 1.2.6 引擎无 force_default_font 消费逻辑（libgame126.so 无此键），隐藏开关避免误导。 */
@@ -425,6 +463,322 @@ class LauncherKrkrSettingsFragment : Fragment() {
             } else {
                 View.VISIBLE
             }
+    }
+
+    // ──────────────────────────────────────────────
+    // KRKR 渲染 / 内存配置
+    // ──────────────────────────────────────────────
+
+    private fun isKrkrPerGame(): Boolean =
+        isPerGameMode() && perGameEngine == EngineType.KIRIKIRI
+
+    /** 各渲染键的 UI 描述；键未显式管理时全局层为空串、per-game 层为 null（跟随全局）。 */
+    private fun renderPrefs(): List<RenderPref> = listOf(
+        RenderPref(LauncherKrkrBridge.PREF_RENDERER, R.string.settings_kr_renderer, listOf(
+            LauncherKrkrBridge.RENDERER_SOFTWARE to { getString(R.string.settings_kr_renderer_software) },
+            LauncherKrkrBridge.RENDERER_OPENGL to { getString(R.string.settings_kr_renderer_opengl) },
+        )),
+        RenderPref(LauncherKrkrBridge.PREF_SOFTWARE_DRAW_THREAD, R.string.settings_kr_software_draw_thread,
+            (0..8).map { n ->
+                n.toString() to {
+                    if (n == 0) getString(R.string.settings_kr_auto) else getString(R.string.settings_kr_thread_count, n)
+                }
+            }),
+        RenderPref(LauncherKrkrBridge.PREF_SOFTWARE_COMPRESS_TEX, R.string.settings_kr_software_compress_tex, listOf(
+            "none" to { getString(R.string.settings_kr_compress_none) },
+            "halfline" to { getString(R.string.settings_kr_compress_halfline) },
+            "lz4" to { getString(R.string.settings_kr_compress_lz4) },
+            "lz4+tlg5" to { getString(R.string.settings_kr_compress_lz4_tlg5) },
+        )),
+        RenderPref(LauncherKrkrBridge.PREF_OGL_COMPRESS_TEX, R.string.settings_kr_ogl_compress_tex, listOf(
+            "none" to { getString(R.string.settings_kr_compress_none) },
+            "half" to { getString(R.string.settings_kr_compress_half) },
+            "etc2" to { getString(R.string.settings_kr_compress_etc2) },
+            "pvrtc" to { getString(R.string.settings_kr_compress_pvrtc) },
+        )),
+        RenderPref(LauncherKrkrBridge.PREF_MEMUSAGE, R.string.settings_kr_mem_usage, listOf(
+            LauncherKrkrBridge.MEMUSAGE_UNLIMITED to { getString(R.string.settings_kr_memusage_unlimited) },
+            LauncherKrkrBridge.MEMUSAGE_HIGH to { getString(R.string.settings_kr_memusage_high) },
+            LauncherKrkrBridge.MEMUSAGE_MEDIUM to { getString(R.string.settings_kr_memusage_medium) },
+            LauncherKrkrBridge.MEMUSAGE_LOW to { getString(R.string.settings_kr_memusage_low) },
+        )),
+        RenderPref(LauncherKrkrBridge.PREF_OGL_MAX_TEXSIZE, R.string.settings_kr_ogl_max_texsize,
+            (listOf("0") + listOf(1024, 2048, 4096, 8192, 16384).map { it.toString() }).map { v ->
+                v to { if (v == "0") getString(R.string.settings_kr_auto) else v }
+            }),
+        RenderPref(LauncherKrkrBridge.PREF_FPS_LIMIT, R.string.settings_kr_fps_limit, listOf(
+            "60" to { getString(R.string.settings_kr_fps_60) },
+            "45" to { getString(R.string.settings_kr_fps_45) },
+            "30" to { getString(R.string.settings_kr_fps_30) },
+            "15" to { getString(R.string.settings_kr_fps_15) },
+        )),
+    )
+
+    private fun renderPref(engineKey: String): RenderPref =
+        renderPrefs().first { it.engineKey == engineKey }
+
+    private fun bindRenderSection(currentBinding: ActivityLauncherKrkrSettingsBinding) {
+        currentBinding.krRendererText.setOnClickListener { showRenderPicker(renderPref(LauncherKrkrBridge.PREF_RENDERER)) }
+        currentBinding.krDrawThreadText.setOnClickListener {
+            showRenderPicker(renderPref(LauncherKrkrBridge.PREF_SOFTWARE_DRAW_THREAD))
+        }
+        currentBinding.krSwCompressTexText.setOnClickListener {
+            showRenderPicker(renderPref(LauncherKrkrBridge.PREF_SOFTWARE_COMPRESS_TEX))
+        }
+        currentBinding.krOglCompressTexText.setOnClickListener {
+            showRenderPicker(renderPref(LauncherKrkrBridge.PREF_OGL_COMPRESS_TEX))
+        }
+        currentBinding.krMemUsageText.setOnClickListener { showRenderPicker(renderPref(LauncherKrkrBridge.PREF_MEMUSAGE)) }
+        currentBinding.krMaxTexsizeText.setOnClickListener {
+            showRenderPicker(renderPref(LauncherKrkrBridge.PREF_OGL_MAX_TEXSIZE))
+        }
+        currentBinding.krFpsLimitText.setOnClickListener { showRenderPicker(renderPref(LauncherKrkrBridge.PREF_FPS_LIMIT)) }
+        currentBinding.krOglAccurateRenderSwitch.setOnCheckedChangeListener { _, checked ->
+            // load 回填时不触发（renderConfigLoading guard），用户拨动才写盘。
+            if (renderConfigLoading) return@setOnCheckedChangeListener
+            writeRenderValue(LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER, if (checked) "1" else "0")
+        }
+        // per-game 模式点击行弹出选择器，提供开关唯一缺失的「跟随全局」退出通道
+        //（直接拨动只会产生同值覆盖，无法清回 null）。
+        currentBinding.krOglAccurateRenderRow.setOnClickListener {
+            if (isKrkrPerGame()) showOglAccurateRenderResetChoices()
+        }
+    }
+
+    /** 开关行的可选集：跟随全局 / 开 / 关，支持把 per-game 覆盖清回 null（跟随全局）。 */
+    private fun showOglAccurateRenderResetChoices() {
+        val global = readRenderGlobal(LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER)
+        val followLabel = getString(R.string.settings_kr_follow_global, oglAccurateValueLabel(global))
+        val options = arrayOf<CharSequence>(
+            followLabel,
+            getString(R.string.settings_kr_ogl_accurate_render_on),
+            getString(R.string.settings_kr_ogl_accurate_render_off),
+        )
+        val override = LauncherKrkrGameSettingsBridge.enginePrefOverride(
+            LauncherKrkrGameSettingsBridge.load(requireContext(), gameId),
+            LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER,
+        )
+        val current = override ?: global
+        val selected = if (current == "1") 1 else if (current.isNotEmpty()) 2 else 0
+        LauncherDialogRouter.showSingleChoice(
+            requireContext(),
+            getString(R.string.settings_kr_ogl_accurate_render),
+            options,
+            selected,
+        ) { i ->
+            // 写盘 + 回填开关需要在 guard 内进行，避免 setChecked 再触发用户拨动回调。
+            renderConfigLoading = true
+            try {
+                when (i) {
+                    0 -> writeRenderOverride(LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER, null)
+                    1 -> writeRenderValue(LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER, "1")
+                    else -> writeRenderValue(LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER, "0")
+                }
+                renderEngineFields()
+            } finally {
+                renderConfigLoading = false
+            }
+        }
+    }
+
+    private fun oglAccurateValueLabel(value: String): CharSequence = when (value) {
+        "1" -> getString(R.string.settings_kr_ogl_accurate_render_on)
+        "0" -> getString(R.string.settings_kr_ogl_accurate_render_off)
+        else -> getString(R.string.settings_kr_engine_default)
+    }
+
+    private fun loadRenderConfig() {
+        renderConfigLoading = true
+        renderEngineFields()
+        renderConfigLoading = false
+    }
+
+    private fun renderEngineFields() {
+        val b = binding ?: return
+        val perGame = isKrkrPerGame()
+        val overrides = if (perGame) LauncherKrkrGameSettingsBridge.load(requireContext(), gameId) else null
+        for (pref in renderPrefs()) {
+            val override = if (overrides != null) {
+                LauncherKrkrGameSettingsBridge.enginePrefOverride(overrides, pref.engineKey)
+            } else {
+                null
+            }
+            val global = readRenderGlobal(pref.engineKey)
+            renderFieldView(pref)?.text = effectiveRenderLabel(perGame, override, global, pref)
+        }
+        val overrideAccurate = overrides?.oglAccurateRender
+        val globalAccurate = readRenderGlobal(LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER)
+        b.krOglAccurateRenderSwitch.isChecked = (overrideAccurate ?: globalAccurate) == "1"
+    }
+
+    private fun renderFieldView(pref: RenderPref): TextView? = when (pref.engineKey) {
+        LauncherKrkrBridge.PREF_RENDERER -> binding?.krRendererText
+        LauncherKrkrBridge.PREF_SOFTWARE_DRAW_THREAD -> binding?.krDrawThreadText
+        LauncherKrkrBridge.PREF_SOFTWARE_COMPRESS_TEX -> binding?.krSwCompressTexText
+        LauncherKrkrBridge.PREF_OGL_COMPRESS_TEX -> binding?.krOglCompressTexText
+        LauncherKrkrBridge.PREF_MEMUSAGE -> binding?.krMemUsageText
+        LauncherKrkrBridge.PREF_OGL_MAX_TEXSIZE -> binding?.krMaxTexsizeText
+        LauncherKrkrBridge.PREF_FPS_LIMIT -> binding?.krFpsLimitText
+        else -> null
+    }
+
+    private fun effectiveRenderLabel(perGame: Boolean, override: String?, global: String, pref: RenderPref): CharSequence =
+        if (perGame) {
+            if (override != null) pref.label(override)
+            else getString(
+                R.string.settings_kr_follow_global,
+                effectiveValueLabel(global, pref),
+            )
+        } else {
+            effectiveValueLabel(global, pref)
+        }
+
+    private fun effectiveValueLabel(value: String, pref: RenderPref): CharSequence =
+        if (value.isEmpty()) getString(R.string.settings_kr_engine_default) else pref.label(value)
+
+    /** 弹单选选择框；per-game 首项为「跟随全局」，全局首项为「引擎默认」。 */
+    private fun showRenderPicker(pref: RenderPref) {
+        val perGame = isKrkrPerGame()
+        val override = if (perGame) {
+            LauncherKrkrGameSettingsBridge.enginePrefOverride(
+                LauncherKrkrGameSettingsBridge.load(requireContext(), gameId),
+                pref.engineKey,
+            )
+        } else {
+            null
+        }
+        val global = readRenderGlobal(pref.engineKey)
+        val base: List<CharSequence> = pref.values.map { it.second() }
+        val resetLabel: CharSequence = if (perGame) {
+            getString(R.string.settings_kr_follow_global, effectiveValueLabel(global, pref))
+        } else {
+            getString(R.string.settings_kr_engine_default)
+        }
+        val options = listOf(resetLabel) + base
+        val current = override ?: global
+        val idx = pref.indexOf(current)
+        val selected = if (idx >= 0) idx + 1 else 0
+        LauncherDialogRouter.showSingleChoice(
+            requireContext(),
+            getString(pref.labelRes),
+            options.toTypedArray(),
+            selected,
+        ) { i ->
+            if (i == 0) {
+                writeRenderClear(pref)
+            } else {
+                applyRenderSelect(pref, pref.values[i - 1].first)
+            }
+        }
+    }
+
+    /** renderer 切到 opengl 需确认（部分 GPU 驱动兼容性差）；其余键直接落盘。 */
+    private fun applyRenderSelect(pref: RenderPref, value: String) {
+        if (pref.engineKey == LauncherKrkrBridge.PREF_RENDERER && value == LauncherKrkrBridge.RENDERER_OPENGL) {
+            LauncherDialogRouter.showStandardConfirm(
+                requireContext(),
+                getString(R.string.settings_kr_renderer_opengl_title),
+                getString(R.string.settings_kr_renderer_opengl_message),
+                getString(R.string.settings_kr_renderer_opengl_confirm),
+            ) { commitRenderValue(pref, value) }
+            return
+        }
+        commitRenderValue(pref, value)
+    }
+
+    private fun commitRenderValue(pref: RenderPref, value: String) {
+        writeRenderValue(pref.engineKey, value)
+        afterRenderChange(pref.engineKey)
+    }
+
+    private fun writeRenderClear(pref: RenderPref) {
+        if (isKrkrPerGame()) {
+            writeRenderOverride(pref.engineKey, null)
+        } else {
+            writeRenderGlobal(pref.engineKey, "")
+        }
+        afterRenderChange(pref.engineKey)
+    }
+
+    /** 写入某键生效值：per-game 覆盖（非 null）或全局偏好。 */
+    private fun writeRenderValue(engineKey: String, value: String) {
+        if (isKrkrPerGame()) {
+            writeRenderOverride(engineKey, value)
+        } else {
+            writeRenderGlobal(engineKey, value)
+        }
+        afterRenderChange(engineKey)
+    }
+
+    private fun afterRenderChange(engineKey: String) {
+        if (engineKey == LauncherKrkrBridge.PREF_RENDERER) {
+            renderEngineFields()
+            updateRenderSubSectionVisibility()
+        } else {
+            renderEngineFields()
+        }
+    }
+
+    /** 子区段联动：renderer 为 opengl 时显示 OGL 子区段，隐藏软件子区段。 */
+    private fun updateRenderSubSectionVisibility() {
+        val b = binding ?: return
+        val isOgl = readRenderPrefEffective(LauncherKrkrBridge.PREF_RENDERER) == LauncherKrkrBridge.RENDERER_OPENGL
+        b.krSwSubSection.visibility = if (isOgl) View.GONE else View.VISIBLE
+        b.krOglSubSection.visibility = if (isOgl) View.VISIBLE else View.GONE
+    }
+
+    private fun readRenderPrefEffective(engineKey: String): String {
+        if (isKrkrPerGame()) {
+            LauncherKrkrGameSettingsBridge.enginePrefOverride(
+                LauncherKrkrGameSettingsBridge.load(requireContext(), gameId),
+                engineKey,
+            )?.let { return it }
+        }
+        return readRenderGlobal(engineKey)
+    }
+
+    private fun writeRenderOverride(engineKey: String, value: String?) {
+        val perGame = LauncherKrkrGameSettingsBridge.load(requireContext(), gameId)
+        when (engineKey) {
+            LauncherKrkrBridge.PREF_RENDERER -> perGame.renderer = value
+            LauncherKrkrBridge.PREF_SOFTWARE_DRAW_THREAD -> perGame.softwareDrawThread = value
+            LauncherKrkrBridge.PREF_SOFTWARE_COMPRESS_TEX -> perGame.softwareCompressTex = value
+            LauncherKrkrBridge.PREF_OGL_COMPRESS_TEX -> perGame.oglCompressTex = value
+            LauncherKrkrBridge.PREF_MEMUSAGE -> perGame.memUsage = value
+            LauncherKrkrBridge.PREF_OGL_MAX_TEXSIZE -> perGame.oglMaxTexsize = value
+            LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER -> perGame.oglAccurateRender = value
+            LauncherKrkrBridge.PREF_FPS_LIMIT -> perGame.fpsLimit = value
+        }
+        LauncherKrkrGameSettingsBridge.save(requireContext(), gameId, perGame)
+    }
+
+    private fun readRenderGlobal(engineKey: String): String {
+        val ctx = requireContext()
+        return when (engineKey) {
+            LauncherKrkrBridge.PREF_RENDERER -> LauncherKrkrBridge.getRenderer(ctx)
+            LauncherKrkrBridge.PREF_SOFTWARE_DRAW_THREAD -> LauncherKrkrBridge.getSoftwareDrawThread(ctx)
+            LauncherKrkrBridge.PREF_SOFTWARE_COMPRESS_TEX -> LauncherKrkrBridge.getSoftwareCompressTex(ctx)
+            LauncherKrkrBridge.PREF_OGL_COMPRESS_TEX -> LauncherKrkrBridge.getOglCompressTex(ctx)
+            LauncherKrkrBridge.PREF_MEMUSAGE -> LauncherKrkrBridge.getMemUsage(ctx)
+            LauncherKrkrBridge.PREF_OGL_MAX_TEXSIZE -> LauncherKrkrBridge.getOglMaxTexsize(ctx)
+            LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER -> LauncherKrkrBridge.getOglAccurateRender(ctx)
+            LauncherKrkrBridge.PREF_FPS_LIMIT -> LauncherKrkrBridge.getFpsLimit(ctx)
+            else -> ""
+        }
+    }
+
+    private fun writeRenderGlobal(engineKey: String, value: String) {
+        val ctx = requireContext()
+        when (engineKey) {
+            LauncherKrkrBridge.PREF_RENDERER -> LauncherKrkrBridge.setRenderer(ctx, value)
+            LauncherKrkrBridge.PREF_SOFTWARE_DRAW_THREAD -> LauncherKrkrBridge.setSoftwareDrawThread(ctx, value)
+            LauncherKrkrBridge.PREF_SOFTWARE_COMPRESS_TEX -> LauncherKrkrBridge.setSoftwareCompressTex(ctx, value)
+            LauncherKrkrBridge.PREF_OGL_COMPRESS_TEX -> LauncherKrkrBridge.setOglCompressTex(ctx, value)
+            LauncherKrkrBridge.PREF_MEMUSAGE -> LauncherKrkrBridge.setMemUsage(ctx, value)
+            LauncherKrkrBridge.PREF_OGL_MAX_TEXSIZE -> LauncherKrkrBridge.setOglMaxTexsize(ctx, value)
+            LauncherKrkrBridge.PREF_OGL_ACCURATE_RENDER -> LauncherKrkrBridge.setOglAccurateRender(ctx, value)
+            LauncherKrkrBridge.PREF_FPS_LIMIT -> LauncherKrkrBridge.setFpsLimit(ctx, value)
+        }
     }
 
     /** 字体字段展示：已选字体显示其文件名，未选（内置）显示占位提示。 */
@@ -710,6 +1064,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         private const val INDEX_AUTO_PATCH_AUTO = 1
         private const val INDEX_AUTO_PATCH_OFF = 2
         // engine_version_options 数组顺序：auto/1.3.9/1.3.4/1.2.6。
+        private const val INDEX_ENGINE_VERSION_134 = 2
         private const val INDEX_ENGINE_VERSION_126 = 3
         const val EXTRA_GAME_ID = "extra_game_id"
         private const val STATE_ENGINE_VERSION_INDEX = "engine_version_index"

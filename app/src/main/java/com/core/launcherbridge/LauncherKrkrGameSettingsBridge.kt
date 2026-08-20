@@ -26,9 +26,9 @@ object LauncherKrkrGameSettingsBridge {
      * 字段语义分两类：
      * - engineVersion / scopedSaveDir / engineKernel：load() 返回全局叠加覆盖后的生效值，
      *   save() 整体回写（快照冻结，项目既有语义）。
-     * - defaultFont / forceDefaultFont：**可空覆盖语义**，null = 跟随全局（toJson 跳过 null
-     *   键，load() 不回填全局值）。save() 前调用方不得把全局回退值赋给这两键，否则
-     *   会把全局值固化成游戏覆盖，导致该游戏不再跟随全局修改。
+     * - defaultFont / forceDefaultFont / renderer 等渲染键：**可空覆盖语义**，null = 跟随
+     *   全局（toJson 跳过 null 键，load() 不回填全局值）。save() 前调用方不得把全局回退值
+     *   赋给这些键，否则会把全局值固化成游戏覆盖，导致该游戏不再跟随全局修改。
      */
     class KrkrEngineSettings(
         @JvmField var engineVersion: String = LauncherKrkrBridge.ENGINE_VERSION_AUTO,
@@ -36,6 +36,14 @@ object LauncherKrkrGameSettingsBridge {
         @JvmField var engineKernel: String = LauncherKrkrBridge.KERNEL_AUTO,
         @JvmField var defaultFont: String? = null,
         @JvmField var forceDefaultFont: Boolean? = null,
+        @JvmField var renderer: String? = null,
+        @JvmField var softwareDrawThread: String? = null,
+        @JvmField var softwareCompressTex: String? = null,
+        @JvmField var oglCompressTex: String? = null,
+        @JvmField var memUsage: String? = null,
+        @JvmField var oglMaxTexsize: String? = null,
+        @JvmField var oglAccurateRender: String? = null,
+        @JvmField var fpsLimit: String? = null,
     )
 
     private fun prefs(context: Context): SharedPreferences =
@@ -122,10 +130,39 @@ object LauncherKrkrGameSettingsBridge {
         o.put("engine_version", LauncherKrkrBridge.normalizeEngineVersion(settings.engineVersion))
         o.put("scoped_save_dir", settings.scopedSaveDir)
         o.put("engine_kernel", LauncherKrkrBridge.normalizeEngineKernel(settings.engineKernel))
-        // 字体两键为可空覆盖语义：null（跟随全局）不落 JSON，避免固化全局回退值。
+        // 字体/渲染键为可空覆盖语义：null（跟随全局）不落 JSON，避免固化全局回退值。
         settings.defaultFont?.let { o.put("default_font", it) }
         settings.forceDefaultFont?.let { o.put("force_default_font", it) }
+        putPrefIfValid(o, "renderer", settings.renderer) { LauncherKrkrBridge.normalizeRenderer(it) }
+        putPrefIfValid(o, "software_draw_thread", settings.softwareDrawThread) {
+            LauncherKrkrBridge.normalizeSoftwareDrawThread(it)
+        }
+        putPrefIfValid(o, "software_compress_tex", settings.softwareCompressTex) {
+            LauncherKrkrBridge.normalizeSoftwareCompressTex(it)
+        }
+        putPrefIfValid(o, "ogl_compress_tex", settings.oglCompressTex) {
+            LauncherKrkrBridge.normalizeOglCompressTex(it)
+        }
+        putPrefIfValid(o, "memusage", settings.memUsage) { LauncherKrkrBridge.normalizeMemUsage(it) }
+        putPrefIfValid(o, "ogl_max_texsize", settings.oglMaxTexsize) {
+            LauncherKrkrBridge.normalizeOglMaxTexsize(it)
+        }
+        putPrefIfValid(o, "ogl_accurate_render", settings.oglAccurateRender) {
+            LauncherKrkrBridge.normalizeOglAccurateRender(it)
+        }
+        putPrefIfValid(o, "fps_limit", settings.fpsLimit) { LauncherKrkrBridge.normalizeFpsLimit(it) }
         return o
+    }
+
+    /** 归一化后非空才落 JSON；空串（非法/未设置）不写入。 */
+    private inline fun putPrefIfValid(
+        o: JSONObject,
+        key: String,
+        value: String?,
+        normalize: (String?) -> String,
+    ) {
+        val normalized = normalize(value)
+        if (normalized.isNotEmpty()) o.put(key, normalized)
     }
 
     private fun applyOverride(settings: KrkrEngineSettings, o: JSONObject?) {
@@ -144,5 +181,47 @@ object LauncherKrkrGameSettingsBridge {
             settings.defaultFont = o.optString("default_font").takeIf { it.isNotEmpty() }
         }
         if (o.has("force_default_font")) settings.forceDefaultFont = o.optBoolean("force_default_font")
+        settings.renderer = normalizedOrNull(o, "renderer") { LauncherKrkrBridge.normalizeRenderer(it) }
+        settings.softwareDrawThread = normalizedOrNull(o, "software_draw_thread") {
+            LauncherKrkrBridge.normalizeSoftwareDrawThread(it)
+        }
+        settings.softwareCompressTex = normalizedOrNull(o, "software_compress_tex") {
+            LauncherKrkrBridge.normalizeSoftwareCompressTex(it)
+        }
+        settings.oglCompressTex = normalizedOrNull(o, "ogl_compress_tex") {
+            LauncherKrkrBridge.normalizeOglCompressTex(it)
+        }
+        settings.memUsage = normalizedOrNull(o, "memusage") { LauncherKrkrBridge.normalizeMemUsage(it) }
+        settings.oglMaxTexsize = normalizedOrNull(o, "ogl_max_texsize") {
+            LauncherKrkrBridge.normalizeOglMaxTexsize(it)
+        }
+        settings.oglAccurateRender = normalizedOrNull(o, "ogl_accurate_render") {
+            LauncherKrkrBridge.normalizeOglAccurateRender(it)
+        }
+        settings.fpsLimit = normalizedOrNull(o, "fps_limit") { LauncherKrkrBridge.normalizeFpsLimit(it) }
+    }
+
+    /** 渲染键按引擎键名读取覆盖值（null = 跟随全局），供启动链路组装 JSON 统一分发。 */
+    @JvmStatic
+    fun enginePrefOverride(settings: KrkrEngineSettings, engineKey: String): String? = when (engineKey) {
+        "renderer" -> settings.renderer
+        "software_draw_thread" -> settings.softwareDrawThread
+        "software_compress_tex" -> settings.softwareCompressTex
+        "ogl_compress_tex" -> settings.oglCompressTex
+        "memusage" -> settings.memUsage
+        "ogl_max_texsize" -> settings.oglMaxTexsize
+        "ogl_accurate_render" -> settings.oglAccurateRender
+        "fps_limit" -> settings.fpsLimit
+        else -> null
+    }
+
+    private inline fun normalizedOrNull(
+        o: JSONObject,
+        key: String,
+        normalize: (String) -> String,
+    ): String? {
+        if (!o.has(key)) return null
+        val normalized = normalize(o.optString(key))
+        return normalized.ifEmpty { null }
     }
 }
