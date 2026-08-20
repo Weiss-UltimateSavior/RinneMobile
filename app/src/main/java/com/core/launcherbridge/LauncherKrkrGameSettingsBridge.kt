@@ -20,11 +20,22 @@ object LauncherKrkrGameSettingsBridge {
     private const val PREF_NAME = "krkr_game_overrides"
     private const val KEY_PREFIX = "game_"
 
-    /** 单款游戏的 KRKR 引擎最终生效配置（全局默认叠加游戏覆盖）。 */
+    /**
+     * 单款游戏的 KRKR 引擎配置。
+     *
+     * 字段语义分两类：
+     * - engineVersion / scopedSaveDir / engineKernel：load() 返回全局叠加覆盖后的生效值，
+     *   save() 整体回写（快照冻结，项目既有语义）。
+     * - defaultFont / forceDefaultFont：**可空覆盖语义**，null = 跟随全局（toJson 跳过 null
+     *   键，load() 不回填全局值）。save() 前调用方不得把全局回退值赋给这两键，否则
+     *   会把全局值固化成游戏覆盖，导致该游戏不再跟随全局修改。
+     */
     class KrkrEngineSettings(
         @JvmField var engineVersion: String = LauncherKrkrBridge.ENGINE_VERSION_AUTO,
         @JvmField var scopedSaveDir: Boolean = true,
         @JvmField var engineKernel: String = LauncherKrkrBridge.KERNEL_AUTO,
+        @JvmField var defaultFont: String? = null,
+        @JvmField var forceDefaultFont: Boolean? = null,
     )
 
     private fun prefs(context: Context): SharedPreferences =
@@ -38,8 +49,10 @@ object LauncherKrkrGameSettingsBridge {
     }
 
     /**
-     * 返回该游戏最终生效的 KRKR 引擎设置：全局默认叠加该游戏的覆盖项。
-     * gameId <= 0 时退化为全局设置。
+     * 返回该游戏的 KRKR 引擎设置：engineVersion 等为全局叠加覆盖后的生效值，
+     * defaultFont / forceDefaultFont 为覆盖状态（null = 跟随全局，生效值由调用方按
+     * <code>settings.defaultFont ?: LauncherKrkrBridge.getDefaultFont(context)</code>
+     * 这类模式取）。
      */
     @JvmStatic
     fun load(context: Context?, gameId: Long): KrkrEngineSettings {
@@ -87,13 +100,6 @@ object LauncherKrkrGameSettingsBridge {
         prefs(context).edit().clear().apply()
     }
 
-    /** 该游戏最终生效的引擎版本；gameId <= 0 时回退全局。 */
-    @JvmStatic
-    fun resolveEngineVersion(context: Context?, gameId: Long): String {
-        if (gameId <= 0) return LauncherKrkrBridge.getEngineVersion(context)
-        return load(context, gameId).engineVersion
-    }
-
     /** 该游戏最终生效的独立存档开关；gameId <= 0 时回退全局。 */
     @JvmStatic
     fun resolveScopedSaveDir(context: Context?, gameId: Long): Boolean {
@@ -116,6 +122,9 @@ object LauncherKrkrGameSettingsBridge {
         o.put("engine_version", LauncherKrkrBridge.normalizeEngineVersion(settings.engineVersion))
         o.put("scoped_save_dir", settings.scopedSaveDir)
         o.put("engine_kernel", LauncherKrkrBridge.normalizeEngineKernel(settings.engineKernel))
+        // 字体两键为可空覆盖语义：null（跟随全局）不落 JSON，避免固化全局回退值。
+        settings.defaultFont?.let { o.put("default_font", it) }
+        settings.forceDefaultFont?.let { o.put("force_default_font", it) }
         return o
     }
 
@@ -130,5 +139,10 @@ object LauncherKrkrGameSettingsBridge {
         if (o.has("engine_kernel")) {
             settings.engineKernel = LauncherKrkrBridge.normalizeEngineKernel(o.optString("engine_kernel"))
         }
+        // 空串是旧版本无条件回写固化的全局空值，视为无覆盖（迁移）。
+        if (o.has("default_font")) {
+            settings.defaultFont = o.optString("default_font").takeIf { it.isNotEmpty() }
+        }
+        if (o.has("force_default_font")) settings.forceDefaultFont = o.optBoolean("force_default_font")
     }
 }

@@ -26,6 +26,14 @@
     <string name="settings_kr_kernel_switch_message">krkrsdl3 is a brand-new engine kernel with unpredictable stability and may be incompatible with some games. Switch anyway?</string>
     <string name="settings_kr_kernel_switch_confirm">Switch</string>
     <string name="settings_krkr_unified_save">Unified Save Directory for KRKR</string>
+    <string name="settings_kr_default_font">Default Font</string>
+    <string name="settings_kr_default_font_hint">Tap to pick a font file</string>
+    <string name="settings_kr_default_font_restore">Restore built-in font</string>
+    <string name="settings_kr_default_font_restore_follow_global">Follow global settings</string>
+    <string name="settings_kr_default_font_choose">Choose font file</string>
+    <string name="settings_kr_font_pick_failed">Cannot read the selected file, please pick again</string>
+    <string name="settings_kr_font_invalid_file">Not a font file (ttf/ttc/otf/otc supported)</string>
+    <string name="settings_kr_force_default_font">Force using default font</string>
     <string name="settings_artemis_engine_version">Artemis Engine Version</string>
     <!-- Artemis engine version dropdown options: first item reuses settings_auto for locale fallback consistency -->
     <string-array name="artemis_engine_version_options">

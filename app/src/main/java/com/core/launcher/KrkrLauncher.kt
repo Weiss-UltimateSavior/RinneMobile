@@ -10,6 +10,7 @@ import com.akira.tyranoemu.remote.Kirikiroid126
 import com.akira.tyranoemu.remote.Kirikiroid134
 import com.akira.tyranoemu.remote.Kirikiroid139
 import com.core.CorePreferences
+import com.core.launcherbridge.LauncherKrkrBridge
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -36,6 +37,10 @@ internal object KrkrLauncher {
         engineVersion: String? = "auto",
         safFileFallback: Boolean = false,
         scopedSaveDir: Boolean? = null,
+        defaultFont: String? = null,
+        forceDefaultFont: Boolean? = null,
+        fontScopeDefault: String? = null,
+        fontScopeForce: String? = null,
     ): Intent {
         val resolvedPath = if (originMode) null else resolvePath(context, gamePath, launchTarget)
         val rawRootPath = ScriptEngineLaunchers.stripFileScheme(
@@ -108,6 +113,21 @@ internal object KrkrLauncher {
             putExtra("scopedSaveName", saveName)
             scopedSaveRoot?.let { putExtra("scopedSaveRoot", it) }
             putExtra("safFileFallback", safFileFallback)
+            // 字体偏好（krkr2 专用）：引擎读 XML 偏好文件（GlobalPreference.xml / 游戏目录
+            // Kirikiroid2Preference.xml），由 KirikiroidLauncherBaseActivity 落地。
+            // 两键作用域独立：scope 非空时空串=清除该作用域字体键（恢复内置/跟随全局），
+            // 未传 scope（旧调用方）仅在值非空时注入，不触发清除。
+            val normalizedFont = LauncherKrkrBridge.normalizeFontPath(defaultFont)
+            if (!fontScopeDefault.isNullOrEmpty()) {
+                putExtra("font_scope_default", fontScopeDefault)
+                putExtra("default_font", normalizedFont)
+            } else if (normalizedFont.isNotEmpty()) {
+                putExtra("default_font", normalizedFont)
+            }
+            if (forceDefaultFont != null) {
+                putExtra("force_default_font", forceDefaultFont)
+                if (!fontScopeForce.isNullOrEmpty()) putExtra("font_scope_force", fontScopeForce)
+            }
             addFlags(engineIntentFlags())
             LauncherUiBridge.appendEngineThemeExtrasSafely(this, context)
         }

@@ -13,6 +13,12 @@ object CorePreferences {
     /** KRKR 引擎内核偏好键（krkrsdl3 集成，值 = auto/kirikiri2/krkrsdl3，默认 auto）。 */
     const val KEY_KR_ENGINE_KERNEL = "kr_engine_kernel"
 
+    /** KRKR（Kirikiroid2）默认字体偏好键：字体文件路径，空串表示使用内置字体（主源）。 */
+    const val KEY_KR_DEFAULT_FONT = "kr_default_font"
+
+    /** KRKR（Kirikiroid2）强制使用默认字体偏好键（主源）。 */
+    const val KEY_KR_FORCE_DEFAULT_FONT = "kr_force_default_font"
+
     /** Artemis 引擎版本偏好键（应用级默认，取值 auto/1/2/3，主源）。 */
     const val KEY_ARTEMIS_ENGINE_VERSION = "artemis_engine_version"
 

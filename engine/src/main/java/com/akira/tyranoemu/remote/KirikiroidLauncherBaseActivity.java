@@ -12,6 +12,7 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Xml;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +25,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlSerializer;
+
 import bridge.NativeBridge;
 import com.core.engine.R;
 import org.tvp.kirikiri2.KR2Activity;
@@ -47,6 +58,9 @@ import org.tvp.kirikiri2.KR2Activity;
 public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
     private static final String TAG = "Kirikiroid2";
     private static final long SAFE_FALLBACK_REVEAL_MS = 20_000L;
+    /** Hidden Item keys tracking the font values this launcher injected into the engine XML. */
+    private static final String MARKER_FONT = "_rinne_injected_default_font";
+    private static final String MARKER_FORCE = "_rinne_injected_force_default_font";
     @SuppressLint("StaticFieldLeak") // Dedicated process activity; cleared immediately before process termination.
     public static Context app;
     private FrameLayout mask;
@@ -84,6 +98,8 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
         launchOrientationGuardEnabled = !getIntent().getBooleanExtra("originMode", false);
         applyKrkrRequestedOrientation();
         doSetSystemUiVisibility();
+        // Must run before super.onCreate (native library loading and preference singleton construction).
+        applyFontPreferences();
         super.onCreate(bundle);
         app = this;
         if (getIntent().getBooleanExtra("originMode", false)) {
@@ -162,6 +178,254 @@ public abstract class KirikiroidLauncherBaseActivity extends KR2Activity {
             finish();
         }
     }
+
+    /**
+     * Persists font preferences from the launch Intent into the XML preference files the
+     * native engine actually reads. Confirmed from krkr2 sources: FontImpl/FontSystem read
+     * default_font / force_default_font via IndividualConfigManager, which first checks the
+     * game directory's Kirikiroid2Preference.xml and falls back to
+     * {filesDir}/.preference/GlobalPreference.xml for missing keys. SharedPreferences
+     * (including Cocos2dxPrefsFile) has no effect on font keys. Must run before native
+     * singleton construction (super.onCreate loads the libraries).
+     *
+     * Both keys have independent scopes (font_scope_default / font_scope_force extras):
+     *   game   -> write the game directory XML (per-game override)
+     *   global -> write the global XML and clear the stale key from the game directory XML
+     * Per-key scopes prevent freezing the other key's global fallback value into the game
+     * directory when only one key is overridden.
+     *
+     * Ownership markers: the launcher is the source of truth on writes — an injected
+     * value always overwrites whatever the file holds, including values the user set
+     * through the engine's own preference UI. Only the unset path is protected: when
+     * the launcher wants a key removed (empty font / restore), a global XML entry is
+     * removed only while it still holds the value we injected last time (tracked via
+     * a hidden _rinne_injected_* Item); a value the user changed in the engine UI is
+     * left alone. Game directory files are launcher-managed and cleared unconditionally.
+     * Known limitation: keys written by pre-marker builds carry no marker and survive
+     * one restore cycle; picking a launcher font again re-establishes the marker.
+     */
+    private void applyFontPreferences() {
+        Intent intent = getIntent();
+        if (intent == null) return;
+        File globalFile = globalPreferenceFile();
+        if (globalFile == null) {
+            Log.w(TAG, "font pref global file unavailable");
+            return;
+        }
+        File gameFile = gamePreferenceFile();
+        // Keys fail independently: a read-only game directory must not block the other key.
+        if (intent.hasExtra("default_font")) {
+            try {
+                String font = safeTrim(intent.getStringExtra("default_font"));
+                File target = fontTarget(intent, "font_scope_default", gameFile, globalFile);
+                boolean changed = applyFontItem(
+                        target, "default_font", MARKER_FONT, font.isEmpty() ? null : font);
+                Log.i(TAG, "font pref default_font='" + font + "' -> " + target
+                        + (changed ? "" : " (unchanged)"));
+                clearStaleFontItem(target, gameFile, "default_font", MARKER_FONT);
+            } catch (Exception error) {
+                Log.w(TAG, "apply default_font failed", error);
+            }
+        }
+        if (intent.hasExtra("force_default_font")) {
+            try {
+                boolean force = intent.getBooleanExtra("force_default_font", false);
+                File target = fontTarget(intent, "font_scope_force", gameFile, globalFile);
+                boolean changed = applyFontItem(
+                        target, "force_default_font", MARKER_FORCE, force ? "1" : "0");
+                Log.i(TAG, "font pref force_default_font=" + force + " -> " + target
+                        + (changed ? "" : " (unchanged)"));
+                clearStaleFontItem(target, gameFile, "force_default_font", MARKER_FORCE);
+            } catch (Exception error) {
+                Log.w(TAG, "apply force_default_font failed", error);
+            }
+        }
+    }
+
+    /** {filesDir}/.preference/GlobalPreference.xml; null when the directory cannot be created. */
+    private File globalPreferenceFile() {
+        File dir = new File(getFilesDir(), ".preference");
+        if (!dir.isDirectory() && !dir.mkdirs()) return null;
+        return new File(dir, "GlobalPreference.xml");
+    }
+
+    /** Game directory Kirikiroid2Preference.xml; null when projectRoot is unusable (content:// or origin mode). */
+    private File gamePreferenceFile() {
+        String root = gameRootDir();
+        if (root.isEmpty()) return null;
+        return new File(root, "Kirikiroid2Preference.xml");
+    }
+
+    /** Resolves the target file for one key: the game directory when scoped to game, else global. */
+    private static File fontTarget(Intent intent, String scopeExtra, File gameFile, File globalFile) {
+        if ("game".equals(intent.getStringExtra(scopeExtra)) && gameFile != null) {
+            return gameFile;
+        }
+        return globalFile;
+    }
+
+    /**
+     * When a key lands in the global file, removes its stale copy (including any
+     * leftover _rinne_injected_* marker) from the game directory XML so the game
+     * follows the global value. Game files are launcher-managed: removal is
+     * unconditional (legacy pre-marker builds wrote keys without markers).
+     */
+    private static void clearStaleFontItem(File target, File gameFile, String name, String markerName)
+            throws Exception {
+        if (target == gameFile || gameFile == null || !gameFile.isFile()) return;
+        applyFontItem(gameFile, name, markerName, null, false);
+    }
+
+    private String gameRootDir() {
+        Intent intent = getIntent();
+        if (intent == null) return "";
+        String root = safeTrim(intent.getStringExtra("projectRoot"));
+        if (root.isEmpty() || root.startsWith("content://")) return "";
+        return root;
+    }
+
+    private static String safeTrim(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    /**
+     * Writes one preference key into a tinyxml2-format XML file, preserving all other
+     * Item/Custom/KeyMap entries. Boolean-style keys are stored as "1"/"0" integer strings
+     * because the engine parses them with GetValue&lt;bool&gt; via int conversion.
+     *
+     * value == null means the launcher wants the key unset. With trackOwnership the file
+     * is shared with the engine's own preference UI: a non-null value always overwrites
+     * the current entry (the launcher is the source of truth on writes), while the unset
+     * path removes the key only while it still equals the value recorded in markerName;
+     * the marker is kept in sync on writes. Without ownership tracking the key is
+     * written/removed directly.
+     *
+     * @return whether the file content changed.
+     */
+    private static boolean applyFontItem(
+            File file, String name, String markerName, String value) throws Exception {
+        return applyFontItem(file, name, markerName, value, true);
+    }
+
+    private static boolean applyFontItem(
+            File file, String name, String markerName, String value, boolean trackOwnership)
+            throws Exception {
+        LinkedHashMap<String, String> items = new LinkedHashMap<>();
+        List<String[]> customs = new ArrayList<>();
+        LinkedHashMap<Integer, Integer> keyMaps = new LinkedHashMap<>();
+        if (file.isFile()) {
+            XmlPullParser parser = Xml.newPullParser();
+            try (FileInputStream in = new FileInputStream(file)) {
+                parser.setInput(in, null);
+                for (int event = parser.getEventType();
+                        event != XmlPullParser.END_DOCUMENT;
+                        event = parser.next()) {
+                    if (event != XmlPullParser.START_TAG) continue;
+                    String tag = parser.getName();
+                    String key = parser.getAttributeValue(null, "key");
+                    String attr = parser.getAttributeValue(null, "value");
+                    if ("Item".equals(tag)) {
+                        if (key != null && attr != null) items.put(key, attr);
+                    } else if ("Custom".equals(tag)) {
+                        if (key != null && attr != null) customs.add(new String[]{key, attr});
+                    } else if ("KeyMap".equals(tag) && key != null && attr != null) {
+                        try {
+                            int keyCode = Integer.parseInt(key);
+                            int mapped = Integer.parseInt(attr);
+                            if (keyCode != 0 && mapped != 0) keyMaps.put(keyCode, mapped);
+                        } catch (NumberFormatException ignored) {
+                        }
+                    }
+                }
+            }
+        }
+        boolean changed = false;
+        if (value != null) {
+            changed |= !value.equals(items.put(name, value));
+            if (trackOwnership) {
+                changed |= !value.equals(items.put(markerName, value));
+            }
+        } else if (trackOwnership) {
+            String current = items.get(name);
+            String marker = items.get(markerName);
+            if (marker != null) {
+                if (current == null || current.equals(marker)) {
+                    // Still our injected value (or already gone): remove key and marker.
+                    changed |= items.remove(name) != null;
+                    changed |= items.remove(markerName) != null;
+                } else {
+                    // The user changed the value via the engine UI after our injection: disown.
+                    changed |= items.remove(markerName) != null;
+                }
+            }
+            // marker == null: never injected by us; the entry belongs to the engine UI. Untouched.
+        } else {
+            changed |= items.remove(name) != null;
+            changed |= items.remove(markerName) != null;
+        }
+        if (!changed) return false;
+        writePreferenceXml(file, items, customs, keyMaps);
+        return true;
+    }
+
+    /**
+     * Serializes the preference file atomically: content goes to a temp file next to the
+     * target which is then renamed over it, so an interrupted write cannot truncate the
+     * engine's whole preference file (renderers, key maps, etc.).
+     */
+    private static void writePreferenceXml(
+            File file,
+            LinkedHashMap<String, String> items,
+            List<String[]> customs,
+            LinkedHashMap<Integer, Integer> keyMaps) throws Exception {
+        File parent = file.getParentFile();
+        if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
+            Log.w(TAG, "font pref cannot create parent dir " + parent);
+            return;
+        }
+        File tmp = new File(parent, file.getName() + ".tmp");
+        XmlSerializer serializer = Xml.newSerializer();
+        try (FileOutputStream out = new FileOutputStream(tmp)) {
+            serializer.setOutput(out, "UTF-8");
+            serializer.startDocument("UTF-8", true);
+            serializer.startTag("", "GlobalPreference");
+            for (Map.Entry<String, String> item : items.entrySet()) {
+                serializer.startTag("", "Item");
+                serializer.attribute("", "key", item.getKey());
+                serializer.attribute("", "value", item.getValue());
+                serializer.endTag("", "Item");
+            }
+            for (String[] custom : customs) {
+                serializer.startTag("", "Custom");
+                serializer.attribute("", "key", custom[0]);
+                serializer.attribute("", "value", custom[1]);
+                serializer.endTag("", "Custom");
+            }
+            for (Map.Entry<Integer, Integer> keyMap : keyMaps.entrySet()) {
+                serializer.startTag("", "KeyMap");
+                serializer.attribute("", "key", String.valueOf(keyMap.getKey()));
+                serializer.attribute("", "value", String.valueOf(keyMap.getValue()));
+                serializer.endTag("", "KeyMap");
+            }
+            serializer.endTag("", "GlobalPreference");
+            serializer.endDocument();
+            serializer.flush();
+        }
+        if (!tmp.renameTo(file)) {
+            // renameTo over an existing target can fail on some filesystems: retry after delete.
+            if (file.exists() && file.delete()) {
+                if (tmp.renameTo(file)) return;
+                // The target is gone and tmp holds the only complete copy: keep it for a
+                // later recovery attempt instead of deleting (never destroy both copies).
+                Log.w(TAG, "font pref rename retry failed, kept temp " + tmp);
+                return;
+            }
+            // Target intact, only the swap failed: tmp is garbage and safe to remove.
+            Log.w(TAG, "font pref cannot replace " + file);
+            tmp.delete();
+        }
+    }
+
     @Override
     public void onLoadNativeLibraries() {
         String gameLibrary = gameLibraryForBridge();

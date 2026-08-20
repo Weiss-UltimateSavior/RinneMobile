@@ -26,6 +26,14 @@
     <string name="settings_kr_kernel_switch_message">krkrsdl3 は新しいエンジンカーネルで、安定性は予測できず、一部のゲームと互換性がない可能性があります。切り替えますか？</string>
     <string name="settings_kr_kernel_switch_confirm">切り替える</string>
     <string name="settings_krkr_unified_save">KRKR 共通セーブディレクトリ</string>
+    <string name="settings_kr_default_font">デフォルトフォント</string>
+    <string name="settings_kr_default_font_hint">タップしてフォントファイルを選択</string>
+    <string name="settings_kr_default_font_restore">組込みフォントに戻す</string>
+    <string name="settings_kr_default_font_restore_follow_global">グローバル設定に従う</string>
+    <string name="settings_kr_default_font_choose">フォントファイルを選択</string>
+    <string name="settings_kr_font_pick_failed">選択したファイルを読み取れません。選び直してください</string>
+    <string name="settings_kr_font_invalid_file">フォントファイルではありません（ttf/ttc/otf/otc 対応）</string>
+    <string name="settings_kr_force_default_font">強制的にデフォルトフォントを使用</string>
     <string name="settings_artemis_engine_version">Artemis エンジンバージョン</string>
     <!-- Artemis エンジンバージョン候補：先頭項目は settings_auto を参照しロケール回退を維持 -->
     <string-array name="artemis_engine_version_options">

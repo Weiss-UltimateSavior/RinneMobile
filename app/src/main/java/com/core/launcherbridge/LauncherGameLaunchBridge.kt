@@ -236,6 +236,10 @@ object LauncherGameLaunchBridge {
      * 构建进入原生 KRKR 引擎（origin 模式、无具体游戏路径）的 Intent。
      * 供设置页面"进入原生 KRKR"入口使用，避免 com.apps 直接依赖 EmulatorLauncher。
      *
+     * origin 模式不注入字体偏好：引擎原生界面直接读写 XML 偏好（含我们注入并标记的
+     * 字体键）；启动游戏时 applyFontPreferences 的 marker 归属机制会保护用户在引擎
+     * 内手动改过的值不被清除。
+     *
      * @return 可用于 [Activity.startActivity] 的 Intent；上下文无效时返回 null
      */
     @JvmStatic
@@ -404,24 +408,33 @@ object LauncherGameLaunchBridge {
         val pkg = emulatorPackage.trim()
         try {
             if (EnginePackages.isInternalKrkr(pkg)) {
-                // 内核决策：per-game 覆盖优先，无覆盖时回退全局。
-                val krEngineKernel = LauncherKrkrGameSettingsBridge.resolveEngineKernel(context, game.id)
-                if (krEngineKernel == LauncherKrkrBridge.KERNEL_KRKRSDL3) {
-                    val krScopedSaveDir = LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, game.id)
+                // 内核决策：per-game 覆盖优先，无覆盖时回退全局。一次 load 取整个覆盖
+                // 快照（engineVersion/scopedSaveDir/kernel 是叠加后的生效值，字体两键是
+                // 覆盖状态 null=跟随全局），避免同一 gameId 重复解析 JSON。
+                val krkr = LauncherKrkrGameSettingsBridge.load(context, game.id)
+                if (krkr.engineKernel == LauncherKrkrBridge.KERNEL_KRKRSDL3) {
                     return startActivitySafely(
                         context,
                         EmulatorLauncher.buildKrkrsdl3Intent(
-                            context, game.rootUri, launchTarget, krScopedSaveDir,
+                            context, game.rootUri, launchTarget, krkr.scopedSaveDir,
                         ),
                     )
                 }
-                // Kirikiroid2 路由（内核=auto/kirikiri2 时走原有逻辑）
-                val krEngineVersion = LauncherKrkrGameSettingsBridge.resolveEngineVersion(context, game.id)
-                val krScopedSaveDir = LauncherKrkrGameSettingsBridge.resolveScopedSaveDir(context, game.id)
+                // Kirikiroid2 路由（内核=auto/kirikiri2 时走原有逻辑）。
+                // krkr2 字体偏好：两键作用域独立判定（有覆盖→写游戏目录
+                // Kirikiroid2Preference.xml，无覆盖→写全局 GlobalPreference.xml
+                // 并清游戏目录残留键，保证跟随全局）。
+                val defaultFont = krkr.defaultFont ?: LauncherKrkrBridge.getDefaultFont(context)
+                val forceDefaultFont = krkr.forceDefaultFont
+                    ?: LauncherKrkrBridge.isForceDefaultFont(context)
+                val fontScopeDefault = if (krkr.defaultFont != null) "game" else "global"
+                val fontScopeForce = if (krkr.forceDefaultFont != null) "game" else "global"
                 return startActivitySafely(
                     context,
                     EmulatorLauncher.buildInternalKrkrIntent(
-                        context, game.rootUri, launchTarget, false, krEngineVersion, false, krScopedSaveDir,
+                        context, game.rootUri, launchTarget, false, krkr.engineVersion, false,
+                        krkr.scopedSaveDir, defaultFont, forceDefaultFont,
+                        fontScopeDefault, fontScopeForce,
                     ),
                 )
             }

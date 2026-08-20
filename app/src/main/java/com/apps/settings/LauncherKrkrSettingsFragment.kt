@@ -1,12 +1,15 @@
 package com.apps.settings
 
 import android.content.ActivityNotFoundException
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.apps.HDModel.HdEmbeddedActivityOwner
 import com.apps.HDModel.HdModeActivity
 import com.apps.HDModel.LauncherDialogRouter
@@ -15,6 +18,7 @@ import com.apps.theme.LauncherTheme
 import com.apps.widget.LauncherTabletPortraitScaler
 import com.core.R
 import com.core.databinding.ActivityLauncherKrkrSettingsBinding
+import com.core.launcher.ScriptEngineLaunchers
 import com.core.launcherbridge.LauncherGameLaunchBridge
 import com.core.launcherbridge.LauncherArtemisGameSettingsBridge
 import com.core.launcherbridge.LauncherKrkrBridge
@@ -24,6 +28,10 @@ import com.core.launcherbridge.LauncherRepositoryBridge
 import com.core.model.EngineType
 import com.core.ons.OnsSettings
 import com.core.util.DevLogger
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * 引擎设置页（重构计划 9.9 阶段 110 自 LauncherKrkrSettingsActivity 抽取）。
@@ -44,6 +52,13 @@ class LauncherKrkrSettingsFragment : Fragment() {
     private var gameId = 0L
     /** per-game 模式下目标游戏的引擎类型；全局模式为 null。 */
     private var perGameEngine: EngineType? = null
+    /** 进入页面时的强制字体生效值（全局叠加覆盖）；save() 据此判断用户是否实际拨动开关。 */
+    private var initialForceDefaultFont = false
+    /** 默认字体文件选择器：取到 content/file Uri 后转真实路径并回填（空结果不处理）。 */
+    private val fontPicker =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) onFontPicked(uri)
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -139,8 +154,13 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.artemisEngineVersionText.setOnClickListener { showArtemisEngineVersionPicker() }
         currentBinding.artemisAutoPatchText.setOnClickListener { showArtemisAutoPatchPicker() }
         currentBinding.onsEncodingText.setOnClickListener { showOnsEncodingPicker() }
+        currentBinding.krDefaultFontText.setOnClickListener { showDefaultFontChoices() }
         // krkrsdl3 内核开关：开启需确认（全新引擎内核，稳定性不可预测）。
         currentBinding.krEngineKernelSwitch.setOnCheckedChangeListener { _, checked ->
+            // 可见性重估必须先于 confirming guard：确认回调程序化置位 isChecked=true 时
+            // 会被 guard 拦截提前返回，若重估放在 guard 后，krkrsdl3 生效后字体区段
+            // 会残留显示（取消路径反而正常）。
+            updateKrFontSectionVisibility()
             if (kernelSwitchConfirming) return@setOnCheckedChangeListener
             if (!checked || !isAdded) return@setOnCheckedChangeListener
             currentBinding.krEngineKernelSwitch.isChecked = false
@@ -161,6 +181,7 @@ class LauncherKrkrSettingsFragment : Fragment() {
         val currentBinding = binding ?: return
         LauncherTheme.styleMaterialSwitch(currentBinding.krScopedSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.krEngineKernelSwitch)
+        LauncherTheme.styleMaterialSwitch(currentBinding.krForceDefaultFontSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.artemisRotateSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.onsScopedSwitch)
         LauncherTheme.styleMaterialSwitch(currentBinding.onsStretchSwitch)
@@ -211,6 +232,8 @@ class LauncherKrkrSettingsFragment : Fragment() {
         currentBinding.krEngineKernelSwitch.isChecked =
             LauncherKrkrBridge.KERNEL_KRKRSDL3 == kernel
         kernelSwitchConfirming = false
+        updateKrFontSectionVisibility()
+        loadKrkrFontConfig()
         loadArtemisConfig(savedInstanceState)
         val onsSettings = if (isPerGameMode()) {
             LauncherOnsGameSettingsBridge.load(requireContext(), gameId)
@@ -254,6 +277,13 @@ class LauncherKrkrSettingsFragment : Fragment() {
                     perGame.engineVersion = version
                     perGame.engineKernel = kernel
                     perGame.scopedSaveDir = currentBinding.krScopedSwitch.isChecked
+                    // 默认字体在选取/恢复时已即时写回，此处不覆盖（load 已带回最新覆盖状态）。
+                    // 强制开关仅在用户相对进入页面时的生效值实际拨动过才落覆盖（null=跟随全局），
+                    // 未拨动时保留 load() 带回的原覆盖状态，避免把全局回退值固化进游戏 JSON。
+                    val currentForce = currentBinding.krForceDefaultFontSwitch.isChecked
+                    if (currentForce != initialForceDefaultFont) {
+                        perGame.forceDefaultFont = currentForce
+                    }
                     LauncherKrkrGameSettingsBridge.save(requireContext(), gameId, perGame)
                     Toast.makeText(
                         requireContext(),
@@ -297,6 +327,11 @@ class LauncherKrkrSettingsFragment : Fragment() {
         LauncherKrkrBridge.setEngineVersion(requireContext(), version)
         LauncherKrkrBridge.setEngineKernel(requireContext(), kernel)
         LauncherKrkrBridge.setKrScopedSaveDir(requireContext(), currentBinding.krScopedSwitch.isChecked)
+        // 默认字体在选取/恢复时已即时写回，此处不覆盖。
+        LauncherKrkrBridge.setForceDefaultFont(
+            requireContext(),
+            currentBinding.krForceDefaultFontSwitch.isChecked,
+        )
         val onsSettings = OnsSettings.load(requireContext())
         onsSettings.scopedSaveDir = currentBinding.onsScopedSwitch.isChecked
         onsSettings.stretchFull = currentBinding.onsStretchSwitch.isChecked
@@ -348,6 +383,167 @@ class LauncherKrkrSettingsFragment : Fragment() {
         val labels = engineVersionLabels()
         selectedEngineVersionIndex = if (index in labels.indices) index else 0
         currentBinding.engineVersionText.setText(labels[selectedEngineVersionIndex])
+        updateKrForceFontRowVisibility()
+    }
+
+    private fun loadKrkrFontConfig() {
+        val currentBinding = binding ?: return
+        val isKrkrGame = isPerGameMode() && perGameEngine == EngineType.KIRIKIRI
+        val setting = if (isKrkrGame) {
+            LauncherKrkrGameSettingsBridge.load(requireContext(), gameId)
+        } else {
+            null
+        }
+        // setting?.defaultFont 为 null 即跟随全局，取全局值；非空为游戏覆盖值。
+        val defaultFont = setting?.defaultFont ?: LauncherKrkrBridge.getDefaultFont(requireContext())
+        val forceDefault = setting?.forceDefaultFont
+            ?: LauncherKrkrBridge.isForceDefaultFont(requireContext())
+        initialForceDefaultFont = forceDefault
+        renderDefaultFontField(defaultFont)
+        currentBinding.krForceDefaultFontSwitch.isChecked = forceDefault
+    }
+
+    /**
+     * 字体区段可见性：krkrsdl3 内核走 buildKrkrsdl3Intent 路由不注入字体参数，
+     * 设置无效，按当前内核开关状态隐藏避免误导（全局与 per-game 模式一致）。
+     */
+    private fun updateKrFontSectionVisibility() {
+        val currentBinding = binding ?: return
+        val isKrkr = !isPerGameMode() || perGameEngine == EngineType.KIRIKIRI
+        val kernelSdl3 = currentBinding.krEngineKernelSwitch.isChecked
+        currentBinding.krFontSection.visibility =
+            if (isKrkr && !kernelSdl3) View.VISIBLE else View.GONE
+    }
+
+    /** 1.2.6 引擎无 force_default_font 消费逻辑（libgame126.so 无此键），隐藏开关避免误导。 */
+    private fun updateKrForceFontRowVisibility() {
+        val currentBinding = binding ?: return
+        val isKrkr = !isPerGameMode() || perGameEngine == EngineType.KIRIKIRI
+        currentBinding.krForceFontRow.visibility =
+            if (isKrkr && selectedEngineVersionIndex == INDEX_ENGINE_VERSION_126) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+    }
+
+    /** 字体字段展示：已选字体显示其文件名，未选（内置）显示占位提示。 */
+    private fun renderDefaultFontField(fontPath: String?) {
+        val currentBinding = binding ?: return
+        val path = fontPath?.trim().orEmpty()
+        if (path.isEmpty()) {
+            currentBinding.krDefaultFontText.text = null
+            return
+        }
+        currentBinding.krDefaultFontText.text = path
+    }
+
+    /** 点击默认字体字段：恢复（per-game=跟随全局，全局=使用内置）或经文件选择器挑选字体。 */
+    private fun showDefaultFontChoices() {
+        // per-game 的"恢复"语义是清除字体区段全部覆盖（字体路径 + 强制开关）、
+        // 回退全局值（全局设了字体仍会用全局字体），与全局模式的"恢复内置字体"
+        // 不同，文案需区分以免误导。
+        val restoreLabel = if (isPerGameMode() && perGameEngine == EngineType.KIRIKIRI) {
+            getString(R.string.settings_kr_default_font_restore_follow_global)
+        } else {
+            getString(R.string.settings_kr_default_font_restore)
+        }
+        LauncherDialogRouter.showStandardActionChoices(
+            requireContext(),
+            getString(R.string.settings_kr_default_font),
+            arrayOf(
+                restoreLabel,
+                getString(R.string.settings_kr_default_font_choose),
+            ),
+        ) { index ->
+            when (index) {
+                0 -> restoreDefaultFont()
+                1 -> pickDefaultFontFile()
+            }
+        }
+    }
+
+    private fun restoreDefaultFont() {
+        if (isPerGameMode() && perGameEngine == EngineType.KIRIKIRI) {
+            // per-game：清除字体区段两键覆盖（null=跟随全局）。这是强制开关覆盖
+            // 唯一的手动退出通道（否则只能整页清空 per-game 设置）。
+            val perGame = LauncherKrkrGameSettingsBridge.load(requireContext(), gameId)
+            perGame.defaultFont = null
+            perGame.forceDefaultFont = null
+            LauncherKrkrGameSettingsBridge.save(requireContext(), gameId, perGame)
+            // 回显跟随全局后的开关状态并重置拨动基线，避免 save() 误判为用户拨动。
+            val globalForce = LauncherKrkrBridge.isForceDefaultFont(requireContext())
+            binding?.krForceDefaultFontSwitch?.isChecked = globalForce
+            initialForceDefaultFont = globalForce
+        } else {
+            LauncherKrkrBridge.setDefaultFont(requireContext(), "")
+        }
+        renderDefaultFontField("")
+    }
+
+    /**
+     * 启动系统文件选择器挑选字体。不按 font MIME 过滤：多数文件管理器把 ttf/otf
+     * 上报为 octet-stream，font 形态过滤后列表为空；改用通配类型，由选取后的
+     * 扩展名校验兜底。
+     */
+    private fun pickDefaultFontFile() {
+        fontPicker.launch("*/*")
+    }
+
+    private fun onFontPicked(uri: Uri) {
+        // 快速路径：已映射为真实文件路径的 URI 只做轻量 stat（isFile/canRead 不触发流式 IO，
+        // 允许保留在主线程），命中即回填。
+        val direct = ScriptEngineLaunchers.uriToFilePath(uri.toString())
+        if (!direct.isNullOrEmpty()) {
+            val file = File(direct)
+            if (file.isFile && file.canRead()) {
+                if (!LauncherKrkrBridge.isFontFileName(direct)) {
+                    Toast.makeText(requireContext(), R.string.settings_kr_font_invalid_file, Toast.LENGTH_SHORT).show()
+                } else {
+                    applyFontPath(direct)
+                }
+                return
+            }
+        }
+        // 慢路径：MediaStore/Downloads 形态 content URI 无法解析真实路径，需经 provider 流式
+        // 拷贝进私有目录。查询与写盘下沉到 Dispatchers.IO（§8 UI 层不持有流），回主线程
+        // 先做生命周期守卫。
+        val appContext = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val displayName = withContext(Dispatchers.IO) {
+                LauncherKrkrBridge.resolveFontFileName(appContext, uri)
+            }
+            if (displayName == null) {
+                Toast.makeText(requireContext(), R.string.settings_kr_font_pick_failed, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            // 先按扩展名预检再拷贝，避免把 zip/视频等非字体大文件完整拷入后再丢弃。
+            if (!LauncherKrkrBridge.isFontFileName(displayName)) {
+                Toast.makeText(requireContext(), R.string.settings_kr_font_invalid_file, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val imported = withContext(Dispatchers.IO) {
+                LauncherKrkrBridge.importFontFile(appContext, uri, displayName)
+            }
+            if (!isAdded || binding == null) return@launch
+            if (imported == null) {
+                Toast.makeText(requireContext(), R.string.settings_kr_font_pick_failed, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            applyFontPath(imported)
+        }
+    }
+
+    /** 将已解析成功的字体路径写入全局或 per-game 偏好并回填字段。 */
+    private fun applyFontPath(path: String) {
+        if (isPerGameMode() && perGameEngine == EngineType.KIRIKIRI) {
+            val perGame = LauncherKrkrGameSettingsBridge.load(requireContext(), gameId)
+            perGame.defaultFont = path
+            LauncherKrkrGameSettingsBridge.save(requireContext(), gameId, perGame)
+        } else {
+            LauncherKrkrBridge.setDefaultFont(requireContext(), path)
+        }
+        renderDefaultFontField(path)
     }
 
     /** 加载 Artemis 区段配置（per-game 覆盖或应用级全局默认）。 */
@@ -513,6 +709,8 @@ class LauncherKrkrSettingsFragment : Fragment() {
         private const val INDEX_AUTO_PATCH_ASK = 0
         private const val INDEX_AUTO_PATCH_AUTO = 1
         private const val INDEX_AUTO_PATCH_OFF = 2
+        // engine_version_options 数组顺序：auto/1.3.9/1.3.4/1.2.6。
+        private const val INDEX_ENGINE_VERSION_126 = 3
         const val EXTRA_GAME_ID = "extra_game_id"
         private const val STATE_ENGINE_VERSION_INDEX = "engine_version_index"
         private const val STATE_ARTEMIS_ENGINE_VERSION_INDEX = "artemis_engine_version_index"
