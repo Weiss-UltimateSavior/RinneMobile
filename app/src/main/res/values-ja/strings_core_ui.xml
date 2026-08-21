@@ -14,6 +14,8 @@
     <string name="core_file_access_message">ゲームファイルの読み取りと管理には、フォルダーへの完全アクセスが必要です。システム画面で「すべてのファイルを管理」を許可してください。</string>
     <string name="core_landscape_mode_title">横画面ゲームモード</string>
     <string name="core_landscape_mode_message">横画面の没入型ゲームモードに切り替えますか？</string>
+    <string name="core_krkr_savedata_missing_title">セーブできません</string>
+    <string name="core_krkr_savedata_missing_message">KRKR のゲームフォルダーに savedata フォルダーがありません。セーブできるようにするには、このパスに savedata フォルダーを作成してください：%1$s</string>
 
     <string name="home_user_avatar">ユーザーアバター</string>
     <string name="home_settings">設定</string>

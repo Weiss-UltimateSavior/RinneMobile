@@ -102,9 +102,21 @@ class GameSessionController(
             if (result.activeGameConflict) {
                 GameActionMenuFactory.showActiveGameInfo(fragment.requireContext(), result.activeGameTitle)
             } else if (!result.success && !result.message.trim().isEmpty()) {
-                Toast.makeText(fragment.requireContext(), result.message, Toast.LENGTH_LONG).show()
+                showLaunchFailure(fragment.requireContext(), result)
             }
         }
+    }
+
+    private fun showLaunchFailure(context: Context, result: LauncherGameLaunchBridge.LaunchResult) {
+        if (result.errorCategory == "krkr_savedata_missing") {
+            LauncherDialogRouter.showInfo(
+                context,
+                context.getString(R.string.core_krkr_savedata_missing_title),
+                result.message,
+            )
+            return
+        }
+        Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
     }
 
     /**

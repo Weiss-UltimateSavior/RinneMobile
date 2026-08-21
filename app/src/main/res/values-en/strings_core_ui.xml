@@ -14,6 +14,8 @@
     <string name="core_file_access_message">The app needs full folder access to read and manage game files. Allow “Manage all files” on the system page.</string>
     <string name="core_landscape_mode_title">Landscape Game Mode</string>
     <string name="core_landscape_mode_message">Enter immersive landscape game mode?</string>
+    <string name="core_krkr_savedata_missing_title">Cannot save</string>
+    <string name="core_krkr_savedata_missing_message">The KRKR game folder is missing a savedata folder. Create savedata at this path first, otherwise saves will not work: %1$s</string>
 
     <string name="home_user_avatar">User avatar</string>
     <string name="home_settings">Settings</string>

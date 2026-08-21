@@ -12,6 +12,7 @@ import com.core.launcher.ArtemisLauncher
 import com.core.launcher.ArtemisPfsUnpacker
 import com.core.launcher.EmulatorLauncher
 import com.core.launcher.EnginePackages
+import com.core.launcher.KrkrLauncher
 import com.core.launcher.ScriptEngineLaunchers
 import com.core.model.EngineType
 import com.core.model.Game
@@ -89,9 +90,9 @@ object LauncherGameLaunchBridge {
         }
         repository.cancelPlaySession(sessionId)
         releaseLaunchGate(appContext, sessionId)
-        val message = context.getString(R.string.core_emulator_launch_failed)
+        val message = attempt.userMessage ?: context.getString(R.string.core_emulator_launch_failed)
         GameDiagnostics.recordLaunch(appContext, game, false, message, launchTarget, attempt.errorCategory, attempt.error)
-        return LaunchResult.failure(message)
+        return LaunchResult.failure(message, attempt.errorCategory)
     }
 
     /**
@@ -472,6 +473,8 @@ object LauncherGameLaunchBridge {
             } else {
                 StartAttempt.failure("activity_unavailable_or_rejected")
             }
+        } catch (error: KrkrLauncher.MissingSaveDataDirectoryException) {
+            return StartAttempt.failure("krkr_savedata_missing", error, error.message)
         } catch (error: Exception) {
             return StartAttempt.failure("activity_exception", error)
         }
@@ -559,10 +562,12 @@ object LauncherGameLaunchBridge {
         val success: Boolean,
         val errorCategory: String? = null,
         val error: Throwable? = null,
+        val userMessage: String? = null,
     ) {
         companion object {
             fun success() = StartAttempt(true)
-            fun failure(category: String, error: Throwable? = null) = StartAttempt(false, category, error)
+            fun failure(category: String, error: Throwable? = null, userMessage: String? = null) =
+                StartAttempt(false, category, error, userMessage)
         }
     }
 
@@ -587,15 +592,27 @@ object LauncherGameLaunchBridge {
         @JvmField val message: String,
         @JvmField val activeGameConflict: Boolean,
         @JvmField val activeGameTitle: String,
+        @JvmField val errorCategory: String,
     ) {
         companion object {
             @JvmStatic
             fun success(sessionId: Long): LaunchResult =
-                LaunchResult(true, sessionId, "", false, "")
+                LaunchResult(true, sessionId, "", false, "", "")
 
             @JvmStatic
             fun failure(message: String?): LaunchResult =
-                LaunchResult(false, -1L, if (message.isNullOrBlank()) "启动失败" else message, false, "")
+                failure(message, "")
+
+            @JvmStatic
+            fun failure(message: String?, errorCategory: String?): LaunchResult =
+                LaunchResult(
+                    false,
+                    -1L,
+                    if (message.isNullOrBlank()) "启动失败" else message,
+                    false,
+                    "",
+                    errorCategory.orEmpty(),
+                )
 
             @JvmStatic
             fun activeGame(
@@ -610,6 +627,7 @@ object LauncherGameLaunchBridge {
                     message ?: "已有游戏正在运行：$title",
                     true,
                     title,
+                    "",
                 )
             }
         }

@@ -14,6 +14,8 @@
     <string name="core_file_access_message">应用需要完全访问文件夹的权限来读取和管理游戏文件。请在系统页面允许“管理所有文件”。</string>
     <string name="core_landscape_mode_title">横屏游戏模式</string>
     <string name="core_landscape_mode_message">要进入横屏游戏沉浸模式吗？</string>
+    <string name="core_krkr_savedata_missing_title">无法存档</string>
+    <string name="core_krkr_savedata_missing_message">KRKR 游戏目录缺少 savedata 文件夹，请先在该路径创建 savedata 文件夹，否则无法存档：%1$s</string>
 
     <string name="home_user_avatar">用户头像</string>
     <string name="home_settings">设置</string>

@@ -9,6 +9,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.akira.tyranoemu.remote.Kirikiroid126
 import com.akira.tyranoemu.remote.Kirikiroid134
 import com.akira.tyranoemu.remote.Kirikiroid139
+import com.core.R
 import com.core.CorePreferences
 import com.core.launcherbridge.LauncherKrkrBridge
 import java.io.File
@@ -26,6 +27,11 @@ internal object KrkrLauncher {
         @JvmField val description: String,
         @JvmField val available: Boolean,
     )
+
+    class MissingSaveDataDirectoryException(
+        @JvmField val directory: File,
+        message: String,
+    ) : IllegalStateException(message)
 
     @JvmStatic
     @JvmOverloads
@@ -57,17 +63,20 @@ internal object KrkrLauncher {
             context,
             gamePath,
             launchTarget,
-            globalScoped,
+            scoped,
         )
         if (!originMode && (saveLocation?.available != true || saveLocation.directory == null)) {
             throw IllegalStateException(saveLocation?.description ?: "无法解析实际存档目录")
+        }
+        if (!originMode && !scoped) {
+            ensurePhysicalSaveDataDirectory(context, rootPath)
         }
 
         val saveName = safeSaveName(rootPath)
         var scopedSaveRoot: String? = null
         if (!originMode && scoped) {
             val directory = requireNotNull(saveLocation?.directory)
-            if (!prepareScopedSaveDirectory(context, directory, saveName)) {
+            if (!prepareScopedSaveDirectory(context, directory, saveName, rootPath)) {
                 throw IllegalStateException("无法创建 KRKR 应用独立存档目录")
             }
             scopedSaveRoot = directory.absolutePath
@@ -335,7 +344,12 @@ internal object KrkrLauncher {
         }
     }
 
-    private fun prepareScopedSaveDirectory(context: Context, saveDirectory: File, saveName: String?): Boolean {
+    private fun prepareScopedSaveDirectory(
+        context: Context,
+        saveDirectory: File,
+        saveName: String?,
+        rootPath: String?,
+    ): Boolean {
         return try {
             val internal = context.filesDir ?: return false
             val external = context.getExternalFilesDir(null)
@@ -354,11 +368,31 @@ internal object KrkrLauncher {
             if (migrated > 0) {
                 logInfo("migrated KRKR internal saves count=$migrated from=$previousInternalRoot to=$saveDirectory")
             }
+            ensurePhysicalSaveDataDirectory(context, rootPath)
             true
+        } catch (error: MissingSaveDataDirectoryException) {
+            throw error
         } catch (error: Exception) {
             logWarn("prepare KRKR scoped save directory failed save=$saveDirectory", error)
             false
         }
+    }
+
+    private fun ensurePhysicalSaveDataDirectory(context: Context, rootPath: String?) {
+        if (rootPath.isNullOrBlank() || rootPath.startsWith("content://")) return
+        val directory = try {
+            File(rootPath, "savedata").absoluteFile
+        } catch (_: Exception) {
+            return
+        }
+        if (directory.isDirectory) return
+        if (directory.exists() || !directory.mkdirs()) {
+            throw MissingSaveDataDirectoryException(
+                directory,
+                context.getString(R.string.core_krkr_savedata_missing_message, directory.absolutePath),
+            )
+        }
+        logInfo("created KRKR physical savedata directory=$directory")
     }
 
     private fun copyRegularFilesRecursively(fromDirectory: File?, toDirectory: File?, onlyNewer: Boolean): Int {
