@@ -42,4 +42,13 @@ public class TyranoStorageTest {
         assertTrue(legacy.createNewFile());
         assertEquals(legacy.getCanonicalFile(), TyranoActivity.resolveStorageFile(root, "save data"));
     }
+
+    @Test
+    public void rpgMakerStorage_usesBinExtension() throws Exception {
+        File root = Files.createTempDirectory("tyrano-storage").toFile();
+        TyranoStorage.write(root, "file1", "payload", ".bin");
+
+        assertEquals("payload", TyranoStorage.read(root, "file1", ".bin"));
+        assertTrue(new File(root, "file1.bin").isFile());
+    }
 }

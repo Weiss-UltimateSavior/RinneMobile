@@ -5,6 +5,19 @@ import java.util.Locale
 
 /** Engine detection over cached [ScanNode] metadata; it performs no per-entry provider query. */
 internal object NodeEngineDetector {
+    private val FEATURE_PASSTHROUGH_DIRECTORIES = setOf("www", "js", "app.asar")
+
+    internal data class TestNode(
+        val name: String,
+        val children: List<TestNode> = emptyList()
+    )
+
+    internal fun detectForTest(rootFiles: List<TestNode>, featureDepth: Int = 2): EngineDetector.Result {
+        val state = FeatureState()
+        collectForTest(rootFiles, "", "", 1, featureDepth.coerceIn(1, 4), state)
+        return score(state)
+    }
+
     fun detect(
         rootFiles: List<ScanNode>,
         featureDepth: Int = 2,
@@ -37,6 +50,7 @@ internal object NodeEngineDetector {
             if (node.isDirectory) {
                 state.directories.add(lower)
                 when (lower) {
+                    "app.asar" -> state.hasAppAsar = true
                     "ps3_game" -> state.hasPs3GameDir = true
                     "usrdir" -> state.hasUsrdirChild = true
                 }
@@ -45,14 +59,15 @@ internal object NodeEngineDetector {
             }
             state.recordFile(lower, relative, originalRelative)
         }
-        if (level >= maxLevel) return
         for (candidate in directories) {
+            if (level >= maxLevel && candidate.name !in FEATURE_PASSTHROUGH_DIRECTORIES) continue
             if (!shouldDescend(candidate.name, state)) continue
+            val nextLevel = if (candidate.name in FEATURE_PASSTHROUGH_DIRECTORIES) level else level + 1
             collect(
                 loadChildren(candidate.node),
                 candidate.relative,
                 candidate.originalRelative,
-                level + 1,
+                nextLevel,
                 maxLevel,
                 state,
                 loadChildren
@@ -60,10 +75,58 @@ internal object NodeEngineDetector {
         }
     }
 
+    private fun collectForTest(
+        files: List<TestNode>,
+        lowerPrefix: String,
+        originalPrefix: String,
+        level: Int,
+        maxLevel: Int,
+        state: FeatureState,
+    ) {
+        val directories = ArrayList<TestCandidate>()
+        for (node in files) {
+            val original = node.name
+            val lower = original.lowercase(Locale.ROOT)
+            val relative = if (lowerPrefix.isEmpty()) lower else "$lowerPrefix/$lower"
+            val originalRelative = if (originalPrefix.isEmpty()) original else "$originalPrefix/$original"
+            state.empty = false
+            state.names.add(lower)
+            state.relativeNames.add(relative)
+            if (node.children.isNotEmpty()) {
+                state.directories.add(lower)
+                when (lower) {
+                    "app.asar" -> state.hasAppAsar = true
+                    "ps3_game" -> state.hasPs3GameDir = true
+                    "usrdir" -> state.hasUsrdirChild = true
+                }
+                directories.add(TestCandidate(node, lower, relative, originalRelative))
+            } else {
+                state.recordFile(lower, relative, originalRelative)
+            }
+        }
+        for (candidate in directories) {
+            if (level >= maxLevel && candidate.name !in FEATURE_PASSTHROUGH_DIRECTORIES) continue
+            if (!shouldDescend(candidate.name, state)) continue
+            val nextLevel = if (candidate.name in FEATURE_PASSTHROUGH_DIRECTORIES) level else level + 1
+            collectForTest(
+                candidate.node.children,
+                candidate.relative,
+                candidate.originalRelative,
+                nextLevel,
+                maxLevel,
+                state
+            )
+        }
+    }
+
     private fun shouldDescend(name: String, state: FeatureState): Boolean = when (name) {
         "resources" -> true
         "app" -> "resources" in state.directories
+        "app.asar" -> true
         "tyrano" -> state.hasIndex
+        "www" -> true
+        "js" -> true
+        "scenario" -> state.hasIndex
         "data" -> EngineFeatureTraversal.shouldDescendIntoData(
             hasIndex = state.hasIndex,
             hasGameIni = state.hasGameIni
@@ -87,11 +150,12 @@ internal object NodeEngineDetector {
             s.xp3Files.isNotEmpty() -> s.xp3Files.first()
             else -> null
         }
-        val tyranoRuntime = "tyrano" in s.directories || "data" in s.directories ||
+        val strongTyranoRuntime = "tyrano" in s.directories ||
             "tyrano.css" in s.names || "tyrano.base.js" in s.names ||
             "tyrano/tyrano.css" in s.relativeNames || "tyrano/tyrano.base.js" in s.relativeNames ||
             "tyrano/libs/jquery-3.6.0.min.js" in s.relativeNames ||
             "tyrano/libs/jquery-2.0.3.min.js" in s.relativeNames
+        val tyranoRuntime = strongTyranoRuntime || "data" in s.directories
         val electronWrapper = "resources" in s.directories &&
             (s.hasAppAsar || s.hasElectronPak || "icudtl.dat" in s.names ||
                 "libegl.dll" in s.names || "libglesv2.dll" in s.names)
@@ -106,6 +170,9 @@ internal object NodeEngineDetector {
             return result
         }
         when {
+            s.hasIndex && strongTyranoRuntime -> set(result, EngineType.TYRANO, 96, "[游戏目录]")
+            s.hasIndex && s.hasRpgMvCoreJs -> set(result, EngineType.RPG_MV, 95, "[游戏目录]")
+            s.hasIndex && s.hasRpgMzCoreJs -> set(result, EngineType.RPG_MZ, 95, "[游戏目录]")
             s.hasIndex && tyranoRuntime -> set(result, EngineType.TYRANO, 96, "[游戏目录]")
             s.hasAppAsar && (s.hasPackageJson || electronWrapper) ->
                 set(result, EngineType.TYRANO, 72, "[游戏目录]")
@@ -181,6 +248,13 @@ internal object NodeEngineDetector {
         val originalRelative: String
     )
 
+    private data class TestCandidate(
+        val node: TestNode,
+        val name: String,
+        val relative: String,
+        val originalRelative: String
+    )
+
     private class FeatureState {
         var empty = true
         val names = HashSet<String>()
@@ -218,9 +292,13 @@ internal object NodeEngineDetector {
         var hasPs3GameDir = false
         var hasUsrdirChild = false
         var hasParamSfo = false
+        var hasRpgMvCoreJs = false
+        var hasRpgMzCoreJs = false
 
         fun recordFile(lower: String, relative: String, originalRelative: String) {
             if (lower == "index.html" || lower == "index.htm") hasIndex = true
+            if (relative == "js/rpg_core.js" || relative.endsWith("/js/rpg_core.js")) hasRpgMvCoreJs = true
+            if (relative == "js/rmmz_core.js" || relative.endsWith("/js/rmmz_core.js")) hasRpgMzCoreJs = true
             if (lower == "startup.tjs") hasStartupTjs = true
             if (lower == "config.tjs") hasConfigTjs = true
             if (lower == "system.ini") hasSystemIni = true

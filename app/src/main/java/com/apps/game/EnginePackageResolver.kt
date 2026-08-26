@@ -16,6 +16,8 @@ internal object EnginePackageResolver {
         if (engine == EngineType.KIRIKIRI) return EnginePackages.INTERNAL_KRKR
         if (engine == EngineType.ONS) return EnginePackages.INTERNAL_ONS
         if (engine == EngineType.TYRANO) return EnginePackages.INTERNAL_TYRANO
+        if (engine == EngineType.RPG_MV) return EnginePackages.INTERNAL_TYRANO_RPG_MV
+        if (engine == EngineType.RPG_MZ) return EnginePackages.INTERNAL_TYRANO_RPG_MZ
         if (engine == EngineType.ARTEMIS) return EnginePackages.INTERNAL_ARTEMIS
         if (engine == EngineType.PSP) return EnginePackages.EXTERNAL_PPSSPP
         if (engine == EngineType.NINTENDO_3DS) return EnginePackages.EXTERNAL_AZAHAR

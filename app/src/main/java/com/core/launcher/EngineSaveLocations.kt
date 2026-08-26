@@ -66,7 +66,7 @@ internal object EngineSaveLocations {
                     Location(location.directory, location.description, location.available)
                 }
 
-                EngineType.TYRANO -> {
+                EngineType.TYRANO, EngineType.RPG_MV, EngineType.RPG_MZ -> {
                     val gameDirectory = ScriptEngineLaunchers.stripFileScheme(
                         ScriptEngineLaunchers.resolveTyranoGameDirectory(rootUri, launchTarget),
                     )

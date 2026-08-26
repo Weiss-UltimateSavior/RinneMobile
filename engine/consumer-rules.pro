@@ -15,6 +15,9 @@
 # 引用该 Java 桥接类，R8 无法从 native 代码推断，会当作无用代码剥离，
 # 导致 Dialog.Show() 不被调用、游戏卡在等待 OnClose 回调。须整体 keep 以防回归。
 -keep class moe.artemis.gui.Dialog { *; }
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 -keepclasseswithmembernames class * {
     native <methods>;
 }

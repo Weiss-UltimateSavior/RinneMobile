@@ -335,6 +335,8 @@ object LauncherScanBridge {
         EngineType.KIRIKIRI -> EnginePackages.INTERNAL_KRKR
         EngineType.ONS -> EnginePackages.INTERNAL_ONS
         EngineType.TYRANO -> EnginePackages.INTERNAL_TYRANO
+        EngineType.RPG_MV -> EnginePackages.INTERNAL_TYRANO_RPG_MV
+        EngineType.RPG_MZ -> EnginePackages.INTERNAL_TYRANO_RPG_MZ
         EngineType.ARTEMIS -> EnginePackages.INTERNAL_ARTEMIS
         EngineType.PSP -> EnginePackages.EXTERNAL_PPSSPP
         EngineType.NINTENDO_3DS -> EnginePackages.EXTERNAL_AZAHAR

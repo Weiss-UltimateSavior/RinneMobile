@@ -15,6 +15,7 @@ import java.util.Locale
 object EngineDetector {
 
     private const val TAG = "EngineDetector"
+    private val FEATURE_PASSTHROUGH_DIRECTORIES = setOf("www", "js", "app.asar")
 
     class Result {
         @JvmField var engine: EngineType = EngineType.UNKNOWN
@@ -75,13 +76,20 @@ object EngineDetector {
 
         // 只对 Artemis 使用原 Tyranor 的判定：
         // system.ini + system/first.iet、root.pfs、或目录内任意 .pfs 都视为 Artemis。
-        val tyranoRuntime = s.hasTyranoDir || s.hasDataDir || s.names.contains("tyrano.css") || s.names.contains("tyrano.base.js")
+        val strongTyranoRuntime = s.hasTyranoDir || s.names.contains("tyrano.css") || s.names.contains("tyrano.base.js")
             || s.relativeNames.contains("tyrano/tyrano.css") || s.relativeNames.contains("tyrano/tyrano.base.js")
             || s.relativeNames.contains("tyrano/libs/jquery-3.6.0.min.js") || s.relativeNames.contains("tyrano/libs/jquery-2.0.3.min.js")
+        val tyranoRuntime = strongTyranoRuntime || s.hasDataDir
         val electronWrapper = s.hasResourcesDir && (s.hasAppAsar || s.hasElectronPak || s.names.contains("icudtl.dat") || s.names.contains("libegl.dll") || s.names.contains("libglesv2.dll"))
         val artemisRuntime = (s.hasSystemIni && s.hasFirstIet) || s.hasRootPfs || s.hasAnyPfsFile
 
-        if (s.hasIndex && tyranoRuntime) {
+        if (s.hasIndex && strongTyranoRuntime) {
+            score(r, EngineType.TYRANO, 96, "[游戏目录]")
+        } else if (s.hasIndex && s.hasRpgMvCoreJs) {
+            score(r, EngineType.RPG_MV, 95, "[游戏目录]")
+        } else if (s.hasIndex && s.hasRpgMzCoreJs) {
+            score(r, EngineType.RPG_MZ, 95, "[游戏目录]")
+        } else if (s.hasIndex && tyranoRuntime) {
             score(r, EngineType.TYRANO, 96, "[游戏目录]")
         } else if (s.hasAppAsar && (s.hasPackageJson || electronWrapper)) {
             score(r, EngineType.TYRANO, 72, "[游戏目录]")
@@ -243,6 +251,9 @@ object EngineDetector {
         // Godot 检测字段
         var firstPck: String? = null
         var hasProjectGodot = false
+        // RPG Maker MV/MZ Web 引擎核心脚本。
+        var hasRpgMvCoreJs = false
+        var hasRpgMzCoreJs = false
     }
 
     private fun collectFeatures(
@@ -285,6 +296,7 @@ object EngineDetector {
                 if (lower == "game") s.hasGameDir = true
                 if (lower == "renpy") s.hasRenpyDir = true
                 if (lower == "resources") s.hasResourcesDir = true
+                if (lower == "app.asar") s.hasAppAsar = true
                 if (lower == "scenario") s.hasScenarioDir = true
                 if (lower == "system") s.hasSystemDir = true
                 if (lower == "bgimage") s.hasBgimageDir = true
@@ -303,6 +315,8 @@ object EngineDetector {
             if (!file) continue
 
             if (lower == "index.html" || lower == "index.htm") s.hasIndex = true
+            if (rel == "js/rpg_core.js" || rel.endsWith("/js/rpg_core.js")) s.hasRpgMvCoreJs = true
+            if (rel == "js/rmmz_core.js" || rel.endsWith("/js/rmmz_core.js")) s.hasRpgMzCoreJs = true
             if (lower == "startup.tjs") s.hasStartupTjs = true
             if (lower == "config.tjs") s.hasConfigTjs = true
             if (lower == "system.ini") s.hasSystemIni = true
@@ -370,14 +384,14 @@ object EngineDetector {
         // Phase 2 only expands directories whose contents can complete a plausible signature.
         // `resources` remains a candidate on its own because Electron games commonly keep the
         // sole app.asar under resources/ with no useful root-level file beside it.
-        if (level < maxLevel) {
-            for (candidate in childDirectories) {
-                if (!shouldDescendForFeature(candidate.lowerName, s)) continue
-                collectFeatures(
-                    candidate.file, candidate.relativeName, candidate.originalName,
-                    level + 1, maxLevel, s, null
-                )
-            }
+        for (candidate in childDirectories) {
+            if (level >= maxLevel && candidate.lowerName !in FEATURE_PASSTHROUGH_DIRECTORIES) continue
+            if (!shouldDescendForFeature(candidate.lowerName, s)) continue
+            val nextLevel = if (candidate.lowerName in FEATURE_PASSTHROUGH_DIRECTORIES) level else level + 1
+            collectFeatures(
+                candidate.file, candidate.relativeName, candidate.originalName,
+                nextLevel, maxLevel, s, null
+            )
         }
     }
 
@@ -394,9 +408,13 @@ object EngineDetector {
             // Electron packages require looking under resources/app(.asar).
             "resources" -> true
             "app" -> state.hasResourcesDir
+            "app.asar" -> true
             // Tyrano is HTML-specific. Data/ is also the unpacked RGSS database
             // directory used by RPG Maker XP/VX/VX Ace.
             "tyrano" -> state.hasIndex
+            "www" -> true
+            "js" -> true
+            "scenario" -> state.hasIndex
             "data" -> EngineFeatureTraversal.shouldDescendIntoData(
                 hasIndex = state.hasIndex,
                 hasGameIni = state.hasGameIni

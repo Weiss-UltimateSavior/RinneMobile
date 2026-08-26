@@ -14,8 +14,13 @@ internal object TyranoStorage {
 
     @JvmStatic
     fun read(directory: File?, key: String?): String {
+        return read(directory, key, ".sav")
+    }
+
+    @JvmStatic
+    fun read(directory: File?, key: String?, extension: String): String {
         return try {
-            val file = resolveFile(directory, key) ?: return ""
+            val file = resolveFile(directory, key, extension) ?: return ""
             if (!file.isFile || file.length() !in 0..MAX_SAVE_BYTES) return ""
             val bytes = file.inputStream().buffered().use { input ->
                 val output = java.io.ByteArrayOutputStream(file.length().toInt())
@@ -37,8 +42,13 @@ internal object TyranoStorage {
 
     @JvmStatic
     fun write(directory: File?, key: String?, value: String?) {
+        write(directory, key, value, ".sav")
+    }
+
+    @JvmStatic
+    fun write(directory: File?, key: String?, value: String?, extension: String) {
         try {
-            val file = resolveFile(directory, key) ?: return
+            val file = resolveFile(directory, key, extension) ?: return
             val bytes = value.orEmpty().toByteArray(StandardCharsets.UTF_8)
             if (bytes.size > MAX_SAVE_BYTES) return
             file.outputStream().use { it.write(bytes) }
@@ -48,8 +58,25 @@ internal object TyranoStorage {
     }
 
     @JvmStatic
-    fun resolveFile(directory: File?, key: String?): File? {
+    fun exists(directory: File?, key: String?, extension: String): Boolean =
+        resolveFile(directory, key, extension)?.isFile == true
+
+    @JvmStatic
+    fun remove(directory: File?, key: String?, extension: String): Boolean = try {
+        val file = resolveFile(directory, key, extension) ?: return false
+        !file.exists() || file.delete()
+    } catch (error: Throwable) {
+        Log.w(TAG, "removeStorage failed key=$key", error)
+        false
+    }
+
+    @JvmStatic
+    fun resolveFile(directory: File?, key: String?): File? = resolveFile(directory, key, ".sav")
+
+    @JvmStatic
+    fun resolveFile(directory: File?, key: String?, extension: String): File? {
         if (directory == null || key == null) return null
+        if (extension !in setOf(".sav", ".bin")) return null
         val clean = key.trim()
         if (clean.isEmpty() || clean.length > MAX_KEY_CHARS || clean.any { it == '\u0000' || it.isISOControl() }) return null
         // Keys are data, never paths.  Special filename characters are supported through the
@@ -59,17 +86,17 @@ internal object TyranoStorage {
         // Preserve Tyranor/Rinne's established filename for normal keys, so existing saves
         // remain readable.  Non-standard keys use a deterministic SHA-256 name instead of
         // being rejected; the raw key never becomes part of a filesystem path.
-        if (directFileKey.matches(clean)) return insideRoot(root, File(root, "$clean.sav"))
+        if (directFileKey.matches(clean)) return insideRoot(root, File(root, "$clean$extension"))
 
         // A legacy Tyranor save with spaces or Unicode may already exist under its raw key.
         // Continue using it when it is safely a single filename, otherwise migrate new writes
         // to the deterministic mapping below.
-        legacyFile(root, clean)?.takeIf(File::isFile)?.let { return it }
-        return insideRoot(root, File(root, "key_${sha256(clean)}.sav"))
+        legacyFile(root, clean, extension)?.takeIf(File::isFile)?.let { return it }
+        return insideRoot(root, File(root, "key_${sha256(clean)}$extension"))
     }
 
-    private fun legacyFile(root: File, key: String): File? {
-        return insideRoot(root, File(root, "$key.sav"))
+    private fun legacyFile(root: File, key: String, extension: String): File? {
+        return insideRoot(root, File(root, "$key$extension"))
     }
 
     private fun insideRoot(root: File, candidate: File): File? = try {

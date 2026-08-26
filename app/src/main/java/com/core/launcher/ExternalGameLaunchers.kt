@@ -29,6 +29,12 @@ internal object ExternalGameLaunchers {
         addBuiltIn(InternalStrategy(EngineType.TYRANO, EnginePackages.INTERNAL_TYRANO, EnginePackages.LEGACY_TYRANO) {
             ScriptEngineLaunchers.buildTyranoIntent(it, rootUri, launchTarget)
         })
+        addBuiltIn(InternalStrategy(EngineType.RPG_MV, EnginePackages.INTERNAL_TYRANO_RPG_MV, EnginePackages.INTERNAL_TYRANO) {
+            ScriptEngineLaunchers.buildTyranoIntent(it, rootUri, launchTarget, "RPG")
+        })
+        addBuiltIn(InternalStrategy(EngineType.RPG_MZ, EnginePackages.INTERNAL_TYRANO_RPG_MZ, EnginePackages.INTERNAL_TYRANO) {
+            ScriptEngineLaunchers.buildTyranoIntent(it, rootUri, launchTarget, "RMMZ")
+        })
         addBuiltIn(InternalStrategy(EngineType.ONS, EnginePackages.INTERNAL_ONS, EnginePackages.INTERNAL_ONSCRIPTER, EnginePackages.LEGACY_ONS) {
             ScriptEngineLaunchers.buildOnsIntent(it, rootUri, launchTarget)
         })
@@ -96,8 +102,8 @@ internal object ExternalGameLaunchers {
 
     private fun addBuiltIn(strategy: EngineLaunchStrategy) = strategies.add(strategy)
 
-    private abstract class BaseStrategy(private val engineType: EngineType) : EngineLaunchStrategy {
-        override fun getEngineType(): EngineType = engineType
+    private abstract class BaseStrategy(protected val strategyEngineType: EngineType) : EngineLaunchStrategy {
+        override fun getEngineType(): EngineType = strategyEngineType
 
         protected fun start(context: Context, intent: Intent): Boolean = try {
             context.startActivity(intent)
@@ -114,8 +120,13 @@ internal object ExternalGameLaunchers {
         private vararg val aliases: String,
         private val intentBuilder: LaunchRequest.(Context) -> Intent,
     ) : BaseStrategy(engineType) {
-        override fun supports(request: LaunchRequest): Boolean =
-            aliases.any { it.equals(request.packageName, ignoreCase = true) }
+        override fun supports(request: LaunchRequest): Boolean {
+            if (!aliases.any { it.equals(request.packageName, ignoreCase = true) }) return false
+            if (!EnginePackages.isInternalTyrano(request.packageName)) return true
+            return request.engineType == strategyEngineType ||
+                request.engineType == EngineType.AUTO ||
+                request.engineType == EngineType.UNKNOWN
+        }
 
         override fun launch(context: Context, request: LaunchRequest): Boolean =
             start(context, request.intentBuilder(context))

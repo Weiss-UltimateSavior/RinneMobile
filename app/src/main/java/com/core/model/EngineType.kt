@@ -5,6 +5,8 @@ enum class EngineType(val displayName: String) {
     KIRIKIRI("Kirikiri"),
     ONS("ONScripter"),
     TYRANO("Tyrano"),
+    RPG_MV("RPG Maker MV"),
+    RPG_MZ("RPG Maker MZ"),
     ARTEMIS("Artemis"),
     WINLATOR("Winlator"),
     GAMEHUB("GameHub"),

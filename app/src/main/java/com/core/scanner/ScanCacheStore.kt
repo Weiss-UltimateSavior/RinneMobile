@@ -13,11 +13,11 @@ import java.nio.charset.StandardCharsets
  * observed in the current directory listing, so deleted files/directories are never resurrected.
  */
 internal object ScanCacheStore {
-    // v2→v3：新增 .pkg / PS3 目录签名识别与 engineCandidates 双候选后，schema 语义已变化。
-    // 若不递增键名，重扫同目录会命中旧缓存而看不到 PS3 识别结果；bump 命名即强制整体失效。
-    private const val PREFS = "game_scan_result_cache_v3"
+    // v3→v4：Tyrano/Electron 解包目录 resources/app.asar 需要重新按父目录识别，
+    // 否则旧缓存可能继续显示内部 app.asar 目录作为游戏名。
+    private const val PREFS = "game_scan_result_cache_v4"
     /** 上一个缓存 schema 的 prefs 名，仅用于升级迁移清理。 */
-    private const val LEGACY_PREFS = "game_scan_result_cache_v2"
+    private const val LEGACY_PREFS = "game_scan_result_cache_v3"
 
     /** v2 旧缓存清理仅需一次；用内存标志避免每次 load 都重新 clear+写盘。 */
     private var legacyPrefsCleared = false

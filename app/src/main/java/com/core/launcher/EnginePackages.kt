@@ -18,6 +18,8 @@ object EnginePackages {
     const val LEGACY_YUKI_ONS = "com.yuki.yukihub.ons"
 
     const val INTERNAL_TYRANO = "internal.tyrano"
+    const val INTERNAL_TYRANO_RPG_MV = "internal.tyrano.rpgmv"
+    const val INTERNAL_TYRANO_RPG_MZ = "internal.tyrano.rpgmz"
     const val LEGACY_TYRANO = "com.core.tyrano"
     const val LEGACY_YUKI_TYRANO = "com.yuki.yukihub.tyrano"
 

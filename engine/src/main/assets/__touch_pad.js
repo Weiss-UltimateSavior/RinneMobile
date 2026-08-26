@@ -1,98 +1,32 @@
-Graphics._createRenderer = function() {
-    PIXI.dontSayHello = true;
-    var width = this._width;
-    var height = this._height;
-    var options = { view: this._canvas };
+/* 触屏手柄（issue #30/#35）：MV/MZ 共用。
+ * 由 TyranoActivity 拼接进引擎 hook 注入；按键通过合成 keydown/keyup
+ * （keyCode）派发，MV 与 MZ 的 Input 均读 keyCode，事件模型一致。
+ *
+ * 布局说明：所有尺寸/位置由 layout() 统一计算，锚定全视口
+ * （window.innerWidth/innerHeight），portrait 模式下自然利用
+ * letterbox 黑边空间；监听 resize/orientationchange 重排。
+ * 布局完成后发布 window.__touchPadMetrics 并派发
+ * tyranorpadlayout 事件，供修改器悬浮球避让动作键列。 */
+(function () {
+  if (window.__tyranorTouchPadInjected) return
+  window.__tyranorTouchPadInjected = true
 
-    function getUrlParameters(url) {
-        if (!url) url = window.location.href;
-        var result = {};
-        var parts = url.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-            result[key] = value;
-        });
-        return result;
-    }
+  const ROOT_ID = 'tyranor-touch-pad-root'
 
-    var param = getUrlParameters();
+  function initTouchPad() {
+    const oldRoot = document.getElementById(ROOT_ID)
+    if (oldRoot) oldRoot.remove()
+    const rootElement = document.createElement('div')
+    rootElement.id = ROOT_ID
+    document.body.appendChild(rootElement)
 
-    if ("android-legacy" in param) {
-        console.log("Android loader enabled.");
-        console.log("Add options to the PIXI renderer.");
-
-        const AndroidLegacyOption = {
-            legacy: true
-        };
-
-        for (var optkey in AndroidLegacyOption) {
-            options[optkey] = AndroidLegacyOption[optkey];
-            console.log(`Option added : ${"$"}{optkey} => ${"$"}{options[optkey]}`);
-        }
-    } else
-        console.log("Android loader has been disabled. (Not a legacy device or running in desktop)");
-
-    try {
-
-    switch (this._rendererType) {
-        case 'canvas':
-            this._renderer = new PIXI.CanvasRenderer(width, height, options);
-            break;
-        case 'webgl':
-            this._renderer = new PIXI.WebGLRenderer(width, height, options);
-            break;
-        default:
-            this._renderer = PIXI.autoDetectRenderer(width, height, options);
-            break;
-        }
-
-        if(this._renderer && this._renderer.textureGC)
-            this._renderer.textureGC.maxIdle = 1;
-
-        console.log(typeof this._renderer);
-
-    } catch (e) {
-        this._renderer = null;
-    }
-};
-
-StorageManager.saveToWebStorage = function(savefileId, json) {
-    var key = this.webStorageKey(savefileId);
-    var data = LZString.compressToBase64(json);
-    window.saveDataManager.Save(key, data);
-};
-
-StorageManager.loadFromWebStorage = function(savefileId) {
-    var key = this.webStorageKey(savefileId);
-    return LZString.decompressFromBase64(window.saveDataManager.Load(key));
-};
-
-StorageManager.loadFromWebStorageBackup = function(savefileId) {
-    var key = this.webStorageKey(savefileId) + "bak";
-    return LZString.decompressFromBase64(window.saveDataManager.Load(key));
-};
-
-StorageManager.webStorageBackupExists = function(savefileId) {
-    var key = this.webStorageKey(savefileId) + "bak";
-    return window.saveDataManager.Exists(key);
-};
-
-StorageManager.webStorageExists = function(savefileId) {
-    var key = this.webStorageKey(savefileId);
-    return window.saveDataManager.Exists(key);
-};
-Utils.isMobileDevice = function() {return false;};
-SceneManager.shouldUseCanvasRenderer = function() {return true;};
-Graphics._defaultStretchMode = function() {return true;};
-document.body.parentNode.style.overflow = "hidden";
-
-// RPG Touch Pad
-window.addEventListener('load', () => {
-  const padSize = window.innerHeight * 0.4
-  const joyStickSR = padSize * 0.5
-  const joyStickR = joyStickSR * 0.4
+  let padSize = 0
+  let joyStickSR = 0
+  let joyStickR = 0
+  let joyStickCX = 0
+  let joyStickCY = 0
   const allMargin = 10
   const lrMargin = 50
-  const joyStickCX = joyStickSR + allMargin + lrMargin
-  const joyStickCY = window.innerHeight - joyStickSR - allMargin
   let isKeysShown = true
   let useJoyStick = true
   let useDir8 = false
@@ -113,14 +47,14 @@ window.addEventListener('load', () => {
   dir8SwitchElement.innerText = useDir8 ? '4 Dir' : '8 Dir'
   const udlrElement = document.createElement('div')
   const qwzxElement = document.createElement('div')
-  document.body.appendChild(actionsElement)
+  rootElement.appendChild(actionsElement)
   actionsElement.appendChild(keySwitchElement)
   actionsElement.appendChild(joyStickSwitchElement)
   actionsElement.appendChild(dir8SwitchElement)
-  document.body.appendChild(qwzxElement)
-  document.body.appendChild(joyStickStage)
+  rootElement.appendChild(qwzxElement)
+  rootElement.appendChild(joyStickStage)
   joyStickStage.appendChild(joyStick)
-  document.body.appendChild(udlrElement)
+  rootElement.appendChild(udlrElement)
   const keyCodes = {
     Tab: 9,
     Enter: 13,
@@ -344,24 +278,6 @@ window.addEventListener('load', () => {
     textAlign: 'center',
     boxShadow: padShadow
   }
-  const actionStyle = {
-    ...btnStyle,
-    width: `${padSize * 0.5}px`,
-    height: `${padSize * 0.125}px`,
-    lineHeight: `${padSize * 0.125}px`,
-    borderRadius: '50em'
-  }
-  const udlrStyle = {
-    ...btnStyle,
-    width: '33%',
-    height: '33%'
-  }
-  const qwzxStyle = {
-    ...btnStyle,
-    width: '40%',
-    height: '40%',
-    borderRadius: '50em'
-  }
   const textStyle = {
     ...commonStyle,
     color: padTextColor,
@@ -369,73 +285,119 @@ window.addEventListener('load', () => {
     left: '50%',
     top: '50%'
   }
-  Object.assign(keySwitchElement.style, {
-    ...btnStyle,
-    width: `${padSize * 0.3}px`,
-    height: `${padSize * 0.3}px`,
-    lineHeight: `${padSize * 0.3}px`,
-    borderRadius: '50em',
-    left: `${allMargin}px`,
-    top: `${allMargin}px`
-  })
-  Object.assign(joyStickSwitchElement.style, {
-    ...btnStyle,
-    width: `${padSize * 0.3}px`,
-    height: `${padSize * 0.3}px`,
-    lineHeight: `${padSize * 0.3}px`,
-    borderRadius: '50em',
-    left: `${allMargin}px`,
-    top: `${padSize * 0.3 + 5 + allMargin}px`
-  })
-  Object.assign(dir8SwitchElement.style, {
-    ...btnStyle,
-    width: `${padSize * 0.3}px`,
-    height: `${padSize * 0.3}px`,
-    lineHeight: `${padSize * 0.3}px`,
-    borderRadius: '50em',
-    left: `${allMargin}px`,
-    top: `${padSize * 0.6 + 10 + allMargin}px`
-  })
-  Object.assign(joyStickStage.style, {
-    ...commonStyle,
-    boxShadow: padShadow,
-    width: `${padSize}px`,
-    height: `${padSize}px`,
-    transform: 'translate(0%,-100%)',
-    borderRadius: '50em',
-    left: `${allMargin + lrMargin}px`,
-    top: `calc(100% - ${allMargin}px)`,
-    display: useJoyStick ? 'block' : 'none'
-  })
-  Object.assign(joyStick.style, {
-    ...btnStyle,
-    marginLeft: `${joyStickSR - joyStickR}px`,
-    marginTop: `${joyStickSR - joyStickR}px`,
-    width: `${2 * joyStickR}px`,
-    height: `${2 * joyStickR}px`,
-    borderRadius: '50em'
-  })
-  Object.assign(udlrElement.style, {
-    ...commonStyle,
-    boxShadow: padShadow,
-    borderRadius: '50em',
-    width: `${padSize}px`,
-    height: `${padSize}px`,
-    transform: 'translate(0%,-100%)',
-    left: `${allMargin + lrMargin}px`,
-    top: `calc(100% - ${allMargin}px)`,
-    display: useJoyStick ? 'none' : 'block'
-  })
-  Object.assign(qwzxElement.style, {
-    ...commonStyle,
-    width: `${padSize}px`,
-    height: `${padSize}px`,
-    transform: 'translate(-100%,-100%)',
-    borderRadius: '50em',
-    boxShadow: padShadow,
-    left: `calc(100% - ${allMargin + lrMargin}px)`,
-    top: `calc(100% - ${allMargin}px)`
-  })
+  const switchSize = () => `${padSize * 0.3}px`
+  const actionBtnH = () => padSize * 0.125
+
+  /* 全视口布局：始终使用整个屏幕，portrait 下按钮自然落入 letterbox 黑边。 */
+  function gameRect() {
+    return { rect: { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight } }
+  }
+
+  let actionEls = []
+  function layout() {
+    const g = gameRect()
+    const r = g.rect
+    padSize = Math.min(r.height * 0.4, r.width * 0.25)
+    joyStickSR = padSize * 0.5
+    joyStickR = joyStickSR * 0.4
+    joyStickCX = r.left + joyStickSR + allMargin + lrMargin
+    joyStickCY = r.top + r.height - joyStickSR - allMargin
+    const switchTop = (i) => `${r.top + allMargin + i * (padSize * 0.3 + 5)}px`
+    Object.assign(keySwitchElement.style, {
+      ...btnStyle,
+      width: switchSize(),
+      height: switchSize(),
+      lineHeight: switchSize(),
+      borderRadius: '50em',
+      left: `${r.left + allMargin}px`,
+      top: switchTop(0),
+      display: 'block'
+    })
+    Object.assign(joyStickSwitchElement.style, {
+      ...btnStyle,
+      width: switchSize(),
+      height: switchSize(),
+      lineHeight: switchSize(),
+      borderRadius: '50em',
+      left: `${r.left + allMargin}px`,
+      top: switchTop(1),
+      display: isKeysShown ? 'block' : 'none'
+    })
+    Object.assign(dir8SwitchElement.style, {
+      ...btnStyle,
+      width: switchSize(),
+      height: switchSize(),
+      lineHeight: switchSize(),
+      borderRadius: '50em',
+      left: `${r.left + allMargin}px`,
+      top: switchTop(2),
+      display: isKeysShown ? 'block' : 'none'
+    })
+    Object.assign(joyStickStage.style, {
+      ...commonStyle,
+      boxShadow: padShadow,
+      width: `${padSize}px`,
+      height: `${padSize}px`,
+      transform: 'translate(0%,-100%)',
+      borderRadius: '50em',
+      left: `${r.left + allMargin + lrMargin}px`,
+      top: `${joyStickCY + joyStickSR}px`,
+      display: useJoyStick && isKeysShown ? 'block' : 'none'
+    })
+    Object.assign(joyStick.style, {
+      ...btnStyle,
+      marginLeft: `${joyStickSR - joyStickR}px`,
+      marginTop: `${joyStickSR - joyStickR}px`,
+      width: `${2 * joyStickR}px`,
+      height: `${2 * joyStickR}px`,
+      borderRadius: '50em'
+    })
+    Object.assign(udlrElement.style, {
+      ...commonStyle,
+      boxShadow: padShadow,
+      borderRadius: '50em',
+      width: `${padSize}px`,
+      height: `${padSize}px`,
+      transform: 'translate(0%,-100%)',
+      left: `${r.left + allMargin + lrMargin}px`,
+      top: `${joyStickCY + joyStickSR}px`,
+      display: !useJoyStick && isKeysShown ? 'block' : 'none'
+    })
+    Object.assign(qwzxElement.style, {
+      ...commonStyle,
+      width: `${padSize}px`,
+      height: `${padSize}px`,
+      transform: 'translate(-100%,-100%)',
+      borderRadius: '50em',
+      boxShadow: padShadow,
+      left: `${r.left + r.width - allMargin}px`,
+      top: `${r.top + r.height - allMargin}px`,
+      display: isKeysShown ? 'block' : 'none'
+    })
+    const btnW = padSize * 0.5
+    const pitch = actionBtnH() + 5
+    actionEls.forEach((el, i) => {
+      Object.assign(el.style, {
+        ...btnStyle,
+        width: `${btnW}px`,
+        height: `${actionBtnH()}px`,
+        lineHeight: `${actionBtnH()}px`,
+        borderRadius: '50em',
+        right: 'auto',
+        left: `${r.left + r.width - allMargin - btnW}px`,
+        top: `${r.top + allMargin + i * pitch}px`,
+        display: isKeysShown ? 'block' : 'none'
+      })
+    })
+    // 发布动作键列区域，供修改器悬浮球避让（见 __rpgmaker_mod_ui.js）
+    window.__touchPadMetrics = {
+      actionLeft: r.left + r.width - allMargin - btnW,
+      actionTop: r.top + allMargin,
+      actionBottom: r.top + allMargin + actionEls.length * pitch - 5
+    }
+    window.dispatchEvent(new Event('tyranorpadlayout'))
+  }
+
   const setKeyDownColor = (e) => {
     e.style.background = padPressedBg
   }
@@ -459,30 +421,37 @@ window.addEventListener('load', () => {
     e.dispatchEvent(evtObj)
   }
   const setEventStart = (e, keyCodes) => {
-    e.addEventListener('touchstart', (evt) => {
+    const press = (evt) => {
       evt.stopPropagation()
       evt.preventDefault()
       setKeyDownColor(e)
       keyCodes.forEach(keyCode => {
         startKeyEvent(e, keyCode, 'keydown')
       })
-    })
+    }
+    // 触摸路径 preventDefault 会阻止浏览器合成鼠标事件，不会双触发；
+    // 虚拟鼠标（__tyranor_mouse）只派发 MouseEvent，靠这里的 mousedown 命中
+    e.addEventListener('touchstart', press)
+    e.addEventListener('mousedown', press)
   }
   const setEventMove = (e) => {
     e.addEventListener('touchmove', (evt) => {
       evt.stopPropagation()
       evt.preventDefault()
     })
+    e.addEventListener('mousemove', (evt) => { evt.stopPropagation() })
   }
   const setEventEnd = (e, keyCodes) => {
-    e.addEventListener('touchend', (evt) => {
+    const release = (evt) => {
       evt.stopPropagation()
       evt.preventDefault()
       setKeyUpColor(e)
       keyCodes.forEach(keyCode => {
         startKeyEvent(e, keyCode, 'keyup')
       })
-    })
+    }
+    e.addEventListener('touchend', release)
+    e.addEventListener('mouseup', release)
   }
   const getDistance = (x1, y1, x2, y2) => {
     return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
@@ -529,120 +498,108 @@ window.addEventListener('load', () => {
       endMoveEvent()
     }
   }
-  keySwitchElement.addEventListener('touchstart', (evt) => {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setKeyDownColor(keySwitchElement)
+  // 开关通用绑定：press/release 与按钮一致走 touchstart/touchend +
+  // mousedown/mouseup 双路径（虚拟鼠标靠后者命中）
+  const bindSwitch = (el, onRelease) => {
+    el.addEventListener('touchstart', (evt) => {
+      evt.stopPropagation()
+      evt.preventDefault()
+      setKeyDownColor(el)
+    })
+    el.addEventListener('mousedown', (evt) => {
+      evt.stopPropagation()
+      evt.preventDefault()
+      setKeyDownColor(el)
+    })
+    setEventMove(el)
+    const release = (evt) => {
+      evt.stopPropagation()
+      evt.preventDefault()
+      setKeyUpColor(el)
+      onRelease()
+    }
+    el.addEventListener('touchend', release)
+    el.addEventListener('mouseup', release)
+  }
+  bindSwitch(keySwitchElement, () => {
+    isKeysShown = !isKeysShown
+    keySwitchElement.innerText = isKeysShown ? 'Hide' : 'Show'
+    layout()
   })
-  setEventMove(keySwitchElement)
-  keySwitchElement.addEventListener('touchend', (evt) => {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setKeyUpColor(keySwitchElement)
-    if (isKeysShown) {
-      if (useJoyStick) joyStickStage.style.display = 'none'
-      else udlrElement.style.display = 'none'
-      qwzxElement.style.display = 'none'
-      for (let i = 1; i < actionsElement.children.length; i++) {
-        actionsElement.children.item(i).style.display = 'none'
-      }
-      keySwitchElement.innerText = 'Show'
-      isKeysShown = false
-    } else {
-      if (useJoyStick) joyStickStage.style.display = 'block'
-      else udlrElement.style.display = 'block'
-      qwzxElement.style.display = 'block'
-      for (let i = 1; i < actionsElement.children.length; i++) {
-        actionsElement.children.item(i).style.display = 'block'
-      }
-      keySwitchElement.innerText = 'Hide'
-      isKeysShown = true
+  bindSwitch(joyStickSwitchElement, () => {
+    useJoyStick = !useJoyStick
+    joyStickSwitchElement.innerText = useJoyStick ? 'Button' : 'Stick'
+    layout()
+  })
+  bindSwitch(dir8SwitchElement, () => {
+    useDir8 = !useDir8
+    dir8SwitchElement.innerText = useDir8 ? '4 Dir' : '8 Dir'
+    for (let i = 4; i < udlrElement.children.length; i++) {
+      udlrElement.children.item(i).style.display = useDir8 ? 'block' : 'none'
     }
   })
-  joyStickSwitchElement.addEventListener('touchstart', (evt) => {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setKeyDownColor(joyStickSwitchElement)
-  })
-  setEventMove(joyStickSwitchElement)
-  joyStickSwitchElement.addEventListener('touchend', (evt) => {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setKeyUpColor(joyStickSwitchElement)
-    if (useJoyStick) {
-      udlrElement.style.display = 'block'
-      joyStickStage.style.display = 'none'
-      joyStickSwitchElement.innerText = 'Stick'
-      useJoyStick = false
+  const joyStart = (x, y) => {
+    joyStick.style.left = `${x - joyStickCX}px`
+    joyStick.style.top = `${y - joyStickCY}px`
+    startMoveEvent({ clientX: x, clientY: y })
+  }
+  const joyMove = (x, y) => {
+    const subLen = getDistance(x, y, joyStickCX, joyStickCY)
+    if (subLen > joyStickSR) {
+      joyStick.style.left = `${(x - joyStickCX) * joyStickSR / subLen}px`
+      joyStick.style.top = `${(y - joyStickCY) * joyStickSR / subLen}px`
     } else {
-      udlrElement.style.display = 'none'
-      joyStickStage.style.display = 'block'
-      joyStickSwitchElement.innerText = 'Button'
-      useJoyStick = true
+      joyStick.style.left = `${x - joyStickCX}px`
+      joyStick.style.top = `${y - joyStickCY}px`
     }
-  })
-  dir8SwitchElement.addEventListener('touchstart', (evt) => {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setKeyDownColor(dir8SwitchElement)
-  })
-  setEventMove(dir8SwitchElement)
-  dir8SwitchElement.addEventListener('touchend', (evt) => {
-    evt.stopPropagation()
-    evt.preventDefault()
-    setKeyUpColor(dir8SwitchElement)
-    if (useDir8) {
-      for (let i = 4; i < udlrElement.children.length; i++) {
-        udlrElement.children.item(i).style.display = 'none'
-      }
-      dir8SwitchElement.innerText = '8 Dir'
-      useDir8 = false
-    } else {
-      for (let i = 4; i < udlrElement.children.length; i++) {
-        udlrElement.children.item(i).style.display = 'block'
-      }
-      dir8SwitchElement.innerText = '4 Dir'
-      useDir8 = true
-    }
-  })
+    startMoveEvent({ clientX: x, clientY: y })
+  }
+  const joyEnd = () => {
+    joyStick.style.left = '0px'
+    joyStick.style.top = '0px'
+    endMoveEvent()
+  }
   joyStickStage.addEventListener('touchstart', (evt) => {
     evt.stopPropagation()
     evt.preventDefault()
     const touch = evt.targetTouches[0]
-    joyStick.style.left = `${touch.clientX - joyStickCX}px`
-    joyStick.style.top = `${touch.clientY - joyStickCY}px`
-    startMoveEvent(touch)
+    joyStart(touch.clientX, touch.clientY)
   })
   joyStickStage.addEventListener('touchmove', (evt) => {
     evt.stopPropagation()
     evt.preventDefault()
     const touch = evt.targetTouches[0]
-    const subLen = getDistance(touch.clientX, touch.clientY, joyStickCX, joyStickCY)
-    if (subLen > joyStickSR) {
-      joyStick.style.left = `${(touch.clientX - joyStickCX) * joyStickSR / subLen}px`
-      joyStick.style.top = `${(touch.clientY - joyStickCY) * joyStickSR / subLen}px`
-    } else {
-      joyStick.style.left = `${touch.clientX - joyStickCX}px`
-      joyStick.style.top = `${touch.clientY - joyStickCY}px`
-    }
-    startMoveEvent(touch)
+    joyMove(touch.clientX, touch.clientY)
   })
   joyStickStage.addEventListener('touchend', (evt) => {
     evt.stopPropagation()
     evt.preventDefault()
-    joyStick.style.left = '0px'
-    joyStick.style.top = '0px'
-    endMoveEvent()
+    joyEnd()
+  })
+  // 虚拟鼠标拖拽摇杆：光标按下后跟随 mousemove
+  let joyMouseDown = false
+  joyStickStage.addEventListener('mousedown', (evt) => {
+    evt.stopPropagation()
+    evt.preventDefault()
+    joyMouseDown = true
+    joyStart(evt.clientX, evt.clientY)
+  })
+  window.addEventListener('mousemove', (evt) => {
+    if (!joyMouseDown) return
+    evt.stopPropagation()
+    joyMove(evt.clientX, evt.clientY)
+  })
+  window.addEventListener('mouseup', (evt) => {
+    if (!joyMouseDown) return
+    evt.stopPropagation()
+    joyMouseDown = false
+    joyEnd()
   })
   actionsBtns.forEach(it => {
     const childElement = document.createElement('div')
     actionsElement.appendChild(childElement)
     childElement.innerText = it.text
-    Object.assign(childElement.style, {
-      ...actionStyle,
-      right: `${allMargin}px`,
-      top: `${actionsBtns.indexOf(it) * (padSize * 0.125 + 5) + allMargin}px`
-    })
+    actionEls.push(childElement)
     setEventStart(childElement, [it.keyCode])
     setEventMove(childElement)
     setEventEnd(childElement, [it.keyCode])
@@ -651,7 +608,9 @@ window.addEventListener('load', () => {
     const childElement = document.createElement('div')
     udlrElement.appendChild(childElement)
     Object.assign(childElement.style, {
-      ...udlrStyle,
+      ...btnStyle,
+      width: '33%',
+      height: '33%',
       ...it.style
     })
     setEventStart(childElement, it.keyCodes)
@@ -662,7 +621,10 @@ window.addEventListener('load', () => {
     const childElement = document.createElement('div')
     qwzxElement.appendChild(childElement)
     Object.assign(childElement.style, {
-      ...qwzxStyle,
+      ...btnStyle,
+      width: '40%',
+      height: '40%',
+      borderRadius: '50em',
       ...it.style
     })
     setEventStart(childElement, [it.keyCode])
@@ -673,4 +635,15 @@ window.addEventListener('load', () => {
     Object.assign(tElement.style, textStyle)
     tElement.innerText = it.text
   })
-})
+  layout()
+  window.addEventListener('resize', layout)
+  // 旋转后画布矩形可能滞后于视口变化，延迟一帧再排
+  window.addEventListener('orientationchange', () => setTimeout(layout, 150))
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('load', initTouchPad, { once: true })
+  } else {
+    initTouchPad()
+  }
+})()

@@ -116,6 +116,8 @@ class PadSaveCategoryActivity : AppCompatActivity() {
         EngineType.ARTEMIS -> "A"
         EngineType.ONS -> "O"
         EngineType.TYRANO -> "T"
+        EngineType.RPG_MV -> "MV"
+        EngineType.RPG_MZ -> "MZ"
         else -> "G"
     }
 

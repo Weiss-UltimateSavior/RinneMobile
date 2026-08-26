@@ -39,6 +39,8 @@ object GameMetadataFormatter {
             EngineType.KIRIKIRI -> R.string.game_engine_kirikiri
             EngineType.ONS -> R.string.game_engine_onscripter
             EngineType.TYRANO -> R.string.game_engine_tyrano
+            EngineType.RPG_MV -> R.string.game_engine_rpgmaker_mv
+            EngineType.RPG_MZ -> R.string.game_engine_rpgmaker_mz
             EngineType.ARTEMIS -> R.string.game_engine_artemis
             EngineType.WINLATOR -> R.string.game_engine_winlator
             EngineType.GAMEHUB -> R.string.game_engine_gamehub

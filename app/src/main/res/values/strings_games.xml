@@ -31,6 +31,8 @@
     <string name="game_engine_kirikiri">Kirikiri</string>
     <string name="game_engine_onscripter">ONScripter</string>
     <string name="game_engine_tyrano">Tyrano</string>
+    <string name="game_engine_rpgmaker_mv">RPG Maker MV</string>
+    <string name="game_engine_rpgmaker_mz">RPG Maker MZ</string>
     <string name="game_engine_rpgmaker_mkxp">mkxp-z (Ruby 3.x, 自定义/通用)</string>
     <string name="game_engine_godot_auto">Godot (自动检测 3/4)</string>
     <string name="game_engine_artemis">Artemis</string>

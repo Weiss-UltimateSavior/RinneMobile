@@ -346,6 +346,8 @@ object LauncherGameLaunchBridge {
         if (emulatorPackage.isEmpty() && game.engine == EngineType.KIRIKIRI) return EnginePackages.INTERNAL_KRKR
         if (emulatorPackage.isEmpty() && game.engine == EngineType.ONS) return EnginePackages.INTERNAL_ONS
         if (emulatorPackage.isEmpty() && game.engine == EngineType.TYRANO) return EnginePackages.INTERNAL_TYRANO
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.RPG_MV) return EnginePackages.INTERNAL_TYRANO_RPG_MV
+        if (emulatorPackage.isEmpty() && game.engine == EngineType.RPG_MZ) return EnginePackages.INTERNAL_TYRANO_RPG_MZ
         if (emulatorPackage.isEmpty() && game.engine == EngineType.PSP) return EnginePackages.EXTERNAL_PPSSPP
         if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_3DS) return EnginePackages.EXTERNAL_AZAHAR
         if (emulatorPackage.isEmpty() && game.engine == EngineType.NINTENDO_SWITCH) return EnginePackages.EXTERNAL_EDEN
@@ -363,6 +365,8 @@ object LauncherGameLaunchBridge {
         EngineType.KIRIKIRI -> EnginePackages.INTERNAL_KRKR
         EngineType.ONS -> EnginePackages.INTERNAL_ONS
         EngineType.TYRANO -> EnginePackages.INTERNAL_TYRANO
+        EngineType.RPG_MV -> EnginePackages.INTERNAL_TYRANO_RPG_MV
+        EngineType.RPG_MZ -> EnginePackages.INTERNAL_TYRANO_RPG_MZ
         EngineType.ARTEMIS -> EnginePackages.INTERNAL_ARTEMIS
         EngineType.PSP -> EnginePackages.EXTERNAL_PPSSPP
         EngineType.NINTENDO_3DS -> EnginePackages.EXTERNAL_AZAHAR
@@ -377,7 +381,8 @@ object LauncherGameLaunchBridge {
     private fun resolveLaunchTarget(game: Game): String? {
         // Preserve an explicit target such as root.pfs.  Artemis/Tyrano still default to the
         // directory when the field is absent, but must not silently discard a user selection.
-        if ((game.engine == EngineType.ARTEMIS || game.engine == EngineType.TYRANO)
+        if ((game.engine == EngineType.ARTEMIS || game.engine == EngineType.TYRANO ||
+            game.engine == EngineType.RPG_MV || game.engine == EngineType.RPG_MZ)
             && game.launchTarget.isNullOrBlank()) return "[游戏目录]"
         if (game.engine == EngineType.GAMEHUB) {
             return game.title?.trim().takeUnless { it.isNullOrEmpty() }

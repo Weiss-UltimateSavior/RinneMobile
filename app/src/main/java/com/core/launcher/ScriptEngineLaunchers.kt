@@ -23,7 +23,13 @@ internal object ScriptEngineLaunchers {
     )
 
     @JvmStatic
-    fun buildTyranoIntent(context: Context, gamePath: String?, launchTarget: String?): Intent {
+    @JvmOverloads
+    fun buildTyranoIntent(
+        context: Context,
+        gamePath: String?,
+        launchTarget: String?,
+        webType: String = "Tyrano",
+    ): Intent {
         val resolvedPath = resolveTyranoGameDirectory(gamePath, launchTarget)
         val path = stripFileScheme(resolvedPath)
         val scoped = isTyranoScopedSaveEnabled(context)
@@ -43,7 +49,7 @@ internal object ScriptEngineLaunchers {
             }
             putExtra("rootUri", gamePath)
             putExtra("launchTarget", launchTarget)
-            putExtra("type", "Tyrano")
+            putExtra("type", webType)
             putExtra("launchMode", EnginePackages.INTERNAL_TYRANO)
             putExtra("orientation", 6)
             putExtra("scopedSaveDir", scoped)

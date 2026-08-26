@@ -320,6 +320,8 @@ object GameScanner {
         EngineType.KIRIKIRI,
         EngineType.ONS,
         EngineType.TYRANO,
+        EngineType.RPG_MV,
+        EngineType.RPG_MZ,
         EngineType.ARTEMIS,
         EngineType.RPGMAKER,
         EngineType.RENPY,
@@ -375,7 +377,7 @@ object GameScanner {
             name == "scenario" || name == "system" || name == "bgimage" || name == "fgimage" ||
             name == "image" || name == "sound" || name == "bgm" || name == "voice" ||
             name == "video" || name == "movie" || name == "font" || name == "others" ||
-            name == "app" || name == "game" || name == "renpy"
+            name == "app" || name == "app.asar" || name == "game" || name == "renpy"
 
     internal fun shouldTraverseMatchedGames(requestedDepth: Int): Boolean =
         requestedDepth == SCAN_ALL_LEVELS

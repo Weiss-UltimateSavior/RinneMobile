@@ -320,12 +320,15 @@ class GameSaveFileManager(context: Context) {
         private fun isBuiltInPackage(game: Game): Boolean {
             val pkg = game.emulatorPackage?.trim()?.lowercase(Locale.ROOT) ?: ""
             if (pkg.isEmpty()) return game.engine == EngineType.KIRIKIRI || game.engine == EngineType.ARTEMIS
-                || game.engine == EngineType.ONS || game.engine == EngineType.TYRANO
+                || game.engine == EngineType.ONS || game.engine == EngineType.TYRANO ||
+                game.engine == EngineType.RPG_MV || game.engine == EngineType.RPG_MZ
             return when (game.engine) {
                 EngineType.KIRIKIRI -> pkg.startsWith(EnginePackages.INTERNAL_KRKR) || EnginePackages.LEGACY_KRKR == pkg
                 EngineType.ARTEMIS -> pkg.startsWith(EnginePackages.INTERNAL_ARTEMIS)
                 EngineType.ONS -> pkg.startsWith(EnginePackages.INTERNAL_ONS) || EnginePackages.LEGACY_ONS == pkg
                 EngineType.TYRANO -> pkg.startsWith(EnginePackages.INTERNAL_TYRANO) || EnginePackages.LEGACY_TYRANO == pkg
+                EngineType.RPG_MV -> pkg.startsWith(EnginePackages.INTERNAL_TYRANO)
+                EngineType.RPG_MZ -> pkg.startsWith(EnginePackages.INTERNAL_TYRANO)
                 else -> false
             }
         }

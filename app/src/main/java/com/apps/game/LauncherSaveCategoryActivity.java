@@ -108,13 +108,16 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
             case ARTEMIS: return "Artemis";
             case ONS: return "ONS";
             case TYRANO: return "Tyrano";
+            case RPG_MV: return "RPG MV";
+            case RPG_MZ: return "RPG MZ";
             default: return engine.name();
         }
     }
 
     public static boolean isSupportedBuiltInEngine(EngineType engine) {
         return engine == EngineType.KIRIKIRI || engine == EngineType.ARTEMIS
-                || engine == EngineType.ONS || engine == EngineType.TYRANO;
+                || engine == EngineType.ONS || engine == EngineType.TYRANO
+                || engine == EngineType.RPG_MV || engine == EngineType.RPG_MZ;
     }
 
     /** Engine type alone is not enough: custom cards may route it to an external package. */
@@ -130,6 +133,8 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
             case ONS:
                 return pkg.startsWith(EnginePackages.INTERNAL_ONS) || EnginePackages.LEGACY_ONS.equals(pkg);
             case TYRANO:
+            case RPG_MV:
+            case RPG_MZ:
                 return pkg.startsWith(EnginePackages.INTERNAL_TYRANO) || EnginePackages.LEGACY_TYRANO.equals(pkg);
             default:
                 return false;
@@ -141,6 +146,8 @@ public class LauncherSaveCategoryActivity extends AppCompatActivity {
         if (engine == EngineType.ARTEMIS) return "A";
         if (engine == EngineType.ONS) return "O";
         if (engine == EngineType.TYRANO) return "T";
+        if (engine == EngineType.RPG_MV) return "MV";
+        if (engine == EngineType.RPG_MZ) return "MZ";
         return "G";
     }
 

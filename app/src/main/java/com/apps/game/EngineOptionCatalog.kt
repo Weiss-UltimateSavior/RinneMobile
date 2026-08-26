@@ -13,6 +13,8 @@ internal object EngineOptionCatalog {
             EngineOption(EngineType.KIRIKIRI, context.getString(R.string.game_engine_kirikiri), null),
             EngineOption(EngineType.ONS, context.getString(R.string.game_engine_onscripter), null),
             EngineOption(EngineType.TYRANO, context.getString(R.string.game_engine_tyrano), null),
+            EngineOption(EngineType.RPG_MV, context.getString(R.string.game_engine_rpgmaker_mv), null),
+            EngineOption(EngineType.RPG_MZ, context.getString(R.string.game_engine_rpgmaker_mz), null),
             EngineOption(EngineType.ARTEMIS, context.getString(R.string.game_engine_artemis), null),
             EngineOption(EngineType.WINLATOR, context.getString(R.string.game_engine_winlator), null),
             EngineOption(EngineType.GAMEHUB, context.getString(R.string.game_engine_gamehub), null),
