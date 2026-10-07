@@ -2,13 +2,16 @@ package com.apps.game;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -22,6 +25,7 @@ import com.core.util.RxMainQueue;
 
 import com.apps.LauncherPreferences;
 import com.apps.common.LauncherInsetsHelper;
+import com.apps.profile.LauncherModuleCompatibilityActivity;
 import com.apps.settings.LauncherKrkrSettingsActivity;
 import com.apps.LauncherNavigationMetricsKt;
 import com.apps.settings.LauncherMetadataSourceActivity;
@@ -32,7 +36,8 @@ import com.apps.widget.LauncherTabletPortraitScaler;
 /**
  * 管理页 Fragment：仅保留生命周期、UI 缩放和共享确认弹窗入口。
  * 业务逻辑委托给 6 个 Controller：DiagnosticsController / SyncSettingsController /
- * LocalBackupController / ScanDirectoryController / Xp3TargetResolver / ExternalImportController。
+ * LocalBackupController / ScanDirectoryController / Xp3TargetResolver / ExternalImportController；
+ * 另承载「模块兼容」入口（含应用列表权限检查，HD 覆写为子 Fragment 嵌入）。
  */
 public class LauncherManageFragment extends Fragment implements ManageHost {
     private FragmentLauncherManageBinding binding;
@@ -174,6 +179,7 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
         binding.actionDiagnostics.setOnClickListener(view -> diagnosticsController.showDiagnosticsPrivacyDialog());
         binding.actionMetadataSource.setOnClickListener(view -> openMetadataSource());
         binding.actionKrkrSettings.setOnClickListener(view -> openKrkrSettings());
+        binding.actionModuleCompatibility.setOnClickListener(view -> handleModuleCompatibility());
     }
 
     protected void openAddGame() {
@@ -190,6 +196,31 @@ public class LauncherManageFragment extends Fragment implements ManageHost {
 
     protected void openSyncCenter() {
         startActivity(new Intent(requireContext(), com.apps.sync.LauncherSyncCenterActivity.class));
+    }
+
+    private void handleModuleCompatibility() {
+        if (hasApplicationListPermission()) {
+            openModuleCompatibility();
+            return;
+        }
+        LauncherDialogRouter.showConfirm(requireContext(),
+                getString(R.string.profile_module_permission_title),
+                getString(R.string.profile_module_permission_message),
+                getString(R.string.settings_confirm),
+                () -> Toast.makeText(requireContext(),
+                        R.string.profile_app_list_permission_missing, Toast.LENGTH_SHORT).show());
+    }
+
+    /** 竖屏独立页面启动；HD 覆写为子 Fragment 嵌入。 */
+    protected void openModuleCompatibility() {
+        startActivity(new Intent(requireContext(), LauncherModuleCompatibilityActivity.class));
+    }
+
+    private boolean hasApplicationListPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true;
+        return requireContext().getPackageManager().checkPermission(
+                "android.permission.QUERY_ALL_PACKAGES", requireContext().getPackageName())
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     private void applyThemeTone() {

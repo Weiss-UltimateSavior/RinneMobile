@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment
 import com.apps.account.LauncherAccountSettingsFragment
 import com.apps.chat.LauncherChatSelectFragment
 import com.apps.leaderboard.LauncherLeaderboardFragment
-import com.apps.profile.LauncherModuleCompatibilityFragment
 import com.apps.profile.LauncherProfileEditFragment
 import com.apps.profile.LauncherProfileFragment
 import com.apps.translation.TranslationSettingFragment
@@ -19,9 +18,10 @@ import com.core.R
 /**
  * HD 个人页：复用账户资料业务，以双栏内容适配大屏容器。
  *
- * 重构计划 9.9 阶段 111/129：5 个设置目标（资料编辑/账号设置/模块兼容/翻译设置/排行榜）
+ * 重构计划 9.9 阶段 111/129：4 个设置目标（资料编辑/账号设置/翻译设置/排行榜）
  * 与聊天流（[LauncherChatSelectFragment] 选择 → 聊天子 Fragment）全部迁子 Fragment 承载，
  * embeddedHost（LocalActivityManager 嵌入）已整体移除（阶段 129，W-3 收官）。
+ * 「模块兼容」入口已移至管理页 [com.apps.HDModel.HdManageFragment]。
  */
 class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     private var detailContainer: FrameLayout? = null
@@ -67,10 +67,6 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
         showChildFragment(CHILD_CHAT_SELECT_TAG, LauncherChatSelectFragment())
     }
 
-    override fun openModuleCompatibility() {
-        showChildFragment(CHILD_MODULE_COMPAT_TAG, LauncherModuleCompatibilityFragment())
-    }
-
     override fun openTranslationSettings() {
         showChildFragment(CHILD_TRANSLATION_TAG, TranslationSettingFragment())
     }
@@ -91,10 +87,9 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     }
 
     override fun closeEmbeddedActivity(child: Activity?): Boolean {
-        // 子 Fragment 路径（8 个目标：资料编辑/账号设置/模块兼容/翻译设置/排行榜/聊天选择/AI 聊天/公共聊天）
+        // 子 Fragment 路径（7 个目标：资料编辑/账号设置/翻译设置/排行榜/聊天选择/AI 聊天/公共聊天）
         val existing = childFragmentManager.findFragmentByTag(CHILD_PROFILE_EDIT_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_ACCOUNT_SETTINGS_TAG)
-            ?: childFragmentManager.findFragmentByTag(CHILD_MODULE_COMPAT_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_TRANSLATION_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_LEADERBOARD_TAG)
             ?: childFragmentManager.findFragmentByTag(CHILD_CHAT_SELECT_TAG)
@@ -113,7 +108,6 @@ class HdProfileFragment : LauncherProfileFragment(), HdEmbeddedActivityOwner {
     companion object {
         private const val CHILD_PROFILE_EDIT_TAG = "hd_profile_edit"
         private const val CHILD_ACCOUNT_SETTINGS_TAG = "hd_account_settings"
-        private const val CHILD_MODULE_COMPAT_TAG = "hd_module_compatibility"
         private const val CHILD_TRANSLATION_TAG = "hd_translation_settings"
         private const val CHILD_LEADERBOARD_TAG = "hd_leaderboard"
         private const val CHILD_CHAT_SELECT_TAG = "hd_chat_select"

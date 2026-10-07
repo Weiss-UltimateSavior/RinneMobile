@@ -3,10 +3,8 @@ package com.apps.profile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -142,18 +140,6 @@ public class LauncherProfileFragment extends Fragment {
         });
         binding.accountSettingsRow.setOnClickListener(v -> openAccountSettings());
         binding.chatRoomRow.setOnClickListener(v -> openChatRoom());
-        binding.moduleCompatibilityRow.setOnClickListener(v -> {
-            if (hasApplicationListPermission()) {
-                openModuleCompatibility();
-                return;
-            }
-            LauncherDialogRouter.showConfirm(requireContext(),
-                    getString(R.string.profile_module_permission_title),
-                    getString(R.string.profile_module_permission_message),
-                    getString(R.string.settings_confirm),
-                    () -> Toast.makeText(requireContext(),
-                            R.string.profile_app_list_permission_missing, Toast.LENGTH_SHORT).show());
-        });
         binding.cloudRestoreRow.setOnClickListener(v -> showCloudRestoreConfirmDialog());
         binding.logoutRow.setOnClickListener(v -> showLogoutDialog());
         binding.translationRow.setOnClickListener(v -> openTranslationSettings());
@@ -177,11 +163,6 @@ public class LauncherProfileFragment extends Fragment {
         LauncherMotion.applyActivityOpen(requireActivity());
     }
 
-    protected void openModuleCompatibility() {
-        startActivity(new Intent(requireContext(), LauncherModuleCompatibilityActivity.class));
-        LauncherMotion.applyActivityOpen(requireActivity());
-    }
-
     protected void openTranslationSettings() {
         startActivity(new Intent(requireContext(), TranslationSettingActivity.class));
         LauncherMotion.applyActivityOpen(requireActivity());
@@ -190,13 +171,6 @@ public class LauncherProfileFragment extends Fragment {
     protected void openLeaderboard() {
         startActivity(new Intent(requireContext(), LauncherLeaderboardActivity.class));
         LauncherMotion.applyActivityOpen(requireActivity());
-    }
-
-    private boolean hasApplicationListPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true;
-        return requireContext().getPackageManager().checkPermission(
-                "android.permission.QUERY_ALL_PACKAGES", requireContext().getPackageName())
-                == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override

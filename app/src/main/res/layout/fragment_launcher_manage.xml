@@ -188,6 +188,25 @@
                         android:contentDescription="@null"
                         android:src="@drawable/launcher_manage_arrow" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/actionModuleCompatibility"
+                    style="@style/LauncherManageItem">
+
+                    <ImageView
+                        style="@style/LauncherProfileActionIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_profile_action_module" />
+
+                    <TextView
+                        style="@style/LauncherManageTitle"
+                        android:text="@string/module_compatibility_title" />
+
+                    <ImageView
+                        style="@style/LauncherManageArrowIcon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/launcher_manage_arrow" />
+                </LinearLayout>
             </LinearLayout>
 
             <TextView
