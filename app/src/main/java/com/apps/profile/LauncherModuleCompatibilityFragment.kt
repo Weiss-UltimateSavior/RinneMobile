@@ -420,6 +420,8 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         if (!installed || invalid) {
             labels += getString(R.string.module_native_import)
             actions += { launchKirikiroid2ImportPicker() }
+            labels += getString(R.string.module_native_download)
+            actions += { promptNativeDownload(ModuleType.KIRIKIROID2) }
         } else if (isModuleEnabled(ModuleType.KIRIKIROID2)) {
             labels += getString(R.string.module_disable)
             actions += {
@@ -540,6 +542,8 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         if (!installed || invalid) {
             labels += getString(R.string.module_native_import)
             actions += { launchOnsImportPicker() }
+            labels += getString(R.string.module_native_download)
+            actions += { promptNativeDownload(ModuleType.ONS) }
         } else if (isModuleEnabled(ModuleType.ONS)) {
             labels += getString(R.string.module_disable)
             actions += {
@@ -650,6 +654,8 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         if (!installed || invalid) {
             labels += getString(R.string.module_native_import)
             actions += { launchArtemisImportPicker() }
+            labels += getString(R.string.module_native_download)
+            actions += { promptNativeDownload(ModuleType.ARTEMIS) }
         } else if (isModuleEnabled(ModuleType.ARTEMIS)) {
             labels += getString(R.string.module_disable)
             actions += {
@@ -752,6 +758,16 @@ class LauncherModuleCompatibilityFragment : Fragment() {
 
     // ----- 安装页跳转 -----
 
+    /** 原生 zip 插件下载：确认后跳转浏览器，下载完成后返回本页导入。 */
+    private fun promptNativeDownload(module: ModuleType) {
+        LauncherDialogRouter.showStandardConfirm(
+            requireContext(),
+            getString(R.string.module_download_title, module.shortName),
+            getString(R.string.module_download_message),
+            getString(R.string.theme_go_to_download),
+        ) { openInstallPage(module.installUrl) }
+    }
+
     private fun openInstallPage(installUrl: String) {
         val opened: Boolean = try {
             // 统一走共享 LauncherUrlOpener：scheme 白名单校验 + ActivityNotFoundException 捕获。
@@ -780,17 +796,23 @@ class LauncherModuleCompatibilityFragment : Fragment() {
         RPGM(R.string.module_rpgm_name, R.string.module_rpgm_detail, RPGM_INSTALL_URL, "RPGM"),
         RENPY(R.string.module_renpy_name, R.string.module_renpy_detail, RENPY_INSTALL_URL, "RenPy"),
         GODOT(R.string.module_godot_name, R.string.module_godot_detail, GODOT_INSTALL_URL, "Godot"),
-        KIRIKIROID2(R.string.module_kirikiroid2_name, R.string.module_kirikiroid2_detail, "", "Kirikiroid2"),
-        ONS(R.string.module_ons_name, R.string.module_ons_detail, "", "ONS"),
-        ARTEMIS(R.string.module_artemis_name, R.string.module_artemis_detail, "", "Artemis"),
+        KIRIKIROID2(R.string.module_kirikiroid2_name, R.string.module_kirikiroid2_detail, KIRIKIROID2_INSTALL_URL, "Kirikiroid2"),
+        ONS(R.string.module_ons_name, R.string.module_ons_detail, ONS_INSTALL_URL, "ONS"),
+        ARTEMIS(R.string.module_artemis_name, R.string.module_artemis_detail, ARTEMIS_INSTALL_URL, "Artemis"),
     }
 
     companion object {
         private const val RPGM_INSTALL_URL =
-            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RPGMPlugin-1.22.00-patreon-release.apk"
+            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RPGM-Plugin.apk"
         private const val RENPY_INSTALL_URL =
-            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RenPyPlugin-8.5.0-1.01.00.apk"
+            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/RenPy-Plugin-8.5.apk"
         private const val GODOT_INSTALL_URL =
-            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/Godot.4.3-Plugin-1.00.60.apk"
+            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/Godot.4.3-Plugin.apk"
+        private const val KIRIKIROID2_INSTALL_URL =
+            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/kirikiroid2-arm64-Plugin.zip"
+        private const val ONS_INSTALL_URL =
+            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/ons-arm64-Plugin.zip"
+        private const val ARTEMIS_INSTALL_URL =
+            "https://github.com/Weiss-UltimateSavior/RinneMobile/releases/download/test/artemis-arm64--Plugin.zip"
     }
 }

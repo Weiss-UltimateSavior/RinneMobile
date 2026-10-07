@@ -380,6 +380,7 @@
     <string name="module_enable_message">启用后该模块可用于启动 %1$s 游戏。是否启用？</string>
     <string name="module_enable">启用</string>
     <string name="module_native_import">导入插件</string>
+    <string name="module_native_download">下载插件</string>
     <string name="module_native_delete">删除插件</string>
     <string name="module_native_importing_title">正在导入插件</string>
     <string name="module_native_importing_message">正在校验 zip SHA-256 并解压插件，请稍候。</string>

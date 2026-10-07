@@ -375,6 +375,7 @@
     <string name="module_enable_message">有効にすると、このモジュールで %1$s ゲームを起動できます。有効にしますか？</string>
     <string name="module_enable">有効にする</string>
     <string name="module_native_import">プラグインをインポート</string>
+    <string name="module_native_download">プラグインをダウンロード</string>
     <string name="module_native_delete">プラグインを削除</string>
     <string name="module_native_importing_title">プラグインをインポート中</string>
     <string name="module_native_importing_message">zip の SHA-256 を検証し、プラグインを展開しています。しばらくお待ちください。</string>

@@ -375,6 +375,7 @@
     <string name="module_enable_message">Enabling this module allows it to launch %1$s games. Enable it?</string>
     <string name="module_enable">Enable</string>
     <string name="module_native_import">Import plugin</string>
+    <string name="module_native_download">Download plugin</string>
     <string name="module_native_delete">Delete plugin</string>
     <string name="module_native_importing_title">Importing plugin</string>
     <string name="module_native_importing_message">Verifying the zip SHA-256 and extracting the plugin. Please wait.</string>
